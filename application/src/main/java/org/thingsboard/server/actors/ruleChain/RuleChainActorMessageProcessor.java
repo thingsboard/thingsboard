@@ -74,6 +74,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private final TbClusterService clusterService;
     private final TbApiUsageReportClient apiUsageClient;
     private String ruleChainName;
+    private boolean debugRuleNodeFailures;
 
     private RuleNodeId firstId;
     private RuleNodeCtx firstNode;
@@ -83,6 +84,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         super(systemContext, tenantId, ruleChain.getId());
         this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChain.getName();
+        this.debugRuleNodeFailures = ruleChain.isDebugMode();
         this.parent = parent;
         this.self = self;
         this.nodeActors = new HashMap<>();
@@ -107,7 +109,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 for (RuleNode ruleNode : ruleNodeList) {
                     log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
                     TbActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
-                    nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+                    nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode, debugRuleNodeFailures));
                 }
                 initRoutes(ruleChain, ruleNodeList);
                 started = true;
@@ -122,6 +124,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
         RuleChain ruleChain = service.findRuleChainById(tenantId, entityId);
         if (ruleChain != null && RuleChainType.CORE.equals(ruleChain.getType())) {
             ruleChainName = ruleChain.getName();
+            debugRuleNodeFailures = ruleChain.isDebugMode();
             List<RuleNode> ruleNodeList = service.getRuleChainNodes(tenantId, entityId);
             log.debug("[{}][{}] Updating rule chain with {} nodes", tenantId, entityId, ruleNodeList.size());
             for (RuleNode ruleNode : ruleNodeList) {
@@ -129,16 +132,17 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
                 if (existing == null) {
                     log.trace("[{}][{}] Creating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
                     TbActorRef ruleNodeActor = createRuleNodeActor(context, ruleNode);
-                    nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode));
+                    nodeActors.put(ruleNode.getId(), new RuleNodeCtx(tenantId, self, ruleNodeActor, ruleNode, debugRuleNodeFailures));
                 } else {
                     log.trace("[{}][{}] Updating rule node [{}]: {}", entityId, ruleNode.getId(), ruleNode.getName(), ruleNode);
                     existing.setSelf(ruleNode);
+                    existing.setDebugRuleNodeFailures(debugRuleNodeFailures);
                     existing.getSelfActor().tellWithHighPriority(new RuleNodeUpdatedMsg(tenantId, existing.getSelf().getId()));
                 }
             }
 
             Set<RuleNodeId> existingNodes = ruleNodeList.stream().map(RuleNode::getId).collect(Collectors.toSet());
-            List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).collect(Collectors.toList());
+            List<RuleNodeId> removedRules = nodeActors.keySet().stream().filter(node -> !existingNodes.contains(node)).toList();
             removedRules.forEach(ruleNodeId -> {
                 log.trace("[{}][{}] Removing rule node [{}]", tenantId, entityId, ruleNodeId);
                 RuleNodeCtx removed = nodeActors.remove(ruleNodeId);
@@ -167,7 +171,7 @@ public class RuleChainActorMessageProcessor extends ComponentMsgProcessor<RuleCh
     private TbActorRef createRuleNodeActor(TbActorCtx ctx, RuleNode ruleNode) {
         return ctx.getOrCreateChildActor(new TbEntityActorId(ruleNode.getId()),
                 () -> DefaultActorService.RULE_DISPATCHER_NAME,
-                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId()),
+                () -> new RuleNodeActor.ActorCreator(systemContext, tenantId, entityId, ruleChainName, ruleNode.getId(), debugRuleNodeFailures),
                 () -> true);
     }
 

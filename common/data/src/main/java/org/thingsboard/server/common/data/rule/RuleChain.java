@@ -52,7 +52,7 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
     private RuleNodeId firstRuleNodeId;
     @Schema(description = "Indicates root rule chain. The root rule chain process messages from all devices and entities by default. User may configure default rule chain per device profile.")
     private boolean root;
-    @Schema(description = "Reserved for future usage.")
+    @Schema(description = "Enable/disable capture of rule nodes message processing failures even if debug modes are disabled for these nodes.", example = "false", defaultValue = "false")
     private boolean debugMode;
     @Schema(description = "Reserved for future usage. The actual list of rule nodes and their relations is stored in the database separately.")
     private transient JsonNode configuration;

@@ -44,19 +44,22 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNodeId> {
 
     private final String ruleChainName;
+    private final boolean debugOnlyFailures;
     private final TbApiUsageReportClient apiUsageClient;
     private final DefaultTbContext defaultCtx;
     private RuleNode ruleNode;
     private TbNode tbNode;
     private RuleNodeInfo info;
 
-    RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName, RuleNodeId ruleNodeId, ActorSystemContext systemContext
-            , TbActorRef parent, TbActorRef self) {
+    RuleNodeActorMessageProcessor(TenantId tenantId, String ruleChainName, RuleNodeId ruleNodeId,
+                                  ActorSystemContext systemContext, TbActorRef parent,
+                                  TbActorRef self, boolean debugRuleNodeFailures) {
         super(systemContext, tenantId, ruleNodeId);
         this.apiUsageClient = systemContext.getApiUsageClient();
         this.ruleChainName = ruleChainName;
         this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
-        this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, parent, self, ruleNode));
+        this.debugOnlyFailures = !ruleNode.isDebugMode() && debugRuleNodeFailures;
+        this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, parent, self, ruleNode, debugRuleNodeFailures));
         this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, ruleNode != null ? ruleNode.getName() : "Unknown");
     }
 
@@ -77,7 +80,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         if (isMyNodePartition(newRuleNode)) {
             this.info = new RuleNodeInfo(entityId, ruleChainName, newRuleNode != null ? newRuleNode.getName() : "Unknown");
             boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
-                    !(ruleNode.getType().equals(newRuleNode.getType()) && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
+                                      !(ruleNode.getType().equals(newRuleNode.getType()) && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
             this.ruleNode = newRuleNode;
             this.defaultCtx.updateSelf(newRuleNode);
             if (restartRequired) {
@@ -130,6 +133,10 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
             if (ruleNode.isDebugMode()) {
                 systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
             }
+            if (debugOnlyFailures) {
+                defaultCtx.subscribeForFailure(msg.getMsg().getId(), () ->
+                        systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self"));
+            }
             try {
                 tbNode.onMsg(defaultCtx, msg.getMsg());
             } catch (Exception e) {
@@ -153,6 +160,10 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 apiUsageClient.report(tenantId, tbMsg.getCustomerId(), ApiUsageRecordKey.RE_EXEC_COUNT);
                 if (ruleNode.isDebugMode()) {
                     systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
+                }
+                if (debugOnlyFailures) {
+                    msg.getCtx().subscribeForFailure(msg.getMsg().getId(), () ->
+                            systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType()));
                 }
                 try {
                     tbNode.onMsg(msg.getCtx(), msg.getMsg());
@@ -191,8 +202,8 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     private boolean isMyNodePartition(RuleNode ruleNode) {
         boolean result = ruleNode == null || !ruleNode.isSingletonMode()
-                || systemContext.getDiscoveryService().isMonolith()
-                || defaultCtx.isLocalEntity(ruleNode.getId());
+                         || systemContext.getDiscoveryService().isMonolith()
+                         || defaultCtx.isLocalEntity(ruleNode.getId());
         if (!result) {
             log.trace("[{}][{}] Is not my node partition", tenantId, entityId);
         }

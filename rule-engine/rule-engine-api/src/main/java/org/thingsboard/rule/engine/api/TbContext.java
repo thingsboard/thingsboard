@@ -80,6 +80,7 @@ import org.thingsboard.server.dao.widget.WidgetsBundleService;
 
 import java.util.List;
 import java.util.Set;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
@@ -408,4 +409,7 @@ public interface TbContext {
     EventService getEventService();
 
     AuditLogService getAuditLogService();
+
+    void subscribeForFailure(UUID msgId, Runnable onFailure);
+
 }
