@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -29,23 +28,24 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
@@ -54,7 +54,10 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbMsgCountNodeTest {
 
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("773ccb0e-e822-44b7-97aa-10de83ad081d"));
     private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor();
+    private final int msgCountInterval = 1;
+
 
     private TbMsgCountNode node;
     private TbMsgCountNodeConfiguration config;
@@ -71,129 +74,56 @@ public class TbMsgCountNodeTest {
 
     @Test
     public void givenIncomingMsgs_whenOnMsg_thenSendsMsgWithMsgCount() throws TbNodeException, InterruptedException {
-        config.setInterval(10);
+        config.setInterval(msgCountInterval);
         config.setTelemetryPrefix("count");
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        int numberOfMsgs = 7;
-        int wantedNumberOfTellSelfInvocation = 2;
+        int msgCount = 100;
+        awaitTellSelfLatch = new CountDownLatch(1);
+        AtomicInteger currentMsgNumber = new AtomicInteger(0);
+        AtomicBoolean isMsgWithCounterSent = new AtomicBoolean(false);
 
-        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, config.getInterval());
-
-        TbMsg tickMsg = TbMsg.newMsg(null, TbMsgType.MSG_COUNT_SELF_MSG, null, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        invokeTellSelf(isMsgWithCounterSent, config.getInterval());
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getServiceId()).thenReturn("tb-rule-engine");
+        TbMsg tickMsg = TbMsg.newMsg(TbMsgType.MSG_COUNT_SELF_MSG, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
         when(ctxMock.newMsg(any(), any(TbMsgType.class), any(), any(), any(), any())).thenReturn(tickMsg);
 
         node.init(ctxMock, configuration);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
-        for (int i = 0; i < numberOfMsgs; i++) {
+        for (int i = 0; i < msgCount; i++) {
+            if (isMsgWithCounterSent.get()) {
+                break;
+            }
             node.onMsg(ctxMock, msg);
-            Thread.sleep(2000);
+            currentMsgNumber.getAndIncrement();
         }
 
         awaitTellSelfLatch.await();
 
-        verify(ctxMock, times(numberOfMsgs)).ack(any());
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(wantedNumberOfTellSelfInvocation)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
-
-        List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
-        Assertions.assertEquals(wantedNumberOfTellSelfInvocation, resultMsgs.size());
-
-        TbMsg firstMsg = resultMsgs.get(0);
-        assertThat(firstMsg.getData()).isEqualTo("{\"count_null\":5}");
-
-        TbMsg lastMsg = resultMsgs.get(1);
-        assertThat(lastMsg.getData()).isEqualTo("{\"count_null\":2}");
+        verify(ctxMock, times(currentMsgNumber.get())).ack(any(TbMsg.class));
+        ArgumentCaptor<TbMsg> msgWithCounterCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        verify(ctxMock).enqueueForTellNext(msgWithCounterCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
+        TbMsg resultedMsg = msgWithCounterCaptor.getValue();
+        String expectedData = "{\"count_tb-rule-engine\":" + currentMsgNumber + "}";
+        TbMsg expectedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TENANT_ID, TbMsgMetaData.EMPTY, expectedData);
+        assertThat(resultedMsg).usingRecursiveComparison()
+                .ignoringFields("id", "ts", "ctx", "metaData")
+                .isEqualTo(expectedMsg);
+        assertThat(resultedMsg.getMetaData().getData()).hasFieldOrProperty("delta");
     }
 
-    @Test
-    public void givenSingleIncomingMsg_thenOnMsg_thenContinueSendingMsgsWithMsgCountIsZero() throws TbNodeException, InterruptedException {
-        config.setInterval(2);
-        config.setTelemetryPrefix("count");
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        int numberOfMsgs = 1;
-        int wantedNumberOfTellSelfInvocation = 3;
-
-        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, config.getInterval());
-
-        TbMsg tickMsg = TbMsg.newMsg(null, TbMsgType.MSG_COUNT_SELF_MSG, null, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
-        when(ctxMock.newMsg(any(), any(TbMsgType.class), any(), any(), any(), any())).thenReturn(tickMsg);
-
-        node.init(ctxMock, configuration);
-
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
-        node.onMsg(ctxMock, msg);
-
-        awaitTellSelfLatch.await();
-
-        verify(ctxMock, times(numberOfMsgs)).ack(any());
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(wantedNumberOfTellSelfInvocation)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
-
-        List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
-        Assertions.assertEquals(wantedNumberOfTellSelfInvocation, resultMsgs.size());
-
-        TbMsg firstMsg = resultMsgs.get(0);
-        assertThat(firstMsg.getData()).isEqualTo("{\"count_null\":1}");
-
-        TbMsg secondMsg = resultMsgs.get(1);
-        assertThat(secondMsg.getData()).isEqualTo("{\"count_null\":0}");
-
-        TbMsg thirdMsg = resultMsgs.get(2);
-        assertThat(thirdMsg.getData()).isEqualTo("{\"count_null\":0}");
-    }
-
-    @Test
-    public void givenNoIncomingMsgs_whenOnMsg_thenSendsMsgsWithMsgCountIsZero() throws TbNodeException, InterruptedException {
-        config.setInterval(3);
-        config.setTelemetryPrefix("count");
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        int wantedNumberOfTellSelfInvocation = 3;
-
-        awaitTellSelfLatch = new CountDownLatch(wantedNumberOfTellSelfInvocation);
-        invokeTellSelf(wantedNumberOfTellSelfInvocation, config.getInterval());
-
-        TbMsg tickMsg = TbMsg.newMsg(null, TbMsgType.MSG_COUNT_SELF_MSG, null, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
-        when(ctxMock.newMsg(any(), any(TbMsgType.class), any(), any(), any(), any())).thenReturn(tickMsg);
-
-        node.init(ctxMock, configuration);
-
-        awaitTellSelfLatch.await();
-
-        verify(ctxMock, never()).ack(any());
-        ArgumentCaptor<TbMsg> newMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(wantedNumberOfTellSelfInvocation)).enqueueForTellNext(newMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
-
-        List<TbMsg> resultMsgs = newMsgCaptor.getAllValues();
-        Assertions.assertEquals(wantedNumberOfTellSelfInvocation, resultMsgs.size());
-
-        TbMsg firstMsg = resultMsgs.get(0);
-        assertThat(firstMsg.getData()).isEqualTo("{\"count_null\":0}");
-
-        TbMsg secondMsg = resultMsgs.get(1);
-        assertThat(secondMsg.getData()).isEqualTo("{\"count_null\":0}");
-
-        TbMsg thirdMsg = resultMsgs.get(2);
-        assertThat(thirdMsg.getData()).isEqualTo("{\"count_null\":0}");
-    }
-
-    private void invokeTellSelf(int maxNumberOfInvocation, int interval) {
-        AtomicInteger scheduleCount = new AtomicInteger(0);
+    private void invokeTellSelf(AtomicBoolean outgoingMsgSent, int interval) {
         doAnswer((Answer<Void>) invocationOnMock -> {
-            scheduleCount.getAndIncrement();
-            if (scheduleCount.get() <= maxNumberOfInvocation) {
-                TbMsg msg = (TbMsg) (invocationOnMock.getArguments())[0];
-                executorService.schedule(() -> {
-                    node.onMsg(ctxMock, msg);
-                    awaitTellSelfLatch.countDown();
-                }, interval, TimeUnit.SECONDS);
-            }
+            executorService.schedule(() -> {
+                TbMsg tickMsg = invocationOnMock.getArgument(0);
+                outgoingMsgSent.set(true);
+                node.onMsg(ctxMock, tickMsg);
+                awaitTellSelfLatch.countDown();
+            }, interval, TimeUnit.SECONDS);
             return null;
         }).when(ctxMock).tellSelf(ArgumentMatchers.any(TbMsg.class), ArgumentMatchers.anyLong());
     }
+
 }
