@@ -386,7 +386,7 @@ export abstract class ColorProcessor {
 
   color: string;
 
-  colorUpdated: EventEmitter<void> = new EventEmitter<void>();
+  colorUpdated?: EventEmitter<void>;
 
   protected constructor(protected settings: ColorSettings) {
     this.color = settings.color;
@@ -426,6 +426,8 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
   protected advancedMode: boolean;
   private currentValue: number;
 
+  colorUpdated = new EventEmitter<void>();
+
   protected constructor(protected settings: ColorSettings,
                         protected ctx: WidgetContext) {
     super(settings);
@@ -455,6 +457,9 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
     if (this.sourcesSubscription) {
       this.ctx.subscriptionApi.removeSubscription(this.sourcesSubscription.id);
     }
+    this.colorUpdated.complete();
+    this.colorUpdated.unsubscribe();
+    this.colorUpdated = null;
   }
 
   private onDataUpdated(subscription: IWidgetSubscription) {

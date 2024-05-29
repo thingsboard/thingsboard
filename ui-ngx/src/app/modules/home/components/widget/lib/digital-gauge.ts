@@ -191,7 +191,6 @@ export class TbCanvasDigitalGauge {
   private ticksSourcesSubscription: IWidgetSubscription;
 
   private readonly barColorProcessor: ColorProcessor;
-  private updatedBarColor$: Subscription;
 
   private gauge: CanvasDigitalGauge;
 
@@ -219,7 +218,7 @@ export class TbCanvasDigitalGauge {
       this.updateSetting();
     }
 
-    this.updatedBarColor$ = this.barColorProcessor.colorUpdated.subscribe(() => {
+    this.barColorProcessor.colorUpdated?.subscribe(() => {
       this.gauge.update({} as CanvasDigitalGaugeOptions);
     });
   }
@@ -285,7 +284,6 @@ export class TbCanvasDigitalGauge {
     if (this.ticksSourcesSubscription) {
       this.ctx.subscriptionApi.removeSubscription(this.ticksSourcesSubscription.id);
     }
-    this.updatedBarColor$?.unsubscribe();
     this.gauge = null;
   }
 }

@@ -217,9 +217,9 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
 
-    this.valueColor.colorUpdated.subscribe(() => this.cd.markForCheck());
-    this.batteryLevelColor.colorUpdated.subscribe(() => this.cd.markForCheck());
-    this.batteryShapeColor.colorUpdated.subscribe(() => this.cd.markForCheck());
+    this.valueColor.colorUpdated?.subscribe(() => this.cd.markForCheck());
+    this.batteryLevelColor.colorUpdated?.subscribe(() => this.cd.markForCheck());
+    this.batteryShapeColor.colorUpdated?.subscribe(() => this.cd.markForCheck());
   }
 
   ngAfterViewInit() {
@@ -237,10 +237,6 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
     if (this.batteryBoxResize$) {
       this.batteryBoxResize$.disconnect();
     }
-
-    this.valueColor.colorUpdated.unsubscribe();
-    this.batteryLevelColor.colorUpdated.unsubscribe();
-    this.batteryShapeColor.colorUpdated.unsubscribe();
 
     this.batteryLevelColor.destroy();
     this.valueColor.destroy();
