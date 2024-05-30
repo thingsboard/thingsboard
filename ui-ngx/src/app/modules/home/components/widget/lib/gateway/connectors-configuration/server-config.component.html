@@ -25,8 +25,8 @@
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
                   [matTooltip]="('gateway.server-url-required') | translate"
-                  *ngIf="serverConfigFormGroup.get('url').hasError('required')
-                                           && serverConfigFormGroup.get('url').touched"
+                  *ngIf="serverConfigFormGroup.get('url').hasError('required') &&
+                         serverConfigFormGroup.get('url').touched"
                   class="tb-error">
           warning
         </mat-icon>
@@ -40,6 +40,16 @@
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.timeout-error' | translate: {min: 1000}"
+                  *ngIf="(serverConfigFormGroup.get('timeoutInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('timeoutInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('timeoutInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
       </mat-form-field>
     </div>
   </div>
@@ -61,6 +71,16 @@
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value"
                formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.scan-period-error' | translate: {min: 1000}"
+                  *ngIf="(serverConfigFormGroup.get('scanPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('scanPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('scanPeriodInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
       </mat-form-field>
     </div>
   </div>
@@ -72,6 +92,16 @@
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value"
                formControlName="subCheckPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.sub-check-period-error' | translate: {min: 10}"
+                  *ngIf="(serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('subCheckPeriodInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
       </mat-form-field>
     </div>
   </div>

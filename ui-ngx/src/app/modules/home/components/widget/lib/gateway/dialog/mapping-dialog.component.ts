@@ -56,8 +56,7 @@ import { TranslateService } from '@ngx-translate/core';
 @Component({
   selector: 'tb-mapping-dialog',
   templateUrl: './mapping-dialog.component.html',
-  styleUrls: ['./mapping-dialog.component.scss'],
-  providers: [],
+  styleUrls: ['./mapping-dialog.component.scss']
 })
 export class MappingDialogComponent extends DialogComponent<MappingDialogComponent, BaseData<HasId>> implements OnDestroy {
 
@@ -404,7 +403,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   private createOPCUAMappingForm(): void {
     this.mappingForm = this.fb.group({
-      deviceNodeSource: [OPCUaSourceTypes.CONST, []],
+      deviceNodeSource: [OPCUaSourceTypes.PATH, []],
       deviceNodePattern: ['', [Validators.required]],
       deviceInfo: [{}, []],
       attributes: [[], []],

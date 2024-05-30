@@ -42,7 +42,9 @@ import {
   MappingValueType,
   mappingValueTypesMap,
   noLeadTrailSpacesRegex,
-  RpcMethodsMapping
+  OPCUaSourceTypes,
+  RpcMethodsMapping,
+  SourceTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Component({
@@ -69,10 +71,10 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   keys: Array<MappingDataKey> | {[key: string]: any};
 
   @Input()
-  keysType: string;
+  keysType: MappingKeysType;
 
   @Input()
-  valueTypeKeys = Object.values(MappingValueType);
+  valueTypeKeys: Array<MappingValueType | OPCUaSourceTypes> = Object.values(MappingValueType);
 
   @Input()
   valueTypeEnum = MappingValueType;
@@ -192,6 +194,16 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       return value;
     }
     return '';
+  }
+
+  helpLink(sourceType: SourceTypes | OPCUaSourceTypes) {
+    if (this.valueTypeKeys?.includes(OPCUaSourceTypes.PATH)) {
+      if (sourceType !== OPCUaSourceTypes.CONST) {
+        return `widget/lib/gateway/${this.keysType}-value-field-${sourceType}_fn`;
+      }
+    } else {
+      return 'widget/lib/gateway/expressions_fn';
+    }
   }
 
 }

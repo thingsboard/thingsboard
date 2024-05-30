@@ -178,4 +178,14 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
     this.propagateChange(value);
   }
 
+  helpLink(field: string, sourceType: SourceTypes | OPCUaSourceTypes) {
+    if (this.sourceTypes?.includes(OPCUaSourceTypes.PATH)) {
+      if (sourceType !== OPCUaSourceTypes.CONST) {
+        return `widget/lib/gateway/${field}-${sourceType}_fn`;
+      }
+    } else {
+      return 'widget/lib/gateway/expressions_fn';
+    }
+  }
+
 }

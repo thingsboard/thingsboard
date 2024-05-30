@@ -35,13 +35,12 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  BrokerSecurityType,
+  defaultOPCUAServerConfig,
   noLeadTrailSpacesRegex,
   SecurityType,
   ServerSecurityTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
-import { isDefined } from '@core/utils';
 
 @Component({
   selector: 'tb-server-config',
@@ -76,10 +75,10 @@ export class ServerConfigComponent extends PageComponent implements ControlValue
     this.serverConfigFormGroup = this.fb.group({
       name: ['', []],
       url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      timeoutInMillis: [0, []],
-      scanPeriodInMillis: [0, []],
+      timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
+      scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],
       enableSubscriptions: [true, []],
-      subCheckPeriodInMillis: [0, []],
+      subCheckPeriodInMillis: [10, [Validators.required, Validators.min(10)]],
       showMap: [false, []],
       security: [SecurityType.BASIC128, []],
       identity: [{}, [Validators.required]]
@@ -108,18 +107,7 @@ export class ServerConfigComponent extends PageComponent implements ControlValue
     if (!deviceInfo) {
       deviceInfo = {};
     }
-    if (!deviceInfo.security) {
-      deviceInfo.security = SecurityType.BASIC128;
-    }
-    if (!deviceInfo.identity) {
-      deviceInfo.identity = { type: BrokerSecurityType.ANONYMOUS };
-    }
-    if (!isDefined(deviceInfo.enableSubscriptions)) {
-      deviceInfo.enableSubscriptions = true;
-    }
-    if (!isDefined(deviceInfo.showMap)) {
-      deviceInfo.showMap = false;
-    }
+    deviceInfo = { ...defaultOPCUAServerConfig, ...deviceInfo };
     this.serverConfigFormGroup.reset(deviceInfo);
     this.updateView(deviceInfo);
   }

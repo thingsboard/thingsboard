@@ -120,7 +120,8 @@
                         </mat-icon>
                         <div matSuffix
                              class="see-example"
-                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                             *ngIf="helpLink(keyControl.get('type').value)"
+                             [tb-help-popup]="helpLink(keyControl.get('type').value)"
                              tb-help-popup-placement="left"
                              [tb-help-popup-style]="{maxWidth: '970px'}">
                         </div>

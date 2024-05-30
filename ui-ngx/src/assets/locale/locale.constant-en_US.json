@@ -2820,8 +2820,8 @@
             "name": "Name",
             "profile-name": "Profile name",
             "device-name-expression": "Device name expression",
-            "device-name-expression-required": "Device name expression required.",
-            "device-profile-expression-required": "Device profile expression required."
+            "device-name-expression-required": "Device name expression is required.",
+            "device-profile-expression-required": "Device profile expression is required."
         },
         "device-name-filter": "Device name filter",
         "device-name-filter-hint": "This field supports Regular expressions to filter incoming data by device name.",
@@ -3114,7 +3114,9 @@
         "other": "Other",
         "save-tip": "Save configuration file",
         "scan-period": "Scan period (ms)",
+        "scan-period-error": "Scan period should be at least {{min}}(ms).",
         "sub-check-period": "Subscription check period (ms)",
+        "sub-check-period-error": "Subscription check period should be at least {{min}}(ms).",
         "security": "Security",
         "security-type": "Security type",
         "security-types": {
@@ -3215,6 +3217,7 @@
         "tidy": "Tidy",
         "tidy-tip": "Tidy config JSON",
         "timeout": "Timeout (ms)",
+        "timeout-error": "Timeout should be at least {{min}}(ms).",
         "title-connectors-json": "Connector {{typeName}} configuration",
         "type": "Type",
         "topic-filter": "Topic filter",

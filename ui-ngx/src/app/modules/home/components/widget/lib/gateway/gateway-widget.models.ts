@@ -584,3 +584,15 @@ export const ServerSecurityTypes = [
   { value: 'Basic256', name: 'Basic256' },
   { value: 'Basic256Sha256', name: 'Basic256SHA256' }
 ];
+
+export const defaultOPCUAServerConfig = {
+  name: '',
+  url: '',
+  timeoutInMillis: 1000,
+  scanPeriodInMillis: 1000,
+  enableSubscriptions: true,
+  subCheckPeriodInMillis: 10,
+  showMap: false,
+  security: SecurityType.BASIC128,
+  identity: { type: BrokerSecurityType.ANONYMOUS }
+};
