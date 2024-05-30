@@ -33,6 +33,7 @@ import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -77,6 +78,8 @@ public class DefaultTbClusterServiceTest {
     protected PartitionService partitionService;
     @MockBean
     protected TbQueueProducerProvider producerProvider;
+    @MockBean
+    protected TbRuleEngineProducerService ruleEngineProducerService;
 
     @SpyBean
     protected TopicService topicService;

@@ -22,6 +22,7 @@ import { BasicWidgetConfigComponent } from '@home/components/widget/config/widge
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
   DataKey,
+  Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -72,6 +73,15 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
   get sectionsCountEnabled(): boolean {
     const layout: BatteryLevelLayout = this.batteryLevelWidgetConfigForm.get('layout').value;
     return [BatteryLevelLayout.vertical_divided, BatteryLevelLayout.horizontal_divided].includes(layout);
+  }
+
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.widgetConfig.config.datasources;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
   }
 
   constructor(protected store: Store<AppState>,

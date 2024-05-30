@@ -77,12 +77,24 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
     TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer();
 
     /**
-     * Used to consume messages by TB Core Service
+     * Used to consume messages by TB Rule Engine Service
      *
      * @return
      * @param configuration
      */
     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration);
+
+    /**
+     * Used to consume messages by TB Rule Engine Service
+     * Intended usage for consumer per partition strategy
+     *
+     * @return TbQueueConsumer
+     * @param configuration
+     * @param partitionId as a suffix for consumer name
+     */
+    default TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration, Integer partitionId) {
+        return createToRuleEngineMsgConsumer(configuration);
+    }
 
     /**
      * Used to consume high priority messages by TB Core Service

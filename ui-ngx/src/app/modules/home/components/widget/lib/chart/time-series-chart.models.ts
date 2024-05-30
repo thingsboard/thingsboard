@@ -26,7 +26,9 @@ import {
   DateFormatProcessor,
   DateFormatSettings,
   Font,
-  tsToFormatTimeUnit
+  tsToFormatTimeUnit,
+  ValueSourceConfig,
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
 import {
   CallbackDataParams,
@@ -66,7 +68,6 @@ import {
   FormattedData,
   WidgetComparisonSettings
 } from '@shared/models/widget.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
 import { DatePipe } from '@angular/common';
@@ -88,7 +89,8 @@ import {
   chartColorScheme,
   ChartFillSettings,
   ChartFillType,
-  ChartLabelPosition, ChartLineType,
+  ChartLabelPosition,
+  ChartLineType,
   ChartShape,
   createChartTextStyle,
   createLinearOpacityGradient,
@@ -522,23 +524,6 @@ export const timeSeriesThresholdLabelPositionTranslations = new Map<ThresholdLab
   ]
 );
 
-export enum TimeSeriesChartThresholdType {
-  constant = 'constant',
-  latestKey = 'latestKey',
-  entity = 'entity'
-}
-
-export const timeSeriesThresholdTypes = Object.keys(TimeSeriesChartThresholdType) as TimeSeriesChartThresholdType[];
-
-export const timeSeriesThresholdTypeTranslations = new Map<TimeSeriesChartThresholdType, string>(
-  [
-    [TimeSeriesChartThresholdType.constant, 'widgets.time-series-chart.threshold.type-constant'],
-    [TimeSeriesChartThresholdType.latestKey, 'widgets.time-series-chart.threshold.type-latest-key'],
-    [TimeSeriesChartThresholdType.entity, 'widgets.time-series-chart.threshold.type-entity']
-  ]
-);
-
-
 export enum TimeSeriesChartStateSourceType {
   constant = 'constant',
   range = 'range'
@@ -737,14 +722,7 @@ export const defaultTimeSeriesChartXAxisSettings: TimeSeriesChartXAxisSettings =
 
 export type TimeSeriesChartYAxes = {[id: TimeSeriesChartYAxisId]: TimeSeriesChartYAxisSettings};
 
-export interface TimeSeriesChartThreshold {
-  type: TimeSeriesChartThresholdType;
-  value?: number;
-  latestKey?: string;
-  latestKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
-  entityAlias?: string;
-  entityKey?: string;
-  entityKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
+export interface TimeSeriesChartThreshold extends ValueSourceConfig {
   yAxisId: TimeSeriesChartYAxisId;
   units?: string;
   decimals?: number;
@@ -769,17 +747,17 @@ export const timeSeriesChartThresholdValid = (threshold: TimeSeriesChartThreshol
     return false;
   }
   switch (threshold.type) {
-    case TimeSeriesChartThresholdType.constant:
+    case ValueSourceType.constant:
       if (isUndefinedOrNull(threshold.value)) {
         return false;
       }
       break;
-    case TimeSeriesChartThresholdType.latestKey:
+    case ValueSourceType.latestKey:
       if (!threshold.latestKey || !threshold.latestKeyType) {
         return false;
       }
       break;
-    case TimeSeriesChartThresholdType.entity:
+    case ValueSourceType.entity:
       if (!threshold.entityAlias || !threshold.entityKey || !threshold.entityKeyType) {
         return false;
       }
@@ -799,7 +777,7 @@ export const timeSeriesChartThresholdValidator = (control: AbstractControl): Val
 };
 
 export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold = {
-  type: TimeSeriesChartThresholdType.constant,
+  type: ValueSourceType.constant,
   yAxisId: 'default',
   units: null,
   decimals: 0,

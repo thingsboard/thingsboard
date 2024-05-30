@@ -15,34 +15,22 @@
     limitations under the License.
 
 -->
-<div class="tb-flot-threshold">
-  <mat-expansion-panel class="tb-settings tb-flot-threshold-settings" fxFlex [formGroup]="thresholdFormGroup" [(expanded)]="expanded">
-    <mat-expansion-panel-header>
-      <div class="tb-threshold-header">
-        <div class="tb-threshold-text">{{ thresholdText() }}</div>
-        <mat-divider vertical></mat-divider>
-        <tb-color-input asBoxInput
-                        formControlName="color">
-        </tb-color-input>
-        <mat-divider vertical></mat-divider>
-      </div>
-    </mat-expansion-panel-header>
-    <ng-template matExpansionPanelContent>
-      <tb-value-source [aliasController]="aliasController" formControlName="valueSource"></tb-value-source>
-      <div class="tb-form-row space-between">
-        <div translate>widgets.chart.line-width</div>
-        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-          <input matInput formControlName="lineWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
-          <span matSuffix>px</span>
-        </mat-form-field>
-      </div>
-    </ng-template>
-  </mat-expansion-panel>
-  <button *ngIf="!disabled" mat-icon-button
-          type="button"
-          (click)="removeThreshold.emit()"
-          matTooltip="{{ 'action.remove' | translate }}"
-          matTooltipPosition="above">
-    <mat-icon>delete</mat-icon>
-  </button>
+<div class="tb-form-row no-border no-padding column-lt-md" style="gap: 10px;" [formGroup]="thresholdFormGroup">
+  <tb-value-source style="flex: 1" [aliasController]="aliasController" formControlName="valueSource"></tb-value-source>
+  <div class="tb-form-row no-border no-padding" style="gap: 10px;">
+      <mat-form-field fxFlex.lt-md appearance="outline" class="number" subscriptSizing="dynamic">
+        <input matInput formControlName="lineWidth" type="number" min="0" placeholder="{{ 'widgets.chart.line-width' | translate }}">
+      </mat-form-field>
+      <tb-color-input asBoxInput
+                      formControlName="color">
+      </tb-color-input>
+      <button *ngIf="!disabled" mat-icon-button
+              class="tb-box-button"
+              type="button"
+              (click)="removeThreshold.emit()"
+              matTooltip="{{ 'action.remove' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+  </div>
 </div>

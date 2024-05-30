@@ -204,7 +204,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 .queueKey(new QueueKey(ServiceType.TB_CORE))
                 .config(CoreQueueConfig.of(consumerPerPartition, (int) pollInterval))
                 .msgPackProcessor(this::processMsgs)
-                .consumerCreator(config -> queueFactory.createToCoreMsgConsumer())
+                .consumerCreator((config, partitionId) -> queueFactory.createToCoreMsgConsumer())
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)

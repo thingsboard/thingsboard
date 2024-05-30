@@ -84,7 +84,7 @@ public class DefaultTransportRateLimitService implements TransportRateLimitServi
             return TbPair.of(EntityType.DEVICE, true);
         }
 
-        if (!checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
+        if (deviceId != null && !checkEntityRateLimit(dataPoints, getDeviceRateLimits(tenantId, deviceId))) {
             return TbPair.of(EntityType.DEVICE, false);
         }
         return null;
