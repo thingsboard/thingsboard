@@ -47,10 +47,19 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
+import org.eclipse.leshan.core.node.codec.NodeDecoder;
+import org.eclipse.leshan.core.node.codec.NodeEncoder;
+import org.eclipse.leshan.core.node.codec.cbor.LwM2mNodeCborDecoder;
+import org.eclipse.leshan.core.node.codec.cbor.LwM2mNodeCborEncoder;
+import org.eclipse.leshan.core.node.codec.senml.LwM2mNodeSenMLDecoder;
+import org.eclipse.leshan.core.node.codec.senml.LwM2mNodeSenMLEncoder;
 import org.eclipse.leshan.core.request.BootstrapRequest;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
+import org.eclipse.leshan.senml.cbor.upokecenter.SenMLCborUpokecenterEncoderDecoder;
+import org.eclipse.leshan.senml.json.jackson.SenMLJsonJacksonEncoderDecoder;
 import org.junit.Assert;
 import org.mockito.Mockito;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
@@ -78,6 +87,7 @@ import static org.eclipse.leshan.core.LwM2mId.LOCATION;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.eclipse.leshan.core.LwM2mId.SOFTWARE_MANAGEMENT;
+import static org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder.getDefaultPathEncoder;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverId;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.serverIdBs;
 import static org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest.shortServerId;
@@ -130,7 +140,8 @@ public class LwM2MTestClient {
 
     public void init(Security security, Security securityBs, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
-                     LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength, boolean queueMode) throws InvalidDDFFileException, IOException {
+                     LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength, boolean queueMode,
+                     boolean supportFormatOnly_SenMLJSON_SenMLCBOR) throws InvalidDDFFileException, IOException {
         Assert.assertNull("client already initialized", leshanClient);
         this.defaultLwM2mUplinkMsgHandlerTest = defaultLwM2mUplinkMsgHandler;
         this.clientContext = clientContext;
@@ -274,11 +285,27 @@ public class LwM2MTestClient {
         builder.setEndpointsProviders(endpointsProvider.toArray(new LwM2mClientEndpointsProvider[endpointsProvider.size()]));
         builder.setDataSenders(new ManualDataSender());
         builder.setRegistrationEngineFactory(engineFactory);
-        boolean supportOldFormat =  true;
-        if (supportOldFormat) {
+        Map<ContentFormat, NodeDecoder> decoders = new HashMap<>();
+        Map<ContentFormat, NodeEncoder> encoders =  new HashMap<>();
+        if (supportFormatOnly_SenMLJSON_SenMLCBOR) {
+//                decoders.put(ContentFormat.OPAQUE, new LwM2mNodeOpaqueDecoder());
+            decoders.put(ContentFormat.CBOR, new LwM2mNodeCborDecoder());
+            decoders.put(ContentFormat.SENML_JSON, new LwM2mNodeSenMLDecoder(new SenMLJsonJacksonEncoderDecoder(), true));
+            decoders.put(ContentFormat.SENML_CBOR, new LwM2mNodeSenMLDecoder(new SenMLCborUpokecenterEncoderDecoder(), false));
+            builder.setDecoder(new DefaultLwM2mDecoder(decoders));
+
+//            encoders.put(ContentFormat.OPAQUE, new LwM2mNodeOpaqueEncoder());
+            encoders.put(ContentFormat.CBOR, new LwM2mNodeCborEncoder());
+            encoders.put(ContentFormat.SENML_JSON, new LwM2mNodeSenMLEncoder(new SenMLJsonJacksonEncoderDecoder()));
+            encoders.put(ContentFormat.SENML_CBOR, new LwM2mNodeSenMLEncoder(new SenMLCborUpokecenterEncoderDecoder()));
+            builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), false));
+            builder.setEncoder(new DefaultLwM2mEncoder(encoders, getDefaultPathEncoder(), new LwM2mValueConverterImpl()));
+        } else {
+            boolean supportOldFormat = true;
             builder.setDecoder(new DefaultLwM2mDecoder(supportOldFormat));
             builder.setEncoder(new DefaultLwM2mEncoder(new LwM2mValueConverterImpl(), supportOldFormat));
         }
+
 
         builder.setRegistrationEngineFactory(engineFactory);
         builder.setSharedExecutor(executor);

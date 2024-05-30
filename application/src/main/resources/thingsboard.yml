@@ -937,7 +937,7 @@ transport:
   client_side_rpc:
     # Processing timeout interval of the RPC command on the CLIENT SIDE. Time in milliseconds
     timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
-  # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
+  # Enable/disable http/mqtt/coap/lwm2m transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   log:
     # Enable/Disable log of transport messages to telemetry. For example, logging of LwM2M registration update
@@ -972,6 +972,8 @@ transport:
     proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
     # MQTT processing timeout in milliseconds
     timeout: "${MQTT_TIMEOUT:10000}"
+    # MQTT disconnect timeout in milliseconds. The time to wait for the client to disconnect after the server sends a disconnect message.
+    disconnect_timeout: "${MQTT_DISCONNECT_TIMEOUT:1000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before the device connected state. This limit works on the low level before TenantProfileLimits mechanism
     netty:
       # Netty leak detector level
@@ -1024,10 +1026,6 @@ transport:
   coap:
     # Enable/disable CoAP transport protocol.
     enabled: "${COAP_ENABLED:true}"
-    # CoAP bind-address
-    bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
-    # CoAP bind port
-    bind_port: "${COAP_BIND_PORT:5683}"
     # CoaP processing timeout in milliseconds
     timeout: "${COAP_TIMEOUT:10000}"
     # CoaP piggyback response timeout in milliseconds
@@ -1036,56 +1034,6 @@ transport:
     psm_activity_timer: "${COAP_PSM_ACTIVITY_TIMER:10000}"
     # Default PSM Activity Timer if not specified in device profile
     paging_transmission_window: "${COAP_PAGING_TRANSMISSION_WINDOW:10000}"
-    dtls:
-      # Enable/disable DTLS 1.2 support
-      enabled: "${COAP_DTLS_ENABLED:false}"
-      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
-      retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # CoAP DTLS bind-address
-      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
-      # CoAP DTLS bind port
-      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
-      # Server DTLS credentials
-      # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
-      # Default: off
-      # Control usage of DTLS connection ID length (CID).
-      # - 'off' to deactivate it.
-      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-      # - A positive value defines generated CID size in bytes.
-      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
-      credentials:
-        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-        type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
-        # PEM server credentials
-        pem:
-          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
-          cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
-          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in the server certificate file;
-          key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
-          # Server certificate private key password (optional)
-          key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
-        # Keystore server credentials
-        keystore:
-          # Type of the key store (JKS or PKCS12)
-          type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
-          # Path to the key store that holds the SSL certificate
-          store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
-          # Password used to access the key store
-          store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-          # Key alias
-          key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
-          # Password used to access the key
-          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
-      x509:
-        # Skip certificate validity check for client certificates.
-        skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
-        # Inactivity timeout of DTLS session. Used to clean cache
-        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
-        # Interval of periodic eviction of the timed-out DTLS sessions
-        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable LwM2M transport protocol.
@@ -1249,6 +1197,65 @@ transport:
     enabled: "${TB_TRANSPORT_STATS_ENABLED:true}"
     # Interval of transport statistics logging
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
+
+# CoAP server parameters
+coap:
+  # Enable/disable coap server.
+  enabled: "${COAP_SERVER_ENABLED:true}"
+  # CoAP bind address
+  bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
+  # CoAP bind port
+  bind_port: "${COAP_BIND_PORT:5683}"
+  dtls:
+    # Enable/disable DTLS 1.2 support
+    enabled: "${COAP_DTLS_ENABLED:false}"
+    # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+    retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
+    # CoAP DTLS bind address
+    bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+    # CoAP DTLS bind port
+    bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+    # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
+    # Default: off
+    # Control usage of DTLS connection ID length (CID).
+    # - 'off' to deactivate it.
+    # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+    # - A positive value defines generated CID size in bytes.
+    # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+    # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+    # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # Server DTLS credentials
+    credentials:
+      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+      # PEM server credentials
+      pem:
+        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+        cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
+        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in the server certificate file;
+        key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
+        # Server certificate private key password (optional)
+        key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
+      # Keystore server credentials
+      keystore:
+        # Type of the key store (JKS or PKCS12)
+        type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
+        # Path to the key store that holds the SSL certificate
+        store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+        # Password used to access the key store
+        store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+        # Key alias
+        key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+        # Password used to access the key
+        key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+    x509:
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      # Inactivity timeout of DTLS session. Used to cleanup cache
+      dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+      # Interval of periodic eviction of the timed-out DTLS sessions
+      dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
 
 # Device connectivity parameters
 device:

@@ -232,6 +232,7 @@ public class JwtTokenFactory {
     }
 
     public JwtPair createTokenPair(SecurityUser securityUser) {
+        securityUser.setSessionId(UUID.randomUUID().toString());
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
         return new JwtPair(accessToken.getToken(), refreshToken.getToken());

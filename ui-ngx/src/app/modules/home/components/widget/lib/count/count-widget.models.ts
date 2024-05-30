@@ -101,10 +101,12 @@ export const countDefaultSettings = (alarmElseEntity: boolean): CountWidgetSetti
     ? {
       color: 'rgba(0, 105, 92, 1)',
       type: ColorType.range,
-      rangeList: [
-        {from: 0, to: 0, color: 'rgba(0, 105, 92, 1)'},
-        {from: 1, color: 'rgba(209, 39, 48, 1)'}
-      ],
+      rangeList: {
+        range: [
+          {from: 0, to: 0, color: 'rgba(0, 105, 92, 1)'},
+          {from: 1, color: 'rgba(209, 39, 48, 1)'}
+        ]
+      },
       colorFunction: defaultColorFunction
     }
     : constantColor('rgba(241, 141, 23, 1)'),

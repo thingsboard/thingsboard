@@ -397,6 +397,11 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   TransportApiRequestErrorCode error = 3;
 }
 
+message GatewayDisconnectDeviceMsg {
+  string deviceName = 1;
+  int32 reasonCode = 2;
+}
+
 enum TransportApiRequestErrorCode {
   UNKNOWN_TRANSPORT_API_ERROR  = 0;
   ENTITY_LIMIT = 1;
@@ -579,8 +584,16 @@ message ResourceDeleteMsg {
   string resourceKey = 4;
 }
 
+enum SessionCloseReason {
+  UNKNOWN_REASON = 0;
+  CREDENTIALS_UPDATED = 1;
+  MAX_CONCURRENT_SESSIONS_LIMIT_REACHED = 2;
+  SESSION_TIMEOUT = 3;
+}
+
 message SessionCloseNotificationProto {
   string message = 1;
+  SessionCloseReason reason = 2;
 }
 
 message SubscribeToAttributeUpdatesMsg {

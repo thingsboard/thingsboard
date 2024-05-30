@@ -152,8 +152,6 @@ transport:
   client_side_rpc:
     # Processing timeout interval of the RPC command on the CLIENT SIDE. Time in milliseconds
     timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
-  # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
-  api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   log:
     # Enable/Disable log of transport messages to telemetry. For example, logging of LwM2M registration update
     enabled: "${TB_TRANSPORT_LOG_ENABLED:true}"

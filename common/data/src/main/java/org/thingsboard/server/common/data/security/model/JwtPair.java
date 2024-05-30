@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.security.model;
 
+import com.fasterxml.jackson.annotation.JsonInclude;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.NoArgsConstructor;
@@ -25,6 +26,7 @@ import java.io.Serializable;
 @Schema(description = "JWT Pair")
 @Data
 @NoArgsConstructor
+@JsonInclude(JsonInclude.Include.NON_NULL)
 public class JwtPair implements Serializable {
 
     @Schema(description = "The JWT Access Token. Used to perform API calls.", example = "AAB254FF67D..")
