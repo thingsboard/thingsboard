@@ -16,14 +16,12 @@
 
 import {
   Component,
-  EventEmitter,
   forwardRef,
   Input,
-  OnChanges,
   OnInit,
-  Output, Renderer2,
-  SimpleChanges,
-  ViewChild, ViewContainerRef,
+  Renderer2,
+  ViewChild,
+  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -34,26 +32,12 @@ import {
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
-import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
-import { MatExpansionPanel } from '@angular/material/expansion';
-import { JsFuncComponent } from '@shared/components/js-func.component';
-import { MatSelect } from '@angular/material/select';
+import { ScadaSymbolTag } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
-import {
-  scadaSymbolClickActionHighlightRules,
-  scadaSymbolClickActionPropertiesHighlightRules,
-  scadaSymbolElementStateRenderHighlightRules,
-  scadaSymbolElementStateRenderPropertiesHighlightRules
-} from '@home/pages/scada-symbol/scada-symbol.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { deepClone } from '@core/utils';
-import {
-  ScadaSymbolBehaviorPanelComponent
-} from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-panel.component';
 import {
   ScadaSymbolMetadataTagFunctionPanelComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag-function-panel.component';
@@ -95,7 +79,7 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
 
   tagFormGroup: UntypedFormGroup;
 
-  modelValue: IotSvgTag;
+  modelValue: ScadaSymbolTag;
 
   private propagateChange = (_val: any) => {};
 
@@ -129,9 +113,9 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
     }
   }
 
-  writeValue(value: IotSvgTag): void {
+  writeValue(value: ScadaSymbolTag): void {
     this.modelValue = value;
-    const clickAction = value?.actions && value?.actions.click ? value.actions.click.actionFunction : null;
+    const clickAction = value?.actions?.click?.actionFunction;
     this.tagFormGroup.patchValue(
       {
         tag: value?.tag,
@@ -152,20 +136,10 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
 
   editTagStateRenderFunction(): void {
     this.openTagFunction('renderFunction', this.editStateRenderFunctionButton);
-    /*this.openPanelWithCallback(this.expansionPanel, () => {
-      this.openPanelWithCallback(this.renderFunctionExpansionPanel, () => {
-        this.stateRenderFunction.focus();
-      });
-    });*/
   }
 
   editClickAction(): void {
     this.openTagFunction('clickAction', this.editClickActionButton);
-    /*this.openPanelWithCallback(this.expansionPanel, () => {
-      this.openPanelWithCallback(this.clickActionExpansionPanel, () => {
-        this.clickAction.focus();
-      });
-    });*/
   }
 
   private openTagFunction(tagFunctionType: 'renderFunction' | 'clickAction',
@@ -204,20 +178,6 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
       });
     }
   }
-
-/*  private openPanelWithCallback(panel: MatExpansionPanel, callback: () => void) {
-    if (!panel.expanded) {
-      const s = panel.afterExpand.subscribe(() => {
-        s.unsubscribe();
-        setTimeout(() => {
-          callback();
-        });
-      });
-      panel.open();
-    } else {
-      callback();
-    }
-  }*/
 
   private updateModel() {
     const value = this.tagFormGroup.value;

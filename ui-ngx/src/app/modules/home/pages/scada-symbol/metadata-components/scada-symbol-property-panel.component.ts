@@ -18,12 +18,13 @@ import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } fro
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import {
-  IotSvgProperty, iotSvgPropertyFieldClasses, iotSvgPropertyRowClasses,
-  IotSvgPropertyType,
-  iotSvgPropertyTypes,
-  iotSvgPropertyTypeTranslations
-} from '@home/components/widget/lib/svg/iot-svg.models';
-import { WidgetService } from '@core/http/widget.service';
+  ScadaSymbolProperty,
+  scadaSymbolPropertyFieldClasses,
+  scadaSymbolPropertyRowClasses,
+  ScadaSymbolPropertyType,
+  scadaSymbolPropertyTypes,
+  scadaSymbolPropertyTypeTranslations
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { defaultPropertyValue } from '@home/pages/scada-symbol/metadata-components/scada-symbol-property-row.component';
 import { ValueType } from '@shared/models/constants';
 
@@ -37,20 +38,20 @@ export class ScadaSymbolPropertyPanelComponent implements OnInit {
 
   ValueType = ValueType;
 
-  IotSvgPropertyType = IotSvgPropertyType;
+  ScadaSymbolPropertyType = ScadaSymbolPropertyType;
 
-  iotSvgPropertyTypes = iotSvgPropertyTypes;
-  iotSvgPropertyTypeTranslations = iotSvgPropertyTypeTranslations;
+  scadaSymbolPropertyTypes = scadaSymbolPropertyTypes;
+  scadaSymbolPropertyTypeTranslations = scadaSymbolPropertyTypeTranslations;
 
-  iotSvgPropertyRowClasses = iotSvgPropertyRowClasses;
+  scadaSymbolPropertyRowClasses = scadaSymbolPropertyRowClasses;
 
-  iotSvgPropertyFieldClasses = iotSvgPropertyFieldClasses;
+  scadaSymbolPropertyFieldClasses = scadaSymbolPropertyFieldClasses;
 
   @Input()
   isAdd = false;
 
   @Input()
-  property: IotSvgProperty;
+  property: ScadaSymbolProperty;
 
   @Input()
   booleanPropertyIds: string[];
@@ -59,16 +60,15 @@ export class ScadaSymbolPropertyPanelComponent implements OnInit {
   popover: TbPopoverComponent<ScadaSymbolPropertyPanelComponent>;
 
   @Output()
-  propertySettingsApplied = new EventEmitter<IotSvgProperty>();
+  propertySettingsApplied = new EventEmitter<ScadaSymbolProperty>();
 
   panelTitle: string;
 
   propertyFormGroup: UntypedFormGroup;
 
-  private propertyType: IotSvgPropertyType;
+  private propertyType: ScadaSymbolPropertyType;
 
-  constructor(private fb: UntypedFormBuilder,
-              private widgetService: WidgetService) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit(): void {
@@ -110,8 +110,8 @@ export class ScadaSymbolPropertyPanelComponent implements OnInit {
   }
 
   private updateValidators() {
-    const type: IotSvgPropertyType = this.propertyFormGroup.get('type').value;
-    if (type === IotSvgPropertyType.number) {
+    const type: ScadaSymbolPropertyType = this.propertyFormGroup.get('type').value;
+    if (type === ScadaSymbolPropertyType.number) {
       this.propertyFormGroup.get('min').enable({emitEvent: false});
       this.propertyFormGroup.get('max').enable({emitEvent: false});
       this.propertyFormGroup.get('step').enable({emitEvent: false});

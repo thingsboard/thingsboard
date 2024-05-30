@@ -14,7 +14,16 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
+import {
+  ChangeDetectorRef,
+  Component,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnInit,
+  SimpleChanges,
+  ViewEncapsulation
+} from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -29,59 +38,60 @@ import {
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
-  defaultIotSvgObjectSettings,
-  IotSvgBehaviorType,
-  IotSvgMetadata,
-  IotSvgObjectSettings,
-  IotSvgPropertyType,
-  parseIotSvgMetadataFromContent
-} from '@home/components/widget/lib/svg/iot-svg.models';
-import { HttpClient } from '@angular/common/http';
+  defaultScadaSymbolObjectSettings,
+  parseScadaSymbolMetadataFromContent,
+  ScadaSymbolBehaviorType,
+  ScadaSymbolMetadata,
+  ScadaSymbolObjectSettings,
+  ScadaSymbolPropertyType
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import {
-  IotSvgPropertyRow,
+  ScadaSymbolPropertyRow,
   toPropertyRows
-} from '@home/components/widget/lib/settings/common/svg/iot-svg-object-settings.models';
+} from '@home/components/widget/lib/settings/common/scada/scada-symbol-object-settings.models';
 import { merge, Observable, of, Subscription } from 'rxjs';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import { ImageService } from '@core/http/image.service';
+import { map } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-iot-svg-object-settings',
-  templateUrl: './iot-svg-object-settings.component.html',
-  styleUrls: ['./iot-svg-object-settings.component.scss', './../../widget-settings.scss'],
+  selector: 'tb-scada-symbol-object-settings',
+  templateUrl: './scada-symbol-object-settings.component.html',
+  styleUrls: ['./scada-symbol-object-settings.component.scss', './../../widget-settings.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => IotSvgObjectSettingsComponent),
+      useExisting: forwardRef(() => ScadaSymbolObjectSettingsComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => IotSvgObjectSettingsComponent),
+      useExisting: forwardRef(() => ScadaSymbolObjectSettingsComponent),
       multi: true
     }
-  ]
+  ],
+  encapsulation: ViewEncapsulation.None
 })
-export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
+export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 
-  IotSvgBehaviorType = IotSvgBehaviorType;
+  ScadaSymbolBehaviorType = ScadaSymbolBehaviorType;
 
-  IotSvgPropertyType = IotSvgPropertyType;
+  ScadaSymbolPropertyType = ScadaSymbolPropertyType;
 
   @Input()
   disabled: boolean;
 
   @Input()
-  svgPath = 'drawing.svg';
+  scadaSymbolUrl: string;
 
   @Input()
-  svgUrl: string;
+  scadaSymbolContent: string;
 
   @Input()
-  svgContent: string;
+  scadaSymbolMetadata: ScadaSymbolMetadata;
 
   @Input()
   aliasController: IAliasController;
@@ -95,31 +105,30 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   @Input()
   widgetType: widgetType;
 
-  private modelValue: IotSvgObjectSettings;
+  private modelValue: ScadaSymbolObjectSettings;
 
   private propagateChange = null;
 
   private validatorTriggers: string[];
   private validatorSubscription: Subscription;
 
-  public iotSvgObjectSettingsFormGroup: UntypedFormGroup;
+  public scadaSymbolObjectSettingsFormGroup: UntypedFormGroup;
 
-  metadata: IotSvgMetadata;
-  propertyRows: IotSvgPropertyRow[];
+  metadata: ScadaSymbolMetadata;
+  propertyRows: ScadaSymbolPropertyRow[];
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,
-              private http: HttpClient,
               private imageService: ImageService,
               private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
-    this.iotSvgObjectSettingsFormGroup = this.fb.group({
+    this.scadaSymbolObjectSettingsFormGroup = this.fb.group({
       behavior: this.fb.group({}),
       properties: this.fb.group({})
     });
-    this.iotSvgObjectSettingsFormGroup.valueChanges.subscribe(() => {
+    this.scadaSymbolObjectSettingsFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
     });
     this.loadMetadata();
@@ -129,7 +138,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['svgPath', 'svgUrl', 'svgContent'].includes(propName)) {
+        if (['scadaSymbolUrl', 'scadaSymbolContent', 'scadaSymbolMetadata'].includes(propName)) {
           this.loadMetadata();
         }
       }
@@ -146,22 +155,22 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (isDisabled) {
-      this.iotSvgObjectSettingsFormGroup.disable({emitEvent: false});
+      this.scadaSymbolObjectSettingsFormGroup.disable({emitEvent: false});
     } else {
-      this.iotSvgObjectSettingsFormGroup.enable({emitEvent: false});
+      this.scadaSymbolObjectSettingsFormGroup.enable({emitEvent: false});
       this.updateValidators();
     }
   }
 
-  writeValue(value: IotSvgObjectSettings): void {
+  writeValue(value: ScadaSymbolObjectSettings): void {
     this.modelValue = value || { behavior: {}, properties: {} };
     this.setupValue();
   }
 
-  validate(c: UntypedFormControl) {
-    const valid = this.iotSvgObjectSettingsFormGroup.valid;
+  validate(_c: UntypedFormControl) {
+    const valid = this.scadaSymbolObjectSettingsFormGroup.valid;
     return valid ? null : {
-      iotSvgObject: {
+      scadaSymbolObjectSettings: {
         valid: false,
       },
     };
@@ -174,28 +183,36 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
     }
     this.validatorTriggers = [];
 
-    let svgContent$: Observable<string>;
-    if (this.svgContent) {
-      svgContent$ = of(this.svgContent);
-    } else if (this.svgUrl) {
-      svgContent$ = this.imageService.getImageString(this.svgUrl);
+    let metadata$: Observable<ScadaSymbolMetadata>;
+    if (this.scadaSymbolMetadata) {
+      metadata$ = of(this.scadaSymbolMetadata);
     } else {
-      svgContent$ = this.http.get(this.svgPath, {responseType: 'text'});
+      let content$: Observable<string>;
+      if (this.scadaSymbolContent) {
+        content$ = of(this.scadaSymbolContent);
+      } else if (this.scadaSymbolUrl) {
+        content$ = this.imageService.getImageString(this.scadaSymbolUrl);
+      } else {
+        content$ = of('<svg></svg>');
+      }
+      metadata$ = content$.pipe(
+        map(content => parseScadaSymbolMetadataFromContent(content))
+      );
     }
-    svgContent$.subscribe(
-      (svgContent) => {
-        this.metadata = parseIotSvgMetadataFromContent(svgContent);
+    metadata$.subscribe(
+      (metadata) => {
+        this.metadata = metadata;
         this.propertyRows = toPropertyRows(this.metadata.properties);
-        const behaviorFormGroup =  this.iotSvgObjectSettingsFormGroup.get('behavior') as UntypedFormGroup;
+        const behaviorFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('behavior') as UntypedFormGroup;
         for (const control of Object.keys(behaviorFormGroup.controls)) {
           behaviorFormGroup.removeControl(control, {emitEvent: false});
         }
-        const propertiesFormGroup =  this.iotSvgObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
+        const propertiesFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
         for (const control of Object.keys(propertiesFormGroup.controls)) {
           propertiesFormGroup.removeControl(control, {emitEvent: false});
         }
-        for (const behaviour of this.metadata.behavior) {
-          behaviorFormGroup.addControl(behaviour.id, this.fb.control(null, []), {emitEvent: false});
+        for (const behavior of this.metadata.behavior) {
+          behaviorFormGroup.addControl(behavior.id, this.fb.control(null, []), {emitEvent: false});
         }
         for (const property of this.metadata.properties) {
           if (property.disableOnProperty) {
@@ -207,7 +224,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
           if (property.required) {
             validators.push(Validators.required);
           }
-          if (property.type === IotSvgPropertyType.number) {
+          if (property.type === ScadaSymbolPropertyType.number) {
             if (isDefinedAndNotNull(property.min)) {
               validators.push(Validators.min(property.min));
             }
@@ -233,7 +250,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   private updateValidators() {
-    const propertiesFormGroup =  this.iotSvgObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
+    const propertiesFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('properties') as UntypedFormGroup;
     for (const trigger of this.validatorTriggers) {
       const value: boolean = propertiesFormGroup.get(trigger).value;
       this.metadata.properties.filter(p => p.disableOnProperty === trigger).forEach(
@@ -251,9 +268,9 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
 
   private setupValue() {
     if (this.metadata) {
-      const defaults = defaultIotSvgObjectSettings(this.metadata);
-      this.modelValue = mergeDeep<IotSvgObjectSettings>(defaults, this.modelValue);
-      this.iotSvgObjectSettingsFormGroup.patchValue(
+      const defaults = defaultScadaSymbolObjectSettings(this.metadata);
+      this.modelValue = mergeDeep<ScadaSymbolObjectSettings>(defaults, this.modelValue);
+      this.scadaSymbolObjectSettingsFormGroup.patchValue(
         this.modelValue, {emitEvent: false}
       );
       this.setDisabledState(this.disabled);
@@ -261,7 +278,7 @@ export class IotSvgObjectSettingsComponent implements OnInit, OnChanges, Control
   }
 
   private updateModel() {
-    this.modelValue = this.iotSvgObjectSettingsFormGroup.getRawValue();
+    this.modelValue = this.scadaSymbolObjectSettingsFormGroup.getRawValue();
     this.propagateChange(this.modelValue);
   }
 }

@@ -16,16 +16,16 @@
 
 @import '../../../../../scss/constants';
 
-.tb-scada-symbol {
+.tb-scada-symbol-editor {
   width: 100%;
   height: 100%;
-  .tb-scada-symbol-details-drawer {
+  .tb-scada-symbol-editor-details-drawer {
     width: 50%;
-    .tb-scada-symbol-preview-content {
+    .tb-scada-symbol-editor-preview-content {
       display: flex;
       flex-direction: column;
       gap: 8px;
-      .tb-scada-symbol-preview-header {
+      .tb-scada-symbol-editor-preview-header {
         padding: 24px 24px 0;
         display: flex;
         gap: 12px;
@@ -33,7 +33,7 @@
         align-items: center;
         justify-content: space-between;
       }
-      .tb-scada-symbol-preview-settings {
+      .tb-scada-symbol-editor-preview-settings {
         & > .mat-content {
           padding-top: 8px;
           @media #{$mat-xs} {
@@ -57,13 +57,11 @@
       }
     }
   }
-  .tb-scada-symbol-content {
+  .tb-scada-symbol-editor-content {
     flex: 1;
     min-width: 0;
     min-height: 0;
+    max-width: 50%;
     background: #fff;
-    .tb-iot-svg-panel {
-      padding: 0;
-    }
   }
 }

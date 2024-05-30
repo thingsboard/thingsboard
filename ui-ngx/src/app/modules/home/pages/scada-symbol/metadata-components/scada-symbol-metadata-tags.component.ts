@@ -37,13 +37,13 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { IotSvgTag } from '@home/components/widget/lib/svg/iot-svg.models';
+import { ScadaSymbolTag } from '@home/components/widget/lib/scada/scada-symbol.models';
 import {
   ScadaSymbolMetadataTagComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata-tag.component';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 
-const tagIsEmpty = (tag: IotSvgTag): boolean =>
+const tagIsEmpty = (tag: ScadaSymbolTag): boolean =>
   !tag.stateRenderFunction && !tag.actions?.click?.actionFunction;
 
 @Component({
@@ -86,7 +86,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   tagsFormGroup: UntypedFormGroup;
 
-  private modelValue: IotSvgTag[];
+  private modelValue: ScadaSymbolTag[];
 
   private propagateChange = (_val: any) => {};
 
@@ -102,7 +102,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
     this.tagsFormGroup.valueChanges.subscribe(
       () => {
-        let value: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
+        let value: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
         if (value) {
           value = value.filter(t => !tagIsEmpty(t));
         }
@@ -147,7 +147,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     }
   }
 
-  writeValue(value: IotSvgTag[] | undefined): void {
+  writeValue(value: ScadaSymbolTag[] | undefined): void {
     this.modelValue = value || [];
     const tagsResult= this.setupTags(this.modelValue);
     this.tagsFormGroup.setControl('tags', this.prepareTagsFormArray(tagsResult.tags), {emitEvent: false});
@@ -172,7 +172,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   editTagStateRenderFunction(tag: string): void {
     setTimeout(() => {
-      const tags: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
+      const tags: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
       const index = tags.findIndex(t => t.tag === tag);
       const tagComponent = this.metadataTags.get(index);
       tagComponent?.editTagStateRenderFunction();
@@ -181,29 +181,31 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
 
   editTagClickAction(tag: string): void {
     setTimeout(() => {
-      const tags: IotSvgTag[] = this.tagsFormGroup.get('tags').value;
+      const tags: ScadaSymbolTag[] = this.tagsFormGroup.get('tags').value;
       const index = tags.findIndex(t => t.tag === tag);
       const tagComponent = this.metadataTags.get(index);
       tagComponent?.editClickAction();
     });
   }
 
-  private setupTags(existing?: IotSvgTag[]): {tags: IotSvgTag[]; emitEvent: boolean} {
+  private setupTags(existing?: ScadaSymbolTag[]): {tags: ScadaSymbolTag[]; emitEvent: boolean} {
     existing = (existing || []).filter(t => !tagIsEmpty(t));
     const result = (this.tags || []).sort().map(tag => ({
       tag,
       stateRenderFunction: null,
-      actions: {
-        click: {
-          actionFunction: null
-        }
-      }
+      actions: null
     }));
     for (const tag of existing) {
       const found = result.find(t => t.tag === tag.tag);
       if (found) {
         found.stateRenderFunction = tag.stateRenderFunction;
-        found.actions.click.actionFunction = tag.actions?.click?.actionFunction;
+        if (tag.actions?.click?.actionFunction) {
+          found.actions = {
+            click: {
+              actionFunction: tag.actions.click.actionFunction
+            }
+          };
+        }
       }
     }
     const tagRemoved = !!existing.find(existingTag =>
@@ -214,7 +216,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     };
   }
 
-  private prepareTagsFormArray(tags: IotSvgTag[] | undefined): UntypedFormArray {
+  private prepareTagsFormArray(tags: ScadaSymbolTag[] | undefined): UntypedFormArray {
     const tagsControls: Array<AbstractControl> = [];
     if (tags) {
       tags.forEach((tag) => {

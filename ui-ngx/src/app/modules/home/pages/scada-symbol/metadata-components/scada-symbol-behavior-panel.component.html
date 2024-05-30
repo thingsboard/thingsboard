@@ -40,13 +40,13 @@
       <div class="fixed-title-width" translate>scada.behavior.type</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="type">
-          <mat-option *ngFor="let type of iotSvgBehaviorTypes" [value]="type">
-            {{ iotSvgBehaviorTypeTranslations.get(type) | translate }}
+          <mat-option *ngFor="let type of scadaSymbolBehaviorTypes" [value]="type">
+            {{ scadaSymbolBehaviorTypeTranslations.get(type) | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
     </div>
-    <div *ngIf="[IotSvgBehaviorType.value, IotSvgBehaviorType.action].includes(behaviorFormGroup.get('type').value)" class="tb-form-row">
+    <div *ngIf="[ScadaSymbolBehaviorType.value, ScadaSymbolBehaviorType.action].includes(behaviorFormGroup.get('type').value)" class="tb-form-row">
       <div class="fixed-title-width" translate>scada.behavior.value-type</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex tb-value-type">
         <mat-select formControlName="valueType">
@@ -63,7 +63,7 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <ng-container *ngIf="behaviorFormGroup.get('type').value === IotSvgBehaviorType.value">
+    <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.value">
       <div class="tb-form-row ">
         <div class="fixed-title-width" translate>scada.behavior.default-value</div>
         <tb-value-input fxFlex [valueType]="behaviorFormGroup.get('valueType').value"
@@ -90,7 +90,7 @@
         </div>
       </ng-container>
     </ng-container>
-    <ng-container *ngIf="behaviorFormGroup.get('type').value === IotSvgBehaviorType.action">
+    <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.action">
       <div class="tb-form-panel stroked">
         <div class="tb-form-row no-padding no-border column-xs">
           <div class="fixed-title-width">{{ 'scada.behavior.default-payload' | translate }}</div>

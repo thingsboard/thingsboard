@@ -35,7 +35,7 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { IotSvgBehavior, IotSvgBehaviorType } from '@home/components/widget/lib/svg/iot-svg.models';
+import { ScadaSymbolBehavior, ScadaSymbolBehaviorType } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { ValueType } from '@shared/models/constants';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
@@ -94,7 +94,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
     });
     this.behaviorsFormGroup.valueChanges.subscribe(
       () => {
-        let behaviors: IotSvgBehavior[] = this.behaviorsFormGroup.get('behaviors').value;
+        let behaviors: ScadaSymbolBehavior[] = this.behaviorsFormGroup.get('behaviors').value;
         if (behaviors) {
           behaviors = behaviors.filter(b => behaviorValid(b));
         }
@@ -119,7 +119,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
     }
   }
 
-  writeValue(value: IotSvgBehavior[] | undefined): void {
+  writeValue(value: ScadaSymbolBehavior[] | undefined): void {
     const behaviors= value || [];
     this.behaviorsFormGroup.setControl('behaviors', this.prepareBehaviorsFormArray(behaviors), {emitEvent: false});
   }
@@ -176,10 +176,10 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
   }
 
   addBehavior() {
-    const behavior: IotSvgBehavior = {
+    const behavior: ScadaSymbolBehavior = {
       id: '',
       name: '',
-      type: IotSvgBehaviorType.value,
+      type: ScadaSymbolBehaviorType.value,
       valueType: ValueType.BOOLEAN,
       defaultValue: false,
       valueToDataType: ValueToDataType.CONSTANT,
@@ -197,7 +197,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
     });
   }
 
-  private prepareBehaviorsFormArray(behaviors: IotSvgBehavior[] | undefined): UntypedFormArray {
+  private prepareBehaviorsFormArray(behaviors: ScadaSymbolBehavior[] | undefined): UntypedFormArray {
     const behaviorsControls: Array<AbstractControl> = [];
     if (behaviors) {
       behaviors.forEach((behavior) => {

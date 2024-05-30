@@ -34,29 +34,29 @@
       <div class="fixed-title-width" translate>scada.property.type</div>
       <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="type">
-          <mat-option *ngFor="let type of iotSvgPropertyTypes" [value]="type">
-            {{ iotSvgPropertyTypeTranslations.get(type) | translate }}
+          <mat-option *ngFor="let type of scadaSymbolPropertyTypes" [value]="type">
+            {{ scadaSymbolPropertyTypeTranslations.get(type) | translate }}
           </mat-option>
         </mat-select>
       </mat-form-field>
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" translate>scada.property.default-value</div>
-      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.text"
+      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.text"
                        class="flex"
                        appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="default" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-color-input *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.color"
+      <tb-color-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.color"
                       asBoxInput
                       colorClearButton
                       formControlName="default">
       </tb-color-input>
-      <tb-color-settings *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.color_settings"
+      <tb-color-settings *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.color_settings"
                          formControlName="default"
                          settingsKey="{{ propertyFormGroup.get('id').value }}">
       </tb-color-settings>
-      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.number"
+      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number"
                        appearance="outline"
                        class="number"
                        subscriptSizing="dynamic">
@@ -66,18 +66,18 @@
                [step]="propertyFormGroup.get('step').value"
                type="number" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-font-settings *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.font"
+      <tb-font-settings *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.font"
                         formControlName="default"
                         clearButton
                         disabledLineHeight>
       </tb-font-settings>
-      <tb-unit-input *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.units"
+      <tb-unit-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.units"
                      formControlName="default"></tb-unit-input>
-      <tb-value-input *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.switch"
+      <tb-value-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.switch"
                       [valueType]="ValueType.BOOLEAN"
                       formControlName="default"></tb-value-input>
     </div>
-    <div *ngIf="propertyFormGroup.get('type').value === IotSvgPropertyType.number" class="tb-form-row space-between">
+    <div *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number" class="tb-form-row space-between">
       <div translate>scada.property.number-settings</div>
       <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
         <div class="tb-small-label" translate>scada.property.min</div>
@@ -124,7 +124,7 @@
               {{ 'scada.property.vertical-divider-after' | translate }}
             </mat-slide-toggle>
           </div>
-          <div *ngIf="[IotSvgPropertyType.number, IotSvgPropertyType.text].includes(propertyFormGroup.get('type').value)"
+          <div *ngIf="[ScadaSymbolPropertyType.number, ScadaSymbolPropertyType.text].includes(propertyFormGroup.get('type').value)"
                class="tb-form-row space-between">
             <div class="fixed-title-width" translate>scada.property.input-field-suffix</div>
             <mat-form-field  class="flex"
@@ -146,17 +146,17 @@
             <div class="fixed-title-width" translate>scada.property.property-row-classes</div>
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="rowClass" multiple placeholder="{{ 'widget-config.set' | translate }}">
-                <mat-option *ngFor="let clazz of iotSvgPropertyRowClasses" [value]="clazz">
+                <mat-option *ngFor="let clazz of scadaSymbolPropertyRowClasses" [value]="clazz">
                   {{ clazz }}
                 </mat-option>
               </mat-select>
             </mat-form-field>
           </div>
-          <div *ngIf="propertyFormGroup.get('type').value !== IotSvgPropertyType.switch" class="tb-form-row">
+          <div *ngIf="propertyFormGroup.get('type').value !== ScadaSymbolPropertyType.switch" class="tb-form-row">
             <div class="fixed-title-width" translate>scada.property.property-field-classes</div>
             <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="fieldClass" multiple placeholder="{{ 'widget-config.set' | translate }}">
-                <mat-option *ngFor="let clazz of iotSvgPropertyFieldClasses" [value]="clazz">
+                <mat-option *ngFor="let clazz of scadaSymbolPropertyFieldClasses" [value]="clazz">
                   {{ clazz }}
                 </mat-option>
               </mat-select>

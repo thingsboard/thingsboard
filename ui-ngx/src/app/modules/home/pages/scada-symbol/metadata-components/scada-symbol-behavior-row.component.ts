@@ -29,21 +29,23 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import {
-  AbstractControl,
-  ControlValueAccessor, NG_VALIDATORS,
+  ControlValueAccessor,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormBuilder, UntypedFormControl,
+  UntypedFormBuilder,
+  UntypedFormControl,
   UntypedFormGroup,
-  ValidationErrors, Validator, ValidatorFn,
+  Validator,
+  ValidatorFn,
   Validators
 } from '@angular/forms';
 import {
-  IotSvgBehavior,
-  IotSvgBehaviorType,
-  iotSvgBehaviorTypes,
-  iotSvgBehaviorTypeTranslations
-} from '@home/components/widget/lib/svg/iot-svg.models';
-import { deepClone, isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
+  ScadaSymbolBehavior,
+  ScadaSymbolBehaviorType,
+  scadaSymbolBehaviorTypes,
+  scadaSymbolBehaviorTypeTranslations
+} from '@home/components/widget/lib/scada/scada-symbol.models';
+import { deepClone, isUndefinedOrNull } from '@core/utils';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
@@ -54,17 +56,17 @@ import {
   ScadaSymbolBehaviorsComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behaviors.component';
 
-export const behaviorValid = (behavior: IotSvgBehavior): boolean => {
+export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
     return false;
   }
   switch (behavior.type) {
-    case IotSvgBehaviorType.value:
+    case ScadaSymbolBehaviorType.value:
       if (!behavior.valueType || isUndefinedOrNull(behavior.defaultValue)) {
         return false;
       }
       break;
-    case IotSvgBehaviorType.action:
+    case ScadaSymbolBehaviorType.action:
       if (!behavior.valueToDataType) {
         return false;
       }
@@ -77,7 +79,7 @@ export const behaviorValid = (behavior: IotSvgBehavior): boolean => {
         return false;
       }
       break;
-    case IotSvgBehaviorType.widgetAction:
+    case ScadaSymbolBehaviorType.widgetAction:
       break;
   }
   return true;
@@ -109,8 +111,8 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   @ViewChild('editButton')
   editButton: MatButton;
 
-  iotSvgBehaviorTypes = iotSvgBehaviorTypes;
-  iotSvgBehaviorTypeTranslations = iotSvgBehaviorTypeTranslations;
+  scadaSymbolBehaviorTypes = scadaSymbolBehaviorTypes;
+  scadaSymbolBehaviorTypeTranslations = scadaSymbolBehaviorTypeTranslations;
 
   @Input()
   disabled: boolean;
@@ -123,7 +125,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
 
   behaviorRowFormGroup: UntypedFormGroup;
 
-  modelValue: IotSvgBehavior;
+  modelValue: ScadaSymbolBehavior;
 
   private propagateChange = (_val: any) => {};
 
@@ -144,7 +146,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     this.behaviorRowFormGroup.valueChanges.subscribe(
       () => this.updateModel()
     );
-    this.behaviorRowFormGroup.get('type').valueChanges.subscribe((newType: IotSvgBehaviorType) => {
+    this.behaviorRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolBehaviorType) => {
       this.onTypeChanged(newType);
     });
   }
@@ -153,7 +155,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
@@ -165,7 +167,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     }
   }
 
-  writeValue(value: IotSvgBehavior): void {
+  writeValue(value: ScadaSymbolBehavior): void {
     this.modelValue = value;
     this.behaviorRowFormGroup.patchValue(
       {
@@ -225,7 +227,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     this.editBehavior(null, this.editButton, true, onCanceled);
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_c: UntypedFormControl) {
     const idControl = this.behaviorRowFormGroup.get('id');
     if (idControl.hasError('behaviorIdNotUnique')) {
       idControl.updateValueAndValidity({onlySelf: false, emitEvent: false});
@@ -236,7 +238,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
         behaviorIdNotUnique: true
       };
     }
-    const behavior: IotSvgBehavior = {...this.modelValue, ...this.behaviorRowFormGroup.value};
+    const behavior: ScadaSymbolBehavior = {...this.modelValue, ...this.behaviorRowFormGroup.value};
     if (!behaviorValid(behavior)) {
       return {
         behavior: true
@@ -261,7 +263,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     };
   }
 
-  private onTypeChanged(newType: IotSvgBehaviorType) {
+  private onTypeChanged(newType: ScadaSymbolBehaviorType) {
     const prevType = this.modelValue.type;
     this.modelValue = {...this.modelValue, ...{type: newType}};
     if (!behaviorValid(this.modelValue)) {
@@ -276,7 +278,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   }
 
   private updateModel() {
-    const value: IotSvgBehavior = this.behaviorRowFormGroup.value;
+    const value: ScadaSymbolBehavior = this.behaviorRowFormGroup.value;
     this.modelValue = {...this.modelValue, ...value};
     this.propagateChange(this.modelValue);
   }

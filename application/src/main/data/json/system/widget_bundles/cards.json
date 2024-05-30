@@ -13,7 +13,6 @@
     "cards.aggregated_value_card",
     "simple_value_and_chart_card",
     "progress_bar",
-    "iot_svg",
     "cards.label_widget",
     "cards.dashboard_state_widget",
     "cards.qr_code",

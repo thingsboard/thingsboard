@@ -150,8 +150,8 @@ import {
 } from '@home/components/widget/lib/settings/common/indicator/status-widget-state-settings.component';
 import { ChartBarSettingsComponent } from '@home/components/widget/lib/settings/common/chart/chart-bar-settings.component';
 import {
-  IotSvgObjectSettingsComponent
-} from '@home/components/widget/lib/settings/common/svg/iot-svg-object-settings.component';
+  ScadaSymbolObjectSettingsComponent
+} from '@home/components/widget/lib/settings/common/scada/scada-symbol-object-settings.component';
 
 @NgModule({
   declarations: [
@@ -207,7 +207,7 @@ import {
     TimeSeriesChartStateRowComponent,
     TimeSeriesChartGridSettingsComponent,
     StatusWidgetStateSettingsComponent,
-    IotSvgObjectSettingsComponent,
+    ScadaSymbolObjectSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],
@@ -269,7 +269,7 @@ import {
     TimeSeriesChartStateRowComponent,
     TimeSeriesChartGridSettingsComponent,
     StatusWidgetStateSettingsComponent,
-    IotSvgObjectSettingsComponent,
+    ScadaSymbolObjectSettingsComponent,
     DataKeyInputComponent,
     EntityAliasInputComponent
   ],

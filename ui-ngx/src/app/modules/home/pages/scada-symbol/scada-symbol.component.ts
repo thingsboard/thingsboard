@@ -28,15 +28,16 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ActivatedRoute, Router } from '@angular/router';
+import { ActivatedRoute } from '@angular/router';
 import { map, switchMap, takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol.models';
+import { ScadaSymbolData, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import {
-  IotSvgMetadata, IotSvgObjectSettings,
-  parseIotSvgMetadataFromContent,
-  updateIotSvgMetadataInContent
-} from '@home/components/widget/lib/svg/iot-svg.models';
+  parseScadaSymbolMetadataFromContent,
+  ScadaSymbolMetadata,
+  ScadaSymbolObjectSettings,
+  updateScadaSymbolMetadataInContent
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { createFileFromContent, deepClone } from '@core/utils';
 import {
@@ -55,9 +56,9 @@ import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { Widget, widgetType } from '@shared/models/widget.models';
 import {
-  iotSvgWidgetDefaultSettings,
-  IotSvgWidgetSettings
-} from '@home/components/widget/lib/svg/iot-svg-widget.models';
+  scadaSymbolWidgetDefaultSettings,
+  ScadaSymbolWidgetSettings
+} from '@home/components/widget/lib/scada/scada-symbol-widget.models';
 import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 import {
   ScadaSymbolMetadataComponent
@@ -87,6 +88,7 @@ export class ScadaSymbolComponent extends PageComponent
   symbolEditorData: ScadaSymbolEditorData;
 
   previewMode = false;
+  previewMetadata: ScadaSymbolMetadata;
 
   scadaSymbolFormGroup: UntypedFormGroup;
 
@@ -113,7 +115,7 @@ export class ScadaSymbolComponent extends PageComponent
 
   symbolEditorDirty = false;
 
-  private previewIotSvgObjectSettings: IotSvgObjectSettings;
+  private previewScadaSymbolObjectSettings: ScadaSymbolObjectSettings;
 
   private previewWidget: Widget;
 
@@ -128,7 +130,6 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   constructor(protected store: Store<AppState>,
-              private router: Router,
               private route: ActivatedRoute,
               private fb: UntypedFormBuilder,
               private cd: ChangeDetectorRef,
@@ -144,7 +145,7 @@ export class ScadaSymbolComponent extends PageComponent
       metadata: [null]
     });
     this.scadaPreviewFormGroup = this.fb.group({
-      iotSvgObject: [null]
+      scadaSymbolObjectSettings: [null]
     });
 
     const entitiAliases: EntityAliases = {};
@@ -182,13 +183,13 @@ export class ScadaSymbolComponent extends PageComponent
 
   onApplyScadaSymbolConfig() {
     if (this.scadaSymbolFormGroup.valid) {
-      const svgContent = this.prepareSvgContent();
-      const file = createFileFromContent(svgContent, this.symbolData.imageResource.fileName,
+      const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+      const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
+      const file = createFileFromContent(scadaSymbolContent, this.symbolData.imageResource.fileName,
         this.symbolData.imageResource.descriptor.mediaType);
       const type = imageResourceType(this.symbolData.imageResource);
       let imageInfoObservable =
         this.imageService.updateImage(type, this.symbolData.imageResource.resourceKey, file);
-      const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
       if (metadata.title !== this.symbolData.imageResource.title) {
         imageInfoObservable = imageInfoObservable.pipe(
           switchMap(imageInfo => {
@@ -202,7 +203,7 @@ export class ScadaSymbolComponent extends PageComponent
             `${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(imageInfo.resourceKey)}`).pipe(
               map(content => ({
                 imageResource: imageInfo,
-                svgContent: content
+                scadaSymbolContent: content
               }))
           ))
       ).subscribe(data => {
@@ -217,25 +218,27 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   enterPreviewMode() {
-    this.symbolData.svgContent = this.prepareSvgContent();
-    this.previewIotSvgObjectSettings = {
+    this.previewMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    this.symbolData.scadaSymbolContent = this.prepareScadaSymbolContent(this.previewMetadata);
+    this.previewScadaSymbolObjectSettings = {
       behavior: {},
       properties: {}
     };
     this.scadaPreviewFormGroup.patchValue({
-      iotSvgObject: this.previewIotSvgObjectSettings
+      scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings
     }, {emitEvent: false});
     this.scadaPreviewFormGroup.markAsPristine();
-    const settings: IotSvgWidgetSettings = {...iotSvgWidgetDefaultSettings,
+    const settings: ScadaSymbolWidgetSettings = {...scadaSymbolWidgetDefaultSettings,
       ...{
           simulated: true,
-          iotSvg: null,
-          iotSvgContent: this.symbolData.svgContent,
-          iotSvgObject: this.previewIotSvgObjectSettings
+          scadaSymbolUrl: null,
+          scadaSymbolContent: this.symbolData.scadaSymbolContent,
+          scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings,
+          padding: '0'
          }
     };
     this.previewWidget = {
-      typeFullFqn: 'system.iot_svg',
+      typeFullFqn: 'system.scada_symbol',
       type: widgetType.rpc,
       sizeX: 24,
       sizeY: 24,
@@ -255,21 +258,21 @@ export class ScadaSymbolComponent extends PageComponent
 
   exitPreviewMode() {
     this.symbolEditorData = {
-      svgContent: this.symbolData.svgContent
+      scadaSymbolContent: this.symbolData.scadaSymbolContent
     };
     this.previewMode = false;
   }
 
   onRevertPreviewSettings() {
     this.scadaPreviewFormGroup.patchValue({
-      iotSvgObject: this.previewIotSvgObjectSettings
+      scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings
     }, {emitEvent: false});
     this.scadaPreviewFormGroup.markAsPristine();
   }
 
   onApplyPreviewSettings() {
     this.scadaPreviewFormGroup.markAsPristine();
-    this.previewIotSvgObjectSettings = this.scadaPreviewFormGroup.get('iotSvgObject').value;
+    this.previewScadaSymbolObjectSettings = this.scadaPreviewFormGroup.get('scadaSymbolObjectSettings').value;
     this.updatePreviewWidgetSettings();
   }
 
@@ -278,7 +281,7 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   tagHasStateRenderFunction(tag: string): boolean {
-    const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
     if (metadata.tags) {
       const found = metadata.tags.find(t => t.tag === tag);
       return !!found?.stateRenderFunction;
@@ -287,7 +290,7 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   tagHasClickAction(tag: string): boolean {
-    const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
     if (metadata.tags) {
       const found = metadata.tags.find(t => t.tag === tag);
       return !!found?.actions?.click?.actionFunction;
@@ -309,14 +312,13 @@ export class ScadaSymbolComponent extends PageComponent
 
   private updatePreviewWidgetSettings() {
     this.previewWidget = deepClone(this.previewWidget);
-    this.previewWidget.config.settings.iotSvgObject = this.previewIotSvgObjectSettings;
+    this.previewWidget.config.settings.scadaSymbolObjectSettings = this.previewScadaSymbolObjectSettings;
     this.previewWidgets = [this.previewWidget];
   }
 
-  private prepareSvgContent(): string {
+  private prepareScadaSymbolContent(metadata: ScadaSymbolMetadata): string {
     const svgContent = this.symbolEditor.getContent();
-    const metadata: IotSvgMetadata = this.scadaSymbolFormGroup.get('metadata').value;
-    return updateIotSvgMetadataInContent(svgContent, metadata);
+    return updateScadaSymbolMetadataInContent(svgContent, metadata);
   }
 
   private reset(): void {
@@ -330,9 +332,9 @@ export class ScadaSymbolComponent extends PageComponent
     this.origSymbolData = data;
     this.symbolData = deepClone(data);
     this.symbolEditorData = {
-      svgContent: this.symbolData.svgContent
+      scadaSymbolContent: this.symbolData.scadaSymbolContent
     };
-    const metadata = parseIotSvgMetadataFromContent(this.symbolData.svgContent);
+    const metadata = parseScadaSymbolMetadataFromContent(this.symbolData.scadaSymbolContent);
     this.scadaSymbolFormGroup.patchValue({
       metadata
     }, {emitEvent: false});

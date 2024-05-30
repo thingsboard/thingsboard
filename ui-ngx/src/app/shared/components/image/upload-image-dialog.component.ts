@@ -36,10 +36,10 @@ import { forkJoin } from 'rxjs';
 import { blobToBase64, blobToText, updateFileContent } from '@core/utils';
 import {
   emptyMetadata,
-  IotSvgMetadata,
-  parseIotSvgMetadataFromContent,
-  updateIotSvgMetadataInContent
-} from '@home/components/widget/lib/svg/iot-svg.models';
+  ScadaSymbolMetadata,
+  parseScadaSymbolMetadataFromContent,
+  updateScadaSymbolMetadataInContent
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 
 export interface UploadImageDialogData {
   imageSubType: ResourceSubType;
@@ -64,11 +64,11 @@ export class UploadImageDialogComponent extends
   maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   get isScada() {
-    return this.data.imageSubType === ResourceSubType.IOT_SVG;
+    return this.data.imageSubType === ResourceSubType.SCADA_SYMBOL;
   }
 
-  private iotSvgContent: string;
-  private iotSvgMetadata: IotSvgMetadata;
+  private scadaSymbolContent: string;
+  private scadaSymbolMetadata: ScadaSymbolMetadata;
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -91,11 +91,11 @@ export class UploadImageDialogComponent extends
         this.uploadImageFormGroup.get('file').valueChanges.subscribe((file: File) => {
           if (file) {
             blobToText(file).subscribe(content => {
-              this.iotSvgContent = content;
-              this.iotSvgMetadata = parseIotSvgMetadataFromContent(this.iotSvgContent);
+              this.scadaSymbolContent = content;
+              this.scadaSymbolMetadata = parseScadaSymbolMetadataFromContent(this.scadaSymbolContent);
               const titleControl = this.uploadImageFormGroup.get('title');
-              if (this.iotSvgMetadata.title && (!titleControl.value || !titleControl.touched)) {
-                titleControl.setValue(this.iotSvgMetadata.title);
+              if (this.scadaSymbolMetadata.title && (!titleControl.value || !titleControl.touched)) {
+                titleControl.setValue(this.scadaSymbolMetadata.title);
               }
             });
           }
@@ -129,13 +129,13 @@ export class UploadImageDialogComponent extends
     if (this.uploadImage) {
       const title: string = this.uploadImageFormGroup.get('title').value;
       if (this.isScada) {
-        if (!this.iotSvgMetadata) {
-          this.iotSvgMetadata = emptyMetadata();
+        if (!this.scadaSymbolMetadata) {
+          this.scadaSymbolMetadata = emptyMetadata();
         }
-        if (this.iotSvgMetadata.title !== title) {
-          this.iotSvgMetadata.title = title;
+        if (this.scadaSymbolMetadata.title !== title) {
+          this.scadaSymbolMetadata.title = title;
         }
-        const newContent = updateIotSvgMetadataInContent(this.iotSvgContent, this.iotSvgMetadata);
+        const newContent = updateScadaSymbolMetadataInContent(this.scadaSymbolContent, this.scadaSymbolMetadata);
         file = updateFileContent(file, newContent);
       }
       forkJoin([

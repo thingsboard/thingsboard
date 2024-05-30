@@ -25,25 +25,25 @@ import {
   setupTagPanelTooltip
 } from '@home/pages/scada-symbol/scada-symbol-tooltip.components';
 import {
-  IotSvgBehavior,
-  IotSvgBehaviorType,
-  iotSvgContentData,
-  IotSvgMetadata,
-  IotSvgProperty,
-  IotSvgPropertyType
-} from '@home/components/widget/lib/svg/iot-svg.models';
+  ScadaSymbolBehavior,
+  ScadaSymbolBehaviorType,
+  scadaSymbolContentData,
+  ScadaSymbolMetadata,
+  ScadaSymbolProperty,
+  ScadaSymbolPropertyType
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { TbHighlightRule } from '@shared/models/ace/ace.models';
+import { ValueType } from '@shared/models/constants';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
 import ITooltipPosition = JQueryTooltipster.ITooltipPosition;
-import { ValueType } from '@shared/models/constants';
 
 export interface ScadaSymbolData {
   imageResource: ImageResourceInfo;
-  svgContent: string;
+  scadaSymbolContent: string;
 }
 
 export interface ScadaSymbolEditObjectCallbacks {
@@ -83,7 +83,7 @@ export class ScadaSymbolEditObject {
       this.svgShape.remove();
     }
     this.scale = 1;
-    const contentData = iotSvgContentData(svgContent);
+    const contentData = scadaSymbolContentData(svgContent);
     this.svgRootNodePart = contentData.svgRootNode;
     this.svgShape = SVG().svg(contentData.innerSvg);
     this.svgShape.node.style.overflow = 'visible';
@@ -153,10 +153,10 @@ export class ScadaSymbolEditObject {
       });
       e.preventDefault();
     });
-    this.svgShape.on('panStart', (e) => {
+    this.svgShape.on('panStart', (_e) => {
       this.svgShape.node.style.cursor = 'grab';
     });
-    this.svgShape.on('panEnd', (e) => {
+    this.svgShape.on('panEnd', (_e) => {
       this.svgShape.node.style.cursor = 'default';
     });
   }
@@ -258,8 +258,10 @@ export class ScadaSymbolEditObject {
       const targetWidth = this.rootElement.getBoundingClientRect().width;
       const targetHeight = this.rootElement.getBoundingClientRect().height;
       if (targetWidth && targetHeight) {
+        const svgAspect = this.box.width / this.box.height;
+        const shapeAspect = targetWidth / targetHeight;
         let scale: number;
-        if (targetWidth < targetHeight) {
+        if (svgAspect > shapeAspect) {
           scale = targetWidth / this.box.width;
         } else {
           scale = targetHeight / this.box.height;
@@ -416,10 +418,10 @@ export class ScadaSymbolElement {
     } else {
       this.element.addClass('tb-element');
     }
-    this.element.on('mouseenter', (event) => {
+    this.element.on('mouseenter', (_event) => {
       this.highlight();
     });
-    this.element.on('mouseleave', (event) => {
+    this.element.on('mouseleave', (_event) => {
       this.unhighlight();
     });
     if (this.hasTag()) {
@@ -588,7 +590,7 @@ export class ScadaSymbolElement {
         zIndex: 100,
         arrow: this.isGroup(),
         distance: this.isGroup() ? (this.scaled(groupRectPadding) + groupRectStroke) : 6,
-        theme: ['iot-svg'],
+        theme: ['scada-symbol'],
         delay: 0,
         animationDuration: 0,
         interactive: true,
@@ -598,7 +600,7 @@ export class ScadaSymbolElement {
         content: '',
         functionPosition: (instance, helper, position) =>
           this.innerTagTooltipPosition(instance, helper, position),
-        functionReady: (instance, helper) => {
+        functionReady: (_instance, helper) => {
           const tooltipEl = $(helper.tooltip);
           tooltipEl.on('mouseenter', () => {
             this.highlight();
@@ -623,7 +625,7 @@ export class ScadaSymbolElement {
       {
         zIndex: 100,
         arrow: true,
-        theme: ['iot-svg', 'tb-active'],
+        theme: ['scada-symbol', 'tb-active'],
         delay: [0, 300],
         interactive: true,
         trigger: 'hover',
@@ -645,7 +647,7 @@ export class ScadaSymbolElement {
         },
         functionPosition: (instance, helper, position) =>
           this.innerAddTagTooltipPosition(instance, helper, position),
-        functionReady: (instance, helper) => {
+        functionReady: (_instance, helper) => {
           const tooltipEl = $(helper.tooltip);
           tooltipEl.on('mouseenter', () => {
             this.highlight();
@@ -664,7 +666,7 @@ export class ScadaSymbolElement {
     setupAddTagPanelTooltip(this, this.editObject.viewContainerRef);
   }
 
-  private innerTagTooltipPosition(instance: ITooltipsterInstance, helper: ITooltipsterHelper,
+  private innerTagTooltipPosition(_instance: ITooltipsterInstance, helper: ITooltipsterHelper,
                                   position: ITooltipPosition): ITooltipPosition {
     const clientRect = helper.origin.getBoundingClientRect();
     if (!this.isGroup()) {
@@ -678,8 +680,8 @@ export class ScadaSymbolElement {
     return position;
   }
 
-  private innerAddTagTooltipPosition(instance: ITooltipsterInstance,
-                                     helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
+  private innerAddTagTooltipPosition(_instance: ITooltipsterInstance,
+                                     _helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
     const distance = 10;
     switch (position.side) {
       case 'right':
@@ -803,61 +805,57 @@ const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
   },
   {
     class: 'scada-symbol-ctx-property',
-    regex: /(?<=ctx\.properties\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=ctx\.properties\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   },
   {
     class: 'scada-symbol-ctx-tag',
-    regex: /(?<=ctx\.tags\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=ctx\.tags\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   },
   {
     class: 'scada-symbol-ctx-value',
-    regex: /(?<=ctx\.values\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=ctx\.values\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   },
   {
     class: 'scada-symbol-ctx-api-method',
-    regex: /(?<=ctx\.api\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=ctx\.api\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   }
 ];
 
 export const scadaSymbolGeneralStateRenderPropertiesHighlightRules: TbHighlightRule[] =
   scadaSymbolCtxPropertyHighlightRules.concat({
     class: 'scada-symbol-svg-properties',
-    regex: /(?<=svg\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=svg\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   });
 
 export const scadaSymbolElementStateRenderPropertiesHighlightRules: TbHighlightRule[] =
   scadaSymbolCtxPropertyHighlightRules.concat({
     class: 'scada-symbol-element-properties',
-    regex: /(?<=element\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=element\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   });
 
 export const scadaSymbolClickActionPropertiesHighlightRules: TbHighlightRule[] =
   scadaSymbolElementStateRenderPropertiesHighlightRules.concat({
     class: 'scada-symbol-event-properties',
-    regex: /(?<=event\.)([a-zA-Z\$_\u00a1-\uffff][a-zA-Z\d\$_\u00a1-\uffff]*)\b/
+    regex: /(?<=event\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   });
 
-export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
-  return {
+export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => ({
     ctx: ctxCompletion,
     svg: {
       meta: 'argument',
       type: 'Svg',
       description: 'A root svg node. Instance of SVG.Svg.'
     }
-  };
-};
+  });
 
-export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
-  return {
+export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => ({
     ctx: ctxCompletion,
     element: {
       meta: 'argument',
       type: 'Element',
       description: 'An SVG element.'
     },
-  };
-};
+  });
 
 export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
   const completions = elementStateRenderFunctionCompletions(ctxCompletion);
@@ -869,8 +867,8 @@ export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion
   return completions;
 };
 
-export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[],
-                                        customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags: string[],
+                                             customTranslate: CustomTranslatePipe): TbEditorCompletion => {
   const properties: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
@@ -878,7 +876,7 @@ export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[]
     children: {}
   };
   for (const property of metadata.properties) {
-    properties.children[property.id] = iotSvgPropertyCompletion(property, customTranslate);
+    properties.children[property.id] = scadaSymbolPropertyCompletion(property, customTranslate);
   }
   const values: TbEditorCompletion = {
     meta: 'object',
@@ -886,9 +884,9 @@ export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[]
     description: 'An object holding all values obtained using behaviors of type \'Value\'',
     children: {}
   };
-  const getValues = metadata.behavior.filter(b => b.type === IotSvgBehaviorType.value);
+  const getValues = metadata.behavior.filter(b => b.type === ScadaSymbolBehaviorType.value);
   for (const value of getValues) {
-    values.children[value.id] = iotSvgValueCompletion(value, customTranslate);
+    values.children[value.id] = scadaSymbolValueCompletion(value, customTranslate);
   }
   const tagsCompletions: TbEditorCompletion = {
     meta: 'object',
@@ -907,12 +905,12 @@ export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[]
   }
   return {
     meta: 'argument',
-    type: 'IotSvgContext',
+    type: 'ScadaSymbolContext',
     description: 'Context of svg object.',
     children: {
       api: {
         meta: 'object',
-        type: 'IotSvgApi',
+        type: 'ScadaSymbolApi',
         description: 'Svg object API',
         children: {
           animate: {
@@ -926,7 +924,7 @@ export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[]
               },
               {
                 name: 'duration',
-                description: 'Animation duretion is milliseconds',
+                description: 'Animation duration in milliseconds',
                 type: 'number'
               }
             ],
@@ -944,7 +942,7 @@ export const iotSvgContextCompletion = (metadata: IotSvgMetadata, tags: string[]
   };
 };
 
-const iotSvgPropertyCompletion = (property: IotSvgProperty, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+const scadaSymbolPropertyCompletion = (property: ScadaSymbolProperty, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
   let description = customTranslate.transform(property.name, property.name);
   if (property.subLabel) {
     description += ` <small>${customTranslate.transform(property.subLabel, property.subLabel)}</small>`;
@@ -952,39 +950,39 @@ const iotSvgPropertyCompletion = (property: IotSvgProperty, customTranslate: Cus
   return {
     meta: 'property',
     description,
-    type: iotSvgPropertyCompletionType(property.type)
+    type: scadaSymbolPropertyCompletionType(property.type)
   };
 };
 
-const iotSvgValueCompletion = (value: IotSvgBehavior, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+const scadaSymbolValueCompletion = (value: ScadaSymbolBehavior, customTranslate: CustomTranslatePipe): TbEditorCompletion => {
   const description = customTranslate.transform(value.name, value.name);
   return {
     meta: 'property',
     description,
-    type: iotSvgValueCompletionType(value.valueType)
+    type: scadaSymbolValueCompletionType(value.valueType)
   };
 };
 
-const iotSvgPropertyCompletionType = (type: IotSvgPropertyType): string => {
+const scadaSymbolPropertyCompletionType = (type: ScadaSymbolPropertyType): string => {
   switch (type) {
-    case IotSvgPropertyType.text:
+    case ScadaSymbolPropertyType.text:
       return 'string';
-    case IotSvgPropertyType.number:
+    case ScadaSymbolPropertyType.number:
       return 'number';
-    case IotSvgPropertyType.switch:
+    case ScadaSymbolPropertyType.switch:
       return 'boolean';
-    case IotSvgPropertyType.color:
+    case ScadaSymbolPropertyType.color:
       return 'color string';
-    case IotSvgPropertyType.color_settings:
+    case ScadaSymbolPropertyType.color_settings:
       return 'ColorProcessor';
-    case IotSvgPropertyType.font:
+    case ScadaSymbolPropertyType.font:
       return 'Font';
-    case IotSvgPropertyType.units:
+    case ScadaSymbolPropertyType.units:
       return 'units string';
   }
 };
 
-const iotSvgValueCompletionType = (type: ValueType): string => {
+const scadaSymbolValueCompletionType = (type: ValueType): string => {
   switch (type) {
     case ValueType.STRING:
       return 'string';

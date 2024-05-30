@@ -14,17 +14,17 @@
 /// limitations under the License.
 ///
 
-import { IotSvgProperty, IotSvgPropertyType } from '@home/components/widget/lib/svg/iot-svg.models';
+import { ScadaSymbolProperty, ScadaSymbolPropertyType } from '@home/components/widget/lib/scada/scada-symbol.models';
 
-export interface IotSvgPropertyRow {
+export interface ScadaSymbolPropertyRow {
   label: string;
-  properties: IotSvgProperty[];
-  switch?: IotSvgProperty;
+  properties: ScadaSymbolProperty[];
+  switch?: ScadaSymbolProperty;
   rowClass?: string;
 }
 
-export const toPropertyRows = (properties: IotSvgProperty[]): IotSvgPropertyRow[] => {
-  const result: IotSvgPropertyRow[] = [];
+export const toPropertyRows = (properties: ScadaSymbolProperty[]): ScadaSymbolPropertyRow[] => {
+  const result: ScadaSymbolPropertyRow[] = [];
   for (const property of properties) {
     let propertyRow = result.find(r => r.label === property.name);
     if (!propertyRow) {
@@ -35,7 +35,7 @@ export const toPropertyRows = (properties: IotSvgProperty[]): IotSvgPropertyRow[
       };
       result.push(propertyRow);
     }
-    if (property.type === IotSvgPropertyType.switch) {
+    if (property.type === ScadaSymbolPropertyType.switch) {
       propertyRow.switch = property;
     } else {
       propertyRow.properties.push(property);

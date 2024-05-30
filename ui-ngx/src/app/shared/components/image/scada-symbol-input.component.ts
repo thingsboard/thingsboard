@@ -18,13 +18,12 @@ import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit } fr
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { ControlValueAccessor, FormControl, NG_VALUE_ACCESSOR, } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, } from '@angular/forms';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   extractParamsFromImageResourceUrl,
+  IMAGE_BASE64_URL_PREFIX,
   ImageResourceInfo,
-  isBase64DataImageUrl,
-  isImageResourceUrl,
   prependTbImagePrefix,
   removeTbImagePrefix,
   ResourceSubType
@@ -35,27 +34,28 @@ import {
   ImageGalleryDialogComponent,
   ImageGalleryDialogData
 } from '@shared/components/image/image-gallery-dialog.component';
+import { ScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
+import { stringToBase64 } from '@core/utils';
 
-export enum ImageLinkType {
+export enum ScadaSymbolLinkType {
   none = 'none',
-  base64 = 'base64',
-  external = 'external',
+  content = 'content',
   resource = 'resource'
 }
 
 @Component({
-  selector: 'tb-gallery-image-input',
-  templateUrl: './gallery-image-input.component.html',
-  styleUrls: ['./gallery-image-input.component.scss'],
+  selector: 'tb-scada-symbol-input',
+  templateUrl: './scada-symbol-input.component.html',
+  styleUrls: ['./scada-symbol-input.component.scss'],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => GalleryImageInputComponent),
+      useExisting: forwardRef(() => ScadaSymbolInputComponent),
       multi: true
     }
   ]
 })
-export class GalleryImageInputComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor {
+export class ScadaSymbolInputComponent extends PageComponent implements OnInit, OnDestroy, ControlValueAccessor {
 
   @Input()
   label: string;
@@ -67,17 +67,21 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
   @Input()
   disabled: boolean;
 
-  imageUrl: string;
+  @Input()
+  scadaSymbolContent: string;
+
+  @Input()
+  scadaSymbolMetadata: ScadaSymbolMetadata;
+
+  scadaSymbolUrl: string;
 
   imageResource: ImageResourceInfo;
 
   loadingImageResource = false;
 
-  ImageLinkType = ImageLinkType;
+  ScadaSymbolLinkType = ScadaSymbolLinkType;
 
-  linkType: ImageLinkType = ImageLinkType.none;
-
-  externalLinkControl = new FormControl(null);
+  linkType: ScadaSymbolLinkType = ScadaSymbolLinkType.none;
 
   private propagateChange = null;
 
@@ -89,11 +93,10 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
   }
 
   ngOnInit() {
-    this.externalLinkControl.valueChanges.subscribe((value) => {
-      if (this.linkType === ImageLinkType.external) {
-        this.updateModel(value);
-      }
-    });
+    if (this.scadaSymbolContent && this.scadaSymbolMetadata) {
+      this.scadaSymbolUrl = IMAGE_BASE64_URL_PREFIX + 'svg+xml;base64,' + stringToBase64(this.scadaSymbolContent);
+      this.linkType = ScadaSymbolLinkType.content;
+    }
   }
 
   ngOnDestroy() {
@@ -103,27 +106,24 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     this.propagateChange = fn;
   }
 
-  registerOnTouched(fn: any): void {
+  registerOnTouched(_fn: any): void {
   }
 
   setDisabledState(isDisabled: boolean): void {
     this.disabled = isDisabled;
     if (this.disabled) {
       this.detectLinkType();
-      this.externalLinkControl.disable({emitEvent: false});
-    } else {
-      this.externalLinkControl.enable({emitEvent: false});
     }
   }
 
   writeValue(value: string): void {
     value = removeTbImagePrefix(value);
-    if (this.imageUrl !== value) {
+    if (this.scadaSymbolUrl !== value) {
       this.reset();
-      this.imageUrl = value;
+      this.scadaSymbolUrl = value;
       this.detectLinkType();
-      if (this.linkType === ImageLinkType.resource) {
-        const params = extractParamsFromImageResourceUrl(this.imageUrl);
+      if (this.linkType === ScadaSymbolLinkType.resource) {
+        const params = extractParamsFromImageResourceUrl(this.scadaSymbolUrl);
         if (params) {
           this.loadingImageResource = true;
           this.imageService.getImageInfo(params.type, params.key, {ignoreLoading: true, ignoreErrors: true}).subscribe(
@@ -144,53 +144,34 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
           this.reset();
           this.cd.markForCheck();
         }
-      } else if (this.linkType === ImageLinkType.base64) {
-        this.cd.markForCheck();
-      } else if (this.linkType === ImageLinkType.external) {
-        this.externalLinkControl.setValue(this.imageUrl, {emitEvent: false});
-        this.cd.markForCheck();
       }
     }
   }
 
   private detectLinkType() {
-    if (this.imageUrl) {
-      if (isImageResourceUrl(this.imageUrl)) {
-        this.linkType = ImageLinkType.resource;
-      } else if (isBase64DataImageUrl(this.imageUrl)) {
-        this.linkType = ImageLinkType.base64;
-      } else {
-        this.linkType = ImageLinkType.external;
-      }
+    if (this.scadaSymbolUrl) {
+      this.linkType = ScadaSymbolLinkType.resource;
     } else {
-      this.linkType = ImageLinkType.none;
+      this.linkType = ScadaSymbolLinkType.none;
     }
   }
 
   private updateModel(value: string) {
     this.cd.markForCheck();
-    if (this.imageUrl !== value) {
-      this.imageUrl = value;
-      this.propagateChange(prependTbImagePrefix(this.imageUrl));
+    if (this.scadaSymbolUrl !== value) {
+      this.scadaSymbolUrl = value;
+      this.propagateChange(prependTbImagePrefix(this.scadaSymbolUrl));
     }
   }
 
   private reset() {
-    this.linkType = ImageLinkType.none;
+    this.linkType = ScadaSymbolLinkType.none;
     this.imageResource = null;
-    this.externalLinkControl.setValue(null, {emitEvent: false});
   }
 
-  clearImage() {
+  clearSymbol() {
     this.reset();
     this.updateModel(null);
-  }
-
-  setLink($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.linkType = ImageLinkType.external;
   }
 
   openGallery($event: Event): void {
@@ -199,15 +180,15 @@ export class GalleryImageInputComponent extends PageComponent implements OnInit,
     }
     this.dialog.open<ImageGalleryDialogComponent, ImageGalleryDialogData,
       ImageResourceInfo>(ImageGalleryDialogComponent, {
-        autoFocus: false,
-        disableClose: false,
-        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-        data: {
-          imageSubType: ResourceSubType.IMAGE
-        }
+      autoFocus: false,
+      disableClose: false,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        imageSubType: ResourceSubType.SCADA_SYMBOL
+      }
     }).afterClosed().subscribe((image) => {
       if (image) {
-        this.linkType = ImageLinkType.resource;
+        this.linkType = ScadaSymbolLinkType.resource;
         this.imageResource = image;
         this.updateModel(image.link);
       }

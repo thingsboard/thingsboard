@@ -27,10 +27,10 @@ import {
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ScadaSymbolEditObject, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol.models';
+import { ScadaSymbolEditObject, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 
 export interface ScadaSymbolEditorData {
-  svgContent: string;
+  scadaSymbolContent: string;
 }
 
 @Component({
@@ -41,8 +41,8 @@ export interface ScadaSymbolEditorData {
 })
 export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewInit, OnChanges {
 
-  @ViewChild('iotSvgShape', {static: false})
-  iotSvgShape: ElementRef<HTMLElement>;
+  @ViewChild('scadaSymbolShape', {static: false})
+  scadaSymbolShape: ElementRef<HTMLElement>;
 
   @Input()
   data: ScadaSymbolEditorData;
@@ -59,10 +59,10 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   ngAfterViewInit() {
-    this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.iotSvgShape.nativeElement,
+    this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.scadaSymbolShape.nativeElement,
       this.viewContainerRef, this.editObjectCallbacks);
     if (this.data) {
-      this.scadaSymbolEditObject.setContent(this.data.svgContent);
+      this.scadaSymbolEditObject.setContent(this.data.scadaSymbolContent);
     }
   }
 
@@ -73,7 +73,7 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
         if (propName === 'data') {
           if (this.scadaSymbolEditObject) {
             setTimeout(() => {
-              this.scadaSymbolEditObject.setContent(this.data.svgContent);
+              this.scadaSymbolEditObject.setContent(this.data.scadaSymbolContent);
             });
           }
         }

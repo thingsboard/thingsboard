@@ -15,14 +15,15 @@
     limitations under the License.
 
 -->
-<div class="tb-iot-svg-panel" [style]="backgroundStyle$ | async">
-  <div class="tb-iot-svg-overlay" [style]="overlayStyle"></div>
+<div class="tb-scada-symbol-panel" [style.padding]="padding"
+     [class.overlay]="overlayEnabled" [style]="backgroundStyle$ | async">
+  <div class="tb-scada-symbol-overlay" [style]="overlayStyle"></div>
   <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </ng-container>
-  <div class="tb-iot-svg-content">
-    <div #iotSvgShape class="tb-iot-svg-shape">
+  <div class="tb-scada-symbol-content">
+    <div #scadaSymbolShape class="tb-scada-symbol-shape">
     </div>
   </div>
-  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="iotSvgObject?.loading$ | async"></mat-progress-bar>
+  <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
 </div>

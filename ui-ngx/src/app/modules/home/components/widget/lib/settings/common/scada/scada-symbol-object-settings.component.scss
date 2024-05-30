@@ -13,11 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .iot-svg-object-title {
-    font-size: 18px;
-    font-style: normal;
-    font-weight: 500;
-    line-height: 24px;
-  }
+.tb-scada-symbol-appearance-properties {
+  gap: 16px;
+  display: flex;
+  flex-direction: column;
 }

@@ -40,11 +40,11 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  IotSvgProperty,
-  IotSvgPropertyType,
-  iotSvgPropertyTypes,
-  iotSvgPropertyTypeTranslations
-} from '@home/components/widget/lib/svg/iot-svg.models';
+  ScadaSymbolProperty,
+  ScadaSymbolPropertyType,
+  scadaSymbolPropertyTypes,
+  scadaSymbolPropertyTypeTranslations
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { deepClone } from '@core/utils';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
@@ -56,21 +56,21 @@ import {
   ScadaSymbolPropertiesComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-properties.component';
 
-export const propertyValid = (property: IotSvgProperty): boolean => !(!property.id || !property.name || !property.type);
+export const propertyValid = (property: ScadaSymbolProperty): boolean => !(!property.id || !property.name || !property.type);
 
-export const defaultPropertyValue = (type: IotSvgPropertyType): any => {
+export const defaultPropertyValue = (type: ScadaSymbolPropertyType): any => {
   switch (type) {
-    case IotSvgPropertyType.text:
+    case ScadaSymbolPropertyType.text:
       return '';
-    case IotSvgPropertyType.number:
+    case ScadaSymbolPropertyType.number:
       return 0;
-    case IotSvgPropertyType.switch:
+    case ScadaSymbolPropertyType.switch:
       return false;
-    case IotSvgPropertyType.color:
+    case ScadaSymbolPropertyType.color:
       return '#000';
-    case IotSvgPropertyType.color_settings:
+    case ScadaSymbolPropertyType.color_settings:
       return constantColor('#000');
-    case IotSvgPropertyType.font:
+    case ScadaSymbolPropertyType.font:
       return {
         size: 12,
         sizeUnit: 'px',
@@ -79,7 +79,7 @@ export const defaultPropertyValue = (type: IotSvgPropertyType): any => {
         style: 'normal',
         lineHeight: '1'
       } as Font;
-    case IotSvgPropertyType.units:
+    case ScadaSymbolPropertyType.units:
       return '';
   }
 };
@@ -110,8 +110,8 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
   @ViewChild('editButton')
   editButton: MatButton;
 
-  iotSvgPropertyTypes = iotSvgPropertyTypes;
-  iotSvgPropertyTypeTranslations = iotSvgPropertyTypeTranslations;
+  scadaSymbolPropertyTypes = scadaSymbolPropertyTypes;
+  scadaSymbolPropertyTypeTranslations = scadaSymbolPropertyTypeTranslations;
 
   @Input()
   disabled: boolean;
@@ -127,7 +127,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
 
   propertyRowFormGroup: UntypedFormGroup;
 
-  modelValue: IotSvgProperty;
+  modelValue: ScadaSymbolProperty;
 
   private propagateChange = (_val: any) => {};
 
@@ -148,7 +148,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
     this.propertyRowFormGroup.valueChanges.subscribe(
       () => this.updateModel()
     );
-    this.propertyRowFormGroup.get('type').valueChanges.subscribe((newType: IotSvgPropertyType) => {
+    this.propertyRowFormGroup.get('type').valueChanges.subscribe((newType: ScadaSymbolPropertyType) => {
       this.onTypeChanged(newType);
     });
   }
@@ -169,7 +169,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
     }
   }
 
-  writeValue(value: IotSvgProperty): void {
+  writeValue(value: ScadaSymbolProperty): void {
     this.modelValue = value;
     this.propertyRowFormGroup.patchValue(
       {
@@ -241,7 +241,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
         propertyIdNotUnique: true
       };
     }
-    const property: IotSvgProperty = {...this.modelValue, ...this.propertyRowFormGroup.value};
+    const property: ScadaSymbolProperty = {...this.modelValue, ...this.propertyRowFormGroup.value};
     if (!propertyValid(property)) {
       return {
         property: true
@@ -266,13 +266,13 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
     };
   }
 
-  private onTypeChanged(newType: IotSvgPropertyType) {
+  private onTypeChanged(newType: ScadaSymbolPropertyType) {
     this.modelValue = {...this.modelValue, ...{type: newType}};
     this.modelValue.default = defaultPropertyValue(newType);
   }
 
   private updateModel() {
-    const value: IotSvgProperty = this.propertyRowFormGroup.value;
+    const value: ScadaSymbolProperty = this.propertyRowFormGroup.value;
     this.modelValue = {...this.modelValue, ...value};
     this.propagateChange(this.modelValue);
   }

@@ -99,7 +99,7 @@ import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-c
 import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
-import { IotSvgWidgetComponent } from '@home/components/widget/lib/svg/iot-svg-widget.component';
+import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 
 @NgModule({
   declarations:
@@ -166,7 +166,7 @@ import { IotSvgWidgetComponent } from '@home/components/widget/lib/svg/iot-svg-w
       BarChartWidgetComponent,
       PolarAreaWidgetComponent,
       RadarChartWidgetComponent,
-      IotSvgWidgetComponent
+      ScadaSymbolWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -236,7 +236,7 @@ import { IotSvgWidgetComponent } from '@home/components/widget/lib/svg/iot-svg-w
         BarChartWidgetComponent,
         PolarAreaWidgetComponent,
         RadarChartWidgetComponent,
-        IotSvgWidgetComponent
+        ScadaSymbolWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

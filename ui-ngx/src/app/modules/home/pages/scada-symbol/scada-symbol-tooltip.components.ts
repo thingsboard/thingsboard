@@ -30,7 +30,7 @@ import {
   ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ScadaSymbolElement } from '@home/pages/scada-symbol/scada-symbol.models';
+import { ScadaSymbolElement } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { ENTER } from '@angular/cdk/keycodes';
@@ -234,7 +234,7 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         {
           zIndex: 200,
           arrow: true,
-          theme: ['iot-svg', 'tb-active'],
+          theme: ['scada-symbol', 'tb-active'],
           interactive: true,
           trigger: 'click',
           side: 'top',
@@ -254,7 +254,7 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         {
           zIndex: 200,
           arrow: true,
-          theme: ['iot-svg', 'tb-active'],
+          theme: ['scada-symbol', 'tb-active'],
           interactive: true,
           trigger: 'click',
           side: 'top',

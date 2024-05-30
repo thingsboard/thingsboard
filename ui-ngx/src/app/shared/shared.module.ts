@@ -220,6 +220,7 @@ import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rul
 import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol-input.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -421,7 +422,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
-    HexInputComponent
+    HexInputComponent,
+    ScadaSymbolInputComponent
   ],
   imports: [
     CommonModule,
@@ -675,7 +677,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MultipleGalleryImageInputComponent,
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
-    WidgetButtonComponent
+    WidgetButtonComponent,
+    ScadaSymbolInputComponent
   ]
 })
 export class SharedModule { }

@@ -35,7 +35,7 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { IotSvgProperty, IotSvgPropertyType } from '@home/components/widget/lib/svg/iot-svg.models';
+import { ScadaSymbolProperty, ScadaSymbolPropertyType } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
   propertyValid,
@@ -94,11 +94,11 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     });
     this.propertiesFormGroup.valueChanges.subscribe(
       () => {
-        let properties: IotSvgProperty[] = this.propertiesFormGroup.get('properties').value;
+        let properties: ScadaSymbolProperty[] = this.propertiesFormGroup.get('properties').value;
         if (properties) {
           properties = properties.filter(p => propertyValid(p));
         }
-        this.booleanPropertyIds = properties.filter(p => p.type === IotSvgPropertyType.switch).map(p => p.id);
+        this.booleanPropertyIds = properties.filter(p => p.type === ScadaSymbolPropertyType.switch).map(p => p.id);
         this.propagateChange(properties);
       }
     );
@@ -120,10 +120,10 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     }
   }
 
-  writeValue(value: IotSvgProperty[] | undefined): void {
+  writeValue(value: ScadaSymbolProperty[] | undefined): void {
     const properties= value || [];
     this.propertiesFormGroup.setControl('properties', this.preparePropertiesFormArray(properties), {emitEvent: false});
-    this.booleanPropertyIds = properties.filter(p => p.type === IotSvgPropertyType.switch).map(p => p.id);
+    this.booleanPropertyIds = properties.filter(p => p.type === ScadaSymbolPropertyType.switch).map(p => p.id);
   }
 
   public validate(c: UntypedFormControl) {
@@ -178,10 +178,10 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
   }
 
   addProperty() {
-    const property: IotSvgProperty = {
+    const property: ScadaSymbolProperty = {
       id: '',
       name: '',
-      type: IotSvgPropertyType.text,
+      type: ScadaSymbolPropertyType.text,
       default: ''
     };
     const propertiesArray = this.propertiesFormGroup.get('properties') as UntypedFormArray;
@@ -195,7 +195,7 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
     });
   }
 
-  private preparePropertiesFormArray(properties: IotSvgProperty[] | undefined): UntypedFormArray {
+  private preparePropertiesFormArray(properties: ScadaSymbolProperty[] | undefined): UntypedFormArray {
     const propertiesControls: Array<AbstractControl> = [];
     if (properties) {
       properties.forEach((property) => {

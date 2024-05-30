@@ -15,44 +15,44 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="iotSvgObjectSettingsFormGroup">
-  <div class="iot-svg-object-title">{{ metadata?.title | customTranslate }}</div>
+<ng-container [formGroup]="scadaSymbolObjectSettingsFormGroup">
   <div *ngIf="metadata?.behavior?.length" class="tb-form-panel" formGroupName="behavior">
     <div class="tb-form-panel-title" translate>scada.behavior.behavior</div>
-    <div *ngFor="let behaviour of metadata.behavior" class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ behaviour.hint | customTranslate }}">{{ behaviour.name | customTranslate }}</div>
-      <tb-get-value-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.value"
+    <div *ngFor="let behavior of metadata.behavior" class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ behavior.hint | customTranslate }}">{{ behavior.name | customTranslate }}</div>
+      <tb-get-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.value"
                                     fxFlex
-                                    panelTitle="{{ behaviour.name | customTranslate }}"
-                                    [valueType]="behaviour.valueType"
-                                    [trueLabel]="behaviour.trueLabel | customTranslate"
-                                    [falseLabel]="behaviour.falseLabel | customTranslate"
-                                    [stateLabel]="behaviour.stateLabel | customTranslate"
+                                    panelTitle="{{ behavior.name | customTranslate }}"
+                                    [valueType]="behavior.valueType"
+                                    [trueLabel]="behavior.trueLabel | customTranslate"
+                                    [falseLabel]="behavior.falseLabel | customTranslate"
+                                    [stateLabel]="behavior.stateLabel | customTranslate"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="{{ behaviour.id }}">
+                                    formControlName="{{ behavior.id }}">
       </tb-get-value-action-settings>
-      <tb-set-value-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.action"
+      <tb-set-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.action"
                                     fxFlex
-                                    panelTitle="{{ behaviour.name | customTranslate }}"
-                                    [valueType]="behaviour.valueType"
+                                    panelTitle="{{ behavior.name | customTranslate }}"
+                                    [valueType]="behavior.valueType"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
-                                    formControlName="{{ behaviour.id }}">
+                                    formControlName="{{ behavior.id }}">
       </tb-set-value-action-settings>
-      <tb-widget-action-settings *ngIf="behaviour.type === IotSvgBehaviorType.widgetAction"
+      <tb-widget-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.widgetAction"
                                  fxFlex
-                                 panelTitle="{{ behaviour.name | customTranslate }}"
+                                 panelTitle="{{ behavior.name | customTranslate }}"
                                  [callbacks]="callbacks"
                                  [widgetType]="widgetType"
-                                 formControlName="{{ behaviour.id }}">
+                                 formControlName="{{ behavior.id }}">
       </tb-widget-action-settings>
     </div>
   </div>
-  <div *ngIf="propertyRows?.length" class="tb-form-panel" formGroupName="properties">
+  <div [fxShow]="propertyRows?.length || appearanceProperties.children.length" class="tb-form-panel" formGroupName="properties">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div #appearanceProperties><ng-content select=".tb-scada-symbol-appearance-properties"></ng-content></div>
     <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between" [class]="propertyRow.rowClass">
       <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width" formControlName="{{ propertyRow.switch.id }}">
         {{ propertyRow.label | customTranslate }}
@@ -61,35 +61,35 @@
       <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
         <ng-container *ngFor="let property of propertyRow.properties">
           <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
-          <mat-form-field  *ngIf="property.type === IotSvgPropertyType.text" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.text" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
             <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
           </mat-form-field>
-          <tb-color-input *ngIf="property.type === IotSvgPropertyType.color"
+          <tb-color-input *ngIf="property.type === ScadaSymbolPropertyType.color"
                           [required]="property.required"
                           [class]="property.fieldClass"
                           asBoxInput
                           colorClearButton
                           formControlName="{{ property.id }}">
           </tb-color-input>
-          <tb-color-settings *ngIf="property.type === IotSvgPropertyType.color_settings"
+          <tb-color-settings *ngIf="property.type === ScadaSymbolPropertyType.color_settings"
                              [class]="property.fieldClass"
                              formControlName="{{ property.id }}"
                              settingsKey="{{ property.name | customTranslate }}">
           </tb-color-settings>
-          <mat-form-field  *ngIf="property.type === IotSvgPropertyType.number" [class]="property.fieldClass" appearance="outline" class="number" subscriptSizing="dynamic">
+          <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.number" [class]="property.fieldClass" appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="{{ property.id }}" [required]="property.required"
                    [min]="property.min" [max]="property.max" [step]="property.step"
                    type="number" placeholder="{{ 'widget-config.set' | translate }}">
             <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
           </mat-form-field>
-          <tb-font-settings *ngIf="property.type === IotSvgPropertyType.font"
+          <tb-font-settings *ngIf="property.type === ScadaSymbolPropertyType.font"
                             [class]="property.fieldClass"
                             formControlName="{{ property.id }}"
                             clearButton
                             disabledLineHeight>
           </tb-font-settings>
-          <tb-unit-input *ngIf="property.type === IotSvgPropertyType.units"
+          <tb-unit-input *ngIf="property.type === ScadaSymbolPropertyType.units"
                          [class]="property.fieldClass"
                          [required]="property.required"
                          formControlName="{{ property.id }}"></tb-unit-input>

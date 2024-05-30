@@ -115,11 +115,11 @@ public class ImageControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testUploadIoTSvgImage() throws Exception {
-        String filename = "my_iot_svg_image.svg";
-        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.IOT_SVG.name(), filename, "image/svg+xml", SVG_IMAGE);
+    public void testUploadScadaSymbolImage() throws Exception {
+        String filename = "my_scada_symbol_image.svg";
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.SCADA_SYMBOL.name(), filename, "image/svg+xml", SVG_IMAGE);
 
-        assertThat(imageInfo.getResourceSubType()).isEqualTo(ResourceSubType.IOT_SVG);
+        assertThat(imageInfo.getResourceSubType()).isEqualTo(ResourceSubType.SCADA_SYMBOL);
 
         ImageDescriptor imageDescriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         checkSvgImageDescriptor(imageDescriptor);
@@ -224,37 +224,37 @@ public class ImageControllerTest extends AbstractControllerTest {
         String systemImageName = "my_system_png_image.png";
         TbResourceInfo systemImage = uploadImage(HttpMethod.POST, "/api/image", systemImageName, "image/png", PNG_IMAGE);
 
-        String systemIotSvgName  = "my_system_iot_svg_image.svg";
-        TbResourceInfo systemIotSvg = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.IOT_SVG.name(), systemIotSvgName, "image/svg+xml", SVG_IMAGE);
+        String systemScadaSymbolName  = "my_system_scada_symbol_image.svg";
+        TbResourceInfo systemScadaSymbol = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.SCADA_SYMBOL.name(), systemScadaSymbolName, "image/svg+xml", SVG_IMAGE);
 
         loginTenantAdmin();
         String tenantImageName = "my_jpeg_image.jpg";
         TbResourceInfo tenantImage = uploadImage(HttpMethod.POST, "/api/image", tenantImageName, "image/jpeg", JPEG_IMAGE);
 
-        String tenantIotSvgName  = "my_iot_svg_image.svg";
-        TbResourceInfo tenantIotSvg = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.IOT_SVG.name(), tenantIotSvgName, "image/svg+xml", SVG_IMAGE);
+        String tenantScadaSymbolName  = "my_scada_symbol_image.svg";
+        TbResourceInfo tenantScadaSymbol = uploadImage(HttpMethod.POST, "/api/image", ResourceSubType.SCADA_SYMBOL.name(), tenantScadaSymbolName, "image/svg+xml", SVG_IMAGE);
 
         List<TbResourceInfo> tenantImages = getImages(null, false, 10);
         assertThat(tenantImages).containsOnly(tenantImage);
 
-        List<TbResourceInfo> tenantIotSvgs = getImages(null, ResourceSubType.IOT_SVG.name(), false, 10);
-        assertThat(tenantIotSvgs).containsOnly(tenantIotSvg);
+        List<TbResourceInfo> tenantScadaSymbols = getImages(null, ResourceSubType.SCADA_SYMBOL.name(), false, 10);
+        assertThat(tenantScadaSymbols).containsOnly(tenantScadaSymbol);
 
         List<TbResourceInfo> allImages = getImages(null, true, 10);
         assertThat(allImages).containsOnly(tenantImage, systemImage);
 
-        List<TbResourceInfo> allIotSvgs = getImages(null, ResourceSubType.IOT_SVG.name(), true, 10);
-        assertThat(allIotSvgs).containsOnly(tenantIotSvg, systemIotSvg);
+        List<TbResourceInfo> allScadaSymbols = getImages(null, ResourceSubType.SCADA_SYMBOL.name(), true, 10);
+        assertThat(allScadaSymbols).containsOnly(tenantScadaSymbol, systemScadaSymbol);
 
         assertThat(getImages("png", true, 10))
                 .containsOnly(systemImage);
         assertThat(getImages("jpg", true, 10))
                 .containsOnly(tenantImage);
 
-        assertThat(getImages("my_system_iot", ResourceSubType.IOT_SVG.name(), true, 10))
-                .containsOnly(systemIotSvg);
-        assertThat(getImages("my_iot_svg", ResourceSubType.IOT_SVG.name(),true, 10))
-                .containsOnly(tenantIotSvg);
+        assertThat(getImages("my_system_scada_symbol", ResourceSubType.SCADA_SYMBOL.name(), true, 10))
+                .containsOnly(systemScadaSymbol);
+        assertThat(getImages("my_scada_symbol", ResourceSubType.SCADA_SYMBOL.name(),true, 10))
+                .containsOnly(tenantScadaSymbol);
     }
 
     @Test

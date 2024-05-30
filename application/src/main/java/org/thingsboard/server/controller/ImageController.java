@@ -266,7 +266,7 @@ public class ImageController extends BaseController {
                                               @RequestParam int pageSize,
                                               @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                               @RequestParam int page,
-                                              @Parameter(description = RESOURCE_IMAGE_SUB_TYPE_DESCRIPTION, schema = @Schema(allowableValues = {"IMAGE", "IOT_SVG"}))
+                                              @Parameter(description = RESOURCE_IMAGE_SUB_TYPE_DESCRIPTION, schema = @Schema(allowableValues = {"IMAGE", "SCADA_SYMBOL"}))
                                               @RequestParam(required = false) String imageSubType,
                                               @Parameter(description = RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION)
                                               @RequestParam(required = false) boolean includeSystemImages,

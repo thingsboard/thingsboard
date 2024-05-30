@@ -35,7 +35,7 @@ import {
   Validators
 } from '@angular/forms';
 import { PageComponent } from '@shared/components/page.component';
-import { emptyMetadata, IotSvgMetadata } from '@home/components/widget/lib/svg/iot-svg.models';
+import { emptyMetadata, ScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
@@ -48,10 +48,10 @@ import {
   clickActionFunctionCompletions,
   elementStateRenderFunctionCompletions,
   generalStateRenderFunctionCompletions,
-  iotSvgContextCompletion,
+  scadaSymbolContextCompletion,
   scadaSymbolGeneralStateRenderHighlightRules,
   scadaSymbolGeneralStateRenderPropertiesHighlightRules
-} from '@home/pages/scada-symbol/scada-symbol.models';
+} from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 
 @Component({
@@ -83,7 +83,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   @Input()
   tags: string[];
 
-  private modelValue: IotSvgMetadata;
+  private modelValue: ScadaSymbolMetadata;
 
   private propagateChange = null;
 
@@ -167,7 +167,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
     }
   }
 
-  writeValue(value: IotSvgMetadata): void {
+  writeValue(value: ScadaSymbolMetadata): void {
     this.modelValue = value;
     this.metadataFormGroup.patchValue(
       value, {emitEvent: false}
@@ -195,14 +195,14 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   }
 
   private updateModel() {
-    const metadata: IotSvgMetadata = this.metadataFormGroup.getRawValue();
+    const metadata: ScadaSymbolMetadata = this.metadataFormGroup.getRawValue();
     this.modelValue = metadata;
     this.propagateChange(this.modelValue);
     this.updateFunctionCompleters(metadata);
   }
 
-  private updateFunctionCompleters(metadata: IotSvgMetadata) {
-    const contextCompleter = iotSvgContextCompletion(metadata, this.tags, this.customTranslate);
+  private updateFunctionCompleters(metadata: ScadaSymbolMetadata) {
+    const contextCompleter = scadaSymbolContextCompletion(metadata, this.tags, this.customTranslate);
     const generalStateRender = generalStateRenderFunctionCompletions(contextCompleter);
     if (!this.generalStateRenderFunctionCompleter) {
       this.generalStateRenderFunctionCompleter = new TbEditorCompleter(generalStateRender);

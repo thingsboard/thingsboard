@@ -178,7 +178,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   actionColumnWidth = '240px';
 
   get isScada() {
-    return this.imageSubType === ResourceSubType.IOT_SVG;
+    return this.imageSubType === ResourceSubType.SCADA_SYMBOL;
   }
 
   private updateDataSubscription: Subscription;

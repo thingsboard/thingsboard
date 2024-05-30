@@ -29,7 +29,7 @@ export enum ResourceType {
 
 export enum ResourceSubType {
   IMAGE = 'IMAGE',
-  IOT_SVG = 'IOT_SVG'
+  SCADA_SYMBOL = 'SCADA_SYMBOL'
 }
 
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
@@ -167,7 +167,11 @@ export const isImageResourceUrl = (url: string): boolean => url && IMAGES_URL_RE
 
 export const extractParamsFromImageResourceUrl = (url: string): {type: ImageResourceType; key: string} => {
   const res = url.match(IMAGES_URL_REGEXP);
-  return {type: res[1] as ImageResourceType, key: res[2]};
+  if (res?.length > 2) {
+    return {type: res[1] as ImageResourceType, key: res[2]};
+  } else {
+    return null;
+  }
 };
 
 export const isBase64DataImageUrl = (url: string): boolean => url && url.startsWith(IMAGE_BASE64_URL_PREFIX);

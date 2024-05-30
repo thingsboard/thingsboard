@@ -43,7 +43,7 @@ import { ImageGalleryComponent } from '@shared/components/image/image-gallery.co
 import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/models/resource.models';
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
 import { ImageService } from '@core/http/image.service';
-import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol.models';
+import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -64,7 +64,7 @@ export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
     const key = decodeURIComponent(route.params.key);
     return forkJoin({
       imageResource: imageService.getImageInfo(type, key),
-      svgContent: imageService.getImageString(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`)
+      scadaSymbolContent: imageService.getImageString(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`)
     });
 };
 
@@ -127,7 +127,7 @@ const routes: Routes = [
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
               title: 'scada.symbols',
-              imageSubType: ResourceSubType.IOT_SVG
+              imageSubType: ResourceSubType.SCADA_SYMBOL
             }
           },
           {

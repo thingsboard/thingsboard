@@ -18,7 +18,9 @@
 <div class="tb-time-series-chart-panel" [style.padding]="padding"
      [class.overlay]="overlayEnabled" [style]="backgroundStyle$ | async">
   <div class="tb-time-series-chart-overlay" [style]="overlayStyle"></div>
-  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  </ng-container>
   <div class="tb-time-series-chart-content" [class]="legendClass">
     <div #chartShape class="tb-time-series-chart-shape">
     </div>

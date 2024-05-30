@@ -3415,6 +3415,10 @@
         "state-render-function": "State render function",
         "preview": "Preview",
         "preview-widget-action-text": "Widget action '{{type}}' successfully invoked!",
+        "no-symbol": "No SCADA symbol",
+        "no-symbol-selected": "No SCADA symbol selected",
+        "clear-symbol": "Clear SCADA symbol",
+        "browse-symbol-from-gallery": "Browse SCADA symbol from gallery",
         "tag": {
             "tag": "Tag",
             "on-click-action": "On click action",

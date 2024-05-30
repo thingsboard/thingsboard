@@ -14,21 +14,20 @@
 /// limitations under the License.
 ///
 
-import { IotSvgObjectSettings } from '@home/components/widget/lib/svg/iot-svg.models';
+import { ScadaSymbolObjectSettings } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { BackgroundSettings, BackgroundType } from '@shared/models/widget-settings.models';
 
-export interface IotSvgWidgetSettings {
-  iotSvg?: string;
-  iotSvgUrl?: string;
-  iotSvgContent?: string;
+export interface ScadaSymbolWidgetSettings {
+  scadaSymbolUrl?: string;
+  scadaSymbolContent?: string;
   simulated?: boolean;
-  iotSvgObject: IotSvgObjectSettings;
+  scadaSymbolObjectSettings: ScadaSymbolObjectSettings;
   background: BackgroundSettings;
+  padding: string;
 }
 
-export const iotSvgWidgetDefaultSettings: IotSvgWidgetSettings = {
-  iotSvg: '/assets/widget/svg/drawing.svg',
-  iotSvgObject: {
+export const scadaSymbolWidgetDefaultSettings: ScadaSymbolWidgetSettings = {
+  scadaSymbolObjectSettings: {
     behavior: {},
     properties: {}
   },
@@ -40,5 +39,6 @@ export const iotSvgWidgetDefaultSettings: IotSvgWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };

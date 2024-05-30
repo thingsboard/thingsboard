@@ -27,7 +27,6 @@ import {
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetService } from '@core/http/widget.service';
-import { TranslateService } from '@ngx-translate/core';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { TbHighlightRule } from '@shared/models/ace/ace.models';
 import {
@@ -35,7 +34,7 @@ import {
   scadaSymbolClickActionPropertiesHighlightRules,
   scadaSymbolElementStateRenderHighlightRules,
   scadaSymbolElementStateRenderPropertiesHighlightRules
-} from '@home/pages/scada-symbol/scada-symbol.models';
+} from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 
 @Component({

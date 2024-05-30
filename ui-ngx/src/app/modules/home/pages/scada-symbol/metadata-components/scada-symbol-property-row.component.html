@@ -24,8 +24,8 @@
   </mat-form-field>
   <mat-form-field class="tb-inline-field tb-type-field fixed-height" appearance="outline" subscriptSizing="dynamic">
     <mat-select formControlName="type">
-      <mat-option *ngFor="let type of iotSvgPropertyTypes" [value]="type">
-        {{ iotSvgPropertyTypeTranslations.get(type) | translate }}
+      <mat-option *ngFor="let type of scadaSymbolPropertyTypes" [value]="type">
+        {{ scadaSymbolPropertyTypeTranslations.get(type) | translate }}
       </mat-option>
     </mat-select>
   </mat-form-field>

@@ -33,8 +33,7 @@ import {
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { BehaviorSubject, forkJoin, Observable, Observer } from 'rxjs';
-import { share } from 'rxjs/operators';
+import { BehaviorSubject, forkJoin, Observable, Observer, Subject } from 'rxjs';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
@@ -42,8 +41,9 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { takeUntil } from 'rxjs/operators';
 
-export interface IotSvgApi {
+export interface ScadaSymbolApi {
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
@@ -54,57 +54,57 @@ export interface IotSvgApi {
   setValue: (valueId: string, value: any) => void;
 }
 
-export interface IotSvgContext {
-  api: IotSvgApi;
+export interface ScadaSymbolContext {
+  api: ScadaSymbolApi;
   tags: {[id: string]: Element[]};
   values: {[id: string]: any};
   properties: {[id: string]: any};
 }
 
-export type IotSvgStateRenderFunction = (ctx: IotSvgContext, svg: Svg) => void;
+export type ScadaSymbolStateRenderFunction = (ctx: ScadaSymbolContext, svg: Svg) => void;
 
-export type IotSvgTagStateRenderFunction = (ctx: IotSvgContext, element: Element) => void;
+export type ScadaSymbolTagStateRenderFunction = (ctx: ScadaSymbolContext, element: Element) => void;
 
-export type IotSvgActionTrigger = 'click';
+export type ScadaSymbolActionTrigger = 'click';
 
-export type IotSvgActionFunction = (ctx: IotSvgContext, element: Element, event: Event) => void;
-export interface IotSvgAction {
+export type ScadaSymbolActionFunction = (ctx: ScadaSymbolContext, element: Element, event: Event) => void;
+export interface ScadaSymbolAction {
   actionFunction?: string;
-  action?: IotSvgActionFunction;
+  action?: ScadaSymbolActionFunction;
 }
 
-export interface IotSvgTag {
+export interface ScadaSymbolTag {
   tag: string;
   stateRenderFunction?: string;
-  stateRender?: IotSvgTagStateRenderFunction;
-  actions?: {[trigger: string]: IotSvgAction};
+  stateRender?: ScadaSymbolTagStateRenderFunction;
+  actions?: {[trigger: string]: ScadaSymbolAction};
 }
 
-export enum IotSvgBehaviorType {
+export enum ScadaSymbolBehaviorType {
   value = 'value',
   action = 'action',
   widgetAction = 'widgetAction'
 }
 
-export const iotSvgBehaviorTypes = Object.keys(IotSvgBehaviorType) as IotSvgBehaviorType[];
+export const scadaSymbolBehaviorTypes = Object.keys(ScadaSymbolBehaviorType) as ScadaSymbolBehaviorType[];
 
-export const iotSvgBehaviorTypeTranslations = new Map<IotSvgBehaviorType, string>(
+export const scadaSymbolBehaviorTypeTranslations = new Map<ScadaSymbolBehaviorType, string>(
   [
-    [IotSvgBehaviorType.value, 'scada.behavior.type-value'],
-    [IotSvgBehaviorType.action, 'scada.behavior.type-action'],
-    [IotSvgBehaviorType.widgetAction, 'scada.behavior.type-widget-action']
+    [ScadaSymbolBehaviorType.value, 'scada.behavior.type-value'],
+    [ScadaSymbolBehaviorType.action, 'scada.behavior.type-action'],
+    [ScadaSymbolBehaviorType.widgetAction, 'scada.behavior.type-widget-action']
   ]
 );
 
 
-export interface IotSvgBehaviorBase {
+export interface ScadaSymbolBehaviorBase {
   id: string;
   name: string;
   hint?: string;
-  type: IotSvgBehaviorType;
+  type: ScadaSymbolBehaviorType;
 }
 
-export interface IotSvgBehaviorValue extends IotSvgBehaviorBase {
+export interface ScadaSymbolBehaviorValue extends ScadaSymbolBehaviorBase {
   valueType: ValueType;
   defaultValue: any;
   trueLabel?: string;
@@ -112,16 +112,16 @@ export interface IotSvgBehaviorValue extends IotSvgBehaviorBase {
   stateLabel?: string;
 }
 
-export interface IotSvgBehaviorAction extends IotSvgBehaviorBase {
+export interface ScadaSymbolBehaviorAction extends ScadaSymbolBehaviorBase {
   valueType: ValueType;
   valueToDataType: ValueToDataType;
   constantValue: any;
   valueToDataFunction: string;
 }
 
-export type IotSvgBehavior = IotSvgBehaviorValue & IotSvgBehaviorAction;
+export type ScadaSymbolBehavior = ScadaSymbolBehaviorValue & ScadaSymbolBehaviorAction;
 
-export enum IotSvgPropertyType {
+export enum ScadaSymbolPropertyType {
   text = 'text',
   number = 'number',
   switch = 'switch',
@@ -131,30 +131,30 @@ export enum IotSvgPropertyType {
   units = 'units'
 }
 
-export const iotSvgPropertyTypes = Object.keys(IotSvgPropertyType) as IotSvgPropertyType[];
+export const scadaSymbolPropertyTypes = Object.keys(ScadaSymbolPropertyType) as ScadaSymbolPropertyType[];
 
-export const iotSvgPropertyTypeTranslations = new Map<IotSvgPropertyType, string>(
+export const scadaSymbolPropertyTypeTranslations = new Map<ScadaSymbolPropertyType, string>(
   [
-    [IotSvgPropertyType.text, 'scada.property.type-text'],
-    [IotSvgPropertyType.number, 'scada.property.type-number'],
-    [IotSvgPropertyType.switch, 'scada.property.type-switch'],
-    [IotSvgPropertyType.color, 'scada.property.type-color'],
-    [IotSvgPropertyType.color_settings, 'scada.property.type-color-settings'],
-    [IotSvgPropertyType.font, 'scada.property.type-font'],
-    [IotSvgPropertyType.units, 'scada.property.type-units']
+    [ScadaSymbolPropertyType.text, 'scada.property.type-text'],
+    [ScadaSymbolPropertyType.number, 'scada.property.type-number'],
+    [ScadaSymbolPropertyType.switch, 'scada.property.type-switch'],
+    [ScadaSymbolPropertyType.color, 'scada.property.type-color'],
+    [ScadaSymbolPropertyType.color_settings, 'scada.property.type-color-settings'],
+    [ScadaSymbolPropertyType.font, 'scada.property.type-font'],
+    [ScadaSymbolPropertyType.units, 'scada.property.type-units']
   ]
 );
 
-export const iotSvgPropertyRowClasses =
+export const scadaSymbolPropertyRowClasses =
   ['column', 'column-xs', 'column-lt-md', 'align-start', 'no-border', 'no-gap', 'no-padding', 'same-padding'];
 
-export const iotSvgPropertyFieldClasses =
+export const scadaSymbolPropertyFieldClasses =
   ['medium-width', 'flex', 'flex-xs', 'flex-lt-md'];
 
-export interface IotSvgPropertyBase {
+export interface ScadaSymbolPropertyBase {
   id: string;
   name: string;
-  type: IotSvgPropertyType;
+  type: ScadaSymbolPropertyType;
   default: any;
   required?: boolean;
   subLabel?: string;
@@ -165,24 +165,24 @@ export interface IotSvgPropertyBase {
   fieldClass?: string;
 }
 
-export interface IotSvgNumberProperty extends IotSvgPropertyBase {
+export interface ScadaSymbolNumberProperty extends ScadaSymbolPropertyBase {
   min?: number;
   max?: number;
   step?: number;
 }
 
-export type IotSvgProperty = IotSvgPropertyBase & IotSvgNumberProperty;
+export type ScadaSymbolProperty = ScadaSymbolPropertyBase & ScadaSymbolNumberProperty;
 
-export interface IotSvgMetadata {
+export interface ScadaSymbolMetadata {
   title: string;
   stateRenderFunction?: string;
-  stateRender?: IotSvgStateRenderFunction;
-  tags: IotSvgTag[];
-  behavior: IotSvgBehavior[];
-  properties: IotSvgProperty[];
+  stateRender?: ScadaSymbolStateRenderFunction;
+  tags: ScadaSymbolTag[];
+  behavior: ScadaSymbolBehavior[];
+  properties: ScadaSymbolProperty[];
 }
 
-export const emptyMetadata = (): IotSvgMetadata => ({
+export const emptyMetadata = (): ScadaSymbolMetadata => ({
   title: '',
   tags: [],
   behavior: [],
@@ -190,16 +190,16 @@ export const emptyMetadata = (): IotSvgMetadata => ({
 });
 
 
-export const parseIotSvgMetadataFromContent = (svgContent: string): IotSvgMetadata => {
+export const parseScadaSymbolMetadataFromContent = (svgContent: string): ScadaSymbolMetadata => {
   try {
     const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-    return parseIotSvgMetadataFromDom(svgDoc);
+    return parseScadaSymbolMetadataFromDom(svgDoc);
   } catch (_e) {
     return emptyMetadata();
   }
 };
 
-const parseIotSvgMetadataFromDom = (svgDoc: Document): IotSvgMetadata => {
+const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata => {
   try {
     const elements = svgDoc.getElementsByTagName('tb:metadata');
     if (elements.length) {
@@ -213,13 +213,13 @@ const parseIotSvgMetadataFromDom = (svgDoc: Document): IotSvgMetadata => {
   }
 };
 
-export const updateIotSvgMetadataInContent = (svgContent: string, metadata: IotSvgMetadata): string => {
+export const updateScadaSymbolMetadataInContent = (svgContent: string, metadata: ScadaSymbolMetadata): string => {
   const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
-  updateIotSvgMetadataInDom(svgDoc, metadata);
+  updateScadaSymbolMetadataInDom(svgDoc, metadata);
   return svgDoc.documentElement.outerHTML;
 };
 
-const updateIotSvgMetadataInDom = (svgDoc: Document, metadata: IotSvgMetadata) => {
+const updateScadaSymbolMetadataInDom = (svgDoc: Document, metadata: ScadaSymbolMetadata) => {
   svgDoc.documentElement.setAttribute('xmlns:tb', 'https://thingsboard.io/svg');
   let metadataElement: Node;
   const elements = svgDoc.getElementsByTagName('tb:metadata');
@@ -238,13 +238,13 @@ const updateIotSvgMetadataInDom = (svgDoc: Document, metadata: IotSvgMetadata) =
 const svgPartsRegex = /(<svg .*?>)(.*)<\/svg>/gms;
 const tbMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
 
-export interface IoTSvgContentData {
+export interface ScadaSymbolContentData {
   svgRootNode: string;
   innerSvg: string;
 }
 
-export const iotSvgContentData = (svgContent: string): IoTSvgContentData => {
-  const result: IoTSvgContentData = {
+export const scadaSymbolContentData = (svgContent: string): ScadaSymbolContentData => {
+  const result: ScadaSymbolContentData = {
     svgRootNode: '',
     innerSvg: ''
   };
@@ -268,7 +268,7 @@ export const iotSvgContentData = (svgContent: string): IoTSvgContentData => {
   return result;
 };
 
-const defaultGetValueSettings = (get: IotSvgBehaviorValue): GetValueSettings<any> => ({
+const defaultGetValueSettings = (get: ScadaSymbolBehaviorValue): GetValueSettings<any> => ({
     action: GetValueAction.DO_NOTHING,
     defaultValue: get.defaultValue,
     executeRpc: {
@@ -291,7 +291,7 @@ const defaultGetValueSettings = (get: IotSvgBehaviorValue): GetValueSettings<any
     }
   });
 
-const defaultSetValueSettings = (set: IotSvgBehaviorAction): SetValueSettings => ({
+const defaultSetValueSettings = (set: ScadaSymbolBehaviorAction): SetValueSettings => ({
   action: SetValueAction.EXECUTE_RPC,
   executeRpc: {
     method: 'setState',
@@ -314,7 +314,7 @@ const defaultSetValueSettings = (set: IotSvgBehaviorAction): SetValueSettings =>
   }
 });
 
-const defaultWidgetActionSettings = (widgetAction: IotSvgBehavior): WidgetAction => ({
+const defaultWidgetActionSettings = (widgetAction: ScadaSymbolBehavior): WidgetAction => ({
   type: WidgetActionType.updateDashboardState,
   targetDashboardStateId: null,
   openRightLayout: false,
@@ -322,17 +322,17 @@ const defaultWidgetActionSettings = (widgetAction: IotSvgBehavior): WidgetAction
   stateEntityParamName: null
 });
 
-export const defaultIotSvgObjectSettings = (metadata: IotSvgMetadata): IotSvgObjectSettings => {
-  const settings: IotSvgObjectSettings = {
+export const defaultScadaSymbolObjectSettings = (metadata: ScadaSymbolMetadata): ScadaSymbolObjectSettings => {
+  const settings: ScadaSymbolObjectSettings = {
     behavior: {},
     properties: {}
   };
   for (const behavior of metadata.behavior) {
-    if (behavior.type === IotSvgBehaviorType.value) {
-      settings.behavior[behavior.id] = defaultGetValueSettings(behavior as IotSvgBehaviorValue);
-    } else if (behavior.type === IotSvgBehaviorType.action) {
-      settings.behavior[behavior.id] = defaultSetValueSettings(behavior as IotSvgBehaviorAction);
-    } else if (behavior.type === IotSvgBehaviorType.widgetAction) {
+    if (behavior.type === ScadaSymbolBehaviorType.value) {
+      settings.behavior[behavior.id] = defaultGetValueSettings(behavior as ScadaSymbolBehaviorValue);
+    } else if (behavior.type === ScadaSymbolBehaviorType.action) {
+      settings.behavior[behavior.id] = defaultSetValueSettings(behavior as ScadaSymbolBehaviorAction);
+    } else if (behavior.type === ScadaSymbolBehaviorType.widgetAction) {
       settings.behavior[behavior.id] = defaultWidgetActionSettings(behavior);
     }
   }
@@ -342,7 +342,7 @@ export const defaultIotSvgObjectSettings = (metadata: IotSvgMetadata): IotSvgObj
   return settings;
 };
 
-export type IotSvgObjectSettings = {
+export type ScadaSymbolObjectSettings = {
   behavior: {[id: string]: any};
   properties: {[id: string]: any};
 };
@@ -350,21 +350,21 @@ export type IotSvgObjectSettings = {
 const parseError = (ctx: WidgetContext, err: any): string =>
   ctx.$injector.get(UtilsService).parseException(err).message || 'Unknown Error';
 
-export interface IotSvgObjectCallbacks {
-  onSvgObjectError: (error: string) => void;
-  onSvgObjectMessage: (message: string) => void;
+export interface ScadaSymbolObjectCallbacks {
+  onScadaSymbolObjectLoadingState: (loading: boolean) => void;
+  onScadaSymbolObjectError: (error: string) => void;
+  onScadaSymbolObjectMessage: (message: string) => void;
 }
 
-export class IotSvgObject {
+export class ScadaSymbolObject {
 
-  private metadata: IotSvgMetadata;
-  private settings: IotSvgObjectSettings;
-  private context: IotSvgContext;
+  private metadata: ScadaSymbolMetadata;
+  private settings: ScadaSymbolObjectSettings;
+  private context: ScadaSymbolContext;
 
   private svgShape: Svg;
   private box: Box;
 
-  private loadingSubject = new BehaviorSubject(false);
   private valueGetters: ValueGetter<any>[] = [];
   private valueActions: ValueAction[] = [];
   private valueSetters: {[behaviorId: string]: ValueSetter<any>} = {};
@@ -372,32 +372,34 @@ export class IotSvgObject {
   private stateValueSubjects: {[id: string]: BehaviorSubject<any>} = {};
 
   private readonly shapeResize$: ResizeObserver;
+  private readonly destroy$ = new Subject<void>();
+
   private scale = 1;
 
   private performInit = true;
 
-  loading$ = this.loadingSubject.asObservable().pipe(share());
-
   constructor(private rootElement: HTMLElement,
               private ctx: WidgetContext,
               private svgContent: string,
-              private inputSettings: IotSvgObjectSettings,
-              private callbacks: IotSvgObjectCallbacks,
+              private inputSettings: ScadaSymbolObjectSettings,
+              private callbacks: ScadaSymbolObjectCallbacks,
               private simulated: boolean) {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
     });
     const doc: XMLDocument = new DOMParser().parseFromString(this.svgContent, 'image/svg+xml');
-    this.metadata = parseIotSvgMetadataFromDom(doc);
-    const defaults = defaultIotSvgObjectSettings(this.metadata);
-    this.settings = mergeDeep<IotSvgObjectSettings>({} as IotSvgObjectSettings,
-      defaults, this.inputSettings || {} as IotSvgObjectSettings);
+    this.metadata = parseScadaSymbolMetadataFromDom(doc);
+    const defaults = defaultScadaSymbolObjectSettings(this.metadata);
+    this.settings = mergeDeep<ScadaSymbolObjectSettings>({} as ScadaSymbolObjectSettings,
+      defaults, this.inputSettings || {} as ScadaSymbolObjectSettings);
     this.prepareMetadata();
     this.prepareSvgShape(doc);
     this.shapeResize$.observe(this.rootElement);
   }
 
   public destroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
     if (this.shapeResize$) {
       this.shapeResize$.disconnect();
     }
@@ -406,8 +408,6 @@ export class IotSvgObject {
       this.stateValueSubjects[stateValueId].unsubscribe();
     }
     this.valueActions.forEach(v => v.destroy());
-    this.loadingSubject.complete();
-    this.loadingSubject.unsubscribe();
     for (const tag of this.metadata.tags) {
       const elements = this.context.tags[tag.tag];
       elements.forEach(element => {
@@ -490,15 +490,15 @@ export class IotSvgObject {
       }
     }
     for (const behavior of this.metadata.behavior) {
-      if (behavior.type === IotSvgBehaviorType.value) {
-        const getBehavior = behavior as IotSvgBehaviorValue;
+      if (behavior.type === ScadaSymbolBehaviorType.value) {
+        const getBehavior = behavior as ScadaSymbolBehaviorValue;
         let getValueSettings: GetValueSettings<any> = this.settings.behavior[getBehavior.id];
         getValueSettings = {...getValueSettings, actionLabel:
             this.ctx.utilsService.customTranslation(getBehavior.name, getBehavior.name)};
         const stateValueSubject = new BehaviorSubject<any>(getValueSettings.defaultValue);
         this.stateValueSubjects[getBehavior.id] = stateValueSubject;
         this.context.values[getBehavior.id] = getValueSettings.defaultValue;
-        stateValueSubject.subscribe((value) => {
+        stateValueSubject.pipe(takeUntil(this.destroy$)).subscribe((value) => {
           this.onStateValueChanged(getBehavior.id, value);
         });
         const valueGetter =
@@ -511,15 +511,15 @@ export class IotSvgObject {
           }, this.simulated);
         this.valueGetters.push(valueGetter);
         this.valueActions.push(valueGetter);
-      } else if (behavior.type === IotSvgBehaviorType.action) {
-        const setBehavior = behavior as IotSvgBehaviorAction;
+      } else if (behavior.type === ScadaSymbolBehaviorType.action) {
+        const setBehavior = behavior as ScadaSymbolBehaviorAction;
         let setValueSettings: SetValueSettings = this.settings.behavior[setBehavior.id];
         setValueSettings = {...setValueSettings, actionLabel:
             this.ctx.utilsService.customTranslation(setBehavior.name, setBehavior.name)};
         const valueSetter = ValueSetter.fromSettings<any>(this.ctx, setValueSettings, this.simulated);
         this.valueSetters[setBehavior.id] = valueSetter;
         this.valueActions.push(valueSetter);
-      } else if (behavior.type === IotSvgBehaviorType.widgetAction) {
+      } else if (behavior.type === ScadaSymbolBehaviorType.widgetAction) {
         // TODO:
       }
     }
@@ -529,45 +529,49 @@ export class IotSvgObject {
       this.valueGetters.forEach(valueGetter => {
         getValueObservables.push(valueGetter.getValue());
       });
-      this.loadingSubject.next(true);
-      forkJoin(getValueObservables).subscribe(
+      this.onLoadingState(true);
+      forkJoin(getValueObservables).pipe(takeUntil(this.destroy$)).subscribe(
         {
           next: () => {
-            this.loadingSubject.next(false);
+            this.onLoadingState(false);
           },
           error: () => {
-            this.loadingSubject.next(false);
+            this.onLoadingState(false);
           }
         }
       );
     }
   }
 
+  private onLoadingState(loading: boolean) {
+    this.callbacks.onScadaSymbolObjectLoadingState(loading);
+  }
+
   private onError(error: string) {
-    this.callbacks.onSvgObjectError(error);
+    this.callbacks.onScadaSymbolObjectError(error);
   }
 
   private onMessage(message: string) {
-    this.callbacks.onSvgObjectMessage(message);
+    this.callbacks.onScadaSymbolObjectMessage(message);
   }
 
   private callAction(event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) {
     const behavior = this.metadata.behavior.find(b => b.id === behaviorId);
     if (behavior) {
-      if (behavior.type === IotSvgBehaviorType.action) {
+      if (behavior.type === ScadaSymbolBehaviorType.action) {
         const valueSetter = this.valueSetters[behaviorId];
         if (valueSetter) {
-          this.loadingSubject.next(true);
-          valueSetter.setValue(value).subscribe(
+          this.onLoadingState(true);
+          valueSetter.setValue(value).pipe(takeUntil(this.destroy$)).subscribe(
             {
               next: () => {
                 if (observer?.next) {
                   observer.next();
                 }
-                this.loadingSubject.next(false);
+                this.onLoadingState(false);
               },
               error: (err) => {
-                this.loadingSubject.next(false);
+                this.onLoadingState(false);
                 if (observer?.error) {
                   observer.error(err);
                 }
@@ -577,7 +581,7 @@ export class IotSvgObject {
             }
           );
         }
-      } else if (behavior.type === IotSvgBehaviorType.widgetAction) {
+      } else if (behavior.type === ScadaSymbolBehaviorType.widgetAction) {
         const widgetAction: WidgetAction = this.settings.behavior[behavior.id];
         if (this.simulated) {
           const translatedType = this.ctx.translate.instant(widgetActionTypeTranslationMap.get(widgetAction.type));
@@ -598,8 +602,10 @@ export class IotSvgObject {
       const targetWidth = this.rootElement.getBoundingClientRect().width;
       const targetHeight = this.rootElement.getBoundingClientRect().height;
       if (targetWidth && targetHeight) {
+        const svgAspect = this.box.width / this.box.height;
+        const shapeAspect = targetWidth / targetHeight;
         let scale: number;
-        if (targetWidth < targetHeight) {
+        if (svgAspect > shapeAspect) {
           scale = targetWidth / this.box.width;
         } else {
           scale = targetHeight / this.box.height;
@@ -617,7 +623,7 @@ export class IotSvgObject {
   }
 
   private onValue(id: string, value: any) {
-    const valueBehavior = this.metadata.behavior.find(b => b.id === id) as IotSvgBehaviorValue;
+    const valueBehavior = this.metadata.behavior.find(b => b.id === id) as ScadaSymbolBehaviorValue;
     value = this.normalizeValue(value, valueBehavior.valueType);
     this.setValue(valueBehavior.id, value);
   }
@@ -725,7 +731,7 @@ export class IotSvgObject {
     return Array.isArray(element) ? element : [element];
   }
 
-  private getProperty(id: string): IotSvgProperty {
+  private getProperty(id: string): ScadaSymbolProperty {
     return this.metadata.properties.find(p => p.id === id);
   }
 
@@ -734,9 +740,9 @@ export class IotSvgObject {
     if (property) {
       const value = this.settings.properties[id];
       if (isDefinedAndNotNull(value)) {
-        if (property.type === IotSvgPropertyType.color_settings) {
+        if (property.type === ScadaSymbolPropertyType.color_settings) {
           return ColorProcessor.fromSettings(value);
-        } else if (property.type === IotSvgPropertyType.text) {
+        } else if (property.type === ScadaSymbolPropertyType.text) {
           const result =  this.ctx.utilsService.customTranslation(value, value);
           const entityInfo = this.ctx.defaultSubscription.getFirstEntityInfo();
           return createLabelFromSubscriptionEntityInfo(entityInfo, result);
@@ -744,13 +750,13 @@ export class IotSvgObject {
         return value;
       } else {
         switch (property.type) {
-          case IotSvgPropertyType.text:
+          case ScadaSymbolPropertyType.text:
             return '';
-          case IotSvgPropertyType.number:
+          case ScadaSymbolPropertyType.number:
             return 0;
-          case IotSvgPropertyType.color:
+          case ScadaSymbolPropertyType.color:
             return '#000';
-          case IotSvgPropertyType.color_settings:
+          case ScadaSymbolPropertyType.color_settings:
             return ColorProcessor.fromSettings(constantColor('#000'));
         }
       }

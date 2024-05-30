@@ -22,36 +22,35 @@ import {
   Input,
   OnDestroy,
   OnInit,
-  Renderer2,
   TemplateRef,
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
-import { HttpClient } from '@angular/common/http';
-import { IotSvgObject, IotSvgObjectCallbacks } from '@home/components/widget/lib/svg/iot-svg.models';
+import { ScadaSymbolObject, ScadaSymbolObjectCallbacks } from '@home/components/widget/lib/scada/scada-symbol.models';
 import {
-  iotSvgWidgetDefaultSettings,
-  IotSvgWidgetSettings
-} from '@home/components/widget/lib/svg/iot-svg-widget.models';
-import { Observable, of } from 'rxjs';
+  scadaSymbolWidgetDefaultSettings,
+  ScadaSymbolWidgetSettings
+} from '@home/components/widget/lib/scada/scada-symbol-widget.models';
+import { BehaviorSubject, Observable, of } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { ImageService } from '@core/http/image.service';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { WidgetContext } from '@home/models/widget-component.models';
+import { catchError, share } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-iot-svg-widget',
-  templateUrl: './iot-svg-widget.component.html',
-  styleUrls: ['../action/action-widget.scss', './iot-svg-widget.component.scss'],
+  selector: 'tb-scada-symbol-widget',
+  templateUrl: './scada-symbol-widget.component.html',
+  styleUrls: ['../action/action-widget.scss', './scada-symbol-widget.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-export class IotSvgWidgetComponent implements OnInit, AfterViewInit, OnDestroy, IotSvgObjectCallbacks {
+export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDestroy, ScadaSymbolObjectCallbacks {
 
-  @ViewChild('iotSvgShape', {static: false})
-  iotSvgShape: ElementRef<HTMLElement>;
+  @ViewChild('scadaSymbolShape', {static: false})
+  scadaSymbolShape: ElementRef<HTMLElement>;
 
   @Input()
   ctx: WidgetContext;
@@ -59,47 +58,57 @@ export class IotSvgWidgetComponent implements OnInit, AfterViewInit, OnDestroy, 
   @Input()
   widgetTitlePanel: TemplateRef<any>;
 
-  private settings: IotSvgWidgetSettings;
-  private svgContent$: Observable<string>;
+  private loadingSubject = new BehaviorSubject(false);
+  private settings: ScadaSymbolWidgetSettings;
+  private scadaSymbolContent$: Observable<string>;
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
-  iotSvgObject: IotSvgObject;
+  overlayEnabled: boolean;
+  padding: string;
+
+  loading$ = this.loadingSubject.asObservable().pipe(share());
+
+  scadaSymbolObject: ScadaSymbolObject;
 
   constructor(public widgetComponent: WidgetComponent,
               protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private imageService: ImageService,
-              protected cd: ChangeDetectorRef,
-              private http: HttpClient) {
+              protected cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
     this.ctx.$scope.actionWidget = this;
-    this.settings = mergeDeep({} as IotSvgWidgetSettings, iotSvgWidgetDefaultSettings, this.ctx.settings || {});
+    this.settings = mergeDeep({} as ScadaSymbolWidgetSettings, scadaSymbolWidgetDefaultSettings, this.ctx.settings || {});
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.overlayEnabled = this.settings.background.overlay.enabled;
+    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
 
-    if (this.settings.iotSvgContent) {
-      this.svgContent$ = of(this.settings.iotSvgContent);
-    } else if (this.settings.iotSvgUrl) {
-      this.svgContent$ = this.imageService.getImageString(this.settings.iotSvgUrl);
+    if (this.settings.scadaSymbolContent) {
+      this.scadaSymbolContent$ = of(this.settings.scadaSymbolContent);
+    } else if (this.settings.scadaSymbolUrl) {
+      this.scadaSymbolContent$ = this.imageService.getImageString(this.settings.scadaSymbolUrl)
+      .pipe(catchError(() => of('<svg></svg>')));
     } else {
-      this.svgContent$ = this.http.get(this.settings.iotSvg, {responseType: 'text'});
+      this.scadaSymbolContent$ = of('<svg></svg>');
     }
   }
 
   ngAfterViewInit(): void {
-    this.svgContent$.subscribe((content) => {
-      this.initObject(this.iotSvgShape.nativeElement, content);
+    this.scadaSymbolContent$.subscribe((content) => {
+      this.initObject(this.scadaSymbolShape.nativeElement, content);
     });
   }
 
   ngOnDestroy() {
-    if (this.iotSvgObject) {
-      this.iotSvgObject.destroy();
+    if (this.scadaSymbolObject) {
+      this.scadaSymbolObject.destroy();
     }
+    this.loadingSubject.complete();
+    this.loadingSubject.unsubscribe();
   }
 
   public onInit() {
@@ -108,19 +117,24 @@ export class IotSvgWidgetComponent implements OnInit, AfterViewInit, OnDestroy, 
     this.cd.detectChanges();
   }
 
-  onSvgObjectError(error: string) {
+  onScadaSymbolObjectLoadingState(loading: boolean) {
+    this.loadingSubject.next(loading);
+  }
+
+  onScadaSymbolObjectError(error: string) {
     this.ctx.showErrorToast(error, 'bottom', 'center', this.ctx.toastTargetId, true);
   }
 
-  onSvgObjectMessage(message: string) {
+  onScadaSymbolObjectMessage(message: string) {
     this.ctx.showSuccessToast(message, 3000, 'bottom', 'center', this.ctx.toastTargetId, true);
   }
 
   private initObject(rootElement: HTMLElement,
-                     svgContent: string) {
+                     content: string) {
     const simulated = this.ctx.utilsService.widgetEditMode ||
       this.ctx.isPreview || (isDefinedAndNotNull(this.settings.simulated) ? this.settings.simulated : false);
-    this.iotSvgObject = new IotSvgObject(rootElement, this.ctx, svgContent, this.settings.iotSvgObject, this, simulated);
+    this.scadaSymbolObject = new ScadaSymbolObject(rootElement, this.ctx, content,
+      this.settings.scadaSymbolObjectSettings, this, simulated);
   }
 
 }

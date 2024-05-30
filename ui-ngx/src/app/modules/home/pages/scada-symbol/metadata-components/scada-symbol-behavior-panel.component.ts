@@ -19,11 +19,11 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
 import {
-  IotSvgBehavior,
-  IotSvgBehaviorType,
-  iotSvgBehaviorTypes,
-  iotSvgBehaviorTypeTranslations
-} from '@app/modules/home/components/widget/lib/svg/iot-svg.models';
+  ScadaSymbolBehavior,
+  ScadaSymbolBehaviorType,
+  scadaSymbolBehaviorTypes,
+  scadaSymbolBehaviorTypeTranslations
+} from '@app/modules/home/components/widget/lib/scada/scada-symbol.models';
 import { ValueType, valueTypesMap } from '@shared/models/constants';
 import { ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { WidgetService } from '@core/http/widget.service';
@@ -36,14 +36,14 @@ import { WidgetService } from '@core/http/widget.service';
 })
 export class ScadaSymbolBehaviorPanelComponent implements OnInit {
 
-  IotSvgBehaviorType = IotSvgBehaviorType;
+  ScadaSymbolBehaviorType = ScadaSymbolBehaviorType;
 
   ValueType = ValueType;
 
   ValueToDataType = ValueToDataType;
 
-  iotSvgBehaviorTypes = iotSvgBehaviorTypes;
-  iotSvgBehaviorTypeTranslations = iotSvgBehaviorTypeTranslations;
+  scadaSymbolBehaviorTypes = scadaSymbolBehaviorTypes;
+  scadaSymbolBehaviorTypeTranslations = scadaSymbolBehaviorTypeTranslations;
 
   valueTypes = Object.keys(ValueType) as ValueType[];
 
@@ -53,13 +53,13 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
   isAdd = false;
 
   @Input()
-  behavior: IotSvgBehavior;
+  behavior: ScadaSymbolBehavior;
 
   @Input()
   popover: TbPopoverComponent<ScadaSymbolBehaviorPanelComponent>;
 
   @Output()
-  behaviorSettingsApplied = new EventEmitter<IotSvgBehavior>();
+  behaviorSettingsApplied = new EventEmitter<ScadaSymbolBehavior>();
 
   functionScopeVariables = this.widgetService.getWidgetScopeVariables();
 
@@ -107,7 +107,7 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
   }
 
   private updateValidators() {
-    const type: IotSvgBehaviorType = this.behaviorFormGroup.get('type').value;
+    const type: ScadaSymbolBehaviorType = this.behaviorFormGroup.get('type').value;
     const valueType: ValueType = this.behaviorFormGroup.get('valueType').value;
     let valueToDataType: ValueToDataType = this.behaviorFormGroup.get('valueToDataType').value;
     this.behaviorFormGroup.disable({emitEvent: false});
@@ -116,7 +116,7 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
     this.behaviorFormGroup.get('type').enable({emitEvent: false});
     this.behaviorFormGroup.get('hint').enable({emitEvent: false});
     switch (type) {
-      case IotSvgBehaviorType.value:
+      case ScadaSymbolBehaviorType.value:
         this.behaviorFormGroup.get('valueType').enable({emitEvent: false});
         this.behaviorFormGroup.get('defaultValue').enable({emitEvent: false});
         if (valueType === ValueType.BOOLEAN) {
@@ -125,7 +125,7 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
           this.behaviorFormGroup.get('stateLabel').enable({emitEvent: false});
         }
         break;
-      case IotSvgBehaviorType.action:
+      case ScadaSymbolBehaviorType.action:
         if (valueType === ValueType.BOOLEAN && valueToDataType === ValueToDataType.VALUE) {
           this.behaviorFormGroup.patchValue({valueToDataType: ValueToDataType.CONSTANT}, {emitEvent: false});
           valueToDataType = ValueToDataType.CONSTANT;
@@ -141,7 +141,7 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
           this.behaviorFormGroup.get('valueToDataFunction').enable({emitEvent: false});
         }
         break;
-      case IotSvgBehaviorType.widgetAction:
+      case ScadaSymbolBehaviorType.widgetAction:
         break;
     }
   }
