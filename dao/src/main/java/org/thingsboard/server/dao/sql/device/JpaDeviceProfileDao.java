@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.DeviceProfileInfo;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -174,6 +175,11 @@ public class JpaDeviceProfileDao extends JpaAbstractDao<DeviceProfileEntity, Dev
     @Override
     public EntityType getEntityType() {
         return EntityType.DEVICE_PROFILE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.DEVICE_PROFILE;
     }
 
 }

@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.AlarmCommentInfo;
 import org.thingsboard.server.common.data.id.AlarmId;
@@ -91,4 +92,10 @@ public class JpaAlarmCommentDao extends JpaPartitionedAbstractDao<AlarmCommentEn
     protected JpaRepository<AlarmCommentEntity, UUID> getRepository() {
         return alarmCommentRepository;
     }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.ALARM_COMMENT;
+    }
+
 }

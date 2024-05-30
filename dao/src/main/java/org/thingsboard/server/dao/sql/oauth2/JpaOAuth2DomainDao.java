@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Domain;
 import org.thingsboard.server.common.data.page.PageData;
@@ -57,6 +58,11 @@ public class JpaOAuth2DomainDao extends JpaAbstractDao<OAuth2DomainEntity, OAuth
     @Override
     public PageData<OAuth2Domain> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(repository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.OAUTH2_DOMAIN;
     }
 
 }

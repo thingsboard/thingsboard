@@ -48,16 +48,6 @@ public interface RuleChainDebugEventRepository extends EventRepository<RuleChain
                                                @Param("endTime") Long endTime,
                                                Pageable pageable);
 
-    @Override
-    @Query("SELECT e FROM RuleChainDebugEventEntity e WHERE " +
-            "e.tenantId = :tenantId " +
-            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
-            "AND (:endTime IS NULL OR e.ts <= :endTime)")
-    Page<RuleChainDebugEventEntity> findEvents(@Param("tenantId") UUID tenantId,
-                                               @Param("startTime") Long startTime,
-                                               @Param("endTime") Long endTime,
-                                               Pageable pageable);
-
     @Query(nativeQuery = true,
             value = "SELECT * FROM rule_chain_debug_event e WHERE " +
                     "e.tenant_id = :tenantId " +
@@ -122,4 +112,5 @@ public interface RuleChainDebugEventRepository extends EventRepository<RuleChain
                       @Param("message") String message,
                       @Param("isError") boolean isError,
                       @Param("error") String error);
+
 }

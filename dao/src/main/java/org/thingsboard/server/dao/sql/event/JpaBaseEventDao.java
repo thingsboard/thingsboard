@@ -24,6 +24,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.event.ErrorEventFilter;
 import org.thingsboard.server.common.data.event.Event;
@@ -228,11 +229,6 @@ public class JpaBaseEventDao implements EventDao {
     @Override
     public void migrateEvents(long regularEventTs, long debugEventTs) {
         eventCleanupRepository.migrateEvents(regularEventTs, debugEventTs);
-    }
-
-    @Override
-    public PageData<? extends Event> findEvents(UUID tenantId, EventType eventType, TimePageLink pageLink) {
-        return DaoUtil.toPageData(getEventRepository(eventType).findEvents(tenantId, pageLink.getStartTime(), pageLink.getEndTime(), DaoUtil.toPageable(pageLink, EventEntity.eventColumnMap)));
     }
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, RuleChainDebugEventFilter eventFilter, TimePageLink pageLink) {
@@ -455,6 +451,11 @@ public class JpaBaseEventDao implements EventDao {
     public Event save(TenantId tenantId, Event event) {
         saveAsync(event).get();
         return event;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.EVENT;
     }
 
 }

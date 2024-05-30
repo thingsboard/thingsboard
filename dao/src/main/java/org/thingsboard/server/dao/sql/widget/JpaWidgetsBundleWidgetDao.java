@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.widget;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -41,6 +42,11 @@ public class JpaWidgetsBundleWidgetDao implements TenantEntityDao<WidgetsBundleW
     @Override
     public PageData<WidgetsBundleWidget> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(widgetsBundleWidgetRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.WIDGETS_BUNDLE_WIDGET;
     }
 
 }

@@ -26,6 +26,7 @@ import org.apache.commons.io.FileUtils;
 import org.apache.commons.io.IOUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.ObjectType;
 
 import java.io.BufferedReader;
 import java.io.FileInputStream;
@@ -65,9 +66,8 @@ public class Storage {
     }
 
     @SneakyThrows
-    public void save(UUID tenantId, String type, DataWrapper dataWrapper) {
-        Path file = getPath(tenantId, type);
-
+    public void save(UUID tenantId, ObjectType type, DataWrapper dataWrapper) {
+        Path file = getPath(tenantId, type.name());
         Writer writer = files.get(tenantId).computeIfAbsent(file, path -> {
             try {
                 Files.deleteIfExists(file);
@@ -82,11 +82,11 @@ public class Storage {
 
         String data = toJson(dataWrapper);
         writer.write(data + System.lineSeparator());
-//        log.info("[{}] Saved entity to {}: {}", tenantId, file, dataWrapper.getEntity());
+        log.trace("[{}] Saved entity to {}: {}", tenantId, file, dataWrapper.getEntity());
     }
 
     @SneakyThrows
-    public void finish(UUID tenantId) {
+    public void archiveExportData(UUID tenantId) {
         for (Writer writer : files.get(tenantId).values()) {
             writer.close();
         }
@@ -98,20 +98,26 @@ public class Storage {
             tarArchive.putArchiveEntry(archiveEntry);
             Files.copy(file, tarArchive);
             tarArchive.closeArchiveEntry();
-//            Files.delete(file);
+            Files.delete(file);
         }
         tarArchive.close();
     }
 
     @SneakyThrows
-    public InputStream download(UUID tenantId) {
+    public void cleanUpExportData(UUID tenantId) {
+        Path workingDirectory = Path.of(this.workingDirectory, tenantId.toString());
+        deleteDirectory(workingDirectory);
+    }
+
+    @SneakyThrows
+    public InputStream downloadExportData(UUID tenantId) {
         return Files.newInputStream(Path.of(workingDirectory, tenantId.toString(), "data.tar"));
     }
 
     @SneakyThrows
-    public void unwrap(InputStream dataStream) {
+    public void unwrapImportData(InputStream dataStream) {
         Path workingDirectory = Path.of(this.workingDirectory, "importing");
-        FileUtils.deleteDirectory(workingDirectory.toFile());
+        deleteDirectory(workingDirectory);
         Files.createDirectories(workingDirectory);
 
         TarArchiveInputStream tarArchive = new TarArchiveInputStream(dataStream);
@@ -124,10 +130,16 @@ public class Storage {
     }
 
     @SneakyThrows
-    public void read(String type, Consumer<DataWrapper> processor) {
+    public void cleanUpImportData() {
+        Path workingDirectory = Path.of(this.workingDirectory, "importing");
+        deleteDirectory(workingDirectory);
+    }
+
+    @SneakyThrows
+    public void readAndProcess(ObjectType type, Consumer<DataWrapper> processor) {
         Path file = Path.of(this.workingDirectory, "importing", type + ".gz");
         if (!Files.exists(file)) {
-            log.info("No data for {}", type);
+            log.debug("No data for {}", type);
             return;
         }
 
@@ -152,6 +164,10 @@ public class Storage {
 
     private Path getPath(UUID tenantId, String name) {
         return Path.of(workingDirectory, tenantId.toString(), name + ".gz");
+    }
+
+    private void deleteDirectory(Path directory) throws IOException {
+        FileUtils.deleteDirectory(directory.toFile());
     }
 
 }

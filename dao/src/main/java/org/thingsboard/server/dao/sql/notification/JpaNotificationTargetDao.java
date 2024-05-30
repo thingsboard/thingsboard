@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -27,7 +28,6 @@ import org.thingsboard.server.common.data.notification.targets.platform.UsersFil
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.NotificationTargetEntity;
 import org.thingsboard.server.dao.notification.NotificationTargetDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -120,6 +120,11 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TARGET;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.NOTIFICATION_TARGET;
     }
 
 }

@@ -48,16 +48,6 @@ public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, 
                                       @Param("endTime") Long endTime,
                                       Pageable pageable);
 
-    @Override
-    @Query("SELECT e FROM ErrorEventEntity e WHERE " +
-            "e.tenantId = :tenantId " +
-            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
-            "AND (:endTime IS NULL OR e.ts <= :endTime)")
-    Page<ErrorEventEntity> findEvents(@Param("tenantId") UUID tenantId,
-                                      @Param("startTime") Long startTime,
-                                      @Param("endTime") Long endTime,
-                                      Pageable pageable);
-
     @Query(nativeQuery = true,
             value = "SELECT * FROM error_event e WHERE " +
                     "e.tenant_id = :tenantId " +
@@ -118,4 +108,5 @@ public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, 
                       @Param("serviceId") String server,
                       @Param("method") String method,
                       @Param("error") String error);
+
 }

@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.sync.tenant.util;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.ObjectType;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -27,9 +28,10 @@ public class TenantExportResult {
     private boolean success;
     private String error;
 
-    private final Map<String, AtomicInteger> stats = new LinkedHashMap<>();
+    private final Map<ObjectType, AtomicInteger> stats = new LinkedHashMap<>();
 
-    public void report(String type) {
+    public void report(ObjectType type) {
         stats.computeIfAbsent(type, k -> new AtomicInteger()).incrementAndGet();
     }
+
 }

@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -277,6 +278,11 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         latestEntity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
         return latestEntity;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.LATEST_TS_KV;
     }
 
 }

@@ -27,6 +27,7 @@ import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -242,6 +243,11 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     public LatestTsKv save(TenantId tenantId, LatestTsKv latestTsKv) {
         saveLatest(tenantId, latestTsKv.getEntityId(), latestTsKv.getEntry()).get();
         return latestTsKv;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.LATEST_TS_KV;
     }
 
 }

@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -33,7 +34,6 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -95,4 +95,10 @@ public class JpaTenantDao extends JpaAbstractDao<TenantEntity, Tenant> implement
                 .map(TenantId::fromUUID)
                 .collect(Collectors.toList());
     }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.TENANT;
+    }
+
 }

@@ -22,6 +22,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.asset.AssetProfileInfo;
 import org.thingsboard.server.common.data.id.AssetProfileId;
@@ -156,6 +157,11 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public EntityType getEntityType() {
         return EntityType.ASSET_PROFILE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.ASSET_PROFILE;
     }
 
 }

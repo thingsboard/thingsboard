@@ -16,15 +16,8 @@
 package org.thingsboard.server.service.sync.tenant.util;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.ObjectType;
-
-import java.util.Set;
-import java.util.UUID;
 
 @Data
-public class TenantExportConfig {
-
-    private UUID tenantId;
-    private Set<ObjectType> skipped;
+public class TenantImportConfig {
 
 }

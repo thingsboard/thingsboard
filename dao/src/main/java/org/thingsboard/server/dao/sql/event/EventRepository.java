@@ -29,8 +29,6 @@ public interface EventRepository<T extends EventEntity<V>, V extends Event> {
 
     Page<T> findEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime, Pageable pageable);
 
-    Page<T> findEvents(UUID tenantId, Long startTime, Long endTime, Pageable pageable);
-
     void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime);
 
 }

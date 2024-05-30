@@ -18,57 +18,60 @@ package org.thingsboard.server.dao.entity;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.dao.ObjectDao;
 import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.stream.Collectors;
 
 @Service
 @Slf4j
-@SuppressWarnings({"unchecked", "rawtypes"})
+@SuppressWarnings({"unchecked"})
 public class EntityDaoRegistry {
 
-    private final Map<EntityType, Dao<?>> daos = new EnumMap<>(EntityType.class);
-    private final Map<String, TenantEntityDao<?>> tenantEntityDaos;
+    private final Map<ObjectType, ObjectDao<?>> objectDaos = new EnumMap<>(ObjectType.class);
+    private final Map<EntityType, Dao<?>> entityDaos = new EnumMap<>(EntityType.class);
 
-    private final Map<Class<? extends TenantEntityDao>, String> tenantEntityDaosTypes = new ConcurrentHashMap<>();
-
-    private EntityDaoRegistry(List<Dao<?>> daos, List<TenantEntityDao<?>> tenantEntityDaos) {
+    private EntityDaoRegistry(List<ObjectDao<?>> daos) {
         daos.forEach(dao -> {
-            EntityType entityType = dao.getEntityType();
-            if (entityType != null) {
-                this.daos.put(entityType, dao);
+            if (dao instanceof Dao<?> entityDao) {
+                EntityType entityType = entityDao.getEntityType();
+                if (entityType != null) {
+                    entityDaos.put(entityType, entityDao);
+                }
+            }
+            ObjectType objectType = dao.getType();
+            if (objectType != null) {
+                objectDaos.put(objectType, dao);
             }
         });
-        this.tenantEntityDaos = tenantEntityDaos.stream().collect(Collectors.toMap(TenantEntityDao::getType, dao -> dao));
     }
 
     public <T> Dao<T> getDao(EntityType entityType) {
-        Dao<T> dao = (Dao<T>) daos.get(entityType);
+        Dao<T> dao = (Dao<T>) entityDaos.get(entityType);
         if (dao == null) {
             throw new IllegalArgumentException("Missing dao for entity type " + entityType);
         }
         return dao;
     }
 
-    public <T> TenantEntityDao<T> getTenantEntityDao(String type) {
-        TenantEntityDao<T> dao = (TenantEntityDao<T>) tenantEntityDaos.get(type);
+    public <T> ObjectDao<T> getObjectDao(ObjectType objectType) {
+        ObjectDao<T> dao = (ObjectDao<T>) objectDaos.get(objectType);
         if (dao == null) {
-            throw new IllegalArgumentException("Missing dao for type " + type);
+            throw new IllegalArgumentException("Missing dao for object type " + objectType);
         }
         return dao;
     }
 
-    public Map<String, TenantEntityDao<?>> getTenantEntityDaos() {
-        return tenantEntityDaos;
-    }
-
-    public String getType(TenantEntityDao<?> dao) {
-        return tenantEntityDaosTypes.computeIfAbsent(dao.getClass(), cls -> dao.getType());
+    public <T> TenantEntityDao<T> getTenantEntityDao(ObjectType objectType) {
+        ObjectDao<?> dao = objectDaos.get(objectType);
+        if (!(dao instanceof TenantEntityDao<?>)) {
+            throw new IllegalArgumentException("Missing tenant entity dao for entity type " + objectType);
+        }
+        return (TenantEntityDao<T>) dao;
     }
 
 }

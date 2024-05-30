@@ -46,17 +46,6 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                                            @Param("endTime") Long endTime,
                                            Pageable pageable);
 
-    @Override
-    @Query("SELECT e FROM StatisticsEventEntity e WHERE " +
-            "e.tenantId = :tenantId " +
-            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
-            "AND (:endTime IS NULL OR e.ts <= :endTime)"
-    )
-    Page<StatisticsEventEntity> findEvents(@Param("tenantId") UUID tenantId,
-                                           @Param("startTime") Long startTime,
-                                           @Param("endTime") Long endTime,
-                                           Pageable pageable);
-
     @Query(nativeQuery = true,
             value = "SELECT * FROM stats_event e WHERE " +
                     "e.tenant_id = :tenantId " +
@@ -128,4 +117,5 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                       @Param("maxMessagesProcessed") Integer maxMessagesProcessed,
                       @Param("minErrorsOccurred") Integer minErrorsOccurred,
                       @Param("maxErrorsOccurred") Integer maxErrorsOccurred);
+
 }

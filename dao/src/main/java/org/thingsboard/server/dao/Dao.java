@@ -23,7 +23,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 
-public interface Dao<T> {
+public interface Dao<T> extends ObjectDao<T> {
 
     List<T> find(TenantId tenantId);
 
@@ -45,6 +45,6 @@ public interface Dao<T> {
 
     List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
 
-    default EntityType getEntityType() { return null; }
+    default EntityType getEntityType() {return null;}
 
 }

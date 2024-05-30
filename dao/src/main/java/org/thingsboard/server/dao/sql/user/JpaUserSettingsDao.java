@@ -17,8 +17,8 @@ package org.thingsboard.server.dao.sql.user;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -29,18 +29,15 @@ import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.UserSettingsEntity;
-import org.thingsboard.server.dao.sql.JpaAbstractDao;
-import org.thingsboard.server.dao.sql.JpaAbstractDaoListeningExecutorService;
 import org.thingsboard.server.dao.user.UserSettingsDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.UUID;
 
 @Slf4j
 @Component
 @SqlDao
-public class JpaUserSettingsDao  implements UserSettingsDao, TenantEntityDao<UserSettings> {
+public class JpaUserSettingsDao implements UserSettingsDao, TenantEntityDao<UserSettings> {
 
     @Autowired
     private UserSettingsRepository userSettingsRepository;
@@ -75,6 +72,11 @@ public class JpaUserSettingsDao  implements UserSettingsDao, TenantEntityDao<Use
     @Override
     public PageData<UserSettings> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         return DaoUtil.toPageData(userSettingsRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.USER_SETTINGS;
     }
 
 }

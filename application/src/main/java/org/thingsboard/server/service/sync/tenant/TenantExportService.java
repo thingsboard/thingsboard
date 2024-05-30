@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.service.sync.tenant;
 
+import com.github.benmanes.caffeine.cache.Cache;
+import com.github.benmanes.caffeine.cache.Caffeine;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
@@ -25,6 +28,7 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.event.Event;
@@ -36,10 +40,10 @@ import org.thingsboard.server.common.data.kv.AttributeKv;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.LatestTsKv;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.attributes.AttributesDao;
 import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
@@ -55,13 +59,24 @@ import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportResult;
 
 import java.util.Collections;
+import java.util.EnumSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.thingsboard.server.common.data.ObjectType.ATTRIBUTE_KV;
+import static org.thingsboard.server.common.data.ObjectType.AUDIT_LOG;
+import static org.thingsboard.server.common.data.ObjectType.EVENT;
+import static org.thingsboard.server.common.data.ObjectType.LATEST_TS_KV;
+import static org.thingsboard.server.common.data.ObjectType.RELATION;
+import static org.thingsboard.server.common.data.ObjectType.TENANT;
+import static org.thingsboard.server.common.data.ObjectType.values;
 
 @Service
 @RequiredArgsConstructor
@@ -80,9 +95,21 @@ public class TenantExportService {
     private final SqlPartitioningRepository partitioningRepository;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tenant-export"));
-    private final Map<TenantId, TenantExportResult> results = new ConcurrentHashMap<>();
+    private Cache<UUID, TenantExportResult> results;
 
-    public UUID exportTenant(TenantExportConfig config) throws Exception {
+    @PostConstruct
+    private void init() {
+        results = Caffeine.newBuilder()
+                .expireAfterAccess(24, TimeUnit.HOURS)
+                .<UUID, TenantExportResult>removalListener((tenantId, result, removalCause) -> {
+                    if (tenantId != null) {
+                        storage.cleanUpExportData(tenantId);
+                    }
+                })
+                .build();
+    }
+
+    public UUID exportTenant(TenantExportConfig config) {
         TenantId tenantId = TenantId.fromUUID(config.getTenantId());
         log.info("[{}] Exporting tenant", tenantId);
         Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
@@ -92,7 +119,7 @@ public class TenantExportService {
         TenantExportResult result = new TenantExportResult();
         executor.submit(() -> {
             try {
-                exportTenant(tenant);
+                exportTenant(tenant, config);
                 result.setSuccess(true);
                 result.setDone(true);
             } catch (Exception e) {
@@ -101,58 +128,46 @@ public class TenantExportService {
                 result.setDone(true);
             }
         });
-        results.put(tenant.getId(), result);
+
+        results.put(tenant.getUuidId(), result);
         return tenant.getUuidId();
     }
 
-    public TenantExportResult getResult(TenantId tenantId) {
-        return results.get(tenantId);
-    }
-
-    public ResponseEntity<InputStreamResource> downloadResult(TenantId tenantId) {
-        TenantExportResult result = getResult(tenantId);
-        if (!result.isSuccess()) {
-            throw new IllegalStateException("Tenant export failed: " + result.getError());
-        }
-
-        String fileName = "data.tar";
-        return ResponseEntity.ok()
-                .header("Content-Type", "")
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
-                .header("x-filename", fileName)
-                .body(new InputStreamResource(storage.download(tenantId.getId())));
-    }
-
-    private void exportTenant(Tenant tenant) throws Exception {
+    private void exportTenant(Tenant tenant, TenantExportConfig config) {
         TenantId tenantId = tenant.getId();
         storage.init(tenantId.getId());
+        Set<ObjectType> skipped = EnumSet.of(TENANT, RELATION, EVENT, ATTRIBUTE_KV, LATEST_TS_KV, AUDIT_LOG);
+        if (config.getSkipped() != null) {
+            skipped.addAll(config.getSkipped());
+        }
 
-        save(tenantId, entityDaoRegistry.getType(tenantDao), tenant);
-        entityDaoRegistry.getTenantEntityDaos().forEach((type, dao) -> {
-            log.debug("[{}] Exporting {} entities", tenantId, dao.getType());
-            var entities = new PageDataIterable<>(pageLink -> {
-                try {
-                    return dao.findAllByTenantId(tenantId, pageLink);
-                } catch (UnsupportedOperationException e) {
-                    log.debug("[{}] findAllByTenantId not supported", dao.getType());
-                    return PageData.emptyPageData();
-                }
-            }, 100);
+        save(tenantId, TENANT, tenant);
+        for (ObjectType type : values()) {
+            if (skipped.contains(type)) {
+                continue;
+            }
+
+            log.debug("[{}] Exporting {} entities", tenantId, type);
+            TenantEntityDao<?> dao = entityDaoRegistry.getTenantEntityDao(type);
+            var entities = new PageDataIterable<>(pageLink -> dao.findAllByTenantId(tenantId, pageLink), 100);
+
             for (Object entity : entities) {
                 save(tenantId, type, entity);
 
-                if (entity instanceof HasId<?> withId && withId.getId() instanceof EntityId entityId) {
-                    exportAttributes(tenantId, entityId);
+                if (entity instanceof HasId<?> hasId && hasId.getId() instanceof EntityId entityId) {
                     exportRelations(tenantId, entityId);
+                    exportEvents(tenantId, entityId);
+                    exportAttributes(tenantId, entityId);
                     exportLatestTelemetry(tenantId, entityId);
                 }
             }
-        });
 
-        exportEvents(tenantId);
+            AtomicInteger count = getResult(tenantId.getId()).getStats().get(type);
+            log.debug("[{}] Exported {} {} entities", tenantId, count != null ? count : 0, type);
+        }
         exportAuditLogs(tenantId);
 
-        storage.finish(tenantId.getId());
+        storage.archiveExportData(tenantId.getId());
     }
 
     private void exportAttributes(TenantId tenantId, EntityId entityId) {
@@ -160,7 +175,7 @@ public class TenantExportService {
             List<AttributeKvEntry> attributes = attributesDao.findAll(tenantId, entityId, attributeScope);
             for (AttributeKvEntry entry : attributes) {
                 AttributeKv attributeKv = new AttributeKv(entityId, attributeScope, entry);
-                save(tenantId, entityDaoRegistry.getType(attributesDao), attributeKv);
+                save(tenantId, ATTRIBUTE_KV, attributeKv);
             }
         }
     }
@@ -168,7 +183,7 @@ public class TenantExportService {
     private void exportRelations(TenantId tenantId, EntityId entityId) {
         List<EntityRelation> relations = relationDao.findAllByFrom(tenantId, entityId);
         for (EntityRelation relation : relations) {
-            save(tenantId, entityDaoRegistry.getType(relationDao), relation);
+            save(tenantId, RELATION, relation);
         }
     }
 
@@ -177,7 +192,7 @@ public class TenantExportService {
         List<TsKvEntry> latestTelemetry = timeseriesLatestDao.findAllLatest(tenantId, entityId).get();
         for (TsKvEntry tsKvEntry : latestTelemetry) {
             LatestTsKv latestTsKv = new LatestTsKv(entityId, tsKvEntry);
-            save(tenantId, entityDaoRegistry.getType(timeseriesLatestDao), latestTsKv);
+            save(tenantId, LATEST_TS_KV, latestTsKv);
         }
     }
 
@@ -188,28 +203,28 @@ public class TenantExportService {
                 return auditLogDao.findAuditLogsByTenantId(tenantId.getId(), null, new TimePageLink(pageLink, startTime, endTime));
             }, 512);
             for (AuditLog auditLog : auditLogs) {
-                save(tenantId, entityDaoRegistry.getType(auditLogDao), auditLog);
+                save(tenantId, AUDIT_LOG, auditLog);
             }
         });
     }
 
-    private void exportEvents(TenantId tenantId) {
+    private void exportEvents(TenantId tenantId, EntityId entityId) {
         for (EventType eventType : EventType.values()) {
             Map<Long, Long> partitions = getPartitions(eventType.getTable());
             partitions.forEach((startTime, endTime) -> {
                 PageDataIterable<? extends Event> events = new PageDataIterable<>(pageLink -> {
-                    return eventDao.findEvents(tenantId.getId(), eventType, new TimePageLink(pageLink, startTime, endTime));
+                    return eventDao.findEvents(tenantId.getId(), entityId.getId(), eventType, new TimePageLink(pageLink, startTime, endTime));
                 }, 512);
                 for (Event event : events) {
-                    save(tenantId, entityDaoRegistry.getType(eventDao), event);
+                    save(tenantId, EVENT, event);
                 }
             });
         }
     }
 
-    private void save(TenantId tenantId, String type, Object entity) {
+    private void save(TenantId tenantId, ObjectType type, Object entity) {
         storage.save(tenantId.getId(), type, DataWrapper.of(entity));
-        getResult(tenantId).report(type);
+        getResult(tenantId.getId()).report(type);
         log.trace("[{}][{}] Saved entity {}", tenantId, type, entity);
     }
 
@@ -231,6 +246,30 @@ public class TenantExportService {
             partitions.put(startTime, endTime);
         }
         return partitions;
+    }
+
+    public TenantExportResult getResult(UUID tenantId) {
+        TenantExportResult result = results.getIfPresent(tenantId);
+        if (result == null) {
+            throw new IllegalStateException("Export result for tenant id " + tenantId + " not found");
+        }
+        return result;
+    }
+
+    public ResponseEntity<InputStreamResource> downloadResult(UUID tenantId) {
+        TenantExportResult result = getResult(tenantId);
+        if (!result.isDone()) {
+            throw new IllegalStateException("Not ready yet");
+        } else if (!result.isSuccess()) {
+            throw new IllegalStateException("Tenant export failed: " + result.getError());
+        }
+
+        String fileName = "data.tar";
+        return ResponseEntity.ok()
+                .header("Content-Type", "")
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
+                .header("x-filename", fileName)
+                .body(new InputStreamResource(storage.downloadExportData(tenantId)));
     }
 
 }

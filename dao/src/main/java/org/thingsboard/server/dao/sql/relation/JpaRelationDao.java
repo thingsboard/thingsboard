@@ -22,6 +22,7 @@ import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.dao.DataAccessException;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -256,6 +257,11 @@ public class JpaRelationDao extends JpaAbstractDaoListeningExecutorService imple
     public EntityRelation save(TenantId tenantId, EntityRelation relation) {
         saveRelation(tenantId, relation);
         return relation;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.RELATION;
     }
 
 }

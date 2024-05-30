@@ -22,12 +22,11 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
-import org.thingsboard.server.dao.TenantEntityDao;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface TenantDao extends Dao<Tenant>, TenantEntityDao<Tenant> {
+public interface TenantDao extends Dao<Tenant> {
 
     TenantInfo findTenantInfoById(TenantId tenantId, UUID id);
 
@@ -38,10 +37,10 @@ public interface TenantDao extends Dao<Tenant>, TenantEntityDao<Tenant> {
      * @return saved tenant object
      */
     Tenant save(TenantId tenantId, Tenant tenant);
-    
+
     /**
      * Find tenants by page link.
-     * 
+     *
      * @param pageLink the page link
      * @return the list of tenant objects
      */
@@ -52,4 +51,5 @@ public interface TenantDao extends Dao<Tenant>, TenantEntityDao<Tenant> {
     PageData<TenantId> findTenantsIds(PageLink pageLink);
 
     List<TenantId> findTenantIdsByTenantProfileId(TenantProfileId tenantProfileId);
+
 }

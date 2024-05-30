@@ -13,18 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.tenant.util;
+package org.thingsboard.server.dao;
 
-import lombok.Data;
 import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Set;
-import java.util.UUID;
+public interface ObjectDao<T> {
 
-@Data
-public class TenantExportConfig {
+    T save(TenantId tenantId, T entity);
 
-    private UUID tenantId;
-    private Set<ObjectType> skipped;
+    default ObjectType getType() {
+        return null;
+    }
 
 }

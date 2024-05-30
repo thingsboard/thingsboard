@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -232,6 +233,11 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setBooleanValue(entry.getBooleanValue().orElse(null));
         entity.setJsonValue(entry.getJsonValue().orElse(null));
         return entity;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.ATTRIBUTE_KV;
     }
 
 }

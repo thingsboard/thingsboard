@@ -47,16 +47,6 @@ public interface LifecycleEventRepository extends EventRepository<LifecycleEvent
                                           @Param("endTime") Long endTime,
                                           Pageable pageable);
 
-    @Override
-    @Query("SELECT e FROM LifecycleEventEntity e WHERE " +
-            "e.tenantId = :tenantId " +
-            "AND (:startTime IS NULL OR e.ts >= :startTime) " +
-            "AND (:endTime IS NULL OR e.ts <= :endTime)")
-    Page<LifecycleEventEntity> findEvents(@Param("tenantId") UUID tenantId,
-                                          @Param("startTime") Long startTime,
-                                          @Param("endTime") Long endTime,
-                                          Pageable pageable);
-
     @Query(nativeQuery = true,
             value = "SELECT * FROM lc_event e WHERE " +
                     "e.tenant_id = :tenantId " +
@@ -124,4 +114,5 @@ public interface LifecycleEventRepository extends EventRepository<LifecycleEvent
                       @Param("statusFilterEnabled") boolean statusFilterEnabled,
                       @Param("statusFilter") boolean statusFilter,
                       @Param("error") String error);
+
 }

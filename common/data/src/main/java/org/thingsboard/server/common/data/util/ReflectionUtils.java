@@ -16,8 +16,6 @@
 package org.thingsboard.server.common.data.util;
 
 import java.lang.annotation.Annotation;
-import java.lang.reflect.ParameterizedType;
-import java.lang.reflect.Type;
 
 @SuppressWarnings("unchecked")
 public class ReflectionUtils {
@@ -28,31 +26,6 @@ public class ReflectionUtils {
         Class<Annotation> annotationClass = (Class<Annotation>) Class.forName(annotationType);
         Annotation annotation = Class.forName(targetType).getAnnotation(annotationClass);
         return (T) annotationClass.getDeclaredMethod(property).invoke(annotation);
-    }
-
-    public static Class<?> getGenericType(Type type, Class<?> targetInterface) {
-        if (!(type instanceof Class<?>)) {
-            return null;
-        }
-        Type[] interfaces = ((Class<?>) type).getGenericInterfaces();
-        for (Type superclass : interfaces) {
-            if (superclass instanceof ParameterizedType genericSuperclass) {
-                if (genericSuperclass.getRawType().equals(targetInterface)) {
-                    return getGenericType(genericSuperclass);
-                }
-            }
-        }
-        for (Type superclass : interfaces) {
-            Class<?> genericType = getGenericType(superclass, targetInterface);
-            if (genericType != null) {
-                return genericType;
-            }
-        }
-        return null;
-    }
-
-    private static Class<?> getGenericType(ParameterizedType type) {
-        return (Class<?>) type.getActualTypeArguments()[0];
     }
 
 }

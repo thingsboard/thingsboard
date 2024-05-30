@@ -18,9 +18,8 @@ package org.thingsboard.server.dao;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.util.ReflectionUtils;
 
-public interface TenantEntityDao<T> {
+public interface TenantEntityDao<T> extends ObjectDao<T> {
 
     default Long countByTenantId(TenantId tenantId) {
         throw new UnsupportedOperationException();
@@ -28,12 +27,6 @@ public interface TenantEntityDao<T> {
 
     default PageData<T> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
         throw new UnsupportedOperationException();
-    }
-
-    T save(TenantId tenantId, T entity);
-
-    default String getType() {
-        return ReflectionUtils.getGenericType(getClass(), TenantEntityDao.class).getSimpleName();
     }
 
 }

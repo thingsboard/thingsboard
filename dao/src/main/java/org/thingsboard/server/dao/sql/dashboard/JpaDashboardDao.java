@@ -20,6 +20,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -98,6 +99,11 @@ public class JpaDashboardDao extends JpaAbstractDao<DashboardEntity, Dashboard> 
     @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.DASHBOARD;
     }
 
 }

@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKv;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.dao.TenantEntityDao;
+import org.thingsboard.server.dao.ObjectDao;
 
 import java.util.Collection;
 import java.util.List;
@@ -32,7 +32,7 @@ import java.util.Optional;
 /**
  * @author Andrew Shvayka
  */
-public interface AttributesDao extends TenantEntityDao<AttributeKv> {
+public interface AttributesDao extends ObjectDao<AttributeKv> {
 
     Optional<AttributeKvEntry> find(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, String attributeKey);
 
