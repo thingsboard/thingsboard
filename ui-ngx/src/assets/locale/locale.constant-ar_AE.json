@@ -482,9 +482,9 @@
             "issuer-name": "اسم الجهة المصدرة",
             "issuer-name-required": "اسم الجهة المصدرة مطلوب.",
             "signings-key": "مفتاح التوقيع",
-            "signings-key-hint": "سلسلة مشفرة بتنسيق Base64 تمثل ما لا يقل عن 256 بت من البيانات.",
+            "signings-key-hint": "سلسلة مشفرة بتنسيق Base64 تمثل ما لا يقل عن 512 بت من البيانات.",
             "signings-key-required": "مفتاح التوقيع مطلوب.",
-            "signings-key-min-length": "يجب أن يكون مفتاح التوقيع ما لا يقل عن 256 بت من البيانات.",
+            "signings-key-min-length": "يجب أن يكون مفتاح التوقيع ما لا يقل عن 512 بت من البيانات.",
             "signings-key-base64": "يجب أن يكون مفتاح التوقيع بتنسيق base64.",
             "expiration-time": "وقت انتهاء صلاحية الرمز (ثانية)",
             "expiration-time-required": "وقت انتهاء صلاحية الرمز مطلوب.",
@@ -2078,8 +2078,7 @@
                 "step": "خطوة",
                 "min-evaluation-period": "الفترة الدنيا للتقييم",
                 "max-evaluation-period": "الفترة القصوى للتقييم"
-            },
-            "composite-operations-support": "يدعم عمليات القراءة/الكتابة/المراقبة المركبة"
+            }
         },
         "snmp": {
             "add-communication-config": "إضافة تكوين الاتصال",

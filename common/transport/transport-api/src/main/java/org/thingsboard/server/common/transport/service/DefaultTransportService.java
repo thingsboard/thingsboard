@@ -21,6 +21,9 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.Gson;
 import com.google.gson.JsonObject;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -97,6 +100,8 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.AsyncCallbackTemplate;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
@@ -106,14 +111,12 @@ import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbTransportComponent;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
-import java.util.Collections;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
 import java.util.Random;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutionException;
@@ -130,6 +133,7 @@ import java.util.stream.Collectors;
 @Slf4j
 @Service
 @TbTransportComponent
+@RequiredArgsConstructor
 public class DefaultTransportService extends TransportActivityManager implements TransportService {
 
     public static final TransportProtos.SessionEventMsg SESSION_EVENT_MSG_OPEN = TransportProtos.SessionEventMsg.newBuilder()
@@ -162,6 +166,7 @@ public class DefaultTransportService extends TransportActivityManager implements
     private final PartitionService partitionService;
     private final TbTransportQueueFactory queueProvider;
     private final TbQueueProducerProvider producerProvider;
+    private final TbRuleEngineProducerService ruleEngineProducerService;
 
     private final TopicService topicService;
     private final TbServiceInfoProvider serviceInfoProvider;
@@ -179,46 +184,16 @@ public class DefaultTransportService extends TransportActivityManager implements
     protected TbQueueRequestTemplate<TbProtoQueueMsg<TransportApiRequestMsg>, TbProtoQueueMsg<TransportApiResponseMsg>> transportApiRequestTemplate;
     protected TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> ruleEngineMsgProducer;
     protected TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> tbCoreMsgProducer;
-    protected TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> transportNotificationsConsumer;
+    protected QueueConsumerManager<TbProtoQueueMsg<ToTransportMsg>> transportNotificationsConsumer;
 
     protected MessagesStats ruleEngineProducerStats;
     protected MessagesStats tbCoreProducerStats;
     protected MessagesStats transportApiStats;
 
     protected ExecutorService transportCallbackExecutor;
-    private ExecutorService mainConsumerExecutor;
+    private ExecutorService consumerExecutor;
 
     private final Map<String, RpcRequestMetadata> toServerRpcPendingMap = new ConcurrentHashMap<>();
-
-    private volatile boolean stopped = false;
-
-    public DefaultTransportService(PartitionService partitionService,
-                                   TbServiceInfoProvider serviceInfoProvider,
-                                   TbTransportQueueFactory queueProvider,
-                                   TbQueueProducerProvider producerProvider,
-                                   TopicService topicService,
-                                   StatsFactory statsFactory,
-                                   TransportDeviceProfileCache deviceProfileCache,
-                                   TransportTenantProfileCache tenantProfileCache,
-                                   TransportRateLimitService rateLimitService,
-                                   SchedulerComponent scheduler, TransportResourceCache transportResourceCache,
-                                   ApplicationEventPublisher eventPublisher, NotificationRuleProcessor notificationRuleProcessor,
-                                   EntityLimitsCache entityLimitsCache) {
-        this.partitionService = partitionService;
-        this.serviceInfoProvider = serviceInfoProvider;
-        this.queueProvider = queueProvider;
-        this.producerProvider = producerProvider;
-        this.topicService = topicService;
-        this.statsFactory = statsFactory;
-        this.deviceProfileCache = deviceProfileCache;
-        this.tenantProfileCache = tenantProfileCache;
-        this.rateLimitService = rateLimitService;
-        this.scheduler = scheduler;
-        this.transportResourceCache = transportResourceCache;
-        this.eventPublisher = eventPublisher;
-        this.notificationRuleProcessor = notificationRuleProcessor;
-        this.entityLimitsCache = entityLimitsCache;
-    }
 
     @PostConstruct
     public void init() {
@@ -232,42 +207,33 @@ public class DefaultTransportService extends TransportActivityManager implements
         transportApiRequestTemplate.setMessagesStats(transportApiStats);
         ruleEngineMsgProducer = producerProvider.getRuleEngineMsgProducer();
         tbCoreMsgProducer = producerProvider.getTbCoreMsgProducer();
-        transportNotificationsConsumer = queueProvider.createTransportNotificationsConsumer();
-        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceInfoProvider.getServiceId());
-        transportNotificationsConsumer.subscribe(Collections.singleton(tpi));
         transportApiRequestTemplate.init();
-        mainConsumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
+        consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("transport-consumer"));
+        transportNotificationsConsumer = QueueConsumerManager.<TbProtoQueueMsg<ToTransportMsg>>builder()
+                .name("TB Transport")
+                .msgPackProcessor(this::processNotificationMsgs)
+                .pollInterval(notificationsPollDuration)
+                .consumerCreator(queueProvider::createTransportNotificationsConsumer)
+                .consumerExecutor(consumerExecutor)
+                .build();
     }
 
     @AfterStartUp(order = AfterStartUp.TRANSPORT_SERVICE)
     public void start() {
-        mainConsumerExecutor.execute(() -> {
-            while (!stopped) {
-                try {
-                    List<TbProtoQueueMsg<ToTransportMsg>> records = transportNotificationsConsumer.poll(notificationsPollDuration);
-                    if (records.size() == 0) {
-                        continue;
-                    }
-                    records.forEach(record -> {
-                        try {
-                            processToTransportMsg(record.getValue());
-                        } catch (Throwable e) {
-                            log.warn("Failed to process the notification.", e);
-                        }
-                    });
-                    transportNotificationsConsumer.commit();
-                } catch (Exception e) {
-                    if (!stopped) {
-                        log.warn("Failed to obtain messages from queue.", e);
-                        try {
-                            Thread.sleep(notificationsPollDuration);
-                        } catch (InterruptedException e2) {
-                            log.trace("Failed to wait until the server has capacity to handle new requests", e2);
-                        }
-                    }
-                }
+        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, serviceInfoProvider.getServiceId());
+        transportNotificationsConsumer.subscribe(Set.of(tpi));
+        transportNotificationsConsumer.launch();
+    }
+
+    private void processNotificationMsgs(List<TbProtoQueueMsg<ToTransportMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToTransportMsg>> consumer) {
+        msgs.forEach(msg -> {
+            try {
+                processToTransportMsg(msg.getValue());
+            } catch (Throwable e) {
+                log.warn("Failed to process the notification.", e);
             }
         });
+        consumer.commit();
     }
 
     private void invalidateRateLimits() {
@@ -276,16 +242,14 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @PreDestroy
     public void destroy() {
-        stopped = true;
-
         if (transportNotificationsConsumer != null) {
-            transportNotificationsConsumer.unsubscribe();
+            transportNotificationsConsumer.stop();
         }
         if (transportCallbackExecutor != null) {
             transportCallbackExecutor.shutdownNow();
         }
-        if (mainConsumerExecutor != null) {
-            mainConsumerExecutor.shutdownNow();
+        if (consumerExecutor != null) {
+            consumerExecutor.shutdownNow();
         }
         if (transportApiRequestTemplate != null) {
             transportApiRequestTemplate.stop();
@@ -464,8 +428,13 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @Override
     public void process(TenantId tenantId, TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg requestMsg, TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback) {
-        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(requestMsg).build());
         log.trace("Processing msg: {}", requestMsg);
+        DeviceId gatewayid = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
+        if (!checkLimits(tenantId, gatewayid, null, requestMsg.getDeviceName(), requestMsg, callback, 0)) {
+            return;
+        }
+
+        TbProtoQueueMsg<TransportApiRequestMsg> protoMsg = new TbProtoQueueMsg<>(UUID.randomUUID(), TransportApiRequestMsg.newBuilder().setGetOrCreateDeviceRequestMsg(requestMsg).build());
         var key = new EntityLimitKey(tenantId, StringUtils.truncate(requestMsg.getDeviceName(), 256));
         if (entityLimitsCache.get(key)) {
             transportCallbackExecutor.submit(() -> callback.onError(new RuntimeException(DataConstants.MAXIMUM_NUMBER_OF_DEVICES_REACHED)));
@@ -864,20 +833,40 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
         TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
         DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
+        DeviceId gatewayId = null;
+        if (sessionInfo.hasGatewayIdMSB() && sessionInfo.hasGatewayIdLSB()) {
+            gatewayId = new DeviceId(new UUID(sessionInfo.getGatewayIdMSB(), sessionInfo.getGatewayIdLSB()));
+        }
 
-        EntityType rateLimitedEntityType = rateLimitService.checkLimits(tenantId, deviceId, dataPoints);
-        if (rateLimitedEntityType == null) {
+        return checkLimits(tenantId, gatewayId, deviceId, sessionInfo.getDeviceName(), msg, callback, dataPoints);
+    }
+
+    private boolean checkLimits(TenantId tenantId, DeviceId gatewayId, DeviceId deviceId, String deviceName, Object msg, TransportServiceCallback<?> callback, int dataPoints) {
+        if (log.isTraceEnabled()) {
+            log.trace("[{}][{}] Processing msg: {}", tenantId, deviceName, msg);
+        }
+
+        var rateLimitedPair = rateLimitService.checkLimits(tenantId, gatewayId, deviceId, dataPoints);
+        if (rateLimitedPair == null) {
             return true;
         } else {
+            var rateLimitedEntityType = rateLimitedPair.getFirst();
             if (callback != null) {
                 callback.onError(new TbRateLimitsException(rateLimitedEntityType));
             }
+
             if (rateLimitedEntityType == EntityType.DEVICE || rateLimitedEntityType == EntityType.TENANT) {
+                LimitedApi limitedApi =
+                        rateLimitedEntityType == EntityType.TENANT ? LimitedApi.TRANSPORT_MESSAGES_PER_TENANT :
+                                rateLimitedPair.getSecond() ? LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY : LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE;
+
+                EntityId limitLevel = rateLimitedEntityType == EntityType.DEVICE ? deviceId == null ? gatewayId : deviceId : tenantId;
+
                 notificationRuleProcessor.process(RateLimitsTrigger.builder()
                         .tenantId(tenantId)
-                        .api(rateLimitedEntityType == EntityType.DEVICE ? LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE : LimitedApi.TRANSPORT_MESSAGES_PER_TENANT)
-                        .limitLevel(rateLimitedEntityType == EntityType.DEVICE ? deviceId : tenantId)
-                        .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? sessionInfo.getDeviceName() : null)
+                        .api(limitedApi)
+                        .limitLevel(limitLevel)
+                        .limitLevelEntityName(rateLimitedEntityType == EntityType.DEVICE ? deviceName : null)
                         .build());
             }
             return false;
@@ -945,7 +934,6 @@ public class DefaultTransportService extends TransportActivityManager implements
                     log.trace("ResourceUpdate - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(msg));
                 });
-
             } else if (toSessionMsg.hasResourceDeleteMsg()) {
                 TransportProtos.ResourceDeleteMsg msg = toSessionMsg.getResourceDeleteMsg();
                 TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
@@ -1113,19 +1101,6 @@ public class DefaultTransportService extends TransportActivityManager implements
         tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(routingKey, msg), wrappedCallback);
     }
 
-    private void sendToRuleEngine(TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
-        if (log.isTraceEnabled()) {
-            log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
-        }
-        ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder().setTbMsg(TbMsg.toByteString(tbMsg))
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
-        ruleEngineProducerStats.incrementTotal();
-        StatsCallback wrappedCallback = new StatsCallback(callback, ruleEngineProducerStats);
-        ruleEngineMsgProducer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), wrappedCallback);
-    }
-
     private void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, CustomerId customerId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,
                                   TbMsgMetaData metaData, TbMsgType tbMsgType, TbQueueCallback callback) {
         DeviceProfileId deviceProfileId = new DeviceProfileId(new UUID(sessionInfo.getDeviceProfileIdMSB(), sessionInfo.getDeviceProfileIdLSB()));
@@ -1143,7 +1118,8 @@ public class DefaultTransportService extends TransportActivityManager implements
         }
 
         TbMsg tbMsg = TbMsg.newMsg(queueName, tbMsgType, deviceId, customerId, metaData, gson.toJson(json), ruleChainId, null);
-        sendToRuleEngine(tenantId, tbMsg, callback);
+        ruleEngineProducerService.sendToRuleEngine(ruleEngineMsgProducer, tenantId, tbMsg, new StatsCallback(callback, ruleEngineProducerStats));
+        ruleEngineProducerStats.incrementTotal();
     }
 
     private class TransportTbQueueCallback implements TbQueueCallback {

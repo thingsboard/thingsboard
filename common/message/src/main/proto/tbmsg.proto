@@ -66,4 +66,8 @@ message TbMsgProto {
     int64 customerIdLSB = 18;
 
     TbMsgProcessingCtxProto ctx = 19;
+
+    int64 correlationIdMSB = 20;
+    int64 correlationIdLSB = 21;
+    int32 partition = 22;
 }

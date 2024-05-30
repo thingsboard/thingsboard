@@ -49,7 +49,7 @@
         <spring-redis.version>6.2.4</spring-redis.version>
         <spring-security.version>6.2.4</spring-security.version>
         <jedis.version>5.1.2</jedis.version>
-        <jjwt.version>0.9.1</jjwt.version> <!-- 0.12.5 requires JWT usage refactoring-->
+        <jjwt.version>0.12.5</jjwt.version>
         <slf4j.version>2.0.13</slf4j.version>
         <log4j.version>2.23.1</log4j.version>
         <logback.version>1.5.5</logback.version>
@@ -149,6 +149,7 @@
         <rest-assured.version>5.4.0</rest-assured.version>
         <hamcrest.version>2.2</hamcrest.version>
         <testcontainers.version>1.19.7</testcontainers.version>
+        <testcontainers-junit4-mock.version>1.0.1</testcontainers-junit4-mock.version>
         <zeroturnaround.version>1.12</zeroturnaround.version>
         <selenium.version>4.19.1</selenium.version>
         <webdrivermanager.version>5.8.0</webdrivermanager.version>
@@ -1482,6 +1483,12 @@
                 <groupId>org.apache.httpcomponents</groupId>
                 <artifactId>httpclient</artifactId>
                 <version>${apache-httpclient.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents</groupId>
@@ -1949,6 +1956,12 @@
                 <groupId>org.elasticsearch.client</groupId>
                 <artifactId>elasticsearch-rest-client</artifactId>
                 <version>${elasticsearch.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.javadelight</groupId>
@@ -1974,11 +1987,23 @@
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-sqs</artifactId>
                 <version>${aws.sdk.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.amazonaws</groupId>
                 <artifactId>aws-java-sdk-sns</artifactId>
                 <version>${aws.sdk.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>com.google.cloud</groupId>
@@ -2109,6 +2134,10 @@
                         <artifactId>*</artifactId>
                     </exclusion>
                     <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                    <exclusion>
                         <groupId>com.github.spotbugs</groupId>
                         <artifactId>spotbugs-annotations</artifactId>
                     </exclusion>
@@ -2131,6 +2160,14 @@
                     </exclusion>
                 </exclusions>
             </dependency>
+            <!-- Mocks the few JUnit 4 classes that testcontainers needs so that JUnit 4 can be excluded.
+            Fixes/Works around https://github.com/testcontainers/testcontainers-java/issues/970 -->
+            <dependency>
+                <groupId>software.xdev</groupId>
+                <artifactId>testcontainers-junit4-mock</artifactId>
+                <version>${testcontainers-junit4-mock.version}</version>
+                <scope>test</scope>
+            </dependency>
             <dependency>
                 <groupId>org.zeroturnaround</groupId>
                 <artifactId>zt-exec</artifactId>
@@ -2142,6 +2179,12 @@
                 <artifactId>mockserver-netty</artifactId>
                 <version>${mock-server.version}</version>
                 <scope>test</scope>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.mock-server</groupId>
@@ -2174,6 +2217,12 @@
                 <groupId>com.google.firebase</groupId>
                 <artifactId>firebase-admin</artifactId>
                 <version>${firebase-admin.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.eclipse.jgit</groupId>
@@ -2209,6 +2258,12 @@
                 <groupId>org.apache.xmlgraphics</groupId>
                 <artifactId>batik-transcoder</artifactId>
                 <version>${apache-xmlgraphics.version}</version>
+                <exclusions>
+                    <exclusion>
+                        <groupId>commons-logging</groupId>
+                        <artifactId>commons-logging</artifactId>
+                    </exclusion>
+                </exclusions>
             </dependency>
             <dependency>
                 <groupId>org.apache.xmlgraphics</groupId>

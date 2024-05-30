@@ -23,6 +23,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
@@ -105,6 +106,32 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualValues = rpcActualResult.get("value").asText();
         expected = "LwM2mResourceInstance [id=" + resourceInstanceId15 + ", value=" + expectedValue15.length()/2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
+    }
+
+    /**
+     * Resource:
+     * <Type>Opaque</Type>
+     * Input type String (not HexDec)
+     * return Hex.decodeHex(((String)value).toCharArray()) - error
+     * return Base64.getDecoder().decode(((String) value).getBytes()) - ok;
+     * WriteReplace {"id": "/19_1.1/0/0","value": {"0":"01234567890"}}
+     * {"result":"CHANGED"} -> Actual Value Not Equals expectedValue0
+     */
+    @Test
+    public void testWriteReplaceValueMultipleResource_Error_InputFormatData_Result_CHANGED_Value_Not_Equals_expectedValue0() throws Exception {
+        String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
+        int resourceInstanceId0 = 0;
+        String expectedValue0 = "01234567890";
+        String expectedValue = "{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\"}";
+        String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        String expectedPath0 = expectedPath + "/" + resourceInstanceId0;
+        actualResult = sendRPCReadById(expectedPath0);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        assertFalse(actualValues.contains(expected));
     }
 
     /**

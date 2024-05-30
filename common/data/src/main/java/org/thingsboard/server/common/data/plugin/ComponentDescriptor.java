@@ -39,7 +39,7 @@ public class ComponentDescriptor extends BaseData<ComponentDescriptorId> {
     @Getter @Setter private ComponentType type;
     @Schema(description = "Scope of the Rule Node. Always set to 'TENANT', since no rule chains on the 'SYSTEM' level yet.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = "TENANT", example = "TENANT")
     @Getter @Setter private ComponentScope scope;
-    @Schema(description = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = "USER_PREFERENCE, ENABLED, SINGLETON", example = "ENABLED")
+    @Schema(description = "Clustering mode of the RuleNode. This mode represents the ability to start Rule Node in multiple microservices.", accessMode = Schema.AccessMode.READ_ONLY, allowableValues = {"USER_PREFERENCE", "ENABLED", "SINGLETON"}, example = "ENABLED")
     @Getter @Setter private ComponentClusteringMode clusteringMode;
     @Length(fieldName = "name")
     @Schema(description = "Name of the Rule Node. Taken from the @RuleNode annotation.", accessMode = Schema.AccessMode.READ_ONLY, example = "Custom Rule Node")
