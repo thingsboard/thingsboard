@@ -31,7 +31,7 @@ return 'Incoming message:\n' + JSON.stringify(msg) +
 
 You can see real life example, how to use this node in this tutorial:
 
-- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#log-unknown-request)
+- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#log-unknown-request)
 
 <br>
 <br>
