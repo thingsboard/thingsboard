@@ -48,7 +48,8 @@ import java.util.concurrent.TimeUnit;
         configClazz = TbSendRpcRequestNodeConfiguration.class,
         nodeDescription = "Sends RPC call to device",
         nodeDetails = "Expects messages with \"method\" and \"params\". Will forward response from device to next nodes." +
-                "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.",
+                "If the RPC call request is originated by REST API call from user, will forward the response to user immediately.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeRpcRequestConfig",
         icon = "call_made"

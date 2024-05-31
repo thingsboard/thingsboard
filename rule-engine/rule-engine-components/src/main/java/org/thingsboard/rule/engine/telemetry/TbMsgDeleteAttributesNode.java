@@ -43,7 +43,8 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
         nodeDetails = "Attempt to remove attributes by selected keys. If msg originator doesn't have an attribute with " +
                 " a key selected in the configuration, it will be ignored. If delete operation is completed successfully, " +
                 " rule node will send the \"Attributes Deleted\" event to the root chain of the message originator and " +
-                " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
+                " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"

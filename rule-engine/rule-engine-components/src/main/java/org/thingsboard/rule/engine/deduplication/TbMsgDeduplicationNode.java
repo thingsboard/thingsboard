@@ -57,7 +57,8 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         nodeDetails = "Deduplication strategies: <ul><li><strong>FIRST</strong> - return first message that arrived during deduplication period.</li>" +
                 "<li><strong>LAST</strong> - return last message that arrived during deduplication period.</li>" +
                 "<li><strong>ALL</strong> - return all messages as a single JSON array message. " +
-                "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>",
+                "Where each element represents object with <strong><i>msg</i></strong> and <strong><i>metadata</i></strong> inner properties.</li></ul>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         icon = "content_copy",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDeduplicationConfig"

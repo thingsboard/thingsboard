@@ -57,7 +57,8 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         version = 1,
         hasQueueName = true,
         nodeDescription = "Periodically generates messages",
-        nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.",
+        nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         inEnabled = false,
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeGeneratorConfig",
