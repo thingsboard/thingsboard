@@ -8,4 +8,4 @@
 </ul>
 
 Enable 'debug mode' for your rule node to see the messages that arrive in near real-time. 
-See <a href="${siteBaseUrl}/docs/user-guide/rule-engine-2-0/overview/#debugging" target="_blank">Debugging</a> for more information.
+See <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/overview/#debugging" target="_blank">Debugging</a> for more information.

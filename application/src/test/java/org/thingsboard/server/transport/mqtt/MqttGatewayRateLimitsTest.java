@@ -81,7 +81,8 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
 
     @Test
     public void transportGatewayMsgRateLimitTest() throws Exception {
-        transportGatewayRateLimitTest(profileConfiguration -> profileConfiguration.setTransportGatewayMsgRateLimit("1:600"));
+        // Device A 2 msgs success ('create device', 'to device actor'), Device B 'create device success' , 'to device actor' - limited
+        transportGatewayRateLimitTest(profileConfiguration -> profileConfiguration.setTransportGatewayMsgRateLimit("3:600"));
     }
 
     @Test

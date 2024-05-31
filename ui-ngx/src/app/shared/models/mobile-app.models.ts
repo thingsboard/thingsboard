@@ -38,7 +38,6 @@ export interface QRCodeConfig {
   showOnHomePage: boolean;
   badgeEnabled: boolean;
   badgePosition: BadgePosition;
-  badgeStyle: BadgeStyle;
   qrCodeLabelEnabled: boolean;
   qrCodeLabel: string;
 }
@@ -56,25 +55,4 @@ export enum BadgePosition {
 export const badgePositionTranslationsMap = new Map<BadgePosition, string>([
   [BadgePosition.RIGHT, 'admin.mobile-app.right'],
   [BadgePosition.LEFT, 'admin.mobile-app.left']
-]);
-
-export enum BadgeStyle {
-  ORIGINAL = 'ORIGINAL',
-  WHITE = 'WHITE'
-}
-
-export const badgeStyleTranslationsMap = new Map<BadgeStyle, string>([
-  [BadgeStyle.ORIGINAL, 'admin.mobile-app.original'],
-  [BadgeStyle.WHITE, 'admin.mobile-app.white']
-]);
-
-export const badgeStyleURLMap = new Map<BadgeStyle, MobileOSBadgeURL>([
-  [BadgeStyle.ORIGINAL, {
-    iOS: 'assets/android-ios-stores-badges/ios_store_en_black_badge.svg',
-    android: 'assets/android-ios-stores-badges/android_store_en_black_badge.svg'
-  }],
-  [BadgeStyle.WHITE, {
-    iOS: 'assets/android-ios-stores-badges/ios_store_en_white_badge.svg',
-    android: 'assets/android-ios-stores-badges/android_store_en_black_badge.svg'
-  }]
 ]);

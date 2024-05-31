@@ -13,28 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: block;
-  .mat-expansion-panel {
-    box-shadow: none;
-    &.tick-value {
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        &.mat-expanded {
-          height: 48px;
-        }
-      }
-    }
-  }
-}
 
-:host ::ng-deep {
-  .mat-expansion-panel {
-    &.tick-value {
-      .mat-expansion-panel-body {
-        padding: 0 8px 8px;
-      }
+:host {
+  .range {
+    display: flex;
+    flex: 1;
+    align-items: center;
+    flex-direction: row;
+
+    &-container {
+      display: flex;
+      flex: 1;
+      flex-direction: row;
+      align-items: center;
+      gap: 12px;
+      padding: 8px;
+      margin-right: 12px;
+      border: 1px solid rgba(0, 0, 0, 0.12);
+      border-radius: 6px;
     }
   }
 }

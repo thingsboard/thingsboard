@@ -76,8 +76,8 @@ return false;
 
 You can see real life example, how to use this node in those tutorials:
 
-- [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/create-clear-alarms/#node-a-filter-script)
-- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-filter-script-node)
+- [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/create-clear-alarms/#node-a-filter-script)
+- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-filter-script-node)
 
 <br>
 <br>

@@ -13,12 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.coapserver;
 
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-public enum BadgeStyle {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    ORIGINAL,
-    WHITE;
-
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || " +
+        "('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${coap.enabled}'=='true' && '${transport.coap.enabled}'=='true')")
+public @interface TbCoapTransportComponent {
 }
