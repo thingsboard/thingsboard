@@ -25,10 +25,9 @@ import { MobileAppService } from '@core/http/mobile-app.service';
 import {
   BadgePosition,
   badgePositionTranslationsMap,
-  BadgeStyle,
-  badgeStyleTranslationsMap,
   MobileAppSettings
 } from '@shared/models/mobile-app.models';
+import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 
 @Component({
   selector: 'tb-mobile-app-settings',
@@ -44,7 +43,6 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
   private readonly destroy$ = new Subject<void>();
 
   badgePositionTranslationsMap = badgePositionTranslationsMap;
-  badgeStyleTranslationsMap = badgeStyleTranslationsMap;
 
   constructor(protected store: Store<AppState>,
               private mobileAppService: MobileAppService,
@@ -80,23 +78,37 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     ).subscribe(value => {
       this.iosEnableChanged(value);
     });
+    this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(value => {
+      if (value) {
+        this.mobileAppSettingsForm.get('qrCodeConfig').enable({emitEvent: false});
+      } else {
+        this.mobileAppSettingsForm.get('qrCodeConfig').disable({emitEvent: false});
+        this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').enable({emitEvent: false});
+      }
+      this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
+      this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').updateValueAndValidity({onlySelf: true});
+    });
     this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
       if (value) {
         if (this.mobileAppSettingsForm.get('androidConfig.enabled').value || this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').enable({emitEvent: false});
+          this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
           this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
+        } else {
+          this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
+          this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
         }
       } else {
-        this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
         this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
       }
     });
     this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(value => {
-      if (value) {
+      if (value && this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
         this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
       } else {
         this.mobileAppSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
@@ -125,10 +137,9 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       qrCodeConfig: this.fb.group({
         showOnHomePage: [true],
         badgeEnabled: [true],
-        badgeStyle: [{value: BadgeStyle.ORIGINAL, disabled: true}],
-        badgePosition: [{value: BadgePosition.RIGHT, disabled: true}],
+        badgePosition: [BadgePosition.RIGHT],
         qrCodeLabelEnabled: [true],
-        qrCodeLabel: ['', [Validators.required]]
+        qrCodeLabel: ['', [Validators.required, Validators.maxLength(50)]]
       })
     });
   }
@@ -148,7 +159,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
       this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
     }
-    this.updateBadgeControls(value);
+    this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
   }
 
   private iosEnableChanged(value: boolean): void {
@@ -159,31 +170,20 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     } else {
       this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
     }
-    this.updateBadgeControls(value);
-  }
-
-  private updateBadgeControls(value: boolean) {
-    if (this.mobileAppSettingsForm.get('qrCodeConfig.showOnHomePage').value) {
-      if (value) {
-        this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
-        if (this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').value) {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').enable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
-        }
-      } else {
-        if (!this.mobileAppSettingsForm.get('iosConfig.enabled').value && !this.mobileAppSettingsForm.get('androidConfig.enabled').value) {
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
-          this.mobileAppSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
-        }
-      }
-    }
+    this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
   }
 
   save(): void {
+    const showOnHomePagePreviousValue = this.mobileAppSettings.qrCodeConfig.showOnHomePage;
     this.mobileAppSettings = {...this.mobileAppSettings, ...this.mobileAppSettingsForm.getRawValue()};
     this.mobileAppService.saveMobileAppSettings(this.mobileAppSettings)
-      .subscribe((settings) => this.processMobileAppSettings(settings));
+      .subscribe((settings) => {
+        const showOnHomePageValue = settings.qrCodeConfig.showOnHomePage;
+        if (showOnHomePagePreviousValue !== showOnHomePageValue) {
+          this.store.dispatch(new ActionUpdateMobileQrCodeEnabled({mobileQrEnabled: showOnHomePageValue}));
+        }
+        this.processMobileAppSettings(settings);
+      });
   }
 
   confirmForm(): FormGroup {
