@@ -29,6 +29,10 @@
     &.tb-actions-header {
       width: 120px;
       min-width: 120px;
+      &.disabled {
+        width: 40px;
+        min-width: 40px;
+      }
     }
   }
   .tb-form-table {

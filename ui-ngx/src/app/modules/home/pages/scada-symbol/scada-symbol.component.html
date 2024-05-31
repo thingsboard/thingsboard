@@ -76,7 +76,7 @@
                 formControlName="metadata">
                 <div class="tb-scada-symbol-metadata-header-prefix">
                   <button fxHide.gt-sm
-                          [disabled]="!scadaSymbolFormGroup.valid"
+                          [disabled]="scadaSymbolFormGroup.invalid"
                           mat-button color="primary"
                           (click)="enterPreviewMode()">
                     <mat-icon>visibility</mat-icon>
@@ -85,13 +85,13 @@
                 </div>
                 <div fxFlex.lt-md class="tb-scada-symbol-metadata-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
                   <button fxHide.lt-md
-                          [disabled]="!scadaSymbolFormGroup.valid"
+                          [disabled]="scadaSymbolFormGroup.invalid"
                           mat-button color="primary"
                           (click)="enterPreviewMode()">
                     <mat-icon>visibility</mat-icon>
                     {{ 'scada.preview' | translate }}
                   </button>
-                  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+                  <div *ngIf="!readonly" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
                     <button [disabled]="!(scadaSymbolFormGroup.dirty || symbolEditorDirty)"
                             mat-stroked-button color="primary"
                             (click)="onRevertScadaSymbolConfig()">
@@ -112,6 +112,7 @@
         </mat-drawer>
         <mat-drawer-content class="tb-scada-symbol-editor-content">
           <tb-scada-symbol-editor *ngIf="!previewMode" #symbolEditor
+                                  [readonly]="readonly"
                                   [data]="symbolEditorData"
                                   [editObjectCallbacks]="editObjectCallbacks"></tb-scada-symbol-editor>
           <tb-dashboard *ngIf="previewMode"

@@ -189,6 +189,7 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
     } else {
       const ctx: any = {
         isAdd: add,
+        disabled: this.disabled,
         behavior: deepClone(this.modelValue)
       };
       const scadaSymbolBehaviorPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,

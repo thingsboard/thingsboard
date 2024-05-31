@@ -70,10 +70,15 @@ export class ScadaSymbolEditObject {
 
   constructor(private rootElement: HTMLElement,
               public viewContainerRef: ViewContainerRef,
-              private callbacks: ScadaSymbolEditObjectCallbacks) {
+              private callbacks: ScadaSymbolEditObjectCallbacks,
+              public readonly: boolean) {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
     });
+  }
+
+  public setReadOnly(readonly: boolean) {
+    this.readonly = readonly;
   }
 
   public setContent(svgContent: string) {
@@ -391,6 +396,10 @@ export class ScadaSymbolElement {
   private tooltipMouseX: number;
   private tooltipMouseY: number;
 
+  get readonly(): boolean {
+    return this.editObject.readonly;
+  }
+
   constructor(private editObject: ScadaSymbolEditObject,
               public element: Element) {
     this.tag = element.attr('tb:tag');
@@ -426,7 +435,7 @@ export class ScadaSymbolElement {
     });
     if (this.hasTag()) {
       this.createTagTooltip();
-    } else {
+    } else if (!this.readonly) {
       this.createAddTagTooltip();
     }
   }

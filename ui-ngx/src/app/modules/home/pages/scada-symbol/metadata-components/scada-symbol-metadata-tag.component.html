@@ -26,84 +26,23 @@
     </mat-chip-set>
   </div>
   <div class="tb-state-render-function-field">
-    <button #editStateRenderFunctionButton
+    <button *ngIf="!disabled || tagFormGroup.get('stateRenderFunction').value"
+            #editStateRenderFunctionButton
             mat-button
             color="primary"
             (click)="editTagStateRenderFunction()">
-      <mat-icon>{{ tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add' }}</mat-icon>
-      <span>{{ (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') | translate }}</span>
+      <mat-icon>{{ disabled ? 'visibility' :  (tagFormGroup.get('stateRenderFunction').value ? 'edit' : 'add') }}</mat-icon>
+      <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('stateRenderFunction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
     </button>
   </div>
   <div class="tb-on-click-action-field">
-    <button #editClickActionButton
+    <button *ngIf="!disabled || tagFormGroup.get('clickAction').value"
+            #editClickActionButton
             mat-button
             color="primary"
             (click)="editClickAction()">
-      <mat-icon>{{ tagFormGroup.get('clickAction').value ? 'edit' : 'add' }}</mat-icon>
-      <span>{{ (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') | translate }}</span>
+      <mat-icon>{{ disabled ? 'visibility' : (tagFormGroup.get('clickAction').value ? 'edit' : 'add') }}</mat-icon>
+      <span>{{ ( disabled ? 'action.view' : (tagFormGroup.get('clickAction').value ? 'action.edit' : 'action.add') ) | translate }}</span>
     </button>
   </div>
-  <!--mat-expansion-panel #expansionPanel class="tb-settings">
-    <mat-expansion-panel-header fxLayout="row wrap">
-      <div class="tb-scada-symbol-metadata-tag-header">
-        <div class="tb-form-row tb-flex">
-          <div class="fixed-title-width" translate>scada.tag</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" (click)="$event.stopPropagation()">
-            <mat-select #tagSelect required formControlName="tag" placeholder="{{ 'scada.select-tag' | translate }}">
-              <mat-option *ngFor="let tag of availableTags" [value]="tag">
-                {{ tag }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <button type="button"
-                mat-icon-button
-                (click)="tagRemoved.emit()"
-                matTooltip="{{ 'scada.remove-tag' | translate }}"
-                matTooltipPosition="above">
-          <mat-icon>delete</mat-icon>
-        </button>
-      </div>
-    </mat-expansion-panel-header>
-    <ng-template matExpansionPanelContent>
-      <div class="tb-form-panel stroked">
-        <mat-expansion-panel #renderFunctionExpansionPanel class="tb-settings">
-          <mat-expansion-panel-header fxLayout="row wrap">
-            <mat-panel-title>
-              {{ 'scada.state-render-function' | translate }}
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <tb-js-func #stateRenderFunction
-                        formControlName="stateRenderFunction"
-                        [objectHighlightRules]="scadaSymbolElementStateRenderHighlightRules"
-                        [propertyHighlightRules]="scadaSymbolElementStateRenderPropertiesHighlightRules"
-                        [editorCompleter]="elementStateRenderFunctionCompleter"
-                        [functionArgs]="['ctx', 'element']"
-                        helpId="widget/lib/timeseries/cell_style_fn">
-            </tb-js-func>
-          </ng-template>
-        </mat-expansion-panel>
-      </div>
-      <div class="tb-form-panel stroked">
-        <mat-expansion-panel #clickActionExpansionPanel class="tb-settings">
-          <mat-expansion-panel-header fxLayout="row wrap">
-            <mat-panel-title>
-              {{ 'scada.on-click-action' | translate }}
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <tb-js-func #clickAction
-                        formControlName="clickAction"
-                        [objectHighlightRules]="scadaSymbolClickActionHighlightRules"
-                        [propertyHighlightRules]="scadaSymbolClickActionPropertiesHighlightRules"
-                        [editorCompleter]="clickActionFunctionCompleter"
-                        [functionArgs]="['ctx', 'element', 'event']"
-                        helpId="widget/lib/timeseries/cell_style_fn">
-            </tb-js-func>
-          </ng-template>
-        </mat-expansion-panel>
-      </div>
-    </ng-template>
-  </mat-expansion-panel-->
 </div>

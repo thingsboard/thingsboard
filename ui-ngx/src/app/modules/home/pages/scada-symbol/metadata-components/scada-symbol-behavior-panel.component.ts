@@ -56,6 +56,9 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
   behavior: ScadaSymbolBehavior;
 
   @Input()
+  disabled: boolean;
+
+  @Input()
   popover: TbPopoverComponent<ScadaSymbolBehaviorPanelComponent>;
 
   @Output()
@@ -89,12 +92,16 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
         valueToDataFunction: [this.behavior.valueToDataFunction, [Validators.required]]
       }
     );
-    merge(this.behaviorFormGroup.get('type').valueChanges,
-      this.behaviorFormGroup.get('valueType').valueChanges,
-      this.behaviorFormGroup.get('valueToDataType').valueChanges).subscribe(() => {
+    if (this.disabled) {
+      this.behaviorFormGroup.disable({emitEvent: false});
+    } else {
+      merge(this.behaviorFormGroup.get('type').valueChanges,
+        this.behaviorFormGroup.get('valueType').valueChanges,
+        this.behaviorFormGroup.get('valueToDataType').valueChanges).subscribe(() => {
+        this.updateValidators();
+      });
       this.updateValidators();
-    });
-    this.updateValidators();
+    }
   }
 
   cancel() {

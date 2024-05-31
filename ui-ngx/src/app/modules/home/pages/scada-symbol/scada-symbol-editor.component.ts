@@ -50,6 +50,9 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   @Input()
   editObjectCallbacks: ScadaSymbolEditObjectCallbacks;
 
+  @Input()
+  readonly: boolean;
+
   scadaSymbolEditObject: ScadaSymbolEditObject;
 
   constructor(private viewContainerRef: ViewContainerRef) {
@@ -60,7 +63,7 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   ngAfterViewInit() {
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.scadaSymbolShape.nativeElement,
-      this.viewContainerRef, this.editObjectCallbacks);
+      this.viewContainerRef, this.editObjectCallbacks, this.readonly);
     if (this.data) {
       this.scadaSymbolEditObject.setContent(this.data.scadaSymbolContent);
     }
@@ -76,6 +79,8 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
               this.scadaSymbolEditObject.setContent(this.data.scadaSymbolContent);
             });
           }
+        } else if (propName === 'readonly') {
+          this.scadaSymbolEditObject.setReadOnly(this.readonly);
         }
       }
     }

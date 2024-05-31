@@ -42,9 +42,9 @@
             color="primary"
             type="button"
             (click)="cancel()">
-      {{ 'action.cancel' | translate }}
+      {{ (disabled ? 'action.close' : 'action.cancel') | translate }}
     </button>
-    <button mat-raised-button
+    <button *ngIf="!disabled" mat-raised-button
             color="primary"
             type="button"
             (click)="applyTagFunction()"

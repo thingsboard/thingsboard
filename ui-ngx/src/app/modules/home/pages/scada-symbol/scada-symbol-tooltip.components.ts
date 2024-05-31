@@ -184,19 +184,22 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
   template: `<div class="tb-scada-symbol-tooltip-panel">
     <span>{{ symbolElement?.element?.type }}:</span>
     <span><b>{{ symbolElement?.tag }}</b></span>
-    <button type="button" mat-icon-button class="tb-mat-20"
+    <button *ngIf="!symbolElement?.readonly" type="button" mat-icon-button class="tb-mat-20"
             matTooltip="{{ 'scada.tag.update-tag' | translate }}"
             matTooltipPosition="above"
             (click)="onUpdateTag()">
       <mat-icon>edit</mat-icon>
     </button>
-    <button #tagSettingsButton type="button"
+    <button *ngIf="displayTagSettings"
+            #tagSettingsButton type="button"
             mat-icon-button class="tb-mat-20"
             matTooltip="{{ 'scada.tag.tag-settings' | translate }}"
             matTooltipPosition="above">
       <mat-icon>settings</mat-icon>
     </button>
-    <button #removeTagButton type="button"
+    <button *ngIf="!symbolElement?.readonly"
+            #removeTagButton
+            type="button"
             mat-icon-button class="tb-mat-20"
             matTooltip="{{ 'scada.tag.remove-tag' | translate }}"
             matTooltipPosition="above">
@@ -206,7 +209,7 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
   styleUrls: ['./scada-symbol-tooltip.component.scss'],
   encapsulation: ViewEncapsulation.None
 })
-class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements AfterViewInit {
+class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements OnInit, AfterViewInit {
 
   @ViewChild('tagSettingsButton', {read: ElementRef})
   tagSettingsButton: ElementRef<HTMLElement>;
@@ -220,61 +223,73 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
   @Output()
   removeTag = new EventEmitter();
 
+  displayTagSettings = true;
+
   constructor(public element: ElementRef<HTMLElement>,
               private container: ViewContainerRef) {
     super(element);
+  }
+
+  ngOnInit() {
+    if (this.symbolElement?.readonly) {
+      this.displayTagSettings = (this.symbolElement?.hasStateRenderFunction() || this.symbolElement?.hasClickAction());
+    }
   }
 
   ngAfterViewInit() {
     super.ngAfterViewInit();
     setTimeout(() => {
 
-      const tagSettingsButton = $(this.tagSettingsButton.nativeElement);
-      tagSettingsButton.tooltipster(
-        {
-          zIndex: 200,
-          arrow: true,
-          theme: ['scada-symbol', 'tb-active'],
-          interactive: true,
-          trigger: 'click',
-          side: 'top',
-          content: ''
-        }
-      );
+      if (this.displayTagSettings) {
+        const tagSettingsButton = $(this.tagSettingsButton.nativeElement);
+        tagSettingsButton.tooltipster(
+          {
+            zIndex: 200,
+            arrow: true,
+            theme: ['scada-symbol', 'tb-active'],
+            interactive: true,
+            trigger: 'click',
+            trackOrigin: true,
+            trackerInterval: 100,
+            side: 'top',
+            content: ''
+          }
+        );
 
-      const scadaSymbolTagSettingsTooltip = tagSettingsButton.tooltipster('instance');
-      const scadaSymbolTagSettingsCompRef =
+        const scadaSymbolTagSettingsTooltip = tagSettingsButton.tooltipster('instance');
         setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, scadaSymbolTagSettingsTooltip);
-      scadaSymbolTagSettingsTooltip.on('ready', () => {
-        scadaSymbolTagSettingsCompRef.instance.updateFunctionsState();
-      });
+      }
 
-      const removeTagButton = $(this.removeTagButton.nativeElement);
-      removeTagButton.tooltipster(
-        {
-          zIndex: 200,
-          arrow: true,
-          theme: ['scada-symbol', 'tb-active'],
-          interactive: true,
-          trigger: 'click',
-          side: 'top',
-          content: ''
-        }
-      );
+      if (!this.symbolElement.readonly) {
+        const removeTagButton = $(this.removeTagButton.nativeElement);
+        removeTagButton.tooltipster(
+          {
+            zIndex: 200,
+            arrow: true,
+            theme: ['scada-symbol', 'tb-active'],
+            interactive: true,
+            trigger: 'click',
+            trackOrigin: true,
+            trackerInterval: 100,
+            side: 'top',
+            content: ''
+          }
+        );
 
-      const scadaSymbolRemoveTagTooltip = removeTagButton.tooltipster('instance');
-      const scadaSymbolRemoveTagCompRef =
-        setTooltipComponent(this.symbolElement, this.container, ScadaSymbolRemoveTagConfirmComponent, scadaSymbolRemoveTagTooltip);
-      scadaSymbolRemoveTagCompRef.instance.removeTag.subscribe(() => {
-        scadaSymbolRemoveTagTooltip.destroy();
-        this.removeTag.emit();
-      });
-      scadaSymbolRemoveTagCompRef.instance.cancel.subscribe(() => {
-        scadaSymbolRemoveTagTooltip.close();
-      });
-      scadaSymbolRemoveTagTooltip.on('ready', () => {
-        scadaSymbolRemoveTagCompRef.instance.yesButton.focus();
-      });
+        const scadaSymbolRemoveTagTooltip = removeTagButton.tooltipster('instance');
+        const scadaSymbolRemoveTagCompRef =
+          setTooltipComponent(this.symbolElement, this.container, ScadaSymbolRemoveTagConfirmComponent, scadaSymbolRemoveTagTooltip);
+        scadaSymbolRemoveTagCompRef.instance.removeTag.subscribe(() => {
+          scadaSymbolRemoveTagTooltip.destroy();
+          this.removeTag.emit();
+        });
+        scadaSymbolRemoveTagCompRef.instance.cancel.subscribe(() => {
+          scadaSymbolRemoveTagTooltip.close();
+        });
+        scadaSymbolRemoveTagTooltip.on('ready', () => {
+          scadaSymbolRemoveTagCompRef.instance.yesButton.focus();
+        });
+      }
     });
   }
 
@@ -335,30 +350,30 @@ class ScadaSymbolRemoveTagConfirmComponent extends ScadaSymbolPanelComponent imp
 
 @Component({
   template: `<div class="tooltipster-content tb-scada-symbol-tooltip-panel column flex-start">
-    <div translate>scada.state-render-function</div>
+    <div *ngIf="!symbolElement?.readonly || hasStateRenderFunction" translate>scada.state-render-function</div>
     <button *ngIf="hasStateRenderFunction"
             mat-stroked-button
             color="primary"
             (click)="editStateRenderFunction()">
-      <mat-icon>edit</mat-icon>
-      <span translate>action.edit</span>
+      <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
+      <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
     </button>
-    <button *ngIf="!hasStateRenderFunction"
+    <button *ngIf="!hasStateRenderFunction && !symbolElement?.readonly"
             mat-stroked-button
             color="primary"
             (click)="editStateRenderFunction()">
       <mat-icon>add</mat-icon>
       <span translate>action.add</span>
     </button>
-    <div translate>scada.tag.on-click-action</div>
+    <div *ngIf="!symbolElement?.readonly || hasClickAction" translate>scada.tag.on-click-action</div>
     <button *ngIf="hasClickAction"
             mat-stroked-button
             color="primary"
             (click)="editClickAction()">
-      <mat-icon>edit</mat-icon>
-      <span translate>action.edit</span>
+      <mat-icon>{{ symbolElement?.readonly ? 'visibility' : 'edit' }}</mat-icon>
+      <span>{{ (symbolElement?.readonly ? 'action.view' : 'action.edit') | translate }}</span>
     </button>
-    <button *ngIf="!hasClickAction"
+    <button *ngIf="!hasClickAction && !symbolElement?.readonly"
             mat-stroked-button
             color="primary"
             (click)="editClickAction()">
@@ -380,9 +395,10 @@ class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implemen
   }
 
   ngOnInit() {
+    this.updateFunctionsState();
   }
 
-  updateFunctionsState() {
+  private updateFunctionsState() {
     this.hasStateRenderFunction = this.symbolElement.hasStateRenderFunction();
     this.hasClickAction = this.symbolElement.hasClickAction();
   }

@@ -17,18 +17,18 @@
 -->
 <div class="tb-form-panel tb-scada-symbol-properties">
   <div class="tb-form-table">
-    <div class="tb-form-table-header no-padding-right">
+    <div class="tb-form-table-header" [class.no-padding-right]="!disabled">
       <div class="tb-form-table-header-cell tb-id-header" translate>scada.property.id</div>
       <div class="tb-form-table-header-cell tb-name-header" translate>scada.property.name</div>
       <div class="tb-form-table-header-cell tb-type-header" translate>scada.property.type</div>
-      <div class="tb-form-table-header-cell tb-actions-header"></div>
+      <div class="tb-form-table-header-cell tb-actions-header" [class.disabled]="disabled"></div>
     </div>
     <div *ngIf="propertiesFormArray().controls.length; else noProperties" class="tb-form-table-body tb-drop-list"
          cdkDropList cdkDropListOrientation="vertical"
          [cdkDropListDisabled]="!dragEnabled"
          (cdkDropListDropped)="propertyDrop($event)">
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
-           class="tb-draggable-form-table-row"
+           [class.tb-draggable-form-table-row]="!disabled"
            *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
         <tb-scada-symbol-metadata-property-row fxFlex
                                                [index]="$index"
@@ -38,6 +38,7 @@
         </tb-scada-symbol-metadata-property-row>
         <div class="tb-form-table-row-cell-buttons">
           <button mat-icon-button
+                  *ngIf="!disabled"
                   type="button"
                   cdkDragHandle
                   [ngClass]="{'tb-hidden': !dragEnabled}"
@@ -50,7 +51,7 @@
     </div>
     <tb-error *ngIf="errorText" noMargin [error]="errorText" style="padding-left: 12px;"></tb-error>
   </div>
-  <div>
+  <div *ngIf="!disabled">
     <button type="button" mat-stroked-button color="primary" (click)="addProperty()">
       {{ 'scada.property.add-property' | translate }}
     </button>

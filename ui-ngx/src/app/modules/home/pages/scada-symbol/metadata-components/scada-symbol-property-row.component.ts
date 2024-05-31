@@ -191,6 +191,7 @@ export class ScadaSymbolPropertyRowComponent implements ControlValueAccessor, On
     } else {
       const ctx: any = {
         isAdd: add,
+        disabled: this.disabled,
         booleanPropertyIds: this.booleanPropertyIds,
         property: deepClone(this.modelValue)
       };

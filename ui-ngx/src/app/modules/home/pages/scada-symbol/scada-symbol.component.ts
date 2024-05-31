@@ -63,6 +63,9 @@ import { WidgetActionCallbacks } from '@home/components/widget/action/manage-wid
 import {
   ScadaSymbolMetadataComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-metadata.component';
+import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { Authority } from '@shared/models/authority.enum';
+import { NULL_UUID } from '@shared/models/id/has-uuid';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -120,6 +123,10 @@ export class ScadaSymbolComponent extends PageComponent
   private previewWidget: Widget;
 
   private forcePristine = false;
+
+  private authUser = getCurrentAuthUser(this.store);
+
+  readonly: boolean;
 
   get isDirty(): boolean {
     return (this.scadaSymbolFormGroup.dirty || this.symbolEditorDirty) && !this.forcePristine;
@@ -329,6 +336,11 @@ export class ScadaSymbolComponent extends PageComponent
   }
 
   private init(data: ScadaSymbolData) {
+    if (this.authUser.authority === Authority.TENANT_ADMIN) {
+      this.readonly = data.imageResource.tenantId.id === NULL_UUID;
+    } else {
+      this.readonly = this.authUser.authority !== Authority.SYS_ADMIN;
+    }
     this.origSymbolData = data;
     this.symbolData = deepClone(data);
     this.symbolEditorData = {
@@ -338,6 +350,11 @@ export class ScadaSymbolComponent extends PageComponent
     this.scadaSymbolFormGroup.patchValue({
       metadata
     }, {emitEvent: false});
+    if (this.readonly) {
+      this.scadaSymbolFormGroup.disable({emitEvent: false});
+    } else {
+      this.scadaSymbolFormGroup.enable({emitEvent: false});
+    }
     this.scadaSymbolFormGroup.markAsPristine();
     this.symbolEditorDirty = false;
     this.cd.markForCheck();

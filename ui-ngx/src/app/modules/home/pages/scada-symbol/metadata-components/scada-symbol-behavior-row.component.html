@@ -38,7 +38,8 @@
             matTooltipPosition="above">
       <mat-icon>settings</mat-icon>
     </button>
-    <button type="button"
+    <button *ngIf="!disabled"
+            type="button"
             mat-icon-button
             (click)="behaviorRemoved.emit()"
             matTooltip="{{ 'scada.behavior.remove-behavior' | translate }}"

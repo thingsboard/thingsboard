@@ -79,7 +79,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
   errorText = '';
 
   get dragEnabled(): boolean {
-    return this.behaviorsFormArray().controls.length > 1;
+    return !this.disabled && this.behaviorsFormArray().controls.length > 1;
   }
 
   private propagateChange = (_val: any) => {};

@@ -122,9 +122,11 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
           if (tagsResult.emitEvent) {
             setTimeout(() => {
               this.tagsFormGroup.setControl('tags', tagsControls, {emitEvent: true});
+              this.setDisabledState(this.disabled);
             });
           } else {
             this.tagsFormGroup.setControl('tags', tagsControls, {emitEvent: false});
+            this.setDisabledState(this.disabled);
           }
         }
       }
@@ -151,6 +153,7 @@ export class ScadaSymbolMetadataTagsComponent implements ControlValueAccessor, O
     this.modelValue = value || [];
     const tagsResult= this.setupTags(this.modelValue);
     this.tagsFormGroup.setControl('tags', this.prepareTagsFormArray(tagsResult.tags), {emitEvent: false});
+    this.setDisabledState(this.disabled);
   }
 
   public validate(_c: UntypedFormControl) {

@@ -57,6 +57,9 @@ export class ScadaSymbolPropertyPanelComponent implements OnInit {
   booleanPropertyIds: string[];
 
   @Input()
+  disabled: boolean;
+
+  @Input()
   popover: TbPopoverComponent<ScadaSymbolPropertyPanelComponent>;
 
   @Output()
@@ -92,10 +95,14 @@ export class ScadaSymbolPropertyPanelComponent implements OnInit {
         step: [this.property.step, [Validators.min(0)]]
       }
     );
-    this.propertyFormGroup.get('type').valueChanges.subscribe(() => {
+    if (this.disabled) {
+      this.propertyFormGroup.disable({emitEvent: false});
+    } else {
+      this.propertyFormGroup.get('type').valueChanges.subscribe(() => {
+        this.updateValidators();
+      });
       this.updateValidators();
-    });
-    this.updateValidators();
+    }
   }
 
   cancel() {

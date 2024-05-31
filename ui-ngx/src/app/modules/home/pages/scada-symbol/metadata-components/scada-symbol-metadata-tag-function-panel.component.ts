@@ -61,6 +61,9 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
   completer: TbEditorCompleter;
 
   @Input()
+  disabled: boolean;
+
+  @Input()
   popover: TbPopoverComponent<ScadaSymbolMetadataTagFunctionPanelComponent>;
 
   @Output()
@@ -90,6 +93,9 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
         tagFunction: [this.tagFunction, []]
       }
     );
+    if (this.disabled) {
+      this.tagFunctionFormGroup.disable({emitEvent: false});
+    }
     if (this.tagFunctionType === 'renderFunction') {
       this.panelTitle = 'scada.state-render-function';
       this.tagFunctionArgs = ['ctx', 'element'];

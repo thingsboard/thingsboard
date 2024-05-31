@@ -162,7 +162,8 @@ export class ScadaSymbolMetadataTagComponent implements ControlValueAccessor, On
         tagFunction: tagFunctionControl.value,
         tagFunctionType,
         tag: this.tagFormGroup.get('tag').value,
-        completer
+        completer,
+        disabled: this.disabled
       };
       const scadaSymbolTagFunctionPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ScadaSymbolMetadataTagFunctionPanelComponent,
