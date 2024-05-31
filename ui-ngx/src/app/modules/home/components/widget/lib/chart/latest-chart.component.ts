@@ -83,7 +83,6 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
-  overlayEnabled: boolean;
   padding: string;
 
   get legendItems(): LatestChartLegendItem[] {
@@ -113,8 +112,7 @@ export class LatestChartComponent implements OnInit, OnDestroy, AfterViewInit {
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
-    this.overlayEnabled = this.settings.background.overlay.enabled;
-    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     if (this.showLegend) {
       this.legendClass = `legend-${this.settings.legendPosition}`;

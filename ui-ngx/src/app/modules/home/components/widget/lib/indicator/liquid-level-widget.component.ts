@@ -81,7 +81,6 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
-  overlayEnabled: boolean;
   padding: string;
 
   hasCardClickAction = false;
@@ -126,8 +125,7 @@ export class LiquidLevelWidgetComponent implements OnInit {
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
-    this.overlayEnabled = this.settings.background.overlay.enabled;
-    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
 

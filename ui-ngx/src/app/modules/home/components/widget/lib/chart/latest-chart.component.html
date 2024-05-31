@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-latest-chart-panel" [style.padding]="padding"
-     [class.overlay]="overlayEnabled" [style]="backgroundStyle$ | async">
+<div class="tb-latest-chart-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-latest-chart-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #chartContent class="tb-latest-chart-content" [class]="legendClass">
