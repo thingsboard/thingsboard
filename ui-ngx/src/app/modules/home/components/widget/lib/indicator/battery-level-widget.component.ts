@@ -132,6 +132,8 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  overlayEnabled: boolean;
+  padding: string;
 
   batteryBoxResize$: ResizeObserver;
 
@@ -214,6 +216,8 @@ export class BatteryLevelWidgetComponent implements OnInit, OnDestroy, AfterView
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.overlayEnabled = this.settings.background.overlay.enabled;
+    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
 

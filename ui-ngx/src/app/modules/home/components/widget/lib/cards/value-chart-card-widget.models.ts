@@ -50,6 +50,7 @@ export interface ValueChartCardWidgetSettings {
   valueFont: Font;
   valueColor: ColorSettings;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const valueChartCardDefaultSettings: ValueChartCardWidgetSettings = {
@@ -73,5 +74,6 @@ export const valueChartCardDefaultSettings: ValueChartCardWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };

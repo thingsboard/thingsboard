@@ -141,7 +141,8 @@ export abstract class LatestChartWidgetSettingsComponent<S extends LatestChartWi
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
     this.setupLatestChartControls(this.latestChartWidgetSettingsForm, settings);
   }
