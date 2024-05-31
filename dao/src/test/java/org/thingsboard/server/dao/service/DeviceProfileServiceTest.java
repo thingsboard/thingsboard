@@ -209,6 +209,18 @@ public class DeviceProfileServiceTest extends AbstractServiceTest {
         });
     }
 
+    @Test
+    public void testSaveDeviceProfileWithNameDefaultAndProfileWithIsDefaultAndDifferentNameAlreadyExists() {
+        DeviceProfile defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId);
+        Assert.assertNotNull(defaultDeviceProfile);
+        defaultDeviceProfile.setName("Device Profile 1");
+        deviceProfileService.saveDeviceProfile(defaultDeviceProfile);
+        DeviceProfile createdDeviceProfile = deviceProfileService.findOrCreateDeviceProfile(tenantId, "default");
+        Assert.assertNotNull(createdDeviceProfile);
+        Assert.assertEquals("default", createdDeviceProfile.getName());
+        Assert.assertFalse(createdDeviceProfile.isDefault());
+    }
+
     @Ignore
     @Test
     public void testChangeDeviceProfileTypeWithExistingDevices() {

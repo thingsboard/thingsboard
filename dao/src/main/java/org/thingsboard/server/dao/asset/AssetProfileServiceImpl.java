@@ -234,8 +234,9 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
         log.trace("Executing findOrCreateAssetProfile");
         AssetProfile assetProfile = findAssetProfileByName(tenantId, name, false);
         if (assetProfile == null) {
+            boolean createDefaultProfile = "default".equals(name) && findDefaultAssetProfile(tenantId) == null;
             try {
-                assetProfile = this.doCreateDefaultAssetProfile(tenantId, name, name.equals("default"), true);
+                assetProfile = this.doCreateDefaultAssetProfile(tenantId, name, createDefaultProfile, true);
             } catch (DataValidationException e) {
                 if (ASSET_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
                     assetProfile = findAssetProfileByName(tenantId, name, false);
