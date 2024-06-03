@@ -666,6 +666,7 @@
         "filter-type-apiUsageState": "API Usage State",
         "filter-type-edge-search-query": "Edge search query",
         "filter-type-edge-search-query-description": "Edges with types {{edgeTypes}} that have {{relationType}} relation {{direction}} {{rootEntity}}",
+        "filter-type-queue-stats": "Queue statistics",
         "entity-filter": "Entity filter",
         "resolve-multiple": "Resolve as multiple entities",
         "filter-type": "Filter type",

@@ -34,7 +34,8 @@ export enum AliasFilterType {
   assetSearchQuery = 'assetSearchQuery',
   deviceSearchQuery = 'deviceSearchQuery',
   edgeSearchQuery = 'edgeSearchQuery',
-  entityViewSearchQuery = 'entityViewSearchQuery'
+  entityViewSearchQuery = 'entityViewSearchQuery',
+  queueStats = 'queueStats'
 }
 
 export const edgeAliasFilterTypes = new Array<string>(
@@ -58,7 +59,8 @@ export const aliasFilterTypeTranslationMap = new Map<AliasFilterType, string>(
     [ AliasFilterType.assetSearchQuery, 'alias.filter-type-asset-search-query' ],
     [ AliasFilterType.deviceSearchQuery, 'alias.filter-type-device-search-query' ],
     [ AliasFilterType.edgeSearchQuery, 'alias.filter-type-edge-search-query' ],
-    [ AliasFilterType.entityViewSearchQuery, 'alias.filter-type-entity-view-search-query' ]
+    [ AliasFilterType.entityViewSearchQuery, 'alias.filter-type-entity-view-search-query' ],
+    [ AliasFilterType.queueStats, 'alias.filter-type-queue-stats']
   ]
 );
 

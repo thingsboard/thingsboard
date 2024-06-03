@@ -111,7 +111,11 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
         resolveMultiple: this.resolveMultiple
       };
     }
-    this.entityFilterFormGroup.get('type').patchValue(filter.type, {emitEvent: false});
+    if (filter?.entityType === EntityType.QUEUE_STATS) {
+      this.entityFilterFormGroup.get('type').patchValue(AliasFilterType.queueStats, {emitEvent: false});
+    } else {
+      this.entityFilterFormGroup.get('type').patchValue(filter.type, {emitEvent: false});
+    }
     if (filter && filter.type) {
       this.updateFilterFormGroup(filter.type, filter);
     }
@@ -182,6 +186,7 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
           entityViewNameFilter: [filter ? filter.entityViewNameFilter : '', []],
         });
         break;
+      case AliasFilterType.queueStats:
       case AliasFilterType.apiUsageState:
         this.filterFormGroup = this.fb.group({});
         break;

@@ -688,6 +688,8 @@ export class EntityService {
         return true;
       case AliasFilterType.apiUsageState:
         return true;
+      case AliasFilterType.queueStats:
+        return true;
       case AliasFilterType.assetSearchQuery:
         return entityType === EntityType.ASSET;
       case AliasFilterType.deviceSearchQuery:
@@ -716,7 +718,6 @@ export class EntityService {
         entityTypes.push(EntityType.CUSTOMER);
         entityTypes.push(EntityType.USER);
         entityTypes.push(EntityType.DASHBOARD);
-        entityTypes.push(EntityType.QUEUE_STATS);
         if (authState.edgesSupportEnabled) {
           entityTypes.push(EntityType.EDGE);
         }
@@ -1012,6 +1013,13 @@ export class EntityService {
         return of(result);
       case AliasFilterType.entityViewType:
         result.entityFilter = deepClone(filter);
+        return of(result);
+      case AliasFilterType.queueStats:
+        result.entityFilter = {
+          entityType: EntityType.QUEUE_STATS,
+          resolveMultiple: filter.resolveMultiple,
+          type: AliasFilterType.entityType
+        } as EntityFilter;
         return of(result);
       case AliasFilterType.apiUsageState:
         result.entityFilter = deepClone(filter);
