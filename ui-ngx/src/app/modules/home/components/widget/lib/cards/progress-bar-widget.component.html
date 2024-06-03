@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div #progressBarPanel class="tb-progress-bar-panel" [style]="backgroundStyle$ | async">
+<div #progressBarPanel class="tb-progress-bar-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-progress-bar-overlay" [style]="overlayStyle"></div>
   <div #progressBarContainer class="tb-progress-bar-container" [class]="layoutClass">
     <ng-container *ngIf="layout === progressBarLayout.default">

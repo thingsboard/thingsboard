@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-signal-strength-panel" [style]="backgroundStyle$ | async" [class.tb-signal-strength-pointer]="hasCardClickAction" (click)="cardClick($event)">
+<div class="tb-signal-strength-panel" [style.padding]="padding" [style]="backgroundStyle$ | async"
+     [class.tb-signal-strength-pointer]="hasCardClickAction" (click)="cardClick($event)">
     <div class="tb-signal-strength-overlay" [style]="overlayStyle"></div>
     <div *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel || showDate" class="tb-signal-strength-title-panel">
         <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>

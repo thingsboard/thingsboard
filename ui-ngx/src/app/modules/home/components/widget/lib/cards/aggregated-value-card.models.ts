@@ -43,6 +43,7 @@ export interface AggregatedValueCardWidgetSettings {
   dateColor: string;
   showChart: boolean;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export enum AggregatedValueCardKeyPosition {
@@ -145,7 +146,8 @@ export const aggregatedValueCardDefaultSettings: AggregatedValueCardWidgetSettin
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '18px'
 };
 
 export const aggregatedValueCardDefaultKeySettings: AggregatedValueCardKeySettings = {
