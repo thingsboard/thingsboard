@@ -27,20 +27,20 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
-import org.thingsboard.server.common.data.limit.LimitedApi;
-import org.thingsboard.server.cache.limits.RateLimitService;
 
-import jakarta.annotation.Nullable;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -114,7 +114,7 @@ public abstract class AbstractBufferedRateExecutor<T extends AsyncTask, F extend
         boolean perTenantLimitReached = false;
         TenantId tenantId = task.getTenantId();
         if (tenantId != null && !tenantId.isSysTenantId()) {
-            if (!rateLimitService.checkRateLimit(LimitedApi.CASSANDRA_QUERIES, tenantId)) {
+            if (!rateLimitService.checkRateLimit(LimitedApi.CASSANDRA_QUERIES, tenantId, tenantId, true)) {
                 stats.incrementRateLimitedTenant(tenantId);
                 stats.getTotalRateLimited().increment();
                 settableFuture.setException(new TenantRateLimitException());

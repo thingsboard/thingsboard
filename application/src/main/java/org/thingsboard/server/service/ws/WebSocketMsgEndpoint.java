@@ -29,4 +29,6 @@ public interface WebSocketMsgEndpoint {
     void sendPing(WebSocketSessionRef sessionRef, long currentTime) throws IOException;
 
     void close(WebSocketSessionRef sessionRef, CloseStatus withReason) throws IOException;
+
+    boolean isOpen(String sessionId);
 }

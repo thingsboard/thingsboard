@@ -25,7 +25,7 @@ CREATE OR REPLACE PROCEDURE insert_tb_schema_settings()
 $$
 BEGIN
     IF (SELECT COUNT(*) FROM tb_schema_settings) = 0 THEN
-        INSERT INTO tb_schema_settings (schema_version) VALUES (3006000);
+        INSERT INTO tb_schema_settings (schema_version) VALUES (3006004);
     END IF;
 END;
 $$;
@@ -144,6 +144,8 @@ CREATE TABLE IF NOT EXISTS customer (
     title varchar(255),
     zip varchar(255),
     external_id uuid,
+    is_public boolean,
+    CONSTRAINT customer_title_unq_key UNIQUE (tenant_id, title),
     CONSTRAINT customer_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
@@ -864,6 +866,7 @@ CREATE TABLE IF NOT EXISTS notification (
     request_id UUID,
     recipient_id UUID NOT NULL,
     type VARCHAR(50) NOT NULL,
+    delivery_method VARCHAR(50) NOT NULL,
     subject VARCHAR(255),
     body VARCHAR(1000) NOT NULL,
     additional_config VARCHAR(1000),
@@ -892,4 +895,15 @@ CREATE TABLE IF NOT EXISTS queue_stats (
     queue_name varchar(255) NOT NULL,
     service_id varchar(255) NOT NULL,
     CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
+);
+
+CREATE TABLE IF NOT EXISTS mobile_app_settings (
+    id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    use_default_app boolean,
+    android_config VARCHAR(1000),
+    ios_config VARCHAR(1000),
+    qr_code_config VARCHAR(100000),
+    CONSTRAINT mobile_app_settings_tenant_id_unq_key UNIQUE (tenant_id)
 );

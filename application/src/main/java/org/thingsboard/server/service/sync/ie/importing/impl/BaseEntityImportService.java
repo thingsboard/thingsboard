@@ -27,6 +27,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasDefaultOption;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -73,7 +74,7 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     @Autowired
     @Lazy
-    private ExportableEntitiesService exportableEntitiesService;
+    private ExportableEntitiesService entitiesService;
     @Autowired
     private RelationService relationService;
     @Autowired
@@ -274,22 +275,30 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
 
     @SuppressWarnings("unchecked")
     protected E findExistingEntity(EntitiesImportCtx ctx, E entity, IdProvider idProvider) {
-        return (E) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(ctx.getTenantId(), entity.getId()))
-                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entity.getId())))
+        return (E) Optional.ofNullable(entitiesService.findEntityByTenantIdAndExternalId(ctx.getTenantId(), entity.getId()))
+                .or(() -> Optional.ofNullable(entitiesService.findEntityByTenantIdAndId(ctx.getTenantId(), entity.getId())))
                 .or(() -> {
                     if (ctx.isFindExistingByName()) {
-                        return Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndName(ctx.getTenantId(), getEntityType(), entity.getName()));
+                        return Optional.ofNullable(entitiesService.findEntityByTenantIdAndName(ctx.getTenantId(), getEntityType(), entity.getName()));
                     } else {
                         return Optional.empty();
                     }
+                })
+                .or(() -> {
+                    if (entity instanceof HasDefaultOption hasDefaultOption) {
+                        if (hasDefaultOption.isDefault()) {
+                            return Optional.ofNullable(entitiesService.findDefaultEntityByTenantId(ctx.getTenantId(), getEntityType()));
+                        }
+                    }
+                    return Optional.empty();
                 })
                 .orElse(null);
     }
 
     @SuppressWarnings("unchecked")
     private <ID extends EntityId> HasId<ID> findInternalEntity(TenantId tenantId, ID externalId) {
-        return (HasId<ID>) Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
-                .or(() -> Optional.ofNullable(exportableEntitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
+        return (HasId<ID>) Optional.ofNullable(entitiesService.findEntityByTenantIdAndExternalId(tenantId, externalId))
+                .or(() -> Optional.ofNullable(entitiesService.findEntityByTenantIdAndId(tenantId, externalId)))
                 .orElseThrow(() -> new MissingEntityException(externalId));
     }
 

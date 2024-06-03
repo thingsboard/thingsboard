@@ -22,11 +22,11 @@ import lombok.Data;
 @Data
 public class LoginResponse {
 
-    @Schema(required = true, description = "JWT token",
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JWT token",
             example = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZW5hbnRAdGhpbmdzYm9hcmQub3JnIi...")
     private String token;
 
-    @Schema(required = true, description = "Refresh token",
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Refresh token",
             example = "eyJhbGciOiJIUzUxMiJ9.eyJzdWIiOiJ0ZW5hbnRAdGhpbmdzYm9hcmQub3JnIi...")
     private String refreshToken;
 

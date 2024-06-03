@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.service.sms.smpp;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.smpp.Session;
 import org.smpp.pdu.SubmitSMResp;
 import org.thingsboard.server.common.data.StringUtils;
@@ -35,14 +35,14 @@ import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class SmppSmsSenderTest {
 
     SmppSmsSender smppSmsSender;
     SmppSmsProviderConfiguration smppConfig;
     Session smppSession;
 
-    @Before
+    @BeforeEach
     public void beforeEach() throws Exception {
         Constructor<SmppSmsSender> constructor = SmppSmsSender.class.getDeclaredConstructor();
         constructor.setAccessible(true);

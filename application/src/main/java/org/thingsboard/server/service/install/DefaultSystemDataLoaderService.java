@@ -19,13 +19,18 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
+import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Profile;
 import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.stereotype.Service;
@@ -64,6 +69,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -81,6 +87,7 @@ import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.UserCredentials;
+import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
@@ -93,6 +100,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.oauth2.OAuth2MobileDao;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -100,14 +108,11 @@ import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
-import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
+import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
+import java.util.Base64;
 import java.util.Collections;
 import java.util.List;
 import java.util.TreeMap;
@@ -117,79 +122,52 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateKeyLength;
 
 @Service
 @Profile("install")
 @Slf4j
+@RequiredArgsConstructor
 public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     public static final String CUSTOMER_CRED = "customer";
     public static final String ACTIVITY_STATE = "active";
 
-    @Autowired
-    private InstallScripts installScripts;
+    private final InstallScripts installScripts;
+    private final UserService userService;
+    private final AdminSettingsService adminSettingsService;
+    private final TenantService tenantService;
+    private final TenantProfileService tenantProfileService;
+    private final CustomerService customerService;
+    private final DeviceService deviceService;
+    private final DeviceProfileService deviceProfileService;
+    private final AttributesService attributesService;
+    private final DeviceCredentialsService deviceCredentialsService;
+    private final RuleChainService ruleChainService;
+    private final TimeseriesService tsService;
+    private final DeviceConnectivityConfiguration connectivityConfiguration;
+    private final QueueService queueService;
+    private final JwtSettingsService jwtSettingsService;
+    private final OAuth2MobileDao oAuth2MobileDao;
+    private final NotificationSettingsService notificationSettingsService;
+    private final NotificationTargetService notificationTargetService;
 
     @Autowired
     private BCryptPasswordEncoder passwordEncoder;
-
-    @Autowired
-    private UserService userService;
-
-    @Autowired
-    private AdminSettingsService adminSettingsService;
-
-    @Autowired
-    private WidgetTypeService widgetTypeService;
-
-    @Autowired
-    private WidgetsBundleService widgetsBundleService;
-
-    @Autowired
-    private TenantService tenantService;
-
-    @Autowired
-    private TenantProfileService tenantProfileService;
-
-    @Autowired
-    private CustomerService customerService;
-
-    @Autowired
-    private DeviceService deviceService;
-
-    @Autowired
-    private DeviceProfileService deviceProfileService;
-
-    @Autowired
-    private AttributesService attributesService;
-
-    @Autowired
-    private DeviceCredentialsService deviceCredentialsService;
-
-    @Autowired
-    private RuleChainService ruleChainService;
-
-    @Autowired
-    private TimeseriesService tsService;
-
-    @Autowired
-    private DeviceConnectivityConfiguration connectivityConfiguration;
 
     @Value("${state.persistToTelemetry:false}")
     @Getter
     private boolean persistActivityToTelemetry;
 
-    @Lazy
-    @Autowired
-    private QueueService queueService;
-
-    @Autowired
-    private JwtSettingsService jwtSettingsService;
-
-    @Autowired
-    private NotificationSettingsService notificationSettingsService;
-
-    @Autowired
-    private NotificationTargetService notificationTargetService;
+    @Value("${security.jwt.tokenExpirationTime:9000}")
+    private Integer tokenExpirationTime;
+    @Value("${security.jwt.refreshTokenExpTime:604800}")
+    private Integer refreshTokenExpTime;
+    @Value("${security.jwt.tokenIssuer:thingsboard.io}")
+    private String tokenIssuer;
+    @Value("${security.jwt.tokenSigningKey:thingsboardDefaultSigningKey}")
+    private String tokenSigningKey;
 
     @Bean
     protected BCryptPasswordEncoder passwordEncoder() {
@@ -295,7 +273,59 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createRandomJwtSettings() throws Exception {
-        jwtSettingsService.createRandomJwtSettings();
+        if (jwtSettingsService.getJwtSettings() == null) {
+            log.info("Creating JWT admin settings...");
+            var jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
+            if (isSigningKeyDefault(jwtSettings) || !validateKeyLength(jwtSettings.getTokenSigningKey())) {
+                jwtSettings.setTokenSigningKey(generateRandomKey());
+            }
+            jwtSettingsService.saveJwtSettings(jwtSettings);
+        } else {
+            log.info("Skip creating JWT admin settings because they already exist.");
+        }
+    }
+
+    @Override
+    public void updateSecuritySettings() {
+        JwtSettings jwtSettings = jwtSettingsService.getJwtSettings();
+        boolean invalidSignKey = false;
+        String warningMessage = null;
+
+        if (isSigningKeyDefault(jwtSettings)) {
+            warningMessage = "The platform is using the default JWT Signing Key, which is a security risk.";
+            invalidSignKey = true;
+        } else if (!validateKeyLength(jwtSettings.getTokenSigningKey())) {
+            warningMessage = "The JWT Signing Key is shorter than 512 bits, which is a security risk.";
+            invalidSignKey = true;
+        }
+
+        if (invalidSignKey) {
+            log.warn("WARNING: {}. A new JWT Signing Key has been added automatically. " +
+                    "You can change the JWT Signing Key using the Web UI: " +
+                    "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.", warningMessage);
+
+            jwtSettings.setTokenSigningKey(generateRandomKey());
+            jwtSettingsService.saveJwtSettings(jwtSettings);
+        }
+
+        List<OAuth2Mobile> mobiles = oAuth2MobileDao.find(TenantId.SYS_TENANT_ID);
+        if (CollectionUtils.isNotEmpty(mobiles)) {
+            mobiles.stream()
+                    .filter(config -> !validateKeyLength(config.getAppSecret()))
+                    .forEach(config -> {
+                        log.warn("WARNING: The App secret is shorter than 512 bits, which is a security risk. " +
+                                "A new Application Secret has been added automatically for Mobile Application [{}]. " +
+                                "You can change the Application Secret using the Web UI: " +
+                                "Navigate to \"Security settings -> OAuth2 -> Mobile applications\" while logged in as a System Administrator.", config.getPkgName());
+                        config.setAppSecret(generateRandomKey());
+                        oAuth2MobileDao.save(TenantId.SYS_TENANT_ID, config);
+                    });
+        }
+    }
+
+    private String generateRandomKey() {
+        return Base64.getEncoder().encodeToString(
+                RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -549,7 +579,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         } else {
             ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
                     Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
-                    , System.currentTimeMillis())));
+                            , System.currentTimeMillis())));
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         }
     }
@@ -693,23 +723,26 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     @SneakyThrows
-    public void updateDefaultNotificationConfigs() {
-        PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
-        ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
-        log.info("Updating default edge failure notification configs for all tenants");
-        AtomicInteger count = new AtomicInteger();
-        for (TenantId tenantId : tenants) {
-            executor.submit(() -> {
-                notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
-                int n = count.incrementAndGet();
-                if (n % 500 == 0) {
-                    log.info("{} tenants processed", n);
-                }
-            });
-        }
-        executor.shutdown();
-        executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+    public void updateDefaultNotificationConfigs(boolean updateTenants) {
+        log.info("Updating notification configs...");
         notificationSettingsService.updateDefaultNotificationConfigs(TenantId.SYS_TENANT_ID);
+
+        if (updateTenants) {
+            PageDataIterable<TenantId> tenants = new PageDataIterable<>(tenantService::findTenantsIds, 500);
+            ExecutorService executor = Executors.newFixedThreadPool(Math.max(Runtime.getRuntime().availableProcessors(), 4));
+            AtomicInteger count = new AtomicInteger();
+            for (TenantId tenantId : tenants) {
+                executor.submit(() -> {
+                    notificationSettingsService.updateDefaultNotificationConfigs(tenantId);
+                    int n = count.incrementAndGet();
+                    if (n % 500 == 0) {
+                        log.info("{} tenants processed", n);
+                    }
+                });
+            }
+            executor.shutdown();
+            executor.awaitTermination(Integer.MAX_VALUE, TimeUnit.SECONDS);
+        }
     }
 
 }

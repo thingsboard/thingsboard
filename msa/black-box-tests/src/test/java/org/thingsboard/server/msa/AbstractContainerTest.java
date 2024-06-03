@@ -45,6 +45,8 @@ import java.util.Random;
 @Listeners(TestListener.class)
 public abstract class AbstractContainerTest {
 
+    protected static final int TIMEOUT = 30;
+
     protected final static String TEST_PROVISION_DEVICE_KEY = "test_provision_key";
     protected final static String TEST_PROVISION_DEVICE_SECRET = "test_provision_secret";
     protected static long timeoutMultiplier = 1;

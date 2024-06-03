@@ -16,7 +16,7 @@
 package org.thingsboard.server.common.msg.tools;
 
 import io.github.bucket4j.Bandwidth;
-import io.github.bucket4j.Bucket4j;
+import io.github.bucket4j.Bucket;
 import io.github.bucket4j.Refill;
 import io.github.bucket4j.local.LocalBucket;
 import io.github.bucket4j.local.LocalBucketBuilder;
@@ -38,7 +38,7 @@ public class TbRateLimits {
     }
 
     public TbRateLimits(String limitsConfiguration, boolean refillIntervally) {
-        LocalBucketBuilder builder = Bucket4j.builder();
+        LocalBucketBuilder builder = Bucket.builder();
         boolean initialized = false;
         for (String limitSrc : limitsConfiguration.split(",")) {
             long capacity = Long.parseLong(limitSrc.split(":")[0]);

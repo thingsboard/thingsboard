@@ -33,7 +33,11 @@ public interface PartitionService {
 
     TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
+    TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId, Integer partition);
+
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
+
+    List<TopicPartitionInfo> resolveAll(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
     boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 

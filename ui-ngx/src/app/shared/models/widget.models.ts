@@ -21,7 +21,6 @@ import { AggregationType, ComparisonDuration, Timewindow } from '@shared/models/
 import { EntityType } from '@shared/models/entity-type.models';
 import { DataKeyType } from './telemetry/telemetry.models';
 import { EntityId } from '@shared/models/id/entity-id';
-import * as moment_ from 'moment';
 import {
   AlarmFilter,
   AlarmFilterConfig,
@@ -360,6 +359,8 @@ export interface DataKey extends KeyInfo {
   _hash?: number;
 }
 
+export type CellClickColumnInfo = Pick<DataKey, 'name' | 'label'>
+
 export enum DataKeyConfigMode {
   general = 'general',
   advanced = 'advanced'
@@ -687,6 +688,7 @@ export interface WidgetActionDescriptor extends WidgetAction {
   displayName?: string;
   useShowWidgetActionFunction?: boolean;
   showWidgetActionFunction?: string;
+  columnIndex?: number;
 }
 
 export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): WidgetAction => {
@@ -697,6 +699,7 @@ export const actionDescriptorToAction = (descriptor: WidgetActionDescriptor): Wi
   delete result.displayName;
   delete result.useShowWidgetActionFunction;
   delete result.showWidgetActionFunction;
+  delete result.columnIndex;
   return result;
 };
 
@@ -710,9 +713,22 @@ export const defaultWidgetAction = (setEntityId = true): WidgetAction => ({
 
 export interface WidgetComparisonSettings {
   comparisonEnabled?: boolean;
-  timeForComparison?: moment_.unitOfTime.DurationConstructor;
+  timeForComparison?: ComparisonDuration;
   comparisonCustomIntervalValue?: number;
 }
+
+export interface DataKeyComparisonSettings {
+  showValuesForComparison: boolean;
+  comparisonValuesLabel: string;
+  color: string;
+}
+
+export interface DataKeySettingsWithComparison {
+  comparisonSettings?: DataKeyComparisonSettings;
+}
+
+export const isDataKeySettingsWithComparison = (settings: any): settings is DataKeySettingsWithComparison =>
+  'comparisonSettings' in settings;
 
 export interface WidgetSettings {
   [key: string]: any;

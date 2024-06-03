@@ -92,7 +92,7 @@ public class HomePageApiTest extends AbstractControllerTest {
     @MockBean
     private SmsService smsService;
 
-    private static final int DEFAULT_DASHBOARDS_COUNT = 1;
+    private static final int DEFAULT_DASHBOARDS_COUNT = 0;
 
     //For system administrator
     @Test
@@ -103,7 +103,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         for (int i = 0; i < 100; i++) {
             Tenant tenant = new Tenant();
             tenant.setTitle("tenant" + i);
-            tenants.add(doPost("/api/tenant", tenant, Tenant.class));
+            tenants.add(saveTenant(tenant));
         }
 
         EntityTypeFilter ef = new EntityTypeFilter();
@@ -115,7 +115,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertEquals(initialCount + 100, update.getCount());
 
         for (Tenant tenant : tenants) {
-            doDelete("/api/tenant/" + tenant.getId().toString());
+            deleteTenant(tenant.getId());
         }
     }
 

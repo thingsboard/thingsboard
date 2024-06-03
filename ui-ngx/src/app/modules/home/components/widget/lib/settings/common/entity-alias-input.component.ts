@@ -15,7 +15,6 @@
 ///
 
 import {
-  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
@@ -36,7 +35,6 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { IAliasController } from '@core/api/widget-api.models';
 import { map, mergeMap } from 'rxjs/operators';
 import { Observable, of } from 'rxjs';
-import { TimeSeriesChartThresholdType } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
   selector: 'tb-entity-alias-input',
@@ -78,8 +76,7 @@ export class EntityAliasInputComponent implements ControlValueAccessor, OnInit {
 
   private propagateChange = (_val: any) => {};
 
-  constructor(private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {
+  constructor(private fb: UntypedFormBuilder) {
   }
 
   ngOnInit() {
@@ -151,6 +148,4 @@ export class EntityAliasInputComponent implements ControlValueAccessor, OnInit {
     const value = this.entityAliasFormControl.value;
     this.propagateChange(value);
   }
-
-  protected readonly TimeSeriesChartThresholdType = TimeSeriesChartThresholdType;
 }

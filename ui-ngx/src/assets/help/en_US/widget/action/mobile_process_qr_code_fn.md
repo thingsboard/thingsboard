@@ -34,7 +34,7 @@ function showQrCodeDialog(title, code, format) {
 {:copy-code}
 ```
 
-* Parse code as a device claiming info (in this case ```{deviceName: string, secretKey: string}```)<br>and then claim device (see [Claiming devices{:target="_blank"}](${siteBaseUrl}/docs/user-guide/claiming-devices/) for details):
+* Parse code as a device claiming info (in this case ```{deviceName: string, secretKey: string}```)<br>and then claim device (see [Claiming devices{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/claiming-devices/) for details):
 
 ```javascript
 var $scope = widgetContext.$scope;

@@ -72,12 +72,11 @@ public class ThingsboardSecurityConfiguration {
     public static final String JWT_TOKEN_HEADER_PARAM_V2 = "Authorization";
     public static final String JWT_TOKEN_QUERY_PARAM = "token";
 
-    public static final String WEBJARS_ENTRY_POINT = "/webjars/**";
     public static final String DEVICE_API_ENTRY_POINT = "/api/v1/**";
     public static final String FORM_BASED_LOGIN_ENTRY_POINT = "/api/auth/login";
     public static final String PUBLIC_LOGIN_ENTRY_POINT = "/api/auth/login/public";
     public static final String TOKEN_REFRESH_ENTRY_POINT = "/api/auth/token";
-    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[] {"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**",  "/api/license/**", "/api/images/public/**"};
+    protected static final String[] NON_TOKEN_BASED_AUTH_ENTRY_POINTS = new String[]{"/index.html", "/assets/**", "/static/**", "/api/noauth/**", "/webjars/**", "/api/license/**", "/api/images/public/**", "/.well-known/**"};
     public static final String TOKEN_BASED_AUTH_ENTRY_POINT = "/api/**";
     public static final String WS_ENTRY_POINT = "/api/ws/**";
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
@@ -153,7 +152,7 @@ public class ThingsboardSecurityConfiguration {
     protected JwtTokenAuthenticationProcessingFilter buildJwtTokenAuthenticationProcessingFilter() throws Exception {
         List<String> pathsToSkip = new ArrayList<>(Arrays.asList(NON_TOKEN_BASED_AUTH_ENTRY_POINTS));
         pathsToSkip.addAll(Arrays.asList(WS_ENTRY_POINT, TOKEN_REFRESH_ENTRY_POINT, FORM_BASED_LOGIN_ENTRY_POINT,
-                PUBLIC_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, WEBJARS_ENTRY_POINT, MAIL_OAUTH2_PROCESSING_ENTRY_POINT,
+                PUBLIC_LOGIN_ENTRY_POINT, DEVICE_API_ENTRY_POINT, MAIL_OAUTH2_PROCESSING_ENTRY_POINT,
                 DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT));
         SkipPathRequestMatcher matcher = new SkipPathRequestMatcher(pathsToSkip, TOKEN_BASED_AUTH_ENTRY_POINT);
         JwtTokenAuthenticationProcessingFilter filter
@@ -209,18 +208,18 @@ public class ThingsboardSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .exceptionHandling(config -> {})
                 .sessionManagement(config -> config.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-                .authorizeRequests(config -> config
-                        .requestMatchers(WEBJARS_ENTRY_POINT).permitAll() // Webjars
-                        .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll() // Device HTTP Transport API
-                        .requestMatchers(FORM_BASED_LOGIN_ENTRY_POINT).permitAll() // Login end-point
-                        .requestMatchers(PUBLIC_LOGIN_ENTRY_POINT).permitAll() // Public login end-point
-                        .requestMatchers(TOKEN_REFRESH_ENTRY_POINT).permitAll() // Token refresh end-point
-                        .requestMatchers(MAIL_OAUTH2_PROCESSING_ENTRY_POINT).permitAll() // Mail oauth2 code processing url
-                        .requestMatchers(DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT).permitAll() // Device connectivity certificate (public)
-                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll()) // static resources, user activation and password reset end-points
-                .authorizeRequests(config -> config
-                        .requestMatchers(WS_ENTRY_POINT).permitAll() // Protected WebSocket API End-points
-                        .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated()) // Protected API End-points
+                .authorizeHttpRequests(config -> config
+                        .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll() // static resources, user activation and password reset end-points (webjars included)
+                        .requestMatchers(
+                                DEVICE_API_ENTRY_POINT, // Device HTTP Transport API
+                                FORM_BASED_LOGIN_ENTRY_POINT, // Login end-point
+                                PUBLIC_LOGIN_ENTRY_POINT, // Public login end-point
+                                TOKEN_REFRESH_ENTRY_POINT, // Token refresh end-point
+                                MAIL_OAUTH2_PROCESSING_ENTRY_POINT, // Mail oauth2 code processing url
+                                DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT, // Device connectivity certificate (public)
+                                WS_ENTRY_POINT).permitAll() // Protected WebSocket API End-points
+                        .requestMatchers(TOKEN_BASED_AUTH_ENTRY_POINT).authenticated() // Protected API End-points
+                        .anyRequest().permitAll())
                 .exceptionHandling(config -> config.accessDeniedHandler(restAccessDeniedHandler))
                 .addFilterBefore(buildRestLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
@@ -243,7 +242,7 @@ public class ThingsboardSecurityConfiguration {
     @Bean
     @ConditionalOnMissingBean(CorsFilter.class)
     public CorsFilter corsFilter(@Autowired MvcCorsProperties mvcCorsProperties) {
-        if (mvcCorsProperties.getMappings().size() == 0) {
+        if (mvcCorsProperties.getMappings().isEmpty()) {
             return new CorsFilter(new UrlBasedCorsConfigurationSource());
         } else {
             UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();

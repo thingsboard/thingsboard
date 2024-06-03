@@ -45,7 +45,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     public TransportProtos.PostTelemetryMsg convertToPostTelemetry(UUID sessionId, Request inbound, Descriptors.Descriptor telemetryMsgDescriptor) throws AdaptorException {
         String payload = validatePayload(sessionId, inbound, false);
         try {
-            return JsonConverter.convertToTelemetryProto(new JsonParser().parse(payload));
+            return JsonConverter.convertToTelemetryProto(JsonParser.parseString(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }
@@ -55,7 +55,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     public TransportProtos.PostAttributeMsg convertToPostAttributes(UUID sessionId, Request inbound, Descriptors.Descriptor attributesMsgDescriptor) throws AdaptorException {
         String payload = validatePayload(sessionId, inbound, false);
         try {
-            return JsonConverter.convertToAttributesProto(new JsonParser().parse(payload));
+            return JsonConverter.convertToAttributesProto(JsonParser.parseString(payload));
         } catch (IllegalStateException | JsonSyntaxException ex) {
             throw new AdaptorException(ex);
         }
@@ -70,7 +70,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     public TransportProtos.ToDeviceRpcResponseMsg convertToDeviceRpcResponse(UUID sessionId, Request inbound, Descriptors.Descriptor rpcResponseMsgDescriptor) throws AdaptorException {
         Optional<Integer> requestId = CoapTransportResource.getRequestId(inbound);
         String payload = validatePayload(sessionId, inbound, false);
-        JsonObject response = new JsonParser().parse(payload).getAsJsonObject();
+        JsonObject response = JsonParser.parseString(payload).getAsJsonObject();
         return TransportProtos.ToDeviceRpcResponseMsg.newBuilder().setRequestId(requestId.orElseThrow(() -> new AdaptorException("Request id is missing!")))
                 .setPayload(response.toString()).build();
     }
@@ -78,7 +78,7 @@ public class JsonCoapAdaptor implements CoapTransportAdaptor {
     @Override
     public TransportProtos.ToServerRpcRequestMsg convertToServerRpcRequest(UUID sessionId, Request inbound) throws AdaptorException {
         String payload = validatePayload(sessionId, inbound, false);
-        return JsonConverter.convertToServerRpcRequest(new JsonParser().parse(payload), 0);
+        return JsonConverter.convertToServerRpcRequest(JsonParser.parseString(payload), 0);
     }
 
     @Override
