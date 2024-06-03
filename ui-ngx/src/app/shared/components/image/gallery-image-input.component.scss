@@ -98,6 +98,7 @@ $containerHeight: 96px !default;
         color: rgba(0, 0, 0, 0.54);
         overflow: hidden;
         text-overflow: ellipsis;
+        word-break: break-all;
         -webkit-line-clamp: 2;
         display: -webkit-box;
         -webkit-box-orient: vertical;
