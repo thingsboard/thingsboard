@@ -46,6 +46,7 @@ public class SessionInfoCreator {
                 .setDeviceType(msg.getDeviceInfo().getDeviceType())
                 .setDeviceProfileIdMSB(msg.getDeviceInfo().getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(msg.getDeviceInfo().getDeviceProfileId().getId().getLeastSignificantBits())
+                .setIsGateway(msg.getDeviceInfo().isGateway())
                 .build();
     }
 

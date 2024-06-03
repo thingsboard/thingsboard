@@ -141,6 +141,9 @@ public class TenantProfileController extends BaseController {
                     "      \"transportGatewayMsgRateLimit\": \"20:1,600:60\",\n" +
                     "      \"transportGatewayTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
                     "      \"transportGatewayTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayDeviceMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayDeviceTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayDeviceTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
                     "      \"maxTransportMessages\": 10000000,\n" +
                     "      \"maxTransportDataPoints\": 10000000,\n" +
                     "      \"maxREExecutions\": 4000000,\n" +
