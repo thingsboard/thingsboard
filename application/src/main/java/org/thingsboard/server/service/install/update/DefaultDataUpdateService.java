@@ -107,14 +107,17 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 boolean updated = false;
                 if (configuration.getTransportDeviceMsgRateLimit() != null && configuration.getTransportGatewayMsgRateLimit() == null) {
                     configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                    configuration.setTransportGatewayDeviceMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
                     updated = true;
                 }
                 if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null && configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
                     configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                    configuration.setTransportGatewayDeviceTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
                     updated = true;
                 }
                 if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null && configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
                     configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                    configuration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
                     updated = true;
                 }
                 if (updated) {
