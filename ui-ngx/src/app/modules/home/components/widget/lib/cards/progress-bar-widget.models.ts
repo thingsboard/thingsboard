@@ -57,6 +57,7 @@ export interface ProgressBarWidgetSettings {
   barColor: ColorSettings;
   barBackground: string;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const progressBarDefaultSettings: ProgressBarWidgetSettings = {
@@ -94,5 +95,6 @@ export const progressBarDefaultSettings: ProgressBarWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };

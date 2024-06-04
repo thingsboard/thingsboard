@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-slider-panel" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style]="backgroundStyle$ | async">
+<div class="tb-slider-panel" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-slider-overlay" [style]="overlayStyle"></div>
   <div *ngIf="showWidgetTitlePanel" class="tb-slider-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
