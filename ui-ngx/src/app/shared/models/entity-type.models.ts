@@ -367,7 +367,11 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
       EntityType.QUEUE_STATS,
       {
         type: 'entity.type-queue-stats',
-        typePlural: 'entity.type-queues-stats'
+        typePlural: 'entity.type-queues-stats',
+        list: 'queue-statistics.list-of-queue-statistics',
+        noEntities: 'queue-statistics.no-queue-statistics-text',
+        selectedEntities: 'queue-statistics.selected-queue-statistics',
+        nameStartsWith: 'queue-statistics.queue-statistics-starts-with',
       }
     ],
     [

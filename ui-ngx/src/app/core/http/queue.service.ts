@@ -18,7 +18,7 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
-import { QueueInfo, ServiceType } from '@shared/models/queue.models';
+import { QueueInfo, QueueStatisticsInfo, ServiceType } from '@shared/models/queue.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 
@@ -52,5 +52,14 @@ export class QueueService {
 
   public deleteQueue(queueId: string) {
     return this.http.delete(`/api/queues/${queueId}`);
+  }
+
+  public getQueueStatistics(pageLink: PageLink, config?: RequestConfig): Observable<PageData<QueueStatisticsInfo>> {
+    return this.http.get<PageData<QueueStatisticsInfo>>(`/api/queueStats${pageLink.toQuery()}`,
+      defaultHttpOptionsFromConfig(config));
+  }
+
+  public getQueueStatisticsById(queueStatId: string, config?: RequestConfig): Observable<QueueStatisticsInfo> {
+    return this.http.get<QueueStatisticsInfo>(`/api/queueStats/${queueStatId}`, defaultHttpOptionsFromConfig(config));
   }
 }

@@ -40,6 +40,7 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { getEntityDetailsPageURL, isDefinedAndNotNull, isEqual } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { QueueStatisticsInfo } from '@shared/models/queue.models';
 
 @Component({
   selector: 'tb-entity-autocomplete',
@@ -185,7 +186,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             }
           }),
           // startWith<string | BaseData<EntityId>>(''),
-          map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
+          map(value =>
+            value ? (typeof value === 'string' ? value : value.name) : ''
+          ),
           switchMap(name => this.fetchEntities(name)),
           share()
         )
@@ -248,6 +251,11 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityText = 'alarm.alarm';
           this.noEntitiesMatchingText = 'alarm.no-alarms-matching';
           this.entityRequiredText = 'alarm.alarm-required';
+          break;
+        case EntityType.QUEUE_STATS:
+          this.entityText = 'queue-statistics.queue-statistics';
+          this.noEntitiesMatchingText = 'queue-statistics.no-queue-statistics-matching';
+          this.entityRequiredText = 'queue-statistics.queue-statistics-required';
           break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
@@ -313,6 +321,10 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       } catch (e) {
         this.propagateChange(null);
       }
+      if (this.entityTypeValue === EntityType.QUEUE_STATS && isDefinedAndNotNull(entity)) {
+        const queueStat  = entity as QueueStatisticsInfo;
+        entity.name = `${queueStat.queueName} (${queueStat.serviceId})`;
+      }
       this.modelValue = entity !== null ? (this.useFullEntityId ? entity.id : entity.id.id) : null;
       this.entityURL = getEntityDetailsPageURL(this.modelValue as string, targetEntityType);
       this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
@@ -361,6 +373,9 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             data.forEach(entity => !excludeEntityIdsSet.has(entity.id.id) && entities.push(entity));
             return entities;
           } else {
+            if (this.entityTypeValue === EntityType.QUEUE_STATS) {
+              data.forEach((entity: QueueStatisticsInfo) => entity.name = `${entity.queueName} (${entity.serviceId})`);
+            }
             return data;
           }
         } else {

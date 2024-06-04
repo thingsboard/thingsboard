@@ -4322,6 +4322,15 @@
             "retry-failed-and-timeout-hint": "Retry all failed and timed-out messages from processing pack"
         }
     },
+    "queue-statistics": {
+        "queue-statistics": "Queue statistics",
+        "no-queue-statistics-matching": "No queue statistics matching '{{entity}}' were found.",
+        "queue-statistics-required": "Queue statistics is required.",
+        "list-of-queue-statistics": "{ count, plural, =1 {One queue statistic} other {List of # queue statistics} }",
+        "selected-queue-statistics": "{ count, plural, =1 {1 queue statistic} other {# queue statistics} } selected",
+        "no-queue-statistics-text": "No queue statistics found",
+        "queue-statistics-starts-with": "Queue statistics whose names start with '{{prefix}}'"
+    },
     "server-error": {
         "general": "General server error",
         "authentication": "Authentication error",

@@ -22,6 +22,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@app/shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-type-select',
@@ -47,6 +48,10 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
 
   @Input()
   filterAllowedEntityTypes = true;
+
+  @Input()
+  @coerceBoolean()
+  addQueueStats = false;
 
   private showLabelValue: boolean;
   get showLabel(): boolean {
@@ -91,7 +96,8 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
 
   ngOnInit() {
     this.entityTypes = this.filterAllowedEntityTypes ?
-      this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes) : this.allowedEntityTypes;
+      this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes, this.addQueueStats) :
+      this.allowedEntityTypes;
     this.entityTypeFormGroup.get('entityType').valueChanges.subscribe(
       (value) => {
         let modelValue;

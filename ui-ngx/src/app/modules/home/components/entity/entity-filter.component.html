@@ -29,7 +29,7 @@
   </mat-form-field>
   <section fxLayout="column" [formGroup]="filterFormGroup" [ngSwitch]="entityFilterFormGroup.get('type').value">
     <ng-template [ngSwitchCase]="aliasFilterType.singleEntity">
-      <tb-entity-select required
+      <tb-entity-select required addQueueStats
                         useAliasEntityTypes="true"
                         formControlName="singleEntity">
       </tb-entity-select>
@@ -37,6 +37,7 @@
     <ng-template [ngSwitchCase]="aliasFilterType.entityList">
       <tb-entity-type-select required
                              showLabel
+                             addQueueStats
                              [allowedEntityTypes]="allowedEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
@@ -49,6 +50,7 @@
     <ng-template [ngSwitchCase]="aliasFilterType.entityName">
       <tb-entity-type-select required
                              showLabel
+                             addQueueStats
                              [allowedEntityTypes]="allowedEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
@@ -65,6 +67,7 @@
     <ng-template [ngSwitchCase]="aliasFilterType.entityType">
       <tb-entity-type-select required
                              showLabel
+                             addQueueStats
                              [allowedEntityTypes]="allowedEntityTypes"
                              formControlName="entityType">
       </tb-entity-type-select>
