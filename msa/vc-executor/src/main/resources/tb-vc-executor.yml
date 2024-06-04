@@ -132,11 +132,13 @@ queue:
     #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
       # Kafka properties for Core topics
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Notifications topics
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Core topics
-      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper tasks topic
+      housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -250,6 +252,9 @@ queue:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+    housekeeper:
+      # Topic name for Housekeeper tasks
+      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
   vc:
     # Default topic name for Kafka, RabbitMQ, etc.
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"

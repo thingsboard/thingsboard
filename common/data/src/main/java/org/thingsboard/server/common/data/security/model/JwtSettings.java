@@ -48,7 +48,7 @@ public class JwtSettings {
      * Key is used to sign {@link JwtToken}.
      * Base64 encoded
      */
-    @Schema(description = "The JWT key is used to sing token. Base64 encoded.", example = "cTU4WnNqemI2aU5wbWVjdm1vYXRzanhjNHRUcXliMjE=")
+    @Schema(description = "The JWT key is used to sing token. Base64 encoded.", example = "dkVTUzU2M2VMWUNwVVltTUhQU2o5SUM0Tkc3M0k2Ykdwcm85QTl6R0RaQ252OFlmVDk2OEptZXBNcndGeExFZg==")
     private String tokenSigningKey;
 
 }

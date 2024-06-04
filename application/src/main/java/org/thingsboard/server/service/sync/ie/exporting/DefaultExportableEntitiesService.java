@@ -109,33 +109,39 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     }
 
     @Override
+    public <E extends ExportableEntity<I>, I extends EntityId> E findDefaultEntityByTenantId(TenantId tenantId, EntityType entityType) {
+        ExportableEntityDao<I, E> dao = getExportableEntityDao(entityType);
+        if (dao == null) {
+            return null;
+        }
+        return dao.findDefaultEntityByTenantId(tenantId.getId());
+    }
+
+    @Override
     public <E extends ExportableEntity<I>, I extends EntityId> PageData<E> findEntitiesByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink) {
         ExportableEntityDao<I, E> dao = getExportableEntityDao(entityType);
-        if (dao != null) {
-            return dao.findByTenantId(tenantId.getId(), pageLink);
-        } else {
-            return new PageData<>();
+        if (dao == null) {
+            return PageData.emptyPageData();
         }
+        return dao.findByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
     public <I extends EntityId> PageData<I> findEntitiesIdsByTenantId(TenantId tenantId, EntityType entityType, PageLink pageLink) {
         ExportableEntityDao<I, ?> dao = getExportableEntityDao(entityType);
-        if (dao != null) {
-            return dao.findIdsByTenantId(tenantId.getId(), pageLink);
-        } else {
-            return new PageData<>();
+        if (dao == null) {
+            return PageData.emptyPageData();
         }
+        return dao.findIdsByTenantId(tenantId.getId(), pageLink);
     }
 
     @Override
     public <I extends EntityId> I getExternalIdByInternal(I internalId) {
         ExportableEntityDao<I, ?> dao = getExportableEntityDao(internalId.getEntityType());
-        if (dao != null) {
-            return dao.getExternalIdByInternal(internalId);
-        } else {
+        if (dao == null) {
             return null;
         }
+        return dao.getExternalIdByInternal(internalId);
     }
 
     private boolean belongsToTenant(HasId<? extends EntityId> entity, TenantId tenantId) {
@@ -147,10 +153,7 @@ public class DefaultExportableEntitiesService implements ExportableEntitiesServi
     public <I extends EntityId> void removeById(TenantId tenantId, I id) {
         EntityType entityType = id.getEntityType();
         EntityDaoService entityService = entityServiceRegistry.getServiceByEntityType(entityType);
-        if (entityService == null) {
-            throw new IllegalArgumentException("Unsupported entity type " + entityType);
-        }
-        entityService.deleteEntity(tenantId, id);
+        entityService.deleteEntity(tenantId, id, false);
     }
 
     private <I extends EntityId, E extends ExportableEntity<I>> ExportableEntityDao<I, E> getExportableEntityDao(EntityType entityType) {

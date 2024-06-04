@@ -5,7 +5,7 @@
 
 *function Transform(msg, metadata, msgType): {msg: object, metadata: object, msgType: string}*
 
-The [TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function to transform input Message payload, Metadata and/or Message type to the output message.  
+The [TBEL{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/tbel/) function to transform input Message payload, Metadata and/or Message type to the output message.  
 
 **Parameters:**
 
@@ -82,8 +82,8 @@ return [
 
 You can see real life example, how to use this node in those tutorials:
 
-- [Transform incoming telemetry{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/transform-incoming-telemetry/)
-- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-transform-script-node)
+- [Transform incoming telemetry{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/transform-incoming-telemetry/)
+- [Reply to RPC Calls{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/rpc-reply-tutorial#add-transform-script-node)
 
 <br>
 <br>

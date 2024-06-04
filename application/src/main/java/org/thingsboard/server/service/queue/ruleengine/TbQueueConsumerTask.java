@@ -16,38 +16,57 @@
 package org.thingsboard.server.service.queue.ruleengine;
 
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.TbQueueConsumer;
-import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsg;
 
+import java.util.Objects;
 import java.util.Set;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Supplier;
 
-@RequiredArgsConstructor
 @Slf4j
-public class TbQueueConsumerTask {
+public class TbQueueConsumerTask<M extends TbQueueMsg> {
 
     @Getter
     private final Object key;
-    @Getter
-    private final TbQueueConsumer<TbProtoQueueMsg<TransportProtos.ToRuleEngineMsg>> consumer;
+    private volatile TbQueueConsumer<M> consumer;
+    private volatile Supplier<TbQueueConsumer<M>> consumerSupplier;
 
     @Setter
     private Future<?> task;
 
+    public TbQueueConsumerTask(Object key, Supplier<TbQueueConsumer<M>> consumerSupplier) {
+        this.key = key;
+        this.consumer = null;
+        this.consumerSupplier = consumerSupplier;
+    }
+
+    public TbQueueConsumer<M> getConsumer() {
+        if (consumer == null) {
+            synchronized (this) {
+                if (consumer == null) {
+                    Objects.requireNonNull(consumerSupplier, "consumerSupplier for key [" + key + "] is null");
+                    consumer = consumerSupplier.get();
+                    Objects.requireNonNull(consumer, "consumer for key [" + key + "] is null");
+                    consumerSupplier = null;
+                }
+            }
+        }
+        return consumer;
+    }
+
     public void subscribe(Set<TopicPartitionInfo> partitions) {
         log.trace("[{}] Subscribing to partitions: {}", key, partitions);
-        consumer.subscribe(partitions);
+        getConsumer().subscribe(partitions);
     }
 
     public void initiateStop() {
         log.debug("[{}] Initiating stop", key);
-        consumer.stop();
+        getConsumer().stop();
     }
 
     public void awaitCompletion() {

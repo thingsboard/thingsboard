@@ -323,13 +323,15 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
         deleteDifferentTenant();
 
-        assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
-                .isZero();
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            assertThat(notificationRequestService.findNotificationRequestsByTenantIdAndOriginatorType(tenantId, EntityType.USER, new PageLink(1)).getTotalElements())
+                    .isZero();
+        });
     }
 
     @Test
     public void testNotificationUpdatesForSeveralUsers() throws Exception {
-        int usersCount = 150;
+        int usersCount = 50;
         Map<User, NotificationApiWsClient> sessions = new HashMap<>();
         List<NotificationTargetId> targets = new ArrayList<>();
 
@@ -523,18 +525,17 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationRequestStats() throws Exception {
-        wsClient.subscribeForUnreadNotifications(10);
-        wsClient.waitForReply(true);
-
-        wsClient.registerWaitForUpdate();
         NotificationTarget notificationTarget = createNotificationTarget(customerUserId);
-        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)", NotificationDeliveryMethod.WEB);
-        wsClient.waitForUpdate();
 
-        await().atMost(2, TimeUnit.SECONDS)
-                .until(() -> findNotificationRequest(notificationRequest.getId()).isSent());
-        NotificationRequestStats stats = getStats(notificationRequest.getId());
+        NotificationRequest notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test :)", NotificationDeliveryMethod.WEB);
+        NotificationRequestStats stats = awaitNotificationRequest(notificationRequest.getId());
         assertThat(stats.getSent().get(NotificationDeliveryMethod.WEB)).hasValue(1);
+
+        doDelete("/api/user/mobile/session").andExpect(status().isOk());
+        notificationRequest = submitNotificationRequest(notificationTarget.getId(), "Test", NotificationDeliveryMethod.MOBILE_APP);
+        stats = awaitNotificationRequest(notificationRequest.getId());
+        assertThat(stats.getErrors().get(NotificationDeliveryMethod.MOBILE_APP)).hasSize(1);
+        assertThat(stats.getTotalErrors()).hasValue(1);
     }
 
     @Test

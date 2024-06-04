@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Triple;
 import org.assertj.core.api.SoftAssertions;
-import org.junit.Assert;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -69,7 +68,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertNotNull;
-import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -78,9 +76,7 @@ import static org.mockito.ArgumentMatchers.argThat;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
-import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.spy;
@@ -93,13 +89,13 @@ import static org.mockito.Mockito.when;
 @ExtendWith(MockitoExtension.class)
 public class TbMathNodeTest {
 
-    static final int RULE_DISPATCHER_POOL_SIZE = 2;
-    static final int DB_CALLBACK_POOL_SIZE = 3;
+    static final int RULE_DISPATCHER_POOL_SIZE = 3;
+    static final int DB_CALLBACK_POOL_SIZE = 4;
     static final long TIMEOUT = TimeUnit.SECONDS.toMillis(5);
     private final EntityId originator = DeviceId.fromString("ccd71696-0586-422d-940e-755a41ec3b0d");
     private final TenantId tenantId = TenantId.fromUUID(UUID.fromString("e7f46b23-0c7d-42f5-9b06-fc35ab17af8a"));
 
-    @Mock(lenient = true)
+    @Mock(strictness = Mock.Strictness.LENIENT)
     private TbContext ctx;
     @Mock
     private AttributesService attributesService;
@@ -126,8 +122,9 @@ public class TbMathNodeTest {
 
     @AfterEach
     public void after() {
-        ruleEngineDispatcherExecutor.executor().shutdownNow();
-        dbCallbackExecutor.executor().shutdownNow();
+        // shutdownNow makes some tests flaky
+        ruleEngineDispatcherExecutor.destroy();
+        dbCallbackExecutor.destroy();
     }
 
     private TbMathNode initNode(TbRuleNodeMathFunctionType operation, TbMathResult result, TbMathArgument... arguments) {
@@ -542,8 +539,8 @@ public class TbMathNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
-        Assert.assertNotNull(tCaptor.getValue().getMessage());
+        Mockito.verify(ctx, timeout(TIMEOUT)).tellFailure(eq(msg), tCaptor.capture());
+        assertNotNull(tCaptor.getValue().getMessage());
     }
 
     @Test
@@ -557,8 +554,8 @@ public class TbMathNodeTest {
         node.onMsg(ctx, msg);
 
         ArgumentCaptor<Throwable> tCaptor = ArgumentCaptor.forClass(Throwable.class);
-        Mockito.verify(ctx, Mockito.timeout(5000)).tellFailure(eq(msg), tCaptor.capture());
-        Assert.assertNotNull(tCaptor.getValue().getMessage());
+        Mockito.verify(ctx, timeout(TIMEOUT)).tellFailure(eq(msg), tCaptor.capture());
+        assertNotNull(tCaptor.getValue().getMessage());
     }
 
     @Test
@@ -574,10 +571,10 @@ public class TbMathNodeTest {
 
         List<TbMsg> slowMsgList = IntStream.range(0, 5)
                 .mapToObj(x -> TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originatorSlow, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
-                .collect(Collectors.toList());
+                .toList();
         List<TbMsg> fastMsgList = IntStream.range(0, 2)
                 .mapToObj(x -> TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originatorFast, TbMsgMetaData.EMPTY, JacksonUtil.newObjectNode().put("a", 2).put("b", 2).toString()))
-                .collect(Collectors.toList());
+                .toList();
 
         assertThat(slowMsgList.size()).as("slow msgs >= rule-dispatcher pool size").isGreaterThanOrEqualTo(RULE_DISPATCHER_POOL_SIZE);
 
@@ -673,11 +670,11 @@ public class TbMathNodeTest {
         // submit slow msg may block all rule engine dispatcher threads
         slowMsgList.forEach(msg -> ruleEngineDispatcherExecutor.executeAsync(() -> node.onMsg(ctx, msg)));
         // wait until dispatcher threads started with all slowMsg
-        verify(node, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
+        verify(node, new Timeout(TIMEOUT, times(slowMsgList.size()))).onMsg(eq(ctx), argThat(slowMsgList::contains));
 
         slowProcessingLatch.countDown();
 
-        verify(ctx, new Timeout(TimeUnit.SECONDS.toMillis(5), times(slowMsgList.size()))).tellFailure(any(), any());
+        verify(ctx, new Timeout(TIMEOUT, times(slowMsgList.size()))).tellFailure(any(), any());
         verify(ctx, never()).tellSuccess(any());
 
     }
@@ -714,10 +711,10 @@ public class TbMathNodeTest {
                     }).given(node).onMsg(any(), any());
                     return Triple.of(ctx, resultKey, node);
                 })
-                .collect(Collectors.toList());
+                .toList();
         ctxNodes.forEach(ctxNode -> ruleEngineDispatcherExecutor.executeAsync(() -> ctxNode.getRight()
                 .onMsg(ctxNode.getLeft(), TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, TbMsgMetaData.EMPTY, "{\"a\":2,\"b\":2}"))));
-        ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(5000)).onMsg(eq(ctxNode.getLeft()), any()));
+        ctxNodes.forEach(ctxNode -> verify(ctxNode.getRight(), timeout(TIMEOUT)).onMsg(eq(ctxNode.getLeft()), any()));
         processingLatch.countDown();
 
         SoftAssertions softly = new SoftAssertions();
@@ -725,7 +722,7 @@ public class TbMathNodeTest {
             final TbContext ctx = ctxNode.getLeft();
             final String resultKey = ctxNode.getMiddle();
             ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-            verify(ctx, timeout(5000)).tellSuccess(msgCaptor.capture());
+            verify(ctx, timeout(TIMEOUT)).tellSuccess(msgCaptor.capture());
 
             TbMsg resultMsg = msgCaptor.getValue();
             assertThat(resultMsg).as("result msg non null for result key " + resultKey).isNotNull();

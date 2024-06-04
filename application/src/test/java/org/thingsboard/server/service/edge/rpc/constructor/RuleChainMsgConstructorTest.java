@@ -17,11 +17,11 @@ package org.thingsboard.server.service.edge.rpc.constructor;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -44,7 +44,7 @@ import java.util.Optional;
 import java.util.UUID;
 
 @Slf4j
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class RuleChainMsgConstructorTest {
 
     private static final String RPC_CONNECTION_TYPE = "RPC";
@@ -53,7 +53,7 @@ public class RuleChainMsgConstructorTest {
 
     private TenantId tenantId;
 
-    @Before
+    @BeforeEach
     public void setup() {
         ruleChainMsgConstructorV1 = new RuleChainMsgConstructorV1();
         tenantId = new TenantId(UUID.randomUUID());
@@ -98,10 +98,10 @@ public class RuleChainMsgConstructorTest {
     }
 
     private void assetV_3_3_3_and_V_3_4_0(RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg) {
-        Assert.assertEquals("First rule node index incorrect!", 3, ruleChainMetadataUpdateMsg.getFirstNodeIndex());
-        Assert.assertEquals("Nodes count incorrect!", 12, ruleChainMetadataUpdateMsg.getNodesCount());
-        Assert.assertEquals("Connections count incorrect!", 13, ruleChainMetadataUpdateMsg.getConnectionsCount());
-        Assert.assertEquals("Rule chain connections count incorrect!", 0, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount());
+        Assertions.assertEquals(3, ruleChainMetadataUpdateMsg.getFirstNodeIndex(), "First rule node index incorrect!");
+        Assertions.assertEquals(12, ruleChainMetadataUpdateMsg.getNodesCount(), "Nodes count incorrect!");
+        Assertions.assertEquals(13, ruleChainMetadataUpdateMsg.getConnectionsCount(), "Connections count incorrect!");
+        Assertions.assertEquals(0, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount(), "Rule chain connections count incorrect!");
 
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 6, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(0));
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 10, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(1));
@@ -129,10 +129,10 @@ public class RuleChainMsgConstructorTest {
                         ruleChainMetaData,
                         EdgeVersion.V_3_3_0);
 
-        Assert.assertEquals("First rule node index incorrect!", 2, ruleChainMetadataUpdateMsg.getFirstNodeIndex());
-        Assert.assertEquals("Nodes count incorrect!", 10, ruleChainMetadataUpdateMsg.getNodesCount());
-        Assert.assertEquals("Connections count incorrect!", 10, ruleChainMetadataUpdateMsg.getConnectionsCount());
-        Assert.assertEquals("Rule chain connections count incorrect!", 1, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount());
+        Assertions.assertEquals(2, ruleChainMetadataUpdateMsg.getFirstNodeIndex(),"First rule node index incorrect!");
+        Assertions.assertEquals(10, ruleChainMetadataUpdateMsg.getNodesCount(), "Nodes count incorrect!");
+        Assertions.assertEquals(10, ruleChainMetadataUpdateMsg.getConnectionsCount(),"Connections count incorrect!");
+        Assertions.assertEquals(1, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount(), "Rule chain connections count incorrect!");
 
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(2, 5, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(0));
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 9, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(1));
@@ -146,13 +146,12 @@ public class RuleChainMsgConstructorTest {
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(6, 9, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(9));
 
         RuleChainConnectionInfoProto ruleChainConnection = ruleChainMetadataUpdateMsg.getRuleChainConnections(0);
-        Assert.assertEquals("From index incorrect!", 2, ruleChainConnection.getFromIndex());
-        Assert.assertEquals("Type index incorrect!", TbNodeConnectionType.SUCCESS, ruleChainConnection.getType());
-        Assert.assertEquals("Additional info incorrect!",
-                "{\"description\":\"\",\"layoutX\":477,\"layoutY\":560,\"ruleChainNodeId\":\"rule-chain-node-UNDEFINED\"}",
-                ruleChainConnection.getAdditionalInfo());
-        Assert.assertTrue("Target rule chain id MSB incorrect!", ruleChainConnection.getTargetRuleChainIdMSB() != 0);
-        Assert.assertTrue("Target rule chain id LSB incorrect!", ruleChainConnection.getTargetRuleChainIdLSB() != 0);
+        Assertions.assertEquals(2, ruleChainConnection.getFromIndex(), "From index incorrect!");
+        Assertions.assertEquals(TbNodeConnectionType.SUCCESS, ruleChainConnection.getType(), "Type index incorrect!");
+        Assertions.assertEquals("{\"description\":\"\",\"layoutX\":477,\"layoutY\":560,\"ruleChainNodeId\":\"rule-chain-node-UNDEFINED\"}",
+                ruleChainConnection.getAdditionalInfo(),"Additional info incorrect!");
+        Assertions.assertTrue(ruleChainConnection.getTargetRuleChainIdMSB() != 0,"Target rule chain id MSB incorrect!");
+        Assertions.assertTrue(ruleChainConnection.getTargetRuleChainIdLSB() != 0,"Target rule chain id LSB incorrect!");
 
         assertCheckpointRuleNodeConfiguration(
                 ruleChainMetadataUpdateMsg.getNodesList(),
@@ -171,10 +170,10 @@ public class RuleChainMsgConstructorTest {
                         ruleChainMetaData1, 
                         EdgeVersion.V_3_3_0);
 
-        Assert.assertEquals("First rule node index incorrect!", 7, ruleChainMetadataUpdateMsg.getFirstNodeIndex());
-        Assert.assertEquals("Nodes count incorrect!", 10, ruleChainMetadataUpdateMsg.getNodesCount());
-        Assert.assertEquals("Connections count incorrect!", 10, ruleChainMetadataUpdateMsg.getConnectionsCount());
-        Assert.assertEquals("Rule chain connections count incorrect!", 1, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount());
+        Assertions.assertEquals(7, ruleChainMetadataUpdateMsg.getFirstNodeIndex(), "First rule node index incorrect!");
+        Assertions.assertEquals(10, ruleChainMetadataUpdateMsg.getNodesCount(),"Nodes count incorrect!");
+        Assertions.assertEquals(10, ruleChainMetadataUpdateMsg.getConnectionsCount(),"Connections count incorrect!");
+        Assertions.assertEquals(1, ruleChainMetadataUpdateMsg.getRuleChainConnectionsCount(),"Rule chain connections count incorrect!");
 
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(3, 0, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(0));
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(4, 0, TbMsgType.ATTRIBUTES_UPDATED.getRuleNodeConnection()), ruleChainMetadataUpdateMsg.getConnections(1));
@@ -188,13 +187,12 @@ public class RuleChainMsgConstructorTest {
         compareNodeConnectionInfoAndProto(createNodeConnectionInfo(7, 4, TbNodeConnectionType.SUCCESS), ruleChainMetadataUpdateMsg.getConnections(9));
 
         RuleChainConnectionInfoProto ruleChainConnection = ruleChainMetadataUpdateMsg.getRuleChainConnections(0);
-        Assert.assertEquals("From index incorrect!", 7, ruleChainConnection.getFromIndex());
-        Assert.assertEquals("Type index incorrect!", TbNodeConnectionType.SUCCESS, ruleChainConnection.getType());
-        Assert.assertEquals("Additional info incorrect!",
-                "{\"description\":\"\",\"layoutX\":477,\"layoutY\":560,\"ruleChainNodeId\":\"rule-chain-node-UNDEFINED\"}",
-                ruleChainConnection.getAdditionalInfo());
-        Assert.assertTrue("Target rule chain id MSB incorrect!", ruleChainConnection.getTargetRuleChainIdMSB() != 0);
-        Assert.assertTrue("Target rule chain id LSB incorrect!", ruleChainConnection.getTargetRuleChainIdLSB() != 0);
+        Assertions.assertEquals(7, ruleChainConnection.getFromIndex(),"From index incorrect!");
+        Assertions.assertEquals(TbNodeConnectionType.SUCCESS, ruleChainConnection.getType(), "Type index incorrect!");
+        Assertions.assertEquals( "{\"description\":\"\",\"layoutX\":477,\"layoutY\":560,\"ruleChainNodeId\":\"rule-chain-node-UNDEFINED\"}",
+                ruleChainConnection.getAdditionalInfo(), "Additional info incorrect!");
+        Assertions.assertTrue(ruleChainConnection.getTargetRuleChainIdMSB() != 0, "Target rule chain id MSB incorrect!");
+        Assertions.assertTrue(ruleChainConnection.getTargetRuleChainIdLSB() != 0, "Target rule chain id LSB incorrect!");
 
         assertCheckpointRuleNodeConfiguration(
                 ruleChainMetadataUpdateMsg.getNodesList(),
@@ -206,15 +204,15 @@ public class RuleChainMsgConstructorTest {
         Optional<RuleNodeProto> checkpointRuleNodeOpt = nodesList.stream()
                 .filter(rn -> "org.thingsboard.rule.engine.flow.TbCheckpointNode".equals(rn.getType()))
                 .findFirst();
-        Assert.assertTrue(checkpointRuleNodeOpt.isPresent());
+        Assertions.assertTrue(checkpointRuleNodeOpt.isPresent());
         RuleNodeProto checkpointRuleNode = checkpointRuleNodeOpt.get();
-        Assert.assertEquals(expectedConfiguration, checkpointRuleNode.getConfiguration());
+        Assertions.assertEquals(expectedConfiguration, checkpointRuleNode.getConfiguration());
     }
 
     private void compareNodeConnectionInfoAndProto(NodeConnectionInfo expected, org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto actual) {
-        Assert.assertEquals(expected.getFromIndex(), actual.getFromIndex());
-        Assert.assertEquals(expected.getToIndex(), actual.getToIndex());
-        Assert.assertEquals(expected.getType(), actual.getType());
+        Assertions.assertEquals(expected.getFromIndex(), actual.getFromIndex());
+        Assertions.assertEquals(expected.getToIndex(), actual.getToIndex());
+        Assertions.assertEquals(expected.getType(), actual.getType());
     }
 
     private RuleChainMetaData createRuleChainMetaData(RuleChainId ruleChainId, Integer firstNodeIndex, List<RuleNode> nodes, List<NodeConnectionInfo> connections) {

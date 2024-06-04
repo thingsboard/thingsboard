@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.controller;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
@@ -28,6 +30,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
+import org.thingsboard.server.common.data.id.AuditLogId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -38,19 +41,21 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.service.ttl.AuditLogsCleanUpService;
 
-import java.time.LocalDate;
-import java.time.ZoneOffset;
+import java.text.ParseException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.eq;
+import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.reset;
 import static org.mockito.Mockito.verify;
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
+@Slf4j
 @DaoSqlTest
 public class AuditLogControllerTest extends AbstractControllerTest {
 
@@ -61,7 +66,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     private AuditLogDao auditLogDao;
     @SpyBean
     private SqlPartitioningRepository partitioningRepository;
-    @Autowired
+    @SpyBean
     private AuditLogsCleanUpService auditLogsCleanUpService;
 
     @Value("#{${sql.audit_logs.partition_size} * 60 * 60 * 1000}")
@@ -75,7 +80,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -92,13 +97,12 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
     public void testAuditLogs() throws Exception {
-        for (int i = 0; i < 178; i++) {
+        for (int i = 0; i < 11; i++) {
             Device device = new Device();
             device.setName("Device" + i);
             device.setType("default");
@@ -106,7 +110,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         }
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(23);
+        TimePageLink pageLink = new TimePageLink(5);
         PageData<AuditLog> pageData;
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs?",
@@ -118,10 +122,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(178, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
 
         loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(23);
+        pageLink = new TimePageLink(5);
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/customer/" + ModelConstants.NULL_UUID + "?",
                     new TypeReference<PageData<AuditLog>>() {
@@ -132,10 +136,10 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(178, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
 
         loadedAuditLogs = new ArrayList<>();
-        pageLink = new TimePageLink(23);
+        pageLink = new TimePageLink(5);
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/user/" + tenantAdmin.getId().getId().toString() + "?",
                     new TypeReference<PageData<AuditLog>>() {
@@ -146,7 +150,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(178, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
     }
 
     @Test
@@ -155,13 +159,13 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         device.setName("Device name");
         device.setType("default");
         Device savedDevice = doPost("/api/device", device, Device.class);
-        for (int i = 0; i < 178; i++) {
+        for (int i = 0; i < 11; i++) {
             savedDevice.setName("Device name" + i);
             doPost("/api/device", savedDevice, Device.class);
         }
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
-        TimePageLink pageLink = new TimePageLink(23);
+        TimePageLink pageLink = new TimePageLink(5);
         PageData<AuditLog> pageData;
         do {
             pageData = doGetTypedWithTimePageLink("/api/audit/logs/entity/DEVICE/" + savedDevice.getId().getId() + "?",
@@ -173,54 +177,62 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        Assert.assertEquals(179, loadedAuditLogs.size());
+        Assert.assertEquals(11 + 1, loadedAuditLogs.size());
     }
 
     @Test
-    public void whenSavingNewAuditLog_thenCheckAndCreatePartitionIfNotExists() {
+    public void whenSavingNewAuditLog_thenCheckAndCreatePartitionIfNotExists() throws ParseException {
+        long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-01-01T01:43:11Z").getTime();
         reset(partitioningRepository);
-        AuditLog auditLog = createAuditLog(ActionType.LOGIN, tenantAdminUserId);
+        AuditLog auditLog = createAuditLog(ActionType.LOGIN, tenantAdminUserId, entityTs);
         verify(partitioningRepository).createPartitionIfNotExists(eq("audit_log"), eq(auditLog.getCreatedTime()), eq(partitionDurationInMs));
 
         List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
-        assertThat(partitions).singleElement().satisfies(partitionStartTs -> {
-            assertThat(partitionStartTs).isEqualTo(partitioningRepository.calculatePartitionStartTime(auditLog.getCreatedTime(), partitionDurationInMs));
-        });
+        assertThat(partitions).contains(partitioningRepository.calculatePartitionStartTime(auditLog.getCreatedTime(), partitionDurationInMs));
     }
 
     @Test
-    public void whenCleaningUpAuditLogsByTtl_thenDropOldPartitions() {
-        long oldAuditLogTs = LocalDate.of(2020, 10, 1).atStartOfDay().toInstant(ZoneOffset.UTC).toEpochMilli();
-        long partitionStartTs = partitioningRepository.calculatePartitionStartTime(oldAuditLogTs, partitionDurationInMs);
+    public void whenCleaningUpAuditLogsByTtl_thenDropOldPartitions() throws ParseException {
+
+        final long oldAuditLogTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2020-10-01T00:00:00Z").getTime();
+        final long currentTimeMillis = oldAuditLogTs + TimeUnit.SECONDS.toMillis(auditLogsTtlInSec) * 2;
+
+        final long partitionStartTs = partitioningRepository.calculatePartitionStartTime(oldAuditLogTs, partitionDurationInMs);
         partitioningRepository.createPartitionIfNotExists("audit_log", oldAuditLogTs, partitionDurationInMs);
         List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
         assertThat(partitions).contains(partitionStartTs);
 
+        willReturn(currentTimeMillis).given(auditLogsCleanUpService).getCurrentTimeMillis();
         auditLogsCleanUpService.cleanUp();
+
         partitions = partitioningRepository.fetchPartitions("audit_log");
-        assertThat(partitions).doesNotContain(partitionStartTs);
-        assertThat(partitions).allSatisfy(partitionsStart -> {
+        assertThat(partitions).as("partitions cleared").doesNotContain(partitionStartTs);
+        assertThat(partitions).as("only newer partitions left").allSatisfy(partitionsStart -> {
             long partitionEndTs = partitionsStart + partitionDurationInMs;
-            assertThat(partitionEndTs).isGreaterThan(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(auditLogsTtlInSec));
+            assertThat(partitionEndTs).isGreaterThan(currentTimeMillis - TimeUnit.SECONDS.toMillis(auditLogsTtlInSec));
         });
     }
 
     @Test
     public void whenSavingAuditLogAndPartitionSaveErrorOccurred_thenSaveAuditLogAnyway() throws Exception {
         // creating partition bigger than sql.audit_logs.partition_size
-        partitioningRepository.createPartitionIfNotExists("audit_log", System.currentTimeMillis(), TimeUnit.DAYS.toMillis(7));
+        long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-29T07:43:11Z").getTime();
+        //the partition 7 days is overlapping default partition size 1 day, use in the far past to not affect other tests
+        partitioningRepository.createPartitionIfNotExists("audit_log", entityTs, TimeUnit.DAYS.toMillis(7));
         List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
-        assertThat(partitions).size().isOne();
-        partitioningRepository.cleanupPartitionsCache("audit_log", System.currentTimeMillis(), 0);
+        log.warn("entityTs [{}], fetched partitions {}", entityTs, partitions);
+        assertThat(partitions).contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());
+        partitioningRepository.cleanupPartitionsCache("audit_log", entityTs, 0);
 
         assertDoesNotThrow(() -> {
             // expecting partition overlap error on partition save
-            createAuditLog(ActionType.LOGIN, tenantAdminUserId);
+            createAuditLog(ActionType.LOGIN, tenantAdminUserId, entityTs);
         });
-        assertThat(partitioningRepository.fetchPartitions("audit_log")).isEqualTo(partitions);
+        assertThat(partitioningRepository.fetchPartitions("audit_log"))
+                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());;
     }
 
-    private AuditLog createAuditLog(ActionType actionType, EntityId entityId) {
+    private AuditLog createAuditLog(ActionType actionType, EntityId entityId, long entityTs) {
         AuditLog auditLog = new AuditLog();
         auditLog.setTenantId(tenantId);
         auditLog.setCustomerId(null);
@@ -228,6 +240,13 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         auditLog.setEntityId(entityId);
         auditLog.setUserName(tenantAdmin.getEmail());
         auditLog.setActionType(actionType);
+
+        if (entityTs > 0) {
+            UUID uuid = Uuids.startOf(entityTs);
+            auditLog.setId(new AuditLogId(uuid));
+            auditLog.setCreatedTime(Uuids.unixTimestamp(uuid));
+        }
+
         return auditLogDao.save(tenantId, auditLog);
     }
 

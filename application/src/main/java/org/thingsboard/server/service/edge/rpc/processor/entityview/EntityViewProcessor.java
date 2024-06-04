@@ -29,4 +29,5 @@ public interface EntityViewProcessor extends EdgeProcessor {
     ListenableFuture<Void> processEntityViewMsgFromEdge(TenantId tenantId, Edge edge, EntityViewUpdateMsg entityViewUpdateMsg);
 
     DownlinkMsg convertEntityViewEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion);
+
 }

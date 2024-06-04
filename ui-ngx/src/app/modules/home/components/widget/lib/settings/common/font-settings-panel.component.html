@@ -83,7 +83,7 @@
   <mat-divider></mat-divider>
   <div class="tb-form-row no-border no-padding font-preview">
     <div class="fixed-title-width" translate>widgets.widget-font.preview</div>
-    <div class="preview-text" fxFlex [style]="previewStyle">{{ previewText }}</div>
+    <div class="preview-text" fxFlex [style]="previewStyle" [innerHTML]="previewText | safe:'html'"></div>
   </div>
   <div class="tb-font-settings-panel-buttons">
     <button *ngIf="clearButton"

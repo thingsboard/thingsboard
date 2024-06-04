@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit, SkipSelf } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -40,6 +40,7 @@ import {
 import { UtilsService } from '@core/services/utils.service';
 import {
   actionDescriptorToAction,
+  CellClickColumnInfo,
   defaultWidgetAction,
   WidgetActionSource,
   widgetType
@@ -47,6 +48,9 @@ import {
 import { takeUntil } from 'rxjs/operators';
 import { CustomActionEditorCompleter } from '@home/components/widget/lib/settings/common/action/custom-action.models';
 import { WidgetService } from '@core/http/widget.service';
+import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';
+import { MatSelect } from '@angular/material/select';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface WidgetActionDialogData {
   isAdd: boolean;
@@ -78,6 +82,12 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
 
   functionScopeVariables: string[];
 
+  configuredColumns: Array<CellClickColumnInfo> = [];
+  usedCellClickColumns: Array<number> = [];
+
+  @ViewChild('columnIndexSelect') columnIndexSelect: MatSelect;
+  columnIndexPlaceholderText = this.translate.instant('widget-config.select-column-index');
+
   constructor(protected store: Store<AppState>,
               protected router: Router,
               private utils: UtilsService,
@@ -85,7 +95,8 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
               @Inject(MAT_DIALOG_DATA) public data: WidgetActionDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<WidgetActionDialogComponent, WidgetActionDescriptorInfo>,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private translate: TranslateService) {
     super(store, router, dialogRef);
     this.isAdd = data.isAdd;
     if (this.isAdd) {
@@ -99,11 +110,15 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.action = this.data.action;
     }
     this.functionScopeVariables = this.widgetService.getWidgetScopeVariables();
+    if (this.action.actionSourceId === 'cellClick') {
+      this.getCellClickColumnsInfo();
+    }
   }
 
   ngOnInit(): void {
     this.widgetActionFormGroup = this.fb.group({
       actionSourceId: [this.action.actionSourceId, Validators.required],
+      columnIndex: [{value: this.checkColumnIndex(this.action.columnIndex), disabled: true}, Validators.required],
       name: [this.action.name, [this.validateActionName(), Validators.required]],
       icon: [this.action.icon, Validators.required],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
@@ -113,14 +128,29 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     this.updateShowWidgetActionForm();
     this.widgetActionFormGroup.get('actionSourceId').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(() => {
+    ).subscribe((value) => {
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
       this.updateShowWidgetActionForm();
+      if (value === 'cellClick') {
+        this.widgetActionFormGroup.get('columnIndex').enable();
+        this.getCellClickColumnsInfo();
+      } else {
+        this.widgetActionFormGroup.get('columnIndex').disable();
+      }
     });
     this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => {
       this.updateShowWidgetActionForm();
+    });
+    setTimeout(() => {
+      if (this.action?.actionSourceId === 'cellClick') {
+        this.widgetActionFormGroup.get('columnIndex').enable();
+        if (isDefinedAndNotNull(this.action.columnIndex) && this.widgetActionFormGroup.get('columnIndex').value === null) {
+          this.columnIndexPlaceholderText = `${this.action.columnIndex} (${this.translate.instant('widget-config.not-set')})`;
+          this.columnIndexSelect.focus();
+        }
+      }
     });
   }
 
@@ -153,6 +183,22 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.widgetActionFormGroup.get('showWidgetActionFunction').clearValidators();
     }
     this.widgetActionFormGroup.get('showWidgetActionFunction').updateValueAndValidity();
+  }
+
+  private checkColumnIndex(columnIndex: number): number | null {
+    return isDefinedAndNotNull(columnIndex) && this.configuredColumns.length - 1 < columnIndex ? null : columnIndex;
+  }
+
+  private getCellClickColumnsInfo(): void {
+    if (!this.configuredColumns.length) {
+      this.configuredColumns = this.data.callbacks.fetchCellClickColumns();
+      this.data.actionsData.actionsMap['cellClick']?.forEach(action => {
+        const actionColumn = this.configuredColumns[action.columnIndex];
+        if (actionColumn && action.columnIndex !== this.action.columnIndex) {
+          this.usedCellClickColumns.push(action.columnIndex);
+        }
+      });
+    }
   }
 
   private validateActionName(): ValidatorFn {
@@ -191,6 +237,10 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
     } else {
       return '';
     }
+  }
+
+  public getCellClickColumnInfo(index: number, columnInfo: CellClickColumnInfo): string {
+    return `${index} (${isNotEmptyStr(columnInfo.label) ? columnInfo.label : columnInfo.name})`;
   }
 
   cancel(): void {

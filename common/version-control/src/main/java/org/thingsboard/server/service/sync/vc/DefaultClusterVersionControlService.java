@@ -21,14 +21,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.eclipse.jgit.errors.LargeObjectException;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
-import org.springframework.context.event.EventListener;
-import org.springframework.core.annotation.Order;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.EntityType;
@@ -68,16 +67,16 @@ import org.thingsboard.server.gen.transport.TransportProtos.VersionedEntityInfoP
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TbApplicationEventListener;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.provider.TbVersionControlQueueFactory;
+import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbVersionControlComponent;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -115,9 +114,8 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
     private final Map<TenantId, PendingCommit> pendingCommitMap = new HashMap<>();
 
     private volatile ExecutorService consumerExecutor;
-    private volatile TbQueueConsumer<TbProtoQueueMsg<ToVersionControlServiceMsg>> consumer;
+    private volatile QueueConsumerManager<TbProtoQueueMsg<ToVersionControlServiceMsg>> consumer;
     private volatile TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> producer;
-    private volatile boolean stopped = false;
 
     @Value("${queue.vc.poll-interval:25}")
     private long pollDuration;
@@ -134,20 +132,25 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     @PostConstruct
     public void init() {
-        consumerExecutor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("vc-consumer"));
+        consumerExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("vc-consumer"));
         var threadFactory = ThingsBoardThreadFactory.forName("vc-io-thread");
         for (int i = 0; i < ioPoolSize; i++) {
             ioThreads.add(MoreExecutors.listeningDecorator(Executors.newSingleThreadExecutor(threadFactory)));
         }
         producer = producerProvider.getTbCoreNotificationsMsgProducer();
-        consumer = queueFactory.createToVersionControlMsgConsumer();
+        consumer = QueueConsumerManager.<TbProtoQueueMsg<ToVersionControlServiceMsg>>builder()
+                .name("TB Version Control")
+                .msgPackProcessor(this::processMsgs)
+                .pollInterval(pollDuration)
+                .consumerCreator(queueFactory::createToVersionControlMsgConsumer)
+                .consumerExecutor(consumerExecutor)
+                .build();
     }
 
     @PreDestroy
     public void stop() {
-        stopped = true;
         if (consumer != null) {
-            consumer.unsubscribe();
+            consumer.stop();
         }
         if (consumerExecutor != null) {
             consumerExecutor.shutdownNow();
@@ -179,48 +182,29 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         return ServiceType.TB_VC_EXECUTOR.equals(event.getServiceType());
     }
 
-    @EventListener(ApplicationReadyEvent.class)
-    @Order(value = 2)
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        consumerExecutor.execute(() -> consumerLoop(consumer));
+    @AfterStartUp(order = 2)
+    public void afterStartUp() {
+        consumer.launch();
     }
 
-    void consumerLoop(TbQueueConsumer<TbProtoQueueMsg<ToVersionControlServiceMsg>> consumer) {
-        while (!stopped && !consumer.isStopped()) {
-            List<ListenableFuture<?>> futures = new ArrayList<>();
-            try {
-                List<TbProtoQueueMsg<ToVersionControlServiceMsg>> msgs = consumer.poll(pollDuration);
-                if (msgs.isEmpty()) {
-                    continue;
-                }
-                for (TbProtoQueueMsg<ToVersionControlServiceMsg> msgWrapper : msgs) {
-                    ToVersionControlServiceMsg msg = msgWrapper.getValue();
-                    var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : ProtoUtils.fromProto(msg.getVcSettings()));
-                    long startTs = System.currentTimeMillis();
-                    log.trace("[{}][{}] RECEIVED task: {}", ctx.getTenantId(), ctx.getRequestId(), msg);
-                    int threadIdx = Math.abs(ctx.getTenantId().hashCode() % ioPoolSize);
-                    ListenableFuture<Void> future = ioThreads.get(threadIdx).submit(() -> processMessage(ctx, msg));
-                    logTaskExecution(ctx, future, startTs);
-                    futures.add(future);
-                }
-                try {
-                    Futures.allAsList(futures).get(packProcessingTimeout, TimeUnit.MILLISECONDS);
-                } catch (TimeoutException e) {
-                    log.info("Timeout for processing the version control tasks.", e);
-                }
-                consumer.commit();
-            } catch (Exception e) {
-                if (!stopped) {
-                    log.warn("Failed to obtain version control requests from queue.", e);
-                    try {
-                        Thread.sleep(pollDuration);
-                    } catch (InterruptedException e2) {
-                        log.trace("Failed to wait until the server has capacity to handle new version control messages", e2);
-                    }
-                }
-            }
+    void processMsgs(List<TbProtoQueueMsg<ToVersionControlServiceMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToVersionControlServiceMsg>> consumer) throws Exception {
+        List<ListenableFuture<?>> futures = new ArrayList<>();
+        for (TbProtoQueueMsg<ToVersionControlServiceMsg> msgWrapper : msgs) {
+            ToVersionControlServiceMsg msg = msgWrapper.getValue();
+            var ctx = new VersionControlRequestCtx(msg, msg.hasClearRepositoryRequest() ? null : ProtoUtils.fromProto(msg.getVcSettings()));
+            long startTs = System.currentTimeMillis();
+            log.trace("[{}][{}] RECEIVED task: {}", ctx.getTenantId(), ctx.getRequestId(), msg);
+            int threadIdx = Math.abs(ctx.getTenantId().hashCode() % ioPoolSize);
+            ListenableFuture<Void> future = ioThreads.get(threadIdx).submit(() -> processMessage(ctx, msg));
+            logTaskExecution(ctx, future, startTs);
+            futures.add(future);
         }
-        log.info("TB Version Control request consumer stopped.");
+        try {
+            Futures.allAsList(futures).get(packProcessingTimeout, TimeUnit.MILLISECONDS);
+        } catch (TimeoutException e) {
+            log.info("Timeout for processing the version control tasks.", e);
+        }
+        consumer.commit();
     }
 
     private Void processMessage(VersionControlRequestCtx ctx, ToVersionControlServiceMsg msg) {
@@ -273,7 +257,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         var ids = vcService.listEntitiesAtVersion(ctx.getTenantId(), request.getVersionId(), path)
                 .stream().skip(request.getOffset()).limit(request.getLimit()).collect(Collectors.toList());
         if (!ids.isEmpty()) {
-            for (int i = 0; i < ids.size(); i++){
+            for (int i = 0; i < ids.size(); i++) {
                 VersionedEntityInfo info = ids.get(i);
                 var data = vcService.getFileContentAtCommit(ctx.getTenantId(),
                         getRelativePath(info.getExternalId().getEntityType(), info.getExternalId().getId().toString()), request.getVersionId());

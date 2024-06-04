@@ -34,7 +34,7 @@ return data[0] ? data[0]['entityName'] : '';
 <li>
 Prepare QR code text to use as device claiming info (in this case <code>{deviceName: string, secretKey: string}</code>).<br>
 Let's assume device has <code>claimingData</code> attribute with string JSON value containing <code>secretKey</code> field<br>
-(see <a target="_blank" href="${siteBaseUrl}/docs/user-guide/claiming-devices/">Claiming devices</a>):
+(see <a target="_blank" href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/claiming-devices/">Claiming devices</a>):
 </li>
 </ul>
 

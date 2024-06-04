@@ -45,7 +45,7 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
             "entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId and device_profile_id = :deviceProfileId limit 100) ORDER BY attribute_key", nativeQuery = true)
     List<Integer> findAllKeysByDeviceProfileId(@Param("tenantId") UUID tenantId,
-                                              @Param("deviceProfileId") UUID deviceProfileId);
+                                               @Param("deviceProfileId") UUID deviceProfileId);
 
     @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
             "entity_id in (SELECT id FROM device WHERE tenant_id = :tenantId limit 100) ORDER BY attribute_key", nativeQuery = true)
@@ -58,6 +58,6 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     @Query(value = "SELECT DISTINCT attribute_key FROM attribute_kv WHERE " +
             "entity_id in :entityIds AND attribute_type = :attributeType ORDER BY attribute_key", nativeQuery = true)
     List<Integer> findAllKeysByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
-                                                        @Param("attributeType") String attributeType);
+                                                         @Param("attributeType") int attributeType);
 }
 

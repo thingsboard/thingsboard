@@ -198,11 +198,12 @@ export class ImportExportService {
     );
   }
 
-  public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget) {
+  public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, widgetTitle: string) {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
-    let name = widgetItem.widget.config.title;
-    name = name.toLowerCase().replace(/\W/g, '_');
-    this.exportToPc(this.prepareExport(widgetItem), name);
+    const widgetDefaultName = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn).widgetName;
+    let fileName = widgetDefaultName + (isNotEmptyStr(widgetTitle) ? `_${widgetTitle}` : '');
+    fileName = fileName.toLowerCase().replace(/\W/g, '_');
+    this.exportToPc(this.prepareExport(widgetItem), fileName);
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,

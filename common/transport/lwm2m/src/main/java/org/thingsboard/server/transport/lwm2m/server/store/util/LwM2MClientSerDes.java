@@ -23,6 +23,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.protobuf.util.JsonFormat;
 import lombok.SneakyThrows;
+import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mNodeException;
@@ -107,6 +108,8 @@ public class LwM2MClientSerDes {
         if (client.getPagingTransmissionWindow() != null) {
             o.addProperty("pagingTransmissionWindow", client.getPagingTransmissionWindow());
         }
+        o.addProperty("defaultObjectIDVer", client.getDefaultObjectIDVer().toString());
+
         if (client.getRegistration() != null) {
             String registrationAddress = client.getRegistration().getAddress().toString();
             JsonNode registrationNode = registrationSerDes.jSerialize(client.getRegistration());
@@ -337,6 +340,13 @@ public class LwM2MClientSerDes {
             Field pagingTransmissionWindowField = lwM2mClientClass.getDeclaredField("pagingTransmissionWindow");
             pagingTransmissionWindowField.setAccessible(true);
             pagingTransmissionWindowField.set(lwM2mClient, pagingTransmissionWindow.getAsLong());
+        }
+
+        JsonElement defaultObjectIDVer = o.get("defaultObjectIDVer");
+        if (defaultObjectIDVer != null) {
+            Field defaultObjectIDVerField = lwM2mClientClass.getDeclaredField("defaultObjectIDVer");
+            defaultObjectIDVerField.setAccessible(true);
+            defaultObjectIDVerField.set(lwM2mClient, new Version(defaultObjectIDVer.getAsString()));
         }
 
         JsonElement registration = o.get("registration");
