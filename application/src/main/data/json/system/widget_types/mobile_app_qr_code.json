@@ -11,13 +11,13 @@
     "resources": [],
     "templateHtml": "<tb-mobile-app-qrcode-widget\n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-mobile-app-qrcode-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '250px',\n        previewHeight: '250px',\n        embedTitlePanel: true\n    };\n};",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '500px',\n        previewHeight: '250px',\n        embedTitlePanel: true\n    };\n};",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "tb-mobile-app-qr-code-widget-settings",
     "hasBasicMode": true,
     "basicModeDirective": "tb-mobile-app-qr-code-basic-config",
-    "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"useSystemSettings\":true,\"qrCodeConfig\":{\"badgeEnabled\":true,\"badgePosition\":\"RIGHT\",\"qrCodeLabelEnabled\":true,\"qrCodeLabel\":\"Scan to connect or download mobile app\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Mobile app QR code\",\"dropShadow\":true,\"showTitleIcon\":false,\"titleTooltip\":\"\",\"enableFullscreen\":false,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetStyle\":{},\"widgetCss\":\"\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"configMode\":\"basic\"}"
+    "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"useSystemSettings\":true,\"qrCodeConfig\":{\"badgeEnabled\":true,\"badgePosition\":\"RIGHT\",\"qrCodeLabelEnabled\":true,\"qrCodeLabel\":\"Scan to connect or download mobile app\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"padding\":\"12px\"},\"title\":\"Download mobile app\",\"dropShadow\":true,\"showTitleIcon\":false,\"titleTooltip\":\"\",\"enableFullscreen\":false,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetStyle\":{},\"widgetCss\":\"\",\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"configMode\":\"basic\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"1.5\"},\"titleColor\":\"#000000\",\"iconSize\":\"26px\",\"titleIcon\":\"qr_code\",\"iconColor\":\"#000000\",\"actions\":{}}"
   },
   "tags": [
     "ios",

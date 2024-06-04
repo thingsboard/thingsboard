@@ -52,6 +52,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   qrCodeSVG = '';
 
@@ -101,6 +102,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
         this.widgetResize$.observe(this.elementRef.nativeElement);
         this.backgroundStyle$ = backgroundStyle(this.ctx.settings.background, this.imagePipe, this.sanitizer);
         this.overlayStyle = overlayStyle(this.ctx.settings.background.overlay);
+        this.padding = this.ctx.settings.background.overlay.enabled ? undefined : this.ctx.settings.padding;
         this.cd.markForCheck();
       }));
     } else {

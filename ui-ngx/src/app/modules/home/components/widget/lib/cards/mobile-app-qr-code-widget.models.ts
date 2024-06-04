@@ -50,5 +50,6 @@ export const mobileAppQrCodeWidgetDefaultSettings: MobileAppQrCodeWidgetSettings
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 }

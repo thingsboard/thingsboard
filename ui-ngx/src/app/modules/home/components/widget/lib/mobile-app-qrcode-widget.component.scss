@@ -47,10 +47,6 @@
     right: 12px;
   }
 
-  div.tb-widget-title {
-    padding: 0;
-  }
-
   .tb-qrcode-label {
     align-self: center;
     text-align: center;
@@ -75,3 +71,11 @@
   }
 }
 
+:host ::ng-deep {
+  .tb-mobile-app-qrcode-panel {
+    > div.tb-widget-title {
+      padding: 0;
+      z-index: 1;
+    }
+  }
+}
