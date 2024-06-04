@@ -21,7 +21,6 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
-import org.mockito.ArgumentMatchers;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.mockito.stubbing.Answer;
@@ -38,6 +37,8 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.ArrayList;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
@@ -46,25 +47,29 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.doAnswer;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.mockito.BDDMockito.willAnswer;
 import static org.mockito.Mockito.times;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 public class TbMsgCountNodeTest {
 
-    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("773ccb0e-e822-44b7-97aa-10de83ad081d"));
+    private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("ee682a85-7f5a-4182-91bc-46e555138fe2"));
+    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("1b21c7cc-0c9e-4ab1-b867-99451599e146"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("04dfbd38-10e5-47b7-925f-11e795db89e1"));
+
     private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("msg-count-node-test");
-    private final ScheduledExecutorService executorService = Executors.newSingleThreadScheduledExecutor(factory);
+    private final TbMsg tickMsg = TbMsg.newMsg(TbMsgType.MSG_COUNT_SELF_MSG, RULE_NODE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
 
-
+    private ScheduledExecutorService executorService;
     private TbMsgCountNode node;
     private TbMsgCountNodeConfiguration config;
-    private CountDownLatch awaitTellSelfLatch;
 
     @Mock
     private TbContext ctxMock;
@@ -73,11 +78,14 @@ public class TbMsgCountNodeTest {
     public void setUp() {
         node = new TbMsgCountNode();
         config = new TbMsgCountNodeConfiguration().defaultConfiguration();
+        executorService = Executors.newSingleThreadScheduledExecutor(factory);
     }
 
     @AfterEach
     public void tearDown() {
-        executorService.shutdownNow();
+        if (executorService != null) {
+            executorService.shutdownNow();
+        }
         node.destroy();
     }
 
@@ -89,62 +97,59 @@ public class TbMsgCountNodeTest {
 
     @Test
     public void givenIncomingMsgs_whenOnMsg_thenSendsMsgWithMsgCount() throws TbNodeException, InterruptedException {
-        int msgCountInterval = 1;
-        config.setInterval(msgCountInterval);
-        config.setTelemetryPrefix("count");
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
+        // GIVEN
         int msgCount = 100;
-        awaitTellSelfLatch = new CountDownLatch(1);
-        AtomicInteger currentMsgNumber = new AtomicInteger(0);
-        AtomicBoolean isMsgWithCounterSent = new AtomicBoolean(false);
+        var awaitTellSelfLatch = new CountDownLatch(1);
+        var currentMsgNumber = new AtomicInteger(0);
+        var msgWithCounterSent = new AtomicBoolean(false);
 
-        invokeTellSelf(isMsgWithCounterSent, config.getInterval());
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getServiceId()).thenReturn("tb-rule-engine");
-        RuleNodeId ruleNodeId = new RuleNodeId(UUID.fromString("4ac734ea-2434-4402-b61b-eaa66b650711"));
-        when(ctxMock.getSelfId()).thenReturn(ruleNodeId);
-        TbMsg tickMsg = TbMsg.newMsg(TbMsgType.MSG_COUNT_SELF_MSG, ruleNodeId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
-        when(ctxMock.newMsg(null, TbMsgType.MSG_COUNT_SELF_MSG, ruleNodeId, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING)).thenReturn(tickMsg);
+        willAnswer((Answer<Void>) invocationOnMock -> {
+            executorService.schedule(() -> {
+                TbMsg tickMsg = invocationOnMock.getArgument(0);
+                msgWithCounterSent.set(true);
+                node.onMsg(ctxMock, tickMsg);
+                awaitTellSelfLatch.countDown();
+            }, config.getInterval(), TimeUnit.SECONDS);
+            return null;
+        }).given(ctxMock).tellSelf(any(TbMsg.class), anyLong());
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.getServiceId()).willReturn("tb-rule-engine");
+        given(ctxMock.getSelfId()).willReturn(RULE_NODE_ID);
+        given(ctxMock.newMsg(null, TbMsgType.MSG_COUNT_SELF_MSG, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING)).willReturn(tickMsg);
 
-        node.init(ctxMock, configuration);
+        // WHEN
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
-        DeviceId deviceId = new DeviceId(UUID.fromString("e7e2392a-16fe-4b2b-81db-ec99a0edd54f"));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+        var expectedProcessedMsgs = new ArrayList<TbMsg>();
         for (int i = 0; i < msgCount; i++) {
-            if (isMsgWithCounterSent.get()) {
+            var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+            if (msgWithCounterSent.get()) {
                 break;
             }
             node.onMsg(ctxMock, msg);
+            expectedProcessedMsgs.add(msg);
             currentMsgNumber.getAndIncrement();
         }
 
         awaitTellSelfLatch.await();
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock, times(currentMsgNumber.get())).ack(msgCaptor.capture());
-        msgCaptor.getAllValues().forEach(captor -> assertThat(captor).isEqualTo(msg));
+        then(ctxMock).should(times(currentMsgNumber.get())).ack(msgCaptor.capture());
+        var actualProcessedMsgs = msgCaptor.getAllValues();
+        assertThat(actualProcessedMsgs).hasSize(expectedProcessedMsgs.size());
+        assertThat(actualProcessedMsgs).isNotEmpty();
+        assertThat(actualProcessedMsgs).containsExactlyInAnyOrderElementsOf(expectedProcessedMsgs);
+
         ArgumentCaptor<TbMsg> msgWithCounterCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock).enqueueForTellNext(msgWithCounterCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
+        then(ctxMock).should().enqueueForTellNext(msgWithCounterCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
         TbMsg resultedMsg = msgWithCounterCaptor.getValue();
-        String expectedData = "{\"count_tb-rule-engine\":" + currentMsgNumber + "}";
+        String expectedData = "{\"messageCount_tb-rule-engine\":" + currentMsgNumber + "}";
         TbMsg expectedMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, TENANT_ID, TbMsgMetaData.EMPTY, expectedData);
         assertThat(resultedMsg).usingRecursiveComparison()
                 .ignoringFields("id", "ts", "ctx", "metaData")
                 .isEqualTo(expectedMsg);
-        assertThat(resultedMsg.getMetaData().getData()).hasFieldOrProperty("delta");
-    }
-
-    private void invokeTellSelf(AtomicBoolean outgoingMsgSent, int interval) {
-        doAnswer((Answer<Void>) invocationOnMock -> {
-            executorService.schedule(() -> {
-                TbMsg tickMsg = invocationOnMock.getArgument(0);
-                outgoingMsgSent.set(true);
-                node.onMsg(ctxMock, tickMsg);
-                awaitTellSelfLatch.countDown();
-            }, interval, TimeUnit.SECONDS);
-            return null;
-        }).when(ctxMock).tellSelf(ArgumentMatchers.any(TbMsg.class), ArgumentMatchers.anyLong());
+        Map<String, String> actualMetadata = resultedMsg.getMetaData().getData();
+        assertThat(actualMetadata).hasFieldOrProperty("delta");
     }
 
 }
