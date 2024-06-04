@@ -52,7 +52,8 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .userInfoUri(registration.getUserInfoUri())
                 .userNameAttributeName(registration.getUserNameAttributeName())
                 .jwkSetUri(registration.getJwkSetUri())
-                .clientAuthenticationMethod(new ClientAuthenticationMethod(registration.getClientAuthenticationMethod()))
+                .clientAuthenticationMethod(registration.getClientAuthenticationMethod().equals("POST") ?
+                        ClientAuthenticationMethod.CLIENT_SECRET_POST : ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .redirectUri(defaultRedirectUriTemplate)
                 .build();
     }

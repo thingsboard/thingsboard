@@ -36,7 +36,7 @@ import java.util.List;
 public class OAuth2ClientRegistrationTemplate extends BaseDataWithAdditionalInfo<OAuth2ClientRegistrationTemplateId> implements HasName {
 
     @Length(fieldName = "providerId")
-    @Schema(description = "OAuth2 provider identifier (e.g. its name)", required = true)
+    @Schema(description = "OAuth2 provider identifier (e.g. its name)", requiredMode = Schema.RequiredMode.REQUIRED)
     private String providerId;
     @Valid
     @Schema(description = "Default config for mapping OAuth2 log in response to platform entities")

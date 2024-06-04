@@ -47,7 +47,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsValue = deviceCredentials.getCredentialsValue();
     }
 
-    @Schema(required = true, accessMode = Schema.AccessMode.READ_ONLY, description = "The Id is automatically generated during device creation. " +
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "The Id is automatically generated during device creation. " +
             "Use 'getDeviceCredentialsByDeviceId' to obtain the id based on device id. " +
             "Use 'updateDeviceCredentials' to update device credentials. ", example = "784f394c-42b6-435a-983c-b7beff2784f9")
     @Override
@@ -61,7 +61,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         return super.getCreatedTime();
     }
 
-    @Schema(required = true, description = "JSON object with the device Id.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with the device Id.")
     public DeviceId getDeviceId() {
         return deviceId;
     }
@@ -70,7 +70,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.deviceId = deviceId;
     }
 
-    @Schema(description = "Type of the credentials", allowableValues ="ACCESS_TOKEN, X509_CERTIFICATE, MQTT_BASIC, LWM2M_CREDENTIALS")
+    @Schema(description = "Type of the credentials", allowableValues = {"ACCESS_TOKEN", "X509_CERTIFICATE", "MQTT_BASIC", "LWM2M_CREDENTIALS"})
     @Override
     public DeviceCredentialsType getCredentialsType() {
         return credentialsType;
@@ -80,7 +80,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsType = credentialsType;
     }
 
-    @Schema(required = true, description = "Unique Credentials Id per platform instance. " +
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Unique Credentials Id per platform instance. " +
             "Used to lookup credentials from the database. " +
             "By default, new access token for your device. " +
             "Depends on the type of the credentials."

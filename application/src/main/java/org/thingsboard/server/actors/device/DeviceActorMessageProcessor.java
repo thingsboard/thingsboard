@@ -23,7 +23,7 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.LinkedHashMapRemoveEldest;
 import org.thingsboard.server.actors.ActorSystemContext;
@@ -90,6 +90,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToTransportUpdateCre
 import org.thingsboard.server.gen.transport.TransportProtos.TransportToDeviceActorMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.gen.transport.TransportProtos.UplinkNotificationMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.SessionCloseReason;
 import org.thingsboard.server.service.rpc.RpcSubmitStrategy;
 import org.thingsboard.server.service.state.DefaultDeviceStateService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
@@ -460,7 +461,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
             handleSessionActivity(sessionInfo, msg.getSubscriptionInfo());
         }
         if (msg.hasClaimDevice()) {
-            handleClaimDeviceMsg(msg.getClaimDevice());
+            handleClaimDeviceMsg(sessionInfo, msg.getClaimDevice());
         }
         if (msg.hasRpcResponseStatusMsg()) {
             processRpcResponseStatus(sessionInfo, msg.getRpcResponseStatusMsg());
@@ -485,9 +486,22 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 });
     }
 
-    private void handleClaimDeviceMsg(ClaimDeviceMsg msg) {
+    private void handleClaimDeviceMsg(SessionInfoProto sessionInfo, ClaimDeviceMsg msg) {
+        UUID sessionId = getSessionId(sessionInfo);
         DeviceId deviceId = new DeviceId(new UUID(msg.getDeviceIdMSB(), msg.getDeviceIdLSB()));
-        systemContext.getClaimDevicesService().registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
+        ListenableFuture<Void> registrationFuture = systemContext.getClaimDevicesService()
+                        .registerClaimingInfo(tenantId, deviceId, msg.getSecretKey(), msg.getDurationMs());
+        Futures.addCallback(registrationFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(Void result) {
+                log.debug("[{}][{}] Successfully processed register claiming info request!", sessionId, deviceId);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                log.error("[{}][{}] Failed to process register claiming info request due to: ", sessionId, deviceId, t);
+            }
+        }, MoreExecutors.directExecutor());
     }
 
     private void reportSessionOpen() {
@@ -832,7 +846,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 notifyTransportAboutDeviceCredentialsUpdate(k, v, ((DeviceCredentialsUpdateNotificationMsg) msg).getDeviceCredentials());
             });
         } else {
-            sessions.forEach((sessionId, sessionMd) -> notifyTransportAboutClosedSession(sessionId, sessionMd, "device credentials updated!"));
+            sessions.forEach((sessionId, sessionMd) -> notifyTransportAboutClosedSession(sessionId, sessionMd, "device credentials updated!", SessionCloseReason.CREDENTIALS_UPDATED));
             attributeSubscriptions.clear();
             rpcSubscriptions.clear();
             dumpSessions();
@@ -842,13 +856,15 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
 
     private void notifyTransportAboutClosedSessionMaxSessionsLimit(UUID sessionId, SessionInfoMetaData sessionMd) {
         log.debug("remove eldest session (max concurrent sessions limit reached per device) sessionId: [{}] sessionMd: [{}]", sessionId, sessionMd);
-        notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!");
+        notifyTransportAboutClosedSession(sessionId, sessionMd, "max concurrent sessions limit reached per device!", SessionCloseReason.MAX_CONCURRENT_SESSIONS_LIMIT_REACHED);
     }
 
-    private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd, String message) {
+    private void notifyTransportAboutClosedSession(UUID sessionId, SessionInfoMetaData sessionMd, String message, SessionCloseReason reason) {
         SessionCloseNotificationProto sessionCloseNotificationProto = SessionCloseNotificationProto
                 .newBuilder()
-                .setMessage(message).build();
+                .setMessage(message)
+                .setReason(reason)
+                .build();
         ToTransportMsg msg = ToTransportMsg.newBuilder()
                 .setSessionIdMSB(sessionId.getMostSignificantBits())
                 .setSessionIdLSB(sessionId.getLeastSignificantBits())
@@ -1031,7 +1047,7 @@ public class DeviceActorMessageProcessor extends AbstractContextAwareMsgProcesso
                 attributeSubscriptions.remove(id);
                 if (session != null) {
                     removed++;
-                    notifyTransportAboutClosedSession(id, session, SESSION_TIMEOUT_MESSAGE);
+                    notifyTransportAboutClosedSession(id, session, SESSION_TIMEOUT_MESSAGE, SessionCloseReason.SESSION_TIMEOUT);
                 }
             }
             if (removed != 0) {

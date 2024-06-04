@@ -63,12 +63,21 @@ public class DefaultRateLimitService implements RateLimitService {
 
     @Override
     public boolean checkRateLimit(LimitedApi api, TenantId tenantId, Object level) {
+        return checkRateLimit(api, tenantId, level, false);
+    }
+
+    @Override
+    public boolean checkRateLimit(LimitedApi api, TenantId tenantId, Object level, boolean ignoreTenantNotFound) {
         if (tenantId.isSysTenantId()) {
             return true;
         }
         TenantProfile tenantProfile = tenantProfileProvider.get(tenantId);
         if (tenantProfile == null) {
-            throw new TenantProfileNotFoundException(tenantId);
+            if (ignoreTenantNotFound) {
+                return true;
+            } else {
+                throw new TenantProfileNotFoundException(tenantId);
+            }
         }
 
         String rateLimitConfig = tenantProfile.getProfileConfiguration()

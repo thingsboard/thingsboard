@@ -15,11 +15,12 @@
  */
 package org.thingsboard.server.queue.kafka;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Builder;
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.consumer.Consumer;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.consumer.KafkaConsumer;
@@ -35,8 +36,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.time.Duration;
 import java.util.ArrayList;
 import java.util.List;
@@ -62,7 +61,6 @@ public class TbKafkaConsumerStatsService {
     @Autowired
     private PartitionService partitionService;
 
-    private AdminClient adminClient;
     private Consumer<String, byte[]> consumer;
     private ScheduledExecutorService statsPrintScheduler;
 
@@ -71,7 +69,6 @@ public class TbKafkaConsumerStatsService {
         if (!statsConfig.getEnabled()) {
             return;
         }
-        this.adminClient = AdminClient.create(kafkaSettings.toAdminProps());
         this.statsPrintScheduler = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("kafka-consumer-stats"));
 
         Properties consumerProps = kafkaSettings.toConsumerProps(null);
@@ -90,7 +87,7 @@ public class TbKafkaConsumerStatsService {
             }
             for (String groupId : monitoredGroups) {
                 try {
-                    Map<TopicPartition, OffsetAndMetadata> groupOffsets = adminClient.listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata()
+                    Map<TopicPartition, OffsetAndMetadata> groupOffsets = kafkaSettings.getAdminClient().listConsumerGroupOffsets(groupId).partitionsToOffsetAndMetadata()
                             .get(statsConfig.getKafkaResponseTimeoutMs(), TimeUnit.MILLISECONDS);
                     Map<TopicPartition, Long> endOffsets = consumer.endOffsets(groupOffsets.keySet(), timeoutDuration);
 
@@ -115,8 +112,8 @@ public class TbKafkaConsumerStatsService {
     }
 
     private boolean isStatsPrintRequired() {
-        boolean isMyRuleEnginePartition = partitionService.resolve(ServiceType.TB_RULE_ENGINE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition();
-        boolean isMyCorePartition = partitionService.resolve(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID).isMyPartition();
+        boolean isMyRuleEnginePartition = partitionService.isMyPartition(ServiceType.TB_RULE_ENGINE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
+        boolean isMyCorePartition = partitionService.isMyPartition(ServiceType.TB_CORE, TenantId.SYS_TENANT_ID, TenantId.SYS_TENANT_ID);
         return log.isInfoEnabled() && (isMyRuleEnginePartition || isMyCorePartition);
     }
 
@@ -156,9 +153,6 @@ public class TbKafkaConsumerStatsService {
     public void destroy() {
         if (statsPrintScheduler != null) {
             statsPrintScheduler.shutdownNow();
-        }
-        if (adminClient != null) {
-            adminClient.close();
         }
         if (consumer != null) {
             consumer.close();

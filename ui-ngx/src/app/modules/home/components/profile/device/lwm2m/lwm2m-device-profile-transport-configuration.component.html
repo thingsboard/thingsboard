@@ -91,28 +91,16 @@
             <tb-power-mode-settings [parentForm]="clientSettingsFormGroup">
             </tb-power-mode-settings>
           </fieldset>
-          <mat-slide-toggle class="mat-slider"
-           formControlName="compositeOperationsSupport">{{ 'device-profile.lwm2m.composite-operations-support' | translate }}</mat-slide-toggle>
-<!--          <mat-accordion multi="true">-->
-<!--            <div *ngIf="false">-->
-<!--              <mat-expansion-panel>-->
-<!--                <mat-expansion-panel-header>-->
-<!--                  <mat-panel-title>{{ 'device-profile.lwm2m.client-strategy' | translate }}</mat-panel-title>-->
-<!--                </mat-expansion-panel-header>-->
-<!--                <ng-template matExpansionPanelContent>-->
-<!--                  <div fxLayout="column">-->
-<!--                    <mat-form-field class="mat-block">-->
-<!--                      <mat-label>{{ 'device-profile.lwm2m.client-strategy-label' | translate }}</mat-label>-->
-<!--                      <mat-select formControlName="clientOnlyObserveAfterConnect">-->
-<!--                        <mat-option value=1>{{ 'device-profile.lwm2m.client-strategy-only-observe' | translate }}</mat-option>-->
-<!--                        <mat-option value=2>{{ 'device-profile.lwm2m.client-strategy-read-all' | translate }}</mat-option>-->
-<!--                      </mat-select>-->
-<!--                    </mat-form-field>-->
-<!--                  </div>-->
-<!--                </ng-template>-->
-<!--              </mat-expansion-panel>-->
-<!--            </div>-->
-<!--          </mat-accordion>-->
+          <fieldset class="fields-group">
+            <legend class="group-title" translate>device-profile.lwm2m.default-object-id</legend>
+            <mat-form-field fxFlex>
+              <mat-select formControlName="defaultObjectIDVer">
+                <mat-option *ngFor="let objectIDVer of objectIDVers" [value]="objectIDVer">
+                  {{ objectIDVerTranslationMap.get(objectIDVer) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </fieldset>
         </section>
       </ng-template>
     </mat-tab>

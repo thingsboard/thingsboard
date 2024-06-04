@@ -104,3 +104,48 @@
     background-color: rgb(25, 128, 56);
   }
 }
+
+:host ::ng-deep {
+  .connector-container {
+
+    .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
+      height: 100%;
+    }
+
+    .mat-mdc-tab-body.mat-mdc-tab-body-active {
+      position: absolute;
+    }
+
+    .tb-form-row {
+      .fixed-title-width {
+        min-width: 120px;
+        width: 30%;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+    }
+
+    .tb-add-new {
+      display: flex;
+      z-index: 999;
+      pointer-events: none;
+      background-color: #fff;
+
+      button.connector {
+        height: auto;
+        padding-right: 12px;
+        font-size: 20px;
+        border-style: dashed;
+        border-width: 2px;
+        border-radius: 8px;
+        display: flex;
+        flex-wrap: wrap;
+        justify-content: center;
+        align-items: center;
+        color: rgba(0, 0, 0, 0.38);
+      }
+    }
+  }
+}
+

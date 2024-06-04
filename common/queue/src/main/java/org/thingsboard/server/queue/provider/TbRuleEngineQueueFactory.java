@@ -32,7 +32,7 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
  * Responsible for initialization of various Producers and Consumers used by TB Core Node.
  * Implementation Depends on the queue queue.type from yml or TB_QUEUE_TYPE environment variable
  */
-public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory {
+public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory, HousekeeperClientQueueFactory {
 
     /**
      * Used to push messages to instances of TB Transport Service
@@ -77,12 +77,24 @@ public interface TbRuleEngineQueueFactory extends TbUsageStatsClientQueueFactory
     TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToOtaPackageStateServiceMsg>> createToOtaPackageStateServiceMsgProducer();
 
     /**
-     * Used to consume messages by TB Core Service
+     * Used to consume messages by TB Rule Engine Service
      *
      * @return
      * @param configuration
      */
     TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration);
+
+    /**
+     * Used to consume messages by TB Rule Engine Service
+     * Intended usage for consumer per partition strategy
+     *
+     * @return TbQueueConsumer
+     * @param configuration
+     * @param partitionId as a suffix for consumer name
+     */
+    default TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineMsg>> createToRuleEngineMsgConsumer(Queue configuration, Integer partitionId) {
+        return createToRuleEngineMsgConsumer(configuration);
+    }
 
     /**
      * Used to consume high priority messages by TB Core Service

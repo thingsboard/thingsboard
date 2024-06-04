@@ -25,22 +25,83 @@
       forceSingleDatasource
       formControlName="datasources">
   </tb-datasources>
-  <tb-data-keys-panel
-      panelTitle="{{ 'widgets.chart.series' | translate }}"
-      addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
-      keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
-      removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
-      noKeysText="{{ 'widgets.chart.no-series' | translate }}"
-      requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
-      timeSeriesChart
-      [yAxisIds]="yAxisIds"
-      [showTimeSeriesType]="chartType === TimeSeriesChartType.default"
-      hideSourceSelection
-      [datasourceType]="datasource?.type"
-      [deviceId]="datasource?.deviceId"
-      [entityAliasId]="datasource?.entityAliasId"
-      formControlName="series">
-  </tb-data-keys-panel>
+  <div class="tb-form-panel">
+    <div fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ seriesMode === 'comparison' ? ('widgets.time-series-chart.comparison.comparison-hint' | translate) : null }}">
+        {{ 'widgets.chart.series' | translate }}
+      </div>
+      <tb-toggle-select [ngModel]="seriesMode" (ngModelChange)="seriesModeChange($event)"
+                        [ngModelOptions]="{ standalone: true }">
+        <tb-toggle-option value="series">{{ 'widgets.chart.series' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="comparison">{{ 'widgets.time-series-chart.comparison.comparison' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <tb-data-keys-panel
+        *ngIf="seriesMode === 'series'"
+        hidePanel
+        panelTitle="{{ 'widgets.chart.series' | translate }}"
+        addKeyTitle="{{ 'widgets.chart.add-series' | translate }}"
+        keySettingsTitle="{{ 'widgets.chart.series-settings' | translate }}"
+        removeKeyTitle="{{ 'widgets.chart.remove-series' | translate }}"
+        noKeysText="{{ 'widgets.chart.no-series' | translate }}"
+        requiredKeysText="{{ 'widgets.chart.no-series-error' | translate }}"
+        timeSeriesChart
+        [yAxisIds]="yAxisIds"
+        [showTimeSeriesType]="chartType === TimeSeriesChartType.default"
+        hideSourceSelection
+        [datasourceType]="datasource?.type"
+        [deviceId]="datasource?.deviceId"
+        [entityAliasId]="datasource?.entityAliasId"
+        formControlName="series">
+    </tb-data-keys-panel>
+    <div *ngIf="seriesMode === 'comparison'" class="tb-form-row no-border no-padding column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="comparisonEnabled">
+        {{ 'widgets.time-series-chart.comparison.comparison' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="timeForComparison">
+            <mat-option [value]="'previousInterval'">
+              {{ 'widgets.chart.time-for-comparison-previous-interval' | translate }}
+            </mat-option>
+            <mat-option [value]="'days'">
+              {{ 'widgets.chart.time-for-comparison-days' | translate }}
+            </mat-option>
+            <mat-option [value]="'weeks'">
+              {{ 'widgets.chart.time-for-comparison-weeks' | translate }}
+            </mat-option>
+            <mat-option [value]="'months'">
+              {{ 'widgets.chart.time-for-comparison-months' | translate }}
+            </mat-option>
+            <mat-option [value]="'years'">
+              {{ 'widgets.chart.time-for-comparison-years' | translate }}
+            </mat-option>
+            <mat-option [value]="'customInterval'">
+              {{ 'widgets.chart.time-for-comparison-custom-interval' | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field [fxShow]="timeSeriesChartWidgetConfigForm.get('timeForComparison').value === 'customInterval'"
+                        appearance="outline" class="number flex-lt-md" subscriptSizing="dynamic">
+          <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-time-series-chart-axis-settings-button
+            axisType="xAxis"
+            panelTitle="{{ 'widgets.time-series-chart.axis.comparison-x-axis-settings' | translate }}"
+            formControlName="comparisonXAxis">
+        </tb-time-series-chart-axis-settings-button>
+      </div>
+    </div>
+    <tb-comparison-keys-table
+        *ngIf="seriesMode === 'comparison'"
+        [datasourceType]="datasource?.type"
+        formControlName="series">
+    </tb-comparison-keys-table>
+  </div>
+  <tb-time-series-chart-states-panel
+      *ngIf="chartType === TimeSeriesChartType.state"
+      formControlName="states">
+  </tb-time-series-chart-states-panel>
   <tb-time-series-chart-y-axes-panel
     formControlName="yAxes"
     (axisRemoved)="yAxisRemoved($event)">
@@ -102,6 +163,9 @@
         {{ 'widgets.time-series-chart.data-zoom' | translate }}
       </mat-slide-toggle>
     </div>
+    <tb-time-series-chart-grid-settings
+        formControlName="grid">
+    </tb-time-series-chart-grid-settings>
     <div class="tb-form-row">
       <mat-slide-toggle class="mat-slide" formControlName="stack">
         <div tb-hint-tooltip-icon="{{'widgets.time-series-chart.stack-mode-hint' | translate}}">
@@ -137,11 +201,38 @@
           <div>{{ 'legend.label' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="legendLabelFont"
+                              [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendLabelColor').value}"
                               previewText="Temperature">
             </tb-font-settings>
             <tb-color-input asBoxInput
                             colorClearButton
                             formControlName="legendLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.value' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendValueFont"
+                              [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendValueColor').value}"
+                              previewText="22 °C">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendValueColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'legend.column-title' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="legendColumnTitleFont"
+                              [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendColumnTitleColor').value}"
+                              previewText="{{ 'legend.Avg' | translate }}">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="legendColumnTitleColor">
             </tb-color-input>
           </div>
         </div>
@@ -173,9 +264,23 @@
           </mat-chip-listbox>
         </div>
         <div class="tb-form-row space-between">
+          <div>{{ 'tooltip.label' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <tb-font-settings formControlName="tooltipLabelFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipLabelColor').value }"
+                              previewText="Temperature">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="tooltipLabelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
           <div>{{ 'tooltip.value' | translate }}</div>
           <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
             <tb-font-settings formControlName="tooltipValueFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipValueColor').value }"
                               [previewText]="tooltipValuePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -192,6 +297,7 @@
             <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
                                    formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
+                              [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipDateColor').value }"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>
             <tb-color-input asBoxInput
@@ -224,9 +330,9 @@
       </ng-template>
     </mat-expansion-panel>
   </div>
-  <tb-time-series-chart-animation-settings
+  <tb-chart-animation-settings
     formControlName="animation">
-  </tb-time-series-chart-animation-settings>
+  </tb-chart-animation-settings>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">

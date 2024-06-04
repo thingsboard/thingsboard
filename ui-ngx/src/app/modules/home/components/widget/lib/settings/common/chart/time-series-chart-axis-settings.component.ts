@@ -85,7 +85,7 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
   public axisSettingsFormGroup: UntypedFormGroup;
 
   constructor(private fb: UntypedFormBuilder,
-              private widgetService: WidgetService,) {
+              private widgetService: WidgetService) {
   }
 
   ngOnInit(): void {
@@ -113,6 +113,7 @@ export class TimeSeriesChartAxisSettingsComponent implements OnInit, ControlValu
       this.axisSettingsFormGroup.addControl('units', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('decimals', this.fb.control(null, [Validators.min(0)]));
       this.axisSettingsFormGroup.addControl('ticksFormatter', this.fb.control(null, []));
+      this.axisSettingsFormGroup.addControl('ticksGenerator', this.fb.control(null, []));
       this.axisSettingsFormGroup.addControl('interval', this.fb.control(null, [Validators.min(0)]));
       this.axisSettingsFormGroup.addControl('splitNumber', this.fb.control(null, [Validators.min(1)]));
       this.axisSettingsFormGroup.addControl('min', this.fb.control(null, []));

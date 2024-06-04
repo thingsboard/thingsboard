@@ -24,10 +24,10 @@ import lombok.Data;
 @Schema
 @Data
 public class NodeConnectionInfo {
-    @Schema(required = true, description = "Index of rule node in the 'nodes' array of the RuleChainMetaData. Indicates the 'from' part of the connection.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Index of rule node in the 'nodes' array of the RuleChainMetaData. Indicates the 'from' part of the connection.")
     private int fromIndex;
-    @Schema(required = true, description = "Index of rule node in the 'nodes' array of the RuleChainMetaData. Indicates the 'to' part of the connection.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Index of rule node in the 'nodes' array of the RuleChainMetaData. Indicates the 'to' part of the connection.")
     private int toIndex;
-    @Schema(required = true, description = "Type of the relation. Typically indicated the result of processing by the 'from' rule node. For example, 'Success' or 'Failure'")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the relation. Typically indicated the result of processing by the 'from' rule node. For example, 'Success' or 'Failure'")
     private String type;
 }

@@ -20,27 +20,27 @@ import lombok.Data;
 
 @Data
 public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
-    @Schema(description = "SMPP version", allowableValues = "3.3, 3.4", required = true)
+    @Schema(description = "SMPP version", allowableValues = "3.3, 3.4", requiredMode = Schema.RequiredMode.REQUIRED)
     private String protocolVersion;
 
-    @Schema(description = "SMPP host", required = true)
+    @Schema(description = "SMPP host", requiredMode = Schema.RequiredMode.REQUIRED)
     private String host;
-    @Schema(description = "SMPP port", required = true)
+    @Schema(description = "SMPP port", requiredMode = Schema.RequiredMode.REQUIRED)
     private Integer port;
 
-    @Schema(description = "System ID", required = true)
+    @Schema(description = "System ID", requiredMode = Schema.RequiredMode.REQUIRED)
     private String systemId;
-    @Schema(description = "Password", required = true)
+    @Schema(description = "Password", requiredMode = Schema.RequiredMode.REQUIRED)
     private String password;
 
-    @Schema(description = "System type", required = false)
+    @Schema(description = "System type", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String systemType;
-    @Schema(description = "TX - Transmitter, RX - Receiver, TRX - Transciever. By default TX is used", required = false)
+    @Schema(description = "TX - Transmitter, RX - Receiver, TRX - Transciever. By default TX is used", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private SmppBindType bindType;
-    @Schema(description = "Service type", required = false)
+    @Schema(description = "Service type", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String serviceType;
 
-    @Schema(description = "Source address", required = false)
+    @Schema(description = "Source address", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String sourceAddress;
     @Schema(description = "Source TON (Type of Number). Needed is source address is set. 5 by default.\n" +
             "0 - Unknown\n" +
@@ -49,7 +49,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "3 - Network Specific\n" +
             "4 - Subscriber Number\n" +
             "5 - Alphanumeric\n" +
-            "6 - Abbreviated", required = false)
+            "6 - Abbreviated", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte sourceTon;
     @Schema(description = "Source NPI (Numbering Plan Identification). Needed is source address is set. 0 by default.\n" +
             "0 - Unknown\n" +
@@ -61,7 +61,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "9 - Private numbering plan\n" +
             "10 - ERMES numbering plan (ETSI DE/PS 3 01-3)\n" +
             "13 - Internet (IP)\n" +
-            "18 - WAP Client Id (to be defined by WAP Forum)", required = false)
+            "18 - WAP Client Id (to be defined by WAP Forum)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte sourceNpi;
 
     @Schema(description = "Destination TON (Type of Number). 5 by default.\n" +
@@ -71,7 +71,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "3 - Network Specific\n" +
             "4 - Subscriber Number\n" +
             "5 - Alphanumeric\n" +
-            "6 - Abbreviated", required = false)
+            "6 - Abbreviated", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte destinationTon;
     @Schema(description = "Destination NPI (Numbering Plan Identification). 0 by default.\n" +
             "0 - Unknown\n" +
@@ -83,13 +83,13 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
             "9 - Private numbering plan\n" +
             "10 - ERMES numbering plan (ETSI DE/PS 3 01-3)\n" +
             "13 - Internet (IP)\n" +
-            "18 - WAP Client Id (to be defined by WAP Forum)", required = false)
+            "18 - WAP Client Id (to be defined by WAP Forum)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte destinationNpi;
 
-    @Schema(description = "Address range", required = false)
+    @Schema(description = "Address range", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private String addressRange;
 
-    @Schema(allowableValues = "0-10,13-14",
+    @Schema(allowableValues = {"0-10" ,"13-14"},
             description = "0 - SMSC Default Alphabet (ASCII for short and long code and to GSM for toll-free, used as default)\n" +
                     "1 - IA5 (ASCII for short and long code, Latin 9 for toll-free (ISO-8859-9))\n" +
                     "2 - Octet Unspecified (8-bit binary)\n" +
@@ -102,7 +102,7 @@ public class SmppSmsProviderConfiguration implements SmsProviderConfiguration {
                     "9 - Pictogram Encoding\n" +
                     "10 - Music Codes (ISO-2022-JP)\n" +
                     "13 - Extended Kanji JIS (X 0212-1990)\n" +
-                    "14 - Korean Graphic Character Set (KS C 5601/KS X 1001)", required = false)
+                    "14 - Korean Graphic Character Set (KS C 5601/KS X 1001)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
     private Byte codingScheme;
 
     @Override

@@ -101,6 +101,7 @@ export class RuleNotificationDialogComponent extends
   rateLimitsTemplateForm: FormGroup;
   edgeCommunicationFailureTemplateForm: FormGroup;
   edgeConnectionTemplateForm: FormGroup;
+  taskProcessingFailureTemplateForm: FormGroup;
 
   triggerType = TriggerType;
   triggerTypes: TriggerType[];
@@ -337,6 +338,12 @@ export class RuleNotificationDialogComponent extends
       })
     });
 
+    this.taskProcessingFailureTemplateForm = this.fb.group({
+      triggerConfig: this.fb.group({
+        taskTypes: []
+      })
+    });
+
     this.triggerTypeFormsMap = new Map<TriggerType, FormGroup>([
       [TriggerType.ALARM, this.alarmTemplateForm],
       [TriggerType.ALARM_COMMENT, this.alarmCommentTemplateForm],
@@ -349,7 +356,8 @@ export class RuleNotificationDialogComponent extends
       [TriggerType.NEW_PLATFORM_VERSION, this.newPlatformVersionTemplateForm],
       [TriggerType.RATE_LIMITS, this.rateLimitsTemplateForm],
       [TriggerType.EDGE_COMMUNICATION_FAILURE, this.edgeCommunicationFailureTemplateForm],
-      [TriggerType.EDGE_CONNECTION, this.edgeConnectionTemplateForm]
+      [TriggerType.EDGE_CONNECTION, this.edgeConnectionTemplateForm],
+      [TriggerType.TASK_PROCESSING_FAILURE, this.taskProcessingFailureTemplateForm]
     ]);
 
     if (data.isAdd || data.isCopy) {
@@ -488,7 +496,8 @@ export class RuleNotificationDialogComponent extends
       TriggerType.ENTITIES_LIMIT,
       TriggerType.API_USAGE_LIMIT,
       TriggerType.NEW_PLATFORM_VERSION,
-      TriggerType.RATE_LIMITS
+      TriggerType.RATE_LIMITS,
+      TriggerType.TASK_PROCESSING_FAILURE
     ]);
 
     if (this.isSysAdmin()) {
