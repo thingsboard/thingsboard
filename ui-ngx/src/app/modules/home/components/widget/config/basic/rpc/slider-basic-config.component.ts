@@ -129,6 +129,7 @@ export class SliderBasicConfigComponent extends BasicWidgetConfigComponent {
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -193,6 +194,7 @@ export class SliderBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;

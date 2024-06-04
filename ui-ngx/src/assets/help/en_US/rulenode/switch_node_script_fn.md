@@ -15,7 +15,7 @@ JavaScript function computing **an array of Link names** to forward the incoming
 
 Should return an array of `string` values presenting **link names** that the Rule Engine should use to further route the incoming Message.<br>
 If the result is an empty array - message will not be routed to any Node and will be immediately 
-<a href="${siteBaseUrl}/docs/user-guide/rule-engine-2-0/overview/#message-processing-result" target="_blank">acknowledged</a>.
+<a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/overview/#message-processing-result" target="_blank">acknowledged</a>.
 
 <div class="divider"></div>
 
@@ -95,7 +95,7 @@ return [];
 
 You can see real life example, how to use this node in this tutorial:
 
-- [Data function based on telemetry from 2 devices{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/function-based-on-telemetry-from-two-devices#delta-temperature-rule-chain)
+- [Data function based on telemetry from 2 devices{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/function-based-on-telemetry-from-two-devices#delta-temperature-rule-chain)
 
 <br>
 <br>

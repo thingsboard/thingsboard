@@ -28,14 +28,14 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(classes = TbCoapDtlsSettings.class)
 @TestPropertySource(properties = {
-        "transport.coap.dtls.enabled=true",
-        "transport.coap.dtls.bind_address=192.168.1.1",
-        "transport.coap.dtls.bind_port=1234",
-        "transport.coap.dtls.retransmission_timeout=100",
-        "transport.coap.dtls.connection_id_length=500",
-        "transport.coap.dtls.x509.skip_validity_check_for_client_cert=true",
-        "transport.coap.dtls.x509.dtls_session_inactivity_timeout=1000",
-        "transport.coap.dtls.x509.dtls_session_report_timeout=3000",
+        "coap.dtls.enabled=true",
+        "coap.dtls.bind_address=192.168.1.1",
+        "coap.dtls.bind_port=1234",
+        "coap.dtls.retransmission_timeout=100",
+        "coap.dtls.connection_id_length=500",
+        "coap.dtls.x509.skip_validity_check_for_client_cert=true",
+        "coap.dtls.x509.dtls_session_inactivity_timeout=1000",
+        "coap.dtls.x509.dtls_session_report_timeout=3000",
 })
 class TbCoapDtlsSettingsTest {
 

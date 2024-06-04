@@ -201,7 +201,7 @@ export class SecuritySettingsComponent extends PageComponent implements HasConfi
     }
     try {
       const value = atob(control.value);
-      if (value.length < 32) {
+      if (value.length < 64) {
         return {minLength: true};
       }
       return null;

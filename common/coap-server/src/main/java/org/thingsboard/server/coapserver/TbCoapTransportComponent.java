@@ -13,28 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: block;
-  .mat-expansion-panel {
-    box-shadow: none;
-    &.tick-value {
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        &.mat-expanded {
-          height: 48px;
-        }
-      }
-    }
-  }
-}
+package org.thingsboard.server.coapserver;
 
-:host ::ng-deep {
-  .mat-expansion-panel {
-    &.tick-value {
-      .mat-expansion-panel-body {
-        padding: 0 8px 8px;
-      }
-    }
-  }
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
+
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || " +
+        "('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${coap.enabled}'=='true' && '${transport.coap.enabled}'=='true')")
+public @interface TbCoapTransportComponent {
 }

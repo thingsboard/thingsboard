@@ -65,7 +65,7 @@ export interface WidgetContextMenuItem extends ContextMenuItem {
 
 export interface DashboardCallbacks {
   onEditWidget?: ($event: Event, widget: Widget) => void;
-  onExportWidget?: ($event: Event, widget: Widget) => void;
+  onExportWidget?: ($event: Event, widget: Widget, widgeTitle: string) => void;
   onRemoveWidget?: ($event: Event, widget: Widget) => void;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;

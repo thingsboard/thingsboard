@@ -81,6 +81,12 @@
       <tb-background-settings formControlName="background">
       </tb-background-settings>
     </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
   </div>
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.power-button.button</div>

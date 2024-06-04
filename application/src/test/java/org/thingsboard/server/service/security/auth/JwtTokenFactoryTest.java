@@ -73,16 +73,7 @@ public class JwtTokenFactoryTest {
 
     @Test
     public void testCreateAndParseAccessJwtToken() {
-        SecurityUser securityUser = new SecurityUser();
-        securityUser.setId(new UserId(UUID.randomUUID()));
-        securityUser.setEmail("tenant@thingsboard.org");
-        securityUser.setAuthority(Authority.TENANT_ADMIN);
-        securityUser.setTenantId(new TenantId(UUID.randomUUID()));
-        securityUser.setEnabled(true);
-        securityUser.setFirstName("A");
-        securityUser.setLastName("B");
-        securityUser.setUserPrincipal(new UserPrincipal(UserPrincipal.Type.USER_NAME, securityUser.getEmail()));
-        securityUser.setCustomerId(new CustomerId(UUID.randomUUID()));
+        SecurityUser securityUser = createSecurityUser();
 
         testCreateAndParseAccessJwtToken(securityUser);
 
@@ -111,18 +102,12 @@ public class JwtTokenFactoryTest {
         assertThat(parsedSecurityUser.getCustomerId()).isEqualTo(securityUser.getCustomerId());
         assertThat(parsedSecurityUser.getFirstName()).isEqualTo(securityUser.getFirstName());
         assertThat(parsedSecurityUser.getLastName()).isEqualTo(securityUser.getLastName());
+        assertThat(parsedSecurityUser.getSessionId()).isNotNull().isEqualTo(securityUser.getSessionId());
     }
 
     @Test
     public void testCreateAndParseRefreshJwtToken() {
-        SecurityUser securityUser = new SecurityUser();
-        securityUser.setId(new UserId(UUID.randomUUID()));
-        securityUser.setEmail("tenant@thingsboard.org");
-        securityUser.setAuthority(Authority.TENANT_ADMIN);
-        securityUser.setUserPrincipal(new UserPrincipal(UserPrincipal.Type.USER_NAME, securityUser.getEmail()));
-        securityUser.setEnabled(true);
-        securityUser.setTenantId(new TenantId(UUID.randomUUID()));
-        securityUser.setCustomerId(new CustomerId(UUID.randomUUID()));
+        SecurityUser securityUser = createSecurityUser();
 
         JwtToken refreshToken = tokenFactory.createRefreshToken(securityUser);
         checkExpirationTime(refreshToken, jwtSettings.getRefreshTokenExpTime());
@@ -138,15 +123,7 @@ public class JwtTokenFactoryTest {
 
     @Test
     public void testCreateAndParsePreVerificationJwtToken() {
-        SecurityUser securityUser = new SecurityUser();
-        securityUser.setId(new UserId(UUID.randomUUID()));
-        securityUser.setEmail("tenant@thingsboard.org");
-        securityUser.setAuthority(Authority.TENANT_ADMIN);
-        securityUser.setUserPrincipal(new UserPrincipal(UserPrincipal.Type.USER_NAME, securityUser.getEmail()));
-        securityUser.setEnabled(true);
-        securityUser.setTenantId(new TenantId(UUID.randomUUID()));
-        securityUser.setCustomerId(new CustomerId(UUID.randomUUID()));
-
+        SecurityUser securityUser = createSecurityUser();
         int tokenLifetime = (int) TimeUnit.MINUTES.toSeconds(30);
         JwtToken preVerificationToken = tokenFactory.createPreVerificationToken(securityUser, tokenLifetime);
         checkExpirationTime(preVerificationToken, tokenLifetime);
@@ -160,6 +137,34 @@ public class JwtTokenFactoryTest {
             return userPrincipal.getType() == UserPrincipal.Type.USER_NAME
                     && userPrincipal.getValue().equals(securityUser.getUserPrincipal().getValue());
         });
+    }
+
+    @Test
+    public void testSessionId() {
+        SecurityUser securityUser = createSecurityUser();
+        String sessionId = securityUser.getSessionId();
+
+        String accessToken = tokenFactory.createAccessJwtToken(securityUser).getToken();
+        securityUser = tokenFactory.parseAccessJwtToken(accessToken);
+        assertThat(securityUser.getSessionId()).isNotNull().isEqualTo(sessionId);
+
+        String newAccessToken = tokenFactory.createTokenPair(securityUser).getToken();
+        securityUser = tokenFactory.parseAccessJwtToken(newAccessToken);
+        assertThat(securityUser.getSessionId()).isNotNull().isNotEqualTo(sessionId);
+    }
+
+    private SecurityUser createSecurityUser() {
+        SecurityUser securityUser = new SecurityUser();
+        securityUser.setId(new UserId(UUID.randomUUID()));
+        securityUser.setEmail("tenant@thingsboard.org");
+        securityUser.setAuthority(Authority.TENANT_ADMIN);
+        securityUser.setTenantId(new TenantId(UUID.randomUUID()));
+        securityUser.setEnabled(true);
+        securityUser.setFirstName("A");
+        securityUser.setLastName("B");
+        securityUser.setUserPrincipal(new UserPrincipal(UserPrincipal.Type.USER_NAME, securityUser.getEmail()));
+        securityUser.setCustomerId(new CustomerId(UUID.randomUUID()));
+        return securityUser;
     }
 
     private void mockJwtSettings(JwtSettings settings) {

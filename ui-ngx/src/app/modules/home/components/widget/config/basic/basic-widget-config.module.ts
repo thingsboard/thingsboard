@@ -129,6 +129,10 @@ import {
 import {
   RadarChartBasicConfigComponent
 } from '@home/components/widget/config/basic/chart/radar-chart-basic-config.component';
+import {
+  DigitalSimpleGaugeBasicConfigComponent
+} from '@home/components/widget/config/basic/gauge/digital-simple-gauge-basic-config.component';
+import { MobileAppQrCodeBasicConfigComponent } from '@home/components/widget/config/basic/cards/mobile-app-qr-code-basic-config.component';
 import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/basic/scada/scada-symbol-basic-config.component';
 
 @NgModule({
@@ -173,6 +177,8 @@ import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/
     BarChartBasicConfigComponent,
     PolarAreaChartBasicConfigComponent,
     RadarChartBasicConfigComponent,
+    DigitalSimpleGaugeBasicConfigComponent,
+    MobileAppQrCodeBasicConfigComponent,
     ScadaSymbolBasicConfigComponent
   ],
   imports: [
@@ -219,7 +225,9 @@ import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/
     BarChartBasicConfigComponent,
     PolarAreaChartBasicConfigComponent,
     RadarChartBasicConfigComponent,
-    ScadaSymbolBasicConfigComponent
+    ScadaSymbolBasicConfigComponent,
+    DigitalSimpleGaugeBasicConfigComponent,
+    MobileAppQrCodeBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -259,5 +267,7 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-bar-chart-basic-config': BarChartBasicConfigComponent,
   'tb-polar-area-chart-basic-config': PolarAreaChartBasicConfigComponent,
   'tb-radar-chart-basic-config': RadarChartBasicConfigComponent,
+  'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent,
+  'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
   'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent
 };

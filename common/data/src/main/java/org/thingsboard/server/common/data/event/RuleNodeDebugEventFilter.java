@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.StringUtils;
 @Schema
 public class RuleNodeDebugEventFilter extends DebugEventFilter {
 
-    @Schema(description = "String value representing msg direction type (incoming to entity or outcoming from entity)", allowableValues = "IN, OUT")
+    @Schema(description = "String value representing msg direction type (incoming to entity or outcoming from entity)", allowableValues = {"IN", "OUT"})
     protected String msgDirectionType;
     @Schema(description = "String value representing the entity id in the event body (originator of the message)", example = "de9d54a0-2b7a-11ec-a3cc-23386423d98f")
     protected String entityId;

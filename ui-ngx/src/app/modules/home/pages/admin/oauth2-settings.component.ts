@@ -17,6 +17,7 @@
 import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
+  FormControl,
   UntypedFormArray,
   UntypedFormBuilder,
   UntypedFormGroup,
@@ -215,7 +216,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
         this.oauth2SettingsForm.get('edgeEnabled').patchValue(false);
         this.oauth2SettingsForm.get('edgeEnabled').disable();
       }
-    }))
+    }));
   }
 
   private initOAuth2Settings(oauth2Info: OAuth2Info): void {
@@ -302,9 +303,23 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   private buildMobileInfoForm(mobileInfo?: OAuth2MobileInfo): UntypedFormGroup {
     return this.fb.group({
       pkgName: [mobileInfo?.pkgName, [Validators.required]],
-      appSecret: [mobileInfo?.appSecret, [Validators.required, Validators.minLength(16), Validators.maxLength(2048),
-        Validators.pattern(/^[A-Za-z0-9]+$/)]],
+      appSecret: [mobileInfo?.appSecret, [Validators.required, this.base64Format]],
     }, {validators: this.uniquePkgNameValidator});
+  }
+
+  private base64Format(control: FormControl): { [key: string]: boolean } | null {
+    if (control.value === '') {
+      return null;
+    }
+    try {
+      const value = atob(control.value);
+      if (value.length < 64) {
+        return {minLength: true};
+      }
+      return null;
+    } catch (e) {
+      return {base64: true};
+    }
   }
 
   private buildRegistrationForm(registration?: OAuth2RegistrationInfo): UntypedFormGroup {
@@ -556,7 +571,7 @@ export class OAuth2SettingsComponent extends PageComponent implements OnInit, Ha
   addMobileInfo(control: AbstractControl): void {
     this.mobileInfos(control).push(this.buildMobileInfoForm({
       pkgName: '',
-      appSecret: randomAlphanumeric(24)
+      appSecret: btoa(randomAlphanumeric(64))
     }));
   }
 

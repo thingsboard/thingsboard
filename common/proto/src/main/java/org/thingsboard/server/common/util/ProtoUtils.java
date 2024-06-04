@@ -659,6 +659,8 @@ public class ProtoUtils {
         }
         if (proto.hasDefaultRuleChainIdMSB() && proto.hasDefaultRuleChainIdLSB()) {
             deviceProfile.setDefaultRuleChainId(getEntityId(proto.getDefaultRuleChainIdMSB(), proto.getDefaultRuleChainIdLSB(), RuleChainId::new));
+        }
+        if (proto.hasDefaultDashboardIdMSB() && proto.hasDefaultDashboardIdLSB()) {
             deviceProfile.setDefaultDashboardId(getEntityId(proto.getDefaultDashboardIdMSB(), proto.getDefaultDashboardIdLSB(), DashboardId::new));
         }
         if (proto.hasDefaultQueueName()) {

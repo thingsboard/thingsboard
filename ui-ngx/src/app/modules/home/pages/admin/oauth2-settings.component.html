@@ -156,7 +156,7 @@
                                 <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
                                   <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                                     <div fxFlex fxLayout="column">
-                                      <mat-form-field fxFlex class="mat-block" floatLabel="always">
+                                      <mat-form-field fxFlex class="mat-block" floatLabel="always" subscriptSizing="dynamic">
                                         <mat-label translate>admin.oauth2.mobile-package</mat-label>
                                         <input matInput formControlName="pkgName" placeholder="{{ 'admin.oauth2.mobile-package-placeholder' | translate }}" required>
                                         <mat-hint translate>admin.oauth2.mobile-package-hint</mat-hint>
@@ -166,9 +166,9 @@
                                       </mat-error>
                                     </div>
                                     <div fxFlex fxLayout="row">
-                                      <mat-form-field fxFlex class="mat-block">
+                                      <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
                                         <mat-label translate>admin.oauth2.mobile-app-secret</mat-label>
-                                        <textarea matInput formControlName="appSecret" rows="1" required></textarea>
+                                        <input matInput formControlName="appSecret" required>
                                         <tb-copy-button
                                           matSuffix
                                           miniButton="false"
@@ -178,8 +178,15 @@
                                           tooltipPosition="above"
                                           icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
-                                        <mat-error *ngIf="mobileInfo.get('appSecret').invalid">
-                                          {{ 'admin.oauth2.invalid-mobile-app-secret' | translate }}
+                                        <mat-hint translate>admin.oauth2.mobile-app-secret-hint</mat-hint>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').hasError('required')">
+                                          {{ 'admin.oauth2.mobile-app-secret-required' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').hasError('base64')">
+                                          {{ 'admin.oauth2.mobile-app-secret-min-length' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').hasError('minLength')">
+                                          {{ 'admin.oauth2.mobile-app-secret-base64' | translate }}
                                         </mat-error>
                                       </mat-form-field>
                                     </div>

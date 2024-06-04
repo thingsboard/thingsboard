@@ -61,6 +61,7 @@ export interface BatteryLevelWidgetSettings {
   batteryLevelColor: ColorSettings;
   batteryShapeColor: ColorSettings;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const batteryLevelDefaultSettings: BatteryLevelWidgetSettings = {
@@ -80,21 +81,25 @@ export const batteryLevelDefaultSettings: BatteryLevelWidgetSettings = {
   batteryLevelColor: {
     color: 'rgba(224, 224, 224, 1)',
     type: ColorType.range,
-    rangeList: [
-      {from: null, to: 25, color: 'rgba(227, 71, 71, 1)'},
-      {from: 25, to: 50, color: 'rgba(246, 206, 67, 1)'},
-      {from: 50, to: null, color: 'rgba(92, 223, 144, 1)'}
-    ],
+    rangeList: {
+      range: [
+        {from: null, to: 25, color: 'rgba(227, 71, 71, 1)'},
+        {from: 25, to: 50, color: 'rgba(246, 206, 67, 1)'},
+        {from: 50, to: null, color: 'rgba(92, 223, 144, 1)'}
+      ]
+    },
     colorFunction: defaultColorFunction
   },
   batteryShapeColor: {
     color: 'rgba(224, 224, 224, 0.32)',
     type: ColorType.range,
-    rangeList: [
-      {from: null, to: 25, color: 'rgba(227, 71, 71, 0.32)'},
-      {from: 25, to: 50, color: 'rgba(246, 206, 67, 0.32)'},
-      {from: 50, to: null, color: 'rgba(92, 223, 144, 0.32)'}
-    ],
+    rangeList: {
+      range: [
+        {from: null, to: 25, color: 'rgba(227, 71, 71, 0.32)'},
+        {from: 25, to: 50, color: 'rgba(246, 206, 67, 0.32)'},
+        {from: 50, to: null, color: 'rgba(92, 223, 144, 0.32)'}
+      ]
+    },
     colorFunction: defaultColorFunction
   },
   background: {
@@ -105,6 +110,7 @@ export const batteryLevelDefaultSettings: BatteryLevelWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };
 

@@ -13,28 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: block;
-  .mat-expansion-panel {
-    box-shadow: none;
-    &.fixed-color-level {
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        &.mat-expanded {
-          height: 48px;
-        }
-      }
-    }
-  }
-}
+package org.thingsboard.server.dao.mobile;
 
-:host ::ng-deep {
-  .mat-expansion-panel {
-    &.fixed-color-level {
-      .mat-expansion-panel-body {
-        padding: 0 8px 8px;
-      }
-    }
-  }
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.dao.Dao;
+
+
+public interface MobileAppSettingsDao extends Dao<MobileAppSettings> {
+
+    MobileAppSettings findByTenantId(TenantId tenantId);
+
+    void removeByTenantId(TenantId tenantId);
 }

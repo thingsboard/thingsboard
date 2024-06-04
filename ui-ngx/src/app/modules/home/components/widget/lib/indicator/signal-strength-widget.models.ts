@@ -66,6 +66,7 @@ export interface SignalStrengthWidgetSettings {
   tooltipBackgroundColor: string;
   tooltipBackgroundBlur: number;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const signalStrengthDefaultSettings: SignalStrengthWidgetSettings = {
@@ -84,12 +85,14 @@ export const signalStrengthDefaultSettings: SignalStrengthWidgetSettings = {
   activeBarsColor: {
     color: 'rgba(92, 223, 144, 1)',
     type: ColorType.range,
-    rangeList: [
-      {to: -85, color: 'rgba(227, 71, 71, 1)'},
-      {from: -85, to: -70, color: 'rgba(255, 122, 0, 1)'},
-      {from: -70, to: -55, color: 'rgba(246, 206, 67, 1)'},
-      {from: -55, color: 'rgba(92, 223, 144, 1)'}
-    ],
+    rangeList: {
+      range: [
+        {to: -85, color: 'rgba(227, 71, 71, 1)'},
+        {from: -85, to: -70, color: 'rgba(255, 122, 0, 1)'},
+        {from: -70, to: -55, color: 'rgba(246, 206, 67, 1)'},
+        {from: -55, color: 'rgba(92, 223, 144, 1)'}
+      ]
+    },
     colorFunction: defaultColorFunction
   },
   noSignalRssiValue: -100,
@@ -126,7 +129,8 @@ export const signalStrengthDefaultSettings: SignalStrengthWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };
 
 export const signalBarActive = (rssi: number, index: number): boolean => {
