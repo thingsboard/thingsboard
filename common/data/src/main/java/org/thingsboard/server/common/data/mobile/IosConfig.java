@@ -32,5 +32,7 @@ public class IosConfig {
     private boolean enabled;
     @NoXss
     private String appId;
+    @NoXss
+    private String storeLink;
 
 }
