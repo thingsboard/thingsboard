@@ -54,7 +54,6 @@ import static org.thingsboard.server.common.data.StringUtils.isBlank;
 /**
  * @author Andrew Shvayka
  */
-@SuppressWarnings("UnstableApiUsage")
 @Service
 @Slf4j
 public class BaseTimeseriesService implements TimeseriesService {
@@ -302,4 +301,5 @@ public class BaseTimeseriesService implements TimeseriesService {
             throw new IncorrectParameterException("Incorrect DeleteTsKvQuery. Key can't be empty");
         }
     }
+
 }

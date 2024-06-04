@@ -21,14 +21,17 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
+import org.thingsboard.server.common.data.kv.TsKv;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.ObjectDao;
 
 import java.util.List;
+import java.util.function.Consumer;
 
 /**
  * @author Andrew Shvayka
  */
-public interface TimeseriesDao {
+public interface TimeseriesDao extends ObjectDao<TsKv> {
 
     ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries);
 
@@ -39,4 +42,7 @@ public interface TimeseriesDao {
     ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query);
 
     void cleanup(long systemTtl);
+
+    ListenableFuture<Void> findAllAsync(TenantId tenantId, EntityId entityId, String key, Consumer<TsKvEntry> processor);
+
 }

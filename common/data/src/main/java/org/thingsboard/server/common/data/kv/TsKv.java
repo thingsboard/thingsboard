@@ -13,25 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.sync.tenant.util;
+package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.ObjectType;
-
-import java.util.Collections;
-import java.util.Set;
-import java.util.UUID;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
-public class TenantExportConfig {
-
-    private UUID tenantId;
-    private Set<ObjectType> skipped;
-
-    private long tsKvTtl;
-
-    public Set<ObjectType> getSkipped() {
-        return skipped != null ? skipped : Collections.emptySet();
-    }
+@AllArgsConstructor
+@NoArgsConstructor
+public class TsKv {
+    private EntityId entityId;
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    private TsKvEntry entry;
+    private long ttl;
 
 }

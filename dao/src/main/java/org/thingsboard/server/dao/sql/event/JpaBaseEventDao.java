@@ -55,6 +55,7 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -449,7 +450,7 @@ public class JpaBaseEventDao implements EventDao {
     @SneakyThrows
     @Override
     public Event save(TenantId tenantId, Event event) {
-        saveAsync(event).get();
+        saveAsync(event).get(30, TimeUnit.SECONDS);
         return event;
     }
 

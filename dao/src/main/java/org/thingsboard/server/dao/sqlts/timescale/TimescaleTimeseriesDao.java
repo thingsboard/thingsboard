@@ -18,13 +18,16 @@ package org.thingsboard.server.dao.sqlts.timescale;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -32,13 +35,13 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
+import org.thingsboard.server.common.data.kv.TsKv;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.model.sqlts.timescale.ts.TimescaleTsKvEntity;
-import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
@@ -47,14 +50,14 @@ import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.TimeUtils;
 import org.thingsboard.server.dao.util.TimescaleDBTsDao;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
 @Component
@@ -177,6 +180,28 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     @Override
+    public ListenableFuture<Void> findAllAsync(TenantId tenantId, EntityId entityId, String key, Consumer<TsKvEntry> processor) {
+        Integer keyId = keyDictionaryDao.getOrSaveKeyId(key);
+        long currentTs = System.currentTimeMillis();
+        PageRequest batchRequest = PageRequest.ofSize(256).withSort(Sort.by(Sort.Direction.ASC, "ts"));
+
+        while (true) {
+            List<TimescaleTsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(entityId.getId(), keyId, 0, currentTs, batchRequest);
+            if (tsKvEntities.isEmpty()) {
+                break;
+            }
+            for (TimescaleTsKvEntity tsKvEntity : tsKvEntities) {
+                tsKvEntity.setStrKey(key);
+                TsKvEntry tsKvEntry = tsKvEntity.toData();
+                processor.accept(tsKvEntry);
+            }
+
+            batchRequest = batchRequest.next();
+        }
+        return Futures.immediateVoidFuture();
+    }
+
+    @Override
     public void cleanup(long systemTtl) {
         super.cleanup(systemTtl);
     }
@@ -246,6 +271,18 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             default:
                 throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
         }
+    }
+
+    @SneakyThrows
+    @Override
+    public TsKv save(TenantId tenantId, TsKv tsKv) {
+        save(tenantId, tsKv.getEntityId(), tsKv.getEntry(), tsKv.getTtl()).get(30, TimeUnit.SECONDS);
+        return tsKv;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.TS_KV;
     }
 
 }

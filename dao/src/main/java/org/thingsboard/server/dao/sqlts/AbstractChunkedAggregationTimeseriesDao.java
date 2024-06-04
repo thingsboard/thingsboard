@@ -22,6 +22,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Sort;
 import org.springframework.data.domain.Sort.Direction;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -48,9 +49,9 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.function.Consumer;
 import java.util.function.Function;
 
-@SuppressWarnings("UnstableApiUsage")
 @Slf4j
 public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao {
 
@@ -144,6 +145,28 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
         }
     }
 
+    @Override
+    public ListenableFuture<Void> findAllAsync(TenantId tenantId, EntityId entityId, String key, Consumer<TsKvEntry> processor) {
+        Integer keyId = keyDictionaryDao.getOrSaveKeyId(key);
+        long currentTs = System.currentTimeMillis();
+        PageRequest batchRequest = PageRequest.ofSize(256).withSort(Sort.by(Direction.ASC, "ts"));
+
+        while (true) {
+            List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(entityId.getId(), keyId, 0, currentTs, batchRequest);
+            if (tsKvEntities.isEmpty()) {
+                break;
+            }
+            for (TsKvEntity tsKvEntity : tsKvEntities) {
+                tsKvEntity.setStrKey(key);
+                TsKvEntry tsKvEntry = tsKvEntity.toData();
+                processor.accept(tsKvEntry);
+            }
+
+            batchRequest = batchRequest.next();
+        }
+        return Futures.immediateVoidFuture();
+    }
+
     private ReadTsKvQueryResult findAllAsyncWithLimit(EntityId entityId, ReadTsKvQuery query) {
         Integer keyId = keyDictionaryDao.getOrSaveKeyId(query.getKey());
         List<TsKvEntity> tsKvEntities = tsKvRepository.findAllWithLimit(
@@ -199,4 +222,5 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
                 throw new IllegalArgumentException("Not supported aggregation type: " + aggregation);
         }
     }
+
 }

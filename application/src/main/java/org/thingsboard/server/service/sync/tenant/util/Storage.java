@@ -43,6 +43,7 @@ import java.nio.file.Path;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Consumer;
 import java.util.zip.GZIPInputStream;
 import java.util.zip.GZIPOutputStream;
@@ -56,7 +57,7 @@ public class Storage {
 
     private static final ObjectMapper jsonMapper = new ObjectMapper();
 
-    private final Map<UUID, Map<Path, Writer>> files = new HashMap<>();
+    private final Map<UUID, Map<Path, Writer>> files = new ConcurrentHashMap<>();
 
     @SneakyThrows
     public void init(UUID tenantId) {
@@ -67,7 +68,7 @@ public class Storage {
 
     @SneakyThrows
     public void save(UUID tenantId, ObjectType type, DataWrapper dataWrapper) {
-        Path file = getPath(tenantId, type.name());
+        Path file = getExportDataPath(tenantId, type);
         Writer writer = files.get(tenantId).computeIfAbsent(file, path -> {
             try {
                 Files.deleteIfExists(file);
@@ -91,7 +92,7 @@ public class Storage {
             writer.close();
         }
 
-        Map<Path, Writer> files = this.files.get(tenantId);
+        Map<Path, Writer> files = this.files.remove(tenantId);
         TarArchiveOutputStream tarArchive = new TarArchiveOutputStream(new FileOutputStream(Path.of(workingDirectory, tenantId.toString(), "data.tar").toFile()));
         for (Path file : files.keySet()) {
             TarArchiveEntry archiveEntry = new TarArchiveEntry(file, file.getFileName().toString());
@@ -136,8 +137,22 @@ public class Storage {
     }
 
     @SneakyThrows
+    public void readAndProcess(ObjectType type, UUID tenantId, Consumer<DataWrapper> processor) {
+        Path file = getExportDataPath(tenantId, type);
+        Writer writer = files.get(tenantId).get(file);
+        if (writer != null) {
+            writer.close();
+        }
+        readAndProcess(type, file, processor);
+    }
+
     public void readAndProcess(ObjectType type, Consumer<DataWrapper> processor) {
-        Path file = Path.of(this.workingDirectory, "importing", type + ".gz");
+        Path file = Path.of(this.workingDirectory, "importing", type.name().toLowerCase() + ".gz");
+        readAndProcess(type, file, processor);
+    }
+
+    @SneakyThrows
+    private void readAndProcess(ObjectType type, Path file, Consumer<DataWrapper> processor) {
         if (!Files.exists(file)) {
             log.debug("No data for {}", type);
             return;
@@ -162,8 +177,8 @@ public class Storage {
         return jsonMapper.writeValueAsString(o);
     }
 
-    private Path getPath(UUID tenantId, String name) {
-        return Path.of(workingDirectory, tenantId.toString(), name + ".gz");
+    private Path getExportDataPath(UUID tenantId, ObjectType type) {
+        return Path.of(workingDirectory, tenantId.toString(), type.name().toLowerCase() + ".gz");
     }
 
     private void deleteDirectory(Path directory) throws IOException {

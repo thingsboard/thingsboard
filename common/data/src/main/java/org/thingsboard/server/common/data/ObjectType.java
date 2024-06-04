@@ -24,16 +24,7 @@ public enum ObjectType {
     RULE_CHAIN,
     OTA_PACKAGE,
     RESOURCE,
-    // ROLE,
-    // ENTITY_GROUP,
-    // DEVICE_GROUP_OTA_PACKAGE,
-    // GROUP_PERMISSION,
-    // BLOB_ENTITY,
-    // SCHEDULER_EVENT,
-    EVENT,
     RULE_NODE,
-    //    CONVERTER,
-//    INTEGRATION,
     USER,
     USER_CREDENTIALS,
     USER_AUTH_SETTINGS,
@@ -60,12 +51,13 @@ public enum ObjectType {
     NOTIFICATION_TARGET,
     NOTIFICATION_TEMPLATE,
     NOTIFICATION_RULE,
-    //    WHITE_LABELING,
     ALARM_COMMENT,
     ALARM_TYPE,
-
+    EVENT,
     AUDIT_LOG,
     RELATION,
     ATTRIBUTE_KV,
-    LATEST_TS_KV
+    LATEST_TS_KV,
+    TS_KV;
+
 }

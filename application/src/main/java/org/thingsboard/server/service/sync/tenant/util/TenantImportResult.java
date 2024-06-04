@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.ObjectType;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
@@ -32,6 +33,10 @@ public class TenantImportResult {
 
     public void report(ObjectType type) {
         stats.computeIfAbsent(type, k -> new AtomicInteger()).incrementAndGet();
+    }
+
+    public int getCount(ObjectType type) {
+        return Optional.ofNullable(stats.get(type)).map(AtomicInteger::get).orElse(0);
     }
 
 }

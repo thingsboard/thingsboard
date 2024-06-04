@@ -62,6 +62,7 @@ public class TenantImportService {
                 .build();
     }
 
+    // todo: cancel
     public UUID importTenant(InputStream dataStream, TenantImportConfig config) {
         storage.unwrapImportData(dataStream);
 
@@ -97,7 +98,7 @@ public class TenantImportService {
     private void importTenant(Tenant tenant, TenantImportConfig config) {
         TenantId tenantId = tenant.getId();
         TenantImportResult result = getResult(tenantId.getId());
-        for (ObjectType type : ObjectType.values()) {
+        for (ObjectType type : ObjectType.values()) { // TODO: in parallel for related entities + ts kv
             log.debug("[{}] Importing {} entities", tenantId, type);
             storage.readAndProcess(type, dataWrapper -> {
                 Object entity = dataWrapper.getEntity();
@@ -106,7 +107,7 @@ public class TenantImportService {
                 result.report(type);
                 log.trace("[{}][{}] Imported entity {}", tenantId, type, entity);
             });
-            log.debug("[{}] Imported {} {} entities", tenantId, result.getStats().get(type), type);
+            log.debug("[{}] Imported {} {} entities", tenantId, result.getCount(type), type);
         }
 
         clearCaches();

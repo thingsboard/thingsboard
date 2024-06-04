@@ -47,6 +47,7 @@ import org.thingsboard.server.dao.util.NoSqlTsLatestDao;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -241,7 +242,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
     @SneakyThrows
     @Override
     public LatestTsKv save(TenantId tenantId, LatestTsKv latestTsKv) {
-        saveLatest(tenantId, latestTsKv.getEntityId(), latestTsKv.getEntry()).get();
+        saveLatest(tenantId, latestTsKv.getEntityId(), latestTsKv.getEntry()).get(30, TimeUnit.SECONDS);
         return latestTsKv;
     }
 
