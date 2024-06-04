@@ -583,6 +583,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
             } else if (ctx.getEntityType() == EntityType.API_USAGE_STATE) {
                 return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
+            } else if (ctx.getEntityType() == EntityType.DASHBOARD) {
+                return "e.tenant_id=:permissions_tenant_id and e.assigned_customers like concat('%', :permissions_customer_id, '%')";
             } else {
                 return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
             }
