@@ -19,12 +19,14 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
@@ -32,9 +34,12 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.UUID;
+
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.QUEUE_STATS_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.QUEUE_STATS_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
@@ -48,8 +53,8 @@ public class QueueStatsController extends BaseController {
 
     private final QueueStatsService queueStatsService;
 
-    @ApiOperation(value = "Get Queue Statistics (getTenantQueueStats)",
-            notes = "Returns a page of queue stats objects that are used to collect queue statistics for every service. " +
+    @ApiOperation(value = "Get Queue Stats entities (getTenantQueueStats)",
+            notes = "Returns a page of queue stats objects that are designed to collect queue statistics for every service. " +
                     PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @RequestMapping(value = "/queueStats", params = {"pageSize", "page"}, method = RequestMethod.GET)
@@ -66,5 +71,17 @@ public class QueueStatsController extends BaseController {
                                                     @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return queueStatsService.findByTenantId(getTenantId(), pageLink);
+    }
+
+    @ApiOperation(value = "Get Queue stats entity by id (getQueueStatsById)",
+            notes = "Fetch the Queue stats object based on the provided Queue stats id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/queueStats/{queueStatsId}", method = RequestMethod.GET)
+    @ResponseBody
+    public QueueStats getQueueStatsById(@Parameter(description = QUEUE_STATS_ID_PARAM_DESCRIPTION)
+                                        @PathVariable("queueStatsId") String queueStatsIdStr) throws ThingsboardException {
+        checkParameter("queueStatsId", queueStatsIdStr);
+        QueueStatsId queueStatsId = new QueueStatsId(UUID.fromString(queueStatsIdStr));
+        return checkNotNull(queueStatsService.findQueueStatsById(getTenantId(), queueStatsId));
     }
 }
