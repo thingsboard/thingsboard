@@ -186,9 +186,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             }
           }),
           // startWith<string | BaseData<EntityId>>(''),
-          map(value =>
-            value ? (typeof value === 'string' ? value : value.name) : ''
-          ),
+          map(value => value ? (typeof value === 'string' ? value : value.name) : ''),
           switchMap(name => this.fetchEntities(name)),
           share()
         )
@@ -321,10 +319,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
       } catch (e) {
         this.propagateChange(null);
       }
-      if (this.entityTypeValue === EntityType.QUEUE_STATS && isDefinedAndNotNull(entity)) {
-        const queueStat  = entity as QueueStatisticsInfo;
-        entity.name = `${queueStat.queueName} (${queueStat.serviceId})`;
-      }
       this.modelValue = entity !== null ? (this.useFullEntityId ? entity.id : entity.id.id) : null;
       this.entityURL = getEntityDetailsPageURL(this.modelValue as string, targetEntityType);
       this.selectEntityFormGroup.get('entity').patchValue(entity !== null ? entity : '', {emitEvent: false});
@@ -373,9 +367,6 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
             data.forEach(entity => !excludeEntityIdsSet.has(entity.id.id) && entities.push(entity));
             return entities;
           } else {
-            if (this.entityTypeValue === EntityType.QUEUE_STATS) {
-              data.forEach((entity: QueueStatisticsInfo) => entity.name = `${entity.queueName} (${entity.serviceId})`);
-            }
             return data;
           }
         } else {

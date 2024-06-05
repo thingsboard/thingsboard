@@ -22,6 +22,7 @@ import { QueueInfo, QueueStatisticsInfo, ServiceType } from '@shared/models/queu
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 import { Asset } from '@shared/models/asset.models';
+import { map } from 'rxjs/operators';
 
 @Injectable({
   providedIn: 'root'
@@ -55,17 +56,30 @@ export class QueueService {
     return this.http.delete(`/api/queues/${queueId}`);
   }
 
+  private parseQueueStatName = (queueStat: QueueStatisticsInfo) => Object.defineProperty(queueStat, 'name', {
+    get() { return `${this.queueName} (${this.serviceId})`; }
+  });
+
   public getQueueStatistics(pageLink: PageLink, config?: RequestConfig): Observable<PageData<QueueStatisticsInfo>> {
     return this.http.get<PageData<QueueStatisticsInfo>>(`/api/queueStats${pageLink.toQuery()}`,
-      defaultHttpOptionsFromConfig(config));
+      defaultHttpOptionsFromConfig(config)).pipe(
+        map(queueData => {
+          queueData.data.map(queueStat => this.parseQueueStatName(queueStat));
+          return queueData;
+        })
+    );
   }
 
   public getQueueStatisticsById(queueStatId: string, config?: RequestConfig): Observable<QueueStatisticsInfo> {
-    return this.http.get<QueueStatisticsInfo>(`/api/queueStats/${queueStatId}`, defaultHttpOptionsFromConfig(config));
+    return this.http.get<QueueStatisticsInfo>(`/api/queueStats/${queueStatId}`, defaultHttpOptionsFromConfig(config)).pipe(
+      map(queueStat => this.parseQueueStatName(queueStat)));
   }
 
   public getQueueStatisticsByIds(queueStatIds: Array<string>, config?: RequestConfig): Observable<Array<QueueStatisticsInfo>> {
     return this.http.get<Array<QueueStatisticsInfo>>(`/api/queueStats?strQueueStatsIds=${queueStatIds.join(',')}`,
-      defaultHttpOptionsFromConfig(config));
+      defaultHttpOptionsFromConfig(config)).pipe(
+      map(queueStats => queueStats.map(queueStat => this.parseQueueStatName(queueStat))
+      )
+    );
   }
 }

@@ -185,9 +185,6 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.entityService.getEntities(this.entityType, value).subscribe(
         (entities) => {
           this.entities = entities;
-          if (this.entityType === EntityType.QUEUE_STATS) {
-            this.entities.forEach((queueStat: QueueStatisticsInfo) => queueStat.name = `${queueStat.queueName} (${queueStat.serviceId})`);
-          }
           this.entityListFormGroup.get('entities').setValue(this.entities);
         }
       );
@@ -248,15 +245,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
     return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
       50, this.subType ? this.subType : '', {ignoreLoading: true}).pipe(
-      map((data) => {
-        if (data) {
-          if (this.entityType === EntityType.QUEUE_STATS) {
-            data.forEach((entity: QueueStatisticsInfo) => entity.name = `${entity.queueName} (${entity.serviceId})`);
-          }
-          return data;
-        }
-        return [];
-      }));
+      map((data) => data ? data : []));
   }
 
   onFocus() {

@@ -127,9 +127,7 @@ export interface QueueInfo extends BaseData<QueueId>, HasTenantId {
   };
 }
 
-export interface QueueStatisticsInfo extends BaseData<QueueId>, HasTenantId {
+export interface QueueStatisticsInfo extends Omit<BaseData<QueueId>, 'label'>, HasTenantId {
   queueName: string;
   serviceId: string;
-  name?: string;
-  tenantId?: TenantId;
 }
