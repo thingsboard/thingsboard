@@ -79,7 +79,7 @@
           <div class="tb-form-panel no-border no-padding-top"
                *ngIf="!mobileAppSettingsForm.get('useDefaultApp').value && mobileAppSettingsForm.get('androidConfig.enabled').value">
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width-230">{{ 'admin.mobile-app.store-link' | translate }}</div>
+              <div class="fixed-title-width-230">{{ 'admin.mobile-app.google-play-link' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="storeLink" placeholder="{{'admin.mobile-app.set' | translate}}">
               </mat-form-field>
@@ -113,7 +113,7 @@
           <div class="tb-form-panel no-border no-padding-top"
                *ngIf="!mobileAppSettingsForm.get('useDefaultApp').value && mobileAppSettingsForm.get('iosConfig.enabled').value">
             <div class="tb-form-row column-xs">
-              <div class="fixed-title-width-230">{{ 'admin.mobile-app.store-link' | translate }}</div>
+              <div class="fixed-title-width-230">{{ 'admin.mobile-app.app-store-link' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="storeLink" placeholder="{{'admin.mobile-app.set' | translate}}">
               </mat-form-field>
