@@ -20,7 +20,9 @@ import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -40,9 +42,12 @@ import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
 import static org.mockito.ArgumentMatchers.any;
@@ -60,6 +65,7 @@ public class TbMsgTimeseriesNodeTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("c8f34868-603a-4433-876a-7d356e5cf377"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("e5095e9a-04f4-44c9-b443-1cf1b97d3384"));
+    private final TenantProfileId TENANT_PROFILE_ID = new TenantProfileId(UUID.fromString("ab78dd78-83d0-43fa-869f-d42ec9ed1744"));
 
     private TbMsgTimeseriesNode node;
     private TbMsgTimeseriesNodeConfiguration config;
@@ -74,24 +80,12 @@ public class TbMsgTimeseriesNodeTest {
     public void setUp() throws TbNodeException {
         node = new TbMsgTimeseriesNode();
         config = new TbMsgTimeseriesNodeConfiguration().defaultConfiguration();
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        var tenantProfile = new TenantProfile(new TenantProfileId(UUID.fromString("8c45d0fe-d437-40e9-8c31-b695b315bf40")));
-        var tenantProfileData = new TenantProfileData();
-        var tenantProfileConfiguration = new DefaultTenantProfileConfiguration();
-        tenantProfileData.setConfiguration(tenantProfileConfiguration);
-        tenantProfile.setProfileData(tenantProfileData);
-        when(ctxMock.getTenantProfile()).thenReturn(tenantProfile);
-        doAnswer(invocation -> {
-            invocation.getArgument(0);
-            return null;
-        }).when(ctxMock).addTenantProfileListener(any());
-        node.init(ctxMock, configuration);
-        tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(tenantProfileConfiguration.getDefaultStorageTtlDays());
     }
 
     @ParameterizedTest
     @EnumSource(TbMsgType.class)
-    void givenMsgTypeAndEmptyMsgData_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) {
+    void givenMsgTypeAndEmptyMsgData_whenOnMsg_thenVerifyFailureMsg(TbMsgType msgType) throws TbNodeException {
+        init();
         TbMsg msg = TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
         node.onMsg(ctxMock, msg);
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
@@ -106,7 +100,9 @@ public class TbMsgTimeseriesNodeTest {
     }
 
     @Test
-    void givenSkipLatestPersistenceIsFalse_whenOnMsg_thenSaveTimeseries() {
+    void givenTtlFromConfigIsZeroAndUseServiceTsIsTrue_whenOnMsg_thenSaveTimeseriesUsingTenantProfileDefaultTtl() throws TbNodeException {
+        config.setUseServerTs(true);
+        init();
         String data = """
                 {
                     "temp": 45,
@@ -126,19 +122,23 @@ public class TbMsgTimeseriesNodeTest {
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
-        verify(telemetryServiceMock).saveAndNotify(
-                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
+        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(),
+                eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
         List<TsKvEntry> entryListCaptorValue = entryListCaptor.getValue();
         assertThat(entryListCaptorValue.size()).isEqualTo(2);
         verifyTimeseriesToSave(entryListCaptorValue, msg);
-        verify(ctxMock).tellSuccess(eq(msg));
+        verify(ctxMock).tellSuccess(msg);
         verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
 
     @Test
-    void givenSkipLatestPersistenceIsTrue_whenOnMsg_thenSaveTimeseries() throws TbNodeException {
+    void givenSkipLatestPersistenceIsTrueAndTtlFromConfig_whenOnMsg_thenSaveTimeseriesUsingTtlFromConfig() throws TbNodeException {
+        long ttlFromConfig = 5L;
+        config.setDefaultTTL(ttlFromConfig);
         config.setSkipLatestPersistence(true);
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var tenantProfile = getTenantProfile();
+        when(ctxMock.getTenantProfile()).thenReturn(tenantProfile);
         node.init(ctxMock, configuration);
 
         String data = """
@@ -147,7 +147,9 @@ public class TbMsgTimeseriesNodeTest {
                     "humidity": 77
                 }
                 """;
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
+        long ts = System.currentTimeMillis();
+        var metadata = Map.of("ts", String.valueOf(ts));
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
 
         when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
@@ -159,24 +161,82 @@ public class TbMsgTimeseriesNodeTest {
 
         node.onMsg(ctxMock, msg);
 
+        verify(ctxMock).addTenantProfileListener(any());
         ArgumentCaptor<List<TsKvEntry>> entryListCaptor = ArgumentCaptor.forClass(List.class);
         verify(telemetryServiceMock).saveWithoutLatestAndNotify(
-                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(tenantProfileDefaultStorageTtl), any(TelemetryNodeCallback.class));
+                eq(TENANT_ID), isNull(), eq(DEVICE_ID), entryListCaptor.capture(), eq(ttlFromConfig), any(TelemetryNodeCallback.class));
         List<TsKvEntry> entryListCaptorValue = entryListCaptor.getValue();
         assertThat(entryListCaptorValue.size()).isEqualTo(2);
-        verifyTimeseriesToSave(entryListCaptorValue, msg);
-        verify(ctxMock).tellSuccess(eq(msg));
+        verifyTimeseriesToSave(entryListCaptorValue, msg, ts);
+        verify(ctxMock).tellSuccess(msg);
         verifyNoMoreInteractions(ctxMock, telemetryServiceMock);
     }
 
+    @ParameterizedTest
+    @MethodSource
+    void givenTtlFromConfigAndTtlFromMd_whenOnMsg_thenVerifyTtl(String ttlFromMd, long ttlFromConfig, long expectedTtl) throws TbNodeException {
+        config.setDefaultTTL(ttlFromConfig);
+        init();
+
+        when(ctxMock.getTelemetryService()).thenReturn(telemetryServiceMock);
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+
+        String data = """
+                {
+                    "temp": 45,
+                    "humidity": 77
+                }
+                """;
+        var metadata = new HashMap<String, String>();
+        metadata.put("TTL", ttlFromMd);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, new TbMsgMetaData(metadata), data);
+        node.onMsg(ctxMock, msg);
+
+        verify(telemetryServiceMock).saveAndNotify(eq(TENANT_ID), isNull(), eq(DEVICE_ID), anyList(), eq(expectedTtl), any(TelemetryNodeCallback.class));
+    }
+
+    private static Stream<Arguments> givenTtlFromConfigAndTtlFromMd_whenOnMsg_thenVerifyTtl() {
+        return Stream.of(
+                Arguments.of("5", 1L, 5L),
+                Arguments.of("", 3L, 3L),
+                Arguments.of(null, 8L, 8L)
+        );
+    }
+
     private void verifyTimeseriesToSave(List<TsKvEntry> tsKvEntryList, TbMsg incomingMsg) {
+        verifyTimeseriesToSave(tsKvEntryList, incomingMsg, null);
+    }
+
+    private void verifyTimeseriesToSave(List<TsKvEntry> tsKvEntryList, TbMsg incomingMsg, Long ts) {
         JsonNode msgData = JacksonUtil.toJsonNode(incomingMsg.getData());
         tsKvEntryList.forEach(tsKvEntry -> {
+            if (ts != null) {
+                assertThat(tsKvEntry.getTs()).isEqualTo(ts);
+            }
             String key = tsKvEntry.getKey();
             assertThat(msgData.has(key)).isTrue();
             String value = tsKvEntry.getValueAsString();
             assertThat(value).isEqualTo(msgData.findValue(key).asText());
         });
+    }
+
+    private void init() throws TbNodeException {
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        var tenantProfile = getTenantProfile();
+        when(ctxMock.getTenantProfile()).thenReturn(tenantProfile);
+        node.init(ctxMock, configuration);
+        tenantProfile.getProfileConfiguration().ifPresent(profileConfiguration ->
+                tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(profileConfiguration.getDefaultStorageTtlDays()));
+        verify(ctxMock).addTenantProfileListener(any());
+    }
+
+    private TenantProfile getTenantProfile() {
+        var tenantProfile = new TenantProfile(TENANT_PROFILE_ID);
+        var tenantProfileData = new TenantProfileData();
+        var tenantProfileConfiguration = new DefaultTenantProfileConfiguration();
+        tenantProfileData.setConfiguration(tenantProfileConfiguration);
+        tenantProfile.setProfileData(tenantProfileData);
+        return tenantProfile;
     }
 
 }
