@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
 
-
-public enum BadgeStyle {
-
-    ORIGINAL,
-    WHITE;
-
+:host {
+  .tb-value-source {
+    display: flex;
+    gap: 12px;
+  }
+  .tb-source-field {
+    display: flex;
+    flex: 1;
+    gap: 12px;
+    .tb-type-field, .tb-entity-alias-field {
+      flex: 1;
+    }
+  }
+  .tb-key-value-field, .tb-constant-field {
+    display: flex;
+    flex: 1;
+  }
+  ::ng-deep {
+    .tb-data-key-input {
+      flex: 1;
+    }
+  }
 }
+

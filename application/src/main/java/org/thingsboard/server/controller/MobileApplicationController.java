@@ -97,7 +97,7 @@ public class MobileApplicationController extends BaseController {
     public ResponseEntity<JsonNode> getAssetLinks() {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         AndroidConfig androidConfig = mobileAppSettings.getAndroidConfig();
-        if (androidConfig != null && androidConfig.isEnabled() && !androidConfig.getAppPackage().isBlank() && !androidConfig.getSha256CertFingerprints().isBlank()) {
+        if (androidConfig != null && androidConfig.isEnabled() && androidConfig.getAppPackage() != null && androidConfig.getSha256CertFingerprints() != null) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(ASSET_LINKS_PATTERN, androidConfig.getAppPackage(), androidConfig.getSha256CertFingerprints())));
         } else {
             return ResponseEntity.notFound().build();
@@ -109,7 +109,7 @@ public class MobileApplicationController extends BaseController {
     public ResponseEntity<JsonNode> getAppleAppSiteAssociation() {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         IosConfig iosConfig = mobileAppSettings.getIosConfig();
-        if (iosConfig != null && iosConfig.isEnabled() && !iosConfig.getAppId().isBlank()) {
+        if (iosConfig != null && iosConfig.isEnabled() && iosConfig.getAppId() != null) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, iosConfig.getAppId())));
         } else {
             return ResponseEntity.notFound().build();
