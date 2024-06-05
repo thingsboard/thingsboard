@@ -15,26 +15,7 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.validation.NoXss;
+public interface HasStoreLink {
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-public class AndroidConfig implements HasStoreLink {
-
-    private boolean enabled;
-    @NoXss
-    private String appPackage;
-    @NoXss
-    private String sha256CertFingerprints;
-    @NoXss
-    private String storeLink;
-
+    String getStoreLink();
 }
