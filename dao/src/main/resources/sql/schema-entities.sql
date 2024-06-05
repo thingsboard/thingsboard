@@ -305,18 +305,6 @@ CREATE TABLE IF NOT EXISTS device_profile (
     CONSTRAINT fk_default_edge_rule_chain_device_profile FOREIGN KEY (default_edge_rule_chain_id) REFERENCES rule_chain(id)
 );
 
-DO
-$$
-    BEGIN
-        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'fk_device_profile_ota_package') THEN
-            ALTER TABLE ota_package
-                ADD CONSTRAINT fk_device_profile_ota_package
-                    FOREIGN KEY (device_profile_id) REFERENCES device_profile (id)
-                        ON DELETE CASCADE;
-        END IF;
-    END;
-$$;
-
 -- We will use one-to-many relation in the first release and extend this feature in case of user requests
 -- CREATE TABLE IF NOT EXISTS device_profile_firmware (
 --     device_profile_id uuid NOT NULL,

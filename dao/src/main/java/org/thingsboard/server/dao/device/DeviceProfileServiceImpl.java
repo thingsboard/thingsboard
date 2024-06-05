@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
@@ -85,6 +86,9 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Autowired
     private DeviceService deviceService;
+
+    @Autowired
+    private OtaPackageService otaPackageService;
 
     @Autowired
     private DataValidator<DeviceProfile> deviceProfileValidator;
@@ -237,6 +241,8 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         DeviceProfileId deviceProfileId = deviceProfile.getId();
         try {
             deviceProfileDao.removeById(tenantId, deviceProfileId.getId());
+            otaPackageService.deleteOtaPackagesByDeviceProfileId(tenantId, deviceProfileId);
+
             publishEvictEvent(new DeviceProfileEvictEvent(deviceProfile.getTenantId(), deviceProfile.getName(),
                     null, deviceProfile.getId(), deviceProfile.isDefault(),
                     deviceProfile.getProvisionDeviceKey()));

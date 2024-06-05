@@ -51,5 +51,8 @@ public interface OtaPackageService extends EntityDaoService {
 
     void deleteOtaPackagesByTenantId(TenantId tenantId);
 
+    void deleteOtaPackagesByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId);
+
     long sumDataSizeByTenantId(TenantId tenantId);
+
 }

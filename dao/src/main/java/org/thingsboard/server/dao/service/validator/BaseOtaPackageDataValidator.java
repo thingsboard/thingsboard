@@ -19,7 +19,6 @@ import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.thingsboard.server.common.data.BaseData;
-import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
@@ -52,8 +51,7 @@ public abstract class BaseOtaPackageDataValidator<D extends BaseData<?>> extends
         }
 
         if (otaPackageInfo.getDeviceProfileId() != null) {
-            DeviceProfile deviceProfile = getDeviceProfileDao().findById(otaPackageInfo.getTenantId(), otaPackageInfo.getDeviceProfileId().getId());
-            if (deviceProfile == null) {
+            if (!deviceProfileDao.existsById(otaPackageInfo.getTenantId(), otaPackageInfo.getDeviceProfileId().getId())) {
                 throw new DataValidationException("OtaPackage is referencing to non-existent device profile!");
             }
         }

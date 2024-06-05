@@ -30,6 +30,8 @@ public interface OtaPackageInfoDao extends Dao<OtaPackageInfo> {
 
     PageData<OtaPackageInfo> findOtaPackageInfoByTenantIdAndDeviceProfileIdAndTypeAndHasData(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType otaPackageType, PageLink pageLink);
 
+    PageData<OtaPackageId> findOtaPackageIdsByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink);
+
     boolean isOtaPackageUsed(OtaPackageId otaPackageId, OtaPackageType otaPackageType, DeviceProfileId deviceProfileId);
 
 }
