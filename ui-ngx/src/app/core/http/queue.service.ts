@@ -76,7 +76,7 @@ export class QueueService {
   }
 
   public getQueueStatisticsByIds(queueStatIds: Array<string>, config?: RequestConfig): Observable<Array<QueueStatisticsInfo>> {
-    return this.http.get<Array<QueueStatisticsInfo>>(`/api/queueStats?strQueueStatsIds=${queueStatIds.join(',')}`,
+    return this.http.get<Array<QueueStatisticsInfo>>(`/api/queueStats?QueueStatsIds=${queueStatIds.join(',')}`,
       defaultHttpOptionsFromConfig(config)).pipe(
       map(queueStats => queueStats.map(queueStat => this.parseQueueStatName(queueStat))
       )
