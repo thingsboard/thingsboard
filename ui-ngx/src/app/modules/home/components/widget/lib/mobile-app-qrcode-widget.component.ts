@@ -45,6 +45,9 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   private deepLinkTTL: number;
   private deepLinkTTLTimeoutID: NodeJS.Timeout;
 
+  googlePlayLink: string;
+  appStoreLink: string;
+
   previewMode = false;
 
   badgePosition = BadgePosition;
@@ -108,6 +111,10 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     } else {
       this.previewMode = true;
     }
+    this.mobileAppService.getMobileAppStoreLinks().subscribe(storeLinks => {
+      this.googlePlayLink = storeLinks.googlePlayLink;
+      this.appStoreLink = storeLinks.appStoreLink;
+    });
     this.initMobileAppQRCode();
   }
 
@@ -128,6 +135,13 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     if (this.ctx.isMobile) {
       window.open(this.deepLink, '_blank');
     }
+  }
+
+  navigateByStoreLink($event, storeLink: string) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    window.open(storeLink, '_blank');
   }
 
   private initMobileAppQRCode() {

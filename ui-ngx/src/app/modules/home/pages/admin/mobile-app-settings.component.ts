@@ -128,11 +128,13 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       androidConfig: this.fb.group({
         enabled: [true],
         appPackage: [{value: '', disabled: true}, [Validators.required]],
-        sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]]
+        sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]],
+        storeLink: ['']
       }),
       iosConfig: this.fb.group({
         enabled: [true],
-        appId: [{value: '', disabled: true}, [Validators.required]]
+        appId: [{value: '', disabled: true}, [Validators.required]],
+        storeLink: ['']
       }),
       qrCodeConfig: this.fb.group({
         showOnHomePage: [true],

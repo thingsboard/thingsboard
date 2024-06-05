@@ -28,8 +28,12 @@
       <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'" ></div>
       <div class="tb-badges" *ngIf="(mobileAppSettings?.iosConfig.enabled || mobileAppSettings?.androidConfig.enabled) &&
                                   mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
-        <img *ngIf="mobileAppSettings?.iosConfig.enabled" src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
-        <img *ngIf="mobileAppSettings?.androidConfig.enabled" src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
+        <img *ngIf="mobileAppSettings?.iosConfig.enabled"
+             (click)="navigateByStoreLink($event, appStoreLink)"
+             src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
+        <img *ngIf="mobileAppSettings?.androidConfig.enabled"
+             (click)="navigateByStoreLink($event, googlePlayLink)"
+             src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
       </div>
     </div>
     <div class="tb-qrcode-label" *ngIf="mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled">

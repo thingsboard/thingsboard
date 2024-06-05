@@ -68,6 +68,9 @@
     flex-direction: column;
     flex: 0.44;
     gap: 8px;
+    img {
+      cursor: pointer;
+    }
   }
 }
 
