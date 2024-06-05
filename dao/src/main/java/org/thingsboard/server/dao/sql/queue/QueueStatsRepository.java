@@ -24,6 +24,7 @@ import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.model.sql.QueueStatsEntity;
 
+import java.util.List;
 import java.util.UUID;
 
 public interface QueueStatsRepository extends JpaRepository<QueueStatsEntity, UUID> {
@@ -41,5 +42,7 @@ public interface QueueStatsRepository extends JpaRepository<QueueStatsEntity, UU
     @Modifying
     @Query("DELETE FROM QueueStatsEntity t WHERE t.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
+
+    List<QueueStatsEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> queueStatsIds);
 
 }

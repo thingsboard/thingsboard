@@ -20,6 +20,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -30,7 +31,10 @@ import org.thingsboard.server.dao.queue.QueueStatsDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.List;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 
 @Slf4j
 @Component
@@ -63,6 +67,11 @@ public class JpaQueueStatsDao extends JpaAbstractDao<QueueStatsEntity, QueueStat
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         queueStatsRepository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public List<QueueStats> findByIds(TenantId tenantId, List<QueueStatsId> queueStatsIds) {
+        return DaoUtil.convertDataList(queueStatsRepository.findByTenantIdAndIdIn(tenantId.getId(), toUUIDs(queueStatsIds)));
     }
 
     @Override

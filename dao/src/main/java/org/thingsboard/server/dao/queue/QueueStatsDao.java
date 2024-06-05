@@ -15,11 +15,14 @@
  */
 package org.thingsboard.server.dao.queue;
 
+import org.thingsboard.server.common.data.id.QueueStatsId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.Dao;
+
+import java.util.List;
 
 public interface QueueStatsDao extends Dao<QueueStats> {
 
@@ -28,5 +31,7 @@ public interface QueueStatsDao extends Dao<QueueStats> {
     PageData<QueueStats> findByTenantId(TenantId tenantId, PageLink pageLink);
 
     void deleteByTenantId(TenantId tenantId);
+
+    List<QueueStats> findByIds(TenantId tenantId, List<QueueStatsId> queueStatsIds);
 
 }

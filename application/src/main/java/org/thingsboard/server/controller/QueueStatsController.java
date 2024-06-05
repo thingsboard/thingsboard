@@ -34,6 +34,8 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -83,5 +85,21 @@ public class QueueStatsController extends BaseController {
         checkParameter("queueStatsId", queueStatsIdStr);
         QueueStatsId queueStatsId = new QueueStatsId(UUID.fromString(queueStatsIdStr));
         return checkNotNull(queueStatsService.findQueueStatsById(getTenantId(), queueStatsId));
+    }
+
+    @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIds)",
+            notes = "Fetch the Queue stats objects based on the provided ids. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @RequestMapping(value = "/queueStats", params = {"strQueueStatsIds"}, method = RequestMethod.GET)
+    @ResponseBody
+    public List<QueueStats> getQueueStatsByIds(
+            @Parameter(description = "A list of queue stats ids, separated by comma ','", required = true)
+            @RequestParam("strQueueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
+        checkArrayParameter("strQueueStatsIds", strQueueStatsIds);
+        List<QueueStatsId> queueStatsIds = new ArrayList<>();
+        for (String queueStatsId : strQueueStatsIds) {
+            queueStatsIds.add(new QueueStatsId(toUUID(queueStatsId)));
+        }
+        return queueStatsService.findQueueStatsByIds(getTenantId(), queueStatsIds);
     }
 }

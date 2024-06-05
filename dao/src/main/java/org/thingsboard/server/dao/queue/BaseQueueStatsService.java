@@ -30,9 +30,11 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
+import java.util.List;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Service("QueueStatsDaoService")
 @Slf4j
@@ -57,6 +59,14 @@ public class BaseQueueStatsService extends AbstractEntityService implements Queu
         log.trace("Executing findQueueStatsById [{}]", queueStatsId);
         validateId(queueStatsId, id -> "Incorrect queueStatsId " + id);
         return queueStatsDao.findById(tenantId, queueStatsId.getId());
+    }
+
+    @Override
+    public List<QueueStats> findQueueStatsByIds(TenantId tenantId, List<QueueStatsId> queueStatsIds) {
+        log.trace("Executing findQueueStatsByIds, tenantId [{}], queueStatsIds [{}]", tenantId, queueStatsIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(queueStatsIds, ids -> "Incorrect queueStatsIds " + ids);
+        return queueStatsDao.findByIds(tenantId, queueStatsIds);
     }
 
     @Override
