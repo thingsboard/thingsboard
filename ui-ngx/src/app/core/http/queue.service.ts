@@ -21,7 +21,6 @@ import { Observable } from 'rxjs';
 import { QueueInfo, QueueStatisticsInfo, ServiceType } from '@shared/models/queue.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
-import { Asset } from '@shared/models/asset.models';
 import { map } from 'rxjs/operators';
 
 @Injectable({
