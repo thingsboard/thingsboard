@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -47,7 +48,7 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.never;
@@ -59,13 +60,14 @@ public class TbSendRPCReplyNodeTest {
 
     private static final String DUMMY_SERVICE_ID = "testServiceId";
     private static final int DUMMY_REQUEST_ID = 0;
-    private static final UUID DUMMY_SESSION_ID = UUID.randomUUID();
-    private static final String DUMMY_DATA = "{\"key\":\"value\"}";
+    private static final UUID DUMMY_SESSION_ID = UUID.fromString("4f1d94aa-f6ee-4078-8499-b8e68443f8ad");
+    private final String DUMMY_DATA = "{\"key\":\"value\"}";
 
-    TbSendRPCReplyNode node;
+    private TbSendRPCReplyNode node;
+    private TbSendRpcReplyNodeConfiguration config;
 
-    private final TenantId tenantId = TenantId.fromUUID(UUID.randomUUID());
-    private final DeviceId deviceId = new DeviceId(UUID.randomUUID());
+    private final TenantId tenantId = TenantId.fromUUID(UUID.fromString("4e2e2336-3376-4238-ba0a-c669b412ca66"));
+    private final DeviceId deviceId = new DeviceId(UUID.fromString("af64d1b9-8635-47e1-8738-6389df7fe57e"));
 
     @Mock
     private TbContext ctx;
@@ -82,7 +84,7 @@ public class TbSendRPCReplyNodeTest {
     @BeforeEach
     public void setUp() throws TbNodeException {
         node = new TbSendRPCReplyNode();
-        TbSendRpcReplyNodeConfiguration config = new TbSendRpcReplyNodeConfiguration().defaultConfiguration();
+        config = new TbSendRpcReplyNodeConfiguration().defaultConfiguration();
         node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
     }
 
@@ -121,18 +123,7 @@ public class TbSendRPCReplyNodeTest {
     @ParameterizedTest
     @EnumSource(EntityType.class)
     public void testOriginatorEntityTypes(EntityType entityType) {
-        if (entityType == EntityType.DEVICE) return;
-        EntityId entityId = new EntityId() {
-            @Override
-            public UUID getId() {
-                return UUID.randomUUID();
-            }
-
-            @Override
-            public EntityType getEntityType() {
-                return entityType;
-            }
-        };
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, "0f386739-210f-4e23-8739-23f84a172adc");
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
         node.onMsg(ctx, msg);
@@ -140,7 +131,8 @@ public class TbSendRPCReplyNodeTest {
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctx).tellFailure(eq(msg), throwableCaptor.capture());
         assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class)
-                .hasMessage("Message originator is not a device entity!");
+                .hasMessage(EntityType.DEVICE != entityType ? "Message originator is not a device entity!"
+                        : "Request id is not present in the metadata!");
     }
 
     @ParameterizedTest
@@ -153,6 +145,13 @@ public class TbSendRPCReplyNodeTest {
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctx).tellFailure(eq(msg), throwableCaptor.capture());
         assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
+    }
+
+    @Test
+    public void verifyDefaultConfig() {
+        assertThat(config.getServiceIdMetaDataAttribute()).isEqualTo("serviceId");
+        assertThat(config.getSessionIdMetaDataAttribute()).isEqualTo("sessionId");
+        assertThat(config.getRequestIdMetaDataAttribute()).isEqualTo("requestId");
     }
 
     private static Stream<Arguments> testForAvailabilityOfMetadataAndDataValues() {
