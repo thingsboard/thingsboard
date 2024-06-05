@@ -270,9 +270,7 @@ export class EntityService {
         observable = this.notificationService.getNotificationTargetsByIds(entityIds, config);
         break;
       case EntityType.QUEUE_STATS:
-        observable = this.getEntitiesByIdsObservable(
-          (id) => this.queueService.getQueueStatisticsById(id, config),
-          entityIds);
+        observable = this.queueService.getQueueStatisticsByIds(entityIds, config);
         break;
     }
     return observable;

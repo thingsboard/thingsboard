@@ -21,6 +21,7 @@ import { Observable } from 'rxjs';
 import { QueueInfo, QueueStatisticsInfo, ServiceType } from '@shared/models/queue.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
+import { Asset } from '@shared/models/asset.models';
 
 @Injectable({
   providedIn: 'root'
@@ -61,5 +62,10 @@ export class QueueService {
 
   public getQueueStatisticsById(queueStatId: string, config?: RequestConfig): Observable<QueueStatisticsInfo> {
     return this.http.get<QueueStatisticsInfo>(`/api/queueStats/${queueStatId}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getQueueStatisticsByIds(queueStatIds: Array<string>, config?: RequestConfig): Observable<Array<QueueStatisticsInfo>> {
+    return this.http.get<Array<QueueStatisticsInfo>>(`/api/queueStats?strQueueStatsIds=${queueStatIds.join(',')}`,
+      defaultHttpOptionsFromConfig(config));
   }
 }
