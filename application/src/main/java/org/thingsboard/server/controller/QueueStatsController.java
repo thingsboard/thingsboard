@@ -87,11 +87,11 @@ public class QueueStatsController extends BaseController {
     @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIds)",
             notes = "Fetch the Queue stats objects based on the provided ids. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @GetMapping(value = "/queueStats", params = {"strQueueStatsIds"})
+    @GetMapping(value = "/queueStats", params = {"queueStatsIds"})
     public List<QueueStats> getQueueStatsByIds(
             @Parameter(description = "A list of queue stats ids, separated by comma ','", required = true)
-            @RequestParam("strQueueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
-        checkArrayParameter("strQueueStatsIds", strQueueStatsIds);
+            @RequestParam("queueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
+        checkArrayParameter("queueStatsIds", strQueueStatsIds);
         List<QueueStatsId> queueStatsIds = new ArrayList<>();
         for (String queueStatsId : strQueueStatsIds) {
             queueStatsIds.add(new QueueStatsId(toUUID(queueStatsId)));
