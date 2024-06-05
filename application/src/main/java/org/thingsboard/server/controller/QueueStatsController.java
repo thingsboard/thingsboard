@@ -19,11 +19,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.QueueStatsId;
@@ -59,8 +58,7 @@ public class QueueStatsController extends BaseController {
             notes = "Returns a page of queue stats objects that are designed to collect queue statistics for every service. " +
                     PAGE_DATA_PARAMETERS + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/queueStats", params = {"pageSize", "page"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/queueStats", params = {"pageSize", "page"})
     public PageData<QueueStats> getTenantQueueStats(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                     @RequestParam int pageSize,
                                                     @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
@@ -78,8 +76,7 @@ public class QueueStatsController extends BaseController {
     @ApiOperation(value = "Get Queue stats entity by id (getQueueStatsById)",
             notes = "Fetch the Queue stats object based on the provided Queue stats id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/queueStats/{queueStatsId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/queueStats/{queueStatsId}")
     public QueueStats getQueueStatsById(@Parameter(description = QUEUE_STATS_ID_PARAM_DESCRIPTION)
                                         @PathVariable("queueStatsId") String queueStatsIdStr) throws ThingsboardException {
         checkParameter("queueStatsId", queueStatsIdStr);
@@ -90,8 +87,7 @@ public class QueueStatsController extends BaseController {
     @ApiOperation(value = "Get QueueStats By Ids (getQueueStatsByIds)",
             notes = "Fetch the Queue stats objects based on the provided ids. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/queueStats", params = {"strQueueStatsIds"}, method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/queueStats", params = {"strQueueStatsIds"})
     public List<QueueStats> getQueueStatsByIds(
             @Parameter(description = "A list of queue stats ids, separated by comma ','", required = true)
             @RequestParam("strQueueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
