@@ -55,7 +55,6 @@ import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 
 /**
@@ -148,6 +147,11 @@ public class JpaBaseEventDao implements EventDao {
     @Override
     public ListenableFuture<Void> saveAsync(Event event) {
         log.debug("Save event [{}] ", event);
+        prepare(event);
+        return queue.add(event);
+    }
+
+    private void prepare(Event event) {
         if (event.getId() == null) {
             UUID timeBased = Uuids.timeBased();
             event.setId(new EventId(timeBased));
@@ -162,7 +166,6 @@ public class JpaBaseEventDao implements EventDao {
         }
         partitioningRepository.createPartitionIfNotExists(event.getType().getTable(), event.getCreatedTime(),
                 partitionConfiguration.getPartitionSizeInMs(event.getType()));
-        return queue.add(event);
     }
 
     @Override
@@ -450,7 +453,8 @@ public class JpaBaseEventDao implements EventDao {
     @SneakyThrows
     @Override
     public Event save(TenantId tenantId, Event event) {
-        saveAsync(event).get(30, TimeUnit.SECONDS);
+        prepare(event);
+        eventInsertRepository.save(List.of(event));
         return event;
     }
 

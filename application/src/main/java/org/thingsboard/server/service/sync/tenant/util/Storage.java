@@ -69,7 +69,11 @@ public class Storage {
     @SneakyThrows
     public void save(UUID tenantId, ObjectType type, DataWrapper dataWrapper) {
         Path file = getExportDataPath(tenantId, type);
-        Writer writer = files.get(tenantId).computeIfAbsent(file, path -> {
+        Map<Path, Writer> dataFiles = files.get(tenantId);
+        if (dataFiles == null) {
+            throw new IllegalStateException("Export cancelled");
+        }
+        Writer writer = dataFiles.computeIfAbsent(file, path -> {
             try {
                 Files.deleteIfExists(file);
                 Files.createFile(file);
@@ -105,10 +109,10 @@ public class Storage {
     }
 
     @SneakyThrows
-    public void cleanUpExportData(UUID tenantId) {
+    public boolean cleanUpExportData(UUID tenantId) {
         Path workingDirectory = Path.of(this.workingDirectory, tenantId.toString());
         deleteDirectory(workingDirectory);
-        files.remove(tenantId);
+        return files.remove(tenantId) != null;
     }
 
     @SneakyThrows

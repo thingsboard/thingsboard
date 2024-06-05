@@ -97,11 +97,7 @@ public class StatsStore<K> {
     }
 
     public StatsResult<K> getStoredResult(UUID id) {
-        StatsResult<K> result = resultsCache.get(id, StatsResult.class);
-        if (result == null) {
-            return new StatsResult<>();
-        }
-        return result;
+        return resultsCache.get(id, StatsResult.class);
     }
 
 }

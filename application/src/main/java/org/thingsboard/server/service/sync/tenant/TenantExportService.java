@@ -24,6 +24,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -131,7 +132,7 @@ public class TenantExportService {
                 .build();
         relatedEntitiesExporters = Map.of(
                 RELATION, this::exportRelations,
-                EVENT, this::exportEvents,
+                EVENT, this::exportEvents, // todo: query by tenant
                 ATTRIBUTE_KV, this::exportAttributes,
                 LATEST_TS_KV, this::exportLatestTelemetry
         );
@@ -141,7 +142,6 @@ public class TenantExportService {
         );
     }
 
-    // todo: cancel
     public UUID exportTenant(TenantExportConfig exportConfig) {
         UUID tenantId = exportConfig.getTenantId();
         log.info("[{}] Exporting tenant", tenantId);
@@ -161,6 +161,7 @@ public class TenantExportService {
                 try {
                     statsStore.update(tenantId, result -> {
                         result.setError(ExceptionUtils.getStackTrace(t));
+                        result.getStats().clear();
                         result.setDone(true);
                     });
                     storage.cleanUpExportData(tenantId);
@@ -169,8 +170,6 @@ public class TenantExportService {
                 }
             }
         });
-        // TODO: send notifications to system admin (new NotificationType SYSTEM)
-
         return tenantId;
     }
 
@@ -242,17 +241,25 @@ public class TenantExportService {
         return statsStore.getStoredResult(tenantId);
     }
 
+    public void cancelExport(UUID tenantId) {
+        boolean removed = storage.cleanUpExportData(tenantId);
+        if (!removed) {
+            throw new IllegalArgumentException("Not found");
+        }
+    }
+
+    @SneakyThrows
     public ResponseEntity<InputStreamResource> downloadResult(UUID tenantId) {
         var result = statsStore.getStoredResult(tenantId);
-        if (!result.isDone()) {
+        if (result == null || !result.isDone()) {
             throw new IllegalStateException("Not ready yet");
         } else if (!result.isSuccess()) {
             throw new IllegalStateException("Tenant export failed: " + result.getError());
         }
 
-        String fileName = "data.tar";
+        String fileName = "tenant_export_data_" + tenantId + ".tar";
         return ResponseEntity.ok()
-                .header("Content-Type", "")
+                .header("Content-Type", MediaType.APPLICATION_OCTET_STREAM_VALUE)
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + fileName)
                 .header("x-filename", fileName)
                 .body(new InputStreamResource(storage.downloadExportData(tenantId)));
