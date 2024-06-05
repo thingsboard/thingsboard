@@ -16,7 +16,6 @@
 package org.thingsboard.server.service.sync.tenant.util;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.ObjectType;
 
 import java.util.LinkedHashMap;
 import java.util.Map;
@@ -24,19 +23,20 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
-public class TenantImportResult {
+public class StatsResult<K> {
+
     private boolean done;
     private boolean success;
     private String error;
 
-    private final Map<ObjectType, AtomicInteger> stats = new LinkedHashMap<>();
+    private final Map<K, AtomicInteger> stats = new LinkedHashMap<>();
 
-    public void report(ObjectType type) {
-        stats.computeIfAbsent(type, k -> new AtomicInteger()).incrementAndGet();
+    public int report(K key) {
+        return stats.computeIfAbsent(key, k -> new AtomicInteger()).incrementAndGet();
     }
 
-    public int getCount(ObjectType type) {
-        return Optional.ofNullable(stats.get(type)).map(AtomicInteger::get).orElse(0);
+    public int getCount(K key) {
+        return Optional.ofNullable(stats.get(key)).map(AtomicInteger::get).orElse(0);
     }
 
 }

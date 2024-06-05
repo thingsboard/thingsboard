@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.tenant;
 
+import com.fasterxml.jackson.core.type.TypeReference;
 import lombok.SneakyThrows;
 import org.junit.After;
 import org.junit.Before;
@@ -65,9 +66,8 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
+import org.thingsboard.server.service.sync.tenant.util.StatsResult;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
-import org.thingsboard.server.service.sync.tenant.util.TenantExportResult;
-import org.thingsboard.server.service.sync.tenant.util.TenantImportResult;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -77,7 +77,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -148,11 +147,12 @@ public class TenantExportImportTest extends AbstractControllerTest {
         saveEntity(tenant, TENANT);
         fillTenant();
 
-        TenantExportResult exportResult = exportTenant(tenantId);
+        StatsResult<ObjectType> exportResult = exportTenant(tenantId);
         createdEntities.forEach((type, entities) -> {
-            AtomicInteger exportedCount = exportResult.getStats().get(type);
-            if (exportedCount.get() != entities.size()) {
-                fail("expected " + entities.size() + " exported entities of type " + type + ". expected: " + entities + ", actual: " + findAllOfType(type));
+            int exportedCount = exportResult.getCount(type);
+            if (exportedCount != entities.size()) {
+                fail("expected " + entities.size() + " exported entities of type " + type + " but was " + exportedCount + ". " +
+                        "expected: " + entities + ", actual: " + findAllOfType(type));
                 return;
             }
             assertAllPresent(type, entities);
@@ -185,11 +185,12 @@ public class TenantExportImportTest extends AbstractControllerTest {
             });
         });
 
-        TenantImportResult importResult = importTenant(exportData);
+        StatsResult<ObjectType> importResult = importTenant(exportData);
         createdEntities.forEach((type, entities) -> {
-            AtomicInteger importedCount = importResult.getStats().get(type);
-            if (importedCount.get() != entities.size()) {
-                fail("expected " + entities.size() + " imported entities of type " + type + ". expected: " + entities + ", actual: " + findAllOfType(type));
+            int importedCount = importResult.getCount(type);
+            if (importedCount != entities.size()) {
+                fail("expected " + entities.size() + " imported entities of type " + type + " but was " + importedCount + ". " +
+                        "expected: " + entities + ", actual: " + findAllOfType(type));
                 return;
             }
             assertAllPresent(type, entities);
@@ -210,12 +211,12 @@ public class TenantExportImportTest extends AbstractControllerTest {
         });
     }
 
-    private TenantExportResult exportTenant(TenantId tenantId) {
+    private StatsResult<ObjectType> exportTenant(TenantId tenantId) {
         TenantExportConfig exportConfig = new TenantExportConfig();
         exportConfig.setTenantId(tenantId.getId());
         doPost("/api/tenant/export", exportConfig, UUID.class);
-        TenantExportResult result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGet("/api/tenant/export/result/" + tenantId.getId(), TenantExportResult.class), TenantExportResult::isDone);
+        StatsResult<ObjectType> result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTyped("/api/tenant/export/result/" + tenantId.getId(), new TypeReference<>() {}), StatsResult::isDone);
         System.err.println(result);
         if (!result.isSuccess()) {
             throw new RuntimeException(result.getError());
@@ -223,14 +224,14 @@ public class TenantExportImportTest extends AbstractControllerTest {
         return result;
     }
 
-    private TenantImportResult importTenant(byte[] data) throws Exception {
+    private StatsResult<ObjectType> importTenant(byte[] data) throws Exception {
         MockMultipartFile dataFile = new MockMultipartFile("dataFile", "data.tar", "application/octet-stream", data);
         var request = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/tenant/import").file(dataFile);
         setJwtToken(request);
         UUID tenantId = readResponse(mockMvc.perform(request).andExpect(status().isOk()), UUID.class);
 
-        TenantImportResult result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGet("/api/tenant/import/result/" + tenantId, TenantImportResult.class), TenantImportResult::isDone);
+        StatsResult<ObjectType> result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTyped("/api/tenant/import/result/" + tenantId, new TypeReference<>() {}), StatsResult::isDone);
         System.err.println(result);
         if (!result.isSuccess()) {
             throw new RuntimeException(result.getError());

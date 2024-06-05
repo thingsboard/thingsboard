@@ -15,19 +15,20 @@
  */
 package org.thingsboard.server.service.sync.tenant;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cache.CacheManager;
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -56,9 +57,10 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesLatestDao;
 import org.thingsboard.server.service.sync.tenant.util.DataWrapper;
+import org.thingsboard.server.service.sync.tenant.util.StatsResult;
+import org.thingsboard.server.service.sync.tenant.util.StatsStore;
 import org.thingsboard.server.service.sync.tenant.util.Storage;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
-import org.thingsboard.server.service.sync.tenant.util.TenantExportResult;
 
 import java.util.Arrays;
 import java.util.Collections;
@@ -89,7 +91,6 @@ public class TenantExportService {
 
     private final Storage storage;
     private final EntityDaoRegistry entityDaoRegistry;
-
     private final TenantDao tenantDao;
     private final EventDao eventDao;
     private final AuditLogDao auditLogDao;
@@ -98,9 +99,12 @@ public class TenantExportService {
     private final TimeseriesLatestDao timeseriesLatestDao;
     private final TimeseriesDao timeseriesDao;
     private final SqlPartitioningRepository partitioningRepository;
+    private final CacheManager cacheManager;
+    @Value("${cache.specs.tenantExportResults.timeToLiveInMinutes:1440}")
+    private int resultsTtl;
+    private StatsStore<ObjectType> statsStore;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tenant-export"));
-    private Cache<UUID, TenantExportResult> results;
 
     private Map<ObjectType, BiConsumer<TenantId, TenantExportConfig>> customExporters;
     private Map<ObjectType, BiConsumer<TenantId, EntityId>> relatedEntitiesExporters;
@@ -113,13 +117,17 @@ public class TenantExportService {
 
     @PostConstruct
     private void init() {
-        results = Caffeine.newBuilder()
-                .expireAfterAccess(24, TimeUnit.HOURS)
-                .<UUID, TenantExportResult>removalListener((tenantId, result, removalCause) -> {
-                    if (tenantId != null) {
+        statsStore = StatsStore.<ObjectType>builder()
+                .name("Tenant export")
+                .ttlInMinutes(resultsTtl)
+                .persistFrequency(100)
+                .removalListener((tenantId, result) -> {
+                    if (result.isDone() && result.isSuccess()) {
                         storage.cleanUpExportData(tenantId);
                     }
                 })
+                .cacheName(CacheConstants.TENANT_EXPORT_RESULT_CACHE)
+                .cacheManager(cacheManager)
                 .build();
         relatedEntitiesExporters = Map.of(
                 RELATION, this::exportRelations,
@@ -135,27 +143,35 @@ public class TenantExportService {
 
     // todo: cancel
     public UUID exportTenant(TenantExportConfig exportConfig) {
-        TenantId tenantId = TenantId.fromUUID(exportConfig.getTenantId());
+        UUID tenantId = exportConfig.getTenantId();
         log.info("[{}] Exporting tenant", tenantId);
-        Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId.getId());
+        Tenant tenant = tenantDao.findById(TenantId.SYS_TENANT_ID, tenantId);
         if (tenant == null) {
             throw new IllegalArgumentException("Tenant with id " + tenantId + " not found");
         }
-        TenantExportResult result = new TenantExportResult();
         executor.submit(() -> {
             try {
                 exportTenant(tenant, exportConfig);
-                result.setSuccess(true);
-                result.setDone(true);
-            } catch (Exception e) {
-                log.error("Failed to export tenant {}", tenant, e);
-                result.setError(ExceptionUtils.getStackTrace(e));
-                result.setDone(true);
+                statsStore.update(tenantId, result -> {
+                    result.setSuccess(true);
+                    result.setDone(true);
+                });
+            } catch (Throwable t) {
+                log.error("Failed to export tenant {}", tenant, t);
+                try {
+                    statsStore.update(tenantId, result -> {
+                        result.setError(ExceptionUtils.getStackTrace(t));
+                        result.setDone(true);
+                    });
+                    storage.cleanUpExportData(tenantId);
+                } catch (Exception e) {
+                    log.error("Failed to handle export error", e);
+                }
             }
         });
+        // TODO: send notifications to system admin (new NotificationType SYSTEM)
 
-        results.put(tenant.getUuidId(), result);
-        return tenant.getUuidId();
+        return tenantId;
     }
 
     private void exportTenant(Tenant tenant, TenantExportConfig exportConfig) {
@@ -178,8 +194,9 @@ public class TenantExportService {
             } else {
                 customExporters.get(type).accept(tenantId, exportConfig);
             }
-            log.debug("[{}] Exported {} {} entities", tenantId, getResult(tenantId.getId()).getCount(type), type);
+            statsStore.flush(tenantId.getId(), type);
         }
+        statsStore.flush(tenantId.getId(), RELATED.toArray(ObjectType[]::new));
 
         storage.archiveExportData(tenantId.getId());
     }
@@ -197,7 +214,7 @@ public class TenantExportService {
 
     private void save(TenantId tenantId, ObjectType type, Object entity) {
         storage.save(tenantId.getId(), type, DataWrapper.of(entity));
-        getResult(tenantId.getId()).report(type);
+        statsStore.report(tenantId.getId(), type);
         log.trace("[{}][{}] Saved entity {}", tenantId, type, entity);
     }
 
@@ -221,16 +238,12 @@ public class TenantExportService {
         return partitions;
     }
 
-    public TenantExportResult getResult(UUID tenantId) {
-        TenantExportResult result = results.getIfPresent(tenantId);
-        if (result == null) {
-            throw new IllegalStateException("Export result for tenant id " + tenantId + " not found");
-        }
-        return result;
+    public StatsResult<ObjectType> getResult(UUID tenantId) {
+        return statsStore.getStoredResult(tenantId);
     }
 
     public ResponseEntity<InputStreamResource> downloadResult(UUID tenantId) {
-        TenantExportResult result = getResult(tenantId);
+        var result = statsStore.getStoredResult(tenantId);
         if (!result.isDone()) {
             throw new IllegalStateException("Not ready yet");
         } else if (!result.isSuccess()) {

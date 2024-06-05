@@ -108,6 +108,7 @@ public class Storage {
     public void cleanUpExportData(UUID tenantId) {
         Path workingDirectory = Path.of(this.workingDirectory, tenantId.toString());
         deleteDirectory(workingDirectory);
+        files.remove(tenantId);
     }
 
     @SneakyThrows

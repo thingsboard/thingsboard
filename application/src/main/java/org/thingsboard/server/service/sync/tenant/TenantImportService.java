@@ -15,29 +15,29 @@
  */
 package org.thingsboard.server.service.sync.tenant;
 
-import com.github.benmanes.caffeine.cache.Cache;
-import com.github.benmanes.caffeine.cache.Caffeine;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
+import org.thingsboard.server.service.sync.tenant.util.StatsResult;
+import org.thingsboard.server.service.sync.tenant.util.StatsStore;
 import org.thingsboard.server.service.sync.tenant.util.Storage;
 import org.thingsboard.server.service.sync.tenant.util.TenantImportConfig;
-import org.thingsboard.server.service.sync.tenant.util.TenantImportResult;
 
 import java.io.InputStream;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static org.thingsboard.server.common.data.ObjectType.TENANT;
@@ -51,14 +51,20 @@ public class TenantImportService {
     private final EntityDaoRegistry entityDaoRegistry;
     private final TransactionTemplate transactionTemplate;
     private final CacheManager cacheManager;
+    private StatsStore<ObjectType> statsStore;
+    @Value("${cache.specs.tenantImportResults.timeToLiveInMinutes:1440}")
+    private int resultsTtl;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tenant-import"));
-    private Cache<UUID, TenantImportResult> results;
 
     @PostConstruct
     private void init() {
-        results = Caffeine.newBuilder()
-                .expireAfterAccess(24, TimeUnit.HOURS)
+        statsStore = StatsStore.<ObjectType>builder()
+                .name("Tenant import")
+                .ttlInMinutes(resultsTtl)
+                .persistFrequency(100)
+                .cacheName(CacheConstants.TENANT_IMPORT_RESULT_CACHE)
+                .cacheManager(cacheManager)
                 .build();
     }
 
@@ -73,41 +79,46 @@ public class TenantImportService {
         if (tenant.get() == null) {
             throw new IllegalStateException("No tenant data found");
         }
-        TenantId tenantId = tenant.get().getId();
+        UUID tenantId = tenant.get().getUuidId();
 
-        TenantImportResult result = new TenantImportResult();
         executor.submit(() -> {
             try {
                 transactionTemplate.executeWithoutResult(status -> {
                     importTenant(tenant.get(), config);
                 });
-                result.setSuccess(true);
-                result.setDone(true);
-            } catch (Exception e) {
-                log.error("Failed to import tenant", e);
-                result.setError(ExceptionUtils.getStackTrace(e));
-                result.setDone(true);
+                statsStore.update(tenantId, result -> {
+                    result.setSuccess(true);
+                    result.setDone(true);
+                });
+            } catch (Throwable t) {
+                log.error("Failed to import tenant", t);
+                try {
+                    statsStore.update(tenantId, result -> {
+                        result.setError(ExceptionUtils.getStackTrace(t));
+                        result.setDone(true);
+                    });
+                } catch (Exception e) {
+                    log.error("Failed to handle import error", e);
+                }
             }
             storage.cleanUpImportData();
         });
 
-        results.put(tenantId.getId(), result);
-        return tenantId.getId();
+        return tenantId;
     }
 
     private void importTenant(Tenant tenant, TenantImportConfig config) {
         TenantId tenantId = tenant.getId();
-        TenantImportResult result = getResult(tenantId.getId());
         for (ObjectType type : ObjectType.values()) { // TODO: in parallel for related entities + ts kv
             log.debug("[{}] Importing {} entities", tenantId, type);
             storage.readAndProcess(type, dataWrapper -> {
                 Object entity = dataWrapper.getEntity();
                 entityDaoRegistry.getObjectDao(type).save(tenantId, entity);
 
-                result.report(type);
+                statsStore.report(tenantId.getId(), type);
                 log.trace("[{}][{}] Imported entity {}", tenantId, type, entity);
             });
-            log.debug("[{}] Imported {} {} entities", tenantId, result.getCount(type), type);
+            statsStore.flush(tenantId.getId(), type);
         }
 
         clearCaches();
@@ -117,12 +128,8 @@ public class TenantImportService {
         cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
     }
 
-    public TenantImportResult getResult(UUID tenantId) {
-        TenantImportResult result = results.getIfPresent(tenantId);
-        if (result == null) {
-            throw new IllegalStateException("Import result for tenant id " + tenantId + " not found");
-        }
-        return result;
+    public StatsResult<ObjectType> getResult(UUID tenantId) {
+        return statsStore.getStoredResult(tenantId);
     }
 
 }

@@ -36,6 +36,7 @@ import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -50,10 +51,9 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.sync.tenant.TenantExportService;
 import org.thingsboard.server.service.sync.tenant.TenantImportService;
+import org.thingsboard.server.service.sync.tenant.util.StatsResult;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
-import org.thingsboard.server.service.sync.tenant.util.TenantExportResult;
 import org.thingsboard.server.service.sync.tenant.util.TenantImportConfig;
-import org.thingsboard.server.service.sync.tenant.util.TenantImportResult;
 
 import java.io.IOException;
 import java.util.UUID;
@@ -195,7 +195,7 @@ public class TenantController extends BaseController {
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/tenant/export/result/{tenantId}")
-    public TenantExportResult getTenantExportResult(@PathVariable UUID tenantId) {
+    public StatsResult<ObjectType> getTenantExportResult(@PathVariable UUID tenantId) {
         return tenantExportService.getResult(tenantId);
     }
 
@@ -218,7 +218,7 @@ public class TenantController extends BaseController {
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/tenant/import/result/{tenantId}")
-    public TenantImportResult getTenantImportResult(@PathVariable UUID tenantId) {
+    public StatsResult<ObjectType> getTenantImportResult(@PathVariable UUID tenantId) {
         return tenantImportService.getResult(tenantId);
     }
 
