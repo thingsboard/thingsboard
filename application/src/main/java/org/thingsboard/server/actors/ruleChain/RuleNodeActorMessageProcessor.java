@@ -134,7 +134,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                 systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self");
             }
             if (debugOnlyFailures) {
-                defaultCtx.subscribeForFailure(msg.getMsg().getId(), () ->
+                defaultCtx.onFailureCallback(msg.getMsg().getId(), () ->
                         systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), "Self"));
             }
             try {
@@ -162,7 +162,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
                     systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType());
                 }
                 if (debugOnlyFailures) {
-                    msg.getCtx().subscribeForFailure(msg.getMsg().getId(), () ->
+                    msg.getCtx().onFailureCallback(msg.getMsg().getId(), () ->
                             systemContext.persistDebugInput(tenantId, entityId, msg.getMsg(), msg.getFromRelationType()));
                 }
                 try {

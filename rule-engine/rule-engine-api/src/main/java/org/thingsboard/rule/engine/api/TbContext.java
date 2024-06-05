@@ -410,6 +410,6 @@ public interface TbContext {
 
     AuditLogService getAuditLogService();
 
-    void subscribeForFailure(UUID msgId, Runnable onFailure);
+    void onFailureCallback(UUID msgId, Runnable onFailure);
 
 }

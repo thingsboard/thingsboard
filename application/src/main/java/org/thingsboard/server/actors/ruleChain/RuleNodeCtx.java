@@ -48,7 +48,7 @@ public final class RuleNodeCtx {
         }
     }
 
-    public void subscribeForFailure(UUID msgId, Runnable onFailure) {
+    public void onFailureCallback(UUID msgId, Runnable onFailure) {
         if (debugRuleNodeFailures) {
             failureSubscribers.putIfAbsent(msgId, onFailure);
         }

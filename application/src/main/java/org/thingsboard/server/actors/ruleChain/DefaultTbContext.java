@@ -977,8 +977,8 @@ public class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public void subscribeForFailure(UUID msgId, Runnable onFailure) {
-        nodeCtx.subscribeForFailure(msgId, onFailure);
+    public void onFailureCallback(UUID msgId, Runnable onFailure) {
+        nodeCtx.onFailureCallback(msgId, onFailure);
     }
 
     private TbMsgMetaData getActionMetaData(RuleNodeId ruleNodeId) {
