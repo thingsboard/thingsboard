@@ -98,6 +98,7 @@ message SessionInfoProto {
   int64 customerIdLSB = 15;
   optional int64 gatewayIdMSB = 16;
   optional int64 gatewayIdLSB = 17;
+  bool isGateway = 18;
 }
 
 enum SessionEvent {
@@ -184,6 +185,7 @@ message DeviceInfoProto {
   int64 edrxCycle = 13;
   int64 psmActivityTimer = 14;
   int64 pagingTransmissionWindow = 15;
+  bool isGateway = 16;
 }
 
 message DeviceProto {

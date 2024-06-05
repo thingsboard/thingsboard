@@ -38,4 +38,5 @@ public class TransportDeviceInfo implements Serializable {
     private Long edrxCycle;
     private Long psmActivityTimer;
     private Long pagingTransmissionWindow;
+    private boolean gateway;
 }
