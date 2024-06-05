@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class AndroidConfig implements HasStoreLink {
+public class AndroidConfig {
 
     private boolean enabled;
     @NoXss

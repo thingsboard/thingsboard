@@ -16,7 +16,6 @@
 package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
@@ -31,11 +30,9 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidConfig;
-import org.thingsboard.server.common.data.mobile.HasStoreLink;
 import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.security.model.JwtPair;
@@ -84,8 +81,6 @@ public class MobileApplicationController extends BaseController {
             "    }\n" +
             "}";
 
-    public static final String DEFAULT_GOOGLE_APP_STORE_LINK = "https://play.google.com/store/apps/details?id=org.thingsboard.demo.app";
-    public static final String DEFAULT_APPLE_APP_STORE_LINK = "https://apps.apple.com/us/app/thingsboard-live/id1594355695";
     public static final String SECRET = "secret";
     public static final String SECRET_PARAM_DESCRIPTION = "A string value representing short-lived secret key";
     public static final String DEFAULT_APP_DOMAIN = "demo.thingsboard.io";
@@ -175,26 +170,17 @@ public class MobileApplicationController extends BaseController {
     @GetMapping(value = "/api/noauth/qr")
     public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
-        boolean useDefaultApp = mobileAppSettings.isUseDefaultApp();
         if (userAgent.contains("Android")) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", getAppStoreLink(useDefaultApp, mobileAppSettings.getAndroidConfig(), DEFAULT_GOOGLE_APP_STORE_LINK))
+                    .header("Location", mobileAppSettings.getAndroidConfig().getStoreLink())
                     .build();
         } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", getAppStoreLink(useDefaultApp, mobileAppSettings.getIosConfig(), DEFAULT_APPLE_APP_STORE_LINK))
+                    .header("Location", mobileAppSettings.getIosConfig().getStoreLink())
                     .build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .build();
-        }
-    }
-
-    private String getAppStoreLink(boolean useDefaultApp, HasStoreLink storeLink, String defaultAppStoreLink) {
-        if (useDefaultApp || StringUtils.isEmpty(storeLink.getStoreLink())) {
-            return defaultAppStoreLink;
-        } else {
-            return storeLink.getStoreLink();
         }
     }
 
