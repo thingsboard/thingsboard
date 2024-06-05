@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data;
 
 public enum ObjectType {
+
     TENANT,
     CUSTOMER,
     ADMIN_SETTINGS,

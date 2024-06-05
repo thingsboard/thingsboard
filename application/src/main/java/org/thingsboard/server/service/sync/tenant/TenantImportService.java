@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.sync.tenant.util.StatsResult;
 import org.thingsboard.server.service.sync.tenant.util.StatsStore;
 import org.thingsboard.server.service.sync.tenant.util.Storage;
@@ -49,6 +50,7 @@ public class TenantImportService {
 
     private final Storage storage;
     private final EntityDaoRegistry entityDaoRegistry;
+    private final TenantProfileService tenantProfileService;
     private final TransactionTemplate transactionTemplate;
     private final CacheManager cacheManager;
     private StatsStore<ObjectType> statsStore;
@@ -109,7 +111,13 @@ public class TenantImportService {
 
     private void importTenant(Tenant tenant, TenantImportConfig config) {
         TenantId tenantId = tenant.getId();
+        tenant.setTenantProfileId(tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID).getId());
+        entityDaoRegistry.getObjectDao(TENANT).save(TenantId.SYS_TENANT_ID, tenant);
+
         for (ObjectType type : ObjectType.values()) { // TODO: in parallel for related entities + ts kv
+            if (type == TENANT) {
+                continue;
+            }
             log.debug("[{}] Importing {} entities", tenantId, type);
             storage.readAndProcess(type, dataWrapper -> {
                 Object entity = dataWrapper.getEntity();

@@ -17,13 +17,14 @@ package org.thingsboard.server.service.sync.tenant.util;
 
 import lombok.Data;
 
+import java.io.Serializable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
-public class StatsResult<K> {
+public class StatsResult<K> implements Serializable {
 
     private boolean done;
     private boolean success;
