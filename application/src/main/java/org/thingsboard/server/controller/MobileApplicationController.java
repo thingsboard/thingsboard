@@ -50,7 +50,6 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.net.URI;
 import java.net.URISyntaxException;
-import java.util.Optional;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
@@ -189,19 +188,6 @@ public class MobileApplicationController extends BaseController {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
                     .build();
         }
-    }
-
-    @ApiOperation(value = "Get Mobile application store link (getMobileAppStoreLinks)",
-            notes = "The response payload contains links to google play and apple store." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/api/mobile/app/storeLinks")
-    public JsonNode getMobileAppStoreLinks() {
-        MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
-        ObjectNode infoObject = JacksonUtil.newObjectNode();
-        boolean useDefaultApp = mobileAppSettings.isUseDefaultApp();
-        infoObject.put("googlePlayLink", getAppStoreLink(useDefaultApp, mobileAppSettings.getAndroidConfig(), DEFAULT_GOOGLE_APP_STORE_LINK));
-        infoObject.put("appStoreLink", getAppStoreLink(useDefaultApp, mobileAppSettings.getIosConfig(), DEFAULT_APPLE_APP_STORE_LINK));
-        return infoObject;
     }
 
     private String getAppStoreLink(boolean useDefaultApp, HasStoreLink storeLink, String defaultAppStoreLink) {
