@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidConfig;
@@ -175,14 +176,14 @@ public class MobileApplicationController extends BaseController {
     @GetMapping(value = "/api/noauth/qr")
     public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
-        boolean isDefaultApp = mobileAppSettings.isUseDefaultApp();
+        boolean useDefaultApp = mobileAppSettings.isUseDefaultApp();
         if (userAgent.contains("Android")) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", getAppStoreLink(isDefaultApp, mobileAppSettings.getAndroidConfig(), DEFAULT_GOOGLE_APP_STORE_LINK))
+                    .header("Location", getAppStoreLink(useDefaultApp, mobileAppSettings.getAndroidConfig(), DEFAULT_GOOGLE_APP_STORE_LINK))
                     .build();
         } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", getAppStoreLink(isDefaultApp, mobileAppSettings.getIosConfig(), DEFAULT_APPLE_APP_STORE_LINK))
+                    .header("Location", getAppStoreLink(useDefaultApp, mobileAppSettings.getIosConfig(), DEFAULT_APPLE_APP_STORE_LINK))
                     .build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)
@@ -197,15 +198,18 @@ public class MobileApplicationController extends BaseController {
     public JsonNode getMobileAppStoreLinks() {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         ObjectNode infoObject = JacksonUtil.newObjectNode();
-        boolean isDefaultApp = mobileAppSettings.isUseDefaultApp();
-        infoObject.put("googlePlayLink", getAppStoreLink(isDefaultApp, mobileAppSettings.getAndroidConfig(), DEFAULT_GOOGLE_APP_STORE_LINK));
-        infoObject.put("appStoreLink", getAppStoreLink(isDefaultApp, mobileAppSettings.getIosConfig(), DEFAULT_APPLE_APP_STORE_LINK));
+        boolean useDefaultApp = mobileAppSettings.isUseDefaultApp();
+        infoObject.put("googlePlayLink", getAppStoreLink(useDefaultApp, mobileAppSettings.getAndroidConfig(), DEFAULT_GOOGLE_APP_STORE_LINK));
+        infoObject.put("appStoreLink", getAppStoreLink(useDefaultApp, mobileAppSettings.getIosConfig(), DEFAULT_APPLE_APP_STORE_LINK));
         return infoObject;
     }
 
-    private String getAppStoreLink(boolean isDefault, HasStoreLink storeLink, String defaultAppStoreLink) {
-        return isDefault ? defaultAppStoreLink :
-                Optional.ofNullable(storeLink.getStoreLink()).orElse(defaultAppStoreLink);
+    private String getAppStoreLink(boolean useDefaultApp, HasStoreLink storeLink, String defaultAppStoreLink) {
+        if (useDefaultApp || StringUtils.isEmpty(storeLink.getStoreLink())) {
+            return defaultAppStoreLink;
+        } else {
+            return storeLink.getStoreLink();
+        }
     }
 
 }
