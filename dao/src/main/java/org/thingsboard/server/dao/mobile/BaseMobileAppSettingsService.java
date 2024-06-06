@@ -43,7 +43,7 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
 
     @Value("${mobileApp.googlePlayLink:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}")
     private String googlePlayLink;
-    @Value("${mobileApp.appStoreLink:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}")
+    @Value("${mobileApp.appStoreLink:https://apps.apple.com/us/app/thingsboard-live/id1594355695}")
     private String appStoreLink;
 
     private final MobileAppSettingsDao mobileAppSettingsDao;

@@ -173,7 +173,7 @@ public class MobileApplicationController extends BaseController {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
         boolean useDefaultApp = mobileAppSettings.isUseDefaultApp();
         String googlePlayLink = useDefaultApp ? mobileAppSettings.getDefaultGooglePlayLink() : mobileAppSettings.getAndroidConfig().getStoreLink();
-        String appStoreLink = useDefaultApp ? mobileAppSettings.getDefaultGooglePlayLink() : mobileAppSettings.getIosConfig().getStoreLink();
+        String appStoreLink = useDefaultApp ? mobileAppSettings.getDefaultAppStoreLink() : mobileAppSettings.getIosConfig().getStoreLink();
         if (userAgent.contains("Android")) {
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", googlePlayLink)
