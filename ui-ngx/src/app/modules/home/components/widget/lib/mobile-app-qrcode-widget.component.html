@@ -25,7 +25,7 @@
     <div class="tb-flex row center align-center shrink"
          [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
          [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
-      <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'" ></div>
+      <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'"></div>
       <div class="tb-badges" [class.tb-no-interaction]="previewMode"
            *ngIf="(mobileAppSettings?.iosConfig.enabled || mobileAppSettings?.androidConfig.enabled) &&
                     mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">

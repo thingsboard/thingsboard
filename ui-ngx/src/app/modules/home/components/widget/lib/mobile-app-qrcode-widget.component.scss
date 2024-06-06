@@ -82,8 +82,14 @@
 }
 
 :host ::ng-deep {
-  .tb-mobile-app-qrcode-panel .tb-widget-title {
-    padding: 0;
-    z-index: 1;
+  .tb-mobile-app-qrcode-panel {
+    .tb-widget-title {
+      padding: 0;
+      z-index: 1;
+    }
+    .tb-qrcode svg {
+      width: 100%;
+      height: 100%;
+    }
   }
 }
