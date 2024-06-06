@@ -244,6 +244,7 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         const tagSettingsButton = $(this.tagSettingsButton.nativeElement);
         tagSettingsButton.tooltipster(
           {
+            parent: this.symbolElement.tooltipContainer,
             zIndex: 200,
             arrow: true,
             theme: ['scada-symbol', 'tb-active'],
@@ -264,6 +265,7 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         const removeTagButton = $(this.removeTagButton.nativeElement);
         removeTagButton.tooltipster(
           {
+            parent: this.symbolElement.tooltipContainer,
             zIndex: 200,
             arrow: true,
             theme: ['scada-symbol', 'tb-active'],

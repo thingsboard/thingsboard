@@ -175,6 +175,8 @@ export type ScadaSymbolProperty = ScadaSymbolPropertyBase & ScadaSymbolNumberPro
 
 export interface ScadaSymbolMetadata {
   title: string;
+  description?: string;
+  searchTags?: string[];
   stateRenderFunction?: string;
   stateRender?: ScadaSymbolStateRenderFunction;
   tags: ScadaSymbolTag[];

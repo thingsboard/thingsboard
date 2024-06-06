@@ -43,6 +43,7 @@ import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-set
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { HasTenantId } from '@shared/models/entity.models';
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 
 export enum widgetType {
   timeseries = 'timeseries',
@@ -833,6 +834,7 @@ export interface WidgetSize {
 
 export interface IWidgetSettingsComponent {
   aliasController: IAliasController;
+  callbacks: WidgetConfigCallbacks;
   dataKeyCallbacks: DataKeysCallbacks;
   dashboard: Dashboard;
   widget: Widget;
@@ -850,6 +852,8 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
   IWidgetSettingsComponent, OnInit, AfterViewInit {
 
   aliasController: IAliasController;
+
+  callbacks: WidgetConfigCallbacks;
 
   dataKeyCallbacks: DataKeysCallbacks;
 

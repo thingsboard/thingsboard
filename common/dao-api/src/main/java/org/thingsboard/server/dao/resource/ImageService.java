@@ -47,6 +47,8 @@ public interface ImageService {
 
     TbImageDeleteResult deleteImage(TbResourceInfo imageInfo, boolean force);
 
+    String calculateImageEtag(byte[] imageData);
+
     TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag);
 
     boolean replaceBase64WithImageUrl(HasImage entity, String type);

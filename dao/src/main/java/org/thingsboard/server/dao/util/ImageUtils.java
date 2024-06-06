@@ -19,6 +19,8 @@ import com.drew.imaging.ImageMetadataReader;
 import com.drew.metadata.Directory;
 import com.drew.metadata.Metadata;
 import com.drew.metadata.Tag;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Data;
@@ -39,6 +41,7 @@ import org.apache.batik.util.XMLResourceDescriptor;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.util.MimeType;
 import org.springframework.util.MimeTypeUtils;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.w3c.dom.Document;
 
@@ -234,6 +237,17 @@ public class ImageUtils {
         return originalImage;
     }
 
+    public static ScadaSymbolMetadataInfo processScadaSymbolMetadata(String fileName, byte[] data) throws Exception {
+        SAXSVGDocumentFactory factory = new SAXSVGDocumentFactory(XMLResourceDescriptor.getXMLParserClassName());
+        Document document = factory.createDocument(null, new ByteArrayInputStream(data));
+        var metaElements = document.getElementsByTagName("tb:metadata");
+        JsonNode metaData = null;
+        if (metaElements.getLength() > 0) {
+            metaData = JacksonUtil.toJsonNode(metaElements.item(0).getTextContent());
+        }
+        return new ScadaSymbolMetadataInfo(fileName, metaData);
+    }
+
     private static int[] getThumbnailDimensions(int originalWidth, int originalHeight, int maxDimension, boolean originalIfSmaller) {
         if (originalWidth <= maxDimension && originalHeight <= maxDimension && originalIfSmaller) {
             return new int[]{originalWidth, originalHeight};
@@ -262,6 +276,35 @@ public class ImageUtils {
         private byte[] data;
         private long size;
         private ProcessedImage preview;
+    }
+
+    @Data
+    public static class ScadaSymbolMetadataInfo {
+        private String title;
+        private String description;
+        private String[] searchTags;
+
+        public ScadaSymbolMetadataInfo(String fileName, JsonNode metaData) {
+            if (metaData != null && metaData.has("title")) {
+                title = metaData.get("title").asText();
+            } else {
+                title = fileName;
+            }
+            if (metaData != null && metaData.has("description")) {
+                description = metaData.get("description").asText();
+            } else {
+                description = "";
+            }
+            if (metaData != null && metaData.has("searchTags") && metaData.get("searchTags").isArray()) {
+                var tagsNode = (ArrayNode) metaData.get("searchTags");
+                searchTags = new String[tagsNode.size()];
+                for (int i = 0; i < tagsNode.size(); i++) {
+                    searchTags[i] = tagsNode.get(i).asText();
+                }
+            } else {
+                searchTags = new String[0];
+            }
+        }
     }
 
 }

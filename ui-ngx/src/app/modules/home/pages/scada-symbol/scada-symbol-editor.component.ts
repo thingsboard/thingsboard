@@ -15,7 +15,7 @@
 ///
 
 import {
-  AfterViewInit,
+  AfterViewInit, ChangeDetectorRef,
   Component,
   ElementRef,
   Input,
@@ -28,6 +28,7 @@ import {
   ViewEncapsulation
 } from '@angular/core';
 import { ScadaSymbolEditObject, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
+import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 
 export interface ScadaSymbolEditorData {
   scadaSymbolContent: string;
@@ -44,6 +45,12 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   @ViewChild('scadaSymbolShape', {static: false})
   scadaSymbolShape: ElementRef<HTMLElement>;
 
+  @ViewChild('tooltipsContainer', {static: false})
+  tooltipsContainer: ElementRef<HTMLElement>;
+
+  @ViewChild('tooltipsContainerComponent', {static: true})
+  tooltipsContainerComponent: TbAnchorComponent;
+
   @Input()
   data: ScadaSymbolEditorData;
 
@@ -55,17 +62,24 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   scadaSymbolEditObject: ScadaSymbolEditObject;
 
-  constructor(private viewContainerRef: ViewContainerRef) {
+  zoomInDisabled = false;
+  zoomOutDisabled = false;
+
+  constructor(private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
   }
 
   ngAfterViewInit() {
+    this.editObjectCallbacks.onZoom = () => {
+      this.updateZoomButtonsState();
+    };
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.scadaSymbolShape.nativeElement,
-      this.viewContainerRef, this.editObjectCallbacks, this.readonly);
+      this.tooltipsContainer.nativeElement,
+      this.tooltipsContainerComponent.viewContainerRef, this.editObjectCallbacks, this.readonly);
     if (this.data) {
-      this.scadaSymbolEditObject.setContent(this.data.scadaSymbolContent);
+      this.updateContent(this.data.scadaSymbolContent);
     }
   }
 
@@ -76,7 +90,7 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
         if (propName === 'data') {
           if (this.scadaSymbolEditObject) {
             setTimeout(() => {
-              this.scadaSymbolEditObject.setContent(this.data.scadaSymbolContent);
+              this.updateContent(this.data.scadaSymbolContent);
             });
           }
         } else if (propName === 'readonly') {
@@ -92,6 +106,27 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   getContent(): string {
     return this.scadaSymbolEditObject?.getContent();
+  }
+
+  zoomIn() {
+    this.scadaSymbolEditObject.zoomIn();
+  }
+
+  zoomOut() {
+    this.scadaSymbolEditObject.zoomOut();
+  }
+
+  private updateContent(content: string) {
+    this.scadaSymbolEditObject.setContent(content);
+    setTimeout(() => {
+      this.updateZoomButtonsState();
+    });
+  }
+
+  private updateZoomButtonsState() {
+    this.zoomInDisabled = this.scadaSymbolEditObject.zoomInDisabled();
+    this.zoomOutDisabled = this.scadaSymbolEditObject.zoomOutDisabled();
+    this.cd.markForCheck();
   }
 }
 

@@ -128,6 +128,8 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   ngOnInit(): void {
     this.metadataFormGroup = this.fb.group({
       title: [null, [Validators.required]],
+      description: [null],
+      searchTags: [null],
       stateRenderFunction: [null],
       tags: [null],
       behavior: [null],
@@ -170,7 +172,15 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   writeValue(value: ScadaSymbolMetadata): void {
     this.modelValue = value;
     this.metadataFormGroup.patchValue(
-      value, {emitEvent: false}
+      {
+        title: value?.title,
+        description: value?.description,
+        searchTags: value?.searchTags,
+        stateRenderFunction: value?.stateRenderFunction,
+        tags: value?.tags,
+        behavior: value?.behavior,
+        properties: value?.properties
+      }, {emitEvent: false}
     );
     this.updateFunctionCompleters(value);
   }

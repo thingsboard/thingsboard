@@ -53,7 +53,11 @@ export interface ScadaSymbolEditObjectCallbacks {
   editTagClickAction: (tag: string) => void;
   tagsUpdated: (tags: string[]) => void;
   onSymbolEditObjectDirty: (dirty: boolean) => void;
+  onZoom?: () => void;
 }
+
+const minSymbolZoom = 1;
+const maxSymbolZoom = 4;
 
 export class ScadaSymbolEditObject {
 
@@ -68,7 +72,10 @@ export class ScadaSymbolEditObject {
 
   public tags: string[] = [];
 
+  private zoomFactor = 0.34;
+
   constructor(private rootElement: HTMLElement,
+              public tooltipsContainer: HTMLElement,
               public viewContainerRef: ViewContainerRef,
               private callbacks: ScadaSymbolEditObjectCallbacks,
               public readonly: boolean) {
@@ -126,6 +133,40 @@ export class ScadaSymbolEditObject {
     this.elements.filter(e => e.isEditing()).forEach(e => e.stopEdit(true));
   }
 
+  public zoomIn() {
+    const level = Math.min(Math.pow(1 + this.zoomFactor, 1.2) * this.svgShape.zoom(), maxSymbolZoom);
+    this.zoomAnimate(level);
+  }
+
+  public zoomOut() {
+    const level = Math.max(Math.pow(1 + this.zoomFactor, -1.2) * this.svgShape.zoom(), minSymbolZoom);
+    this.zoomAnimate(level);
+  }
+
+  private zoomAnimate(level: number, animationMs = 200) {
+    if (level !== this.svgShape.zoom()) {
+      this.hideTooltips();
+      const runner = this.svgShape.animate(animationMs).ease('<>');
+      runner
+      .zoom(level)
+      .during(() => {
+        const box = this.restrictToMargins(this.svgShape.viewbox(), 0);
+        this.svgShape.viewbox(box);
+      })
+      .after(() => {
+        this.postZoom(this.callbacks.onZoom);
+      });
+    }
+  }
+
+  public zoomInDisabled() {
+    return Number(this.svgShape.zoom().toFixed(5)) >= maxSymbolZoom;
+  }
+
+  public zoomOutDisabled() {
+    return Number(this.svgShape.zoom().toFixed(5)) <= minSymbolZoom;
+  }
+
   private doSetup() {
     this.setupZoomPan(0);
     (window as any).SVG = svgjs;
@@ -143,27 +184,35 @@ export class ScadaSymbolEditObject {
         detail: { level, focus }
       } = e as any;
       this.svgShape.zoom(level, focus);
-      const box = this.restrictToMargins(this.svgShape.viewbox(), margin);
-      this.svgShape.viewbox(box);
-      setTimeout(() => {
-        this.updateTooltipPositions();
-      });
-      e.preventDefault();
+      this.postZoom(this.callbacks.onZoom, e, margin);
     });
     this.svgShape.on('panning', (e) => {
       const box = (e as any).detail.box;
       this.svgShape.viewbox(this.restrictToMargins(box, margin));
-      setTimeout(() => {
-        this.updateTooltipPositions();
-      });
       e.preventDefault();
     });
     this.svgShape.on('panStart', (_e) => {
-      this.svgShape.node.style.cursor = 'grab';
+      if (this.svgShape.zoom() > minSymbolZoom) {
+        this.hideTooltips();
+        this.svgShape.node.style.cursor = 'grab';
+      }
     });
     this.svgShape.on('panEnd', (_e) => {
+      this.restoreTooltips();
       this.svgShape.node.style.cursor = 'default';
     });
+  }
+
+  private postZoom(callback?: () => void, e?: any, margin = 0) {
+    const box = this.restrictToMargins(this.svgShape.viewbox(), margin);
+    this.svgShape.viewbox(box);
+    setTimeout(() => {
+      this.updateTooltipPositions();
+    });
+    e?.preventDefault();
+    if (callback) {
+      callback();
+    }
   }
 
   private restrictToMargins(box: Box, margin: number): Box {
@@ -304,17 +353,29 @@ export class ScadaSymbolEditObject {
   }
 
   private updateZoomOptions() {
+ //   this.zoomFactor = 2 / this.scale;
     this.svgShape.panZoom({
-      zoomMin: 1,
-      zoomMax: 4,
-      zoomFactor: 2 / this.scale
+      zoomMin: minSymbolZoom,
+      zoomMax: maxSymbolZoom,
+      zoomFactor: this.zoomFactor
     });
   }
 
   private updateTooltipPositions() {
-    const container = this.rootElement.getBoundingClientRect();
     for (const e of this.elements) {
-      e.updateTooltipPosition(container);
+      e.updateTooltipPosition();
+    }
+  }
+
+  private hideTooltips() {
+    for (const e of this.elements) {
+      e.hideTooltip();
+    }
+  }
+
+  private restoreTooltips() {
+    for (const e of this.elements) {
+      e.restoreTooltip();
     }
   }
 
@@ -362,12 +423,12 @@ const hasBBox = (e: Element): boolean => {
   }
 };
 
-const isDomRectContained = (target: DOMRect, container: DOMRect, horizontalGap = 0, verticalGap = 0): boolean => (
+/*const isDomRectContained = (target: DOMRect, container: DOMRect, horizontalGap = 0, verticalGap = 0): boolean => (
   target.left >= container.left - horizontalGap &&
   target.left + target.width <= container.left + container.width + horizontalGap &&
   target.top >= container.top - verticalGap &&
   target.top + target.height <= container.top + container.height + verticalGap
-);
+);*/
 
 const elementTooltipMinHeight = 36 + 8;
 const elementTooltipMinWidth = 100;
@@ -559,19 +620,27 @@ export class ScadaSymbolElement {
     return this.editing;
   }
 
-  public updateTooltipPosition(container: DOMRect) {
+  public updateTooltipPosition() {
     if (this.tooltip && !this.tooltip.status().destroyed) {
       this.tooltip.reposition();
       const tooltipElement = this.tooltip.elementTooltip();
       if (tooltipElement) {
-        if (isDomRectContained(tooltipElement.getBoundingClientRect(), container,
-          elementTooltipMinWidth, elementTooltipMinHeight)) {
-          tooltipElement.style.visibility = null;
-        } else {
-          tooltipElement.style.visibility = 'hidden';
-        }
+        tooltipElement.style.visibility = null;
       }
     }
+  }
+
+  public hideTooltip() {
+    if (this.tooltip && !this.tooltip.status().destroyed) {
+      const tooltipElement = this.tooltip.elementTooltip();
+      if (tooltipElement) {
+        tooltipElement.style.visibility = 'hidden';
+      }
+    }
+  }
+
+  public restoreTooltip() {
+    this.updateTooltipPosition();
   }
 
   public setInnerTooltipOffset(offset: number, center: number) {
@@ -582,6 +651,10 @@ export class ScadaSymbolElement {
     if (this.tooltip) {
       this.tooltip.destroy();
     }
+  }
+
+  public get tooltipContainer(): JQuery<HTMLElement> {
+    return $(this.editObject.tooltipsContainer);
   }
 
   private unscaled(size: number): number {
@@ -596,6 +669,7 @@ export class ScadaSymbolElement {
     const el = $(this.element.node);
     el.tooltipster(
       {
+        parent: this.tooltipContainer,
         zIndex: 100,
         arrow: this.isGroup(),
         distance: this.isGroup() ? (this.scaled(groupRectPadding) + groupRectStroke) : 6,
@@ -611,6 +685,7 @@ export class ScadaSymbolElement {
           this.innerTagTooltipPosition(instance, helper, position),
         functionReady: (_instance, helper) => {
           const tooltipEl = $(helper.tooltip);
+          // tooltipEl.detach().appendTo($(this.editObject.tooltipsContainer));
           tooltipEl.on('mouseenter', () => {
             this.highlight();
           });
@@ -632,6 +707,7 @@ export class ScadaSymbolElement {
     const el = $(this.element.node);
     el.tooltipster(
       {
+        parent: this.tooltipContainer,
         zIndex: 100,
         arrow: true,
         theme: ['scada-symbol', 'tb-active'],

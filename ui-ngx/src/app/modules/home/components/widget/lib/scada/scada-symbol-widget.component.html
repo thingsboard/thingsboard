@@ -15,8 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-scada-symbol-panel" [style.padding]="padding"
-     [class.overlay]="overlayEnabled" [style]="backgroundStyle$ | async">
+<div class="tb-scada-symbol-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-scada-symbol-overlay" [style]="overlayStyle"></div>
   <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>

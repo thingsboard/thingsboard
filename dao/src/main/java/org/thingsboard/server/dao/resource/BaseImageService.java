@@ -288,6 +288,11 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     @Override
+    public String calculateImageEtag(byte[] imageData) {
+        return calculateEtag(imageData);
+    }
+
+    @Override
     public TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag) {
         log.trace("Executing findSystemOrTenantImageByEtag [{}] [{}]", tenantId, etag);
         return resourceInfoDao.findSystemOrTenantImageByEtag(tenantId, ResourceType.IMAGE, etag);

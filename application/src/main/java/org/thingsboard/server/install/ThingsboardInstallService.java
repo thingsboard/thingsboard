@@ -150,6 +150,7 @@ public class ThingsboardInstallService {
                     log.info("Updating system data...");
                     dataUpdateService.upgradeRuleNodes();
                     systemDataLoaderService.loadSystemWidgets();
+                    systemDataLoaderService.loadSystemScadaSymbols();
                     installScripts.loadSystemLwm2mResources();
                     installScripts.loadSystemImages();
                     if (installScripts.isUpdateImages()) {
@@ -190,6 +191,7 @@ public class ThingsboardInstallService {
                 systemDataLoaderService.createAdminSettings();
                 systemDataLoaderService.createRandomJwtSettings();
                 systemDataLoaderService.loadSystemWidgets();
+                systemDataLoaderService.loadSystemScadaSymbols();
                 systemDataLoaderService.createOAuth2Templates();
                 systemDataLoaderService.createQueues();
                 systemDataLoaderService.createDefaultNotificationConfigs();

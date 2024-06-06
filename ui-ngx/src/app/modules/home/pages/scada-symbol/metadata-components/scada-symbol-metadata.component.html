@@ -33,6 +33,25 @@
             <input matInput required formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.description</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <textarea matInput
+                      formControlName="description"
+                      rows="2"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.search-tags</div>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <tb-string-items-list fxFlex
+                                  style="display: flex;"
+                                  formControlName="searchTags"
+                                  appearance="outline"
+                                  subscriptSizing="dynamic">
+            </tb-string-items-list>
+          </div>
+        </div>
         <div class="tb-form-panel stroked">
           <mat-expansion-panel class="tb-settings" expanded>
             <mat-expansion-panel-header fxLayout="row wrap">

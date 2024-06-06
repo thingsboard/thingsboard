@@ -56,6 +56,8 @@ public interface WidgetTypeService extends EntityDaoService {
 
     WidgetType findWidgetTypeByTenantIdAndFqn(TenantId tenantId, String fqn);
 
+    WidgetTypeDetails findWidgetTypeDetailsByTenantIdAndFqn(TenantId tenantId, String fqn);
+
     void updateWidgetsBundleWidgetTypes(TenantId tenantId, WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds);
 
     void updateWidgetsBundleWidgetFqns(TenantId tenantId, WidgetsBundleId widgetsBundleId, List<String> widgetFqns);

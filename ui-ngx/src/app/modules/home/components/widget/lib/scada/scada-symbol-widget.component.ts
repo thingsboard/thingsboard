@@ -64,7 +64,6 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
-  overlayEnabled: boolean;
   padding: string;
 
   loading$ = this.loadingSubject.asObservable().pipe(share());
@@ -84,8 +83,7 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
-    this.overlayEnabled = this.settings.background.overlay.enabled;
-    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     if (this.settings.scadaSymbolContent) {
       this.scadaSymbolContent$ = of(this.settings.scadaSymbolContent);
