@@ -58,6 +58,8 @@ public class MobileApplicationController extends BaseController {
 
     @Value("${cache.specs.mobileSecretKey.timeToLiveInMinutes:2}")
     private int mobileSecretKeyTtl;
+    @Value("${mobileApp.domain:demo.thingsboard.io}")
+    private String defaultAppDomain;
 
     public static final String ASSET_LINKS_PATTERN = "[{\n" +
             "  \"relation\": [\"delegate_permission/common.handle_all_urls\"],\n" +
@@ -83,7 +85,6 @@ public class MobileApplicationController extends BaseController {
 
     public static final String SECRET = "secret";
     public static final String SECRET_PARAM_DESCRIPTION = "A string value representing short-lived secret key";
-    public static final String DEFAULT_APP_DOMAIN = "demo.thingsboard.io";
     public static final String DEEP_LINK_PATTERN = "https://%s/api/noauth/qr?secret=%s&ttl=%s";
 
     private final SystemSecurityService systemSecurityService;
@@ -149,7 +150,7 @@ public class MobileApplicationController extends BaseController {
         if (!mobileAppSettings.isUseDefaultApp()) {
             appDomain = platformDomain;
         } else {
-            appDomain = DEFAULT_APP_DOMAIN;
+            appDomain = defaultAppDomain;
         }
         String deepLink = String.format(DEEP_LINK_PATTERN, appDomain, secret, mobileSecretKeyTtl);
         if (!appDomain.equals(platformDomain)) {
@@ -170,13 +171,16 @@ public class MobileApplicationController extends BaseController {
     @GetMapping(value = "/api/noauth/qr")
     public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
         MobileAppSettings mobileAppSettings = mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID);
+        boolean useDefaultApp = mobileAppSettings.isUseDefaultApp();
+        String googlePlayLink = useDefaultApp ? mobileAppSettings.getDefaultGooglePlayLink() : mobileAppSettings.getAndroidConfig().getStoreLink();
+        String appStoreLink = useDefaultApp ? mobileAppSettings.getDefaultGooglePlayLink() : mobileAppSettings.getIosConfig().getStoreLink();
         if (userAgent.contains("Android")) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", mobileAppSettings.getAndroidConfig().getStoreLink())
+                    .header("Location", googlePlayLink)
                     .build();
         } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
             return ResponseEntity.status(HttpStatus.FOUND)
-                    .header("Location", mobileAppSettings.getIosConfig().getStoreLink())
+                    .header("Location", appStoreLink)
                     .build();
         } else {
             return ResponseEntity.status(HttpStatus.NOT_FOUND)

@@ -17,9 +17,9 @@ package org.thingsboard.server.dao.mobile;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidConfig;
 import org.thingsboard.server.common.data.mobile.BadgePosition;
@@ -40,8 +40,11 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String DEFAULT_QR_CODE_LABEL = "Scan to connect or download mobile app";
-    public static final String DEFAULT_GOOGLE_APP_STORE_LINK = "https://play.google.com/store/apps/details?id=org.thingsboard.demo.app";
-    public static final String DEFAULT_APPLE_APP_STORE_LINK = "https://apps.apple.com/us/app/thingsboard-live/id1594355695";
+
+    @Value("${mobileApp.googlePlayLink:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}")
+    private String googlePlayLink;
+    @Value("${mobileApp.appStoreLink:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}")
+    private String appStoreLink;
 
     private final MobileAppSettingsDao mobileAppSettingsDao;
     private final DataValidator<MobileAppSettings> mobileAppSettingsDataValidator;
@@ -52,7 +55,7 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
         try {
             MobileAppSettings savedMobileAppSettings = mobileAppSettingsDao.save(tenantId, mobileAppSettings);
             publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
-            return savedMobileAppSettings;
+            return constructMobileAppSettings(savedMobileAppSettings);
         } catch (Exception e) {
             handleEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
             checkConstraintViolation(e, Map.of(
@@ -90,11 +93,9 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
 
             AndroidConfig androidConfig = AndroidConfig.builder()
                     .enabled(true)
-                    .storeLink(DEFAULT_GOOGLE_APP_STORE_LINK)
                     .build();
             IosConfig iosConfig = IosConfig.builder()
                     .enabled(true)
-                    .storeLink(DEFAULT_APPLE_APP_STORE_LINK)
                     .build();
             QRCodeConfig qrCodeConfig = QRCodeConfig.builder()
                     .showOnHomePage(true)
@@ -108,13 +109,10 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
             mobileAppSettings.setQrCodeConfig(qrCodeConfig);
             mobileAppSettings.setAndroidConfig(androidConfig);
             mobileAppSettings.setIosConfig(iosConfig);
-        } else {
-            if (StringUtils.isEmpty(mobileAppSettings.getAndroidConfig().getStoreLink())) {
-                mobileAppSettings.getAndroidConfig().setStoreLink(DEFAULT_GOOGLE_APP_STORE_LINK);
-            }
-            if (StringUtils.isEmpty(mobileAppSettings.getIosConfig().getStoreLink())) {
-                mobileAppSettings.getIosConfig().setStoreLink(DEFAULT_APPLE_APP_STORE_LINK);
-            }
+        }
+        if (mobileAppSettings.isUseDefaultApp()) {
+            mobileAppSettings.setDefaultGooglePlayLink(googlePlayLink);
+            mobileAppSettings.setDefaultAppStoreLink(appStoreLink);
         }
         return mobileAppSettings;
     }
