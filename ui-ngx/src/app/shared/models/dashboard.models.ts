@@ -59,6 +59,7 @@ export interface GridSettings {
   autoFillHeight?: boolean;
   mobileAutoFillHeight?: boolean;
   mobileRowHeight?: number;
+  mobileDisplayLayoutFirst?: boolean;
   layoutDimension?: LayoutDimension;
   [key: string]: any;
 }

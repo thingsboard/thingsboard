@@ -1301,8 +1301,7 @@
               "step": "Krok",
               "min-evaluation-period": "Minimální interval evaluace",
               "max-evaluation-period": "Maximální interval evaluace"
-          },
-          "composite-operations-support": "Podporuje kompozitní Read/Write/Observe operace"
+          }
       },
       "snmp": {
           "add-communication-config": "Přidat konfiguraci komunikace",

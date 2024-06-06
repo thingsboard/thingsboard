@@ -49,7 +49,8 @@ import {
 import { ColorRangeListComponent } from '@home/components/widget/lib/settings/common/color-range-list.component';
 import { ColorRangePanelComponent } from '@home/components/widget/lib/settings/common/color-range-panel.component';
 import {
-  ColorRangeSettingsComponent, ColorRangeSettingsComponentService
+  ColorRangeSettingsComponent,
+  ColorRangeSettingsComponentService
 } from '@home/components/widget/lib/settings/common/color-range-settings.component';
 import {
   GetValueActionSettingsComponent
@@ -116,17 +117,44 @@ import {
   TimeSeriesChartYAxisRowComponent
 } from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-row.component';
 import {
-  TimeSeriesChartYAxisSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-settings-panel.component';
+  TimeSeriesChartAxisSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-panel.component';
 import {
-  TimeSeriesChartAnimationSettingsComponent
-} from '@home/components/widget/lib/settings/common/chart/time-series-chart-animation-settings.component';
+  ChartAnimationSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/chart-animation-settings.component';
 import {
   AutoDateFormatSettingsPanelComponent
 } from '@home/components/widget/lib/settings/common/auto-date-format-settings-panel.component';
 import {
   AutoDateFormatSettingsComponent
 } from '@home/components/widget/lib/settings/common/auto-date-format-settings.component';
+import {
+  ChartFillSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/chart-fill-settings.component';
+import {
+  TimeSeriesChartThresholdSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-threshold-settings.component';
+import {
+  TimeSeriesChartStateRowComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-state-row.component';
+import {
+  TimeSeriesChartStatesPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-states-panel.component';
+import {
+  TimeSeriesChartAxisSettingsButtonComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-button.component';
+import {
+  TimeSeriesChartGridSettingsComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-grid-settings.component';
+import {
+  StatusWidgetStateSettingsComponent
+} from '@home/components/widget/lib/settings/common/indicator/status-widget-state-settings.component';
+import { ChartBarSettingsComponent } from '@home/components/widget/lib/settings/common/chart/chart-bar-settings.component';
+import { AdvancedRangeComponent } from '@home/components/widget/lib/settings/common/advanced-range.component';
+import { GradientComponent } from '@home/components/widget/lib/settings/common/gradient.component';
+import {
+  ValueSourceDataKeyComponent
+} from '@home/components/widget/lib/settings/common/value-source-data-key.component';
 
 @NgModule({
   declarations: [
@@ -145,6 +173,7 @@ import {
     BackgroundSettingsComponent,
     BackgroundSettingsPanelComponent,
     ValueSourceComponent,
+    ValueSourceDataKeyComponent,
     LegendConfigComponent,
     WidgetFontComponent,
     CountWidgetSettingsComponent,
@@ -172,10 +201,20 @@ import {
     TimeSeriesNoAggregationBarWidthSettingsComponent,
     TimeSeriesChartYAxesPanelComponent,
     TimeSeriesChartYAxisRowComponent,
-    TimeSeriesChartYAxisSettingsPanelComponent,
-    TimeSeriesChartAnimationSettingsComponent,
+    TimeSeriesChartAxisSettingsPanelComponent,
+    TimeSeriesChartAxisSettingsButtonComponent,
+    ChartAnimationSettingsComponent,
+    ChartFillSettingsComponent,
+    ChartBarSettingsComponent,
+    TimeSeriesChartThresholdSettingsComponent,
+    TimeSeriesChartStatesPanelComponent,
+    TimeSeriesChartStateRowComponent,
+    TimeSeriesChartGridSettingsComponent,
+    StatusWidgetStateSettingsComponent,
     DataKeyInputComponent,
-    EntityAliasInputComponent
+    EntityAliasInputComponent,
+    AdvancedRangeComponent,
+    GradientComponent
   ],
   imports: [
     CommonModule,
@@ -198,6 +237,7 @@ import {
     BackgroundSettingsComponent,
     BackgroundSettingsPanelComponent,
     ValueSourceComponent,
+    ValueSourceDataKeyComponent,
     LegendConfigComponent,
     WidgetFontComponent,
     CountWidgetSettingsComponent,
@@ -225,10 +265,20 @@ import {
     TimeSeriesNoAggregationBarWidthSettingsComponent,
     TimeSeriesChartYAxesPanelComponent,
     TimeSeriesChartYAxisRowComponent,
-    TimeSeriesChartYAxisSettingsPanelComponent,
-    TimeSeriesChartAnimationSettingsComponent,
+    TimeSeriesChartAxisSettingsPanelComponent,
+    TimeSeriesChartAxisSettingsButtonComponent,
+    ChartAnimationSettingsComponent,
+    ChartFillSettingsComponent,
+    ChartBarSettingsComponent,
+    TimeSeriesChartThresholdSettingsComponent,
+    TimeSeriesChartStatesPanelComponent,
+    TimeSeriesChartStateRowComponent,
+    TimeSeriesChartGridSettingsComponent,
+    StatusWidgetStateSettingsComponent,
     DataKeyInputComponent,
-    EntityAliasInputComponent
+    EntityAliasInputComponent,
+    AdvancedRangeComponent,
+    GradientComponent
   ],
   providers: [
     ColorSettingsComponentService,

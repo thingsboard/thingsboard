@@ -40,4 +40,5 @@ public class EntityViewProcessorV2 extends EntityViewEdgeProcessor {
         CustomerId customerUUID = entityView.getCustomerId() != null ? entityView.getCustomerId() : customerId;
         entityView.setCustomerId(customerUUID);
     }
+
 }

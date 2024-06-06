@@ -51,13 +51,11 @@ public class EntityViewMsgConstructorV1 extends BaseEntityViewMsgConstructor {
     }
 
     private EdgeEntityType checkEntityType(EntityType entityType) {
-        switch (entityType) {
-            case DEVICE:
-                return EdgeEntityType.DEVICE;
-            case ASSET:
-                return EdgeEntityType.ASSET;
-            default:
-                throw new RuntimeException("Unsupported entity type [" + entityType + "]");
-        }
+        return switch (entityType) {
+            case DEVICE -> EdgeEntityType.DEVICE;
+            case ASSET -> EdgeEntityType.ASSET;
+            default -> throw new RuntimeException("Unsupported entity type [" + entityType + "]");
+        };
     }
+
 }

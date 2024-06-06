@@ -14,62 +14,15 @@
 -- limitations under the License.
 --
 
+-- NOTIFICATIONS UPDATE START
 
--- create new attribute_kv table schema
-DO
-$$
-    BEGIN
-        -- in case of running the upgrade script a second time:
-        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'attribute_kv' and column_name='entity_type') THEN
-            DROP VIEW IF EXISTS device_info_view;
-            DROP VIEW IF EXISTS device_info_active_attribute_view;
-            ALTER INDEX IF EXISTS idx_attribute_kv_by_key_and_last_update_ts RENAME TO idx_attribute_kv_by_key_and_last_update_ts_old;
-            IF EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'attribute_kv_pkey') THEN
-                ALTER TABLE attribute_kv RENAME CONSTRAINT attribute_kv_pkey TO attribute_kv_pkey_old;
-            END IF;
-            ALTER TABLE attribute_kv RENAME TO attribute_kv_old;
-            CREATE TABLE IF NOT EXISTS attribute_kv
-            (
-                entity_id uuid,
-                attribute_type int,
-                attribute_key int,
-                bool_v boolean,
-                str_v varchar(10000000),
-                long_v bigint,
-                dbl_v double precision,
-                json_v json,
-                last_update_ts bigint,
-                CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
-            );
-        END IF;
-    END;
-$$;
+ALTER TABLE notification ADD COLUMN IF NOT EXISTS delivery_method VARCHAR(50) NOT NULL default 'WEB';
 
--- rename ts_kv_dictionary table to key_dictionary or create table if not exists
-DO
-$$
-    BEGIN
-        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'ts_kv_dictionary') THEN
-            ALTER TABLE ts_kv_dictionary RENAME CONSTRAINT ts_key_id_pkey TO key_dictionary_id_pkey;
-            ALTER TABLE ts_kv_dictionary RENAME TO key_dictionary;
-        ELSE CREATE TABLE IF NOT EXISTS key_dictionary(
-                key    varchar(255) NOT NULL,
-                key_id serial UNIQUE,
-                CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
-                );
-        END IF;
-    END;
-$$;
+DROP INDEX IF EXISTS idx_notification_recipient_id_created_time;
+DROP INDEX IF EXISTS idx_notification_recipient_id_unread;
 
--- insert keys into key_dictionary
-DO
-$$
-    BEGIN
-        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'attribute_kv_old') THEN
-            INSERT INTO key_dictionary(key) SELECT DISTINCT attribute_key FROM attribute_kv_old ON CONFLICT DO NOTHING;
-        END IF;
-    END;
-$$;
+CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_created_time ON notification(delivery_method, recipient_id, created_time DESC);
+CREATE INDEX IF NOT EXISTS idx_notification_delivery_method_recipient_id_unread ON notification(delivery_method, recipient_id) WHERE status <> 'READ';
 
 -- migrate attributes from attribute_kv_old to attribute_kv
 DO
@@ -107,19 +60,4 @@ EXCEPTION
 END
 $$;
 
--- alarm rules
-CREATE TABLE IF NOT EXISTS alarm_rule (
-    id uuid NOT NULL CONSTRAINT alarm_rule_pkey PRIMARY KEY,
-    created_time bigint NOT NULL,
-    tenant_id uuid NOT NULL,
-    alarm_type varchar(255),
-    name varchar(255),
-    enabled boolean,
-    configuration jsonb,
-    description varchar,
-    external_id uuid,
-    CONSTRAINT alarm_rule_name_unq_key UNIQUE (tenant_id, name)
-);
-
-CREATE INDEX IF NOT EXISTS idx_alarm_rules_tenant_id on alarm_rule(tenant_id);
-CREATE INDEX IF NOT EXISTS idx_alarm_rules_enabled on alarm_rule(tenant_id) WHERE enabled = true;
+-- NOTIFICATIONS UPDATE END

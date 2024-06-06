@@ -25,6 +25,8 @@ public interface InMemoryStorage {
 
     int getLagTotal();
 
+    int getLag(String topic);
+
     boolean put(String topic, TbQueueMsg msg);
 
     <T extends TbQueueMsg> List<T> get(String topic) throws InterruptedException;

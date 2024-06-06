@@ -167,4 +167,10 @@ public class AuthControllerTest extends AbstractControllerTest {
                         .andExpect(jsonPath("$.message",
                                 is("Password must be no more than 72 characters in length.")));
     }
+
+    @Test
+    public void testGetPageWithoutRedirect() throws Exception {
+        doGet("/login").andExpect(status().isOk());
+        doGet("/home").andExpect(status().isOk());
+    }
 }

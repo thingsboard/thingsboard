@@ -52,6 +52,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNoti
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.PostConstruct;
 import java.util.Set;
@@ -62,6 +63,7 @@ import java.util.Set;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
+    private final TenantService tenantService;
 
     @PostConstruct
     public void init() {
@@ -70,83 +72,84 @@ public class EntityStateSourcingListener {
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(SaveEntityEvent<?> event) {
-        log.trace("[{}] SaveEntityEvent called: {}", event.getTenantId(), event);
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
+        if (entityId == null) {
+            return;
+        }
         EntityType entityType = entityId.getEntityType();
+        log.debug("[{}][{}][{}] Handling entity save event: {}", tenantId, entityType, entityId, event);
         boolean isCreated = event.getCreated() != null && event.getCreated();
         ComponentLifecycleEvent lifecycleEvent = isCreated ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED;
 
         switch (entityType) {
-            case ASSET:
-            case ASSET_PROFILE:
-            case ENTITY_VIEW:
-            case NOTIFICATION_RULE:
+            case ASSET, ASSET_PROFILE, ENTITY_VIEW, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
-                break;
-            case RULE_CHAIN:
+            }
+            case RULE_CHAIN -> {
                 RuleChain ruleChain = (RuleChain) event.getEntity();
                 if (RuleChainType.CORE.equals(ruleChain.getType())) {
                     tbClusterService.broadcastEntityStateChangeEvent(ruleChain.getTenantId(), ruleChain.getId(), lifecycleEvent);
                 }
-                break;
-            case TENANT:
+            }
+            case TENANT -> {
                 Tenant tenant = (Tenant) event.getEntity();
                 onTenantUpdate(tenant, lifecycleEvent);
-                break;
-            case TENANT_PROFILE:
+            }
+            case TENANT_PROFILE -> {
                 TenantProfile tenantProfile = (TenantProfile) event.getEntity();
                 onTenantProfileUpdate(tenantProfile, lifecycleEvent);
-                break;
-            case DEVICE:
+            }
+            case DEVICE -> {
                 onDeviceUpdate(event.getEntity(), event.getOldEntity());
-                break;
-            case DEVICE_PROFILE:
+            }
+            case DEVICE_PROFILE -> {
                 DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
                 onDeviceProfileUpdate(deviceProfile, event.getOldEntity(), isCreated);
-                break;
-            case EDGE:
+            }
+            case EDGE -> {
                 handleEdgeEvent(tenantId, entityId, event.getEntity(), lifecycleEvent);
-                break;
-            case TB_RESOURCE:
+            }
+            case TB_RESOURCE -> {
                 TbResource tbResource = (TbResource) event.getEntity();
                 tbClusterService.onResourceChange(tbResource, null);
-                break;
-            case API_USAGE_STATE:
+            }
+            case API_USAGE_STATE -> {
                 ApiUsageState apiUsageState = (ApiUsageState) event.getEntity();
                 tbClusterService.onApiStateChange(apiUsageState, null);
-                break;
-            case ALARM_RULE:
+            }
+            case ALARM_RULE -> {
                 tbClusterService.onAlarmRuleChange(event.getTenantId(), (AlarmRuleId) event.getEntityId(), lifecycleEvent);
-                break;
-            default:
-                break;
+            }
+            default -> {}
         }
     }
 
     @TransactionalEventListener(fallbackExecution = true)
     public void handleEvent(DeleteEntityEvent<?> event) {
-        log.trace("[{}] DeleteEntityEvent called: {}", event.getTenantId(), event);
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
+        if (entityId == null) {
+            return;
+        }
         EntityType entityType = entityId.getEntityType();
+        if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT && !tenantService.tenantExists(tenantId)) {
+            log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
+            return;
+        }
+        log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
 
         switch (entityType) {
-            case ASSET:
-            case ASSET_PROFILE:
-            case ENTITY_VIEW:
-            case CUSTOMER:
-            case EDGE:
-            case NOTIFICATION_RULE:
+            case ASSET, ASSET_PROFILE, ENTITY_VIEW, CUSTOMER, EDGE, NOTIFICATION_RULE -> {
                 tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
-                break;
-            case NOTIFICATION_REQUEST:
+            }
+            case NOTIFICATION_REQUEST -> {
                 NotificationRequest request = (NotificationRequest) event.getEntity();
                 if (request.isScheduled()) {
                     tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
                 }
-                break;
-            case RULE_CHAIN:
+            }
+            case RULE_CHAIN -> {
                 RuleChain ruleChain = (RuleChain) event.getEntity();
                 if (RuleChainType.CORE.equals(ruleChain.getType())) {
                     Set<RuleChainId> referencingRuleChainIds = JacksonUtil.fromString(event.getBody(), new TypeReference<>() {
@@ -157,118 +160,117 @@ public class EntityStateSourcingListener {
                     }
                     tbClusterService.broadcastEntityStateChangeEvent(tenantId, ruleChain.getId(), ComponentLifecycleEvent.DELETED);
                 }
-                break;
-            case TENANT:
+            }
+            case TENANT -> {
                 Tenant tenant = (Tenant) event.getEntity();
                 onTenantDeleted(tenant);
-                break;
-            case TENANT_PROFILE:
+            }
+            case TENANT_PROFILE -> {
                 TenantProfile tenantProfile = (TenantProfile) event.getEntity();
                 tbClusterService.onTenantProfileDelete(tenantProfile, null);
-                break;
-            case DEVICE:
+            }
+            case DEVICE -> {
                 Device device = (Device) event.getEntity();
                 tbClusterService.onDeviceDeleted(tenantId, device, null);
-                break;
-            case DEVICE_PROFILE:
+            }
+            case DEVICE_PROFILE -> {
                 DeviceProfile deviceProfile = (DeviceProfile) event.getEntity();
                 onDeviceProfileDelete(event.getTenantId(), event.getEntityId(), deviceProfile);
-                break;
-            case TB_RESOURCE:
+            }
+            case TB_RESOURCE -> {
                 TbResourceInfo tbResource = (TbResourceInfo) event.getEntity();
                 tbClusterService.onResourceDeleted(tbResource, null);
-                break;
-            case ALARM_RULE:
-                tbClusterService.onAlarmRuleChange(event.getTenantId(), (AlarmRuleId) event.getEntityId(), ComponentLifecycleEvent.DELETED);
-                break;
-            default:
-                break;
-        }
-    }
-
-    @TransactionalEventListener(fallbackExecution = true)
-    public void handleEvent(ActionEntityEvent<?> event) {
-        log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
-        if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
-                EntityType.DEVICE.equals(event.getEntityId().getEntityType())
-                && event.getEntity() instanceof DeviceCredentials) {
-            tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
-                    (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
-        } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device) {
-            Device device = (Device) event.getEntity();
-            Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
-            if (tenant != null) {
-                tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
             }
-            pushAssignedFromNotification(tenant, event.getTenantId(), device);
+            case ALARM_RULE -> {
+                tbClusterService.onAlarmRuleChange(event.getTenantId(), (AlarmRuleId) event.getEntityId(), ComponentLifecycleEvent.DELETED);
+            }
+            default -> {}
+            }
+        }
+
+        @TransactionalEventListener(fallbackExecution = true)
+        public void handleEvent (ActionEntityEvent < ? > event){
+            log.trace("[{}] ActionEntityEvent called: {}", event.getTenantId(), event);
+            if (ActionType.CREDENTIALS_UPDATED.equals(event.getActionType()) &&
+                    EntityType.DEVICE.equals(event.getEntityId().getEntityType())
+                    && event.getEntity() instanceof DeviceCredentials) {
+                tbClusterService.pushMsgToCore(new DeviceCredentialsUpdateNotificationMsg(event.getTenantId(),
+                        (DeviceId) event.getEntityId(), (DeviceCredentials) event.getEntity()), null);
+            } else if (ActionType.ASSIGNED_TO_TENANT.equals(event.getActionType()) && event.getEntity() instanceof Device device) {
+                Tenant tenant = JacksonUtil.fromString(event.getBody(), Tenant.class);
+                if (tenant != null) {
+                    tbClusterService.onDeviceAssignedToTenant(tenant.getId(), device);
+                }
+                pushAssignedFromNotification(tenant, event.getTenantId(), device);
+            }
+        }
+
+        private void onTenantUpdate (Tenant tenant, ComponentLifecycleEvent lifecycleEvent){
+            tbClusterService.onTenantChange(tenant, null);
+            tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), lifecycleEvent);
+        }
+
+        private void onTenantDeleted (Tenant tenant){
+            tbClusterService.onTenantDelete(tenant, null);
+            tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), ComponentLifecycleEvent.DELETED);
+        }
+
+        private void onTenantProfileUpdate (TenantProfile tenantProfile, ComponentLifecycleEvent lifecycleEvent){
+            tbClusterService.onTenantProfileChange(tenantProfile, null);
+            tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, tenantProfile.getId(), lifecycleEvent);
+        }
+
+        private void onDeviceProfileUpdate (DeviceProfile deviceProfile, Object oldEntity,boolean isCreated){
+            DeviceProfile oldDeviceProfile = null;
+            if (!isCreated) {
+                oldDeviceProfile = getOldDeviceProfile(oldEntity);
+            }
+            tbClusterService.onDeviceProfileChange(deviceProfile, oldDeviceProfile, null);
+        }
+
+        private DeviceProfile getOldDeviceProfile (Object oldEntity){
+            if (oldEntity instanceof DeviceProfile) {
+                return (DeviceProfile) oldEntity;
+            }
+            return null;
+        }
+
+        private void onDeviceProfileDelete (TenantId tenantId, EntityId entityId, DeviceProfile deviceProfile){
+            tbClusterService.onDeviceProfileDelete(deviceProfile, null);
+            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
+        }
+
+        private void onDeviceUpdate (Object entity, Object oldEntity){
+            Device device = (Device) entity;
+            Device oldDevice = null;
+            if (oldEntity instanceof Device) {
+                oldDevice = (Device) oldEntity;
+            }
+            tbClusterService.onDeviceUpdated(device, oldDevice);
+        }
+
+        private void handleEdgeEvent (TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent
+        lifecycleEvent){
+            if (entity instanceof Edge) {
+                tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
+            } else if (entity instanceof EdgeEvent) {
+                tbClusterService.onEdgeEventUpdate(tenantId, (EdgeId) entityId);
+            }
+        }
+
+        private void pushAssignedFromNotification (Tenant currentTenant, TenantId newTenantId, Device assignedDevice){
+            String data = JacksonUtil.toString(JacksonUtil.valueToTree(assignedDevice));
+            if (data != null) {
+                TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(),
+                        assignedDevice.getCustomerId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
+                tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
+            }
+        }
+
+        private TbMsgMetaData getMetaDataForAssignedFrom (Tenant tenant){
+            TbMsgMetaData metaData = new TbMsgMetaData();
+            metaData.putValue("assignedFromTenantId", tenant.getId().getId().toString());
+            metaData.putValue("assignedFromTenantName", tenant.getName());
+            return metaData;
         }
     }
-
-    private void onTenantUpdate(Tenant tenant, ComponentLifecycleEvent lifecycleEvent) {
-        tbClusterService.onTenantChange(tenant, null);
-        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), lifecycleEvent);
-    }
-
-    private void onTenantDeleted(Tenant tenant) {
-        tbClusterService.onTenantDelete(tenant, null);
-        tbClusterService.broadcastEntityStateChangeEvent(tenant.getId(), tenant.getId(), ComponentLifecycleEvent.DELETED);
-    }
-
-    private void onTenantProfileUpdate(TenantProfile tenantProfile, ComponentLifecycleEvent lifecycleEvent) {
-        tbClusterService.onTenantProfileChange(tenantProfile, null);
-        tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, tenantProfile.getId(), lifecycleEvent);
-    }
-
-    private void onDeviceProfileUpdate(DeviceProfile deviceProfile, Object oldEntity, boolean isCreated) {
-        DeviceProfile oldDeviceProfile = null;
-        if (!isCreated) {
-            oldDeviceProfile = getOldDeviceProfile(oldEntity);
-        }
-        tbClusterService.onDeviceProfileChange(deviceProfile, oldDeviceProfile, null);
-    }
-
-    private DeviceProfile getOldDeviceProfile(Object oldEntity) {
-        if (oldEntity instanceof DeviceProfile) {
-            return (DeviceProfile) oldEntity;
-        }
-        return null;
-    }
-
-    private void onDeviceProfileDelete(TenantId tenantId, EntityId entityId, DeviceProfile deviceProfile) {
-        tbClusterService.onDeviceProfileDelete(deviceProfile, null);
-        tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, ComponentLifecycleEvent.DELETED);
-    }
-
-    private void onDeviceUpdate(Object entity, Object oldEntity) {
-        Device device = (Device) entity;
-        Device oldDevice = null;
-        if (oldEntity instanceof Device) {
-            oldDevice = (Device) oldEntity;
-        }
-        tbClusterService.onDeviceUpdated(device, oldDevice);
-    }
-
-    private void handleEdgeEvent(TenantId tenantId, EntityId entityId, Object entity, ComponentLifecycleEvent lifecycleEvent) {
-        if (entity instanceof Edge) {
-            tbClusterService.broadcastEntityStateChangeEvent(tenantId, entityId, lifecycleEvent);
-        } else if (entity instanceof EdgeEvent) {
-            tbClusterService.onEdgeEventUpdate(tenantId, (EdgeId) entityId);
-        }
-    }
-
-    private void pushAssignedFromNotification(Tenant currentTenant, TenantId newTenantId, Device assignedDevice) {
-        String data = JacksonUtil.toString(JacksonUtil.valueToTree(assignedDevice));
-        if (data != null) {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.ENTITY_ASSIGNED_FROM_TENANT, assignedDevice.getId(),
-                    assignedDevice.getCustomerId(), getMetaDataForAssignedFrom(currentTenant), TbMsgDataType.JSON, data);
-            tbClusterService.pushMsgToRuleEngine(newTenantId, assignedDevice.getId(), tbMsg, null);
-        }
-    }
-
-    private TbMsgMetaData getMetaDataForAssignedFrom(Tenant tenant) {
-        TbMsgMetaData metaData = new TbMsgMetaData();
-        metaData.putValue("assignedFromTenantId", tenant.getId().getId().toString());
-        metaData.putValue("assignedFromTenantName", tenant.getName());
-        return metaData;
-    }
-}

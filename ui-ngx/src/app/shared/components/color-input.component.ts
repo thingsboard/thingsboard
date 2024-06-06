@@ -77,6 +77,10 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
   @coerceBoolean()
   openOnInput = false;
 
+  @Input()
+  @coerceBoolean()
+  noBorder = false;
+
   private requiredValue: boolean;
   get required(): boolean {
     return this.requiredValue;
@@ -189,13 +193,13 @@ export class ColorInputComponent extends PageComponent implements OnInit, Contro
         this.popoverService.hidePopover(trigger);
       } else {
         const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-            this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
+            this.viewContainerRef, ColorPickerPanelComponent, ['left'], true, null,
             {
               color: this.colorFormGroup.get('color').value,
-              colorClearButton: this.colorClearButton
+              colorClearButton: this.colorClearButton,
+              colorCancelButton: true
             },
-            {},
-            {}, {}, true);
+            {}, {}, {}, false, () => {}, {padding: '12px 4px 12px 12px'});
         colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
         colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
           colorPickerPopover.hide();

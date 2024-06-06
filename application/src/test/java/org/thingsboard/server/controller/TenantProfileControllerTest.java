@@ -75,7 +75,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         savedTenantProfile.setName("New tenant profile");
         doPost("/api/tenantProfile", savedTenantProfile, TenantProfile.class);
-        TenantProfile foundTenantProfile = doGet("/api/tenantProfile/"+savedTenantProfile.getId().getId().toString(), TenantProfile.class);
+        TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString(), TenantProfile.class);
         Assert.assertEquals(foundTenantProfile.getName(), savedTenantProfile.getName());
 
         testBroadcastEntityStateChangeEventTimeManyTimeTenantProfile(savedTenantProfile, ComponentLifecycleEvent.UPDATED, 1);
@@ -100,7 +100,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        TenantProfile foundTenantProfile = doGet("/api/tenantProfile/"+savedTenantProfile.getId().getId().toString(), TenantProfile.class);
+        TenantProfile foundTenantProfile = doGet("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString(), TenantProfile.class);
         Assert.assertNotNull(foundTenantProfile);
         Assert.assertEquals(savedTenantProfile, foundTenantProfile);
     }
@@ -110,7 +110,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        EntityInfo foundTenantProfileInfo = doGet("/api/tenantProfileInfo/"+savedTenantProfile.getId().getId().toString(), EntityInfo.class);
+        EntityInfo foundTenantProfileInfo = doGet("/api/tenantProfileInfo/" + savedTenantProfile.getId().getId().toString(), EntityInfo.class);
         Assert.assertNotNull(foundTenantProfileInfo);
         Assert.assertEquals(savedTenantProfile.getId(), foundTenantProfileInfo.getId());
         Assert.assertEquals(savedTenantProfile.getName(), foundTenantProfileInfo.getName());
@@ -129,7 +129,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile 1");
         TenantProfile savedTenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
-        TenantProfile defaultTenantProfile = doPost("/api/tenantProfile/"+savedTenantProfile.getId().getId().toString()+"/default", TenantProfile.class);
+        TenantProfile defaultTenantProfile = doPost("/api/tenantProfile/" + savedTenantProfile.getId().getId().toString() + "/default", TenantProfile.class);
         Assert.assertNotNull(defaultTenantProfile);
         EntityInfo foundDefaultTenantProfile = doGet("/api/tenantProfileInfo/default", EntityInfo.class);
         Assert.assertNotNull(foundDefaultTenantProfile);
@@ -176,7 +176,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant with tenant profile");
         tenant.setTenantProfileId(savedTenantProfile.getId());
-        Tenant savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedTenant = saveTenant(tenant);
 
         Mockito.reset(tbClusterService);
 
@@ -186,8 +186,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         testBroadcastEntityStateChangeEventNeverTenantProfile();
 
-        doDelete("/api/tenant/"+savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -214,7 +213,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         List<TenantProfile> tenantProfiles = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<TenantProfile> pageData = doGetTypedWithPageLink("/api/tenantProfiles?",
-                new TypeReference<>(){}, pageLink);
+                new TypeReference<>() {}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
         tenantProfiles.addAll(pageData.getData());
@@ -222,8 +221,8 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService);
 
         int cntEntity = 28;
-        for (int i=0;i<28;i++) {
-            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile"+i);
+        for (int i = 0; i < 28; i++) {
+            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile" + i);
             tenantProfiles.add(doPost("/api/tenantProfile", tenantProfile, TenantProfile.class));
         }
 
@@ -233,7 +232,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         pageLink = new PageLink(17);
         do {
             pageData = doGetTypedWithPageLink("/api/tenantProfiles?",
-                    new TypeReference<>(){}, pageLink);
+                    new TypeReference<>() {}, pageLink);
             loadedTenantProfiles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -256,7 +255,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/tenantProfiles?",
-                new TypeReference<PageData<TenantProfile>>(){}, pageLink);
+                new TypeReference<PageData<TenantProfile>>() {}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
 
@@ -269,13 +268,13 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         List<TenantProfile> tenantProfiles = new ArrayList<>();
         PageLink pageLink = new PageLink(17);
         PageData<TenantProfile> tenantProfilePageData = doGetTypedWithPageLink("/api/tenantProfiles?",
-                new TypeReference<>(){}, pageLink);
+                new TypeReference<>() {}, pageLink);
         Assert.assertFalse(tenantProfilePageData.hasNext());
         Assert.assertEquals(1, tenantProfilePageData.getTotalElements());
         tenantProfiles.addAll(tenantProfilePageData.getData());
 
-        for (int i=0;i<28;i++) {
-            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile"+i);
+        for (int i = 0; i < 28; i++) {
+            TenantProfile tenantProfile = this.createTenantProfile("Tenant Profile" + i);
             tenantProfiles.add(doPost("/api/tenantProfile", tenantProfile, TenantProfile.class));
         }
 
@@ -284,7 +283,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         PageData<EntityInfo> pageData;
         do {
             pageData = doGetTypedWithPageLink("/api/tenantProfileInfos?",
-                    new TypeReference<PageData<EntityInfo>>(){}, pageLink);
+                    new TypeReference<PageData<EntityInfo>>() {}, pageLink);
             loadedTenantProfileInfos.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -308,7 +307,7 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
 
         pageLink = new PageLink(17);
         pageData = doGetTypedWithPageLink("/api/tenantProfileInfos?",
-                new TypeReference<PageData<EntityInfo>>(){}, pageLink);
+                new TypeReference<PageData<EntityInfo>>() {}, pageLink);
         Assert.assertFalse(pageData.hasNext());
         Assert.assertEquals(1, pageData.getTotalElements());
     }
@@ -354,14 +353,14 @@ public class TenantProfileControllerTest extends AbstractControllerTest {
         ArgumentMatcher<TenantProfile> matcherTenantProfile = cntTime == 1 ? argument -> argument.equals(tenantProfile) :
                 argument -> argument.getClass().equals(TenantProfile.class);
         if (ComponentLifecycleEvent.DELETED.equals(event)) {
-            Mockito.verify(tbClusterService, times( cntTime)).onTenantProfileDelete(Mockito.argThat( matcherTenantProfile),
+            Mockito.verify(tbClusterService, times(cntTime)).onTenantProfileDelete(Mockito.argThat(matcherTenantProfile),
                     Mockito.isNull());
             testBroadcastEntityStateChangeEventNever(createEntityId_NULL_UUID(new Tenant()));
         } else {
-            Mockito.verify(tbClusterService, times( cntTime)).onTenantProfileChange(Mockito.argThat(matcherTenantProfile),
+            Mockito.verify(tbClusterService, times(cntTime)).onTenantProfileChange(Mockito.argThat(matcherTenantProfile),
                     Mockito.isNull());
             TenantProfileId tenantProfileIdId = cntTime == 1 ? tenantProfile.getId() : (TenantProfileId) createEntityId_NULL_UUID(tenantProfile);
-            testBroadcastEntityStateChangeEventTime(tenantProfileIdId, null,  cntTime);
+            testBroadcastEntityStateChangeEventTime(tenantProfileIdId, null, cntTime);
         }
         Mockito.reset(tbClusterService);
     }

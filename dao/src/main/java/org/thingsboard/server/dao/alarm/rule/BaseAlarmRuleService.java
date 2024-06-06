@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.alarm.rule;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRuleInfo;
@@ -84,7 +85,7 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     @Override
     public AlarmRule findAlarmRuleById(TenantId tenantId, AlarmRuleId alarmRuleId) {
         log.trace("Executing findAlarmById [{}]", alarmRuleId);
-        validateId(alarmRuleId, "Incorrect alarmRuleId " + alarmRuleId);
+        validateId(alarmRuleId, id -> "Incorrect alarmRuleId " + alarmRuleId);
         return alarmRuleDao.findById(tenantId, alarmRuleId.getId());
     }
 
@@ -112,8 +113,14 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     @Override
     public void deleteAlarmRulesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteAlarmRulesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantAlarmRulesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Transactional
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAlarmRulesByTenantId(tenantId);
     }
 
     private PaginatedRemover<TenantId, AlarmRuleInfo> tenantAlarmRulesRemover =

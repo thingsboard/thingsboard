@@ -291,27 +291,28 @@ class AlarmState {
                 return null;
             }
         } else {
-            currentAlarm = new Alarm();
-            currentAlarm.setType(alarmDefinition.getAlarmType());
-            currentAlarm.setAcknowledged(false);
-            currentAlarm.setCleared(false);
-            currentAlarm.setSeverity(severity);
+            var newAlarm = new Alarm();
+            newAlarm.setType(alarmDefinition.getAlarmType());
+            newAlarm.setAcknowledged(false);
+            newAlarm.setCleared(false);
+            newAlarm.setSeverity(severity);
             long startTs = dataSnapshot.getTs();
-            if (startTs == 0L) {
-                startTs = System.currentTimeMillis();
+            long currentTime = System.currentTimeMillis();
+            if (startTs == 0L || startTs > currentTime) {
+                startTs = currentTime;
             }
-            currentAlarm.setStartTs(startTs);
-            currentAlarm.setEndTs(currentAlarm.getStartTs());
-            currentAlarm.setDetails(createDetails(ruleState));
-            currentAlarm.setOriginator(originator);
-            currentAlarm.setTenantId(tenantId);
-            currentAlarm.setPropagate(alarmDefinition.getConfiguration().isPropagate());
-            currentAlarm.setPropagateToOwner(alarmDefinition.getConfiguration().isPropagateToOwner());
-            currentAlarm.setPropagateToTenant(alarmDefinition.getConfiguration().isPropagateToTenant());
+            newAlarm.setStartTs(startTs);
+            newAlarm.setEndTs(startTs);
+            newAlarm.setDetails(createDetails(ruleState));
+            newAlarm.setOriginator(originator);
+            newAlarm.setTenantId(tenantId);
+            newAlarm.setPropagate(alarmDefinition.getConfiguration().isPropagate());
+            newAlarm.setPropagateToOwner(alarmDefinition.getConfiguration().isPropagateToOwner());
+            newAlarm.setPropagateToTenant(alarmDefinition.getConfiguration().isPropagateToTenant());
             if (alarmDefinition.getConfiguration().getPropagateRelationTypes() != null) {
-                currentAlarm.setPropagateRelationTypes(alarmDefinition.getConfiguration().getPropagateRelationTypes());
+                newAlarm.setPropagateRelationTypes(alarmDefinition.getConfiguration().getPropagateRelationTypes());
             }
-            AlarmApiCallResult result = ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(currentAlarm));
+            AlarmApiCallResult result = ctx.getAlarmService().createAlarm(AlarmCreateOrUpdateActiveRequest.fromAlarm(newAlarm));
             currentAlarm = result.getAlarm();
             return TbAlarmResult.fromAlarmResult(result);
         }

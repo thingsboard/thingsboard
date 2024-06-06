@@ -33,7 +33,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isUndefined } from '@core/utils';
+import { formatValue, isUndefined, mergeDeep } from '@core/utils';
 import {
   cssSizeToStrSize,
   DateFormatProcessor,
@@ -44,6 +44,7 @@ import {
   barChartWithLabelsDefaultSettings,
   BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
+import { TimeSeriesChartType } from '@home/components/widget/lib/chart/time-series-chart.models';
 
 @Component({
   selector: 'tb-bar-chart-with-labels-basic-config',
@@ -87,7 +88,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: BarChartWithLabelsWidgetSettings = {...barChartWithLabelsDefaultSettings, ...(configData.config.settings || {})};
+    const settings: BarChartWithLabelsWidgetSettings = mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings,
+      barChartWithLabelsDefaultSettings, configData.config.settings as BarChartWithLabelsWidgetSettings);
     const iconSize = resolveCssSize(configData.config.iconSize);
     this.barChartWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
@@ -105,15 +107,31 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
       icon: [configData.config.titleIcon, []],
       iconColor: [configData.config.iconColor, []],
 
+      dataZoom: [settings.dataZoom, []],
+
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
       barLabelColor: [settings.barLabelColor, []],
       showBarValue: [settings.showBarValue, []],
       barValueFont: [settings.barValueFont, []],
       barValueColor: [settings.barValueColor, []],
+      showBarBorder: [settings.showBarBorder, []],
+      barBorderWidth: [settings.barBorderWidth, []],
+      barBorderRadius: [settings.barBorderRadius, []],
+      barBackgroundSettings: [settings.barBackgroundSettings, []],
+      noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
 
       units: [configData.config.units, []],
       decimals: [configData.config.decimals, []],
+
+      grid: [settings.grid, []],
+
+      yAxis: [settings.yAxis, []],
+      xAxis: [settings.xAxis, []],
+
+      thresholds: [settings.thresholds, []],
+
+      animation: [settings.animation, []],
 
       showLegend: [settings.showLegend, []],
       legendPosition: [settings.legendPosition, []],
@@ -121,6 +139,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -136,6 +156,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -158,6 +179,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
+    this.widgetConfig.config.settings.dataZoom = config.dataZoom;
+
     this.widgetConfig.config.settings.showBarLabel = config.showBarLabel;
     this.widgetConfig.config.settings.barLabelFont = config.barLabelFont;
     this.widgetConfig.config.settings.barLabelColor = config.barLabelColor;
@@ -165,8 +188,23 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings.barValueFont = config.barValueFont;
     this.widgetConfig.config.settings.barValueColor = config.barValueColor;
 
+    this.widgetConfig.config.settings.showBarBorder = config.showBarBorder;
+    this.widgetConfig.config.settings.barBorderWidth = config.barBorderWidth;
+    this.widgetConfig.config.settings.barBorderRadius = config.barBorderRadius;
+    this.widgetConfig.config.settings.barBackgroundSettings = config.barBackgroundSettings;
+    this.widgetConfig.config.settings.noAggregationBarWidthSettings = config.noAggregationBarWidthSettings;
+
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
+
+    this.widgetConfig.config.settings.grid = config.grid;
+
+    this.widgetConfig.config.settings.yAxis = config.yAxis;
+    this.widgetConfig.config.settings.xAxis = config.xAxis;
+
+    this.widgetConfig.config.settings.thresholds = config.thresholds;
+
+    this.widgetConfig.config.settings.animation = config.animation;
 
     this.widgetConfig.config.settings.showLegend = config.showLegend;
     this.widgetConfig.config.settings.legendPosition = config.legendPosition;
@@ -174,6 +212,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings.legendLabelColor = config.legendLabelColor;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
+    this.widgetConfig.config.settings.tooltipLabelFont = config.tooltipLabelFont;
+    this.widgetConfig.config.settings.tooltipLabelColor = config.tooltipLabelColor;
     this.widgetConfig.config.settings.tooltipValueFont = config.tooltipValueFont;
     this.widgetConfig.config.settings.tooltipValueColor = config.tooltipValueColor;
     this.widgetConfig.config.settings.tooltipShowDate = config.tooltipShowDate;
@@ -188,13 +228,14 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showBarLabel', 'showBarValue', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['showTitle', 'showIcon', 'showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
@@ -202,6 +243,7 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     const showIcon: boolean = this.barChartWidgetConfigForm.get('showIcon').value;
     const showBarLabel: boolean = this.barChartWidgetConfigForm.get('showBarLabel').value;
     const showBarValue: boolean = this.barChartWidgetConfigForm.get('showBarValue').value;
+    const showBarBorder: boolean = this.barChartWidgetConfigForm.get('showBarBorder').value;
     const showLegend: boolean = this.barChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.barChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.barChartWidgetConfigForm.get('tooltipShowDate').value;
@@ -248,7 +290,11 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
       this.barChartWidgetConfigForm.get('barValueFont').disable();
       this.barChartWidgetConfigForm.get('barValueColor').disable();
     }
-
+    if (showBarBorder) {
+      this.barChartWidgetConfigForm.get('barBorderWidth').enable();
+    } else {
+      this.barChartWidgetConfigForm.get('barBorderWidth').disable();
+    }
     if (showLegend) {
       this.barChartWidgetConfigForm.get('legendPosition').enable();
       this.barChartWidgetConfigForm.get('legendLabelFont').enable();
@@ -260,6 +306,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     }
 
     if (showTooltip) {
+      this.barChartWidgetConfigForm.get('tooltipLabelFont').enable();
+      this.barChartWidgetConfigForm.get('tooltipLabelColor').enable();
       this.barChartWidgetConfigForm.get('tooltipValueFont').enable();
       this.barChartWidgetConfigForm.get('tooltipValueColor').enable();
       this.barChartWidgetConfigForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -277,6 +325,8 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
         this.barChartWidgetConfigForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.barChartWidgetConfigForm.get('tooltipLabelFont').disable();
+      this.barChartWidgetConfigForm.get('tooltipLabelColor').disable();
       this.barChartWidgetConfigForm.get('tooltipValueFont').disable();
       this.barChartWidgetConfigForm.get('tooltipValueColor').disable();
       this.barChartWidgetConfigForm.get('tooltipShowDate').disable({emitEvent: false});
@@ -326,4 +376,6 @@ export class BarChartWithLabelsBasicConfigComponent extends BasicWidgetConfigCom
     processor.update(Date.now());
     return processor.formatted;
   }
+
+  protected readonly TimeSeriesChartType = TimeSeriesChartType;
 }

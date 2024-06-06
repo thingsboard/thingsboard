@@ -87,24 +87,23 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
             Map<String, Object> entityBody = new HashMap<>();
             JsonNode dataJson = JacksonUtil.toJsonNode(msg.getData());
             switch (actionType) {
-                case ATTRIBUTES_UPDATED:
-                case POST_ATTRIBUTES:
+                case ATTRIBUTES_UPDATED, POST_ATTRIBUTES -> {
                     entityBody.put("kv", dataJson);
                     entityBody.put(SCOPE, getScope(metadata));
                     if (EdgeEventActionType.POST_ATTRIBUTES.equals(actionType)) {
                         entityBody.put("isPostAttributes", true);
                     }
-                    break;
-                case ATTRIBUTES_DELETED:
+                }
+                case ATTRIBUTES_DELETED -> {
                     List<String> keys = JacksonUtil.convertValue(dataJson.get("attributes"), new TypeReference<>() {
                     });
                     entityBody.put("keys", keys);
                     entityBody.put(SCOPE, getScope(metadata));
-                    break;
-                case TIMESERIES_UPDATED:
+                }
+                case TIMESERIES_UPDATED -> {
                     entityBody.put("data", dataJson);
                     entityBody.put("ts", msg.getMetaDataTs());
-                    break;
+                }
             }
             return buildEvent(ctx.getTenantId(),
                     actionType,
@@ -179,4 +178,5 @@ public abstract class AbstractTbMsgPushNode<T extends BaseTbMsgPushNodeConfigura
         return msg.isTypeOneOf(POST_TELEMETRY_REQUEST, POST_ATTRIBUTES_REQUEST, ATTRIBUTES_UPDATED, ATTRIBUTES_DELETED, TIMESERIES_UPDATED,
                 ALARM, CONNECT_EVENT, DISCONNECT_EVENT, ACTIVITY_EVENT, INACTIVITY_EVENT, TO_SERVER_RPC_REQUEST);
     }
+
 }

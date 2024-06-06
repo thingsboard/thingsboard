@@ -26,12 +26,12 @@ import org.thingsboard.server.common.data.id.RuleChainId;
 @Schema
 @Data
 public class RuleChainConnectionInfo {
-    @Schema(required = true, description = "Index of rule node in the 'nodes' array of the RuleChainMetaData. Indicates the 'from' part of the connection.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Index of rule node in the 'nodes' array of the RuleChainMetaData. Indicates the 'from' part of the connection.")
     private int fromIndex;
-    @Schema(required = true, description = "JSON object with the Rule Chain Id.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with the Rule Chain Id.")
     private RuleChainId targetRuleChainId;
-    @Schema(required = true, description = "JSON object with the additional information about the connection.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "JSON object with the additional information about the connection.")
     private JsonNode additionalInfo;
-    @Schema(required = true, description = "Type of the relation. Typically indicated the result of processing by the 'from' rule node. For example, 'Success' or 'Failure'")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of the relation. Typically indicated the result of processing by the 'from' rule node. For example, 'Success' or 'Failure'")
     private String type;
 }

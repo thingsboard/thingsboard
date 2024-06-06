@@ -28,16 +28,16 @@ import java.util.Set;
 @Slf4j
 public class RuleChainOutputLabelsUsage {
 
-    @Schema(required = true, description = "Rule Chain Id", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Rule Chain Id", accessMode = Schema.AccessMode.READ_ONLY)
     private RuleChainId ruleChainId;
-    @Schema(required = true, description = "Rule Node Id", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Rule Node Id", accessMode = Schema.AccessMode.READ_ONLY)
     private RuleNodeId ruleNodeId;
 
-    @Schema(required = true, description = "Rule Chain Name", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Rule Chain Name", accessMode = Schema.AccessMode.READ_ONLY)
     private String ruleChainName;
-    @Schema(required = true, description = "Rule Node Name", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Rule Node Name", accessMode = Schema.AccessMode.READ_ONLY)
     private String ruleNodeName;
-    @Schema(required = true, description = "Output labels", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Output labels", accessMode = Schema.AccessMode.READ_ONLY)
     private Set<String> labels;
 
 }

@@ -17,7 +17,7 @@ package org.thingsboard.rule.engine.edge;
 
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -26,7 +26,8 @@ public class TbMsgPushToEdgeNodeConfiguration extends BaseTbMsgPushNodeConfigura
     @Override
     public TbMsgPushToEdgeNodeConfiguration defaultConfiguration() {
         TbMsgPushToEdgeNodeConfiguration configuration = new TbMsgPushToEdgeNodeConfiguration();
-        configuration.setScope(DataConstants.SERVER_SCOPE);
+        configuration.setScope(AttributeScope.SERVER_SCOPE.name());
         return configuration;
     }
+
 }

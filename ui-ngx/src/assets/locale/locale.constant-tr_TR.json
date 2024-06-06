@@ -1316,8 +1316,7 @@
         "step": "Adım",
         "min-evaluation-period": "Minimum değerlendirme süresi",
         "max-evaluation-period": "Maksimum değerlendirme süresi"
-      },
-      "composite-operations-support": "İç içe Okuma/Yazma/Gözlemleme işlemlerini destekler"
+      }
     },
     "snmp": {
       "add-communication-config": "İletişim yapılandırması ekle",

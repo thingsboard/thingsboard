@@ -25,10 +25,10 @@ import jakarta.validation.constraints.NotNull;;
 @Data
 public class SaveDeviceWithCredentialsRequest {
 
-    @Schema(description = "The JSON with device entity.", required = true)
+    @Schema(description = "The JSON with device entity.", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private final Device device;
-    @Schema(description = "The JSON with credentials entity.", required = true)
+    @Schema(description = "The JSON with credentials entity.", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
     private final DeviceCredentials credentials;
 

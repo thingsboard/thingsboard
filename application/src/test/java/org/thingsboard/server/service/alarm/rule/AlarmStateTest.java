@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.service.alarm.rule;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.alarm.rule.condition.AlarmCondition;
@@ -29,9 +29,9 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.mockito.Mockito.mock;
 
 public class AlarmStateTest {

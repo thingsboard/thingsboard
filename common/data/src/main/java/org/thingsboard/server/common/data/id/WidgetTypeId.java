@@ -31,7 +31,7 @@ public final class WidgetTypeId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "WIDGET_TYPE", allowableValues = "WIDGET_TYPE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "WIDGET_TYPE", allowableValues = "WIDGET_TYPE")
     @Override
     public EntityType getEntityType() {
         return EntityType.WIDGET_TYPE;

@@ -155,4 +155,5 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
         edgeEvent.setEdgeId(edgeId);
         return ctx.getEdgeEventService().saveAsync(edgeEvent);
     }
+
 }

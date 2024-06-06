@@ -24,8 +24,8 @@ import java.util.List;
 @Data
 public class RuleChainData {
 
-    @Schema(required = true, description = "List of the Rule Chain objects.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of the Rule Chain objects.", accessMode = Schema.AccessMode.READ_ONLY)
     List<RuleChain> ruleChains;
-    @Schema(required = true, description = "List of the Rule Chain metadata objects.", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of the Rule Chain metadata objects.", accessMode = Schema.AccessMode.READ_ONLY)
     List<RuleChainMetaData> metadata;
 }

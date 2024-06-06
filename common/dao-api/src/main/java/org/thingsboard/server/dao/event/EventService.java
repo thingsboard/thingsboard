@@ -35,6 +35,8 @@ public interface EventService {
 
     List<EventInfo> findLatestEvents(TenantId tenantId, EntityId entityId, EventType eventType, int limit);
 
+    EventInfo findLatestDebugRuleNodeInEvent(TenantId tenantId, EntityId entityId);
+
     PageData<EventInfo> findEventsByFilter(TenantId tenantId, EntityId entityId, EventFilter eventFilter, TimePageLink pageLink);
 
     void removeEvents(TenantId tenantId, EntityId entityId);

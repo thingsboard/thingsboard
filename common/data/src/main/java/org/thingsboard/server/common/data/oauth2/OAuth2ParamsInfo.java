@@ -36,11 +36,11 @@ public class OAuth2ParamsInfo {
 
     @Schema(description = "List of configured domains where OAuth2 platform will redirect a user after successful " +
             "authentication. Cannot be empty. There have to be only one domain with specific name with scheme type 'MIXED'. " +
-            "Configured domains with the same name must have different scheme types", required = true)
+            "Configured domains with the same name must have different scheme types", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<OAuth2DomainInfo> domainInfos;
-    @Schema(description = "Mobile applications settings. Application package name must be unique within the list", required = true)
+    @Schema(description = "Mobile applications settings. Application package name must be unique within the list", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<OAuth2MobileInfo> mobileInfos;
-    @Schema(description = "List of OAuth2 provider settings. Cannot be empty", required = true)
+    @Schema(description = "List of OAuth2 provider settings. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     private List<OAuth2RegistrationInfo> clientRegistrations;
 
 }

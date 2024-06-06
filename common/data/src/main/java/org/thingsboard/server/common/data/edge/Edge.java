@@ -120,13 +120,13 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         return this.rootRuleChainId;
     }
 
-    @Schema(required = true, description = "Unique Edge Name in scope of Tenant", example = "Silo_A_Edge")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Unique Edge Name in scope of Tenant", example = "Silo_A_Edge")
     @Override
     public String getName() {
         return this.name;
     }
 
-    @Schema(required = true, description = "Edge type", example = "Silos")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Edge type", example = "Silos")
     public String getType() {
         return this.type;
     }
@@ -136,12 +136,12 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         return this.label;
     }
 
-    @Schema(required = true, description = "Edge routing key ('username') to authorize on cloud")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Edge routing key ('username') to authorize on cloud")
     public String getRoutingKey() {
         return this.routingKey;
     }
 
-    @Schema(required = true, description = "Edge secret ('password') to authorize on cloud")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Edge secret ('password') to authorize on cloud")
     public String getSecret() {
         return this.secret;
     }

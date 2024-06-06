@@ -348,7 +348,7 @@ public class DefaultTbAlarmRuleStateService extends AbstractPartitionBasedServic
         Map<AlarmRuleId, AlarmRule> tenantRules = rulesCache.getIfPresent(tenantId);
         if (tenantRules != null) {
             tenantRules.keySet().forEach(alarmRuleId -> deleteAlarmRule(tenantId, alarmRuleId));
-            rulesCache.invalidate(tenantRules);
+            rulesCache.invalidate(tenantId);
         } else {
             Set<EntityId> ids = myEntityStateIds.remove(tenantId);
             if (CollectionsUtil.isNotEmpty(ids)) {

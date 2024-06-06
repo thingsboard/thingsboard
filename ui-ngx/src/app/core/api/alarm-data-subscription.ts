@@ -128,6 +128,9 @@ export class AlarmDataSubscription {
         this.alarmDataCommand.query.pageLink.startTs = this.subsTw.fixedWindow.startTimeMs;
         this.alarmDataCommand.query.pageLink.endTs = this.subsTw.fixedWindow.endTimeMs;
       } else {
+        if (this.subsTw.startTs) {
+          this.alarmDataCommand.query.pageLink.startTs = this.subsTw.startTs;
+        }
         this.alarmDataCommand.query.pageLink.timeWindow = this.subsTw.realtimeWindowMs;
       }
 

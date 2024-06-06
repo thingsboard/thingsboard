@@ -62,4 +62,5 @@ public class EntityViewProcessorV1 extends EntityViewEdgeProcessor {
         CustomerId customerUUID = safeGetCustomerId(entityViewUpdateMsg.getCustomerIdMSB(), entityViewUpdateMsg.getCustomerIdLSB());
         entityView.setCustomerId(customerUUID != null ? customerUUID : customerId);
     }
+
 }

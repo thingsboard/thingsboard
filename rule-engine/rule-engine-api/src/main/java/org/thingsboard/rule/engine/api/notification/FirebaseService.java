@@ -21,6 +21,6 @@ import java.util.Map;
 
 public interface FirebaseService {
 
-    void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body, Map<String, String> data) throws Exception;
+    void sendMessage(TenantId tenantId, String credentials, String fcmToken, String title, String body, Map<String, String> data, Integer badge) throws Exception;
 
 }

@@ -298,15 +298,13 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
 
         logInWithPreVerificationToken(username, password);
         await("async audit log saving").during(1, TimeUnit.SECONDS);
-        assertThat(getLogInAuditLogs()).isEmpty();
-        assertThat(userService.findUserById(tenantId, user.getId()).getAdditionalInfo()
-                .get("lastLoginTs")).isNull();
 
         doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=incorrect")
                 .andExpect(status().isBadRequest());
 
+        // there is the first login audit log after user activation
         await("async audit log saving").atMost(1, TimeUnit.SECONDS)
-                .until(() -> getLogInAuditLogs().size() == 1);
+                .until(() -> getLogInAuditLogs().size() == 2);
         assertThat(getLogInAuditLogs().get(0)).satisfies(failedLogInAuditLog -> {
             assertThat(failedLogInAuditLog.getActionStatus()).isEqualTo(ActionStatus.FAILURE);
             assertThat(failedLogInAuditLog.getActionFailureDetails()).containsIgnoringCase("verification code is incorrect");
@@ -316,7 +314,7 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
         doPost("/api/auth/2fa/verification/check?providerType=TOTP&verificationCode=" + getCorrectTotp(totpTwoFaAccountConfig))
                 .andExpect(status().isOk());
         await("async audit log saving").atMost(1, TimeUnit.SECONDS)
-                .until(() -> getLogInAuditLogs().size() == 2);
+                .until(() -> getLogInAuditLogs().size() == 3);
         assertThat(getLogInAuditLogs().get(0)).satisfies(successfulLogInAuditLog -> {
             assertThat(successfulLogInAuditLog.getActionStatus()).isEqualTo(ActionStatus.SUCCESS);
             assertThat(successfulLogInAuditLog.getUserName()).isEqualTo(username);

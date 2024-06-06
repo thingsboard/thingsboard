@@ -31,11 +31,11 @@ import java.util.List;
 @NoArgsConstructor
 public class AttributesEntityView implements Serializable {
 
-    @Schema(required = true, description = "List of client-side attribute keys to expose", example = "currentConfiguration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of client-side attribute keys to expose", example = "currentConfiguration")
     private List<String> cs = new ArrayList<>();
-    @Schema(required = true, description = "List of server-side attribute keys to expose", example = "model")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of server-side attribute keys to expose", example = "model")
     private List<String> ss = new ArrayList<>();
-    @Schema(required = true, description = "List of shared attribute keys to expose", example = "targetConfiguration")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "List of shared attribute keys to expose", example = "targetConfiguration")
     private List<String> sh = new ArrayList<>();
 
     public AttributesEntityView(List<String> cs,

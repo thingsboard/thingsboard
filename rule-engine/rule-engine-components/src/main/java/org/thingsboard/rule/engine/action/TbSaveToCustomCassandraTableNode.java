@@ -72,7 +72,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 public class TbSaveToCustomCassandraTableNode implements TbNode {
 
     private static final String TABLE_PREFIX = "cs_tb_";
-    private static final JsonParser parser = new JsonParser();
     private static final String ENTITY_ID = "$entityId";
 
     private TbSaveToCustomCassandraTableNodeConfiguration config;
@@ -168,7 +167,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     }
 
     private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
-        JsonElement data = parser.parse(msg.getData());
+        JsonElement data = JsonParser.parseString(msg.getData());
         if (!data.isJsonObject()) {
             throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
         } else {

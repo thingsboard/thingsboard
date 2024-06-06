@@ -36,9 +36,10 @@ import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
-  TimeSeriesChartYAxisSettingsPanelComponent
-} from '@home/components/widget/lib/settings/common/chart/time-series-chart-y-axis-settings-panel.component';
+  TimeSeriesChartAxisSettingsPanelComponent
+} from '@home/components/widget/lib/settings/common/chart/time-series-chart-axis-settings-panel.component';
 import { deepClone } from '@core/utils';
+import { TranslateService } from '@ngx-translate/core';
 
 @Component({
   selector: 'tb-time-series-chart-y-axis-row',
@@ -76,6 +77,7 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
   private propagateChange = (_val: any) => {};
 
   constructor(private fb: UntypedFormBuilder,
+              private translate: TranslateService,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
@@ -143,16 +145,18 @@ export class TimeSeriesChartYAxisRowComponent implements ControlValueAccessor, O
       this.popoverService.hidePopover(trigger);
     } else {
       const ctx: any = {
-        yAxisSettings: deepClone(this.modelValue),
+        axisType: 'yAxis',
+        panelTitle: this.translate.instant('widgets.time-series-chart.axis.y-axis-settings'),
+        axisSettings: deepClone(this.modelValue),
         advanced: this.advanced
       };
       const yAxisSettingsPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, TimeSeriesChartYAxisSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
+        this.viewContainerRef, TimeSeriesChartAxisSettingsPanelComponent, ['leftOnly', 'leftTopOnly', 'leftBottomOnly'], true, null,
         ctx,
         {},
         {}, {}, true);
       yAxisSettingsPanelPopover.tbComponentRef.instance.popover = yAxisSettingsPanelPopover;
-      yAxisSettingsPanelPopover.tbComponentRef.instance.yAxisSettingsApplied.subscribe((yAxisSettings) => {
+      yAxisSettingsPanelPopover.tbComponentRef.instance.axisSettingsApplied.subscribe((yAxisSettings) => {
         yAxisSettingsPanelPopover.hide();
         this.modelValue = {...this.modelValue, ...yAxisSettings};
         this.axisFormGroup.patchValue(

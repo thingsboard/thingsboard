@@ -31,16 +31,10 @@ public abstract class BaseEdgeProcessorFactory<T extends EdgeProcessor, U extend
     protected U v2Processor;
 
     public EdgeProcessor getProcessorByEdgeVersion(EdgeVersion edgeVersion) {
-        switch (edgeVersion) {
-            case V_3_3_0:
-            case V_3_3_3:
-            case V_3_4_0:
-            case V_3_6_0:
-            case V_3_6_1:
-                return v1Processor;
-            case V_3_6_2:
-            default:
-                return v2Processor;
-        }
+        return switch (edgeVersion) {
+            case V_3_3_0, V_3_3_3, V_3_4_0, V_3_6_0, V_3_6_1 -> v1Processor;
+            default -> v2Processor;
+        };
     }
+
 }

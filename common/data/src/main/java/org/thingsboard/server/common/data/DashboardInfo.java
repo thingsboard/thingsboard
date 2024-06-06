@@ -85,7 +85,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.tenantId = tenantId;
     }
 
-    @Schema(required = true, description = "Title of the dashboard.")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Title of the dashboard.")
     public String getTitle() {
         return title;
     }

@@ -33,10 +33,26 @@
   </div>
   <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.constant">
   </div>
+  <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.gradient">
+    <tb-gradient class="tb-gradient-panel"
+                 formControlName="gradient"
+                 [minValue]="minValue"
+                 [maxValue]="maxValue"
+                 [advancedMode]="gradientAdvancedMode"
+                 [aliasController]="aliasController"
+                 [dataKeyCallbacks]="dataKeyCallbacks"
+                 [datasource]="datasource"
+                 [popover]="popover">
+    </tb-gradient>
+  </div>
   <div class="tb-color-settings-panel-body" [fxShow]="colorSettingsFormGroup.get('type').value === colorType.range">
-    <tb-color-range-list fxFlex class="tb-color-ranges-panel"
+    <tb-color-range-list class="tb-color-ranges-panel"
                          formControlName="rangeList"
                          panelTitle="{{ 'widgets.color.value-range' | translate }}"
+                         [advancedMode]="rangeAdvancedMode"
+                         [aliasController]="aliasController"
+                         [dataKeyCallbacks]="dataKeyCallbacks"
+                         [datasource]="datasource"
                          [popover]="popover">
     </tb-color-range-list>
   </div>
@@ -50,7 +66,8 @@
             color="primary"
             type="button"
             [matMenuTriggerFor]="settingsSourcesMenu" [matMenuTriggerData]="{menuWidth: copySettingsButton._elementRef.nativeElement.clientWidth}">
-      {{ 'widgets.color.copy-color-settings-from' | translate }}
+      <span fxHide.xs>{{ 'widgets.color.copy-color-settings-from' | translate }}</span>
+      <span fxHide.gt-xs>{{ 'widgets.color.copy-from' | translate }}</span>
     </button>
     <mat-menu #settingsSourcesMenu="matMenu">
       <ng-template matMenuContent let-menuWidth="menuWidth">

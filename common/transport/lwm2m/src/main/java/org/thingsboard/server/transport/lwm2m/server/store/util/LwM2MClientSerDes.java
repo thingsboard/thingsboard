@@ -15,33 +15,50 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store.util;
 
-import com.fasterxml.jackson.annotation.JsonValue;
+
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
+import com.google.gson.JsonParser;
 import com.google.protobuf.util.JsonFormat;
 import lombok.SneakyThrows;
+import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.model.ResourceModel;
 import org.eclipse.leshan.core.node.LwM2mMultipleResource;
 import org.eclipse.leshan.core.node.LwM2mNodeException;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
 import org.eclipse.leshan.core.node.ObjectLink;
+import org.eclipse.leshan.core.util.datatype.ULong;
 import org.eclipse.leshan.server.redis.serialization.RegistrationSerDes;
+import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2MClientState;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.ResourceValue;
 
 import java.lang.reflect.Field;
+import java.time.Instant;
 import java.util.Base64;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.Map.Entry;
+import java.util.UUID;
+import java.util.concurrent.atomic.AtomicLong;
+
+import static org.thingsboard.common.util.JacksonUtil.toJsonNode;
 
 public class LwM2MClientSerDes {
     public static final String VALUE = "value";
+    private static final RegistrationSerDes registrationSerDes = new RegistrationSerDes();
 
     @SneakyThrows
     public static byte[] serialize(LwM2mClient client) {
         JsonObject o =  new JsonObject();
-        o.addProperty("nodeId", "client.getNodeId()");
+        o.addProperty("nodeId", client.getNodeId());
         o.addProperty("endpoint", client.getEndpoint());
 
         JsonObject resources = new JsonObject();
@@ -91,9 +108,18 @@ public class LwM2MClientSerDes {
         if (client.getPagingTransmissionWindow() != null) {
             o.addProperty("pagingTransmissionWindow", client.getPagingTransmissionWindow());
         }
+        o.addProperty("defaultObjectIDVer", client.getDefaultObjectIDVer().toString());
+
         if (client.getRegistration() != null) {
-            RegistrationSerDes regDez = new RegistrationSerDes();
-            o.addProperty("registration", regDez.jSerialize(client.getRegistration()).toString());
+            String registrationAddress = client.getRegistration().getAddress().toString();
+            JsonNode registrationNode = registrationSerDes.jSerialize(client.getRegistration());
+            if (!registrationAddress.equals(registrationNode.get("transportdata").get("address").asText())){
+                ObjectNode actualRegAddress = (ObjectNode)registrationNode.get("transportdata");
+                actualRegAddress.put("address", registrationAddress);
+                ObjectNode actualIdentity =  (ObjectNode) actualRegAddress.get("identity");
+                actualIdentity.put("address", registrationAddress);
+            }
+            o.addProperty("registration", registrationNode.toString());
         }
         o.addProperty("asleep", client.isAsleep());
         o.addProperty("lastUplinkTime", client.getLastUplinkTime());
@@ -138,33 +164,35 @@ public class LwM2MClientSerDes {
         ResourceModel.Type type = ResourceModel.Type.valueOf(o.get("type").getAsString());
         if (multiInstances) {
             Map<Integer, Object> instances = new HashMap<>();
-            o.get("instances").getAsJsonArray().forEach(entry -> {
-//                instances.put(Integer.valueOf(entry.getAsJsonObject().), parseValue(type, entry.getValue()));
-            });
+            for (Entry<String, JsonElement> entry : o.get("instances").getAsJsonObject().entrySet()) {
+                JsonObject instance = entry.getValue().getAsJsonObject();
+                instances.put(Integer.valueOf(instance.get("id").getAsString()), parseValue(type, instance.get(VALUE)));
+            }
             return LwM2mMultipleResource.newResource(id, instances, type);
         } else {
-            return LwM2mSingleResource.newResource(id, parseValue(type, (JsonValue) o.get(VALUE)));
+            return LwM2mSingleResource.newResource(id, parseValue(type, o.get(VALUE)));
         }
     }
 
-    private static Object parseValue(ResourceModel.Type type, JsonValue value) {
+
+    private static Object parseValue(ResourceModel.Type type, JsonElement value) {
         switch (type) {
             case INTEGER:
-                return value.value();
-//            case FLOAT:
-//                return value.value();
-//            case BOOLEAN:
-//                return value.asBoolean();
-//            case OPAQUE:
-//                return Base64.getDecoder().decode(value.asString());
-//            case STRING:
-//                return value.asString();
-//            case TIME:
-//                return new Date(value.asLong());
-//            case OBJLNK:
-//                return ObjectLink.decodeFromString(value.asString());
-//            case UNSIGNED_INTEGER:
-//                return ULong.valueOf(value.asString());
+                return value.getAsInt();
+            case FLOAT:
+                return value.getAsDouble();
+            case BOOLEAN:
+                return value.getAsBoolean();
+            case OPAQUE:
+                return Base64.getDecoder().decode(value.getAsString());
+            case STRING:
+                return value.getAsString();
+            case TIME:
+                return Instant.ofEpochMilli(value.getAsLong());
+            case OBJLNK:
+                return ObjectLink.decodeFromString(value.getAsString());
+            case UNSIGNED_INTEGER:
+                return ULong.valueOf(value.getAsString());
             default:
                 throw new LwM2mNodeException(String.format("Type %s is not supported", type.name()));
         }
@@ -212,7 +240,7 @@ public class LwM2MClientSerDes {
                 o.addProperty(VALUE, Base64.getEncoder().encodeToString((byte[]) value));
                 break;
             case STRING:
-                o.addProperty(VALUE, (String) value);
+                o.addProperty(VALUE, String.valueOf(value));
                 break;
             case TIME:
                 o.addProperty(VALUE, ((Date) value).getTime());
@@ -221,7 +249,7 @@ public class LwM2MClientSerDes {
                 o.addProperty(VALUE, ((ObjectLink) value).encodeToString());
                 break;
             case UNSIGNED_INTEGER:
-                o.addProperty(VALUE, value.toString());
+                o.addProperty(VALUE, Integer.toUnsignedString((int)value));
                 break;
             default:
                 throw new LwM2mNodeException(String.format("Type %s is not supported", type.name()));
@@ -230,111 +258,118 @@ public class LwM2MClientSerDes {
 
     @SneakyThrows
     public static LwM2mClient deserialize(byte[] data) {
-//        JsonObject o = new JsonObject(new String(data)));
-//        LwM2mClient lwM2mClient = new LwM2mClient(o.get("nodeId").getAsString(), o.get("endpoint").getAsString());
-        LwM2mClient lwM2mClient = new LwM2mClient("nodeId", "endpoint");
-//        o.get("resources").getAsJsonObject().forEach(entry -> {
-//            JsonObject resource = entry.getValue().asObject();
-//            LwM2mResource lwM2mResource = parseLwM2mResource(resource.get("lwM2mResource").getAsJsonObject());
-//            ResourceModel resourceModel = parseResourceModel(resource.get("resourceModel").asObject());
-//            ResourceValue resourceValue = new ResourceValue(lwM2mResource, resourceModel);
-//            lwM2mClient.getResources().put(entry.getName(), resourceValue);
-//        });
-//
-//        for (JsonObject.Member entry : o.get("sharedAttributes").asObject()) {
-//            TransportProtos.TsKvProto.Builder builder = TransportProtos.TsKvProto.newBuilder();
-//            JsonFormat.parser().merge(entry.getValue().getAsString(), builder);
-//            lwM2mClient.getSharedAttributes().put(entry.getName(), builder.build());
-//        }
-//
-//        o.get("keyTsLatestMap").asObject().forEach(entry -> {
-//            lwM2mClient.getKeyTsLatestMap().put(entry.getName(), new AtomicLong(entry.getValue().asLong()));
-//        });
-//
-//        lwM2mClient.setState(LwM2MClientState.valueOf(o.get("state").getAsString()));
-//
-//        Class<LwM2mClient> lwM2mClientClass = LwM2mClient.class;
-//
-//        JsonValue session = o.get("session");
-//        if (session != null) {
-//            TransportProtos.SessionInfoProto.Builder builder = TransportProtos.SessionInfoProto.newBuilder();
-//            JsonFormat.parser().merge(session.asString(), builder);
-//
-//            Field sessionField = lwM2mClientClass.getDeclaredField("session");
-//            sessionField.setAccessible(true);
-//            sessionField.set(lwM2mClient, builder.build());
-//        }
-//
-//        JsonValue tenantId = o.get("tenantId");
-//        if (tenantId != null) {
-//            Field tenantIdField = lwM2mClientClass.getDeclaredField("tenantId");
-//            tenantIdField.setAccessible(true);
-//            tenantIdField.set(lwM2mClient, new TenantId(UUID.fromString(tenantId.asString())));
-//        }
-//
-//        JsonValue deviceId = o.get("deviceId");
-//        if (tenantId != null) {
-//            Field deviceIdField = lwM2mClientClass.getDeclaredField("deviceId");
-//            deviceIdField.setAccessible(true);
-//            deviceIdField.set(lwM2mClient, UUID.fromString(deviceId.asString()));
-//        }
-//
-//        JsonValue profileId = o.get("profileId");
-//        if (tenantId != null) {
-//            Field profileIdField = lwM2mClientClass.getDeclaredField("profileId");
-//            profileIdField.setAccessible(true);
-//            profileIdField.set(lwM2mClient, UUID.fromString(profileId.asString()));
-//        }
-//
-//        JsonValue powerMode = o.get("powerMode");
-//        if (powerMode != null) {
-//            Field powerModeField = lwM2mClientClass.getDeclaredField("powerMode");
-//            powerModeField.setAccessible(true);
-//            powerModeField.set(lwM2mClient, PowerMode.valueOf(powerMode.asString()));
-//        }
-//
-//        JsonValue edrxCycle = o.get("edrxCycle");
-//        if (edrxCycle != null) {
-//            Field edrxCycleField = lwM2mClientClass.getDeclaredField("edrxCycle");
-//            edrxCycleField.setAccessible(true);
-//            edrxCycleField.set(lwM2mClient, edrxCycle.asLong());
-//        }
-//
-//        JsonValue psmActivityTimer = o.get("psmActivityTimer");
-//        if (psmActivityTimer != null) {
-//            Field psmActivityTimerField = lwM2mClientClass.getDeclaredField("psmActivityTimer");
-//            psmActivityTimerField.setAccessible(true);
-//            psmActivityTimerField.set(lwM2mClient, psmActivityTimer.asLong());
-//        }
-//
-//        JsonValue pagingTransmissionWindow = o.get("pagingTransmissionWindow");
-//        if (pagingTransmissionWindow != null) {
-//            Field pagingTransmissionWindowField = lwM2mClientClass.getDeclaredField("pagingTransmissionWindow");
-//            pagingTransmissionWindowField.setAccessible(true);
-//            pagingTransmissionWindowField.set(lwM2mClient, pagingTransmissionWindow.asLong());
-//        }
-//
-//        JsonValue registration = o.get("registration");
-//        if (registration != null) {
-//            lwM2mClient.setRegistration(RegistrationSerDes.deserialize(registration.asObject()));
-//        }
-//
-//        lwM2mClient.setAsleep(o.get("asleep").getAsBoolean());
-//
-//        Field lastUplinkTimeField = lwM2mClientClass.getDeclaredField("lastUplinkTime");
-//        lastUplinkTimeField.setAccessible(true);
-//        lastUplinkTimeField.setLong(lwM2mClient, o.get("lastUplinkTime").asLong());
-//
-//        Field firstEdrxDownlinkField = lwM2mClientClass.getDeclaredField("firstEdrxDownlink");
-//        firstEdrxDownlinkField.setAccessible(true);
-//        firstEdrxDownlinkField.setBoolean(lwM2mClient, o.get("firstEdrxDownlink").getAsBoolean());
-//
-//        lwM2mClient.getRetryAttempts().set(o.get("retryAttempts").asInt());
-//
-//        JsonValue lastSentRpcId = o.get("lastSentRpcId");
-//        if (lastSentRpcId != null) {
-//            lwM2mClient.setLastSentRpcId(UUID.fromString(lastSentRpcId.asString()));
-//        }
+        JsonObject o = JsonParser.parseString(new String(data)).getAsJsonObject();
+        LwM2mClient lwM2mClient = new LwM2mClient(o.get("nodeId").getAsString(), o.get("endpoint").getAsString());
+
+        o.get("resources").getAsJsonObject().entrySet().forEach(entry -> {
+            JsonObject resource = entry.getValue().getAsJsonObject();
+            LwM2mResource lwM2mResource = parseLwM2mResource(resource.get("lwM2mResource").getAsJsonObject());
+            ResourceModel resourceModel = parseResourceModel(resource.get("resourceModel").getAsJsonObject());
+            ResourceValue resourceValue = new ResourceValue(lwM2mResource, resourceModel);
+            lwM2mClient.getResources().put(String.valueOf(lwM2mResource.getId()), resourceValue);
+        });
+
+        for (Entry<String, JsonElement> entry : o.get("sharedAttributes").getAsJsonObject().entrySet()) {
+            TransportProtos.TsKvProto.Builder builder = TransportProtos.TsKvProto.newBuilder();
+            JsonFormat.parser().merge(entry.getValue().getAsString(), builder);
+            lwM2mClient.getSharedAttributes().put(entry.getKey(), builder.build());
+        }
+
+        o.get("keyTsLatestMap").getAsJsonObject().entrySet().forEach(entry -> {
+            lwM2mClient.getKeyTsLatestMap().put(entry.getKey(), new AtomicLong(entry.getValue().getAsLong()));
+        });
+
+        lwM2mClient.setState(LwM2MClientState.valueOf(o.get("state").getAsString()));
+
+        Class<LwM2mClient> lwM2mClientClass = LwM2mClient.class;
+
+        JsonElement session = o.get("session");
+        if (session != null) {
+            TransportProtos.SessionInfoProto.Builder builder = TransportProtos.SessionInfoProto.newBuilder();
+            JsonFormat.parser().merge(session.getAsString(), builder);
+
+            Field sessionField = lwM2mClientClass.getDeclaredField("session");
+            sessionField.setAccessible(true);
+            sessionField.set(lwM2mClient, builder.build());
+        }
+
+        JsonElement tenantId = o.get("tenantId");
+        if (tenantId != null) {
+            Field tenantIdField = lwM2mClientClass.getDeclaredField("tenantId");
+            tenantIdField.setAccessible(true);
+            tenantIdField.set(lwM2mClient, new TenantId(UUID.fromString(tenantId.getAsString())));
+        }
+
+        JsonElement deviceId = o.get("deviceId");
+        if (tenantId != null) {
+            Field deviceIdField = lwM2mClientClass.getDeclaredField("deviceId");
+            deviceIdField.setAccessible(true);
+            deviceIdField.set(lwM2mClient, UUID.fromString(deviceId.getAsString()));
+        }
+
+        JsonElement profileId = o.get("profileId");
+        if (tenantId != null) {
+            Field profileIdField = lwM2mClientClass.getDeclaredField("profileId");
+            profileIdField.setAccessible(true);
+            profileIdField.set(lwM2mClient, UUID.fromString(profileId.getAsString()));
+        }
+
+        JsonElement powerMode = o.get("powerMode");
+        if (powerMode != null) {
+            Field powerModeField = lwM2mClientClass.getDeclaredField("powerMode");
+            powerModeField.setAccessible(true);
+            powerModeField.set(lwM2mClient, PowerMode.valueOf(powerMode.getAsString()));
+        }
+
+        JsonElement edrxCycle = o.get("edrxCycle");
+        if (edrxCycle != null) {
+            Field edrxCycleField = lwM2mClientClass.getDeclaredField("edrxCycle");
+            edrxCycleField.setAccessible(true);
+            edrxCycleField.set(lwM2mClient, edrxCycle.getAsLong());
+        }
+
+        JsonElement psmActivityTimer = o.get("psmActivityTimer");
+        if (psmActivityTimer != null) {
+            Field psmActivityTimerField = lwM2mClientClass.getDeclaredField("psmActivityTimer");
+            psmActivityTimerField.setAccessible(true);
+            psmActivityTimerField.set(lwM2mClient, psmActivityTimer.getAsLong());
+        }
+
+        JsonElement pagingTransmissionWindow = o.get("pagingTransmissionWindow");
+        if (pagingTransmissionWindow != null) {
+            Field pagingTransmissionWindowField = lwM2mClientClass.getDeclaredField("pagingTransmissionWindow");
+            pagingTransmissionWindowField.setAccessible(true);
+            pagingTransmissionWindowField.set(lwM2mClient, pagingTransmissionWindow.getAsLong());
+        }
+
+        JsonElement defaultObjectIDVer = o.get("defaultObjectIDVer");
+        if (defaultObjectIDVer != null) {
+            Field defaultObjectIDVerField = lwM2mClientClass.getDeclaredField("defaultObjectIDVer");
+            defaultObjectIDVerField.setAccessible(true);
+            defaultObjectIDVerField.set(lwM2mClient, new Version(defaultObjectIDVer.getAsString()));
+        }
+
+        JsonElement registration = o.get("registration");
+        if (registration != null) {
+            lwM2mClient.setRegistration(registrationSerDes.deserialize(toJsonNode(registration.getAsString())));
+        }
+
+        lwM2mClient.setAsleep(o.get("asleep").getAsBoolean());
+
+        Field lastUplinkTimeField = lwM2mClientClass.getDeclaredField("lastUplinkTime");
+        lastUplinkTimeField.setAccessible(true);
+        lastUplinkTimeField.setLong(lwM2mClient, o.get("lastUplinkTime").getAsLong());
+
+        Field firstEdrxDownlinkField = lwM2mClientClass.getDeclaredField("firstEdrxDownlink");
+        firstEdrxDownlinkField.setAccessible(true);
+        firstEdrxDownlinkField.setBoolean(lwM2mClient, o.get("firstEdrxDownlink").getAsBoolean());
+
+        lwM2mClient.getRetryAttempts().set(o.get("retryAttempts").getAsInt());
+
+        JsonElement lastSentRpcId = o.get("lastSentRpcId");
+        if (lastSentRpcId != null) {
+            lwM2mClient.setLastSentRpcId(UUID.fromString(lastSentRpcId.getAsString()));
+        }
 
         return lwM2mClient;
     }

@@ -236,14 +236,14 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
                 @Override
                 public void onSuccess(Void unused) {
                     entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, null, scope, attributes);
+                            null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
                 }
 
                 @Override
                 public void onFailure(Throwable throwable) {
                     entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
                             null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
-                            scope, attributes);
+                            AttributeScope.valueOf(scope), attributes);
                     throw new RuntimeException(throwable);
                 }
 
@@ -301,18 +301,13 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         private final DataType dataType;
 
         public JsonPrimitive toJsonPrimitive() {
-            switch (dataType) {
-                case STRING:
-                    return new JsonPrimitive((String) value);
-                case LONG:
-                    return new JsonPrimitive((Long) value);
-                case DOUBLE:
-                    return new JsonPrimitive((Double) value);
-                case BOOLEAN:
-                    return new JsonPrimitive((Boolean) value);
-                default:
-                    return null;
-            }
+            return switch (dataType) {
+                case STRING -> new JsonPrimitive((String) value);
+                case LONG -> new JsonPrimitive((Long) value);
+                case DOUBLE -> new JsonPrimitive((Double) value);
+                case BOOLEAN -> new JsonPrimitive((Boolean) value);
+                default -> null;
+            };
         }
 
         public String stringValue() {

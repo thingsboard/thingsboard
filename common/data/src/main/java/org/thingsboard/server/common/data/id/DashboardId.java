@@ -34,7 +34,7 @@ public class DashboardId extends UUIDBased implements EntityId {
         return new DashboardId(UUID.fromString(dashboardId));
     }
 
-    @Schema(required = true, description = "string", example = "DASHBOARD", allowableValues = "DASHBOARD")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "DASHBOARD", allowableValues = "DASHBOARD")
     @Override
     public EntityType getEntityType() {
         return EntityType.DASHBOARD;

@@ -17,7 +17,7 @@ package org.thingsboard.server.queue.memory;
 
 import com.google.gson.Gson;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.queue.TbQueueMsg;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 

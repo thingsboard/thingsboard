@@ -35,7 +35,7 @@ public class OtaPackageId extends UUIDBased implements EntityId {
         return new OtaPackageId(UUID.fromString(firmwareId));
     }
 
-    @Schema(required = true, description = "string", example = "OTA_PACKAGE", allowableValues = "OTA_PACKAGE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "OTA_PACKAGE", allowableValues = "OTA_PACKAGE")
     @Override
     public EntityType getEntityType() {
         return EntityType.OTA_PACKAGE;

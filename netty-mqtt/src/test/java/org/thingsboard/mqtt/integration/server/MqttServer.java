@@ -46,7 +46,7 @@ public class MqttServer {
     private EventLoopGroup workerGroup;
 
     public void init() throws Exception {
-        log.info("Starting MQTT server...");
+        log.info("Starting MQTT server on port {}...", mqttPort);
         bossGroup = new NioEventLoopGroup();
         workerGroup = new NioEventLoopGroup();
         ServerBootstrap b = new ServerBootstrap();

@@ -33,6 +33,8 @@ import { QueueComponent } from '@home/pages/admin/queue/queue.component';
 import { RepositoryAdminSettingsComponent } from '@home/pages/admin/repository-admin-settings.component';
 import { AutoCommitAdminSettingsComponent } from '@home/pages/admin/auto-commit-admin-settings.component';
 import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-auth-settings.component';
+import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
+import { WidgetComponentsModule } from '@home/components/widget/widget-components.module';
 
 @NgModule({
   declarations:
@@ -49,13 +51,15 @@ import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-aut
       QueueComponent,
       RepositoryAdminSettingsComponent,
       AutoCommitAdminSettingsComponent,
-      TwoFactorAuthSettingsComponent
+      TwoFactorAuthSettingsComponent,
+      MobileAppSettingsComponent
     ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    HomeComponentsModule,
-    AdminRoutingModule
-  ]
+    imports: [
+        CommonModule,
+        SharedModule,
+        HomeComponentsModule,
+        AdminRoutingModule,
+        WidgetComponentsModule
+    ]
 })
 export class AdminModule { }

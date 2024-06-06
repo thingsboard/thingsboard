@@ -16,8 +16,8 @@
 package org.thingsboard.server.service.alarm.rule;
 
 import com.google.common.util.concurrent.Futures;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
@@ -73,7 +73,7 @@ public class EntityStateTest {
     private TbClusterService clusterService;
     private TenantId tenantId;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         ctx = mock(TbAlarmRuleContext.class);
         clusterService = mock(TbClusterService.class);

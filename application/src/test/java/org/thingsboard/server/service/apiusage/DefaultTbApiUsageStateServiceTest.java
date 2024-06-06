@@ -15,24 +15,16 @@
  */
 package org.thingsboard.server.service.apiusage;
 
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Mockito;
 import org.mockito.Spy;
-import org.mockito.junit.MockitoJUnitRunner;
-import org.thingsboard.rule.engine.api.MailService;
-import org.thingsboard.server.cluster.TbClusterService;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.dao.usagerecord.ApiUsageStateService;
-import org.thingsboard.server.queue.discovery.PartitionService;
-import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 
 import java.util.UUID;
 
@@ -40,27 +32,11 @@ import static org.hamcrest.CoreMatchers.is;
 import static org.hamcrest.MatcherAssert.assertThat;
 import static org.mockito.Mockito.never;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class DefaultTbApiUsageStateServiceTest {
 
     @Mock
-    TenantService tenantService;
-    @Mock
-    TimeseriesService tsService;
-    @Mock
-    TbClusterService clusterService;
-    @Mock
-    PartitionService partitionService;
-    @Mock
     TenantApiUsageState tenantUsageStateMock;
-    @Mock
-    ApiUsageStateService apiUsageStateService;
-    @Mock
-    TbTenantProfileCache tenantProfileCache;
-    @Mock
-    MailService mailService;
-    @Mock
-    DbCallbackExecutorService dbExecutor;
 
     TenantId tenantId = TenantId.fromUUID(UUID.fromString("00797a3b-7aeb-4b5b-b57a-c2a810d0f112"));
 
@@ -68,7 +44,7 @@ public class DefaultTbApiUsageStateServiceTest {
     @InjectMocks
     DefaultTbApiUsageStateService service;
 
-    @Before
+    @BeforeEach
     public void setUp() {
     }
 

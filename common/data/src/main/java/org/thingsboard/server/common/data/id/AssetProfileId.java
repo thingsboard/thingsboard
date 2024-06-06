@@ -35,7 +35,7 @@ public class AssetProfileId extends UUIDBased implements EntityId {
         return new AssetProfileId(UUID.fromString(assetProfileId));
     }
 
-    @Schema(required = true, description = "string", example = "ASSET_PROFILE", allowableValues = "ASSET_PROFILE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "ASSET_PROFILE", allowableValues = "ASSET_PROFILE")
     @Override
     public EntityType getEntityType() {
         return EntityType.ASSET_PROFILE;

@@ -40,7 +40,7 @@ java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.ThingsboardI
                 -Dinstall.upgrade=true \
                 -Dinstall.upgrade.from_version=${fromVersion} \
                 -Dlogging.config=/usr/share/thingsboard/bin/install/logback.xml \
-                org.springframework.boot.loader.PropertiesLauncher
+                org.springframework.boot.loader.launch.PropertiesLauncher
 
 echo "${pkg.upgradeVersion}" > ${upgradeversion}
 

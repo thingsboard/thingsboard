@@ -60,8 +60,6 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         configDirective = "tbFilterNodeCheckRelationConfig")
 public class TbCheckRelationNode implements TbNode {
 
-    private static final String DIRECTION_PROPERTY_NAME = "direction";
-
     private TbCheckRelationNodeConfiguration config;
     private EntityId singleEntityId;
 
@@ -114,19 +112,20 @@ public class TbCheckRelationNode implements TbNode {
     public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
         if (fromVersion == 0) {
             var newConfigObjectNode = (ObjectNode) oldConfiguration;
-            if (!newConfigObjectNode.has(DIRECTION_PROPERTY_NAME)) {
-                throw new TbNodeException("property to update: '" + DIRECTION_PROPERTY_NAME + "' doesn't exists in configuration!");
+            var directionPropertyName = "direction";
+            if (!newConfigObjectNode.has(directionPropertyName)) {
+                throw new TbNodeException("property to update: '" + directionPropertyName + "' doesn't exists in configuration!");
             }
-            String direction = newConfigObjectNode.get(DIRECTION_PROPERTY_NAME).asText();
+            String direction = newConfigObjectNode.get(directionPropertyName).asText();
             if (EntitySearchDirection.TO.name().equals(direction)) {
-                newConfigObjectNode.put(DIRECTION_PROPERTY_NAME, EntitySearchDirection.FROM.name());
+                newConfigObjectNode.put(directionPropertyName, EntitySearchDirection.FROM.name());
                 return new TbPair<>(true, newConfigObjectNode);
             }
             if (EntitySearchDirection.FROM.name().equals(direction)) {
-                newConfigObjectNode.put(DIRECTION_PROPERTY_NAME, EntitySearchDirection.TO.name());
+                newConfigObjectNode.put(directionPropertyName, EntitySearchDirection.TO.name());
                 return new TbPair<>(true, newConfigObjectNode);
             }
-            throw new TbNodeException("property to update: '" + DIRECTION_PROPERTY_NAME + "' has invalid value!");
+            throw new TbNodeException("property to update: '" + directionPropertyName + "' has invalid value!");
         }
         return new TbPair<>(false, oldConfiguration);
     }

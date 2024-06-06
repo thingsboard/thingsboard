@@ -27,7 +27,7 @@ public class LifeCycleEventFilter implements EventFilter {
     protected String server;
     @Schema(description = "String value representing the lifecycle event type", example = "STARTED")
     protected String event;
-    @Schema(description = "String value representing status of the lifecycle event", allowableValues = "Success, Failure")
+    @Schema(description = "String value representing status of the lifecycle event", allowableValues = {"Success", "Failure"})
     protected String status;
     @Schema(description = "The case insensitive 'contains' filter based on error message", example = "not present in the DB")
     protected String errorStr;

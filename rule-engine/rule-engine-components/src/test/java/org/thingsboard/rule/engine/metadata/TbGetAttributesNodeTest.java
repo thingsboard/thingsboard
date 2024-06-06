@@ -18,14 +18,14 @@ package org.thingsboard.rule.engine.metadata;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
-import org.junit.After;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -33,7 +33,6 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -55,17 +54,18 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.lenient;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbGetAttributesNodeTest {
 
     private static final EntityId ORIGINATOR = new DeviceId(Uuids.timeBased());
@@ -86,7 +86,7 @@ public class TbGetAttributesNodeTest {
     private long ts;
     private TbGetAttributesNode node;
 
-    @Before
+    @BeforeEach
     public void before() throws TbNodeException {
         dbExecutor = new AbstractListeningExecutor() {
             @Override
@@ -96,10 +96,10 @@ public class TbGetAttributesNodeTest {
         };
         dbExecutor.init();
 
-        when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
-        when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
-        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
-        when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
+        lenient().when(ctxMock.getAttributesService()).thenReturn(attributesServiceMock);
+        lenient().when(ctxMock.getTimeseriesService()).thenReturn(timeseriesServiceMock);
+        lenient().when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        lenient().when(ctxMock.getDbCallbackExecutor()).thenReturn(dbExecutor);
 
         clientAttributes = getAttributeNames("client");
         serverAttributes = getAttributeNames("server");
@@ -107,20 +107,20 @@ public class TbGetAttributesNodeTest {
         tsKeys = List.of("temperature", "humidity", "unknown");
         ts = System.currentTimeMillis();
 
-        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.CLIENT_SCOPE, clientAttributes))
+        lenient().when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.CLIENT_SCOPE, clientAttributes))
                 .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(clientAttributes, ts)));
 
-        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.SERVER_SCOPE, serverAttributes))
+        lenient().when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.SERVER_SCOPE, serverAttributes))
                 .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(serverAttributes, ts)));
 
-        when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.SHARED_SCOPE, sharedAttributes))
+        lenient().when(attributesServiceMock.find(TENANT_ID, ORIGINATOR, AttributeScope.SHARED_SCOPE, sharedAttributes))
                 .thenReturn(Futures.immediateFuture(getListAttributeKvEntry(sharedAttributes, ts)));
 
-        when(timeseriesServiceMock.findLatest(TENANT_ID, ORIGINATOR, tsKeys))
+        lenient().when(timeseriesServiceMock.findLatest(TENANT_ID, ORIGINATOR, tsKeys))
                 .thenReturn(Futures.immediateFuture(getListTsKvEntry(tsKeys, ts)));
     }
 
-    @After
+    @AfterEach
     public void after() {
         dbExecutor.destroy();
     }

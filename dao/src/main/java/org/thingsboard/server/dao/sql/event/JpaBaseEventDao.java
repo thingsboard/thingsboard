@@ -393,6 +393,11 @@ public class JpaBaseEventDao implements EventDao {
     }
 
     @Override
+    public Event findLatestDebugRuleNodeInEvent(UUID tenantId, UUID entityId) {
+        return DaoUtil.getData(ruleNodeDebugEventRepository.findLatestDebugRuleNodeInEvent(tenantId, entityId));
+    }
+
+    @Override
     public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
         if (regularEventExpTs > 0) {
             log.info("Going to cleanup regular events with exp time: {}", regularEventExpTs);

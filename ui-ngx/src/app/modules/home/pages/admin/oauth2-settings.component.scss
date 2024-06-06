@@ -13,7 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../../../../../scss/constants';
+
 :host{
+  .gap-xs-12 {
+    @media #{$mat-xs} {
+      gap: 12px;
+    }
+  }
+
+  .mdc-evolution-chip-set .mdc-evolution-chip {
+    margin-top: 0;
+    margin-bottom: 0;
+  }
+
   .checkbox-row {
     margin-top: 1em;
   }
@@ -31,7 +44,7 @@
   }
 
   .container{
-    margin-bottom: 1em;
+    margin-bottom: 16px;
 
     .tb-highlight{
       margin: 0;

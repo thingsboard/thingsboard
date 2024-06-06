@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.queue.ruleengine;
 
 import com.google.protobuf.ProtocolStringList;
+import lombok.Builder;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -31,11 +32,25 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.ScheduledExecutorService;
 
 public class TbRuleEngineInternalQueueConsumerManager extends TbRuleEngineQueueConsumerManager {
 
-    public TbRuleEngineInternalQueueConsumerManager(TbRuleEngineConsumerContext ctx, QueueKey queueKey) {
-        super(ctx, queueKey);
+    @Builder(builderClassName = "TbRuleEngineInternalQueueConsumerManagerBuilder", builderMethodName = "create")
+    public TbRuleEngineInternalQueueConsumerManager(TbRuleEngineConsumerContext ctx,
+                                                    QueueKey queueKey,
+                                                    ExecutorService consumerExecutor,
+                                                    ScheduledExecutorService scheduler,
+                                                    ExecutorService taskExecutor) {
+        super(ctx, queueKey, consumerExecutor, scheduler, taskExecutor);
+    }
+
+    public static class TbRuleEngineInternalQueueConsumerManagerBuilder extends TbRuleEngineQueueConsumerManager.TbRuleEngineQueueConsumerManagerBuilder {
+        @Override
+        public TbRuleEngineInternalQueueConsumerManager build() {
+            return new TbRuleEngineInternalQueueConsumerManager(ctx, queueKey, consumerExecutor, scheduler, taskExecutor);
+        }
     }
 
     @Override

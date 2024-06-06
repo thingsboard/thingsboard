@@ -23,19 +23,9 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
-import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
-import org.thingsboard.server.common.data.kv.BooleanDataEntry;
-import org.thingsboard.server.common.data.kv.DataType;
-import org.thingsboard.server.common.data.kv.DoubleDataEntry;
-import org.thingsboard.server.common.data.kv.JsonDataEntry;
-import org.thingsboard.server.common.data.kv.KvEntry;
-import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
 import org.thingsboard.server.gen.transport.TransportProtos.SubscriptionMgrMsgProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmDeleteProto;
 import org.thingsboard.server.gen.transport.TransportProtos.TbAlarmUpdateProto;
@@ -46,29 +36,23 @@ import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesDeletePr
 import org.thingsboard.server.gen.transport.TransportProtos.TbTimeSeriesUpdateProto;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TsKvProto;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.TreeMap;
 import java.util.UUID;
 
+import static org.thingsboard.server.common.util.KvProtoUtil.fromTsValueProtoList;
+import static org.thingsboard.server.common.util.KvProtoUtil.toTsKvProtoBuilder;
+import static org.thingsboard.server.common.util.KvProtoUtil.toTsValueProto;
+
 public class TbSubscriptionUtils {
-
-    private static final DataType[] dataTypeByProtoNumber;
-
-    static {
-        int arraySize = Arrays.stream(DataType.values()).mapToInt(DataType::getProtoNumber).max().orElse(0);
-        dataTypeByProtoNumber = new DataType[arraySize + 1];
-        Arrays.stream(DataType.values()).forEach(dataType -> dataTypeByProtoNumber[dataType.getProtoNumber()] = dataType);
-    }
 
     public static ToCoreMsg toSubEventProto(String serviceId, TbEntitySubEvent event) {
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
@@ -189,7 +173,7 @@ public class TbSubscriptionUtils {
         builder.setEntityIdLSB(entityId.getId().getLeastSignificantBits());
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
-        ts.forEach(v -> builder.addData(toKeyValueProto(v.getTs(), v).build()));
+        ts.forEach(v -> builder.addData(toTsKvProtoBuilder(v.getTs(), v).build()));
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setTsUpdate(builder);
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
@@ -216,7 +200,7 @@ public class TbSubscriptionUtils {
         builder.setTenantIdMSB(tenantId.getId().getMostSignificantBits());
         builder.setTenantIdLSB(tenantId.getId().getLeastSignificantBits());
         builder.setScope(scope);
-        attributes.forEach(v -> builder.addData(toKeyValueProto(v.getLastUpdateTs(), v).build()));
+        attributes.forEach(v -> builder.addData(toTsKvProtoBuilder(v.getLastUpdateTs(), v).build()));
 
         SubscriptionMgrMsgProto.Builder msgBuilder = SubscriptionMgrMsgProto.newBuilder();
         msgBuilder.setAttrUpdate(builder);
@@ -239,119 +223,8 @@ public class TbSubscriptionUtils {
         return ToCoreMsg.newBuilder().setToSubscriptionMgrMsg(msgBuilder.build()).build();
     }
 
-    private static TsKvProto.Builder toKeyValueProto(long ts, KvEntry attr) {
-        KeyValueProto.Builder dataBuilder = KeyValueProto.newBuilder();
-        dataBuilder.setKey(attr.getKey());
-        dataBuilder.setType(toProto(attr.getDataType()));
-        switch (attr.getDataType()) {
-            case BOOLEAN:
-                attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
-                break;
-            case LONG:
-                attr.getLongValue().ifPresent(dataBuilder::setLongV);
-                break;
-            case DOUBLE:
-                attr.getDoubleValue().ifPresent(dataBuilder::setDoubleV);
-                break;
-            case JSON:
-                attr.getJsonValue().ifPresent(dataBuilder::setJsonV);
-                break;
-            case STRING:
-                attr.getStrValue().ifPresent(dataBuilder::setStringV);
-                break;
-        }
-        return TsKvProto.newBuilder().setTs(ts).setKv(dataBuilder);
-    }
-
-    private static TransportProtos.TsValueProto toTsValueProto(long ts, KvEntry attr) {
-        TransportProtos.TsValueProto.Builder dataBuilder = TransportProtos.TsValueProto.newBuilder();
-        dataBuilder.setTs(ts);
-        dataBuilder.setType(toProto(attr.getDataType()));
-        switch (attr.getDataType()) {
-            case BOOLEAN:
-                attr.getBooleanValue().ifPresent(dataBuilder::setBoolV);
-                break;
-            case LONG:
-                attr.getLongValue().ifPresent(dataBuilder::setLongV);
-                break;
-            case DOUBLE:
-                attr.getDoubleValue().ifPresent(dataBuilder::setDoubleV);
-                break;
-            case JSON:
-                attr.getJsonValue().ifPresent(dataBuilder::setJsonV);
-                break;
-            case STRING:
-                attr.getStrValue().ifPresent(dataBuilder::setStringV);
-                break;
-        }
-        return dataBuilder.build();
-    }
-
-
     public static EntityId toEntityId(String entityType, long entityIdMSB, long entityIdLSB) {
         return EntityIdFactory.getByTypeAndUuid(entityType, new UUID(entityIdMSB, entityIdLSB));
-    }
-
-    public static List<TsKvEntry> toTsKvEntityList(List<TsKvProto> dataList) {
-        List<TsKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), getKvEntry(proto.getKv()))));
-        return result;
-    }
-
-    public static List<AttributeKvEntry> toAttributeKvList(List<TsKvProto> dataList) {
-        List<AttributeKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BaseAttributeKvEntry(getKvEntry(proto.getKv()), proto.getTs())));
-        return result;
-    }
-
-    private static KvEntry getKvEntry(KeyValueProto proto) {
-        KvEntry entry = null;
-        switch (fromProto(proto.getType())) {
-            case BOOLEAN:
-                entry = new BooleanDataEntry(proto.getKey(), proto.getBoolV());
-                break;
-            case LONG:
-                entry = new LongDataEntry(proto.getKey(), proto.getLongV());
-                break;
-            case DOUBLE:
-                entry = new DoubleDataEntry(proto.getKey(), proto.getDoubleV());
-                break;
-            case STRING:
-                entry = new StringDataEntry(proto.getKey(), proto.getStringV());
-                break;
-            case JSON:
-                entry = new JsonDataEntry(proto.getKey(), proto.getJsonV());
-                break;
-        }
-        return entry;
-    }
-
-    public static List<TsKvEntry> toTsKvEntityList(String key, List<TransportProtos.TsValueProto> dataList) {
-        List<TsKvEntry> result = new ArrayList<>(dataList.size());
-        dataList.forEach(proto -> result.add(new BasicTsKvEntry(proto.getTs(), getKvEntry(key, proto))));
-        return result;
-    }
-
-    private static KvEntry getKvEntry(String key, TransportProtos.TsValueProto proto) {
-        KvEntry entry = null;
-        switch (fromProto(proto.getType())) {
-            case BOOLEAN:
-                entry = new BooleanDataEntry(key, proto.getBoolV());
-                break;
-            case LONG:
-                entry = new LongDataEntry(key, proto.getLongV());
-                break;
-            case DOUBLE:
-                entry = new DoubleDataEntry(key, proto.getDoubleV());
-                break;
-            case STRING:
-                entry = new StringDataEntry(key, proto.getStringV());
-                break;
-            case JSON:
-                entry = new JsonDataEntry(key, proto.getJsonV());
-                break;
-        }
-        return entry;
     }
 
     public static ToCoreMsg toAlarmUpdateProto(TenantId tenantId, EntityId entityId, AlarmInfo alarm) {
@@ -411,7 +284,7 @@ public class TbSubscriptionUtils {
     public static List<TsKvEntry> fromProto(TransportProtos.TbSubUpdateProto proto) {
         List<TsKvEntry> result = new ArrayList<>();
         for (var p : proto.getDataList()) {
-            result.addAll(toTsKvEntityList(p.getKey(), p.getTsValueList()));
+            result.addAll(fromTsValueProtoList(p.getKey(), p.getTsValueList()));
         }
         return result;
     }
@@ -451,14 +324,6 @@ public class TbSubscriptionUtils {
             result.setAttrUpdate(builder);
         }
         return ToCoreNotificationMsg.newBuilder().setToLocalSubscriptionServiceMsg(result).build();
-    }
-
-    public static TransportProtos.KeyValueType toProto(DataType dataType) {
-        return TransportProtos.KeyValueType.forNumber(dataType.getProtoNumber());
-    }
-
-    public static DataType fromProto(TransportProtos.KeyValueType keyValueType) {
-        return dataTypeByProtoNumber[keyValueType.getNumber()];
     }
 
 }

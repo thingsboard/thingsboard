@@ -23,13 +23,13 @@ import {
   WidgetSubscriptionOptions
 } from '@core/api/widget-api.models';
 import {
-  DataKey,
+  DataKey, DataKeySettingsWithComparison,
   DataSet,
   DataSetHolder,
   Datasource,
   DatasourceData,
   datasourcesHasAggregation,
-  DatasourceType,
+  DatasourceType, isDataKeySettingsWithComparison,
   LegendConfig,
   LegendData,
   LegendKey,
@@ -513,7 +513,7 @@ export class WidgetSubscription implements IWidgetSubscription {
       this.configuredDatasources.forEach((datasource, datasourceIndex) => {
         const additionalDataKeys: DataKey[] = [];
         datasource.dataKeys.forEach((dataKey, dataKeyIndex) => {
-          if (dataKey.settings.comparisonSettings && dataKey.settings.comparisonSettings.showValuesForComparison) {
+          if (isDataKeySettingsWithComparison(dataKey.settings) && dataKey.settings.comparisonSettings.showValuesForComparison) {
             const additionalDataKey = deepClone(dataKey);
             additionalDataKey.isAdditional = true;
             additionalDataKey.origDataKeyIndex = dataKeyIndex;
@@ -1468,11 +1468,12 @@ export class WidgetSubscription implements IWidgetSubscription {
           if (datasource.isAdditional) {
             const origDatasource = this.datasourcePages[datasource.origDatasourceIndex].data[dIndex];
             datasource.dataKeys.forEach((dataKey) => {
-              if (dataKey.settings.comparisonSettings.color) {
+              const settings: DataKeySettingsWithComparison = dataKey.settings;
+              if (settings.comparisonSettings.color) {
                 dataKey.color = dataKey.settings.comparisonSettings.color;
               }
               const origDataKey = origDatasource.dataKeys[dataKey.origDataKeyIndex];
-              origDataKey.settings.comparisonSettings.color = dataKey.color;
+              (origDataKey.settings as DataKeySettingsWithComparison).comparisonSettings.color = dataKey.color;
             });
           }
         });
@@ -1523,7 +1524,8 @@ export class WidgetSubscription implements IWidgetSubscription {
     const formattedData = flatFormattedData(formattedDataArray);
 
     datasource.dataKeys.forEach((dataKey) => {
-      if (this.comparisonEnabled && dataKey.isAdditional && dataKey.settings.comparisonSettings.comparisonValuesLabel) {
+      if (this.comparisonEnabled && dataKey.isAdditional && isDataKeySettingsWithComparison(dataKey.settings) &&
+        dataKey.settings.comparisonSettings.comparisonValuesLabel) {
         dataKey.label = createLabelFromPattern(dataKey.settings.comparisonSettings.comparisonValuesLabel, formattedData);
       } else {
         if (this.comparisonEnabled && dataKey.isAdditional) {

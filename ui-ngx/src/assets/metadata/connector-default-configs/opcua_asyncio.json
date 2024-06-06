@@ -1,0 +1,52 @@
+{
+  "server": {
+    "name": "OPC-UA Default Server",
+    "url": "localhost:4840/freeopcua/server/",
+    "timeoutInMillis": 5000,
+    "scanPeriodInMillis": 5000,
+    "disableSubscriptions": false,
+    "subCheckPeriodInMillis": 100,
+    "showMap": false,
+    "security": "Basic128Rsa15",
+    "identity": {
+      "type": "anonymous"
+    },
+    "mapping": [
+      {
+        "deviceNodePattern": "Root\\.Objects\\.Device1",
+        "deviceNamePattern": "Device ${Root\\.Objects\\.Device1\\.serialNumber}",
+        "attributes": [
+          {
+            "key": "temperature °C",
+            "path": "${ns=2;i=5}"
+          }
+        ],
+        "timeseries": [
+          {
+            "key": "humidity",
+            "path": "${Root\\.Objects\\.Device1\\.TemperatureAndHumiditySensor\\.Humidity}"
+          },
+          {
+            "key": "batteryLevel",
+            "path": "${Battery\\.batteryLevel}"
+          }
+        ],
+        "rpc_methods": [
+          {
+            "method": "multiply",
+            "arguments": [
+              2,
+              4
+            ]
+          }
+        ],
+        "attributes_updates": [
+          {
+            "attributeOnThingsBoard": "deviceName",
+            "attributeOnDevice": "Root\\.Objects\\.Device1\\.serialNumber"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -16,6 +16,7 @@
 
 import { Component, Injector } from '@angular/core';
 import {
+  Datasource,
   legendPositions,
   legendPositionTranslationMap,
   WidgetSettings,
@@ -24,10 +25,10 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue } from '@core/utils';
+import { formatValue, mergeDeep } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
-  barChartWithLabelsDefaultSettings
+  barChartWithLabelsDefaultSettings, BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 
 @Component({
@@ -36,6 +37,15 @@ import {
   styleUrls: ['./../widget-settings.scss']
 })
 export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsComponent {
+
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.widgetConfig.config.datasources;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
+  }
 
   legendPositions = legendPositions;
 
@@ -58,11 +68,13 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...barChartWithLabelsDefaultSettings};
+    return mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings, barChartWithLabelsDefaultSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
     this.barChartWidgetSettingsForm = this.fb.group({
+
+      dataZoom: [settings.dataZoom, []],
 
       showBarLabel: [settings.showBarLabel, []],
       barLabelFont: [settings.barLabelFont, []],
@@ -70,6 +82,20 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       showBarValue: [settings.showBarValue, []],
       barValueFont: [settings.barValueFont, []],
       barValueColor: [settings.barValueColor, []],
+      showBarBorder: [settings.showBarBorder, []],
+      barBorderWidth: [settings.barBorderWidth, []],
+      barBorderRadius: [settings.barBorderRadius, []],
+      barBackgroundSettings: [settings.barBackgroundSettings, []],
+      noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
+
+      grid: [settings.grid, []],
+
+      yAxis: [settings.yAxis, []],
+      xAxis: [settings.xAxis, []],
+
+      thresholds: [settings.thresholds, []],
+
+      animation: [settings.animation, []],
 
       showLegend: [settings.showLegend, []],
       legendPosition: [settings.legendPosition, []],
@@ -77,6 +103,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -88,17 +116,19 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
       tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['showBarLabel', 'showBarValue', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['showBarLabel', 'showBarValue', 'showBarBorder', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const showBarLabel: boolean = this.barChartWidgetSettingsForm.get('showBarLabel').value;
     const showBarValue: boolean = this.barChartWidgetSettingsForm.get('showBarValue').value;
+    const showBarBorder: boolean = this.barChartWidgetSettingsForm.get('showBarBorder').value;
     const showLegend: boolean = this.barChartWidgetSettingsForm.get('showLegend').value;
     const showTooltip: boolean = this.barChartWidgetSettingsForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.barChartWidgetSettingsForm.get('tooltipShowDate').value;
@@ -119,6 +149,12 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       this.barChartWidgetSettingsForm.get('barValueColor').disable();
     }
 
+    if (showBarBorder) {
+      this.barChartWidgetSettingsForm.get('barBorderWidth').enable();
+    } else {
+      this.barChartWidgetSettingsForm.get('barBorderWidth').disable();
+    }
+
     if (showLegend) {
       this.barChartWidgetSettingsForm.get('legendPosition').enable();
       this.barChartWidgetSettingsForm.get('legendLabelFont').enable();
@@ -130,6 +166,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
     }
 
     if (showTooltip) {
+      this.barChartWidgetSettingsForm.get('tooltipLabelFont').enable();
+      this.barChartWidgetSettingsForm.get('tooltipLabelColor').enable();
       this.barChartWidgetSettingsForm.get('tooltipValueFont').enable();
       this.barChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.barChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -147,6 +185,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
         this.barChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.barChartWidgetSettingsForm.get('tooltipLabelFont').disable();
+      this.barChartWidgetSettingsForm.get('tooltipLabelColor').disable();
       this.barChartWidgetSettingsForm.get('tooltipValueFont').disable();
       this.barChartWidgetSettingsForm.get('tooltipValueColor').disable();
       this.barChartWidgetSettingsForm.get('tooltipShowDate').disable({emitEvent: false});

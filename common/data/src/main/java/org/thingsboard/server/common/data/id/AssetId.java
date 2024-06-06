@@ -36,7 +36,7 @@ public class AssetId extends UUIDBased implements EntityId {
         return new AssetId(UUID.fromString(assetId));
     }
 
-    @Schema(required = true, description = "string", example = "ASSET", allowableValues = "ASSET")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "ASSET", allowableValues = "ASSET")
     @Override
     public EntityType getEntityType() {
         return EntityType.ASSET;

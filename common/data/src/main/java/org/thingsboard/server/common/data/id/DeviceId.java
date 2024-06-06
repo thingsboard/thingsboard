@@ -37,7 +37,7 @@ public class DeviceId extends UUIDBased implements EntityId {
     }
 
     @Override
-    @Schema(required = true, description = "string", example = "DEVICE", allowableValues = "DEVICE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "DEVICE", allowableValues = "DEVICE")
     public EntityType getEntityType() {
         return EntityType.DEVICE;
     }

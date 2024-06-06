@@ -17,53 +17,451 @@
 import {
   ECharts,
   EChartsOption,
-  EChartsSeriesItem,
-  EChartsTooltipTrigger,
-  EChartsTooltipWidgetSettings,
-  measureThresholdLabelOffset, timeAxisBandWidthCalculator
+  measureThresholdOffset
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
   autoDateFormat,
   AutoDateFormatSettings,
   ComponentStyle,
+  DateFormatProcessor,
+  DateFormatSettings,
   Font,
-  textStyle,
-  tsToFormatTimeUnit
+  tsToFormatTimeUnit,
+  ValueSourceConfig,
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
-import { XAXisOption, YAXisOption } from 'echarts/types/dist/shared';
+import {
+  CallbackDataParams,
+  TimeAxisBandWidthCalculator,
+  VisualMapComponentOption,
+  XAXisOption,
+  YAXisOption
+} from 'echarts/types/dist/shared';
 import { CustomSeriesOption, LineSeriesOption } from 'echarts/charts';
 import {
   formatValue,
   isDefinedAndNotNull,
   isFunction,
+  isNumber,
   isNumeric,
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { LinearGradientObject } from 'zrender/lib/graphic/LinearGradient';
 import tinycolor from 'tinycolor2';
-import { ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
+import { TimeAxisBaseOption, ValueAxisBaseOption } from 'echarts/types/src/coord/axisCommonTypes';
 import { SeriesLabelOption } from 'echarts/types/src/util/types';
+import { LabelFormatterCallback } from 'echarts';
 import {
   BarRenderContext,
   BarRenderSharedContext,
   BarVisualSettings,
   renderTimeSeriesBar
 } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
-import { DataKey } from '@shared/models/widget.models';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { TbColorScheme } from '@shared/models/color.models';
+import {
+  DataEntry,
+  DataKey,
+  DataKeySettingsWithComparison,
+  DataSet,
+  Datasource,
+  FormattedData,
+  WidgetComparisonSettings
+} from '@shared/models/widget.models';
 import { AbstractControl, ValidationErrors } from '@angular/forms';
 import { MarkLine2DDataItemOption } from 'echarts/types/src/component/marker/MarkLineModel';
 import { DatePipe } from '@angular/common';
+import { BuiltinTextPosition } from 'zrender/src/core/types';
+import { CartesianAxisOption } from 'echarts/types/src/coord/cartesian/AxisModel';
+import {
+  calculateAggIntervalWithWidgetTimeWindow,
+  Interval,
+  IntervalMath,
+  WidgetTimewindow
+} from '@shared/models/time/time.models';
+import { UtilsService } from '@core/services/utils.service';
+import { Renderer2 } from '@angular/core';
+import {
+  chartAnimationDefaultSettings,
+  ChartAnimationSettings,
+  chartBarDefaultSettings,
+  ChartBarSettings,
+  chartColorScheme,
+  ChartFillSettings,
+  ChartFillType,
+  ChartLabelPosition,
+  ChartLineType,
+  ChartShape,
+  createChartTextStyle,
+  createLinearOpacityGradient,
+  PieChartLabelPosition,
+  prepareChartThemeColor
+} from '@home/components/widget/lib/chart/chart.models';
+import { BarSeriesLabelOption } from 'echarts/types/src/chart/bar/BarSeries';
+
+type TimeSeriesChartDataEntry = [number, any, number, number];
+
+type TimeSeriesChartDataSet = {name: string; value: TimeSeriesChartDataEntry}[];
+
+export const toTimeSeriesChartDataSet = (data: DataSet, valueConverter?: (value: any) => any): TimeSeriesChartDataSet => {
+  if (!data?.length) {
+    return [];
+  } else {
+    return data.map(d => {
+      const ts = isDefinedAndNotNull(d[2]) ? d[2][0] : d[0];
+      return {
+        name: ts + '',
+        value: toTimeSeriesChartDataEntry(d, valueConverter)
+      };
+    });
+  }
+};
+
+const toTimeSeriesChartDataEntry = (entry: DataEntry, valueConverter?: (value: any) => any): TimeSeriesChartDataEntry => {
+  const value = valueConverter ? valueConverter(entry[1]) : entry[1];
+  const item: TimeSeriesChartDataEntry = [entry[0], value, entry[0], entry[0]];
+  if (isDefinedAndNotNull(entry[2])) {
+    item[2] = entry[2][0];
+    item[3] = entry[2][1];
+  }
+  return item;
+};
+
+export type TimeSeriesChartTooltipValueFormatFunction =
+  (value: any, latestData: FormattedData, units?: string, decimals?: number) => string;
+
+export interface TimeSeriesChartDataItem {
+  id: string;
+  datasource: Datasource;
+  dataKey: DataKey;
+  data: TimeSeriesChartDataSet;
+  dataSet?: DataSet;
+  enabled: boolean;
+  units?: string;
+  decimals?: number;
+  latestData?: FormattedData;
+  tooltipValueFormatFunction?: TimeSeriesChartTooltipValueFormatFunction;
+  comparisonItem?: boolean;
+  xAxisIndex: number;
+  yAxisId: TimeSeriesChartYAxisId;
+  yAxisIndex: number;
+  option?: LineSeriesOption | CustomSeriesOption;
+  barRenderContext?: BarRenderContext;
+}
+
+export const timeAxisBandWidthCalculator: TimeAxisBandWidthCalculator = (model) => {
+  let interval: number;
+  const axisOption = model.option;
+  const seriesDataIndices = axisOption.axisPointer?.seriesDataIndices;
+  if (seriesDataIndices?.length) {
+    const seriesDataIndex = seriesDataIndices[0];
+    const series = model.ecModel.getSeriesByIndex(seriesDataIndex.seriesIndex);
+    if (series) {
+      const values = series.getData().getValues(seriesDataIndex.dataIndex);
+      const start = values[2];
+      const end = values[3];
+      if (typeof start === 'number' && typeof end === 'number') {
+        interval = Math.max(end - start, 1);
+      }
+    }
+  }
+  if (!interval) {
+    const tbTimeWindow: WidgetTimewindow = (axisOption as any).tbTimeWindow;
+    if (isDefinedAndNotNull(tbTimeWindow)) {
+      if (axisOption.axisPointer?.value && typeof axisOption.axisPointer?.value === 'number') {
+        const intervalArray = calculateAggIntervalWithWidgetTimeWindow(tbTimeWindow, axisOption.axisPointer.value);
+        const start = intervalArray[0];
+        const end = intervalArray[1];
+        interval = Math.max(end - start, 1);
+      } else {
+        interval = IntervalMath.numberValue(tbTimeWindow.interval);
+      }
+    }
+  }
+  if (interval) {
+    const timeScale = model.axis.scale;
+    const axisExtent = model.axis.getExtent();
+    const dataExtent = timeScale.getExtent();
+    const size = Math.abs(axisExtent[1] - axisExtent[0]);
+    return interval * (size / (dataExtent[1] - dataExtent[0]));
+  }
+};
+
+
+const minDataTs = (dataSet: TimeSeriesChartDataSet): number => dataSet.length ? dataSet.map(data =>
+  Number(data.name)).reduce((a, b) => Math.min(a, b)) : undefined;
+
+const maxDataTs = (dataSet: TimeSeriesChartDataSet): number => dataSet.length ? dataSet.map(data =>
+  Number(data.name)).reduce((a, b) => Math.max(a, b)) : undefined;
+
+export const adjustTimeAxisExtentToData = (timeAxisOption: TimeAxisBaseOption,
+                                           dataItems: TimeSeriesChartDataItem[],
+                                           defaultMin: number,
+                                           defaultMax: number): void => {
+  let min: number;
+  let max: number;
+  for (const item of dataItems) {
+    if (item.enabled) {
+      const minTs = minDataTs(item.data);
+      if (typeof minTs !== 'undefined') {
+        min = (typeof min !== 'undefined') ? Math.min(min, minTs) : minTs;
+      }
+      const maxTs = maxDataTs(item.data);
+      if (typeof maxTs !== 'undefined') {
+        max = (typeof max !== 'undefined') ? Math.max(max, maxTs) : maxTs;
+      }
+    }
+  }
+  timeAxisOption.min = (typeof min !== 'undefined' && Math.abs(min - defaultMin) < 1000) ? min : defaultMin;
+  timeAxisOption.max = (typeof max !== 'undefined' && Math.abs(max - defaultMax) < 1000) ? max : defaultMax;
+};
+
+export enum TimeSeriesChartTooltipTrigger {
+  point = 'point',
+  axis = 'axis'
+}
+
+export const tooltipTriggerTranslationMap = new Map<TimeSeriesChartTooltipTrigger, string>(
+  [
+    [ TimeSeriesChartTooltipTrigger.point, 'tooltip.trigger-point' ],
+    [ TimeSeriesChartTooltipTrigger.axis, 'tooltip.trigger-axis' ]
+  ]
+);
+
+export interface TimeSeriesChartTooltipWidgetSettings {
+  showTooltip: boolean;
+  tooltipTrigger?: TimeSeriesChartTooltipTrigger;
+  tooltipShowFocusedSeries?: boolean;
+  tooltipLabelFont: Font;
+  tooltipLabelColor: string;
+  tooltipValueFont: Font;
+  tooltipValueColor: string;
+  tooltipValueFormatter?: string | TimeSeriesChartTooltipValueFormatFunction;
+  tooltipShowDate: boolean;
+  tooltipDateInterval?: boolean;
+  tooltipDateFormat: DateFormatSettings;
+  tooltipDateFont: Font;
+  tooltipDateColor: string;
+  tooltipBackgroundColor: string;
+  tooltipBackgroundBlur: number;
+}
+
+export const createTooltipValueFormatFunction =
+  (tooltipValueFormatter: string | TimeSeriesChartTooltipValueFormatFunction): TimeSeriesChartTooltipValueFormatFunction => {
+    let tooltipValueFormatFunction: TimeSeriesChartTooltipValueFormatFunction;
+    if (isFunction(tooltipValueFormatter)) {
+      tooltipValueFormatFunction = tooltipValueFormatter as TimeSeriesChartTooltipValueFormatFunction;
+    } else if (typeof tooltipValueFormatter === 'string' && tooltipValueFormatter.length) {
+      try {
+        tooltipValueFormatFunction =
+          new Function('value', 'latestData', tooltipValueFormatter) as TimeSeriesChartTooltipValueFormatFunction;
+      } catch (e) {}
+    }
+    return tooltipValueFormatFunction;
+  };
+
+export const timeSeriesChartTooltipFormatter = (renderer: Renderer2,
+                                                tooltipDateFormat: DateFormatProcessor,
+                                                settings: TimeSeriesChartTooltipWidgetSettings,
+                                                params: CallbackDataParams[] | CallbackDataParams,
+                                                valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction,
+                                                focusedSeriesIndex: number,
+                                                series?: TimeSeriesChartDataItem[],
+                                                interval?: Interval): null | HTMLElement => {
+
+  const tooltipParams = mapTooltipParams(params, series, focusedSeriesIndex);
+  if (!tooltipParams.items.length && !tooltipParams.comparisonItems.length) {
+    return null;
+  }
+
+  const tooltipElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(tooltipElement, 'display', 'flex');
+  renderer.setStyle(tooltipElement, 'flex-direction', 'column');
+  renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
+  renderer.setStyle(tooltipElement, 'gap', '16px');
+
+  buildItemsTooltip(tooltipElement, tooltipParams.items, renderer, tooltipDateFormat, settings, valueFormatFunction, interval);
+  buildItemsTooltip(tooltipElement, tooltipParams.comparisonItems, renderer, tooltipDateFormat, settings, valueFormatFunction, interval);
+
+  return tooltipElement;
+};
+
+interface TooltipItem {
+  param: CallbackDataParams;
+  dataItem: TimeSeriesChartDataItem;
+}
+
+interface TooltipParams {
+  items: TooltipItem[];
+  comparisonItems: TooltipItem[];
+}
+
+const buildItemsTooltip = (tooltipElement: HTMLElement,
+                           items: TooltipItem[],
+                           renderer: Renderer2,
+                           tooltipDateFormat: DateFormatProcessor,
+                           settings: TimeSeriesChartTooltipWidgetSettings,
+                           valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction,
+                           interval?: Interval) => {
+  if (items.length) {
+    const tooltipItemsElement: HTMLElement = renderer.createElement('div');
+    renderer.setStyle(tooltipItemsElement, 'display', 'flex');
+    renderer.setStyle(tooltipItemsElement, 'flex-direction', 'column');
+    renderer.setStyle(tooltipItemsElement, 'align-items', 'flex-start');
+    renderer.setStyle(tooltipItemsElement, 'gap', '4px');
+    renderer.appendChild(tooltipElement, tooltipItemsElement);
+    if (settings.tooltipShowDate) {
+      renderer.appendChild(tooltipItemsElement,
+        constructTooltipDateElement(renderer, tooltipDateFormat, settings, items[0].param, interval));
+    }
+    for (const item of items) {
+      renderer.appendChild(tooltipItemsElement,
+        constructTooltipSeriesElement(renderer, settings, item, valueFormatFunction));
+    }
+  }
+};
+
+const mapTooltipParams = (params: CallbackDataParams[] | CallbackDataParams,
+                          series?: TimeSeriesChartDataItem[],
+                          focusedSeriesIndex?: number): TooltipParams => {
+  const result: TooltipParams = {
+    items: [],
+    comparisonItems: []
+  };
+  if (!params || Array.isArray(params) && !params[0]) {
+    return result;
+  }
+  const firstParam = Array.isArray(params) ? params[0] : params;
+  if (!firstParam.value) {
+    return result;
+  }
+  let seriesParams: CallbackDataParams = null;
+  if (Array.isArray(params) && focusedSeriesIndex > -1) {
+    seriesParams = params.find(param => param.seriesIndex === focusedSeriesIndex);
+  } else if (!Array.isArray(params)) {
+    seriesParams = params;
+  }
+  if (seriesParams) {
+    appendTooltipItem(result, seriesParams, series);
+  } else if (Array.isArray(params)) {
+    for (seriesParams of params) {
+      appendTooltipItem(result, seriesParams, series);
+    }
+  }
+  return result;
+};
+
+const appendTooltipItem = (tooltipParams: TooltipParams, seriesParams: CallbackDataParams, series?: TimeSeriesChartDataItem[]) => {
+  const dataItem = series?.find(s => s.id === seriesParams.seriesId);
+  const tooltipItem: TooltipItem = {
+    param: seriesParams,
+    dataItem
+  };
+  if (dataItem?.comparisonItem) {
+    tooltipParams.comparisonItems.push(tooltipItem);
+  } else {
+    tooltipParams.items.push(tooltipItem);
+  }
+};
+
+const constructTooltipDateElement = (renderer: Renderer2,
+                                     tooltipDateFormat: DateFormatProcessor,
+                                     settings: TimeSeriesChartTooltipWidgetSettings,
+                                     param: CallbackDataParams,
+                                     interval?: Interval): HTMLElement => {
+  const dateElement: HTMLElement = renderer.createElement('div');
+  let dateText: string;
+  const startTs = param.value[2];
+  const endTs = param.value[3];
+  if (settings.tooltipDateInterval && startTs && endTs && (endTs - 1) > startTs) {
+    const startDateText = tooltipDateFormat.update(startTs, interval);
+    const endDateText = tooltipDateFormat.update(endTs - 1, interval);
+    if (startDateText === endDateText) {
+      dateText = startDateText;
+    } else {
+      dateText = startDateText + ' - ' + endDateText;
+    }
+  } else {
+    const ts = param.value[0];
+    dateText = tooltipDateFormat.update(ts, interval);
+  }
+  renderer.appendChild(dateElement, renderer.createText(dateText));
+  renderer.setStyle(dateElement, 'font-family', settings.tooltipDateFont.family);
+  renderer.setStyle(dateElement, 'font-size', settings.tooltipDateFont.size + settings.tooltipDateFont.sizeUnit);
+  renderer.setStyle(dateElement, 'font-style', settings.tooltipDateFont.style);
+  renderer.setStyle(dateElement, 'font-weight', settings.tooltipDateFont.weight);
+  renderer.setStyle(dateElement, 'line-height', settings.tooltipDateFont.lineHeight);
+  renderer.setStyle(dateElement, 'color', settings.tooltipDateColor);
+  return dateElement;
+};
+
+const constructTooltipSeriesElement = (renderer: Renderer2,
+                                       settings: TimeSeriesChartTooltipWidgetSettings,
+                                       item: TooltipItem,
+                                       valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction): HTMLElement => {
+  const labelValueElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(labelValueElement, 'display', 'flex');
+  renderer.setStyle(labelValueElement, 'flex-direction', 'row');
+  renderer.setStyle(labelValueElement, 'align-items', 'center');
+  renderer.setStyle(labelValueElement, 'align-self', 'stretch');
+  renderer.setStyle(labelValueElement, 'gap', '12px');
+  const labelElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(labelElement, 'display', 'flex');
+  renderer.setStyle(labelElement, 'align-items', 'center');
+  renderer.setStyle(labelElement, 'gap', '8px');
+  renderer.appendChild(labelValueElement, labelElement);
+  const circleElement: HTMLElement = renderer.createElement('div');
+  renderer.setStyle(circleElement, 'width', '8px');
+  renderer.setStyle(circleElement, 'height', '8px');
+  renderer.setStyle(circleElement, 'border-radius', '50%');
+  renderer.setStyle(circleElement, 'background', item.param.color);
+  renderer.appendChild(labelElement, circleElement);
+  const labelTextElement: HTMLElement = renderer.createElement('div');
+  renderer.appendChild(labelTextElement, renderer.createText(item.param.seriesName));
+  renderer.setStyle(labelTextElement, 'font-family', settings.tooltipLabelFont.family);
+  renderer.setStyle(labelTextElement, 'font-size', settings.tooltipLabelFont.size + settings.tooltipLabelFont.sizeUnit);
+  renderer.setStyle(labelTextElement, 'font-style', settings.tooltipLabelFont.style);
+  renderer.setStyle(labelTextElement, 'font-weight', settings.tooltipLabelFont.weight);
+  renderer.setStyle(labelTextElement, 'line-height', settings.tooltipLabelFont.lineHeight);
+  renderer.setStyle(labelTextElement, 'color', settings.tooltipLabelColor);
+  renderer.appendChild(labelElement, labelTextElement);
+  const valueElement: HTMLElement = renderer.createElement('div');
+  let formatFunction = valueFormatFunction;
+  let latestData: FormattedData;
+  let units = '';
+  let decimals = 0;
+  if (item.dataItem) {
+    if (item.dataItem.tooltipValueFormatFunction) {
+      formatFunction = item.dataItem.tooltipValueFormatFunction;
+    }
+    latestData = item.dataItem.latestData;
+    units = item.dataItem.units;
+    decimals = item.dataItem.decimals;
+  }
+  if (!latestData) {
+    latestData = {} as FormattedData;
+  }
+  const value = formatFunction(item.param.value[1], latestData, units, decimals);
+  renderer.appendChild(valueElement, renderer.createText(value));
+  renderer.setStyle(valueElement, 'flex', '1');
+  renderer.setStyle(valueElement, 'text-align', 'end');
+  renderer.setStyle(valueElement, 'font-family', settings.tooltipValueFont.family);
+  renderer.setStyle(valueElement, 'font-size', settings.tooltipValueFont.size + settings.tooltipValueFont.sizeUnit);
+  renderer.setStyle(valueElement, 'font-style', settings.tooltipValueFont.style);
+  renderer.setStyle(valueElement, 'font-weight', settings.tooltipValueFont.weight);
+  renderer.setStyle(valueElement, 'line-height', settings.tooltipValueFont.lineHeight);
+  renderer.setStyle(valueElement, 'color', settings.tooltipValueColor);
+  renderer.appendChild(labelValueElement, valueElement);
+  return labelValueElement;
+};
+
 
 export enum TimeSeriesChartType {
   default = 'default',
   line = 'line',
   bar = 'bar',
-  point = 'point'
+  point = 'point',
+  state = 'state'
 }
 
 export const timeSeriesChartTypeTranslations = new Map<TimeSeriesChartType, string>(
@@ -73,41 +471,6 @@ export const timeSeriesChartTypeTranslations = new Map<TimeSeriesChartType, stri
     [TimeSeriesChartType.point, 'widgets.time-series-chart.type-point']
   ]
 );
-
-const timeSeriesChartColorScheme: TbColorScheme = {
-  'threshold.line': {
-    light: 'rgba(0, 0, 0, 0.76)',
-    dark: '#eee'
-  },
-  'threshold.label': {
-    light: 'rgba(0, 0, 0, 0.76)',
-    dark: '#eee'
-  },
-  'axis.line': {
-    light: 'rgba(0, 0, 0, 0.54)',
-    dark: '#B9B8CE'
-  },
-  'axis.label': {
-    light: 'rgba(0, 0, 0, 0.54)',
-    dark: '#B9B8CE'
-  },
-  'axis.ticks': {
-    light: 'rgba(0, 0, 0, 0.54)',
-    dark: '#B9B8CE'
-  },
-  'axis.tickLabel': {
-    light: 'rgba(0, 0, 0, 0.54)',
-    dark: '#B9B8CE'
-  },
-  'axis.splitLine': {
-    light: 'rgba(0, 0, 0, 0.12)',
-    dark: '#484753'
-  },
-  'series.label': {
-    light: 'rgba(0, 0, 0, 0.76)',
-    dark: '#eee'
-  }
-};
 
 export enum AxisPosition {
   left = 'left',
@@ -124,50 +487,6 @@ export const timeSeriesAxisPositionTranslations = new Map<AxisPosition, string>(
     [AxisPosition.right, 'widgets.time-series-chart.axis.position-right'],
     [AxisPosition.top, 'widgets.time-series-chart.axis.position-top'],
     [AxisPosition.bottom, 'widgets.time-series-chart.axis.position-bottom']
-  ]
-);
-
-export enum TimeSeriesChartShape {
-  emptyCircle = 'emptyCircle',
-  circle = 'circle',
-  rect = 'rect',
-  roundRect = 'roundRect',
-  triangle = 'triangle',
-  diamond = 'diamond',
-  pin = 'pin',
-  arrow = 'arrow',
-  none = 'none'
-}
-
-export const timeSeriesChartShapes = Object.keys(TimeSeriesChartShape) as TimeSeriesChartShape[];
-
-export const timeSeriesChartShapeTranslations = new Map<TimeSeriesChartShape, string>(
-  [
-    [TimeSeriesChartShape.emptyCircle, 'widgets.time-series-chart.shape-empty-circle'],
-    [TimeSeriesChartShape.circle, 'widgets.time-series-chart.shape-circle'],
-    [TimeSeriesChartShape.rect, 'widgets.time-series-chart.shape-rect'],
-    [TimeSeriesChartShape.roundRect, 'widgets.time-series-chart.shape-round-rect'],
-    [TimeSeriesChartShape.triangle, 'widgets.time-series-chart.shape-triangle'],
-    [TimeSeriesChartShape.diamond, 'widgets.time-series-chart.shape-diamond'],
-    [TimeSeriesChartShape.pin, 'widgets.time-series-chart.shape-pin'],
-    [TimeSeriesChartShape.arrow, 'widgets.time-series-chart.shape-arrow'],
-    [TimeSeriesChartShape.none, 'widgets.time-series-chart.shape-none']
-  ]
-);
-
-export enum TimeSeriesChartLineType {
-  solid = 'solid',
-  dashed = 'dashed',
-  dotted = 'dotted'
-}
-
-export const timeSeriesLineTypes = Object.keys(TimeSeriesChartLineType) as TimeSeriesChartLineType[];
-
-export const timeSeriesLineTypeTranslations = new Map<TimeSeriesChartLineType, string>(
-  [
-    [TimeSeriesChartLineType.solid, 'widgets.time-series-chart.line-type-solid'],
-    [TimeSeriesChartLineType.dashed, 'widgets.time-series-chart.line-type-dashed'],
-    [TimeSeriesChartLineType.dotted, 'widgets.time-series-chart.line-type-dotted']
   ]
 );
 
@@ -205,49 +524,17 @@ export const timeSeriesThresholdLabelPositionTranslations = new Map<ThresholdLab
   ]
 );
 
-export enum TimeSeriesChartThresholdType {
+export enum TimeSeriesChartStateSourceType {
   constant = 'constant',
-  latestKey = 'latestKey',
-  entity = 'entity'
+  range = 'range'
 }
 
-export const timeSeriesThresholdTypes = Object.keys(TimeSeriesChartThresholdType) as TimeSeriesChartThresholdType[];
+export const timeSeriesStateSourceTypes = Object.keys(TimeSeriesChartStateSourceType) as TimeSeriesChartStateSourceType[];
 
-export const timeSeriesThresholdTypeTranslations = new Map<TimeSeriesChartThresholdType, string>(
+export const timeSeriesStateSourceTypeTranslations = new Map<TimeSeriesChartStateSourceType, string>(
   [
-    [TimeSeriesChartThresholdType.constant, 'widgets.time-series-chart.threshold.type-constant'],
-    [TimeSeriesChartThresholdType.latestKey, 'widgets.time-series-chart.threshold.type-latest-key'],
-    [TimeSeriesChartThresholdType.entity, 'widgets.time-series-chart.threshold.type-entity']
-  ]
-);
-
-export enum SeriesFillType {
-  none = 'none',
-  opacity = 'opacity',
-  gradient = 'gradient'
-}
-
-export const seriesFillTypes = Object.keys(SeriesFillType) as SeriesFillType[];
-
-export const seriesFillTypeTranslations = new Map<SeriesFillType, string>(
-  [
-    [SeriesFillType.none, 'widgets.time-series-chart.series.fill-type-none'],
-    [SeriesFillType.opacity, 'widgets.time-series-chart.series.fill-type-opacity'],
-    [SeriesFillType.gradient, 'widgets.time-series-chart.series.fill-type-gradient']
-  ]
-);
-
-export enum SeriesLabelPosition {
-  top = 'top',
-  bottom = 'bottom'
-}
-
-export const seriesLabelPositions = Object.keys(SeriesLabelPosition) as SeriesLabelPosition[];
-
-export const seriesLabelPositionTranslations = new Map<SeriesLabelPosition, string>(
-  [
-    [SeriesLabelPosition.top, 'widgets.time-series-chart.series.label-position-top'],
-    [SeriesLabelPosition.bottom, 'widgets.time-series-chart.series.label-position-bottom']
+    [TimeSeriesChartStateSourceType.constant, 'widgets.time-series-chart.state.type-constant'],
+    [TimeSeriesChartStateSourceType.range, 'widgets.time-series-chart.state.type-range']
   ]
 );
 
@@ -380,51 +667,79 @@ export const defaultTimeSeriesChartYAxisSettings: TimeSeriesChartYAxisSettings =
       weight: '600',
       lineHeight: '1'
   },
-  labelColor: timeSeriesChartColorScheme['axis.label'].light,
-    position: AxisPosition.left,
-    showTickLabels: true,
-    tickLabelFont: {
-    family: 'Roboto',
-      size: 12,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '400',
-      lineHeight: '1'
+  labelColor: chartColorScheme['axis.label'].light,
+  position: AxisPosition.left,
+  showTickLabels: true,
+  tickLabelFont: {
+  family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '1'
   },
-  tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
-    ticksFormatter: null,
-    showTicks: true,
-    ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
-    showLine: true,
-    lineColor: timeSeriesChartColorScheme['axis.line'].light,
-    showSplitLines: true,
-    splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+  tickLabelColor: chartColorScheme['axis.tickLabel'].light,
+  ticksFormatter: null,
+  showTicks: true,
+  ticksColor: chartColorScheme['axis.ticks'].light,
+  showLine: true,
+  lineColor: chartColorScheme['axis.line'].light,
+  showSplitLines: true,
+  splitLinesColor: chartColorScheme['axis.splitLine'].light
+};
+
+export const defaultTimeSeriesChartXAxisSettings: TimeSeriesChartXAxisSettings = {
+  show: true,
+  label: '',
+  labelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '600',
+    lineHeight: '1'
+  },
+  labelColor: chartColorScheme['axis.label'].light,
+  position: AxisPosition.bottom,
+  showTickLabels: true,
+  tickLabelFont: {
+    family: 'Roboto',
+    size: 10,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '1'
+  },
+  tickLabelColor: chartColorScheme['axis.tickLabel'].light,
+  ticksFormat: {},
+  showTicks: true,
+  ticksColor: chartColorScheme['axis.ticks'].light,
+  showLine: true,
+  lineColor: chartColorScheme['axis.line'].light,
+  showSplitLines: true,
+  splitLinesColor: chartColorScheme['axis.splitLine'].light
 };
 
 export type TimeSeriesChartYAxes = {[id: TimeSeriesChartYAxisId]: TimeSeriesChartYAxisSettings};
 
-export interface TimeSeriesChartThreshold {
-  type: TimeSeriesChartThresholdType;
-  value?: number;
-  latestKey?: string;
-  latestKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
-  entityAlias?: string;
-  entityKey?: string;
-  entityKeyType?: DataKeyType.attribute | DataKeyType.timeseries;
+export interface TimeSeriesChartThreshold extends ValueSourceConfig {
   yAxisId: TimeSeriesChartYAxisId;
   units?: string;
   decimals?: number;
   lineColor: string;
-  lineType: TimeSeriesChartLineType;
+  lineType: ChartLineType | number | number[];
   lineWidth: number;
-  startSymbol: TimeSeriesChartShape;
+  startSymbol: ChartShape;
   startSymbolSize: number;
-  endSymbol: TimeSeriesChartShape;
+  endSymbol: ChartShape;
   endSymbolSize: number;
   showLabel: boolean;
   labelPosition: ThresholdLabelPosition;
   labelFont: Font;
   labelColor: string;
+  enableLabelBackground: boolean;
+  labelBackground: string;
+  additionalLabelOption?: {[key: string]: any};
 }
 
 export const timeSeriesChartThresholdValid = (threshold: TimeSeriesChartThreshold): boolean => {
@@ -432,17 +747,17 @@ export const timeSeriesChartThresholdValid = (threshold: TimeSeriesChartThreshol
     return false;
   }
   switch (threshold.type) {
-    case TimeSeriesChartThresholdType.constant:
+    case ValueSourceType.constant:
       if (isUndefinedOrNull(threshold.value)) {
         return false;
       }
       break;
-    case TimeSeriesChartThresholdType.latestKey:
+    case ValueSourceType.latestKey:
       if (!threshold.latestKey || !threshold.latestKeyType) {
         return false;
       }
       break;
-    case TimeSeriesChartThresholdType.entity:
+    case ValueSourceType.entity:
       if (!threshold.entityAlias || !threshold.entityKey || !threshold.entityKeyType) {
         return false;
       }
@@ -462,16 +777,16 @@ export const timeSeriesChartThresholdValidator = (control: AbstractControl): Val
 };
 
 export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold = {
-  type: TimeSeriesChartThresholdType.constant,
+  type: ValueSourceType.constant,
   yAxisId: 'default',
   units: null,
   decimals: 0,
-  lineColor: timeSeriesChartColorScheme['threshold.line'].light,
-  lineType: TimeSeriesChartLineType.solid,
+  lineColor: chartColorScheme['threshold.line'].light,
+  lineType: ChartLineType.solid,
   lineWidth: 1,
-  startSymbol: TimeSeriesChartShape.none,
+  startSymbol: ChartShape.none,
   startSymbolSize: 5,
-  endSymbol: TimeSeriesChartShape.arrow,
+  endSymbol: ChartShape.arrow,
   endSymbolSize: 5,
   showLabel: true,
   labelPosition: ThresholdLabelPosition.end,
@@ -483,7 +798,9 @@ export const timeSeriesChartThresholdDefaultSettings: TimeSeriesChartThreshold =
     weight: '400',
     lineHeight: '1'
   },
-  labelColor: timeSeriesChartColorScheme['threshold.label'].light
+  labelColor: chartColorScheme['threshold.label'].light,
+  enableLabelBackground: false,
+  labelBackground: 'rgba(255,255,255,0.56)'
 };
 
 export enum TimeSeriesChartNoAggregationBarWidthStrategy {
@@ -513,62 +830,122 @@ export interface TimeSeriesChartNoAggregationBarWidthSettings {
   barWidth?: TimeSeriesChartBarWidth;
 }
 
-export enum TimeSeriesChartAnimationEasing {
-  linear = 'linear',
-  quadraticIn = 'quadraticIn',
-  quadraticOut = 'quadraticOut',
-  quadraticInOut = 'quadraticInOut',
-  cubicIn = 'cubicIn',
-  cubicOut = 'cubicOut',
-  cubicInOut = 'cubicInOut',
-  quarticIn = 'quarticIn',
-  quarticOut = 'quarticOut',
-  quarticInOut = 'quarticInOut',
-  quinticIn = 'quinticIn',
-  quinticOut = 'quinticOut',
-  quinticInOut = 'quinticInOut',
-  sinusoidalIn = 'sinusoidalIn',
-  sinusoidalOut = 'sinusoidalOut',
-  sinusoidalInOut = 'sinusoidalInOut',
-  exponentialIn = 'exponentialIn',
-  exponentialOut = 'exponentialOut',
-  exponentialInOut = 'exponentialInOut',
-  circularIn = 'circularIn',
-  circularOut = 'circularOut',
-  circularInOut = 'circularInOut',
-  elasticIn = 'elasticIn',
-  elasticOut = 'elasticOut',
-  elasticInOut = 'elasticInOut',
-  backIn = 'backIn',
-  backOut = 'backOut',
-  backInOut = 'backInOut',
-  bounceIn = 'bounceIn',
-  bounceOut = 'bounceOut',
-  bounceInOut = 'bounceInOut'
+export const timeSeriesChartNoAggregationBarWidthDefaultSettings: TimeSeriesChartNoAggregationBarWidthSettings = {
+  strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
+  groupWidth: {
+    relative: true,
+    relativeWidth: 2,
+    absoluteWidth: 1000
+  },
+  barWidth: {
+    relative: true,
+    relativeWidth: 2,
+    absoluteWidth: 1000
+  }
+};
+
+export interface TimeSeriesChartBarWidthSettings {
+  barGap: number;
+  intervalGap: number;
 }
 
-export const timeSeriesChartAnimationEasings = Object.keys(TimeSeriesChartAnimationEasing) as TimeSeriesChartAnimationEasing[];
-
-export interface TimeSeriesChartAnimationSettings {
-  animation: boolean;
-  animationThreshold: number;
-  animationDuration: number;
-  animationEasing: TimeSeriesChartAnimationEasing;
-  animationDelay: number;
-  animationDurationUpdate: number;
-  animationEasingUpdate: TimeSeriesChartAnimationEasing;
-  animationDelayUpdate: number;
+export interface TimeSeriesChartVisualMapPiece {
+  lt?: number;
+  gt?: number;
+  lte?: number;
+  gte?: number;
+  value?: number;
+  color?: string;
 }
 
-export interface TimeSeriesChartSettings extends EChartsTooltipWidgetSettings {
+export const createTimeSeriesChartVisualMapPiece = (color: string, from?: number, to?: number): TimeSeriesChartVisualMapPiece => {
+  const piece: TimeSeriesChartVisualMapPiece = {
+    color
+  };
+  if (isNumber(from) && isNumber(to)) {
+    if (from === to) {
+      piece.value = from;
+    } else {
+      piece.gte = from;
+      piece.lt = to;
+    }
+  } else if (isNumber(from)) {
+    piece.gte = from;
+  } else if (isNumber(to)) {
+    piece.lt = to;
+  }
+  return piece;
+};
+
+export interface TimeSeriesChartVisualMapSettings {
+  outOfRangeColor: string;
+  pieces: TimeSeriesChartVisualMapPiece[];
+}
+
+export interface TimeSeriesChartStateSettings {
+  label: string;
+  value: number;
+  sourceType: TimeSeriesChartStateSourceType;
+  sourceValue?: any;
+  sourceRangeFrom?: number;
+  sourceRangeTo?: number;
+}
+
+export const timeSeriesChartStateValid = (state: TimeSeriesChartStateSettings): boolean => {
+  if (isUndefinedOrNull(state.value) || !state.sourceType) {
+    return false;
+  }
+  switch (state.sourceType) {
+    case TimeSeriesChartStateSourceType.constant:
+      if (isUndefinedOrNull(state.sourceValue)) {
+        return false;
+      }
+      break;
+  }
+  return true;
+};
+
+export const timeSeriesChartStateValidator = (control: AbstractControl): ValidationErrors | null => {
+  const state: TimeSeriesChartStateSettings = control.value;
+  if (!timeSeriesChartStateValid(state)) {
+    return {
+      state: true
+    };
+  }
+  return null;
+};
+
+export interface TimeSeriesChartComparisonSettings extends WidgetComparisonSettings {
+  comparisonXAxis?: TimeSeriesChartXAxisSettings;
+}
+
+export interface TimeSeriesChartGridSettings {
+  show: boolean;
+  backgroundColor: string;
+  borderWidth: number;
+  borderColor: string;
+}
+
+export const timeSeriesChartGridDefaultSettings: TimeSeriesChartGridSettings = {
+  show: false,
+  backgroundColor: null,
+  borderWidth: 1,
+  borderColor: '#ccc'
+};
+
+export interface TimeSeriesChartSettings extends TimeSeriesChartTooltipWidgetSettings, TimeSeriesChartComparisonSettings {
   thresholds: TimeSeriesChartThreshold[];
   darkMode: boolean;
   dataZoom: boolean;
   stack: boolean;
+  grid: TimeSeriesChartGridSettings;
   yAxes: TimeSeriesChartYAxes;
   xAxis: TimeSeriesChartXAxisSettings;
-  animation: TimeSeriesChartAnimationSettings;
+  animation: ChartAnimationSettings;
+  barWidthSettings: TimeSeriesChartBarWidthSettings;
   noAggregationBarWidthSettings: TimeSeriesChartNoAggregationBarWidthSettings;
+  visualMapSettings?: TimeSeriesChartVisualMapSettings;
+  states?: TimeSeriesChartStateSettings[];
 }
 
 export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
@@ -576,67 +953,34 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   darkMode: false,
   dataZoom: true,
   stack: false,
+  grid: mergeDeep({} as TimeSeriesChartGridSettings,
+    timeSeriesChartGridDefaultSettings),
   yAxes: {
     default: mergeDeep({} as TimeSeriesChartYAxisSettings,
                        defaultTimeSeriesChartYAxisSettings,
                        { id: 'default', order: 0 } as TimeSeriesChartYAxisSettings)
   },
-  xAxis: {
-    show: true,
-    label: '',
-    labelFont: {
-      family: 'Roboto',
-      size: 12,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '600',
-      lineHeight: '1'
-    },
-    labelColor: timeSeriesChartColorScheme['axis.label'].light,
-    position: AxisPosition.bottom,
-    showTickLabels: true,
-    tickLabelFont: {
-      family: 'Roboto',
-      size: 10,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '400',
-      lineHeight: '1'
-    },
-    tickLabelColor: timeSeriesChartColorScheme['axis.tickLabel'].light,
-    ticksFormat: {},
-    showTicks: true,
-    ticksColor: timeSeriesChartColorScheme['axis.ticks'].light,
-    showLine: true,
-    lineColor: timeSeriesChartColorScheme['axis.line'].light,
-    showSplitLines: true,
-    splitLinesColor: timeSeriesChartColorScheme['axis.splitLine'].light
+  xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
+    defaultTimeSeriesChartXAxisSettings),
+  animation: mergeDeep({} as ChartAnimationSettings,
+    chartAnimationDefaultSettings),
+  barWidthSettings: {
+    barGap: 0.3,
+    intervalGap: 0.6
   },
-  animation: {
-    animation: true,
-    animationThreshold: 2000,
-    animationDuration: 500,
-    animationEasing: TimeSeriesChartAnimationEasing.cubicOut,
-    animationDelay: 0,
-    animationDurationUpdate: 300,
-    animationEasingUpdate: TimeSeriesChartAnimationEasing.cubicOut,
-    animationDelayUpdate: 0
-  },
-  noAggregationBarWidthSettings: {
-    strategy: TimeSeriesChartNoAggregationBarWidthStrategy.group,
-    groupWidth: {
-      relative: true,
-      relativeWidth: 2,
-      absoluteWidth: 1000
-    },
-    barWidth: {
-      relative: true,
-      relativeWidth: 2,
-      absoluteWidth: 1000
-    }
-  },
+  noAggregationBarWidthSettings: mergeDeep({} as TimeSeriesChartNoAggregationBarWidthSettings,
+    timeSeriesChartNoAggregationBarWidthDefaultSettings),
   showTooltip: true,
-  tooltipTrigger: EChartsTooltipTrigger.axis,
+  tooltipTrigger: TimeSeriesChartTooltipTrigger.axis,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,
@@ -659,53 +1003,43 @@ export const timeSeriesChartDefaultSettings: TimeSeriesChartSettings = {
   tooltipDateColor: 'rgba(0, 0, 0, 0.76)',
   tooltipDateInterval: true,
   tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
-  tooltipBackgroundBlur: 4
+  tooltipBackgroundBlur: 4,
+  comparisonEnabled: false,
+  timeForComparison: 'previousInterval',
+  comparisonCustomIntervalValue: 7200000,
+  comparisonXAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
+    defaultTimeSeriesChartXAxisSettings,
+    { position: AxisPosition.top } as TimeSeriesChartXAxisSettings)
 };
-
-export interface SeriesFillSettings {
-  type: SeriesFillType;
-  opacity: number;
-  gradient: {
-    start: number;
-    end: number;
-  };
-}
 
 export interface LineSeriesSettings {
   showLine: boolean;
   step: boolean;
   stepType: LineSeriesStepType;
   smooth: boolean;
-  lineType: TimeSeriesChartLineType;
+  lineType: ChartLineType;
   lineWidth: number;
   showPoints: boolean;
   showPointLabel: boolean;
-  pointLabelPosition: SeriesLabelPosition;
+  pointLabelPosition: ChartLabelPosition;
   pointLabelFont: Font;
   pointLabelColor: string;
-  pointShape: TimeSeriesChartShape;
+  enablePointLabelBackground: boolean;
+  pointLabelBackground: string;
+  pointLabelFormatter?: string | LabelFormatterCallback;
+  pointShape: ChartShape;
   pointSize: number;
-  fillAreaSettings: SeriesFillSettings;
+  fillAreaSettings: ChartFillSettings;
 }
 
-export interface BarSeriesSettings {
-  showBorder: boolean;
-  borderWidth: number;
-  borderRadius: number;
-  showLabel: boolean;
-  labelPosition: SeriesLabelPosition;
-  labelFont: Font;
-  labelColor: string;
-  backgroundSettings: SeriesFillSettings;
-}
-
-export interface TimeSeriesChartKeySettings {
+export interface TimeSeriesChartKeySettings extends DataKeySettingsWithComparison {
   yAxisId: TimeSeriesChartYAxisId;
   showInLegend: boolean;
   dataHiddenByDefault: boolean;
   type: TimeSeriesChartSeriesType;
   lineSettings: LineSeriesSettings;
-  barSettings: BarSeriesSettings;
+  barSettings: ChartBarSettings;
+  tooltipValueFormatter?: string | TimeSeriesChartTooltipValueFormatFunction;
 }
 
 export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
@@ -718,11 +1052,11 @@ export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
     step: false,
     stepType: LineSeriesStepType.start,
     smooth: false,
-    lineType: TimeSeriesChartLineType.solid,
+    lineType: ChartLineType.solid,
     lineWidth: 2,
     showPoints: false,
     showPointLabel: false,
-    pointLabelPosition: SeriesLabelPosition.top,
+    pointLabelPosition: ChartLabelPosition.top,
     pointLabelFont: {
       family: 'Roboto',
       size: 11,
@@ -731,11 +1065,13 @@ export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
       weight: '400',
       lineHeight: '1'
     },
-    pointLabelColor: timeSeriesChartColorScheme['series.label'].light,
-    pointShape: TimeSeriesChartShape.emptyCircle,
+    pointLabelColor: chartColorScheme['series.label'].light,
+    enablePointLabelBackground: false,
+    pointLabelBackground: 'rgba(255,255,255,0.56)',
+    pointShape: ChartShape.emptyCircle,
     pointSize: 4,
     fillAreaSettings: {
-      type: SeriesFillType.none,
+      type: ChartFillType.none,
       opacity: 0.4,
       gradient: {
         start: 100,
@@ -743,38 +1079,13 @@ export const timeSeriesChartKeyDefaultSettings: TimeSeriesChartKeySettings = {
       }
     }
   },
-  barSettings: {
-    showBorder: false,
-    borderWidth: 2,
-    borderRadius: 0,
-    showLabel: false,
-    labelPosition: SeriesLabelPosition.top,
-    labelFont: {
-      family: 'Roboto',
-      size: 11,
-      sizeUnit: 'px',
-      style: 'normal',
-      weight: '400',
-      lineHeight: '1'
-    },
-    labelColor: timeSeriesChartColorScheme['series.label'].light,
-    backgroundSettings: {
-      type: SeriesFillType.none,
-      opacity: 0.4,
-      gradient: {
-        start: 100,
-        end: 0
-      }
-    }
+  barSettings: mergeDeep({} as ChartBarSettings, chartBarDefaultSettings),
+  comparisonSettings: {
+    showValuesForComparison: false,
+    comparisonValuesLabel: '',
+    color: ''
   }
 };
-
-export interface TimeSeriesChartDataItem extends EChartsSeriesItem {
-  yAxisId: TimeSeriesChartYAxisId;
-  yAxisIndex: number;
-  option?: LineSeriesOption | CustomSeriesOption;
-  barRenderContext?: BarRenderContext;
-}
 
 type TimeSeriesChartThresholdValue = number | string | (number | string)[];
 
@@ -790,16 +1101,27 @@ export interface TimeSeriesChartThresholdItem {
   option?: LineSeriesOption;
 }
 
-export interface TimeSeriesChartYAxis {
+export interface TimeSeriesChartAxis {
   id: string;
+  settings: TimeSeriesChartAxisSettings;
+  option: CartesianAxisOption;
+}
+
+export interface TimeSeriesChartYAxis extends TimeSeriesChartAxis {
   decimals: number;
   settings: TimeSeriesChartYAxisSettings;
   option: YAXisOption & ValueAxisBaseOption;
 }
 
+export interface TimeSeriesChartXAxis extends TimeSeriesChartAxis {
+  settings: TimeSeriesChartXAxisSettings;
+  option: XAXisOption;
+}
+
 export const createTimeSeriesYAxis = (units: string,
                                       decimals: number,
                                       settings: TimeSeriesChartYAxisSettings,
+                                      utils: UtilsService,
                                       darkMode: boolean): TimeSeriesChartYAxis => {
   const yAxisTickLabelStyle = createChartTextStyle(settings.tickLabelFont,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
@@ -814,18 +1136,19 @@ export const createTimeSeriesYAxis = (units: string,
       ticksFormatter = parseFunction(settings.ticksFormatter, ['value']);
     }
   }
+  let configuredTicksGenerator: TimeSeriesChartTicksGenerator;
   let ticksGenerator: TimeSeriesChartTicksGenerator;
   let minInterval: number;
   let interval: number;
   let splitNumber: number;
   if (settings.ticksGenerator) {
     if (isFunction(settings.ticksGenerator)) {
-      ticksGenerator = settings.ticksGenerator as TimeSeriesChartTicksGenerator;
+      configuredTicksGenerator = settings.ticksGenerator as TimeSeriesChartTicksGenerator;
     } else if (settings.ticksGenerator.length) {
-      ticksGenerator = parseFunction(settings.ticksGenerator, ['extent', 'interval', 'niceTickExtent', 'intervalPrecision']);
+      configuredTicksGenerator = parseFunction(settings.ticksGenerator, ['extent', 'interval', 'niceTickExtent', 'intervalPrecision']);
     }
   }
-  if (!ticksGenerator) {
+  if (!configuredTicksGenerator) {
     interval = settings.interval;
     if (isUndefinedOrNull(interval)) {
       if (isDefinedAndNotNull(settings.splitNumber)) {
@@ -834,12 +1157,18 @@ export const createTimeSeriesYAxis = (units: string,
         minInterval = (1 / Math.pow(10, decimals));
       }
     }
+  } else {
+    ticksGenerator = (extent, ticksInterval, niceTickExtent, intervalPrecision) => {
+      const ticks = configuredTicksGenerator(extent, ticksInterval, niceTickExtent, intervalPrecision);
+      return ticks?.filter(tick => tick.value >= extent[0] && tick.value <= extent[1]);
+    };
   }
   return {
     id: settings.id,
     decimals,
     settings,
     option: {
+      mainType: 'yAxis',
       show: settings.show,
       type: 'value',
       position: settings.position,
@@ -853,7 +1182,7 @@ export const createTimeSeriesYAxis = (units: string,
       splitNumber,
       interval,
       ticksGenerator,
-      name: settings.label,
+      name: utils.customTranslation(settings.label, settings.label),
       nameLocation: 'middle',
       nameRotate: settings.position === AxisPosition.left ? 90 : -90,
       nameTextStyle: {
@@ -907,71 +1236,111 @@ export const createTimeSeriesYAxis = (units: string,
   };
 };
 
-export const createTimeSeriesXAxisOption = (settings: TimeSeriesChartXAxisSettings,
-                                            min: number, max: number,
-                                            datePipe: DatePipe,
-                                            darkMode: boolean): XAXisOption => {
+export const createTimeSeriesXAxis = (id: string,
+                                      settings: TimeSeriesChartXAxisSettings,
+                                      min: number, max: number,
+                                      datePipe: DatePipe,
+                                      utils: UtilsService,
+                                      darkMode: boolean): TimeSeriesChartXAxis => {
   const xAxisTickLabelStyle = createChartTextStyle(settings.tickLabelFont,
     settings.tickLabelColor, darkMode, 'axis.tickLabel');
   const xAxisNameStyle = createChartTextStyle(settings.labelFont,
     settings.labelColor, darkMode, 'axis.label');
   const ticksFormat = mergeDeep({}, defaultXAxisTicksFormat, settings.ticksFormat);
   return {
-    show: settings.show,
-    type: 'time',
-    scale: true,
-    position: settings.position,
-    name: settings.label,
-    nameLocation: 'middle',
-    nameTextStyle: {
-      color: xAxisNameStyle.color,
-      fontStyle: xAxisNameStyle.fontStyle,
-      fontWeight: xAxisNameStyle.fontWeight,
-      fontFamily: xAxisNameStyle.fontFamily,
-      fontSize: xAxisNameStyle.fontSize
-    },
-    axisTick: {
-      show: settings.showTicks,
-      lineStyle: {
-        color: prepareChartThemeColor(settings.ticksColor, darkMode, 'axis.ticks')
-      }
-    },
-    axisLabel: {
-      show: settings.showTickLabels,
-      color: xAxisTickLabelStyle.color,
-      fontStyle: xAxisTickLabelStyle.fontStyle,
-      fontWeight: xAxisTickLabelStyle.fontWeight,
-      fontFamily: xAxisTickLabelStyle.fontFamily,
-      fontSize: xAxisTickLabelStyle.fontSize,
-      hideOverlap: true,
-      formatter: (value: number, index: number, extra: {level: number}) => {
-        const unit = tsToFormatTimeUnit(value);
-        const format = ticksFormat[unit];
-        const formatted = datePipe.transform(value, format);
-        if (extra.level > 0) {
-          return `{primary|${formatted}}`;
-        } else {
-          return formatted;
+    id,
+    settings,
+    option: {
+      mainType: 'xAxis',
+      show: settings.show,
+      type: 'time',
+      scale: true,
+      position: settings.position,
+      id,
+      name: utils.customTranslation(settings.label, settings.label),
+      nameLocation: 'middle',
+      nameTextStyle: {
+        color: xAxisNameStyle.color,
+        fontStyle: xAxisNameStyle.fontStyle,
+        fontWeight: xAxisNameStyle.fontWeight,
+        fontFamily: xAxisNameStyle.fontFamily,
+        fontSize: xAxisNameStyle.fontSize
+      },
+      axisPointer: {
+        shadowStyle: {
+          color: id === 'main' ? 'rgba(210,219,238,0.2)' : 'rgba(150,150,150,0.1)'
         }
-      }
-    },
-    axisLine: {
-      show: settings.showLine,
-      onZero: false,
-      lineStyle: {
-        color: prepareChartThemeColor(settings.lineColor, darkMode, 'axis.line')
-      }
-    },
-    splitLine: {
-      show: settings.showSplitLines,
-      lineStyle: {
-        color: prepareChartThemeColor(settings.splitLinesColor, darkMode, 'axis.splitLine')
-      }
-    },
-    min,
-    max,
-    bandWidthCalculator: timeAxisBandWidthCalculator
+      },
+      axisTick: {
+        show: settings.showTicks,
+        lineStyle: {
+          color: prepareChartThemeColor(settings.ticksColor, darkMode, 'axis.ticks')
+        }
+      },
+      axisLabel: {
+        show: settings.showTickLabels,
+        color: xAxisTickLabelStyle.color,
+        fontStyle: xAxisTickLabelStyle.fontStyle,
+        fontWeight: xAxisTickLabelStyle.fontWeight,
+        fontFamily: xAxisTickLabelStyle.fontFamily,
+        fontSize: xAxisTickLabelStyle.fontSize,
+        hideOverlap: true,
+        /** Min/Max time label always visible **/
+        /* alignMinLabel: 'left',
+        alignMaxLabel: 'right',
+        showMinLabel: true,
+        showMaxLabel: true, */
+        formatter: (value: number, _index: number, extra: {level: number}) => {
+          const unit = tsToFormatTimeUnit(value);
+          const format = ticksFormat[unit];
+          const formatted = datePipe.transform(value, format);
+          if (extra.level > 0) {
+            return `{primary|${formatted}}`;
+          } else {
+            return formatted;
+          }
+        }
+      },
+      axisLine: {
+        show: settings.showLine,
+        onZero: false,
+        lineStyle: {
+          color: prepareChartThemeColor(settings.lineColor, darkMode, 'axis.line')
+        }
+      },
+      splitLine: {
+        show: settings.showSplitLines,
+        lineStyle: {
+          color: prepareChartThemeColor(settings.splitLinesColor, darkMode, 'axis.splitLine')
+        }
+      },
+      min,
+      max,
+      bandWidthCalculator: timeAxisBandWidthCalculator
+    }
   };
+};
+
+export const createTimeSeriesVisualMapOption = (settings: TimeSeriesChartVisualMapSettings,
+                                                selectedRanges: {[key: number]: boolean}): VisualMapComponentOption => ({
+  show: false,
+  type: 'piecewise',
+  selected: selectedRanges,
+  dimension: 1,
+  pieces: settings.pieces,
+  outOfRange: {
+  color: settings.outOfRangeColor
+},
+  inRange: !settings.pieces.length ? {
+    color: settings.outOfRangeColor
+  } : undefined
+});
+
+export const updateXAxisTimeWindow = (option: XAXisOption,
+                                      timeWindow: WidgetTimewindow) => {
+  option.min = timeWindow.minTime;
+  option.max = timeWindow.maxTime;
+  (option as any).tbTimeWindow = timeWindow;
 };
 
 export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
@@ -983,7 +1352,7 @@ export const generateChartData = (dataItems: TimeSeriesChartDataItem[],
   let series = generateChartSeries(dataItems,
     stack, noAggregation, barRenderSharedContext, darkMode);
   if (thresholdItems.length) {
-    const thresholds = generateChartThresholds(thresholdItems, darkMode);
+    const thresholds = generateChartThresholds(thresholdItems);
     series = series.concat(thresholds);
   }
   return series;
@@ -995,7 +1364,7 @@ export const calculateThresholdsOffset = (chart: ECharts,
   const result: [number, number] = [0, 0];
   for (const item of thresholdItems) {
     const yAxis = yAxisList[item.yAxisIndex];
-    const offset = measureThresholdLabelOffset(chart, yAxis.id, item.id, item.value);
+    const offset = measureThresholdOffset(chart, yAxis.id, item.id, item.value);
     result[0] = Math.max(result[0], offset[0]);
     result[1] = Math.max(result[1], offset[1]);
   }
@@ -1017,7 +1386,7 @@ export const parseThresholdData = (value: any): TimeSeriesChartThresholdValue =>
   return thresholdValue;
 };
 
-const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[], darkMode: boolean): Array<LineSeriesOption> => {
+const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[]): Array<LineSeriesOption> => {
   const series: Array<LineSeriesOption> = [];
   for (const item of thresholdItems) {
     if (isDefinedAndNotNull(item.value)) {
@@ -1056,6 +1425,14 @@ const generateChartThresholds = (thresholdItems: TimeSeriesChartThresholdItem[],
             }
           }
         };
+        if (item.settings.enableLabelBackground) {
+          seriesOption.markLine.label.backgroundColor = item.settings.labelBackground;
+          seriesOption.markLine.label.padding = [4, 5];
+          seriesOption.markLine.label.borderRadius = 4;
+        }
+        if (item.settings.additionalLabelOption) {
+          seriesOption.markLine.label = {...seriesOption.markLine.label, ...item.settings.additionalLabelOption};
+        }
         item.option = seriesOption;
       }
       seriesOption.markLine.data = [];
@@ -1129,9 +1506,10 @@ const generateChartSeries = (dataItems: TimeSeriesChartDataItem[],
   return series;
 };
 
-export const updateDarkMode = (options: EChartsOption, settings: TimeSeriesChartSettings,
+export const updateDarkMode = (options: EChartsOption,
+                               xAxisList: TimeSeriesChartXAxis[],
                                yAxisList: TimeSeriesChartYAxis[],
-                               dataItems: TimeSeriesChartDataItem[], thresholdDataItems: TimeSeriesChartThresholdItem[],
+                               dataItems: TimeSeriesChartDataItem[],
                                darkMode: boolean): EChartsOption => {
   options.darkMode = darkMode;
   if (Array.isArray(options.yAxis)) {
@@ -1146,12 +1524,14 @@ export const updateDarkMode = (options: EChartsOption, settings: TimeSeriesChart
     }
   }
   if (Array.isArray(options.xAxis)) {
-    for (const xAxis of options.xAxis) {
-      xAxis.nameTextStyle.color = prepareChartThemeColor(settings.xAxis.labelColor, darkMode, 'axis.label');
-      xAxis.axisLabel.color = prepareChartThemeColor(settings.xAxis.tickLabelColor, darkMode, 'axis.tickLabel');
-      xAxis.axisLine.lineStyle.color = prepareChartThemeColor(settings.xAxis.lineColor, darkMode, 'axis.line');
-      xAxis.axisTick.lineStyle.color = prepareChartThemeColor(settings.xAxis.ticksColor, darkMode, 'axis.ticks');
-      xAxis.splitLine.lineStyle.color = prepareChartThemeColor(settings.xAxis.splitLinesColor, darkMode, 'axis.splitLine');
+    for (let i = 0; i < options.xAxis.length; i++) {
+      const xAxis = options.xAxis[i];
+      const xAxisSettings = xAxisList[i].settings;
+      xAxis.nameTextStyle.color = prepareChartThemeColor(xAxisSettings.labelColor, darkMode, 'axis.label');
+      xAxis.axisLabel.color = prepareChartThemeColor(xAxisSettings.tickLabelColor, darkMode, 'axis.tickLabel');
+      xAxis.axisLine.lineStyle.color = prepareChartThemeColor(xAxisSettings.lineColor, darkMode, 'axis.line');
+      xAxis.axisTick.lineStyle.color = prepareChartThemeColor(xAxisSettings.ticksColor, darkMode, 'axis.ticks');
+      xAxis.splitLine.lineStyle.color = prepareChartThemeColor(xAxisSettings.splitLinesColor, darkMode, 'axis.splitLine');
     }
   }
   for (const item of dataItems) {
@@ -1170,8 +1550,8 @@ export const updateDarkMode = (options: EChartsOption, settings: TimeSeriesChart
       }
     } else {
       if (item.barRenderContext?.labelOption?.show) {
-        const barSettings = item.dataKey.settings as BarSeriesSettings;
-        item.barRenderContext.labelOption.rich.value.color = prepareChartThemeColor(barSettings.labelColor,
+        const barSettings = item.dataKey.settings as ChartBarSettings;
+        (item.barRenderContext.labelOption.rich.value as any).fill = prepareChartThemeColor(barSettings.labelColor,
           darkMode, 'series.label');
       }
     }
@@ -1190,6 +1570,7 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
     seriesOption = {
       id: item.id,
       dataGroupId: item.id,
+      xAxisIndex: item.xAxisIndex,
       yAxisIndex: item.yAxisIndex,
       name: item.dataKey.label,
       color: seriesColor,
@@ -1215,21 +1596,24 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
       const lineSeriesOption = seriesOption as LineSeriesOption;
       lineSeriesOption.type = 'line';
       lineSeriesOption.label = createSeriesLabelOption(item, lineSettings.showPointLabel,
-        lineSettings.pointLabelFont, lineSettings.pointLabelColor, lineSettings.pointLabelPosition, darkMode);
+        lineSettings.pointLabelFont, lineSettings.pointLabelColor,
+        lineSettings.enablePointLabelBackground, lineSettings.pointLabelBackground,
+        lineSettings.pointLabelPosition,
+        lineSettings.pointLabelFormatter, false, darkMode) as SeriesLabelOption;
       lineSeriesOption.step = lineSettings.step ? lineSettings.stepType : false;
-      lineSeriesOption.smooth = lineSettings.smooth;
+      lineSeriesOption.smooth = lineSettings.smooth ? 0.25 : false;
       if (lineSettings.smooth) {
-        lineSeriesOption.smoothMonotone = 'x';
+        lineSeriesOption.smoothMonotone = 'none';
       }
       lineSeriesOption.lineStyle = {
         width: lineSettings.showLine ? lineSettings.lineWidth : 0,
         type: lineSettings.lineType
       };
-      if (lineSettings.fillAreaSettings.type !== SeriesFillType.none) {
+      if (lineSettings.fillAreaSettings.type !== ChartFillType.none) {
         lineSeriesOption.areaStyle = {};
-        if (lineSettings.fillAreaSettings.type === SeriesFillType.opacity) {
+        if (lineSettings.fillAreaSettings.type === ChartFillType.opacity) {
           lineSeriesOption.areaStyle.opacity = lineSettings.fillAreaSettings.opacity;
-        } else {
+        } else if (lineSettings.fillAreaSettings.type === ChartFillType.gradient) {
           lineSeriesOption.areaStyle.opacity = 1;
           lineSeriesOption.areaStyle.color = createLinearOpacityGradient(seriesColor, lineSettings.fillAreaSettings.gradient);
         }
@@ -1247,18 +1631,21 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
         borderWidth: barSettings.showBorder ? barSettings.borderWidth : 0,
         borderRadius: barSettings.borderRadius
       };
-      if (barSettings.backgroundSettings.type === SeriesFillType.none) {
+      if (barSettings.backgroundSettings.type === ChartFillType.none) {
         barVisualSettings.color = seriesColor;
-      } else if (barSettings.backgroundSettings.type === SeriesFillType.opacity) {
+      } else if (barSettings.backgroundSettings.type === ChartFillType.opacity) {
         barVisualSettings.color = tinycolor(seriesColor).setAlpha(barSettings.backgroundSettings.opacity).toRgbString();
       } else {
         barVisualSettings.color = createLinearOpacityGradient(seriesColor, barSettings.backgroundSettings.gradient);
       }
       item.barRenderContext.visualSettings = barVisualSettings;
       item.barRenderContext.labelOption = createSeriesLabelOption(item, barSettings.showLabel,
-        barSettings.labelFont, barSettings.labelColor, barSettings.labelPosition, darkMode);
+        barSettings.labelFont, barSettings.labelColor, barSettings.enableLabelBackground, barSettings.labelBackground,
+        barSettings.labelPosition, barSettings.labelFormatter, true, darkMode);
+      item.barRenderContext.additionalLabelOption = barSettings.additionalLabelOption;
       barSeriesOption.renderItem = (params, api) =>
         renderTimeSeriesBar(params, api, item.barRenderContext);
+      barSeriesOption.labelLayout = barSettings.labelLayout;
     }
   }
   seriesOption.data = item.data;
@@ -1266,59 +1653,50 @@ const createTimeSeriesChartSeries = (item: TimeSeriesChartDataItem,
 };
 
 const createSeriesLabelOption = (item: TimeSeriesChartDataItem, show: boolean,
-                                 labelFont: Font, labelColor: string, position: SeriesLabelPosition,
-                                 darkMode: boolean): SeriesLabelOption => {
+                                 labelFont: Font, labelColor: string,
+                                 enableBackground: boolean, labelBackground: string,
+                                 position: ChartLabelPosition | PieChartLabelPosition | BuiltinTextPosition,
+                                 labelFormatter: string | LabelFormatterCallback,
+                                 labelColorFill: boolean,
+                                 darkMode: boolean): SeriesLabelOption | BarSeriesLabelOption => {
   let labelStyle: ComponentStyle = {};
   if (show) {
-    labelStyle = createChartTextStyle(labelFont, labelColor, darkMode, 'series.label');
+    labelStyle = createChartTextStyle(labelFont, labelColor, darkMode, 'series.label', labelColorFill);
   }
-  return {
+  let formatFunction: (...args: any[]) => any;
+  if (typeof labelFormatter === 'string' && labelFormatter.length) {
+    formatFunction = parseFunction(labelFormatter, ['value']);
+  }
+  const formatter: LabelFormatterCallback = (params): string => {
+    let result: string;
+    if (typeof labelFormatter === 'string') {
+      if (formatFunction) {
+        try {
+          result = formatFunction(params.value[1]);
+        } catch (_e) {
+        }
+      }
+    } else if (isFunction(labelFormatter)) {
+      result = labelFormatter(params);
+    }
+    if (isUndefined(result)) {
+      result = formatValue(params.value[1], item.decimals, item.units, false);
+      result = `{value|${result}}`;
+    }
+    return result;
+  };
+  const labelOption: SeriesLabelOption | BarSeriesLabelOption = {
     show,
     position,
-    formatter: (params): string => {
-      const value = formatValue(params.value[1], item.decimals, item.units, false);
-      return `{value|${value}}`;
-    },
+    formatter,
     rich: {
       value: labelStyle
     }
   };
-};
-
-const createChartTextStyle = (font: Font, color: string, darkMode: boolean, colorKey?: string): ComponentStyle => {
-  const style = textStyle(font);
-  delete style.lineHeight;
-  style.fontSize = font.size;
-  style.color = prepareChartThemeColor(color, darkMode, colorKey);
-  return style;
-};
-
-const createLinearOpacityGradient = (color: string, gradient: {start: number; end: number}): LinearGradientObject => ({
-    type: 'linear',
-    x: 0,
-    y: 0,
-    x2: 0,
-    y2: 1,
-    colorStops: [{
-      offset: 0, color: tinycolor(color).setAlpha(gradient.start / 100).toRgbString() // color at 0%
-    }, {
-      offset: 1, color: tinycolor(color).setAlpha(gradient.end / 100).toRgbString() // color at 100%
-    }],
-    global: false
-});
-
-const prepareChartThemeColor = (color: string, darkMode: boolean, colorKey?: string): string => {
-  if (darkMode) {
-    let colorInstance = tinycolor(color);
-    if (colorInstance.isDark()) {
-      if (colorKey && timeSeriesChartColorScheme[colorKey]) {
-        return timeSeriesChartColorScheme[colorKey].dark;
-      } else {
-        const rgb = colorInstance.toRgb();
-        colorInstance = tinycolor({r: 255 - rgb.r, g: 255 - rgb.g, b: 255 - rgb.b, a: rgb.a});
-        return colorInstance.toRgbString();
-      }
-    }
+  if (enableBackground) {
+    labelOption.backgroundColor = labelBackground;
+    labelOption.padding = [4, 5];
+    labelOption.borderRadius = 4;
   }
-  return color;
+  return labelOption;
 };

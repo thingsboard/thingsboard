@@ -13,6 +13,7 @@
           "datasources": [
             {
               "type": "entity",
+              "entityAliasId": "140f23dd-e3a0-ed98-6189-03c49d2d8018",
               "dataKeys": [
                 {
                   "name": "ruleEngineException",
@@ -51,7 +52,59 @@
                   "_hash": 0.7255162989552142
                 }
               ],
-              "entityAliasId": "140f23dd-e3a0-ed98-6189-03c49d2d8018"
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              },
+              "latestDataKeys": [
+                {
+                  "name": "queueName",
+                  "type": "entityField",
+                  "label": "Queue name",
+                  "color": "#ffc107",
+                  "settings": {
+                    "show": false,
+                    "order": null,
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.8104572478982748,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                },
+                {
+                  "name": "serviceId",
+                  "type": "entityField",
+                  "label": "Service Id",
+                  "color": "#607d8b",
+                  "settings": {
+                    "show": false,
+                    "order": null,
+                    "useCellStyleFunction": false,
+                    "cellStyleFunction": "",
+                    "useCellContentFunction": false,
+                    "cellContentFunction": "",
+                    "defaultColumnVisibility": "visible",
+                    "columnSelectionToDisplay": "enabled"
+                  },
+                  "_hash": 0.38329217099945034,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ]
             }
           ],
           "timewindow": {
@@ -71,7 +124,9 @@
           "settings": {
             "showTimestamp": true,
             "displayPagination": true,
-            "defaultPageSize": 10
+            "defaultPageSize": 10,
+            "enableSearch": true,
+            "enableSelectColumnDisplay": true
           },
           "title": "Exceptions",
           "dropShadow": true,
@@ -89,7 +144,10 @@
           "iconColor": "rgba(0, 0, 0, 0.87)",
           "iconSize": "24px",
           "titleTooltip": "",
-          "displayTimewindow": true
+          "displayTimewindow": true,
+          "configMode": "basic",
+          "titleFont": null,
+          "titleColor": null
         },
         "id": "5eb79712-5c24-3060-7e4f-6af36b8f842d",
         "typeFullFqn": "system.cards.timeseries_table"
@@ -329,7 +387,25 @@
                 "statusList": [
                   "ACTIVE"
                 ]
-              }
+              },
+              "latestDataKeys": [
+                {
+                  "name": "queueName",
+                  "type": "entityField",
+                  "label": "Queue name",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.8012481564934415
+                },
+                {
+                  "name": "serviceId",
+                  "type": "entityField",
+                  "label": "Service Id",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.0724871638610094
+                }
+              ]
             }
           ],
           "timewindow": {
@@ -724,7 +800,25 @@
                 "statusList": [
                   "ACTIVE"
                 ]
-              }
+              },
+              "latestDataKeys": [
+                {
+                  "name": "queueName",
+                  "type": "entityField",
+                  "label": "Queue name",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.7242351292118758
+                },
+                {
+                  "name": "serviceId",
+                  "type": "entityField",
+                  "label": "Service Id",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.3347262075244206
+                }
+              ]
             }
           ],
           "timewindow": {
@@ -1004,12 +1098,9 @@
         "id": "140f23dd-e3a0-ed98-6189-03c49d2d8018",
         "alias": "TbServiceQueues",
         "filter": {
-          "type": "assetType",
+          "type": "entityType",
           "resolveMultiple": true,
-          "assetNameFilter": "",
-          "assetTypes": [
-            "TbServiceQueue"
-          ]
+          "entityType": "QUEUE_STATS"
         }
       }
     },

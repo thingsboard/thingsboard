@@ -20,7 +20,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
@@ -157,7 +156,7 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
         return new UserNotificationSettings(prefs);
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED) // so that parent transaction is not aborted on method failure
+    @Transactional
     @Override
     public void createDefaultNotificationConfigs(TenantId tenantId) {
         NotificationTarget allUsers = createTarget(tenantId, "All users", new AllUsersFilter(),
@@ -173,17 +172,15 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
 
             defaultNotifications.create(tenantId, DefaultNotifications.entitiesLimitForSysadmin, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.entitiesLimitForTenant, affectedTenantAdmins.getId());
-
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureWarningForSysadmin, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureWarningForTenant, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureDisabledForSysadmin, sysAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.apiFeatureDisabledForTenant, affectedTenantAdmins.getId());
-
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
             defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
-
             defaultNotifications.create(tenantId, DefaultNotifications.newPlatformVersion, sysAdmins.getId());
+            defaultNotifications.create(tenantId, DefaultNotifications.taskProcessingFailure, tenantAdmins.getId());
             return;
         }
 
@@ -206,19 +203,19 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
     @Override
     public void updateDefaultNotificationConfigs(TenantId tenantId) {
         if (tenantId.isSysTenantId()) {
-            if (notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(tenantId,
-                    List.of(NotificationType.RATE_LIMITS), new PageLink(1)).getTotalElements() > 0) {
-                return;
-            }
-
             NotificationTarget sysAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.SYSTEM_ADMINISTRATORS).stream()
                     .findFirst().orElseGet(() -> createTarget(tenantId, "System administrators", new SystemAdministratorsFilter(), "All system administrators"));
             NotificationTarget affectedTenantAdmins = notificationTargetService.findNotificationTargetsByTenantIdAndUsersFilterType(tenantId, UsersFilterType.AFFECTED_TENANT_ADMINISTRATORS).stream()
                     .findFirst().orElseGet(() -> createTarget(tenantId, "Affected tenant's administrators", new AffectedTenantAdministratorsFilter(), ""));
 
-            defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
-            defaultNotifications.create(tenantId, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
-            defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
+            if (!isNotificationConfigured(tenantId, NotificationType.RATE_LIMITS)) {
+                defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimits, affectedTenantAdmins.getId());
+                defaultNotifications.create(tenantId, DefaultNotifications.exceededPerEntityRateLimits, affectedTenantAdmins.getId());
+                defaultNotifications.create(tenantId, DefaultNotifications.exceededRateLimitsForSysadmin, sysAdmins.getId());
+            }
+            if (!isNotificationConfigured(tenantId, NotificationType.TASK_PROCESSING_FAILURE)) {
+                defaultNotifications.create(tenantId, DefaultNotifications.taskProcessingFailure, sysAdmins.getId());
+            }
         } else {
             var requiredNotificationTypes = List.of(NotificationType.EDGE_CONNECTION, NotificationType.EDGE_COMMUNICATION_FAILURE);
             var existingNotificationTypes = notificationTemplateService.findNotificationTemplatesByTenantIdAndNotificationTypes(
@@ -250,6 +247,10 @@ public class DefaultNotificationSettingsService implements NotificationSettingsS
                 }
             }
         }
+    }
+
+    private boolean isNotificationConfigured(TenantId tenantId, NotificationType... notificationTypes) {
+        return notificationTemplateService.countNotificationTemplatesByTenantIdAndNotificationTypes(tenantId, List.of(notificationTypes)) > 0;
     }
 
     private NotificationTarget createTarget(TenantId tenantId, String name, UsersFilter filter, String description) {

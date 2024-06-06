@@ -41,7 +41,6 @@ import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.locks.ReentrantLock;
 
 @Slf4j
@@ -62,8 +61,11 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     @Value("${js.local.monitor_thread_pool_size}")
     private int monitorThreadPoolSize;
 
-    @Value("${js.local.max_cpu_time}")
+    @Value("${js.local.max_cpu_time:8000}") // 8 seconds
     private long maxCpuTime;
+
+    @Value("${js.local.max_memory:104857600}") // 100 MiB
+    private long maxMemory;
 
     @Getter
     @Value("${js.local.max_errors}")
@@ -107,12 +109,13 @@ public class NashornJsInvokeService extends AbstractJsInvokeService {
     @Override
     public void init() {
         super.init();
-        jsExecutor = MoreExecutors.listeningDecorator(Executors.newWorkStealingPool(jsExecutorThreadPoolSize));
+        jsExecutor = MoreExecutors.listeningDecorator(ThingsBoardExecutors.newWorkStealingPool(jsExecutorThreadPoolSize, "nashorn-js-executor"));
         if (useJsSandbox) {
             sandbox = NashornSandboxes.create();
             monitorExecutorService = ThingsBoardExecutors.newWorkStealingPool(monitorThreadPoolSize, "nashorn-js-monitor");
             sandbox.setExecutor(monitorExecutorService);
             sandbox.setMaxCPUTime(maxCpuTime);
+            sandbox.setMaxMemory(maxMemory);
             sandbox.allowNoBraces(false);
             sandbox.allowLoadFunctions(true);
             sandbox.setMaxPreparedStatements(30);

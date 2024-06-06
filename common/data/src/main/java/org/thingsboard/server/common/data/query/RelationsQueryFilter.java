@@ -40,5 +40,6 @@ public class RelationsQueryFilter implements EntityFilter {
     private List<RelationEntityTypeFilter> filters;
     private int maxLevel;
     private boolean fetchLastLevelOnly;
+    private boolean negate;
 
 }

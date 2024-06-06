@@ -49,10 +49,10 @@ class PropertyUtilsTest {
 
     @Test
     void givenKafkaTopicProperties_whenGetConfig_thenReturnMappedValues() {
-        assertThat(PropertyUtils.getProps("retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1"))
+        assertThat(PropertyUtils.getProps("retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1"))
                 .isEqualTo(Map.of(
                         "retention.ms", "604800000",
-                        "segment.bytes", "26214400",
+                        "segment.bytes", "52428800",
                         "retention.bytes", "1048576000",
                         "partitions", "1",
                         "min.insync.replicas", "1"

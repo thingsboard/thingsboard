@@ -32,4 +32,5 @@ public class EntityViewMsgConstructorV2 extends BaseEntityViewMsgConstructor {
                 .setIdMSB(entityView.getId().getId().getMostSignificantBits())
                 .setIdLSB(entityView.getId().getId().getLeastSignificantBits()).build();
     }
+
 }

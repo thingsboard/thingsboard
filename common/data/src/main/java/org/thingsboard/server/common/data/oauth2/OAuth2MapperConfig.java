@@ -32,7 +32,7 @@ public class OAuth2MapperConfig {
     private boolean allowUserCreation;
     @Schema(description = "Whether user credentials should be activated when user is created after successful authentication")
     private boolean activateUser;
-    @Schema(description = "Type of OAuth2 mapper. Depending on this param, different mapper config fields must be specified", required = true)
+    @Schema(description = "Type of OAuth2 mapper. Depending on this param, different mapper config fields must be specified", requiredMode = Schema.RequiredMode.REQUIRED)
     private MapperType type;
     @Valid
     @Schema(description = "Mapper config for BASIC and GITHUB mapper types")

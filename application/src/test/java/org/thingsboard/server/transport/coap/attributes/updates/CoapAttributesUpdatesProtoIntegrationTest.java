@@ -18,7 +18,6 @@ package org.thingsboard.server.transport.coap.attributes.updates;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.thingsboard.server.common.data.CoapDeviceType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -44,12 +43,10 @@ public class CoapAttributesUpdatesProtoIntegrationTest extends AbstractCoapAttri
     public void afterTest() throws Exception {
         processAfterTest();
     }
-    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServer() throws Exception {
         processProtoTestSubscribeToAttributesUpdates(false);
     }
-    @Ignore // Uncomment when Californium 3.11 is released with https://github.com/eclipse-californium/californium/pull/2215
     @Test
     public void testSubscribeToAttributesUpdatesFromTheServerWithEmptyCurrentStateNotification() throws Exception {
         processProtoTestSubscribeToAttributesUpdates(true);

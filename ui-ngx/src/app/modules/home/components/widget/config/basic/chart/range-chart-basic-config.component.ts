@@ -14,20 +14,26 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Injector } from '@angular/core';
+import { Component, Injector } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
-import { DataKey, legendPositions, legendPositionTranslationMap, WidgetConfig, } from '@shared/models/widget.models';
+import {
+  DataKey,
+  Datasource,
+  legendPositions,
+  legendPositionTranslationMap,
+  WidgetConfig,
+} from '@shared/models/widget.models';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isUndefined } from '@core/utils';
+import { formatValue, isUndefined, mergeDeep } from '@core/utils';
 import {
   cssSizeToStrSize,
   DateFormatProcessor,
@@ -38,6 +44,18 @@ import {
   rangeChartDefaultSettings,
   RangeChartWidgetSettings
 } from '@home/components/widget/lib/chart/range-chart-widget.models';
+import {
+  lineSeriesStepTypes,
+  lineSeriesStepTypeTranslations
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import {
+  chartLabelPositions,
+  chartLabelPositionTranslations,
+  chartLineTypes,
+  chartLineTypeTranslations,
+  chartShapes,
+  chartShapeTranslations
+} from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-range-chart-basic-config',
@@ -46,11 +64,38 @@ import {
 })
 export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.rangeChartWidgetConfigForm.get('datasources').value;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
+  }
+
+  lineSeriesStepTypes = lineSeriesStepTypes;
+
+  lineSeriesStepTypeTranslations = lineSeriesStepTypeTranslations;
+
+  chartLineTypes = chartLineTypes;
+
+  chartLineTypeTranslations = chartLineTypeTranslations;
+
+  chartLabelPositions = chartLabelPositions;
+
+  chartLabelPositionTranslations = chartLabelPositionTranslations;
+
+  chartShapes = chartShapes;
+
+  chartShapeTranslations = chartShapeTranslations;
+
   legendPositions = legendPositions;
 
   legendPositionTranslationMap = legendPositionTranslationMap;
 
   rangeChartWidgetConfigForm: UntypedFormGroup;
+
+  pointLabelPreviewFn = this._pointLabelPreviewFn.bind(this);
 
   tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
 
@@ -72,7 +117,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: RangeChartWidgetSettings = {...rangeChartDefaultSettings, ...(configData.config.settings || {})};
+    const settings: RangeChartWidgetSettings = mergeDeep<RangeChartWidgetSettings>({} as RangeChartWidgetSettings,
+      rangeChartDefaultSettings, configData.config.settings as RangeChartWidgetSettings);
     const iconSize = resolveCssSize(configData.config.iconSize);
     this.rangeChartWidgetConfigForm = this.fb.group({
       timewindowConfig: [getTimewindowConfig(configData.config), []],
@@ -90,11 +136,41 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       iconColor: [configData.config.iconColor, []],
 
       dataZoom: [settings.dataZoom, []],
-      rangeColors: [settings.rangeColors, []],
-      outOfRangeColor: [settings.outOfRangeColor, []],
-      fillArea: [settings.fillArea, []],
+
       units: [configData.config.units, []],
       decimals: [configData.config.decimals, []],
+      rangeColors: [settings.rangeColors, []],
+      outOfRangeColor: [settings.outOfRangeColor, []],
+      showRangeThresholds: [settings.showRangeThresholds, []],
+      rangeThreshold: [settings.rangeThreshold, []],
+      fillArea: [settings.fillArea, []],
+      fillAreaOpacity: [settings.fillAreaOpacity, [Validators.min(0), Validators.max(1)]],
+
+      showLine: [settings.showLine, []],
+      step: [settings.step, []],
+      stepType: [settings.stepType, []],
+      smooth: [settings.smooth, []],
+      lineType: [settings.lineType, []],
+      lineWidth: [settings.lineWidth, [Validators.min(0)]],
+
+      showPoints: [settings.showPoints, []],
+      showPointLabel: [settings.showPointLabel, []],
+      pointLabelPosition: [settings.pointLabelPosition, []],
+      pointLabelFont: [settings.pointLabelFont, []],
+      pointLabelColor: [settings.pointLabelColor, []],
+      enablePointLabelBackground: [settings.enablePointLabelBackground, []],
+      pointLabelBackground: [settings.pointLabelBackground, []],
+      pointShape: [settings.pointShape, []],
+      pointSize: [settings.pointSize, [Validators.min(0)]],
+
+      grid: [settings.grid, []],
+
+      yAxis: [settings.yAxis, []],
+      xAxis: [settings.xAxis, []],
+
+      thresholds: [settings.thresholds, []],
+
+      animation: [settings.animation, []],
 
       showLegend: [settings.showLegend, []],
       legendPosition: [settings.legendPosition, []],
@@ -102,6 +178,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -117,6 +195,7 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -138,12 +217,44 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
+
     this.widgetConfig.config.settings.dataZoom = config.dataZoom;
-    this.widgetConfig.config.settings.rangeColors = config.rangeColors;
-    this.widgetConfig.config.settings.outOfRangeColor = config.outOfRangeColor;
-    this.widgetConfig.config.settings.fillArea = config.fillArea;
+
     this.widgetConfig.config.units = config.units;
     this.widgetConfig.config.decimals = config.decimals;
+
+    this.widgetConfig.config.settings.rangeColors = config.rangeColors;
+    this.widgetConfig.config.settings.outOfRangeColor = config.outOfRangeColor;
+    this.widgetConfig.config.settings.showRangeThresholds = config.showRangeThresholds;
+    this.widgetConfig.config.settings.rangeThreshold = config.rangeThreshold;
+    this.widgetConfig.config.settings.fillArea = config.fillArea;
+    this.widgetConfig.config.settings.fillAreaOpacity = config.fillAreaOpacity;
+
+    this.widgetConfig.config.settings.showLine = config.showLine;
+    this.widgetConfig.config.settings.step = config.step;
+    this.widgetConfig.config.settings.stepType = config.stepType;
+    this.widgetConfig.config.settings.smooth = config.smooth;
+    this.widgetConfig.config.settings.lineType = config.lineType;
+    this.widgetConfig.config.settings.lineWidth = config.lineWidth;
+
+    this.widgetConfig.config.settings.showPoints = config.showPoints;
+    this.widgetConfig.config.settings.showPointLabel = config.showPointLabel;
+    this.widgetConfig.config.settings.pointLabelPosition = config.pointLabelPosition;
+    this.widgetConfig.config.settings.pointLabelFont = config.pointLabelFont;
+    this.widgetConfig.config.settings.pointLabelColor = config.pointLabelColor;
+    this.widgetConfig.config.settings.enablePointLabelBackground = config.enablePointLabelBackground;
+    this.widgetConfig.config.settings.pointLabelBackground = config.pointLabelBackground;
+    this.widgetConfig.config.settings.pointShape = config.pointShape;
+    this.widgetConfig.config.settings.pointSize = config.pointSize;
+
+    this.widgetConfig.config.settings.grid = config.grid;
+
+    this.widgetConfig.config.settings.yAxis = config.yAxis;
+    this.widgetConfig.config.settings.xAxis = config.xAxis;
+
+    this.widgetConfig.config.settings.thresholds = config.thresholds;
+
+    this.widgetConfig.config.settings.animation = config.animation;
 
     this.widgetConfig.config.settings.showLegend = config.showLegend;
     this.widgetConfig.config.settings.legendPosition = config.legendPosition;
@@ -151,6 +262,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.settings.legendLabelColor = config.legendLabelColor;
 
     this.widgetConfig.config.settings.showTooltip = config.showTooltip;
+    this.widgetConfig.config.settings.tooltipLabelFont = config.tooltipLabelFont;
+    this.widgetConfig.config.settings.tooltipLabelColor = config.tooltipLabelColor;
     this.widgetConfig.config.settings.tooltipValueFont = config.tooltipValueFont;
     this.widgetConfig.config.settings.tooltipValueColor = config.tooltipValueColor;
     this.widgetConfig.config.settings.tooltipShowDate = config.tooltipShowDate;
@@ -165,18 +278,26 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showLegend', 'showTooltip', 'tooltipShowDate'];
+    return ['showTitle', 'showIcon', 'showRangeThresholds', 'fillArea', 'showLine',
+      'step', 'showPointLabel', 'enablePointLabelBackground', 'showLegend', 'showTooltip', 'tooltipShowDate'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showTitle: boolean = this.rangeChartWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.rangeChartWidgetConfigForm.get('showIcon').value;
+    const showRangeThresholds: boolean = this.rangeChartWidgetConfigForm.get('showRangeThresholds').value;
+    const fillArea: boolean = this.rangeChartWidgetConfigForm.get('fillArea').value;
+    const showLine: boolean = this.rangeChartWidgetConfigForm.get('showLine').value;
+    const step: boolean = this.rangeChartWidgetConfigForm.get('step').value;
+    const showPointLabel: boolean = this.rangeChartWidgetConfigForm.get('showPointLabel').value;
+    const enablePointLabelBackground: boolean = this.rangeChartWidgetConfigForm.get('enablePointLabelBackground').value;
     const showLegend: boolean = this.rangeChartWidgetConfigForm.get('showLegend').value;
     const showTooltip: boolean = this.rangeChartWidgetConfigForm.get('showTooltip').value;
     const tooltipShowDate: boolean = this.rangeChartWidgetConfigForm.get('tooltipShowDate').value;
@@ -208,6 +329,54 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
       this.rangeChartWidgetConfigForm.get('iconColor').disable();
     }
 
+    if (showRangeThresholds) {
+      this.rangeChartWidgetConfigForm.get('rangeThreshold').enable();
+    } else {
+      this.rangeChartWidgetConfigForm.get('rangeThreshold').disable();
+    }
+
+    if (fillArea) {
+      this.rangeChartWidgetConfigForm.get('fillAreaOpacity').enable();
+    } else {
+      this.rangeChartWidgetConfigForm.get('fillAreaOpacity').disable();
+    }
+
+    if (showLine) {
+      this.rangeChartWidgetConfigForm.get('step').enable({emitEvent: false});
+      if (step) {
+        this.rangeChartWidgetConfigForm.get('stepType').enable();
+        this.rangeChartWidgetConfigForm.get('smooth').disable();
+      } else {
+        this.rangeChartWidgetConfigForm.get('stepType').disable();
+        this.rangeChartWidgetConfigForm.get('smooth').enable();
+      }
+      this.rangeChartWidgetConfigForm.get('lineType').enable();
+      this.rangeChartWidgetConfigForm.get('lineWidth').enable();
+    } else {
+      this.rangeChartWidgetConfigForm.get('step').disable({emitEvent: false});
+      this.rangeChartWidgetConfigForm.get('stepType').disable();
+      this.rangeChartWidgetConfigForm.get('smooth').disable();
+      this.rangeChartWidgetConfigForm.get('lineType').disable();
+      this.rangeChartWidgetConfigForm.get('lineWidth').disable();
+    }
+    if (showPointLabel) {
+      this.rangeChartWidgetConfigForm.get('pointLabelPosition').enable();
+      this.rangeChartWidgetConfigForm.get('pointLabelFont').enable();
+      this.rangeChartWidgetConfigForm.get('pointLabelColor').enable();
+      this.rangeChartWidgetConfigForm.get('enablePointLabelBackground').enable({emitEvent: false});
+      if (enablePointLabelBackground) {
+        this.rangeChartWidgetConfigForm.get('pointLabelBackground').enable();
+      } else {
+        this.rangeChartWidgetConfigForm.get('pointLabelBackground').disable();
+      }
+    } else {
+      this.rangeChartWidgetConfigForm.get('pointLabelPosition').disable();
+      this.rangeChartWidgetConfigForm.get('pointLabelFont').disable();
+      this.rangeChartWidgetConfigForm.get('pointLabelColor').disable();
+      this.rangeChartWidgetConfigForm.get('enablePointLabelBackground').disable({emitEvent: false});
+      this.rangeChartWidgetConfigForm.get('pointLabelBackground').disable();
+    }
+
     if (showLegend) {
       this.rangeChartWidgetConfigForm.get('legendPosition').enable();
       this.rangeChartWidgetConfigForm.get('legendLabelFont').enable();
@@ -219,6 +388,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
     }
 
     if (showTooltip) {
+      this.rangeChartWidgetConfigForm.get('tooltipLabelFont').enable();
+      this.rangeChartWidgetConfigForm.get('tooltipLabelColor').enable();
       this.rangeChartWidgetConfigForm.get('tooltipValueFont').enable();
       this.rangeChartWidgetConfigForm.get('tooltipValueColor').enable();
       this.rangeChartWidgetConfigForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -236,6 +407,8 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
         this.rangeChartWidgetConfigForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.rangeChartWidgetConfigForm.get('tooltipLabelFont').disable();
+      this.rangeChartWidgetConfigForm.get('tooltipLabelColor').disable();
       this.rangeChartWidgetConfigForm.get('tooltipValueFont').disable();
       this.rangeChartWidgetConfigForm.get('tooltipValueColor').disable();
       this.rangeChartWidgetConfigForm.get('tooltipShowDate').disable({emitEvent: false});
@@ -258,6 +431,12 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
 
   private setCardButtons(buttons: string[], config: WidgetConfig) {
     config.enableFullscreen = buttons.includes('fullscreen');
+  }
+
+  private _pointLabelPreviewFn(): string {
+    const units: string = this.rangeChartWidgetConfigForm.get('units').value;
+    const decimals: number = this.rangeChartWidgetConfigForm.get('decimals').value;
+    return formatValue(22, decimals, units, false);
   }
 
   private _tooltipValuePreviewFn(): string {

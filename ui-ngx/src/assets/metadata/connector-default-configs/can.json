@@ -1,0 +1,89 @@
+{
+  "interface": "socketcan",
+  "channel": "vcan0",
+  "backend": {
+    "fd": true
+  },
+  "reconnectPeriod": 5,
+  "devices": [
+    {
+      "name": "Car",
+      "sendDataOnlyOnChange": false,
+      "enableUnknownRpc": true,
+      "strictEval": false,
+      "attributes": [
+        {
+          "key": "isDriverDoorOpened",
+          "nodeId": 41,
+          "command": "2:2:big:8717",
+          "value": "4:1:int",
+          "expression": "bool(value & 0b00000100)",
+          "polling": {
+            "type": "once",
+            "dataInHex": "AB CD AB CD"
+          }
+        }
+      ],
+      "timeseries": [
+        {
+          "key": "rpm",
+          "nodeId": 1918,
+          "isExtendedId": true,
+          "command": "2:2:big:48059",
+          "value": "4:2:big:int",
+          "expression": "value / 4",
+          "polling": {
+            "type": "always",
+            "period": 5,
+            "dataInHex": "aaaa bbbb aaaa bbbb"
+          }
+        },
+        {
+          "key": "milliage",
+          "nodeId": 1918,
+          "isExtendedId": true,
+          "value": "4:2:little:int",
+          "expression": "value * 10",
+          "polling": {
+            "type": "always",
+            "period": 30,
+            "dataInHex": "aa bb cc dd ee ff aa bb"
+          }
+        }
+      ],
+      "attributeUpdates": [
+        {
+          "attributeOnThingsBoard": "softwareVersion",
+          "nodeId": 64,
+          "isExtendedId": true,
+          "dataLength": 4,
+          "dataExpression": "value + 5",
+          "dataByteorder": "little"
+        }
+      ],
+      "serverSideRpc": [
+        {
+          "method": "sendSameData",
+          "nodeId": 4,
+          "isExtendedId": true,
+          "isFd": true,
+          "bitrateSwitch": true,
+          "dataInHex": "aa bb cc dd ee ff    aa bb aa bb cc d ee ff"
+        },
+        {
+          "method": "setLightLevel",
+          "nodeId": 5,
+          "dataLength": 2,
+          "dataByteorder": "little",
+          "dataBefore": "00AA"
+        },
+        {
+          "method": "setSpeed",
+          "nodeId": 16,
+          "dataAfter": "0102",
+          "dataExpression": "userSpeed if maxAllowedSpeed > userSpeed else maxAllowedSpeed"
+        }
+      ]
+    }
+  ]
+}

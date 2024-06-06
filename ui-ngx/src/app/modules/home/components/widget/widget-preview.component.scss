@@ -17,10 +17,10 @@
   z-index: 10;
   background: #F3F6FA;
   display: flex;
-  align-items: center;
-  justify-content: center;
+  overflow: auto;
   .tb-preview-dashboard {
     position: relative;
+    margin: auto;
   }
   .tb-preview-panel {
     position: absolute;

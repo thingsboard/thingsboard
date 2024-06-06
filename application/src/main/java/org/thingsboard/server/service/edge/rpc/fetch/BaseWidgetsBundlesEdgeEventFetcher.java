@@ -35,7 +35,7 @@ public abstract class BaseWidgetsBundlesEdgeEventFetcher extends BasePageableEdg
     protected final WidgetsBundleService widgetsBundleService;
 
     @Override
-    PageData<WidgetsBundle> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<WidgetsBundle> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return findWidgetsBundles(tenantId, pageLink);
     }
 
@@ -46,4 +46,5 @@ public abstract class BaseWidgetsBundlesEdgeEventFetcher extends BasePageableEdg
     }
 
     protected abstract PageData<WidgetsBundle> findWidgetsBundles(TenantId tenantId, PageLink pageLink);
+
 }

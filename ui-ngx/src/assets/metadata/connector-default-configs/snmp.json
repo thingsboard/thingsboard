@@ -1,0 +1,138 @@
+{
+  "devices": [
+    {
+      "deviceName": "SNMP router",
+      "deviceType": "snmp",
+      "ip": "snmp.live.gambitcommunications.com",
+      "port": 161,
+      "pollPeriod": 5000,
+      "community": "public",
+      "attributes": [
+        {
+          "key": "ReceivedFromGet",
+          "method": "get",
+          "oid": "1.3.6.1.2.1.1.1.0",
+          "timeout": 6
+        },
+        {
+          "key": "ReceivedFromMultiGet",
+          "method": "multiget",
+          "oid": [
+            "1.3.6.1.2.1.1.1.0",
+            "1.3.6.1.2.1.1.2.0"
+          ],
+          "timeout": 6
+        },
+        {
+          "key": "ReceivedFromGetNext",
+          "method": "getnext",
+          "oid": "1.3.6.1.2.1.1.1.0",
+          "timeout": 6
+        },
+        {
+          "key": "ReceivedFromMultiWalk",
+          "method": "multiwalk",
+          "oid": [
+            "1.3.6.1.2.1.1.1.0",
+            "1.3.6.0.1.2.1"
+          ]
+        },
+        {
+          "key": "ReceivedFromBulkWalk",
+          "method": "bulkwalk",
+          "oid": [
+            "1.3.6.1.2.1.1.1.0",
+            "1.3.6.1.2.1.1.2.0"
+          ]
+        },
+        {
+          "key": "ReceivedFromBulkGet",
+          "method": "bulkget",
+          "scalarOid": [
+            "1.3.6.1.2.1.1.1.0",
+            "1.3.6.1.2.1.1.2.0"
+          ],
+          "repeatingOid": [
+            "1.3.6.1.2.1.1.1.0",
+            "1.3.6.1.2.1.1.2.0"
+          ],
+          "maxListSize": 10
+        }
+      ],
+      "telemetry": [
+        {
+          "key": "ReceivedFromWalk",
+          "community": "private",
+          "method": "walk",
+          "oid": "1.3.6.1.2.1.1.1.0"
+        },
+        {
+          "key": "ReceivedFromTable",
+          "method": "table",
+          "oid": "1.3.6.1.2.1.1"
+        }
+      ],
+      "attributeUpdateRequests": [
+        {
+          "attributeFilter": "dataToSet",
+          "method": "set",
+          "oid": "1.3.6.1.2.1.1.1.0"
+        },
+        {
+          "attributeFilter": "dataToMultiSet",
+          "method": "multiset",
+          "mappings": {
+            "1.2.3": "10",
+            "2.3.4": "${attribute}"
+          }
+        }
+      ],
+      "serverSideRpcRequests": [
+        {
+          "requestFilter": "setData",
+          "method": "set",
+          "oid": "1.3.6.1.2.1.1.1.0"
+        },
+        {
+          "requestFilter": "multiSetData",
+          "method": "multiset"
+        },
+        {
+          "requestFilter": "getData",
+          "method": "get",
+          "oid": "1.3.6.1.2.1.1.1.0"
+        },
+        {
+          "requestFilter": "runBulkWalk",
+          "method": "bulkwalk",
+          "oid": [
+            "1.3.6.1.2.1.1.1.0",
+            "1.3.6.1.2.1.1.2.0"
+          ]
+        }
+      ]
+    },
+    {
+      "deviceName": "SNMP router",
+      "deviceType": "snmp",
+      "ip": "127.0.0.1",
+      "pollPeriod": 5000,
+      "community": "public",
+      "converter": "CustomSNMPConverter",
+      "attributes": [
+        {
+          "key": "ReceivedFromGetWithCustomConverter",
+          "method": "get",
+          "oid": "1.3.6.1.2.1.1.1.0"
+        }
+      ],
+      "telemetry": [
+        {
+          "key": "ReceivedFromTableWithCustomConverter",
+          "method": "table",
+          "oid": "1.3.6.1.2.1.1.1.0"
+        }
+      ]
+    }
+  ]
+}

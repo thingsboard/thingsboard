@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.attributes;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.tuple.Pair;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
@@ -58,28 +59,28 @@ public class BaseAttributesService implements AttributesService {
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
         validate(entityId, scope);
-        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+        Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k);
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKey));
     }
 
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
-        Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey);
+        Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k);
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, scope, attributeKey));
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k));
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys));
     }
 
     @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, Collection<String> attributeKeys) {
         validate(entityId, scope);
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, "Incorrect attribute key " + attributeKey));
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k));
         return Futures.immediateFuture(attributesDao.find(tenantId, entityId, scope, attributeKeys));
     }
 
@@ -160,4 +161,11 @@ public class BaseAttributesService implements AttributesService {
         validate(entityId, scope);
         return Futures.allAsList(attributesDao.removeAll(tenantId, entityId, scope, attributeKeys));
     }
+
+    @Override
+    public int removeAllByEntityId(TenantId tenantId, EntityId entityId) {
+        List<Pair<AttributeScope, String>> deleted = attributesDao.removeAllByEntityId(tenantId, entityId);
+        return deleted.size();
+    }
+
 }

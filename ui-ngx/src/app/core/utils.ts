@@ -338,6 +338,8 @@ export const isEmpty = (a: any): boolean => _.isEmpty(a);
 
 export const unset = (object: any, path: string | symbol): boolean => _.unset(object, path);
 
+export const setByPath = <T extends object>(object: T, path: string | number | symbol, value: any): T => _.set(object, path, value);
+
 export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
   if (a === b) {
     return true;

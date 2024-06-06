@@ -14,6 +14,7 @@
                     "datasources": [
                         {
                             "type": "entity",
+                            "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f",
                             "dataKeys": [
                                 {
                                     "name": "ruleEngineException",
@@ -52,7 +53,29 @@
                                     "_hash": 0.7255162989552142
                                 }
                             ],
-                            "entityAliasId": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f"
+                            "alarmFilterConfig": {
+                                "statusList": [
+                                    "ACTIVE"
+                                ]
+                            },
+                            "latestDataKeys": [
+                                {
+                                    "name": "queueName",
+                                    "type": "entityField",
+                                    "label": "Queue name",
+                                    "color": "#ffc107",
+                                    "settings": {},
+                                    "_hash": 0.6889245277142959
+                                },
+                                {
+                                    "name": "serviceId",
+                                    "type": "entityField",
+                                    "label": "Service Id",
+                                    "color": "#607d8b",
+                                    "settings": {},
+                                    "_hash": 0.7972226575450785
+                                }
+                            ]
                         }
                     ],
                     "timewindow": {
@@ -7690,7 +7713,25 @@
                                 "statusList": [
                                     "ACTIVE"
                                 ]
-                            }
+                            },
+                            "latestDataKeys": [
+                                {
+                                    "name": "queueName",
+                                    "type": "entityField",
+                                    "label": "Queue name",
+                                    "color": "#ffc107",
+                                    "settings": {},
+                                    "_hash": 0.7021721434431745
+                                },
+                                {
+                                    "name": "serviceId",
+                                    "type": "entityField",
+                                    "label": "Service Id",
+                                    "color": "#607d8b",
+                                    "settings": {},
+                                    "_hash": 0.5924381120750077
+                                }
+                            ]
                         }
                     ],
                     "timewindow": {
@@ -8080,7 +8121,25 @@
                                 "statusList": [
                                     "ACTIVE"
                                 ]
-                            }
+                            },
+                            "latestDataKeys": [
+                                {
+                                    "name": "queueName",
+                                    "type": "entityField",
+                                    "label": "Queue name",
+                                    "color": "#f44336",
+                                    "settings": {},
+                                    "_hash": 0.7066844328378095
+                                },
+                                {
+                                    "name": "serviceId",
+                                    "type": "entityField",
+                                    "label": "Service Id",
+                                    "color": "#ffc107",
+                                    "settings": {},
+                                    "_hash": 0.1371570237026627
+                                }
+                            ]
                         }
                     ],
                     "timewindow": {
@@ -8674,12 +8733,9 @@
                 "id": "2e4c97b0-257a-a1b9-690c-141d9bf2ec6f",
                 "alias": "TbServiceQueues",
                 "filter": {
-                    "type": "assetType",
+                    "type": "entityType",
                     "resolveMultiple": true,
-                    "assetNameFilter": "",
-                    "assetTypes": [
-                        "TbServiceQueue"
-                    ]
+                    "entityType": "QUEUE_STATS"
                 }
             }
         },

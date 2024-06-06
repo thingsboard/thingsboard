@@ -41,7 +41,7 @@ public class EdgeId extends UUIDBased implements EntityId {
         return new EdgeId(UUID.fromString(edgeId));
     }
 
-    @Schema(required = true, description = "string", example = "EDGE", allowableValues = "EDGE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "EDGE", allowableValues = "EDGE")
     @Override
     public EntityType getEntityType() {
         return EntityType.EDGE;

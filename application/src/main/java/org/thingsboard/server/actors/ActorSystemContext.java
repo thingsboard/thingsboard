@@ -19,6 +19,8 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -81,6 +83,7 @@ import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -115,9 +118,6 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.service.transport.TbCoreToTransportService;
-
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
@@ -456,6 +456,11 @@ public class ActorSystemContext {
     @Lazy
     @Autowired(required = false)
     @Getter
+    private QueueStatsService queueStatsService;
+
+    @Lazy
+    @Autowired(required = false)
+    @Getter
     private WidgetsBundleService widgetsBundleService;
 
     @Lazy
@@ -635,6 +640,10 @@ public class ActorSystemContext {
 
     public TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId) {
         return partitionService.resolve(serviceType, queueName, tenantId, entityId);
+    }
+
+    public TopicPartitionInfo resolve(TenantId tenantId, EntityId entityId, TbMsg msg) {
+        return partitionService.resolve(ServiceType.TB_RULE_ENGINE, msg.getQueueName(), tenantId, entityId, msg.getPartition());
     }
 
     public String getServiceId() {

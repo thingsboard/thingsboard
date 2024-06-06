@@ -130,6 +130,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     }
 
     @Override
+    public RuleChain findDefaultEntityByTenantId(UUID tenantId) {
+        return findRootRuleChainByTenantIdAndType(tenantId, RuleChainType.CORE);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.RULE_CHAIN;
     }

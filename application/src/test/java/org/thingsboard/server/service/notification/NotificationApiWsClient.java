@@ -106,8 +106,11 @@ public class NotificationApiWsClient extends TbTestWebSocketClient {
                 }
             }
         } else if (updateType == CmdUpdateType.NOTIFICATIONS_COUNT) {
-            lastCountUpdate = JacksonUtil.treeToValue(update, UnreadNotificationsCountUpdate.class);
-            unreadCount = lastCountUpdate.getTotalUnreadCount();
+            UnreadNotificationsCountUpdate countUpdate = JacksonUtil.treeToValue(update, UnreadNotificationsCountUpdate.class);
+            if (lastCountUpdate == null || countUpdate.getSequenceNumber() > lastCountUpdate.getSequenceNumber()) {
+                lastCountUpdate = countUpdate;
+                unreadCount = lastCountUpdate.getTotalUnreadCount();
+            }
         }
         super.onMessage(s);
     }

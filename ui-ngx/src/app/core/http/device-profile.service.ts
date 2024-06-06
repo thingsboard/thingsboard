@@ -60,7 +60,7 @@ export class DeviceProfileService {
 
   public getLwm2mObjects(sortOrder: SortOrder, objectIds?: string[], searchText?: string, config?: RequestConfig):
     Observable<Array<ObjectLwM2M>> {
-    let url = `/api/resource/lwm2m/?sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
+    let url = `/api/resource/lwm2m?sortProperty=${sortOrder.property}&sortOrder=${sortOrder.direction}`;
     if (isDefinedAndNotNull(objectIds) && objectIds.length > 0) {
       url += `&objectIds=${objectIds}`;
     }

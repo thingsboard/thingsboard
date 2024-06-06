@@ -74,6 +74,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.MultipleTbQueueCallbackWrapper;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -116,6 +117,9 @@ public class DefaultTbClusterService implements TbClusterService {
     @Autowired
     @Lazy
     private TbQueueProducerProvider producerProvider;
+
+    @Autowired
+    private TbRuleEngineProducerService ruleEngineProducerService;
 
     @Autowired
     @Lazy
@@ -209,14 +213,8 @@ public class DefaultTbClusterService implements TbClusterService {
             HasRuleEngineProfile ruleEngineProfile = getRuleEngineProfileForEntityOrElseNull(tenantId, entityId);
             tbMsg = transformMsg(tbMsg, ruleEngineProfile);
         }
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, entityId);
-        log.trace("PUSHING msg: {} to:{}", tbMsg, tpi);
-        ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .addAllRelationTypes(relations)
-                .setTbMsg(TbMsg.toByteString(tbMsg)).build();
-        producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
+
+        ruleEngineProducerService. sendToRuleEngine(producerProvider.getRuleEngineMsgProducer(), tenantId, tbMsg, relations, callback);
         toRuleEngineMsgs.incrementAndGet();
     }
 
@@ -596,6 +594,7 @@ public class DefaultTbClusterService implements TbClusterService {
                         .setQueueName(queue.getName())
                         .setQueueTopic(queue.getTopic())
                         .setPartitions(queue.getPartitions())
+                        .setDuplicateMsgToAllPartitions(queue.isDuplicateMsgToAllPartitions())
                         .build())
                 .collect(Collectors.toList());
 

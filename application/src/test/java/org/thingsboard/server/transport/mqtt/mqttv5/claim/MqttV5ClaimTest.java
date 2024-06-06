@@ -29,7 +29,6 @@ public class MqttV5ClaimTest extends AbstractMqttV5ClaimTest {
                 .deviceName("Test Claim device")
                 .build();
         processBeforeTest(configProperties);
-        createCustomerAndUser();
     }
 
     @Test

@@ -31,7 +31,7 @@ public class TbResourceId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "TB_RESOURCE", allowableValues = "TB_RESOURCE")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "TB_RESOURCE", allowableValues = "TB_RESOURCE")
     @Override
     public EntityType getEntityType() {
         return EntityType.TB_RESOURCE;

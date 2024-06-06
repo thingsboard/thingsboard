@@ -856,6 +856,9 @@ mat-icon {
     .mat-icon {
       color: rgba(0, 0, 0, .54);
     }
+    &.tb-pointer {
+      cursor: pointer;
+    }
   }
 
   .mdc-data-table__row:last-child .mdc-data-table__cell {

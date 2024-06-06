@@ -18,22 +18,88 @@ import {
   BackgroundSettings,
   BackgroundType,
   ColorRange,
+  filterIncludingColorRanges,
   Font,
-  simpleDateFormat
+  simpleDateFormat,
+  sortedColorRange,
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
-import { EChartsTooltipWidgetSettings } from '@home/components/widget/lib/chart/echarts-widget.models';
+import {
+  createTimeSeriesChartVisualMapPiece,
+  defaultTimeSeriesChartXAxisSettings,
+  defaultTimeSeriesChartYAxisSettings,
+  LineSeriesStepType,
+  ThresholdLabelPosition,
+  timeSeriesChartGridDefaultSettings,
+  TimeSeriesChartGridSettings,
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  TimeSeriesChartSettings,
+  TimeSeriesChartThreshold,
+  timeSeriesChartThresholdDefaultSettings,
+  TimeSeriesChartTooltipWidgetSettings,
+  TimeSeriesChartVisualMapPiece,
+  TimeSeriesChartXAxisSettings,
+  TimeSeriesChartYAxisSettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { isNumber, mergeDeep } from '@core/utils';
+import { DeepPartial } from '@shared/models/common';
+import {
+  chartAnimationDefaultSettings,
+  ChartAnimationSettings,
+  chartColorScheme,
+  ChartFillType,
+  ChartLabelPosition,
+  ChartLineType,
+  ChartShape
+} from '@home/components/widget/lib/chart/chart.models';
 
-export interface RangeChartWidgetSettings extends EChartsTooltipWidgetSettings {
+export interface RangeItem {
+  index: number;
+  from?: number;
+  to?: number;
+  color: string;
+  label: string;
+  visible: boolean;
+  enabled: boolean;
+  piece: TimeSeriesChartVisualMapPiece;
+}
+
+export interface RangeChartWidgetSettings extends TimeSeriesChartTooltipWidgetSettings {
   dataZoom: boolean;
   rangeColors: Array<ColorRange>;
   outOfRangeColor: string;
+  showRangeThresholds: boolean;
+  rangeThreshold: Partial<TimeSeriesChartThreshold>;
   fillArea: boolean;
+  fillAreaOpacity: number;
+  showLine: boolean;
+  step: boolean;
+  stepType: LineSeriesStepType;
+  smooth: boolean;
+  lineType: ChartLineType;
+  lineWidth: number;
+  showPoints: boolean;
+  showPointLabel: boolean;
+  pointLabelPosition: ChartLabelPosition;
+  pointLabelFont: Font;
+  pointLabelColor: string;
+  enablePointLabelBackground: boolean;
+  pointLabelBackground: string;
+  pointShape: ChartShape;
+  pointSize: number;
+  grid: TimeSeriesChartGridSettings;
+  yAxis: TimeSeriesChartYAxisSettings;
+  xAxis: TimeSeriesChartXAxisSettings;
+  animation: ChartAnimationSettings;
+  thresholds: TimeSeriesChartThreshold[];
   showLegend: boolean;
   legendPosition: LegendPosition;
   legendLabelFont: Font;
   legendLabelColor: string;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
@@ -48,7 +114,53 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
     {from: 40, color: '#D81838'}
   ],
   outOfRangeColor: '#ccc',
+  showRangeThresholds: true,
+  rangeThreshold: mergeDeep({} as Partial<TimeSeriesChartThreshold>,
+    timeSeriesChartThresholdDefaultSettings,
+    { lineColor: '#37383b',
+      lineType: ChartLineType.dashed,
+      startSymbol: ChartShape.circle,
+      startSymbolSize: 5,
+      endSymbol: ChartShape.arrow,
+      endSymbolSize: 7,
+      labelPosition: ThresholdLabelPosition.insideEndTop,
+      labelColor: '#37383b',
+      enableLabelBackground: true}),
   fillArea: true,
+  fillAreaOpacity: 0.7,
+  showLine: true,
+  step: false,
+  stepType: LineSeriesStepType.start,
+  smooth: false,
+  lineType: ChartLineType.solid,
+  lineWidth: 2,
+  showPoints: false,
+  showPointLabel: false,
+  pointLabelPosition: ChartLabelPosition.top,
+  pointLabelFont: {
+    family: 'Roboto',
+    size: 11,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '1'
+  },
+  pointLabelColor: chartColorScheme['series.label'].light,
+  enablePointLabelBackground: false,
+  pointLabelBackground: 'rgba(255,255,255,0.56)',
+  pointShape: ChartShape.emptyCircle,
+  pointSize: 4,
+  grid: mergeDeep({} as TimeSeriesChartGridSettings,
+    timeSeriesChartGridDefaultSettings),
+  yAxis: mergeDeep({} as TimeSeriesChartYAxisSettings,
+    defaultTimeSeriesChartYAxisSettings,
+    { id: 'default', order: 0, showLine: false, showTicks: false } as TimeSeriesChartYAxisSettings),
+  xAxis: mergeDeep({} as TimeSeriesChartXAxisSettings,
+    defaultTimeSeriesChartXAxisSettings,
+    {showSplitLines: false} as TimeSeriesChartXAxisSettings),
+  animation: mergeDeep({} as ChartAnimationSettings,
+    chartAnimationDefaultSettings),
+  thresholds: [],
   showLegend: true,
   legendPosition: LegendPosition.top,
   legendLabelFont: {
@@ -61,6 +173,15 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   },
   legendLabelColor: 'rgba(0, 0, 0, 0.76)',
   showTooltip: true,
+  tooltipLabelFont: {
+    family: 'Roboto',
+    size: 12,
+    sizeUnit: 'px',
+    style: 'normal',
+    weight: '400',
+    lineHeight: '16px'
+  },
+  tooltipLabelColor: 'rgba(0, 0, 0, 0.76)',
   tooltipValueFont: {
     family: 'Roboto',
     size: 12,
@@ -92,5 +213,152 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
+  },
+  padding: '12px'
+};
+
+export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
+                                             decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
+  let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
+    ...{type: ValueSourceType.constant,
+    yAxisId: 'default',
+    units,
+    decimals,
+    value: item},
+    ...settings.rangeThreshold
+  } as DeepPartial<TimeSeriesChartThreshold>)) : [];
+  if (settings.thresholds?.length) {
+    thresholds = thresholds.concat(settings.thresholds);
   }
+  return {
+    dataZoom: settings.dataZoom,
+    thresholds,
+    grid: settings.grid,
+    yAxes: {
+      default: {
+        ...settings.yAxis,
+        ...{
+          decimals,
+          units
+        }
+      }
+    },
+    xAxis: settings.xAxis,
+    animation: settings.animation,
+    visualMapSettings: {
+      outOfRangeColor: settings.outOfRangeColor,
+      pieces: rangeItems.map(item => item.piece)
+    },
+    showTooltip: settings.showTooltip,
+    tooltipLabelFont: settings.tooltipLabelFont,
+    tooltipLabelColor: settings.tooltipLabelColor,
+    tooltipValueFont: settings.tooltipValueFont,
+    tooltipValueColor: settings.tooltipValueColor,
+    tooltipShowDate: settings.tooltipShowDate,
+    tooltipDateInterval: settings.tooltipDateInterval,
+    tooltipDateFormat: settings.tooltipDateFormat,
+    tooltipDateFont: settings.tooltipDateFont,
+    tooltipDateColor: settings.tooltipDateColor,
+    tooltipBackgroundColor: settings.tooltipBackgroundColor,
+    tooltipBackgroundBlur: settings.tooltipBackgroundBlur,
+  };
+};
+
+export const rangeChartTimeSeriesKeySettings = (settings: RangeChartWidgetSettings): DeepPartial<TimeSeriesChartKeySettings> => ({
+    type: TimeSeriesChartSeriesType.line,
+    lineSettings: {
+      showLine: settings.showLine,
+      step: settings.step,
+      stepType: settings.stepType,
+      smooth: settings.smooth,
+      lineType: settings.lineType,
+      lineWidth: settings.lineWidth,
+      showPoints: settings.showPoints,
+      showPointLabel: settings.showPointLabel,
+      pointLabelPosition: settings.pointLabelPosition,
+      pointLabelFont: settings.pointLabelFont,
+      pointLabelColor: settings.pointLabelColor,
+      enablePointLabelBackground: settings.enablePointLabelBackground,
+      pointLabelBackground: settings.pointLabelBackground,
+      pointShape: settings.pointShape,
+      pointSize: settings.pointSize,
+      fillAreaSettings: {
+        type: settings.fillArea ? ChartFillType.opacity : ChartFillType.none,
+        opacity: settings.fillAreaOpacity
+      }
+    }
+  });
+
+export const toRangeItems = (colorRanges: Array<ColorRange>): RangeItem[] => {
+  const rangeItems: RangeItem[] = [];
+  let counter = 0;
+  const ranges = sortedColorRange(filterIncludingColorRanges(colorRanges)).filter(r => isNumber(r.from) || isNumber(r.to));
+  for (let i = 0; i < ranges.length; i++) {
+    const range = ranges[i];
+    let from = range.from;
+    const to = range.to;
+    if (i > 0) {
+      const prevRange = ranges[i - 1];
+      if (isNumber(prevRange.to) && isNumber(from) && from < prevRange.to) {
+        from = prevRange.to;
+      }
+    }
+    rangeItems.push(
+      {
+        index: counter++,
+        color: range.color,
+        enabled: true,
+        visible: true,
+        from,
+        to,
+        label: rangeItemLabel(from, to),
+        piece: createTimeSeriesChartVisualMapPiece(range.color, from, to)
+      }
+    );
+    if (!isNumber(from) || !isNumber(to)) {
+      const value = !isNumber(from) ? to : from;
+      rangeItems.push(
+        {
+          index: counter++,
+          color: 'transparent',
+          enabled: true,
+          visible: false,
+          label: '',
+          piece: { gt: value - 0.000000001, lt: value + 0.000000001, color: 'transparent'}
+        }
+      );
+    }
+  }
+  return rangeItems;
+};
+
+const rangeItemLabel = (from?: number, to?: number): string => {
+  if (isNumber(from) && isNumber(to)) {
+    if (from === to) {
+      return `${from}`;
+    } else {
+      return `${from} - ${to}`;
+    }
+  } else if (isNumber(from)) {
+    return `≥ ${from}`;
+  } else if (isNumber(to)) {
+    return `< ${to}`;
+  } else {
+    return null;
+  }
+};
+
+const getMarkPoints = (ranges: Array<RangeItem>): number[] => {
+  const points = new Set<number>();
+  for (const range of ranges) {
+    if (range.visible) {
+      if (isNumber(range.from)) {
+        points.add(range.from);
+      }
+      if (isNumber(range.to)) {
+        points.add(range.to);
+      }
+    }
+  }
+  return Array.from(points).sort();
 };

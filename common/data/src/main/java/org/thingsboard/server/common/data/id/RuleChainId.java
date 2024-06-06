@@ -29,7 +29,7 @@ public class RuleChainId extends UUIDBased implements EntityId {
         super(id);
     }
 
-    @Schema(required = true, description = "string", example = "RULE_CHAIN", allowableValues = "RULE_CHAIN")
+    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "string", example = "RULE_CHAIN", allowableValues = "RULE_CHAIN")
     @Override
     public EntityType getEntityType() {
         return EntityType.RULE_CHAIN;

@@ -116,14 +116,14 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public TbResource findResourceById(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing findResourceById [{}] [{}]", tenantId, resourceId);
-        Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
+        Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
         return resourceDao.findById(tenantId, resourceId.getId());
     }
 
     @Override
     public TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing findResourceInfoById [{}] [{}]", tenantId, resourceId);
-        Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
+        Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
 
         return cache.getAndPutInTransaction(new ResourceInfoCacheKey(tenantId, resourceId),
                 () -> resourceInfoDao.findById(tenantId, resourceId.getId()), true);
@@ -138,7 +138,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing findResourceInfoById [{}] [{}]", tenantId, resourceId);
-        Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
+        Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
         return resourceInfoDao.findByIdAsync(tenantId, resourceId.getId());
     }
 
@@ -150,7 +150,7 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public void deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force) {
         log.trace("Executing deleteResource [{}] [{}]", tenantId, resourceId);
-        Validator.validateId(resourceId, INCORRECT_RESOURCE_ID + resourceId);
+        Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
         if (!force) {
             resourceValidator.validateDelete(tenantId, resourceId);
         }
@@ -160,10 +160,15 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteResource(tenantId, (TbResourceId) id, force);
+    }
+
+    @Override
     public PageData<TbResourceInfo> findAllTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
         TenantId tenantId = filter.getTenantId();
         log.trace("Executing findAllTenantResourcesByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return resourceInfoDao.findAllTenantResourcesByTenantId(filter, pageLink);
     }
 
@@ -171,46 +176,46 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     public PageData<TbResourceInfo> findTenantResourcesByTenantId(TbResourceInfoFilter filter, PageLink pageLink) {
         TenantId tenantId = filter.getTenantId();
         log.trace("Executing findTenantResourcesByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return resourceInfoDao.findTenantResourcesByTenantId(filter, pageLink);
     }
 
     @Override
     public List<TbResource> findTenantResourcesByResourceTypeAndObjectIds(TenantId tenantId, ResourceType resourceType, String[] objectIds) {
         log.trace("Executing findTenantResourcesByResourceTypeAndObjectIds [{}][{}][{}]", tenantId, resourceType, objectIds);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return resourceDao.findResourcesByTenantIdAndResourceType(tenantId, resourceType, objectIds, null);
     }
 
     @Override
     public PageData<TbResource> findAllTenantResources(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findAllTenantResources [{}][{}]", tenantId, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return resourceDao.findAllByTenantId(tenantId, pageLink);
     }
 
     @Override
     public PageData<TbResource> findTenantResourcesByResourceTypeAndPageLink(TenantId tenantId, ResourceType resourceType, PageLink pageLink) {
         log.trace("Executing findTenantResourcesByResourceTypeAndPageLink [{}][{}][{}]", tenantId, resourceType, pageLink);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return resourceDao.findResourcesByTenantIdAndResourceType(tenantId, resourceType, pageLink);
     }
 
     @Override
     public void deleteResourcesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteResourcesByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantResourcesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteResourcesByTenantId(tenantId);
     }
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
         return Optional.ofNullable(findResourceInfoById(tenantId, new TbResourceId(entityId.getId())));
-    }
-
-    @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteResource(tenantId, (TbResourceId) id);
     }
 
     @Override
