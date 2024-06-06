@@ -87,7 +87,7 @@ public class TbSendRPCRequestNodeTest {
     private RuleEngineRpcService rpcServiceMock;
 
     @BeforeEach
-    void setUp() throws TbNodeException {
+    public void setUp() throws TbNodeException {
         node = new TbSendRPCRequestNode();
         config = new TbSendRpcRequestNodeConfiguration().defaultConfiguration();
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -95,7 +95,7 @@ public class TbSendRPCRequestNodeTest {
     }
 
     @Test
-    void verifyDefaultConfig() {
+    public void verifyDefaultConfig() {
         assertThat(config.getTimeoutInSeconds()).isEqualTo(60);
     }
 
