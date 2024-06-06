@@ -22,10 +22,12 @@ import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.EnumSource;
 import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcRequest;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceRpcResponse;
@@ -45,9 +47,8 @@ import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.HashMap;
-import java.util.Map;
 import java.util.Optional;
+import java.util.Random;
 import java.util.UUID;
 import java.util.function.Consumer;
 import java.util.stream.Stream;
@@ -100,34 +101,30 @@ public class TbSendRPCRequestNodeTest {
 
     @ParameterizedTest
     @MethodSource
-    void givenOneway_whenOnMsg_thenVerifyRequest(Map<String, String> metadata, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    public void givenOneway_whenOnMsg_thenVerifyRequest(String mdKeyValue, boolean expectedResult) {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsgMetaData msgMetadata = metadata == null ? TbMsgMetaData.EMPTY : new TbMsgMetaData(metadata);
+        TbMsgMetaData msgMetadata = new TbMsgMetaData();
+        msgMetadata.putValue("oneway", mdKeyValue);
         TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, msgMetadata, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
+        var ruleEngineDeviceRpcRequestCaptor = captureRequest();
+        assertThat(ruleEngineDeviceRpcRequestCaptor.getValue().isOneway()).isEqualTo(expectedResult);
     }
 
     private static Stream<Arguments> givenOneway_whenOnMsg_thenVerifyRequest() {
-        var metadata = new HashMap<>();
-        metadata.put("oneway", null);
         return Stream.of(
-                Arguments.of(Map.of("oneway", "true"), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isOneway()).isTrue()),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isOneway()).isFalse()),
-                Arguments.of(Map.of("oneway", ""), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isOneway()).isFalse()),
-                Arguments.of(metadata, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isOneway()).isFalse())
+                Arguments.of("true", true),
+                Arguments.of("false", false),
+                Arguments.of(null, false),
+                Arguments.of("", false)
         );
     }
 
     @Test
-    void givenMsgBody_whenOnMsg_thenVerifyRequest() {
+    public void givenMsgBody_whenOnMsg_thenVerifyRequest() {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
@@ -144,205 +141,211 @@ public class TbSendRPCRequestNodeTest {
                 .hasFieldOrPropertyWithValue("additionalInfo", "information");
     }
 
-    @ParameterizedTest
-    @MethodSource
-    void givenRequestId_whenOnMsg_thenVerifyRequest(String requestId, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    @Test
+    public void givenRequestIdIsNotSet_whenOnMsg_thenVerifyRequest() {
+        Random randomMock = mock(Random.class);
+        given(randomMock.nextInt()).willReturn(123);
+        ReflectionTestUtils.setField(node, "random", randomMock);
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        String data = String.format("""
+        TbMsg msg = TbMsg.newMsg(TbMsgType.TO_SERVER_RPC_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, MSG_DATA);
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getRequestId()).isEqualTo(123);
+    }
+
+    @Test
+    public void givenRequestId_whenOnMsg_thenVerifyRequest() {
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        String data = """
                 {
                   "method": "setGpio",
                   "params": {
                     "pin": "23",
                     "value": 1
-                  }%s%s
+                  },
+                  "requestId": 12345
                 }
-                """, requestId != null ? ",\"requestId\":" : "", requestId != null ? requestId : "");
+                """;
         TbMsg msg = TbMsg.newMsg(TbMsgType.TO_SERVER_RPC_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getRequestId()).isEqualTo(12345);
     }
 
-    private static Stream<Arguments> givenRequestId_whenOnMsg_thenVerifyRequest() {
-        return Stream.of(
-                Arguments.of("12345", (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRequestId()).isEqualTo(12345)),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRequestId()).isNotNull())
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void givenRequestUUID_whenOnMsg_thenVerifyRequest(Map<String, String> metadata, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    @Test
+    public void givenRequestUUID_whenOnMsg_thenVerifyRequest() {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsgMetaData msgMetadata = metadata == null ? TbMsgMetaData.EMPTY : new TbMsgMetaData(metadata);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, msgMetadata, MSG_DATA);
+        String requestUUID = "b795a241-5a30-48fb-92d5-46b864d47130";
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue("requestUUID", requestUUID);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
-    }
-
-    private static Stream<Arguments> givenRequestUUID_whenOnMsg_thenVerifyRequest() {
-        var metadata= new HashMap<>();
-        metadata.put("requestUUID", null);
-        return Stream.of(
-                Arguments.of(Map.of("requestUUID", "1c4ef338-ea1b-495f-8e2b-67981f27cf35"), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRequestUUID()).isEqualTo(UUID.fromString("1c4ef338-ea1b-495f-8e2b-67981f27cf35"))),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRequestUUID()).isNotNull()),
-                Arguments.of(Map.of("requestUUID", ""), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRequestUUID()).isNotNull()),
-                Arguments.of(metadata, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRequestUUID()).isNotNull())
-        );
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getRequestUUID()).isEqualTo(UUID.fromString(requestUUID));
     }
 
     @ParameterizedTest
-    @MethodSource
-    void givenOriginServiceId_whenOnMsg_thenVerifyRequest(Map<String, String> metadata, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    @NullAndEmptySource
+    public void givenInvalidRequestUUID_whenOnMsg_thenVerifyRequest(String requestUUID) {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsgMetaData msgMetaData = metadata == null ? TbMsgMetaData.EMPTY : new TbMsgMetaData(metadata);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, msgMetaData, MSG_DATA);
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue("requestUUID", requestUUID);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getRequestUUID()).isNotNull();
     }
 
-    private static Stream<Arguments> givenOriginServiceId_whenOnMsg_thenVerifyRequest() {
-        var metadata= new HashMap<>();
-        metadata.put("originServiceId", null);
-        return Stream.of(
-                Arguments.of(Map.of("originServiceId", "service-id-123"), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getOriginServiceId()).isEqualTo("service-id-123")),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getOriginServiceId()).isNull()),
-                Arguments.of(Map.of("originServiceId", ""), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getOriginServiceId()).isNull()),
-                Arguments.of(metadata, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getOriginServiceId()).isNull())
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void givenExpirationTime_whenOnMsg_thenVerifyRequest(Map<String, String> metadata, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    @Test
+    public void givenOriginServiceId_whenOnMsg_thenVerifyRequest() {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsgMetaData msgMetaData = metadata == null ? TbMsgMetaData.EMPTY : new TbMsgMetaData(metadata);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, msgMetaData, MSG_DATA);
+        String originServiceId = "service-id-123";
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue("originServiceId", originServiceId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
-    }
-
-    private static Stream<Arguments> givenExpirationTime_whenOnMsg_thenVerifyRequest() {
-        var metadata= new HashMap<>();
-        metadata.put(DataConstants.EXPIRATION_TIME, null);
-        return Stream.of(
-                Arguments.of(Map.of(DataConstants.EXPIRATION_TIME, "2000000000000"), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getExpirationTime()).isEqualTo(2000000000000L)),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getExpirationTime()).isGreaterThan(System.currentTimeMillis())),
-                Arguments.of(Map.of(DataConstants.EXPIRATION_TIME, ""), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getExpirationTime()).isGreaterThan(System.currentTimeMillis())),
-                Arguments.of(metadata, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getExpirationTime()).isGreaterThan(System.currentTimeMillis()))
-        );
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getOriginServiceId()).isEqualTo(originServiceId);
     }
 
     @ParameterizedTest
-    @MethodSource
-    void givenRetries_whenOnMsg_thenVerifyRequest(Map<String, String> metadata, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    @NullAndEmptySource
+    public void givenInvalidOriginServiceId_whenOnMsg_thenVerifyRequest(String originServiceId) {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsgMetaData msgMetaData = metadata == null ? TbMsgMetaData.EMPTY : new TbMsgMetaData(metadata);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, msgMetaData, MSG_DATA);
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue("originServiceId", originServiceId);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getOriginServiceId()).isNull();
     }
 
-    private static Stream<Arguments> givenRetries_whenOnMsg_thenVerifyRequest() {
-        var metadata= new HashMap<>();
-        metadata.put(DataConstants.RETRIES, null);
-        return Stream.of(
-                Arguments.of(Map.of(DataConstants.RETRIES, "3"), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRetries()).isEqualTo(3)),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRetries()).isNull()),
-                Arguments.of(Map.of(DataConstants.RETRIES,""), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRetries()).isNull()),
-                Arguments.of(metadata, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.getRetries()).isNull())
-        );
+    @Test
+    public void givenExpirationTime_whenOnMsg_thenVerifyRequest() {
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        String expirationTime = "2000000000000";
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.EXPIRATION_TIME, expirationTime);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getExpirationTime()).isEqualTo(Long.parseLong(expirationTime));
     }
 
     @ParameterizedTest
-    @MethodSource
-    void givenTbMsgType_whenOnMsg_thenVerifyRequest(TbMsgType msgType, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    @NullAndEmptySource
+    public void givenInvalidExpirationTime_whenOnMsg_thenVerifyRequest(String expirationTime) {
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.EXPIRATION_TIME, expirationTime);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getExpirationTime()).isGreaterThan(System.currentTimeMillis());
+    }
+
+    @Test
+    public void givenRetries_whenOnMsg_thenVerifyRequest() {
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        Integer retries = 3;
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.RETRIES, String.valueOf(retries));
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getRetries()).isEqualTo(retries);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    public void givenInvalidRetriesValue_whenOnMsg_thenVerifyRequest(String retries) {
+        given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.RETRIES, retries);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().getRetries()).isNull();
+    }
+
+    @ParameterizedTest
+    @EnumSource(TbMsgType.class)
+    public void givenTbMsgType_whenOnMsg_thenVerifyRequest(TbMsgType msgType) {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
         TbMsg msg = TbMsg.newMsg(msgType, DEVICE_ID, TbMsgMetaData.EMPTY, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
-    }
-
-    private static Stream<Arguments> givenTbMsgType_whenOnMsg_thenVerifyRequest() {
-        return Stream.of(
-                Arguments.of(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isRestApiCall()).isTrue()),
-                Arguments.of(TbMsgType.TO_SERVER_RPC_REQUEST, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isRestApiCall()).isFalse())
-        );
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        if (msgType == TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE) {
+            assertThat(requestCaptor.getValue().isRestApiCall()).isTrue();
+            return;
+        }
+        assertThat(requestCaptor.getValue().isRestApiCall()).isFalse();
     }
 
     @ParameterizedTest
     @MethodSource
-    void givenPersistent_whenOnMsg_thenVerifyRequest(Map<String, String> metadata, Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    public void givenPersistent_whenOnMsg_thenVerifyRequest(String isPersisted, boolean expectedPersistence) {
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
         given(ctxMock.getTenantId()).willReturn(TENANT_ID);
 
-        TbMsgMetaData msgMetaData = metadata == null ? TbMsgMetaData.EMPTY : new TbMsgMetaData(metadata);
-        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, msgMetaData, MSG_DATA);
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        metadata.putValue(DataConstants.PERSISTENT, isPersisted);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, metadata, MSG_DATA);
         node.onMsg(ctxMock, msg);
 
-        verifyRequest(requestConsumer);
+        ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = captureRequest();
+        assertThat(requestCaptor.getValue().isPersisted()).isEqualTo(expectedPersistence);
     }
 
     private static Stream<Arguments> givenPersistent_whenOnMsg_thenVerifyRequest() {
-        var metadata= new HashMap<>();
-        metadata.put(DataConstants.PERSISTENT, null);
         return Stream.of(
-                Arguments.of(Map.of(DataConstants.PERSISTENT, "true"), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isPersisted()).isTrue()),
-                Arguments.of(null, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isPersisted()).isFalse()),
-                Arguments.of(Map.of(DataConstants.PERSISTENT, ""), (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isPersisted()).isFalse()),
-                Arguments.of(metadata, (Consumer<RuleEngineDeviceRpcRequest>) req ->
-                        assertThat(req.isPersisted()).isFalse())
+                Arguments.of("true", true),
+                Arguments.of("false", false),
+                Arguments.of(null, false),
+                Arguments.of("", false)
         );
     }
 
-    private void verifyRequest(Consumer<RuleEngineDeviceRpcRequest> requestConsumer) {
+    private ArgumentCaptor<RuleEngineDeviceRpcRequest> captureRequest() {
         ArgumentCaptor<RuleEngineDeviceRpcRequest> requestCaptor = ArgumentCaptor.forClass(RuleEngineDeviceRpcRequest.class);
         then(rpcServiceMock).should().sendRpcRequestToDevice(requestCaptor.capture(), any(Consumer.class));
-        requestConsumer.accept(requestCaptor.getValue());
+        return requestCaptor;
     }
 
     @Test
-    void givenRpcResponseWithoutError_whenOnMsg_thenSendsRpcRequest() {
+    public void givenRpcResponseWithoutError_whenOnMsg_thenSendsRpcRequest() {
         TbMsg outMsg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
@@ -366,7 +369,7 @@ public class TbSendRPCRequestNodeTest {
     }
 
     @Test
-    void givenRpcResponseWithError_whenOnMsg_thenTellFailure() {
+    public void givenRpcResponseWithError_whenOnMsg_thenTellFailure() {
         TbMsg outMsg = TbMsg.newMsg(TbMsgType.RPC_CALL_FROM_SERVER_TO_DEVICE, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
         given(ctxMock.getRpcService()).willReturn(rpcServiceMock);
@@ -390,7 +393,7 @@ public class TbSendRPCRequestNodeTest {
 
     @ParameterizedTest
     @EnumSource(EntityType.class)
-    void givenOriginatorIsNotDevice_whenOnMsg_thenThrowsException(EntityType entityType) {
+    public void givenOriginatorIsNotDevice_whenOnMsg_thenThrowsException(EntityType entityType) {
         EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, "ac21a1bb-eabf-4463-8313-24bea1f498d9");
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
@@ -405,7 +408,7 @@ public class TbSendRPCRequestNodeTest {
 
     @ParameterizedTest
     @ValueSource(strings = {"method", "params"})
-    void givenMethodOrParamsAreNotPresent_whenOnMsg_thenThrowsException(String key) {
+    public void givenMethodOrParamsAreNotPresent_whenOnMsg_thenThrowsException(String key) {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, "{\"" + key + "\": \"value\"}");
 
         node.onMsg(ctxMock, msg);
