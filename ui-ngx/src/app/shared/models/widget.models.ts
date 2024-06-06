@@ -72,7 +72,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'timeline',
         configHelpLinkId: 'widgetsConfigTimeseries',
         template: {
-          fullFqn: 'system.charts.basic_timeseries'
+          fullFqn: 'system.time_series_chart'
         }
       }
     ],
