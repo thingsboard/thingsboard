@@ -118,6 +118,12 @@ public class TbSaveToCustomCassandraTableNodeTest {
     }
 
     @Test
+    void verifyDefaultConfig() {
+        assertThat(config.getTableName()).isEqualTo("");
+        assertThat(config.getFieldsMapping()).isEqualTo(Map.of("", ""));
+    }
+
+    @Test
     void givenCassandraClusterIsMissing_whenInit_thenThrowsException() {
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctxMock, configuration))
