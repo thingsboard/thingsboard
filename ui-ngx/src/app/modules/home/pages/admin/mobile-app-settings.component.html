@@ -82,6 +82,15 @@
               <div class="fixed-title-width-230">{{ 'admin.mobile-app.google-play-link' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="storeLink" placeholder="{{'admin.mobile-app.set' | translate}}">
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'admin.mobile-app.google-play-link-required' | translate"
+                          *ngIf="mobileAppSettingsForm.get('androidConfig.storeLink').hasError('required')
+                            && mobileAppSettingsForm.get('androidConfig.storeLink').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
               </mat-form-field>
             </div>
           </div>
@@ -116,6 +125,15 @@
               <div class="fixed-title-width-230">{{ 'admin.mobile-app.app-store-link' | translate }}</div>
               <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
                 <input matInput formControlName="storeLink" placeholder="{{'admin.mobile-app.set' | translate}}">
+                <mat-icon matSuffix
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltip]="'admin.mobile-app.app-store-link-required' | translate"
+                          *ngIf="mobileAppSettingsForm.get('iosConfig.storeLink').hasError('required')
+                            && mobileAppSettingsForm.get('iosConfig.storeLink').touched"
+                          class="tb-error">
+                  warning
+                </mat-icon>
               </mat-form-field>
             </div>
           </div>

@@ -90,6 +90,13 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     if (!this.mobileAppSettings) {
       this.mobileAppService.getMobileAppSettings().subscribe((settings => {
         this.mobileAppSettings = settings;
+
+        const useDefaultApp = this.mobileAppSettings.useDefaultApp;
+        this.appStoreLink = useDefaultApp ? this.mobileAppSettings.defaultAppStoreLink :
+          this.mobileAppSettings.iosConfig.storeLink;
+        this.googlePlayLink = useDefaultApp ? this.mobileAppSettings.defaultGooglePlayLink :
+          this.mobileAppSettings.androidConfig.storeLink;
+
         if (isDefinedAndNotNull(this.ctx.settings.useSystemSettings) && !this.ctx.settings.useSystemSettings) {
           this.mobileAppSettings = mergeDeep(this.mobileAppSettings, this.ctx.settings);
         }
@@ -111,10 +118,6 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     } else {
       this.previewMode = true;
     }
-    this.mobileAppService.getMobileAppStoreLinks().subscribe(storeLinks => {
-      this.googlePlayLink = storeLinks.googlePlayLink;
-      this.appStoreLink = storeLinks.appStoreLink;
-    });
     this.initMobileAppQRCode();
   }
 
@@ -135,13 +138,6 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     if (this.ctx.isMobile) {
       window.open(this.deepLink, '_blank');
     }
-  }
-
-  navigateByStoreLink($event, storeLink: string) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    window.open(storeLink, '_blank');
   }
 
   private initMobileAppQRCode() {

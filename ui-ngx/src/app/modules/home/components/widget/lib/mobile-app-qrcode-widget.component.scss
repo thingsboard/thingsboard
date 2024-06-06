@@ -68,17 +68,22 @@
     flex-direction: column;
     flex: 0.44;
     gap: 8px;
-    img {
-      cursor: pointer;
+    &.tb-no-interaction {
+      pointer-events: none;
+    }
+    a {
+      display: contents;
+      border-bottom: none;
+      &:hover {
+        border-bottom: none;
+      }
     }
   }
 }
 
 :host ::ng-deep {
-  .tb-mobile-app-qrcode-panel {
-    > div.tb-widget-title {
-      padding: 0;
-      z-index: 1;
-    }
+  .tb-mobile-app-qrcode-panel .tb-widget-title {
+    padding: 0;
+    z-index: 1;
   }
 }

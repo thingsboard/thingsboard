@@ -57,14 +57,18 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       if (value) {
         this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
         this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+        this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
         this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+        this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
       } else {
         if (this.mobileAppSettingsForm.get('androidConfig.enabled').value) {
           this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
           this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+          this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
         }
         if (this.mobileAppSettingsForm.get('iosConfig.enabled').value) {
           this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+          this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
         }
       }
     });
@@ -129,12 +133,12 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
         enabled: [true],
         appPackage: [{value: '', disabled: true}, [Validators.required]],
         sha256CertFingerprints: [{value: '', disabled: true}, [Validators.required]],
-        storeLink: ['']
+        storeLink: ['', [Validators.required]]
       }),
       iosConfig: this.fb.group({
         enabled: [true],
         appId: [{value: '', disabled: true}, [Validators.required]],
-        storeLink: ['']
+        storeLink: ['', [Validators.required]]
       }),
       qrCodeConfig: this.fb.group({
         showOnHomePage: [true],
@@ -156,10 +160,12 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
       if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
         this.mobileAppSettingsForm.get('androidConfig.appPackage').enable({emitEvent: false});
         this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').enable({emitEvent: false});
+        this.mobileAppSettingsForm.get('androidConfig.storeLink').enable({emitEvent: false});
       }
     } else {
       this.mobileAppSettingsForm.get('androidConfig.appPackage').disable({emitEvent: false});
       this.mobileAppSettingsForm.get('androidConfig.sha256CertFingerprints').disable({emitEvent: false});
+      this.mobileAppSettingsForm.get('androidConfig.storeLink').disable({emitEvent: false});
     }
     this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
   }
@@ -168,9 +174,11 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     if (value) {
       if (!this.mobileAppSettingsForm.get('useDefaultApp').value) {
         this.mobileAppSettingsForm.get('iosConfig.appId').enable({emitEvent: false});
+        this.mobileAppSettingsForm.get('iosConfig.storeLink').enable({emitEvent: false});
       }
     } else {
       this.mobileAppSettingsForm.get('iosConfig.appId').disable({emitEvent: false});
+      this.mobileAppSettingsForm.get('iosConfig.storeLink').disable({emitEvent: false});
     }
     this.mobileAppSettingsForm.get('qrCodeConfig.badgeEnabled').updateValueAndValidity({onlySelf: true});
   }

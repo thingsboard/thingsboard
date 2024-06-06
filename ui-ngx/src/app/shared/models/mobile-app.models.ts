@@ -21,6 +21,8 @@ export interface MobileAppSettings extends HasTenantId {
   androidConfig: AndroidConfig;
   iosConfig: IosConfig;
   qrCodeConfig: QRCodeConfig;
+  defaultGooglePlayLink: string;
+  defaultAppStoreLink: string;
 }
 
 export interface AndroidConfig {
@@ -52,11 +54,6 @@ export interface MobileOSBadgeURL {
 export enum BadgePosition {
   RIGHT = 'RIGHT',
   LEFT = 'LEFT'
-}
-
-export interface MobileAppStoreLinks {
-  googlePlayLink: string;
-  appStoreLink: string;
 }
 
 export const badgePositionTranslationsMap = new Map<BadgePosition, string>([
