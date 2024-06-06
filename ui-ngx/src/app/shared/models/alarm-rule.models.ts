@@ -112,7 +112,7 @@ export interface AlarmRuleConstantArgument extends AlarmRuleArgumentTypes<AlarmR
 export interface AlarmRuleAttributeArgument extends AlarmRuleArgumentTypes<AlarmRuleArgumentType.ATTRIBUTE> {
   attribute: string;
   defaultValue: string | number | boolean | Date;
-  sourceType: ValueSourceType;
+  // sourceType: ValueSourceType;
   inherit: boolean;
 }
 
@@ -177,11 +177,11 @@ export interface CustomTimeSchedule extends AlarmScheduleTypes<AlarmScheduleType
   items?: CustomTimeSchedulerItem[];
 }
 
-export enum ValueSourceType {
-  CURRENT_TENANT = 'CURRENT_TENANT',
-  CURRENT_CUSTOMER = 'CURRENT_CUSTOMER',
-  CURRENT_ENTITY = 'CURRENT_ENTITY'
-}
+// export enum ValueSourceType {
+//   CURRENT_TENANT = 'CURRENT_TENANT',
+//   CURRENT_CUSTOMER = 'CURRENT_CUSTOMER',
+//   CURRENT_ENTITY = 'CURRENT_ENTITY'
+// }
 
 interface AlarmConditionFilterKey {
   key: string;
