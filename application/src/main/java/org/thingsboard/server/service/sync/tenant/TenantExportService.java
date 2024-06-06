@@ -212,7 +212,9 @@ public class TenantExportService {
     }
 
     private void save(TenantId tenantId, ObjectType type, Object entity) {
-        storage.save(tenantId.getId(), type, DataWrapper.of(entity));
+        DataWrapper dataWrapper = DataWrapper.of(entity);
+
+        storage.save(tenantId.getId(), type, dataWrapper);
         statsStore.report(tenantId.getId(), type);
         log.trace("[{}][{}] Saved entity {}", tenantId, type, entity);
     }

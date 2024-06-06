@@ -111,25 +111,26 @@ public class TenantImportService {
 
     private void importTenant(Tenant tenant, TenantImportConfig config) {
         TenantId tenantId = tenant.getId();
-        tenant.setTenantProfileId(tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID).getId());
-        entityDaoRegistry.getObjectDao(TENANT).save(TenantId.SYS_TENANT_ID, tenant);
-
         for (ObjectType type : ObjectType.values()) { // TODO: in parallel for related entities + ts kv
-            if (type == TENANT) {
-                continue;
-            }
             log.debug("[{}] Importing {} entities", tenantId, type);
             storage.readAndProcess(type, dataWrapper -> {
                 Object entity = dataWrapper.getEntity();
-                entityDaoRegistry.getObjectDao(type).save(tenantId, entity);
-
-                statsStore.report(tenantId.getId(), type);
-                log.trace("[{}][{}] Imported entity {}", tenantId, type, entity);
+                save(tenantId, type, entity);
             });
             statsStore.flush(tenantId.getId(), type);
         }
 
         clearCaches();
+    }
+
+    private void save(TenantId tenantId, ObjectType type, Object entity) {
+        if (entity instanceof Tenant tenant) {
+            tenant.setTenantProfileId(tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID).getId());
+        }
+
+        entityDaoRegistry.getObjectDao(type).save(tenantId, entity);
+        statsStore.report(tenantId.getId(), type);
+        log.trace("[{}][{}] Imported entity {}", tenantId, type, entity);
     }
 
     private void clearCaches() {

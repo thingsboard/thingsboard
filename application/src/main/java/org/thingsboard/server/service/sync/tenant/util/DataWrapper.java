@@ -17,17 +17,35 @@ package org.thingsboard.server.service.sync.tenant.util;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonTypeInfo;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
+import java.util.HashMap;
+import java.util.Map;
+
 @Data
-@AllArgsConstructor(staticName = "of")
 @NoArgsConstructor
 public class DataWrapper {
 
     @JsonIgnoreProperties(ignoreUnknown = true)
     @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
     private Object entity;
+
+    private Map<String, String> additionalInfo;
+
+    private DataWrapper(Object entity) {
+        this.entity = entity;
+    }
+
+    public static DataWrapper of(Object entity) {
+        return new DataWrapper(entity);
+    }
+
+    public void putAdditionalInfo(String key, String value) {
+        if (additionalInfo == null) {
+            additionalInfo = new HashMap<>();
+        }
+        additionalInfo.put(key, value);
+    }
 
 }
