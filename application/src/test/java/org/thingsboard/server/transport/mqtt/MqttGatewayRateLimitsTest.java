@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import org.awaitility.Awaitility;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,7 +26,7 @@ import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.notification.rule.trigger.RateLimitsTrigger;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
@@ -34,12 +35,14 @@ import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.thingsboard.server.common.data.limit.LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY;
+import static org.thingsboard.server.common.data.limit.LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -48,11 +51,14 @@ import static org.thingsboard.server.common.data.limit.LimitedApi.TRANSPORT_MESS
 })
 public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
 
-    private static final String TOPIC = "v1/gateway/telemetry";
+    private static final String GATEWAY_TOPIC = "v1/gateway/telemetry";
+    private static final String DEVICE_TOPIC = "v1/devices/me/telemetry";
     private static final String DEVICE_A = "DeviceA";
     private static final String DEVICE_B = "DeviceB";
 
-    private DeviceId gatewayId;
+    private static final String DEVICE_PAYLOAD = "{\"temperature\": 42}";
+
+    private Device gateway;
     private String gatewayAccessToken;
 
     @SpyBean
@@ -70,6 +76,10 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
         profileConfiguration.setTransportGatewayMsgRateLimit(null);
         profileConfiguration.setTransportGatewayTelemetryMsgRateLimit(null);
         profileConfiguration.setTransportGatewayTelemetryDataPointsRateLimit(null);
+
+        profileConfiguration.setTransportGatewayDeviceMsgRateLimit(null);
+        profileConfiguration.setTransportGatewayDeviceTelemetryMsgRateLimit(null);
+        profileConfiguration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(null);
 
         doPost("/api/tenantProfile", tenantProfile);
 
@@ -107,26 +117,82 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
 
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(gatewayAccessToken);
-        client.publishAndWait(TOPIC, getGatewayPayload(DEVICE_A));
+        client.publishAndWait(GATEWAY_TOPIC, getGatewayPayload(DEVICE_A));
 
         loginTenantAdmin();
 
         Device deviceA = getDeviceByName(DEVICE_A);
 
-        var deviceATrigger = createRateLimitsTrigger(deviceA);
+        var deviceATrigger = createRateLimitsTrigger(deviceA, TRANSPORT_MESSAGES_PER_GATEWAY);
 
         Mockito.verify(notificationRuleProcessor, Mockito.never()).process(eq(deviceATrigger));
 
         try {
-            client.publishAndWait(TOPIC, getGatewayPayload(DEVICE_B));
+            client.publishAndWait(GATEWAY_TOPIC, getGatewayPayload(DEVICE_B));
         } catch (Exception t) {
         }
 
         Device deviceB = getDeviceByName(DEVICE_B);
 
-        var deviceBTrigger = createRateLimitsTrigger(deviceB);
+        var deviceBTrigger = createRateLimitsTrigger(deviceB, TRANSPORT_MESSAGES_PER_GATEWAY);
 
         Mockito.verify(notificationRuleProcessor, Mockito.times(1)).process(deviceBTrigger);
+
+        if (client.isConnected()) {
+            client.disconnect();
+        }
+    }
+
+    @Test
+    public void transportGatewayDeviceMsgRateLimitTest() throws Exception {
+        transportGatewayDeviceRateLimitTest(profileConfiguration -> profileConfiguration.setTransportGatewayDeviceMsgRateLimit("3:600"));
+    }
+
+    @Test
+    public void transportGatewayDeviceTelemetryMsgRateLimitTest() throws Exception {
+        transportGatewayDeviceRateLimitTest(profileConfiguration -> profileConfiguration.setTransportGatewayDeviceTelemetryMsgRateLimit("1:600"));
+    }
+
+    @Test
+    public void transportGatewayDeviceTelemetryDataPointsRateLimitTest() throws Exception {
+        transportGatewayDeviceRateLimitTest(profileConfiguration -> profileConfiguration.setTransportGatewayDeviceTelemetryDataPointsRateLimit("1:600"));
+    }
+
+    private void transportGatewayDeviceRateLimitTest(Consumer<DefaultTenantProfileConfiguration> profileConfiguration) throws Exception {
+        loginSysAdmin();
+
+        TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId, TenantProfile.class);
+        Assert.assertNotNull(tenantProfile);
+
+        profileConfiguration.accept((DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration());
+
+        doPost("/api/tenantProfile", tenantProfile);
+
+        MqttTestClient client = new MqttTestClient();
+        client.connectAndWait(gatewayAccessToken);
+        client.publishAndWait(DEVICE_TOPIC, DEVICE_PAYLOAD.getBytes());
+        client.disconnect();
+
+        var gatewayTrigger = createRateLimitsTrigger(gateway, TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE);
+
+        Mockito.verify(notificationRuleProcessor, Mockito.never()).process(eq(gatewayTrigger));
+
+        loginTenantAdmin();
+
+        client = new MqttTestClient();
+
+        try {
+            client.connectAndWait(gatewayAccessToken);
+            client.publishAndWait(DEVICE_TOPIC, DEVICE_PAYLOAD.getBytes());
+            if (client.isConnected()) {
+                client.disconnect();
+            }
+        } catch (Exception t) {
+        }
+
+        Awaitility.await()
+                .atMost(2, TimeUnit.SECONDS)
+                .untilAsserted(() -> Mockito.verify(notificationRuleProcessor, Mockito.times(1)).process(gatewayTrigger));
 
         if (client.isConnected()) {
             client.disconnect();
@@ -141,7 +207,7 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
         device.setAdditionalInfo(additionalInfo);
         device = doPost("/api/device", device, Device.class);
         assertNotNull(device);
-        gatewayId = device.getId();
+        var gatewayId = device.getId();
         assertNotNull(gatewayId);
 
         DeviceCredentials deviceCredentials = doGet("/api/device/" + gatewayId + "/credentials", DeviceCredentials.class);
@@ -149,6 +215,8 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
         assertEquals(gatewayId, deviceCredentials.getDeviceId());
         gatewayAccessToken = deviceCredentials.getCredentialsId();
         assertNotNull(gatewayAccessToken);
+
+        this.gateway = device;
     }
 
     private Device getDeviceByName(String deviceName) throws Exception {
@@ -158,13 +226,13 @@ public class MqttGatewayRateLimitsTest extends AbstractControllerTest {
     }
 
     private byte[] getGatewayPayload(String deviceName) {
-        return String.format("{\"%s\": [{\"values\": {\"temperature\": 42}}]}", deviceName).getBytes();
+        return String.format("{\"%s\": [{\"values\": %s}]}", deviceName, DEVICE_PAYLOAD).getBytes();
     }
 
-    private RateLimitsTrigger createRateLimitsTrigger(Device device) {
+    private RateLimitsTrigger createRateLimitsTrigger(Device device, LimitedApi limitedApi) {
         return RateLimitsTrigger.builder()
                 .tenantId(tenantId)
-                .api(TRANSPORT_MESSAGES_PER_GATEWAY)
+                .api(limitedApi)
                 .limitLevel(device.getId())
                 .limitLevelEntityName(device.getName())
                 .build();

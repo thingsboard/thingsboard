@@ -16,11 +16,36 @@
 
 @import "../../../../../../../../scss/constants";
 
-
 :host {
   overflow: auto;
   height: 100%;
   max-height: 420px;
+
+  .gradient-preview {
+    width: 100%;
+    padding: 40px 12px 0;
+    .gradient-background {
+      position: relative;
+      height: 56px;
+      border-radius: 8px;
+    }
+  }
+
+  .gradient-settings {
+    flex: 1;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tb-add-gradient {
+    margin-right: 92px;
+    @media #{$mat-lt-lg} {
+      margin-right: 52px;
+    }
+  }
+}
+::ng-deep {
   .gradient {
     display: flex;
     flex: 1;
@@ -67,32 +92,6 @@
       }
     }
   }
-
-  .gradient-preview {
-    width: 100%;
-    padding: 40px 12px 0;
-    .gradient-background {
-      position: relative;
-      height: 56px;
-      border-radius: 8px;
-    }
-  }
-
-  .gradient-settings {
-    flex: 1;
-    gap: 16px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .tb-add-gradient {
-    margin-right: 92px;
-    @media #{$mat-lt-lg} {
-      margin-right: 52px;
-    }
-  }
-}
-::ng-deep {
   .gradient-background {
     .pointer {
       position: absolute;

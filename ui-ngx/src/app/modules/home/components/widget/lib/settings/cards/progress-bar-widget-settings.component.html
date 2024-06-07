@@ -44,6 +44,8 @@
                           [previewText]="valuePreviewFn">
         </tb-font-settings>
         <tb-color-settings formControlName="valueColor"
+                           [minValue]="progressBarWidgetSettingsForm.get('tickMin').value"
+                           [maxValue]="progressBarWidgetSettingsForm.get('tickMax').value"
                            settingsKey="{{'widgets.progress-bar.value' | translate }}">
         </tb-color-settings>
       </div>
@@ -78,6 +80,8 @@
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.progress-bar.bar-color' | translate }}</div>
       <tb-color-settings formControlName="barColor"
+                         [minValue]="progressBarWidgetSettingsForm.get('tickMin').value"
+                         [maxValue]="progressBarWidgetSettingsForm.get('tickMax').value"
                          settingsKey="{{'widgets.progress-bar.bar-color' | translate }}">
       </tb-color-settings>
     </div>

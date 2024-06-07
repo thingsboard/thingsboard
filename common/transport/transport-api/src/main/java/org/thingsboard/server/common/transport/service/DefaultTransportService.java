@@ -429,8 +429,8 @@ public class DefaultTransportService extends TransportActivityManager implements
     @Override
     public void process(TenantId tenantId, TransportProtos.GetOrCreateDeviceFromGatewayRequestMsg requestMsg, TransportServiceCallback<GetOrCreateDeviceFromGatewayResponse> callback) {
         log.trace("Processing msg: {}", requestMsg);
-        DeviceId gatewayid = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
-        if (!checkLimits(tenantId, gatewayid, null, requestMsg.getDeviceName(), requestMsg, callback, 0)) {
+        DeviceId gatewayId = new DeviceId(new UUID(requestMsg.getGatewayIdMSB(), requestMsg.getGatewayIdLSB()));
+        if (!checkLimits(tenantId, gatewayId, null, requestMsg.getDeviceName(), requestMsg, callback, 0, false)) {
             return;
         }
 
@@ -476,6 +476,7 @@ public class DefaultTransportService extends TransportActivityManager implements
         tdi.setAdditionalInfo(di.getAdditionalInfo());
         tdi.setDeviceName(di.getDeviceName());
         tdi.setDeviceType(di.getDeviceType());
+        tdi.setGateway(di.getIsGateway());
         if (StringUtils.isNotEmpty(di.getPowerMode())) {
             tdi.setPowerMode(PowerMode.valueOf(di.getPowerMode()));
             tdi.setEdrxCycle(di.getEdrxCycle());
@@ -838,15 +839,15 @@ public class DefaultTransportService extends TransportActivityManager implements
             gatewayId = new DeviceId(new UUID(sessionInfo.getGatewayIdMSB(), sessionInfo.getGatewayIdLSB()));
         }
 
-        return checkLimits(tenantId, gatewayId, deviceId, sessionInfo.getDeviceName(), msg, callback, dataPoints);
+        return checkLimits(tenantId, gatewayId, deviceId, sessionInfo.getDeviceName(), msg, callback, dataPoints, sessionInfo.getIsGateway());
     }
 
-    private boolean checkLimits(TenantId tenantId, DeviceId gatewayId, DeviceId deviceId, String deviceName, Object msg, TransportServiceCallback<?> callback, int dataPoints) {
+    private boolean checkLimits(TenantId tenantId, DeviceId gatewayId, DeviceId deviceId, String deviceName, Object msg, TransportServiceCallback<?> callback, int dataPoints, boolean isGateway) {
         if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Processing msg: {}", tenantId, deviceName, msg);
         }
 
-        var rateLimitedPair = rateLimitService.checkLimits(tenantId, gatewayId, deviceId, dataPoints);
+        var rateLimitedPair = rateLimitService.checkLimits(tenantId, gatewayId, deviceId, dataPoints, isGateway);
         if (rateLimitedPair == null) {
             return true;
         } else {
@@ -856,9 +857,15 @@ public class DefaultTransportService extends TransportActivityManager implements
             }
 
             if (rateLimitedEntityType == EntityType.DEVICE || rateLimitedEntityType == EntityType.TENANT) {
-                LimitedApi limitedApi =
-                        rateLimitedEntityType == EntityType.TENANT ? LimitedApi.TRANSPORT_MESSAGES_PER_TENANT :
-                                rateLimitedPair.getSecond() ? LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY : LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE;
+                LimitedApi limitedApi;
+
+                if (rateLimitedEntityType == EntityType.TENANT) {
+                    limitedApi = LimitedApi.TRANSPORT_MESSAGES_PER_TENANT;
+                } else if (rateLimitedPair.getSecond()) {
+                    limitedApi = isGateway ? LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE : LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY;
+                } else {
+                    limitedApi = LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE;
+                }
 
                 EntityId limitLevel = rateLimitedEntityType == EntityType.DEVICE ? deviceId == null ? gatewayId : deviceId : tenantId;
 
@@ -1023,16 +1030,20 @@ public class DefaultTransportService extends TransportActivityManager implements
                 } else {
                     newDeviceProfile = null;
                 }
+
+                JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
+                boolean isGateway = deviceAdditionalInfo.has(DataConstants.GATEWAY_PARAMETER)
+                        && deviceAdditionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean();
+
                 TransportProtos.SessionInfoProto newSessionInfo = TransportProtos.SessionInfoProto.newBuilder()
                         .mergeFrom(md.getSessionInfo())
                         .setDeviceProfileIdMSB(deviceProfileIdMSB)
                         .setDeviceProfileIdLSB(deviceProfileIdLSB)
                         .setDeviceName(device.getName())
-                        .setDeviceType(device.getType()).build();
-                JsonNode deviceAdditionalInfo = device.getAdditionalInfo();
-                if (deviceAdditionalInfo.has(DataConstants.GATEWAY_PARAMETER)
-                        && deviceAdditionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean()
-                        && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)
+                        .setDeviceType(device.getType())
+                        .setIsGateway(isGateway).build();
+
+                if (isGateway && deviceAdditionalInfo.has(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER)
                         && deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).isBoolean()) {
                     md.setOverwriteActivityTime(deviceAdditionalInfo.get(DataConstants.OVERWRITE_ACTIVITY_TIME_PARAMETER).asBoolean());
                 }

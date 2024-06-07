@@ -437,6 +437,10 @@
             "ios": "iOS",
             "app-id": "App ID",
             "app-id-required": "App ID is required",
+            "google-play-link": "Google Play link",
+            "google-play-link-required": "Google Play link is required",
+            "app-store-link": "App Store link",
+            "app-store-link-required": "App Store link is required",
             "appearance": "Appearance",
             "appearance-on-home-page": "Appearance on Home page",
             "enabled": "Enabled",
@@ -894,6 +898,8 @@
         "rest-api-requests-per-customer": "REST API requests per customer",
         "transport-messages": "Transport messages",
         "transport-messages-per-device": "Transport messages per device",
+        "transport-messages-per-gateway": "Transport messages per gateway",
+        "transport-messages-per-gateway-device": "Transport messages per gateway device",
         "ws-updates-per-session": "WS updates per session",
         "edge-events": "Edge events",
         "edge-events-per-edge": "Edge events per edge",
@@ -4421,6 +4427,15 @@
             "retry-failed-and-timeout-hint": "Retry all failed and timed-out messages from processing pack"
         }
     },
+    "queue-statistics": {
+        "queue-statistics": "Queue statistics",
+        "no-queue-statistics-matching": "No queue statistics matching '{{entity}}' were found.",
+        "queue-statistics-required": "Queue statistics is required.",
+        "list-of-queue-statistics": "{ count, plural, =1 {One queue statistic} other {List of # queue statistics} }",
+        "selected-queue-statistics": "{ count, plural, =1 {1 queue statistic} other {# queue statistics} } selected",
+        "no-queue-statistics-text": "No queue statistics found",
+        "queue-statistics-starts-with": "Queue statistics whose names start with '{{prefix}}'"
+    },
     "server-error": {
         "general": "General server error",
         "authentication": "Authentication error",
@@ -4547,6 +4562,9 @@
         "transport-gateway-msg-rate-limit": "Transport gateway messages",
         "transport-gateway-telemetry-msg-rate-limit": "Transport gateway telemetry messages",
         "transport-gateway-telemetry-data-points-rate-limit": "Transport gateway telemetry data points",
+        "transport-gateway-device-msg-rate-limit": "Transport gateway device messages",
+        "transport-gateway-device-telemetry-msg-rate-limit": "Transport gateway device telemetry messages",
+        "transport-gateway-device-telemetry-data-points-rate-limit": "Transport gateway device telemetry data points",
         "tenant-entity-export-rate-limit": "Entity version creation",
         "tenant-entity-import-rate-limit": "Entity version load",
         "tenant-notification-request-rate-limit": "Notification requests",
@@ -4631,6 +4649,9 @@
             "edit-transport-gateway-msg-title": "Edit transport gateway messages rate limits",
             "edit-transport-gateway-telemetry-msg-title": "Edit transport gateway telemetry messages rate limits",
             "edit-transport-gateway-telemetry-data-points-title": "Edit transport gateway telemetry data points rate limits",
+            "edit-transport-gateway-device-msg-title": "Edit transport gateway device messages rate limits",
+            "edit-transport-gateway-device-telemetry-msg-title": "Edit transport gateway device telemetry messages rate limits",
+            "edit-transport-gateway-device-telemetry-data-points-title": "Edit transport gateway device telemetry data points rate limits",
             "edit-tenant-rest-limits-title": "Edit REST requests for tenant rate limits",
             "edit-customer-rest-limits-title": "Edit REST requests for customer rate limits",
             "edit-ws-limit-updates-per-session-title": "Edit WS updates per session rate limits",
@@ -4667,6 +4688,9 @@
             "transport-gateway-msg": "Transport gateway messages",
             "transport-gateway-telemetry-msg": "Transport gateway telemetry messages",
             "transport-gateway-telemetry-data-points": "Transport gateway telemetry data points",
+            "transport-gateway-device-msg": "Transport gateway device messages",
+            "transport-gateway-device-telemetry-msg": "Transport gateway device telemetry messages",
+            "transport-gateway-device-telemetry-data-points": "Transport gateway device telemetry data points",
             "sec": "sec"
         }
     },
@@ -5664,7 +5688,9 @@
     },
     "widgets": {
         "mobile-app-qr-code": {
-            "configuration-hint": "The configuration depends on the Mobile app QR code widget in platform main settings"
+            "configuration-hint": "The configuration depends on the Mobile app QR code widget in platform main settings",
+            "get-it-on-google-play": "Get it on Google Play",
+            "download-on-the-app-store": "Download on the App Store"
         },
         "action-button": {
             "behavior": "Behavior",
@@ -6305,6 +6331,7 @@
             "gauge-bar-background": "Gauge bar background",
             "bar-color": "Bar color",
             "min-and-max-value": "Min and max value",
+            "min-and-max-label": "Min and max label",
             "font": "Font",
             "tick-width-and-color": "Tick width and color"
         },

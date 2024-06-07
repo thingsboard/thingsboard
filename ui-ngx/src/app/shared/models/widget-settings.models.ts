@@ -297,6 +297,12 @@ export const defaultGradient = (minValue?: number, maxValue?: number): ColorGrad
   maxValue: isDefinedAndNotNull(maxValue) ? maxValue : 100
 });
 
+export const defaultRange = (): ColorRangeSettings => ({
+  advancedMode: false,
+  range: [],
+  rangeAdvanced: []
+});
+
 const updateGradientMinMaxValues = (colorSettings: ColorSettings, minValue?: number, maxValue?: number): void => {
   if (isDefinedAndNotNull(colorSettings.gradient)) {
     if (isDefinedAndNotNull(minValue)) {
@@ -431,7 +437,7 @@ export abstract class AdvancedModeColorProcessor extends ColorProcessor {
   protected constructor(protected settings: ColorSettings,
                         protected ctx: WidgetContext) {
     super(settings);
-    this.advancedMode = this.getCurrentConfig().advancedMode;
+    this.advancedMode = this.getCurrentConfig()?.advancedMode;
     if (this.advancedMode) {
       createValueSubscription(
         this.ctx,
@@ -529,7 +535,7 @@ class RangeColorProcessor extends AdvancedModeColorProcessor {
         this.settings.rangeList.range as Array<ColorRange>;
     }
 
-    if (rangeList.length && isDefinedAndNotNull(value) && isNumeric(value)) {
+    if (rangeList?.length && isDefinedAndNotNull(value) && isNumeric(value)) {
       const num = Number(value);
       for (const range of rangeList) {
         if (advancedMode ?
@@ -571,7 +577,8 @@ class GradientColorProcessor extends AdvancedModeColorProcessor {
   update(value: any): void {
     const progress = this.calculateProgress(+value, this.minValue, this.maxValue);
     super.update(progress);
-    this.color = this.getGradientColor(progress, this.settings.gradient.gradient);
+    this.color = this.getGradientColor(progress,
+      this.advancedMode ? this.settings.gradient.gradientAdvanced : this.settings.gradient.gradient);
   }
 
   updatedAdvancedData(data: Array<DatasourceData>) {

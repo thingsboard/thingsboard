@@ -138,7 +138,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
 
   protected onSettingsSet(settings: WidgetSettings) {
     if (!settings.barColor) {
-      settings.barColor = constantColor(settings.gaugeColor);
+      settings.barColor = constantColor(settings.defaultColor || '#2196f3');
 
       if (settings.fixedLevelColors.length) {
         settings.barColor.rangeList = {
@@ -192,7 +192,6 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
       dashThickness: [settings.dashThickness, [Validators.min(0)]],
       roundedLineCap: [settings.roundedLineCap, []],
 
-      defaultColor: [settings.defaultColor, []],
       gaugeColor: [settings.gaugeColor, []],
       barColor: [settings.barColor],
 
