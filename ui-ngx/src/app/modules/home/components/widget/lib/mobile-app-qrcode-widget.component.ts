@@ -45,6 +45,9 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
   private deepLinkTTL: number;
   private deepLinkTTLTimeoutID: NodeJS.Timeout;
 
+  googlePlayLink: string;
+  appStoreLink: string;
+
   previewMode = false;
 
   badgePosition = BadgePosition;
@@ -52,6 +55,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   qrCodeSVG = '';
 
@@ -86,6 +90,13 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
     if (!this.mobileAppSettings) {
       this.mobileAppService.getMobileAppSettings().subscribe((settings => {
         this.mobileAppSettings = settings;
+
+        const useDefaultApp = this.mobileAppSettings.useDefaultApp;
+        this.appStoreLink = useDefaultApp ? this.mobileAppSettings.defaultAppStoreLink :
+          this.mobileAppSettings.iosConfig.storeLink;
+        this.googlePlayLink = useDefaultApp ? this.mobileAppSettings.defaultGooglePlayLink :
+          this.mobileAppSettings.androidConfig.storeLink;
+
         if (isDefinedAndNotNull(this.ctx.settings.useSystemSettings) && !this.ctx.settings.useSystemSettings) {
           this.mobileAppSettings = mergeDeep(this.mobileAppSettings, this.ctx.settings);
         }
@@ -101,6 +112,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
         this.widgetResize$.observe(this.elementRef.nativeElement);
         this.backgroundStyle$ = backgroundStyle(this.ctx.settings.background, this.imagePipe, this.sanitizer);
         this.overlayStyle = overlayStyle(this.ctx.settings.background.overlay);
+        this.padding = this.ctx.settings.background.overlay.enabled ? undefined : this.ctx.settings.padding;
         this.cd.markForCheck();
       }));
     } else {

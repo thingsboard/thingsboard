@@ -1463,9 +1463,9 @@ queue:
         - key: max.poll.interval.ms
           # Example of specific consumer properties value per topic for VC
           value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
-    #      tb_rule_engine.sq:
-    #        - key: max.poll.records
-    #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+      #      tb_rule_engine.sq:
+      #        - key: max.poll.records
+      #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
@@ -1794,3 +1794,12 @@ management:
     elasticsearch:
       # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
       enabled: "false"
+
+# Mobile application settings for Thingsboard mobile application
+mobileApp:
+  # Server domain name for Thingsboard Live mobile application
+  domain: "${TB_MOBILE_APP_DOMAIN:demo.thingsboard.io}"
+  # Link to Google Play store for Thingsboard Live mobile application
+  googlePlayLink: "${TB_MOBILE_APP_GOOGLE_PLAY_LINK:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}"
+  # Link to App Store for Thingsboard Live mobile application
+  appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"

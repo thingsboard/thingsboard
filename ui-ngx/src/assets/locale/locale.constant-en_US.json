@@ -437,6 +437,10 @@
             "ios": "iOS",
             "app-id": "App ID",
             "app-id-required": "App ID is required",
+            "google-play-link": "Google Play link",
+            "google-play-link-required": "Google Play link is required",
+            "app-store-link": "App Store link",
+            "app-store-link-required": "App Store link is required",
             "appearance": "Appearance",
             "appearance-on-home-page": "Appearance on Home page",
             "enabled": "Enabled",
@@ -5576,7 +5580,9 @@
     },
     "widgets": {
         "mobile-app-qr-code": {
-            "configuration-hint": "The configuration depends on the Mobile app QR code widget in platform main settings"
+            "configuration-hint": "The configuration depends on the Mobile app QR code widget in platform main settings",
+            "get-it-on-google-play": "Get it on Google Play",
+            "download-on-the-app-store": "Download on the App Store"
         },
         "action-button": {
             "behavior": "Behavior",

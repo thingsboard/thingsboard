@@ -21,17 +21,21 @@ export interface MobileAppSettings extends HasTenantId {
   androidConfig: AndroidConfig;
   iosConfig: IosConfig;
   qrCodeConfig: QRCodeConfig;
+  defaultGooglePlayLink: string;
+  defaultAppStoreLink: string;
 }
 
 export interface AndroidConfig {
   enabled: boolean;
   appPackage: string;
-  sha256CertFingerprints: string
+  sha256CertFingerprints: string;
+  storeLink: string;
 }
 
 export interface IosConfig {
   enabled: boolean;
   appId: string;
+  storeLink: string;
 }
 
 export interface QRCodeConfig {
