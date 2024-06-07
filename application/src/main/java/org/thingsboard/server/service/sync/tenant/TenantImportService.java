@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.service.sync.tenant.util.DataWrapper;
 import org.thingsboard.server.service.sync.tenant.util.StatsResult;
 import org.thingsboard.server.service.sync.tenant.util.StatsStore;
 import org.thingsboard.server.service.sync.tenant.util.Storage;
@@ -70,7 +71,6 @@ public class TenantImportService {
                 .build();
     }
 
-    // todo: cancel
     public UUID importTenant(InputStream dataStream, TenantImportConfig config) {
         storage.unwrapImportData(dataStream);
 
@@ -114,8 +114,7 @@ public class TenantImportService {
         for (ObjectType type : ObjectType.values()) { // TODO: in parallel for related entities + ts kv
             log.debug("[{}] Importing {} entities", tenantId, type);
             storage.readAndProcess(type, dataWrapper -> {
-                Object entity = dataWrapper.getEntity();
-                save(tenantId, type, entity);
+                save(tenantId, type, dataWrapper);
             });
             statsStore.flush(tenantId.getId(), type);
         }
@@ -123,12 +122,13 @@ public class TenantImportService {
         clearCaches();
     }
 
-    private void save(TenantId tenantId, ObjectType type, Object entity) {
+    private void save(TenantId tenantId, ObjectType type, DataWrapper dataWrapper) {
+        Object entity = dataWrapper.getEntity();
         if (entity instanceof Tenant tenant) {
             tenant.setTenantProfileId(tenantProfileService.findDefaultTenantProfile(TenantId.SYS_TENANT_ID).getId());
         }
 
-        entityDaoRegistry.getObjectDao(type).save(tenantId, entity);
+        entityDaoRegistry.getDao(type).save(tenantId, entity);
         statsStore.report(tenantId.getId(), type);
         log.trace("[{}][{}] Imported entity {}", tenantId, type, entity);
     }

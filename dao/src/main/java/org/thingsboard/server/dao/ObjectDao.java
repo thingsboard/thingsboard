@@ -18,7 +18,7 @@ package org.thingsboard.server.dao;
 import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.TenantId;
 
-public interface ObjectDao<T> {
+public interface ObjectDao<T> { // TODO: choose a better name
 
     T save(TenantId tenantId, T entity);
 

@@ -48,4 +48,11 @@ public class DataWrapper {
         additionalInfo.put(key, value);
     }
 
+    public String getAdditionalInfo(String key) {
+        if (additionalInfo == null) {
+            return null;
+        }
+        return additionalInfo.get(key);
+    }
+
 }

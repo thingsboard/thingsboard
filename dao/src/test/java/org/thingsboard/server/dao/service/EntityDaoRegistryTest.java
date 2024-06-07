@@ -43,6 +43,7 @@ import static org.thingsboard.server.common.data.ObjectType.EVENT;
 import static org.thingsboard.server.common.data.ObjectType.LATEST_TS_KV;
 import static org.thingsboard.server.common.data.ObjectType.RELATION;
 import static org.thingsboard.server.common.data.ObjectType.TENANT;
+import static org.thingsboard.server.common.data.ObjectType.TS_KV;
 
 @Slf4j
 @DaoSqlTest
@@ -102,7 +103,7 @@ public class EntityDaoRegistryTest extends AbstractServiceTest {
 
     @Test
     public void givenAllTenantEntityDaos_whenFindAllByTenantId_thenOk() {
-        Set<ObjectType> ignored = EnumSet.of(TENANT, RELATION, EVENT, ATTRIBUTE_KV, LATEST_TS_KV, AUDIT_LOG);
+        Set<ObjectType> ignored = EnumSet.of(TENANT, RELATION, EVENT, ATTRIBUTE_KV, LATEST_TS_KV, TS_KV, AUDIT_LOG);
         for (ObjectType type : ObjectType.values()) {
             if (ignored.contains(type)) {
                 continue;
@@ -118,7 +119,7 @@ public class EntityDaoRegistryTest extends AbstractServiceTest {
     @Test
     public void givenAllObjectTypes_whenGetDao_thenPresent() {
         for (ObjectType type : ObjectType.values()) {
-            ObjectDao<?> dao = assertDoesNotThrow(() -> entityDaoRegistry.getObjectDao(type));
+            ObjectDao<?> dao = assertDoesNotThrow(() -> entityDaoRegistry.getDao(type));
             assertThat(dao).isNotNull();
         }
     }

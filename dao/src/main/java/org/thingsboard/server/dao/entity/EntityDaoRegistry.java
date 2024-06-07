@@ -58,7 +58,7 @@ public class EntityDaoRegistry {
         return dao;
     }
 
-    public <T> ObjectDao<T> getObjectDao(ObjectType objectType) {
+    public <T> ObjectDao<T> getDao(ObjectType objectType) {
         ObjectDao<T> dao = (ObjectDao<T>) objectDaos.get(objectType);
         if (dao == null) {
             throw new IllegalArgumentException("Missing dao for object type " + objectType);

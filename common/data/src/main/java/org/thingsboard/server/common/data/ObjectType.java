@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.data;
 
-public enum ObjectType {
+public enum ObjectType { // TODO: choose a better name. cannot move to EntityType: TS_KV, ADMIN_SETTINGS, etc., also need specific ordering
 
     TENANT,
     CUSTOMER,
@@ -23,11 +23,13 @@ public enum ObjectType {
     QUEUE,
     RPC,
     RULE_CHAIN,
+    RULE_NODE,
+    RULE_NODE_STATE,
     OTA_PACKAGE,
     RESOURCE,
-    RULE_NODE,
     USER,
     USER_CREDENTIALS,
+    USER_SETTINGS,
     USER_AUTH_SETTINGS,
     EDGE,
     EDGE_EVENT,
@@ -47,13 +49,12 @@ public enum ObjectType {
     OAUTH2_DOMAIN,
     OAUTH2_MOBILE,
     OAUTH2_REGISTRATION,
-    RULE_NODE_STATE,
-    USER_SETTINGS,
     NOTIFICATION_TARGET,
     NOTIFICATION_TEMPLATE,
     NOTIFICATION_RULE,
     ALARM_COMMENT,
     ALARM_TYPE,
+    MOBILE_APP_SETTINGS,
     EVENT,
     AUDIT_LOG,
     RELATION,

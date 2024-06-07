@@ -68,6 +68,7 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.service.sync.tenant.util.StatsResult;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
+import org.thingsboard.server.utils.TestUtils;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -97,8 +98,7 @@ import static org.thingsboard.server.common.data.ObjectType.RULE_CHAIN;
 import static org.thingsboard.server.common.data.ObjectType.RULE_NODE;
 import static org.thingsboard.server.common.data.ObjectType.TENANT;
 import static org.thingsboard.server.common.data.ObjectType.TS_KV;
-import static org.thingsboard.server.service.tenant.EntityUtils.easyRandom;
-import static org.thingsboard.server.service.tenant.EntityUtils.newRandomizedEntity;
+import static org.thingsboard.server.utils.TestUtils.newRandomizedEntity;
 
 @DaoSqlTest
 @SuppressWarnings("unchecked")
@@ -273,26 +273,23 @@ public class TenantExportImportTest extends AbstractControllerTest {
         saveEntity(dashboard, DASHBOARD);
 
         DeviceProfile deviceProfile = newRandomizedEntity(DeviceProfile.class);
+
+        OtaPackage otaPackage = newRandomizedEntity(OtaPackage.class);
+        otaPackage.setTenantId(tenantId);
+        otaPackage.setDeviceProfileId(deviceProfile.getId());
+        saveEntity(otaPackage, OTA_PACKAGE);
+
         deviceProfile.setTenantId(tenantId);
-        deviceProfile.setFirmwareId(null);
-        deviceProfile.setSoftwareId(null);
+        deviceProfile.setFirmwareId(otaPackage.getId());
+        deviceProfile.setSoftwareId(otaPackage.getId());
         deviceProfile.setDefaultEdgeRuleChainId(null);
         deviceProfile.setDefaultRuleChainId(ruleChain.getId());
         deviceProfile.setDefaultDashboardId(dashboard.getId());
         saveEntity(deviceProfile, DEVICE_PROFILE);
-
-        OtaPackage otaPackage = newRandomizedEntity(OtaPackage.class);
-        otaPackage.setTenantId(tenantId);
-        otaPackage.setDeviceProfileId(null);
-        saveEntity(otaPackage, OTA_PACKAGE);
-
-//        deviceProfile.setFirmwareId(otaPackage.getId()); // fixme - constraint
-//        deviceProfile.setSoftwareId(otaPackage.getId());
-//        saveEntity(deviceProfile);
     }
 
     private <T extends HasId<? extends UUIDBased>> T saveEntity(T entity, ObjectType type) {
-        entity = (T) entityDaoRegistry.getObjectDao(type).save(tenantId, entity);
+        entity = (T) entityDaoRegistry.getDao(type).save(tenantId, entity);
         if (entity.getId() instanceof EntityId entityId) {
             createAttribute(entityId);
             createTelemetry(entityId);
@@ -317,7 +314,7 @@ public class TenantExportImportTest extends AbstractControllerTest {
     }
 
     private void createRelation(EntityId to, EntityId from) {
-        EntityRelation relation = easyRandom.nextObject(EntityRelation.class);
+        EntityRelation relation = TestUtils.newRandomizedEntity(EntityRelation.class);
         relation.setTo(to);
         relation.setFrom(from);
         relationService.saveRelation(tenantId, relation);

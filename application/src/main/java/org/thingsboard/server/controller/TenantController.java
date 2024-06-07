@@ -198,7 +198,11 @@ public class TenantController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/tenant/export/result/{tenantId}")
     public StatsResult<ObjectType> getTenantExportResult(@PathVariable UUID tenantId) {
-        return tenantExportService.getResult(tenantId);
+        StatsResult<ObjectType> result = tenantExportService.getResult(tenantId);
+        if (result == null) {
+            result = new StatsResult<>();
+        }
+        return result;
     }
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
@@ -227,7 +231,11 @@ public class TenantController extends BaseController {
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/tenant/import/result/{tenantId}")
     public StatsResult<ObjectType> getTenantImportResult(@PathVariable UUID tenantId) {
-        return tenantImportService.getResult(tenantId);
+        StatsResult<ObjectType> result = tenantImportService.getResult(tenantId);
+        if (result == null) {
+            result = new StatsResult<>();
+        }
+        return result;
     }
 
 }

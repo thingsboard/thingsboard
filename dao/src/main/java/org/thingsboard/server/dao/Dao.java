@@ -45,6 +45,6 @@ public interface Dao<T> extends ObjectDao<T> {
 
     List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
 
-    default EntityType getEntityType() {return null;}
+    default EntityType getEntityType() { return null; }
 
 }
