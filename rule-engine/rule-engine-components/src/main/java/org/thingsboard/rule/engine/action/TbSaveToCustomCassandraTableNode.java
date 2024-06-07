@@ -88,7 +88,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         config = TbNodeUtils.convert(configuration, TbSaveToCustomCassandraTableNodeConfiguration.class);
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
-            throw new RuntimeException("Unable to connect to Cassandra database");
+            throw new TbNodeException("Unable to connect to Cassandra database");
         } else {
             startExecutor();
             saveStmt = getSaveStmt();
@@ -170,7 +170,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
         JsonElement data = parser.parse(msg.getData());
         if (!data.isJsonObject()) {
-            throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
+            throw new IllegalStateException("Invalid message structure, it is not a JSON Object: " + data);
         } else {
             JsonObject dataAsObject = data.getAsJsonObject();
             BoundStatementBuilder stmtBuilder = getStmtBuilder();

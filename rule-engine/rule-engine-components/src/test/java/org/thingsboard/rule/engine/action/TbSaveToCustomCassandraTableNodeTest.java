@@ -23,15 +23,11 @@ import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.metadata.Node;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
-
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -54,14 +50,10 @@ import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
-import java.util.stream.Stream;
 
 import static java.util.Collections.emptyMap;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.awaitility.Awaitility.await;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyBoolean;
 import static org.mockito.ArgumentMatchers.anyDouble;
@@ -127,7 +119,7 @@ public class TbSaveToCustomCassandraTableNodeTest {
     void givenCassandraClusterIsMissing_whenInit_thenThrowsException() {
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctxMock, configuration))
-                .isInstanceOf(RuntimeException.class)
+                .isInstanceOf(TbNodeException.class)
                 .hasMessage("Unable to connect to Cassandra database");
     }
 
@@ -155,7 +147,7 @@ public class TbSaveToCustomCassandraTableNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(IllegalStateException.class)
-                .hasMessage("Invalid message structure, it is not a JSON Object:" + null);
+                .hasMessage("Invalid message structure, it is not a JSON Object: " + null);
     }
 
     @Test
@@ -201,92 +193,44 @@ public class TbSaveToCustomCassandraTableNodeTest {
     }
 
     @Test
-    void givenValidMsgStructureAndKeyIsEntityId_whenOnMsg_thenOk() throws Exception {
+    void givenValidMsgStructure_whenOnMsg_thenSaveToCustomCassandraTable() throws TbNodeException {
         config.setTableName("readings");
-        config.setFieldsMapping(Map.of("$entityId", "entityId"));
+        config.setFieldsMapping(Map.of(
+                "$entityId", "entityIdTableColumn",
+                "doubleField", "doubleTableColumn",
+                "longField", "longTableColumn",
+                "booleanField", "booleanTableColumn",
+                "stringField", "stringTableColumn",
+                "jsonField", "jsonTableColumn"
+        ));
 
         mockOnInit();
-        when(boundStatementBuilderMock.setUuid(anyInt(), any(UUID.class))).thenReturn(boundStatementBuilderMock);
-        when(boundStatementMock.getConsistencyLevel()).thenReturn(DefaultConsistencyLevel.ONE);
         mockBoundStatementBuilder();
         mockSubmittingCassandraTask();
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
-        node.onMsg(ctxMock, msg);
-
-        verify(sessionMock).prepare("INSERT INTO cs_tb_readings(entityId) VALUES(?)");
-        verify(boundStatementBuilderMock).setUuid(anyInt(), eq(DEVICE_ID.getId()));
-
-        ArgumentCaptor<CassandraStatementTask> taskCaptor = ArgumentCaptor.forClass(CassandraStatementTask.class);
-        verify(ctxMock).submitCassandraWriteTask(taskCaptor.capture());
-        CassandraStatementTask task = taskCaptor.getValue();
-        assertThat(task.getTenantId()).isEqualTo(TENANT_ID);
-        assertThat(task.getSession()).isEqualTo(sessionMock);
-        assertThat(task.getStatement()).isEqualTo(boundStatementMock);
-        await().atMost(1, TimeUnit.SECONDS).untilAsserted(
-                () -> verify(ctxMock).tellSuccess(msg)
-        );
-    }
-
-    @ParameterizedTest
-    @MethodSource
-    void givenValidMsgStructure_whenOnMsg_thenSaveToCustomCassandraTable(
-            String valueFromData,
-            Consumer<BoundStatementBuilder> mockBuilderConsumer,
-            Consumer<BoundStatementBuilder> verifyBuilderConsumer) throws TbNodeException {
-        config.setTableName("sensor_readings");
-        config.setFieldsMapping(Map.of("msgField1", "tableColumn1", "msgField2", "tableColumn2"));
-
-        mockOnInit();
-        mockBuilderConsumer.accept(boundStatementBuilderMock);
-        mockBoundStatementBuilder();
-        mockSubmittingCassandraTask();
-
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-
-        String data = String.format("""
+        String data = """
                 {
-                    "msgField1": %s,
-                    "msgField2": "value2",
-                    "anotherField": 22
+                    "doubleField": 22.5,
+                    "longField": 56,
+                    "booleanField": true,
+                    "stringField": "some string",
+                    "jsonField": {
+                        "key": "value"
+                    }
                 }
-                """, valueFromData);
+                """;
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, data);
         node.onMsg(ctxMock, msg);
 
-        verifyBuilderConsumer.accept(boundStatementBuilderMock);
-
+        verifySettingStatementBuilder();
         ArgumentCaptor<CassandraStatementTask> taskCaptor = ArgumentCaptor.forClass(CassandraStatementTask.class);
         verify(ctxMock).submitCassandraWriteTask(taskCaptor.capture());
         CassandraStatementTask task = taskCaptor.getValue();
         assertThat(task.getTenantId()).isEqualTo(TENANT_ID);
         assertThat(task.getSession()).isEqualTo(sessionMock);
         assertThat(task.getStatement()).isEqualTo(boundStatementMock);
-        await().atMost(1, TimeUnit.SECONDS).untilAsserted(
-                () -> verify(ctxMock).tellSuccess(msg)
-        );
-    }
-
-    private static Stream<Arguments> givenValidMsgStructure_whenOnMsg_thenSaveToCustomCassandraTable() {
-        return Stream.of(
-                Arguments.of("1.0",
-                        (Consumer<BoundStatementBuilder>) mockBuilder -> when(mockBuilder.setDouble(anyInt(), anyDouble())).thenReturn(mockBuilder),
-                        (Consumer<BoundStatementBuilder>) verifyBuilder -> verify(verifyBuilder).setDouble(anyInt(), eq(1.0))),
-                Arguments.of("2",
-                        (Consumer<BoundStatementBuilder>) mockBuilder -> when(mockBuilder.setLong(anyInt(), anyLong())).thenReturn(mockBuilder),
-                        (Consumer<BoundStatementBuilder>) verifyBuilder -> verify(verifyBuilder).setLong(anyInt(), eq(2L))),
-                Arguments.of("true",
-                        (Consumer<BoundStatementBuilder>) mockBuilder -> when(mockBuilder.setBoolean(anyInt(), anyBoolean())).thenReturn(mockBuilder),
-                        (Consumer<BoundStatementBuilder>) verifyBuilder -> verify(verifyBuilder).setBoolean(anyInt(), eq(true))),
-                Arguments.of("\"string value\"",
-                        (Consumer<BoundStatementBuilder>) mockBuilder -> when(mockBuilder.setString(anyInt(), anyString())).thenReturn(mockBuilder),
-                        (Consumer<BoundStatementBuilder>) verifyBuilder -> verify(verifyBuilder).setString(anyInt(), eq("string value"))),
-                Arguments.of("{\"key\":\"value\"}",
-                        (Consumer<BoundStatementBuilder>) mockBuilder -> when(mockBuilder.setString(anyInt(), anyString())).thenReturn(mockBuilder),
-                        (Consumer<BoundStatementBuilder>) verifyBuilder -> verify(verifyBuilder).setString(anyInt(), eq("{\"key\":\"value\"}")))
-        );
+        verify(ctxMock).tellSuccess(msg);
     }
 
     private void mockOnInit() {
@@ -307,6 +251,11 @@ public class TbSaveToCustomCassandraTableNodeTest {
 
     private void mockBoundStatementBuilder() {
         doAnswer(invocation -> boundStatementBuilderMock).when(node).getStmtBuilder();
+        when(boundStatementBuilderMock.setUuid(anyInt(), any(UUID.class))).thenReturn(boundStatementBuilderMock);
+        when(boundStatementBuilderMock.setDouble(anyInt(), anyDouble())).thenReturn(boundStatementBuilderMock);
+        when(boundStatementBuilderMock.setLong(anyInt(), anyLong())).thenReturn(boundStatementBuilderMock);
+        when(boundStatementBuilderMock.setBoolean(anyInt(), anyBoolean())).thenReturn(boundStatementBuilderMock);
+        when(boundStatementBuilderMock.setString(anyInt(), anyString())).thenReturn(boundStatementBuilderMock);
         when(boundStatementBuilderMock.build()).thenReturn(boundStatementMock);
     }
 
@@ -318,6 +267,15 @@ public class TbSaveToCustomCassandraTableNodeTest {
             return new TbResultSetFuture(mainFuture);
         }).when(ctxMock).submitCassandraWriteTask(any());
         when(ctxMock.getDbCallbackExecutor()).thenReturn(dbCallbackExecutor);
+    }
+
+    private void verifySettingStatementBuilder() {
+        verify(boundStatementBuilderMock).setUuid(anyInt(), eq(DEVICE_ID.getId()));
+        verify(boundStatementBuilderMock).setDouble(anyInt(), eq(22.5));
+        verify(boundStatementBuilderMock).setLong(anyInt(), eq(56L));
+        verify(boundStatementBuilderMock).setBoolean(anyInt(), eq(true));
+        verify(boundStatementBuilderMock).setString(anyInt(), eq("some string"));
+        verify(boundStatementBuilderMock).setString(anyInt(), eq("{\"key\":\"value\"}"));
     }
 
 }
