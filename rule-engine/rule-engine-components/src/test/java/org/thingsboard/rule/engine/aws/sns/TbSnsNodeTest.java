@@ -34,7 +34,6 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -44,15 +43,14 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutionException;
 import java.util.stream.Stream;
 
-import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoMoreInteractions;
-import static org.mockito.Mockito.when;
 
 @ExtendWith(MockitoExtension.class)
 class TbSnsNodeTest {
@@ -90,19 +88,18 @@ class TbSnsNodeTest {
 
     @ParameterizedTest
     @MethodSource
-    void givenTopicNamePattern_whenOnMsg_thenTellSuccess(String topicName, TbMsgMetaData metaData, String data)
-            throws TbNodeException, ExecutionException, InterruptedException {
+    void givenTopicNamePattern_whenOnMsg_thenTellSuccess(String topicName, TbMsgMetaData metaData, String data) {
         config.setAccessKeyId("accessKeyId");
         config.setSecretAccessKey("secretAccessKey");
         config.setTopicArnPattern(topicName);
         String messageId = "msgId-1d186a16-80c7-44b3-a245-a1fc835f20c7";
         String requestId = "reqId-bef0799b-dde9-4aa0-855b-86bbafaeaf31";
 
-        when(ctxMock.getExternalCallExecutor()).thenReturn(executor);
-        when(snsClientMock.publish(any(PublishRequest.class))).thenReturn(publishResultMock);
-        when(publishResultMock.getMessageId()).thenReturn(messageId);
-        when(publishResultMock.getSdkResponseMetadata()).thenReturn(responseMetadataMock);
-        when(responseMetadataMock.getRequestId()).thenReturn(requestId);
+        given(ctxMock.getExternalCallExecutor()).willReturn(executor);
+        given(snsClientMock.publish(any(PublishRequest.class))).willReturn(publishResultMock);
+        given(publishResultMock.getMessageId()).willReturn(messageId);
+        given(publishResultMock.getSdkResponseMetadata()).willReturn(responseMetadataMock);
+        given(responseMetadataMock.getRequestId()).willReturn(requestId);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
         node.onMsg(ctxMock, msg);
@@ -110,9 +107,9 @@ class TbSnsNodeTest {
         PublishRequest publishRequest = new PublishRequest()
                 .withTopicArn(TbNodeUtils.processPattern(topicName, msg))
                 .withMessage(data);
-        verify(snsClientMock).publish(publishRequest);
+        then(snsClientMock).should().publish(publishRequest);
         ArgumentCaptor<TbMsg> msgArgumentCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        verify(ctxMock).tellSuccess(msgArgumentCaptor.capture());
+        then(ctxMock).should().tellSuccess(msgArgumentCaptor.capture());
         assertThat(msgArgumentCaptor.getValue().getMetaData().getData())
                 .hasFieldOrPropertyWithValue("messageId", messageId)
                 .hasFieldOrPropertyWithValue("requestId", requestId);
@@ -128,19 +125,19 @@ class TbSnsNodeTest {
     }
 
     @Test
-    void givenErrorOccursDuringProcessingRequest_whenOnMsg_thenTellFailure() throws TbNodeException, ExecutionException, InterruptedException {
+    void givenErrorOccursDuringProcessingRequest_whenOnMsg_thenTellFailure() {
         ListeningExecutor listeningExecutor = mock(ListeningExecutor.class);
-        when(ctxMock.getExternalCallExecutor()).thenReturn(listeningExecutor);
+        given(ctxMock.getExternalCallExecutor()).willReturn(listeningExecutor);
         String errorMsg = "Something went wrong";
         ListenableFuture<TbMsg> failedFuture = Futures.immediateFailedFuture(new RuntimeException(errorMsg));
-        when(listeningExecutor.executeAsync(any(Callable.class))).thenReturn(failedFuture);
+        given(listeningExecutor.executeAsync(any(Callable.class))).willReturn(failedFuture);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         node.onMsg(ctxMock, msg);
 
         ArgumentCaptor<TbMsg> msgArgumentCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
-        verify(ctxMock).tellFailure(msgArgumentCaptor.capture(), throwableCaptor.capture());
+        then(ctxMock).should().tellFailure(msgArgumentCaptor.capture(), throwableCaptor.capture());
         assertThat(msgArgumentCaptor.getValue().getMetaData().getData())
                 .hasFieldOrPropertyWithValue("error", RuntimeException.class + ": " + errorMsg);
         assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
