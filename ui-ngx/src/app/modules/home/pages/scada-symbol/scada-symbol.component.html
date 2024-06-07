@@ -114,7 +114,9 @@
           <tb-scada-symbol-editor *ngIf="!previewMode" #symbolEditor
                                   [readonly]="readonly"
                                   [data]="symbolEditorData"
-                                  [editObjectCallbacks]="editObjectCallbacks"></tb-scada-symbol-editor>
+                                  [editObjectCallbacks]="editObjectCallbacks"
+                                  (updateScadaSymbol)="updateScadaSymbol()"
+                                  (downloadScadaSymbol)="downloadScadaSymbol()"></tb-scada-symbol-editor>
           <tb-dashboard *ngIf="previewMode"
                         class="tb-absolute-fill"
                         [aliasController]="aliasController"

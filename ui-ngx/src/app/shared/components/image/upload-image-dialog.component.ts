@@ -46,6 +46,11 @@ export interface UploadImageDialogData {
   image?: ImageResourceInfo;
 }
 
+export interface UploadImageDialogResult {
+  image?: ImageResource;
+  scadaSymbolContent?: string;
+}
+
 @Component({
   selector: 'tb-upload-image-dialog',
   templateUrl: './upload-image-dialog.component.html',
@@ -53,7 +58,7 @@ export interface UploadImageDialogData {
   styleUrls: []
 })
 export class UploadImageDialogComponent extends
-  DialogComponent<UploadImageDialogComponent, ImageResource> implements OnInit, ErrorStateMatcher {
+  DialogComponent<UploadImageDialogComponent, UploadImageDialogResult> implements OnInit, ErrorStateMatcher {
 
   uploadImageFormGroup: UntypedFormGroup;
 
@@ -75,7 +80,7 @@ export class UploadImageDialogComponent extends
               private imageService: ImageService,
               @Inject(MAT_DIALOG_DATA) public data: UploadImageDialogData,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
-              public dialogRef: MatDialogRef<UploadImageDialogComponent, ImageResource>,
+              public dialogRef: MatDialogRef<UploadImageDialogComponent, UploadImageDialogResult>,
               public fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
   }
@@ -142,16 +147,22 @@ export class UploadImageDialogComponent extends
         this.imageService.uploadImage(file, title, this.data.imageSubType),
         blobToBase64(file)
       ]).subscribe(([imageInfo, base64]) => {
-        this.dialogRef.close(Object.assign(imageInfo, {base64}));
+        this.dialogRef.close({image: Object.assign(imageInfo, {base64})});
       });
     } else {
-      const image = this.data.image;
-      forkJoin([
-        this.imageService.updateImage(imageResourceType(image), image.resourceKey, file),
-        blobToBase64(file)
-      ]).subscribe(([imageInfo, base64]) => {
-        this.dialogRef.close(Object.assign(imageInfo, {base64}));
-      });
+      if (this.isScada) {
+        blobToText(file).subscribe(scadaSymbolContent => {
+          this.dialogRef.close({scadaSymbolContent});
+        });
+      } else {
+        const image = this.data.image;
+        forkJoin([
+          this.imageService.updateImage(imageResourceType(image), image.resourceKey, file),
+          blobToBase64(file)
+        ]).subscribe(([imageInfo, base64]) => {
+          this.dialogRef.close({image:Object.assign(imageInfo, {base64})});
+        });
+      }
     }
   }
 }

@@ -39,6 +39,7 @@
   <div class="tb-scada-symbol-editor-upload-buttons">
     <div class="tb-primary-fill">
       <button mat-icon-button
+              (click)="updateScadaSymbol.emit()"
               matTooltip="{{ 'scada.update-symbol' | translate }}"
               matTooltipPosition="above">
         <mat-icon>file_upload</mat-icon>
@@ -46,6 +47,7 @@
     </div>
     <div class="tb-primary-fill">
       <button mat-icon-button
+              (click)="downloadScadaSymbol.emit()"
               matTooltip="{{ 'scada.download-symbol' | translate }}"
               matTooltipPosition="above">
         <mat-icon>download</mat-icon>

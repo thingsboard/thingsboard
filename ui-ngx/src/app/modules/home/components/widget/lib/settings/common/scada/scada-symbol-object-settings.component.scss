@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.tb-scada-symbol-appearance-properties {
-  gap: 16px;
-  display: flex;
-  flex-direction: column;
+:host ::ng-deep {
+  .tb-scada-symbol-appearance-properties {
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+  }
 }

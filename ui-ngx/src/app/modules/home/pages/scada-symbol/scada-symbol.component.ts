@@ -66,6 +66,11 @@ import {
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { Authority } from '@shared/models/authority.enum';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import {
+  UploadImageDialogComponent,
+  UploadImageDialogData, UploadImageDialogResult
+} from '@shared/components/image/upload-image-dialog.component';
+import { MatDialog } from '@angular/material/dialog';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -143,7 +148,8 @@ export class ScadaSymbolComponent extends PageComponent
               private entityService: EntityService,
               private utils: UtilsService,
               private translate: TranslateService,
-              private imageService: ImageService) {
+              private imageService: ImageService,
+              private dialog: MatDialog) {
     super(store);
   }
 
@@ -315,6 +321,49 @@ export class ScadaSymbolComponent extends PageComponent
 
   onSymbolEditObjectDirty(dirty: boolean) {
     this.symbolEditorDirty = dirty;
+  }
+
+  updateScadaSymbol() {
+    this.dialog.open<UploadImageDialogComponent, UploadImageDialogData,
+      UploadImageDialogResult>(UploadImageDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        imageSubType: this.symbolData.imageResource.resourceSubType,
+        image: this.symbolData.imageResource
+      }
+    }).afterClosed().subscribe((result) => {
+      if (result?.scadaSymbolContent) {
+        this.symbolData.scadaSymbolContent = result.scadaSymbolContent;
+        this.symbolEditorData = {
+          scadaSymbolContent: this.symbolData.scadaSymbolContent
+        };
+        this.symbolEditorDirty = true;
+      }
+    });
+  }
+
+  downloadScadaSymbol() {
+    let metadata: ScadaSymbolMetadata;
+    if (this.scadaSymbolFormGroup.valid) {
+      metadata = this.scadaSymbolFormGroup.get('metadata').value;
+    } else {
+      metadata = parseScadaSymbolMetadataFromContent(this.origSymbolData.scadaSymbolContent);
+    }
+    const linkElement = document.createElement('a');
+    const scadaSymbolContent = this.prepareScadaSymbolContent(metadata);
+    const blob = new Blob([scadaSymbolContent], { type: this.symbolData.imageResource.descriptor.mediaType });
+    const url = URL.createObjectURL(blob);
+    linkElement.setAttribute('href', url);
+    linkElement.setAttribute('download', this.symbolData.imageResource.fileName);
+    const clickEvent = new MouseEvent('click',
+      {
+        view: window,
+        bubbles: true,
+        cancelable: false
+      }
+    );
+    linkElement.dispatchEvent(clickEvent);
   }
 
   private updatePreviewWidgetSettings() {

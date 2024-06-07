@@ -17,11 +17,11 @@
 import {
   AfterViewInit, ChangeDetectorRef,
   Component,
-  ElementRef,
+  ElementRef, EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
-  OnInit,
+  OnInit, Output,
   SimpleChanges,
   ViewChild,
   ViewContainerRef,
@@ -59,6 +59,12 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   @Input()
   readonly: boolean;
+
+  @Output()
+  updateScadaSymbol = new EventEmitter();
+
+  @Output()
+  downloadScadaSymbol = new EventEmitter();
 
   scadaSymbolEditObject: ScadaSymbolEditObject;
 

@@ -131,8 +131,12 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
                      content: string) {
     const simulated = this.ctx.utilsService.widgetEditMode ||
       this.ctx.isPreview || (isDefinedAndNotNull(this.settings.simulated) ? this.settings.simulated : false);
-    this.scadaSymbolObject = new ScadaSymbolObject(rootElement, this.ctx, content,
-      this.settings.scadaSymbolObjectSettings, this, simulated);
+    if (content.startsWith('<parsererror')) {
+      rootElement.innerHTML = content;
+    } else {
+      this.scadaSymbolObject = new ScadaSymbolObject(rootElement, this.ctx, content,
+        this.settings.scadaSymbolObjectSettings, this, simulated);
+    }
   }
 
 }

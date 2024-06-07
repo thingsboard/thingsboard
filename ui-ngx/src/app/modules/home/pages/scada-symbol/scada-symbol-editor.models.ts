@@ -56,7 +56,7 @@ export interface ScadaSymbolEditObjectCallbacks {
   onZoom?: () => void;
 }
 
-const minSymbolZoom = 1;
+const minSymbolZoom = 0.75;
 const maxSymbolZoom = 4;
 
 export class ScadaSymbolEditObject {
@@ -150,7 +150,7 @@ export class ScadaSymbolEditObject {
       runner
       .zoom(level)
       .during(() => {
-        const box = this.restrictToMargins(this.svgShape.viewbox(), 0);
+        const box = this.restrictToMargins(this.svgShape.viewbox());
         this.svgShape.viewbox(box);
       })
       .after(() => {
@@ -168,7 +168,7 @@ export class ScadaSymbolEditObject {
   }
 
   private doSetup() {
-    this.setupZoomPan(0);
+    this.setupZoomPan();
     (window as any).SVG = svgjs;
     forkJoin([
       from(import('tooltipster')),
@@ -178,33 +178,37 @@ export class ScadaSymbolEditObject {
     });
   }
 
-  private setupZoomPan(margin: number) {
+  private setupZoomPan() {
+    this.svgShape.panZoom({
+      zoomMin: minSymbolZoom,
+      zoomMax: maxSymbolZoom,
+      zoomFactor: this.zoomFactor
+    });
     this.svgShape.on('zoom', (e) => {
       const {
         detail: { level, focus }
       } = e as any;
       this.svgShape.zoom(level, focus);
-      this.postZoom(this.callbacks.onZoom, e, margin);
+      this.postZoom(this.callbacks.onZoom, e);
     });
     this.svgShape.on('panning', (e) => {
       const box = (e as any).detail.box;
-      this.svgShape.viewbox(this.restrictToMargins(box, margin));
+      this.svgShape.viewbox(this.restrictToMargins(box));
       e.preventDefault();
     });
     this.svgShape.on('panStart', (_e) => {
-      if (this.svgShape.zoom() > minSymbolZoom) {
-        this.hideTooltips();
-        this.svgShape.node.style.cursor = 'grab';
-      }
+      this.hideTooltips();
+      this.svgShape.node.style.cursor = 'grab';
     });
     this.svgShape.on('panEnd', (_e) => {
       this.restoreTooltips();
       this.svgShape.node.style.cursor = 'default';
     });
+    this.svgShape.zoom(minSymbolZoom);
   }
 
-  private postZoom(callback?: () => void, e?: any, margin = 0) {
-    const box = this.restrictToMargins(this.svgShape.viewbox(), margin);
+  private postZoom(callback?: () => void, e?: any) {
+    const box = this.restrictToMargins(this.svgShape.viewbox());
     this.svgShape.viewbox(box);
     setTimeout(() => {
       this.updateTooltipPositions();
@@ -215,16 +219,18 @@ export class ScadaSymbolEditObject {
     }
   }
 
-  private restrictToMargins(box: Box, margin: number): Box {
-    if (box.x < -margin) {
-      box.x = -margin;
-    } else if ((box.x + box.width) > (this.box.width + margin)) {
-      box.x = this.box.width + margin - box.width;
+  private restrictToMargins(box: Box): Box {
+    const marginX = Math.max(box.width - this.box.width, 0);
+    const marginY = Math.max(box.height - this.box.height, 0);
+    if (box.x < -marginX) {
+      box.x = -marginX;
+    } else if ((box.x + box.width) > (this.box.width + marginX)) {
+      box.x = this.box.width + marginX - box.width;
     }
-    if (box.y < -margin) {
-      box.y = -margin;
-    } else if ((box.y + box.height) > (this.box.height + margin)) {
-      box.y = this.box.height + margin - box.height;
+    if (box.y < -marginY) {
+      box.y = -marginY;
+    } else if ((box.y + box.height) > (this.box.height + marginY)) {
+      box.y = this.box.height + marginY - box.height;
     }
     return box;
   }
@@ -324,7 +330,6 @@ export class ScadaSymbolEditObject {
           this.scale = scale;
           this.svgShape.node.style.transform = `scale(${this.scale})`;
           this.updateHoverFilterStyle();
-          this.updateZoomOptions();
           this.updateTooltipPositions();
         }
         if (this.performSetup) {
@@ -350,15 +355,6 @@ export class ScadaSymbolEditObject {
              drop-shadow(0px 0px ${blackBlur}px black)`
         }
       );
-  }
-
-  private updateZoomOptions() {
- //   this.zoomFactor = 2 / this.scale;
-    this.svgShape.panZoom({
-      zoomMin: minSymbolZoom,
-      zoomMax: maxSymbolZoom,
-      zoomFactor: this.zoomFactor
-    });
   }
 
   private updateTooltipPositions() {

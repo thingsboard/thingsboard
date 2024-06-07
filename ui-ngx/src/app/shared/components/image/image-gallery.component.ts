@@ -62,7 +62,7 @@ import { ItemSizeStrategy, ScrollGridComponent } from '@shared/components/grid/s
 import { MatDialog } from '@angular/material/dialog';
 import {
   UploadImageDialogComponent,
-  UploadImageDialogData
+  UploadImageDialogData, UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { ImageDialogComponent, ImageDialogData } from '@shared/components/image/image-dialog.component';
 import { ImportExportService } from '@shared/import-export/import-export.service';
@@ -650,20 +650,20 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
 
   uploadImage(): void {
     this.dialog.open<UploadImageDialogComponent, UploadImageDialogData,
-      ImageResourceInfo>(UploadImageDialogComponent, {
+      UploadImageDialogResult>(UploadImageDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         imageSubType: this.imageSubType
       }
     }).afterClosed().subscribe((result) => {
-      if (result) {
+      if (result?.image) {
         if (this.selectionMode) {
-          this.imageSelected.next(result);
+          this.imageSelected.next(result.image);
         } else {
           if (this.isScada) {
-            const type = imageResourceType(result);
-            const key = encodeURIComponent(result.resourceKey);
+            const type = imageResourceType(result.image);
+            const key = encodeURIComponent(result.image.resourceKey);
             this.router.navigateByUrl(`resources/scada-symbols/${type}/${key}`);
           } else {
             this.updateData();

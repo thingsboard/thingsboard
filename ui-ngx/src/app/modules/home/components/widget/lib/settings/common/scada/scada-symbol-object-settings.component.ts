@@ -72,8 +72,7 @@ import { map } from 'rxjs/operators';
       useExisting: forwardRef(() => ScadaSymbolObjectSettingsComponent),
       multi: true
     }
-  ],
-  encapsulation: ViewEncapsulation.None
+  ]
 })
 export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, ControlValueAccessor, Validator {
 

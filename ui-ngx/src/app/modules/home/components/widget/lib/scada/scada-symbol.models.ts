@@ -191,9 +191,38 @@ export const emptyMetadata = (): ScadaSymbolMetadata => ({
   properties: []
 });
 
+const svgPartsRegex = /(<svg.*?>)(.*)<\/svg>/gms;
+
+const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gms;
+
+export const applyTbNamespaceToSvgContent = (svgContent: string): string => {
+  svgPartsRegex.lastIndex = 0;
+  let svgRootNode: string;
+  let innerSvg = '';
+  let match = svgPartsRegex.exec(svgContent);
+  if (match != null) {
+    if (match.length > 1) {
+      svgRootNode =  match[1];
+    }
+    if (match.length > 2) {
+      innerSvg = match[2];
+    }
+  }
+  if (!svgRootNode) {
+    throw new Error('Invalid SVG document.');
+  }
+  tbNamespaceRegex.lastIndex = 0;
+  match = tbNamespaceRegex.exec(svgRootNode);
+  if (match === null || !match.length) {
+    svgRootNode = svgRootNode.slice(0, -1) + ' xmlns:tb="https://thingsboard.io/svg">';
+    return `${svgRootNode}\n${innerSvg}\n</svg>`;
+  }
+  return svgContent;
+};
 
 export const parseScadaSymbolMetadataFromContent = (svgContent: string): ScadaSymbolMetadata => {
   try {
+    svgContent = applyTbNamespaceToSvgContent(svgContent);
     const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
     return parseScadaSymbolMetadataFromDom(svgDoc);
   } catch (_e) {
@@ -216,13 +245,17 @@ const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata 
 };
 
 export const updateScadaSymbolMetadataInContent = (svgContent: string, metadata: ScadaSymbolMetadata): string => {
+  svgContent = applyTbNamespaceToSvgContent(svgContent);
   const svgDoc = new DOMParser().parseFromString(svgContent, 'image/svg+xml');
+  const parsererror = svgDoc.getElementsByTagName('parsererror');
+  if (parsererror?.length) {
+    return parsererror[0].outerHTML;
+  }
   updateScadaSymbolMetadataInDom(svgDoc, metadata);
   return svgDoc.documentElement.outerHTML;
 };
 
 const updateScadaSymbolMetadataInDom = (svgDoc: Document, metadata: ScadaSymbolMetadata) => {
-  svgDoc.documentElement.setAttribute('xmlns:tb', 'https://thingsboard.io/svg');
   let metadataElement: Node;
   const elements = svgDoc.getElementsByTagName('tb:metadata');
   if (elements?.length) {
@@ -237,7 +270,6 @@ const updateScadaSymbolMetadataInDom = (svgDoc: Document, metadata: ScadaSymbolM
   metadataElement.appendChild(cdata);
 };
 
-const svgPartsRegex = /(<svg .*?>)(.*)<\/svg>/gms;
 const tbMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
 
 export interface ScadaSymbolContentData {
@@ -389,6 +421,7 @@ export class ScadaSymbolObject {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
     });
+    this.svgContent = applyTbNamespaceToSvgContent(this.svgContent);
     const doc: XMLDocument = new DOMParser().parseFromString(this.svgContent, 'image/svg+xml');
     this.metadata = parseScadaSymbolMetadataFromDom(doc);
     const defaults = defaultScadaSymbolObjectSettings(this.metadata);
@@ -645,12 +678,22 @@ export class ScadaSymbolObject {
   }
 
   private renderState(): void {
-    this.metadata.stateRender(this.context, this.svgShape);
+    try {
+      this.metadata.stateRender(this.context, this.svgShape);
+    } catch (e) {
+      console.error(e);
+    }
     for (const tag of this.metadata.tags) {
-      const elements = this.context.tags[tag.tag];// this.svgShape.find(`[tb\\:tag="${tag.tag}"]`);
-      elements.forEach(element => {
-        tag.stateRender(this.context, element);
-      });
+      const elements = this.context.tags[tag.tag];
+      if (elements) {
+        elements.forEach(element => {
+          try {
+            tag.stateRender(this.context, element);
+          } catch (e) {
+            console.error(e);
+          }
+        });
+      }
     }
   }
 
