@@ -63,7 +63,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
         nodeDetails = "Administrator should set the custom table name without prefix: <b>cs_tb_</b>. <br>" +
                 "Administrator can configure the mapping between the Message field names and Table columns name.<br>" +
                 "<b>Note:</b>If the mapping key is <b>$entity_id</b>, that is identified by the Message Originator, then to the appropriate column name(mapping value) will be write the message originator id.<br><br>" +
-                "Output connections: <code>Failure</code> - if specified message field does not exist or is not a JSON Primitive, otherwise <code>Success</code>.",
+                "Output connections: <code>Failure</code> - if specified message field does not exist or it is not a JSON Primitive, otherwise <code>Success</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeCustomTableConfig",
         icon = "file_upload",

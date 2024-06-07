@@ -61,7 +61,7 @@ import static org.thingsboard.server.common.data.msg.TbNodeConnectionType.SUCCES
         nodeDetails = "Copy attributes from asset/device to related entity view according to entity view configuration. \n " +
                 "Copy will be done only for attributes that are between start and end dates and according to attribute keys configuration. \n" +
                 "Changes message originator to related entity view and produces new messages according to count of updated entity views.<br><br>" +
-                "Output connections: <code>Cleared</code>, <code>False</code> or <code>Failure</code>.",
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbNodeEmptyConfig",
         icon = "content_copy"
