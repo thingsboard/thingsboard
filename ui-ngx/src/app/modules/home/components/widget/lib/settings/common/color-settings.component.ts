@@ -103,11 +103,11 @@ export class ColorSettingsComponent implements OnInit, ControlValueAccessor, OnD
 
   @Input()
   @coerceNumber()
-  minValue: number;
+  minValue = 0;
 
   @Input()
   @coerceNumber()
-  maxValue: number;
+  maxValue = 100;
 
   colorType = ColorType;
 

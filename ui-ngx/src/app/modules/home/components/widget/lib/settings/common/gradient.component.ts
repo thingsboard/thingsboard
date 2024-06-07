@@ -31,7 +31,7 @@ import { takeUntil } from 'rxjs/operators';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { IAliasController } from '@core/api/widget-api.models';
 import { DomSanitizer } from '@angular/platform-browser';
-import { coerceBoolean } from '@shared/decorators/coercion';
+import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
 import { isDefinedAndNotNull } from '@core/utils';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
@@ -71,10 +71,12 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   datasource: Datasource;
 
   @Input()
-  minValue: string;
+  @coerceNumber()
+  minValue: number;
 
   @Input()
-  maxValue: string;
+  @coerceNumber()
+  maxValue: number;
 
   @Input()
   @coerceBoolean()
@@ -115,6 +117,9 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
     this.gradientFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => this.updateModel());
+    this.gradientFormGroup.get('advancedMode').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {

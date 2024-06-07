@@ -20,7 +20,7 @@ import {
   ColorSettings,
   ColorType,
   colorTypeTranslations,
-  defaultGradient
+  defaultGradient, defaultRange
 } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -102,7 +102,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
         gradient: [this.colorSettings?.gradient || defaultGradient(this.minValue, this.maxValue), []],
-        rangeList: [this.colorSettings?.rangeList, []],
+        rangeList: [this.colorSettings?.rangeList || defaultRange(), []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );

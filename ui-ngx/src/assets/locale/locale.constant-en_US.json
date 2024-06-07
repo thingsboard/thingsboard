@@ -6206,6 +6206,7 @@
             "gauge-bar-background": "Gauge bar background",
             "bar-color": "Bar color",
             "min-and-max-value": "Min and max value",
+            "min-and-max-label": "Min and max label",
             "font": "Font",
             "tick-width-and-color": "Tick width and color"
         },
