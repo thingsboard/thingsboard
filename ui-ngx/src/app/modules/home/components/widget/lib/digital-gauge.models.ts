@@ -162,10 +162,10 @@ export const backwardCompatibilityTicks = (ticksValue: AttributeSourceProperty[]
   return ticks;
 };
 
-export const convertLevelColorsSettingsToColorProcessor = (settings: DigitalGaugeSettings, keyColor?: string) => {
+export const convertLevelColorsSettingsToColorProcessor = (settings: DigitalGaugeSettings, defaultColor?: string) => {
   if (settings.barColor) {
     if (!settings.barColor.color) {
-      settings.barColor.color = keyColor;
+      settings.barColor.color = defaultColor;
     }
     if (isDefinedAndNotNull(settings.barColor.gradient)) {
       settings.barColor.gradient.minValue = settings.minValue;
@@ -174,7 +174,7 @@ export const convertLevelColorsSettingsToColorProcessor = (settings: DigitalGaug
       settings.barColor.gradient = defaultGradient(settings.minValue, settings.maxValue);
     }
   } else {
-    settings.barColor = constantColor(keyColor);
+    settings.barColor = constantColor(defaultColor);
     if (settings.fixedLevelColors?.length) {
       settings.barColor.rangeList = {
         advancedMode: settings.useFixedLevelColor,
