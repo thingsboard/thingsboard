@@ -55,17 +55,6 @@
   }
   .tb-form-row {
     height: auto;
-    .tb-value-range-text {
-      width: 64px;
-      font-size: 14px;
-      color: rgba(0, 0, 0, 0.38);
-      @media #{$mat-xs} {
-        width: auto;
-      }
-      &.tb-value-range-text-to {
-        text-align: center;
-      }
-    }
   }
   button.mat-mdc-button-base.tb-add-color-range {
     &:not(:disabled) {
