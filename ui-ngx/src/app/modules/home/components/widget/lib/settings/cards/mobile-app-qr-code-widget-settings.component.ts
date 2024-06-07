@@ -19,7 +19,7 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from "@angular/forms
 import { WidgetSettings, WidgetSettingsComponent } from "@shared/models/widget.models";
 import { AppState } from '@core/core.state';
 import { Store } from "@ngrx/store";
-import { badgePositionTranslationsMap, badgeStyleTranslationsMap } from '@shared/models/mobile-app.models';
+import { badgePositionTranslationsMap } from '@shared/models/mobile-app.models';
 import { mobileAppQrCodeWidgetDefaultSettings } from '@home/components/widget/lib/cards/mobile-app-qr-code-widget.models';
 
 @Component({
@@ -32,7 +32,6 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
   mobileAppQRCodeWidgetSettingsForm: UntypedFormGroup;
 
   badgePositionTranslationsMap = badgePositionTranslationsMap;
-  badgeStyleTranslationsMap = badgeStyleTranslationsMap;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
@@ -50,54 +49,35 @@ export class MobileAppQrCodeWidgetSettingsComponent extends WidgetSettingsCompon
   protected onSettingsSet(settings: WidgetSettings) {
     this.mobileAppQRCodeWidgetSettingsForm = this.fb.group({
       useSystemSettings: [settings.useSystemSettings],
-      androidConfig: this.fb.group({
-        enabled: [settings.androidConfig.enabled],
-      }),
-      iosConfig: this.fb.group({
-        enabled: [settings.iosConfig.enabled],
-      }),
       qrCodeConfig: this.fb.group({
         badgeEnabled: [settings.qrCodeConfig.badgeEnabled],
-        badgeStyle: [{value: settings.qrCodeConfig.badgeStyle, disabled: true}],
-        badgePosition: [{value: settings.qrCodeConfig.badgePosition, disabled: true}],
+        badgePosition: [settings.qrCodeConfig.badgePosition],
         qrCodeLabelEnabled: [settings.qrCodeConfig.qrCodeLabelEnabled],
-        qrCodeLabel: [settings.qrCodeConfig.qrCodeLabel, [Validators.required]]
-      })
+        qrCodeLabel: [settings.qrCodeConfig.qrCodeLabel]
+      }),
+      background: [settings.background]
     });
   }
 
   protected validatorTriggers(): string[] {
-    return ['useSystemSettings', 'androidConfig.enabled', 'iosConfig.enabled', 'qrCodeConfig.badgeEnabled', 'qrCodeConfig.qrCodeLabelEnabled'];
+    return ['useSystemSettings', 'qrCodeConfig.badgeEnabled', 'qrCodeConfig.qrCodeLabelEnabled'];
   }
 
   protected updateValidators(emitEvent: boolean) {
     const useSystemSettings = this.mobileAppQRCodeWidgetSettingsForm.get('useSystemSettings').value;
-    const androidEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('androidConfig.enabled').value;
-    const iosEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('iosConfig.enabled').value;
-    const badgeEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').value;
-    const qrCodeLabelEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').value;
-
-    if (!androidEnabled && !iosEnabled) {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').disable({emitEvent: false});
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
-    }
-
-    if (androidEnabled || iosEnabled) {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').enable({emitEvent: false});
+    if (!useSystemSettings) {
+      const badgeEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeEnabled').value;
+      const qrCodeLabelEnabled = this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabelEnabled').value;
       if (badgeEnabled) {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').enable({emitEvent: false});
         this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').enable({emitEvent: false});
       } else {
-        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgeStyle').disable({emitEvent: false});
         this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.badgePosition').disable({emitEvent: false});
       }
-    }
-
-    if (qrCodeLabelEnabled && !useSystemSettings) {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
-    } else {
-      this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
+      if (qrCodeLabelEnabled) {
+        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').enable({emitEvent: false});
+      } else {
+        this.mobileAppQRCodeWidgetSettingsForm.get('qrCodeConfig.qrCodeLabel').disable({emitEvent: false});
+      }
     }
   }
 

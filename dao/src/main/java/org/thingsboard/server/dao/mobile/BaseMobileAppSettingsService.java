@@ -22,7 +22,6 @@ import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidConfig;
 import org.thingsboard.server.common.data.mobile.BadgePosition;
-import org.thingsboard.server.common.data.mobile.BadgeStyle;
 import org.thingsboard.server.common.data.mobile.IosConfig;
 import org.thingsboard.server.common.data.mobile.MobileAppSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
@@ -98,7 +97,6 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
                     .qrCodeLabel(DEFAULT_QR_CODE_LABEL)
                     .badgeEnabled(true)
                     .badgePosition(BadgePosition.RIGHT)
-                    .badgeStyle(BadgeStyle.ORIGINAL)
                     .badgeEnabled(true)
                     .build();
 

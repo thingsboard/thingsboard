@@ -15,23 +15,24 @@
     limitations under the License.
 
 -->
-<div class="tb-flex column center align-center">
-  <div class="tb-flex row align-center shrink"
-       [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
-       [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
-    <canvas #canvas class="tb-qrcode"></canvas>
-    <div class="tb-flex column" *ngIf="mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
-      <ng-container *ngIf="mobileAppSettings.qrCodeConfig.badgeStyle === badgeStyle.ORIGINAL;else white">
-        <img *ngIf="mobileAppSettings.iosConfig.enabled" [src]="badgeStyleURLMap.get(badgeStyle.ORIGINAL).iOS">
-        <img *ngIf="mobileAppSettings.androidConfig.enabled" [src]="badgeStyleURLMap.get(badgeStyle.ORIGINAL).android">
-      </ng-container>
-      <ng-template #white>
-        <img *ngIf="mobileAppSettings.iosConfig.enabled" [src]="badgeStyleURLMap.get(badgeStyle.WHITE).iOS">
-        <img *ngIf="mobileAppSettings.androidConfig.enabled" [src]="badgeStyleURLMap.get(badgeStyle.WHITE).android">
-      </ng-template>
+<div class="tb-mobile-app-qrcode-panel"
+     [class.preview]="previewMode"
+     [style]="backgroundStyle$ | async">
+  <div class="tb-mobile-app-qrcode-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-flex column center">
+    <div class="tb-flex row center align-center shrink"
+         [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
+         [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
+      <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'" ></div>
+      <div class="tb-badges" *ngIf="(mobileAppSettings?.iosConfig.enabled || mobileAppSettings?.androidConfig.enabled) &&
+                                  mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
+        <img *ngIf="mobileAppSettings?.iosConfig.enabled" src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
+        <img *ngIf="mobileAppSettings?.androidConfig.enabled" src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
+      </div>
     </div>
-  </div>
-  <div *ngIf="mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled" class="tb-qrcode-label">
-    {{ mobileAppSettings.qrCodeConfig.qrCodeLabel }}
+    <div class="tb-qrcode-label" *ngIf="mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled">
+      {{ mobileAppSettings.qrCodeConfig.qrCodeLabel }}
+    </div>
   </div>
 </div>
