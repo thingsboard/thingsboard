@@ -58,8 +58,8 @@ import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesLatestDao;
 import org.thingsboard.server.service.sync.tenant.util.DataWrapper;
-import org.thingsboard.server.service.sync.tenant.util.StatsResult;
-import org.thingsboard.server.service.sync.tenant.util.StatsStore;
+import org.thingsboard.server.service.sync.tenant.util.Result;
+import org.thingsboard.server.service.sync.tenant.util.ResultStore;
 import org.thingsboard.server.service.sync.tenant.util.Storage;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
 
@@ -103,7 +103,7 @@ public class TenantExportService {
     private final CacheManager cacheManager;
     @Value("${cache.specs.tenantExportResults.timeToLiveInMinutes:1440}")
     private int resultsTtl;
-    private StatsStore<ObjectType> statsStore;
+    private ResultStore<ObjectType> resultStore;
 
     private final ExecutorService executor = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("tenant-export"));
 
@@ -118,7 +118,7 @@ public class TenantExportService {
 
     @PostConstruct
     private void init() {
-        statsStore = StatsStore.<ObjectType>builder()
+        resultStore = ResultStore.<ObjectType>builder()
                 .name("Tenant export")
                 .ttlInMinutes(resultsTtl)
                 .persistFrequency(100)
@@ -152,14 +152,14 @@ public class TenantExportService {
         executor.submit(() -> {
             try {
                 exportTenant(tenant, exportConfig);
-                statsStore.update(tenantId, result -> {
+                resultStore.update(tenantId, result -> {
                     result.setSuccess(true);
                     result.setDone(true);
                 });
             } catch (Throwable t) {
                 log.error("Failed to export tenant {}", tenant, t);
                 try {
-                    statsStore.update(tenantId, result -> {
+                    resultStore.update(tenantId, result -> {
                         result.setError(ExceptionUtils.getStackTrace(t));
                         result.getStats().clear();
                         result.setDone(true);
@@ -193,9 +193,9 @@ public class TenantExportService {
             } else {
                 customExporters.get(type).accept(tenantId, exportConfig);
             }
-            statsStore.flush(tenantId.getId(), type);
+            resultStore.flush(tenantId.getId(), type);
         }
-        statsStore.flush(tenantId.getId(), RELATED.toArray(ObjectType[]::new));
+        resultStore.flush(tenantId.getId(), RELATED.toArray(ObjectType[]::new));
 
         storage.archiveExportData(tenantId.getId());
     }
@@ -215,7 +215,7 @@ public class TenantExportService {
         DataWrapper dataWrapper = DataWrapper.of(entity);
 
         storage.save(tenantId.getId(), type, dataWrapper);
-        statsStore.report(tenantId.getId(), type);
+        resultStore.report(tenantId.getId(), type);
         log.trace("[{}][{}] Saved entity {}", tenantId, type, entity);
     }
 
@@ -239,8 +239,8 @@ public class TenantExportService {
         return partitions;
     }
 
-    public StatsResult<ObjectType> getResult(UUID tenantId) {
-        return statsStore.getStoredResult(tenantId);
+    public Result<ObjectType> getResult(UUID tenantId) {
+        return resultStore.getStoredResult(tenantId);
     }
 
     public void cancelExport(UUID tenantId) {
@@ -252,7 +252,7 @@ public class TenantExportService {
 
     @SneakyThrows
     public ResponseEntity<InputStreamResource> downloadResult(UUID tenantId) {
-        var result = statsStore.getStoredResult(tenantId);
+        var result = resultStore.getStoredResult(tenantId);
         if (result == null || !result.isDone()) {
             throw new IllegalStateException("Not ready yet");
         } else if (!result.isSuccess()) {

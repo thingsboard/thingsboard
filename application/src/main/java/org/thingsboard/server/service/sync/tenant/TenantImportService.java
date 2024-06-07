@@ -31,8 +31,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoRegistry;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.sync.tenant.util.DataWrapper;
-import org.thingsboard.server.service.sync.tenant.util.StatsResult;
-import org.thingsboard.server.service.sync.tenant.util.StatsStore;
+import org.thingsboard.server.service.sync.tenant.util.Result;
+import org.thingsboard.server.service.sync.tenant.util.ResultStore;
 import org.thingsboard.server.service.sync.tenant.util.Storage;
 import org.thingsboard.server.service.sync.tenant.util.TenantImportConfig;
 
@@ -54,7 +54,7 @@ public class TenantImportService {
     private final TenantProfileService tenantProfileService;
     private final TransactionTemplate transactionTemplate;
     private final CacheManager cacheManager;
-    private StatsStore<ObjectType> statsStore;
+    private ResultStore<ObjectType> resultStore;
     @Value("${cache.specs.tenantImportResults.timeToLiveInMinutes:1440}")
     private int resultsTtl;
 
@@ -62,7 +62,7 @@ public class TenantImportService {
 
     @PostConstruct
     private void init() {
-        statsStore = StatsStore.<ObjectType>builder()
+        resultStore = ResultStore.<ObjectType>builder()
                 .name("Tenant import")
                 .ttlInMinutes(resultsTtl)
                 .persistFrequency(100)
@@ -88,14 +88,14 @@ public class TenantImportService {
                 transactionTemplate.executeWithoutResult(status -> {
                     importTenant(tenant.get(), config);
                 });
-                statsStore.update(tenantId, result -> {
+                resultStore.update(tenantId, result -> {
                     result.setSuccess(true);
                     result.setDone(true);
                 });
             } catch (Throwable t) {
                 log.error("Failed to import tenant", t);
                 try {
-                    statsStore.update(tenantId, result -> {
+                    resultStore.update(tenantId, result -> {
                         result.setError(ExceptionUtils.getStackTrace(t));
                         result.setDone(true);
                     });
@@ -116,7 +116,7 @@ public class TenantImportService {
             storage.readAndProcess(type, dataWrapper -> {
                 save(tenantId, type, dataWrapper);
             });
-            statsStore.flush(tenantId.getId(), type);
+            resultStore.flush(tenantId.getId(), type);
         }
 
         clearCaches();
@@ -129,7 +129,7 @@ public class TenantImportService {
         }
 
         entityDaoRegistry.getDao(type).save(tenantId, entity);
-        statsStore.report(tenantId.getId(), type);
+        resultStore.report(tenantId.getId(), type);
         log.trace("[{}][{}] Imported entity {}", tenantId, type, entity);
     }
 
@@ -137,8 +137,8 @@ public class TenantImportService {
         cacheManager.getCacheNames().forEach(cacheName -> cacheManager.getCache(cacheName).clear());
     }
 
-    public StatsResult<ObjectType> getResult(UUID tenantId) {
-        return statsStore.getStoredResult(tenantId);
+    public Result<ObjectType> getResult(UUID tenantId) {
+        return resultStore.getStoredResult(tenantId);
     }
 
 }

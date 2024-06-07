@@ -24,7 +24,7 @@ import java.util.Optional;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Data
-public class StatsResult<K> implements Serializable {
+public class Result<K> implements Serializable {
 
     private boolean done;
     private boolean success;

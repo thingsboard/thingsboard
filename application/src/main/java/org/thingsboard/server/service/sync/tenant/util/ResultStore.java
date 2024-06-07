@@ -28,17 +28,17 @@ import java.util.function.BiConsumer;
 import java.util.function.Consumer;
 
 @Slf4j
-public class StatsStore<K> {
+public class ResultStore<K> {
 
     private final String name;
     private final int persistFrequency;
 
-    private final Cache<UUID, StatsResult<K>> results;
+    private final Cache<UUID, Result<K>> results;
     private final org.springframework.cache.Cache resultsCache;
 
     @Builder
-    public StatsStore(String name, int ttlInMinutes, int persistFrequency, BiConsumer<UUID, StatsResult<K>> removalListener,
-                      String cacheName, CacheManager cacheManager) {
+    public ResultStore(String name, int ttlInMinutes, int persistFrequency, BiConsumer<UUID, Result<K>> removalListener,
+                       String cacheName, CacheManager cacheManager) {
         this.name = name;
         this.persistFrequency = persistFrequency;
 
@@ -46,7 +46,7 @@ public class StatsStore<K> {
                 .orElseThrow(() -> new IllegalArgumentException(cacheName + " cache is missing"));
         this.results = Caffeine.newBuilder()
                 .expireAfterAccess(ttlInMinutes, TimeUnit.MINUTES)
-                .<UUID, StatsResult<K>>removalListener((key, result, removalCause) -> {
+                .<UUID, Result<K>>removalListener((key, result, removalCause) -> {
                     if (key != null) {
                         if (removalListener != null) {
                             removalListener.accept(key, result);
@@ -58,7 +58,7 @@ public class StatsStore<K> {
     }
 
     public void report(UUID id, K key) {
-        StatsResult<K> result = getOrCreateResult(id);
+        Result<K> result = getOrCreateResult(id);
         int count = result.report(key);
         if (count % persistFrequency == 0) {
             resultsCache.put(id, result);
@@ -67,18 +67,18 @@ public class StatsStore<K> {
     }
 
     public int get(UUID id, K key) {
-        StatsResult<K> result = getOrCreateResult(id);
+        Result<K> result = getOrCreateResult(id);
         return result.getCount(key);
     }
 
-    public void update(UUID id, Consumer<StatsResult<K>> updater) {
-        StatsResult<K> result = getOrCreateResult(id);
+    public void update(UUID id, Consumer<Result<K>> updater) {
+        Result<K> result = getOrCreateResult(id);
         updater.accept(result);
         flush(id);
     }
 
     public void flush(UUID id, K... keys) {
-        StatsResult<K> result = getOrCreateResult(id);
+        Result<K> result = getOrCreateResult(id);
         resultsCache.put(id, result);
         for (K key : keys) {
             int count = result.getCount(key);
@@ -92,12 +92,12 @@ public class StatsStore<K> {
         log.info("[{}][{}][{}] {} processed", name, id, key, count);
     }
 
-    private StatsResult<K> getOrCreateResult(UUID id) {
-        return results.get(id, k -> new StatsResult<K>());
+    private Result<K> getOrCreateResult(UUID id) {
+        return results.get(id, k -> new Result<K>());
     }
 
-    public StatsResult<K> getStoredResult(UUID id) {
-        return resultsCache.get(id, StatsResult.class);
+    public Result<K> getStoredResult(UUID id) {
+        return resultsCache.get(id, Result.class);
     }
 
 }

@@ -53,7 +53,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.sync.tenant.TenantExportService;
 import org.thingsboard.server.service.sync.tenant.TenantImportService;
-import org.thingsboard.server.service.sync.tenant.util.StatsResult;
+import org.thingsboard.server.service.sync.tenant.util.Result;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
 import org.thingsboard.server.service.sync.tenant.util.TenantImportConfig;
 
@@ -197,10 +197,10 @@ public class TenantController extends BaseController {
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/tenant/export/result/{tenantId}")
-    public StatsResult<ObjectType> getTenantExportResult(@PathVariable UUID tenantId) {
-        StatsResult<ObjectType> result = tenantExportService.getResult(tenantId);
+    public Result<ObjectType> getTenantExportResult(@PathVariable UUID tenantId) {
+        Result<ObjectType> result = tenantExportService.getResult(tenantId);
         if (result == null) {
-            result = new StatsResult<>();
+            result = new Result<>();
         }
         return result;
     }
@@ -230,10 +230,10 @@ public class TenantController extends BaseController {
 
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @GetMapping("/tenant/import/result/{tenantId}")
-    public StatsResult<ObjectType> getTenantImportResult(@PathVariable UUID tenantId) {
-        StatsResult<ObjectType> result = tenantImportService.getResult(tenantId);
+    public Result<ObjectType> getTenantImportResult(@PathVariable UUID tenantId) {
+        Result<ObjectType> result = tenantImportService.getResult(tenantId);
         if (result == null) {
-            result = new StatsResult<>();
+            result = new Result<>();
         }
         return result;
     }

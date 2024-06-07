@@ -66,7 +66,7 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.tenant.TenantDao;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
-import org.thingsboard.server.service.sync.tenant.util.StatsResult;
+import org.thingsboard.server.service.sync.tenant.util.Result;
 import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
 import org.thingsboard.server.utils.TestUtils;
 
@@ -147,7 +147,7 @@ public class TenantExportImportTest extends AbstractControllerTest {
         saveEntity(tenant, TENANT);
         fillTenant();
 
-        StatsResult<ObjectType> exportResult = exportTenant(tenantId);
+        Result<ObjectType> exportResult = exportTenant(tenantId);
         createdEntities.forEach((type, entities) -> {
             int exportedCount = exportResult.getCount(type);
             if (exportedCount != entities.size()) {
@@ -185,7 +185,7 @@ public class TenantExportImportTest extends AbstractControllerTest {
             });
         });
 
-        StatsResult<ObjectType> importResult = importTenant(exportData);
+        Result<ObjectType> importResult = importTenant(exportData);
         createdEntities.forEach((type, entities) -> {
             int importedCount = importResult.getCount(type);
             if (importedCount != entities.size()) {
@@ -211,12 +211,12 @@ public class TenantExportImportTest extends AbstractControllerTest {
         });
     }
 
-    private StatsResult<ObjectType> exportTenant(TenantId tenantId) {
+    private Result<ObjectType> exportTenant(TenantId tenantId) {
         TenantExportConfig exportConfig = new TenantExportConfig();
         exportConfig.setTenantId(tenantId.getId());
         doPost("/api/tenant/export", exportConfig, UUID.class);
-        StatsResult<ObjectType> result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGetTyped("/api/tenant/export/result/" + tenantId.getId(), new TypeReference<>() {}), StatsResult::isDone);
+        Result<ObjectType> result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTyped("/api/tenant/export/result/" + tenantId.getId(), new TypeReference<>() {}), Result::isDone);
         System.err.println(result);
         if (!result.isSuccess()) {
             throw new RuntimeException(result.getError());
@@ -224,14 +224,14 @@ public class TenantExportImportTest extends AbstractControllerTest {
         return result;
     }
 
-    private StatsResult<ObjectType> importTenant(byte[] data) throws Exception {
+    private Result<ObjectType> importTenant(byte[] data) throws Exception {
         MockMultipartFile dataFile = new MockMultipartFile("dataFile", "data.tar", "application/octet-stream", data);
         var request = MockMvcRequestBuilders.multipart(HttpMethod.POST, "/api/tenant/import").file(dataFile);
         setJwtToken(request);
         UUID tenantId = readResponse(mockMvc.perform(request).andExpect(status().isOk()), UUID.class);
 
-        StatsResult<ObjectType> result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
-                .until(() -> doGetTyped("/api/tenant/import/result/" + tenantId, new TypeReference<>() {}), StatsResult::isDone);
+        Result<ObjectType> result = await().atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> doGetTyped("/api/tenant/import/result/" + tenantId, new TypeReference<>() {}), Result::isDone);
         System.err.println(result);
         if (!result.isSuccess()) {
             throw new RuntimeException(result.getError());
