@@ -1411,6 +1411,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
     });
     this.cd.markForCheck();
+    return dashboard.dialogRef.afterClosed();
   }
 
   private elementClick($event: Event) {
