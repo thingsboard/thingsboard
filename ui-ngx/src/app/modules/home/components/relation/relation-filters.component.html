@@ -27,10 +27,7 @@
       <div class="tb-form-table-row align-start"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
         <mat-chip-listbox *ngIf="enableNotOption" class="flex-18 center-stretch" [formControl]="relationFilterControl.get('negate')">
-          <mat-chip-option color="primary" [value]="true"
-                           [disabled]="!relationFilterControl.get('relationType').value">
-            {{ 'relation.not' | translate}}
-          </mat-chip-option>
+          <mat-chip-option color="primary" [value]="true">{{ 'relation.not' | translate }}</mat-chip-option>
         </mat-chip-listbox>
         <tb-relation-type-autocomplete subscriptSizing="dynamic"
                                        class="flex-50" showLabel="false"
