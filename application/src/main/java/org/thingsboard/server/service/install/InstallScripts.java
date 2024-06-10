@@ -382,6 +382,12 @@ public class InstallScripts {
         }
         settings.put("scadaSymbolUrl", symbolUrl);
         ((ObjectNode)descriptor).put("defaultConfig", JacksonUtil.toString(defaultConfig));
+        ((ObjectNode)descriptor).put("sizeX", metadata.getWidgetSizeX());
+        ((ObjectNode)descriptor).put("sizeY", metadata.getWidgetSizeY());
+        String controllerScript = descriptor.get("controllerScript").asText();
+        controllerScript = controllerScript.replaceAll("previewWidth: '\\d*px'", "previewWidth: '" + (metadata.getWidgetSizeX() * 100) + "px'");
+        controllerScript = controllerScript.replaceAll("previewHeight: '\\d*px'", "previewHeight: '" + (metadata.getWidgetSizeY() * 100 + 20) + "px'");
+        ((ObjectNode)descriptor).put("controllerScript", controllerScript);
         var savedWidget = widgetTypeService.saveWidgetType(scadaSymbolWidget);
         return savedWidget.getFqn();
     }

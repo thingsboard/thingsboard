@@ -283,6 +283,8 @@ public class ImageUtils {
         private String title;
         private String description;
         private String[] searchTags;
+        private int widgetSizeX;
+        private int widgetSizeY;
 
         public ScadaSymbolMetadataInfo(String fileName, JsonNode metaData) {
             if (metaData != null && metaData.has("title")) {
@@ -303,6 +305,16 @@ public class ImageUtils {
                 }
             } else {
                 searchTags = new String[0];
+            }
+            if (metaData != null && metaData.has("widgetSizeX")) {
+                widgetSizeX = metaData.get("widgetSizeX").asInt();
+            } else {
+                widgetSizeX = 3;
+            }
+            if (metaData != null && metaData.has("widgetSizeY")) {
+                widgetSizeY = metaData.get("widgetSizeY").asInt();
+            } else {
+                widgetSizeY = 3;
             }
         }
     }

@@ -59,6 +59,8 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-dashboard',
@@ -89,10 +91,28 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   columns: number;
 
   @Input()
+  @coerceBoolean()
+  setGridSize = false;
+
+  @Input()
   margin: number;
 
   @Input()
   outerMargin: boolean;
+
+  @Input()
+  displayGrid: displayGrids = 'onDrag&Resize';
+
+  @Input()
+  gridType: GridType;
+
+  @Input()
+  @coerceBoolean()
+  centerVertical = false;
+
+  @Input()
+  @coerceBoolean()
+  centerHorizontal = false;
 
   @Input()
   isEdit: boolean;
@@ -208,7 +228,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindow = this.timeService.defaultTimewindow();
     }
     this.gridsterOpts = {
-      gridType: GridType.ScrollVertical,
+      gridType: this.gridType || GridType.ScrollVertical,
       keepFixedHeightInMobile: true,
       disableWarnings: false,
       disableAutoPositionOnConflict: false,
@@ -216,6 +236,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       swap: false,
       maxRows: 3000,
       minCols: this.columns ? this.columns : 24,
+      setGridSize: this.setGridSize,
       maxCols: 3000,
       maxItemCols: 1000,
       maxItemRows: 1000,
@@ -226,6 +247,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       minItemRows: 1,
       defaultItemCols: 8,
       defaultItemRows: 6,
+      displayGrid: this.displayGrid,
       resizable: {enabled: this.isEdit},
       draggable: {enabled: this.isEdit},
       itemChangeCallback: item => this.dashboardWidgets.sortWidgets(),
@@ -530,7 +552,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     if (autofillHeight) {
       this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : GridType.Fit;
     } else {
-      this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : GridType.ScrollVertical;
+      this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : this.gridType || GridType.ScrollVertical;
     }
     const mobileBreakPoint = this.isMobileSize ? 20000 : 0;
     this.gridsterOpts.mobileBreakpoint = mobileBreakPoint;

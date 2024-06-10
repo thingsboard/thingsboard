@@ -63,5 +63,12 @@
     min-height: 0;
     max-width: 50%;
     background: #fff;
+    &.preview {
+      #gridster-parent {
+        #gridster-background {
+          background-color: #eee;
+        }
+      }
+    }
   }
 }

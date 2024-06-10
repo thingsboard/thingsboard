@@ -52,6 +52,23 @@
             </tb-string-items-list>
           </div>
         </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.widget-size</div>
+          <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
+            <div class="tb-small-label">{{ 'scada.cols' | translate }}</div>
+            <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+              <input matInput formControlName="widgetSizeX" required
+                     [min]="1" [max]="24" [step]="1"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <div class="tb-small-label">{{ 'scada.rows' | translate }}</div>
+            <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+              <input matInput formControlName="widgetSizeY" required
+                     [min]="1" [max]="24" [step]="1"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        </div>
         <div class="tb-form-panel stroked">
           <mat-expansion-panel class="tb-settings" expanded>
             <mat-expansion-panel-header fxLayout="row wrap">

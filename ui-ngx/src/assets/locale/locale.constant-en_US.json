@@ -3455,6 +3455,9 @@
         "title": "Title",
         "description": "Description",
         "search-tags": "Search tags",
+        "widget-size": "Widget size",
+        "cols": "cols",
+        "rows": "rows",
         "state-render-function": "State render function",
         "preview": "Preview",
         "preview-widget-action-text": "Widget action '{{type}}' successfully invoked!",
@@ -3464,6 +3467,8 @@
         "browse-symbol-from-gallery": "Browse SCADA symbol from gallery",
         "zoom-in": "Zoom In",
         "zoom-out": "Zoom Out",
+        "create-widget": "Create widget",
+        "create-widget-from-symbol": "Create widget from SCADA symbol",
         "tag": {
             "tag": "Tag",
             "on-click-action": "On click action",

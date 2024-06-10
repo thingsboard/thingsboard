@@ -177,6 +177,8 @@ export interface ScadaSymbolMetadata {
   title: string;
   description?: string;
   searchTags?: string[];
+  widgetSizeX: number;
+  widgetSizeY: number;
   stateRenderFunction?: string;
   stateRender?: ScadaSymbolStateRenderFunction;
   tags: ScadaSymbolTag[];
@@ -186,6 +188,8 @@ export interface ScadaSymbolMetadata {
 
 export const emptyMetadata = (): ScadaSymbolMetadata => ({
   title: '',
+  widgetSizeX: 3,
+  widgetSizeY: 3,
   tags: [],
   behavior: [],
   properties: []
@@ -443,12 +447,14 @@ export class ScadaSymbolObject {
       this.stateValueSubjects[stateValueId].unsubscribe();
     }
     this.valueActions.forEach(v => v.destroy());
-    for (const tag of this.metadata.tags) {
-      const elements = this.context.tags[tag.tag];
-      elements.forEach(element => {
-        element.timeline().finish();
-        element.timeline(null);
-      });
+    if (this.context) {
+      for (const tag of this.metadata.tags) {
+        const elements = this.context.tags[tag.tag];
+        elements.forEach(element => {
+          element.timeline().finish();
+          element.timeline(null);
+        });
+      }
     }
     if (this.svgShape) {
       this.svgShape.remove();

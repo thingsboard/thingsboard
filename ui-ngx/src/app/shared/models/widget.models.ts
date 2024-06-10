@@ -187,6 +187,7 @@ export interface WidgetTypeParameters {
   defaultLatestDataKeysFunction?: (configComponent: any, configData: any) => DataKey[];
   dataKeySettingsFunction?: DataKeySettingsFunction;
   displayRpcMessageToast?: boolean;
+  targetDeviceOptional?: boolean;
 }
 
 export interface WidgetControllerDescriptor {

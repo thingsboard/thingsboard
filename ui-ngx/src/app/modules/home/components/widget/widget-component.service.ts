@@ -589,6 +589,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
         result.typeParameters.displayRpcMessageToast = true;
       }
+      if (isUndefined(result.typeParameters.targetDeviceOptional)) {
+        result.typeParameters.targetDeviceOptional = false;
+      }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();
       } else {

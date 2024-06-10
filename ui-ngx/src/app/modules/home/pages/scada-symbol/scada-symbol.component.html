@@ -29,6 +29,13 @@
                             [showCloseDetails]="false"
                             headerHeightPx="64"
                             headerTitle="{{symbolData?.imageResource?.title}}">
+            <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+              <button mat-stroked-button
+                      [disabled]="scadaSymbolFormGroup.invalid"
+                      (click)="createWidget()">
+                {{ 'scada.create-widget' | translate }}
+              </button>
+            </div>
             <div *ngIf="previewMode" class="tb-scada-symbol-editor-preview-content tb-absolute-fill">
               <div class="tb-scada-symbol-editor-preview-header">
                 <button mat-button
@@ -110,7 +117,7 @@
             </div>
           </tb-details-panel>
         </mat-drawer>
-        <mat-drawer-content class="tb-scada-symbol-editor-content">
+        <mat-drawer-content class="tb-scada-symbol-editor-content" [class.preview]="previewMode">
           <tb-scada-symbol-editor *ngIf="!previewMode" #symbolEditor
                                   [readonly]="readonly"
                                   [data]="symbolEditorData"
@@ -121,8 +128,13 @@
                         class="tb-absolute-fill"
                         [aliasController]="aliasController"
                         [widgets]="previewWidgets"
-                        [autofillHeight]="true"
-                        [columns]="24"
+                        [autofillHeight]="false"
+                        displayGrid="always"
+                        [gridType]="previewWidget.sizeX >= previewWidget.sizeY ? GridType.ScrollVertical : GridType.ScrollHorizontal"
+                        [columns]="previewWidget.sizeX"
+                        setGridSize
+                        [centerVertical]="previewWidget.sizeX >= previewWidget.sizeY"
+                        [centerHorizontal]="previewWidget.sizeX < previewWidget.sizeY"
                         [margin]="0"
                         [isEdit]="false"
                         [isMobileDisabled]="true"

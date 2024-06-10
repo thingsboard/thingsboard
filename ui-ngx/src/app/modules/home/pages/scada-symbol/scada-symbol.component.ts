@@ -45,7 +45,7 @@ import {
   ScadaSymbolEditorData
 } from '@home/pages/scada-symbol/scada-symbol-editor.component';
 import { ImageService } from '@core/http/image.service';
-import { imageResourceType, IMAGES_URL_PREFIX } from '@shared/models/resource.models';
+import { imageResourceType, IMAGES_URL_PREFIX, TB_IMAGE_PREFIX } from '@shared/models/resource.models';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import { IAliasController, IStateController, StateParams } from '@core/api/widget-api.models';
 import { EntityAliases } from '@shared/models/alias.models';
@@ -54,7 +54,7 @@ import { AliasController } from '@core/api/alias-controller';
 import { EntityService } from '@core/http/entity.service';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { Widget, widgetType } from '@shared/models/widget.models';
+import { Widget, WidgetConfig, widgetType, WidgetTypeDetails } from '@shared/models/widget.models';
 import {
   scadaSymbolWidgetDefaultSettings,
   ScadaSymbolWidgetSettings
@@ -71,6 +71,14 @@ import {
   UploadImageDialogData, UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
+import { BackgroundType } from '@shared/models/widget-settings.models';
+import { GridType } from 'angular-gridster2';
+import {
+  SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogData,
+  SaveWidgetTypeAsDialogResult
+} from '@home/pages/widget/save-widget-type-as-dialog.component';
+import { WidgetService } from '@core/http/widget.service';
+import { de } from 'date-fns/locale';
 
 @Component({
   selector: 'tb-scada-symbol',
@@ -82,6 +90,8 @@ export class ScadaSymbolComponent extends PageComponent
   implements OnInit, OnDestroy, AfterViewInit, HasDirtyFlag, ScadaSymbolEditObjectCallbacks {
 
   widgetType = widgetType;
+
+  GridType = GridType;
 
   @HostBinding('style.width') width = '100%';
   @HostBinding('style.height') height = '100%';
@@ -115,6 +125,8 @@ export class ScadaSymbolComponent extends PageComponent
     fetchCellClickColumns: () => []
   };
 
+  previewWidget: Widget;
+
   previewWidgets: Array<Widget> = [];
 
   tags: string[];
@@ -124,8 +136,6 @@ export class ScadaSymbolComponent extends PageComponent
   symbolEditorDirty = false;
 
   private previewScadaSymbolObjectSettings: ScadaSymbolObjectSettings;
-
-  private previewWidget: Widget;
 
   private forcePristine = false;
 
@@ -149,6 +159,7 @@ export class ScadaSymbolComponent extends PageComponent
               private utils: UtilsService,
               private translate: TranslateService,
               private imageService: ImageService,
+              private widgetService: WidgetService,
               private dialog: MatDialog) {
     super(store);
   }
@@ -247,14 +258,23 @@ export class ScadaSymbolComponent extends PageComponent
           scadaSymbolUrl: null,
           scadaSymbolContent: this.symbolData.scadaSymbolContent,
           scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings,
-          padding: '0'
+          padding: '0',
+          background: {
+            type: BackgroundType.color,
+            color: 'rgba(0,0,0,0)',
+            overlay: {
+              enabled: false,
+              color: 'rgba(255,255,255,0.72)',
+              blur: 3
+            }
+          }
          }
     };
     this.previewWidget = {
       typeFullFqn: 'system.scada_symbol',
       type: widgetType.rpc,
-      sizeX: 24,
-      sizeY: 24,
+      sizeX: this.previewMetadata.widgetSizeX || 3,
+      sizeY: this.previewMetadata.widgetSizeY || 3,
       row: 0,
       col: 0,
       config: {
@@ -262,7 +282,8 @@ export class ScadaSymbolComponent extends PageComponent
         showTitle: false,
         dropShadow: false,
         padding: '0',
-        margin: '0'
+        margin: '0',
+        backgroundColor: 'rgba(0,0,0,0)'
       }
     };
     this.previewWidgets = [this.previewWidget];
@@ -364,6 +385,56 @@ export class ScadaSymbolComponent extends PageComponent
       }
     );
     linkElement.dispatchEvent(clickEvent);
+  }
+
+  createWidget() {
+    const metadata: ScadaSymbolMetadata = this.scadaSymbolFormGroup.get('metadata').value;
+    this.dialog.open<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogData,
+      SaveWidgetTypeAsDialogResult>(SaveWidgetTypeAsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        title: metadata.title,
+        dialogTitle: 'scada.create-widget-from-symbol',
+        saveAsActionTitle: 'action.create'
+      }
+    }).afterClosed().subscribe(
+      (saveWidgetAsData) => {
+        if (saveWidgetAsData) {
+          this.widgetService.getWidgetType('system.scada_symbol').subscribe(
+            (widgetTemplate) => {
+              const symbolUrl = TB_IMAGE_PREFIX + this.symbolData.imageResource.link;
+              const widget: WidgetTypeDetails = {
+                image: symbolUrl,
+                description: metadata.description,
+                tags: metadata.searchTags,
+                ...widgetTemplate
+              };
+              widget.fqn = undefined;
+              widget.id = undefined;
+              widget.name = saveWidgetAsData.widgetName;
+              const descriptor = widget.descriptor;
+              descriptor.sizeX = metadata.widgetSizeX;
+              descriptor.sizeY = metadata.widgetSizeY;
+              descriptor.controllerScript = descriptor.controllerScript
+                    .replace(/previewWidth: '\d*px'/gm, `previewWidth: '${metadata.widgetSizeX * 100}px'`);
+              descriptor.controllerScript = descriptor.controllerScript
+                    .replace(/previewHeight: '\d*px'/gm, `previewHeight: '${metadata.widgetSizeY * 100 + 20}px'`);
+              const config: WidgetConfig = JSON.parse(descriptor.defaultConfig);
+              config.title = saveWidgetAsData.widgetName;
+              config.settings = config.settings || {};
+              config.settings.scadaSymbolUrl = symbolUrl;
+              descriptor.defaultConfig = JSON.stringify(config);
+              this.widgetService.saveWidgetType(widget).subscribe((saved) => {
+                if (saveWidgetAsData.widgetBundleId) {
+                  this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, saved.fqn).subscribe();
+                }
+              });
+            }
+          );
+        }
+      }
+    );
   }
 
   private updatePreviewWidgetSettings() {
