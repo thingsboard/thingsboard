@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
@@ -36,26 +37,31 @@ public abstract class BasicKvEntry implements KvEntry {
         return key;
     }
 
+    @JsonIgnore
     @Override
     public Optional<String> getStrValue() {
         return Optional.ofNullable(null);
     }
 
+    @JsonIgnore
     @Override
     public Optional<Long> getLongValue() {
         return Optional.ofNullable(null);
     }
 
+    @JsonIgnore
     @Override
     public Optional<Boolean> getBooleanValue() {
         return Optional.ofNullable(null);
     }
 
+    @JsonIgnore
     @Override
     public Optional<Double> getDoubleValue() {
         return Optional.ofNullable(null);
     }
 
+    @JsonIgnore
     @Override
     public Optional<String> getJsonValue() {
         return Optional.ofNullable(null);

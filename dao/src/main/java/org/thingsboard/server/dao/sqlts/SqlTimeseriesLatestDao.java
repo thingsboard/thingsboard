@@ -25,6 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.LatestTsKv;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
@@ -248,6 +250,24 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     protected ListenableFuture<Void> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {
+        return tsLatestQueue.add(toEntity(entityId, tsKvEntry));
+    }
+
+    private TsKvEntry getLatestTsKvEntry(EntityId entityId, String key) {
+        TsKvEntry latest = doFindLatest(entityId, key);
+        if (latest == null) {
+            latest = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
+        }
+        return latest;
+    }
+
+    @Override
+    public LatestTsKv save(TenantId tenantId, LatestTsKv latestTsKv) {
+        insertLatestTsRepository.saveOrUpdate(List.of(toEntity(latestTsKv.getEntityId(), latestTsKv.getEntry())));
+        return latestTsKv;
+    }
+
+    private TsKvLatestEntity toEntity(EntityId entityId, TsKvEntry tsKvEntry) {
         TsKvLatestEntity latestEntity = new TsKvLatestEntity();
         latestEntity.setEntityId(entityId.getId());
         latestEntity.setTs(tsKvEntry.getTs());
@@ -257,16 +277,12 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         latestEntity.setLongValue(tsKvEntry.getLongValue().orElse(null));
         latestEntity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
         latestEntity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
-
-        return tsLatestQueue.add(latestEntity);
+        return latestEntity;
     }
 
-    private TsKvEntry getLatestTsKvEntry(EntityId entityId, String key) {
-        TsKvEntry latest = doFindLatest(entityId, key);
-        if (latest == null) {
-            latest = new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry(key, null));
-        }
-        return latest;
+    @Override
+    public ObjectType getType() {
+        return ObjectType.LATEST_TS_KV;
     }
 
 }

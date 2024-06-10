@@ -36,4 +36,8 @@ public interface AlarmCommentRepository extends JpaRepository<AlarmCommentEntity
                     "WHERE a.alarmId = :alarmId ")
     Page<AlarmCommentInfoEntity> findAllByAlarmId(@Param("alarmId") UUID alarmId,
                                              Pageable pageable);
+
+    @Query("SELECT c FROM AlarmCommentEntity c WHERE c.userId IN (SELECT u.id FROM UserEntity u WHERE u.tenantId = :tenantId)")
+    Page<AlarmCommentEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+
 }

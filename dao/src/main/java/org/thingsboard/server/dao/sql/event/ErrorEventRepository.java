@@ -108,4 +108,5 @@ public interface ErrorEventRepository extends EventRepository<ErrorEventEntity, 
                       @Param("serviceId") String server,
                       @Param("method") String method,
                       @Param("error") String error);
+
 }

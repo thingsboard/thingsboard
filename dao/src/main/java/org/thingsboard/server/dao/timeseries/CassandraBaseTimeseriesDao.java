@@ -28,13 +28,19 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.env.Environment;
 import org.springframework.core.env.Profiles;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -45,6 +51,7 @@ import org.thingsboard.server.common.data.kv.IntervalType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
+import org.thingsboard.server.common.data.kv.TsKv;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntryAggWrapper;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -54,9 +61,6 @@ import org.thingsboard.server.dao.sqlts.AggregationTimeseriesDao;
 import org.thingsboard.server.dao.util.NoSqlTsDao;
 import org.thingsboard.server.dao.util.TimeUtils;
 
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
@@ -69,6 +73,7 @@ import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
@@ -76,7 +81,6 @@ import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 /**
  * @author Andrew Shvayka
  */
-@SuppressWarnings("UnstableApiUsage")
 @Component
 @Slf4j
 @NoSqlTsDao
@@ -279,7 +283,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                 }
                 endTs = Math.min(endTs, endPeriod);
                 ReadTsKvQuery subQuery = new BaseReadTsKvQuery(query.getKey(), startTs, endTs, endTs - startTs, 1, query.getAggregation(), query.getOrder());
-                futures.add(findAndAggregateAsync(tenantId, entityId, subQuery, toPartitionTs(startTs), toPartitionTs(endTs)));
+                futures.add(findAndAggregateAsync(tenantId, entityId, subQuery));
                 startPeriod = endTs;
             }
             ListenableFuture<List<Optional<TsKvEntryAggWrapper>>> future = Futures.allAsList(futures);
@@ -308,26 +312,54 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
+    public ListenableFuture<Void> findAllAsync(TenantId tenantId, EntityId entityId, String key, Consumer<TsKvEntry> processor) {
+        ListenableFuture<List<Long>> partitionsFuture = getPartitions(tenantId, entityId, key, 0, System.currentTimeMillis());
+        SettableFuture<List<TsKvEntry>> resultFuture = SettableFuture.create();
+        Futures.addCallback(partitionsFuture, new FutureCallback<>() {
+            @Override
+            public void onSuccess(List<Long> partitions) {
+                TsKvQueryCursor cursor = TsKvQueryCursor.builder()
+                        .entityType(entityId.getEntityType().name())
+                        .entityId(entityId.getId())
+                        .baseQuery(new BaseReadTsKvQuery(key, 0, System.currentTimeMillis(), Integer.MAX_VALUE, "ASC"))
+                        .partitions(partitions)
+                        .dataProcessor(tsKvEntries -> tsKvEntries.forEach(processor))
+                        .build();
+                findAllAsyncSequentiallyWithLimit(tenantId, cursor, resultFuture);
+            }
+
+            @Override
+            public void onFailure(Throwable t) {
+                resultFuture.setException(t);
+            }
+        }, readResultsProcessingExecutor);
+        return Futures.transform(resultFuture, result -> null, MoreExecutors.directExecutor());
+    }
+
+    @Override
     public void cleanup(long systemTtl) {
         //Cleanup by TTL is native for Cassandra
     }
 
     private ListenableFuture<ReadTsKvQueryResult> findAllAsyncWithLimit(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
-        long minPartition = toPartitionTs(query.getStartTs());
-        long maxPartition = toPartitionTs(query.getEndTs());
-        final ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(tenantId, query, entityId, minPartition, maxPartition);
-        final SimpleListenableFuture<List<TsKvEntry>> resultFuture = new SimpleListenableFuture<>();
-
+        ListenableFuture<List<Long>> partitionsListFuture = getPartitions(tenantId, entityId, query.getKey(), query.getStartTs(), query.getEndTs());
+        SettableFuture<List<TsKvEntry>> resultFuture = SettableFuture.create();
         Futures.addCallback(partitionsListFuture, new FutureCallback<>() {
             @Override
             public void onSuccess(@Nullable List<Long> partitions) {
-                TsKvQueryCursor cursor = new TsKvQueryCursor(entityId.getEntityType().name(), entityId.getId(), query, partitions);
+                TsKvQueryCursor cursor = TsKvQueryCursor.builder()
+                        .entityType(entityId.getEntityType().name())
+                        .entityId(entityId.getId())
+                        .baseQuery(query)
+                        .partitions(partitions)
+                        .build();
                 findAllAsyncSequentiallyWithLimit(tenantId, cursor, resultFuture);
             }
 
             @Override
             public void onFailure(Throwable t) {
                 log.error("[{}][{}] Failed to fetch partitions for interval {}-{}", entityId.getEntityType().name(), entityId.getId(), toPartitionTs(query.getStartTs()), toPartitionTs(query.getEndTs()), t);
+                resultFuture.setException(t);
             }
         }, readResultsProcessingExecutor);
 
@@ -345,7 +377,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         return tsFormat.truncatedTo(time).toInstant(ZoneOffset.UTC).toEpochMilli();
     }
 
-    private void findAllAsyncSequentiallyWithLimit(TenantId tenantId, final TsKvQueryCursor cursor, final SimpleListenableFuture<List<TsKvEntry>> resultFuture) {
+    private void findAllAsyncSequentiallyWithLimit(TenantId tenantId, final TsKvQueryCursor cursor, final SettableFuture<List<TsKvEntry>> resultFuture) {
         if (cursor.isFull() || !cursor.hasNextPartition()) {
             resultFuture.set(cursor.getData());
         } else {
@@ -379,7 +411,8 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
                             @Override
                             public void onFailure(Throwable t) {
-                                log.error("[{}][{}] Failed to fetch data for query {}-{}", stmt, t);
+                                log.error("[{}] Failed to fetch data for query {}", tenantId, stmt, t);
+                                resultFuture.setException(t);
                             }
                         }, readResultsProcessingExecutor);
 
@@ -389,19 +422,20 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
 
                 @Override
                 public void onFailure(Throwable t) {
-                    log.error("[{}][{}] Failed to fetch data for query {}-{}", stmt, t);
+                    log.error("[{}] Failed to fetch data for query {}", tenantId, stmt, t);
+                    resultFuture.setException(t);
                 }
             }, readResultsProcessingExecutor);
         }
     }
 
-    private ListenableFuture<Optional<TsKvEntryAggWrapper>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query, long minPartition, long maxPartition) {
+    private ListenableFuture<Optional<TsKvEntryAggWrapper>> findAndAggregateAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         final Aggregation aggregation = query.getAggregation();
         final String key = query.getKey();
         final long startTs = query.getStartTs();
         final long endTs = query.getEndTs();
         final long ts = startTs + (endTs - startTs) / 2;
-        ListenableFuture<List<Long>> partitionsListFuture = getPartitionsFuture(tenantId, query, entityId, minPartition, maxPartition);
+        ListenableFuture<List<Long>> partitionsListFuture = getPartitions(tenantId, entityId, key, startTs, endTs);
         ListenableFuture<List<TbResultSet>> aggregationChunks = Futures.transformAsync(partitionsListFuture,
                 getFetchChunksAsyncFunction(tenantId, entityId, key, aggregation, startTs, endTs), readResultsProcessingExecutor);
 
@@ -416,14 +450,17 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
                         readResultsProcessingExecutor);
     }
 
-    private ListenableFuture<List<Long>> getPartitionsFuture(TenantId tenantId, ReadTsKvQuery query, EntityId entityId, long minPartition, long maxPartition) {
+    private ListenableFuture<List<Long>> getPartitions(TenantId tenantId, EntityId entityId, String key, long startTs, long endTs) {
         if (isFixedPartitioning()) { //no need to fetch partitions from DB
             return Futures.immediateFuture(FIXED_PARTITION);
         }
+
+        long minPartition = toPartitionTs(startTs);
+        long maxPartition = toPartitionTs(endTs);
         if (!isUseTsKeyValuePartitioningOnRead()) {
             return Futures.immediateFuture(calculatePartitions(minPartition, maxPartition));
         }
-        TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, query.getKey(), minPartition, maxPartition);
+        TbResultSetFuture partitionsFuture = fetchPartitions(tenantId, entityId, key, minPartition, maxPartition);
         return Futures.transformAsync(partitionsFuture, getPartitionsArrayFunction(), readResultsProcessingExecutor);
     }
 
@@ -511,6 +548,7 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         public void onFailure(Throwable t) {
 
         }
+
     }
 
     private long computeTtl(long ttl) {
@@ -799,4 +837,19 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
         }
         return fetchStmts;
     }
+
+    @SneakyThrows
+    @Override
+    public TsKv save(TenantId tenantId, TsKv tsKv) {
+        ListenableFuture<Integer> partitionFuture = savePartition(tenantId, tsKv.getEntityId(), tsKv.getEntry().getTs(), tsKv.getEntry().getKey());
+        ListenableFuture<Integer> tsKvFuture = save(tenantId, tsKv.getEntityId(), tsKv.getEntry(), tsKv.getTtl());
+        Futures.allAsList(partitionFuture, tsKvFuture).get(30, TimeUnit.SECONDS);
+        return tsKv;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.TS_KV;
+    }
+
 }

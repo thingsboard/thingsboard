@@ -22,12 +22,14 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.model.sql.EdgeEntity;
 import org.thingsboard.server.dao.model.sql.EdgeInfoEntity;
@@ -35,7 +37,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -44,7 +45,7 @@ import static org.thingsboard.server.dao.DaoUtil.convertTenantEntityTypesToDto;
 @Component
 @Slf4j
 @SqlDao
-public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements EdgeDao {
+public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements EdgeDao, TenantEntityDao<Edge> {
 
     @Autowired
     private EdgeRepository edgeRepository;
@@ -194,8 +195,18 @@ public class JpaEdgeDao extends JpaAbstractDao<EdgeEntity, Edge> implements Edge
     }
 
     @Override
+    public PageData<Edge> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findEdgesByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.EDGE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.EDGE;
     }
 
 }

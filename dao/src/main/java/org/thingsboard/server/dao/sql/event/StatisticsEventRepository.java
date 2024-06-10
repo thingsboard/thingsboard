@@ -31,7 +31,7 @@ import java.util.UUID;
 public interface StatisticsEventRepository extends EventRepository<StatisticsEventEntity, StatisticsEvent>, JpaRepository<StatisticsEventEntity, UUID> {
 
     @Override
-    @Query(nativeQuery = true,  value = "SELECT * FROM stats_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
+    @Query(nativeQuery = true, value = "SELECT * FROM stats_event e WHERE e.tenant_id = :tenantId AND e.entity_id = :entityId ORDER BY e.ts DESC LIMIT :limit")
     List<StatisticsEventEntity> findLatestEvents(@Param("tenantId") UUID tenantId, @Param("entityId") UUID entityId, @Param("limit") int limit);
 
     @Query("SELECT e FROM StatisticsEventEntity e WHERE " +
@@ -117,4 +117,5 @@ public interface StatisticsEventRepository extends EventRepository<StatisticsEve
                       @Param("maxMessagesProcessed") Integer maxMessagesProcessed,
                       @Param("minErrorsOccurred") Integer minErrorsOccurred,
                       @Param("maxErrorsOccurred") Integer maxErrorsOccurred);
+
 }

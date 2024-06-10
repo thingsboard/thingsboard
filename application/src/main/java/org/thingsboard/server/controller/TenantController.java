@@ -20,16 +20,25 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RequestPart;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.multipart.MultipartFile;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -42,6 +51,14 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.tenant.TbTenantService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
+import org.thingsboard.server.service.sync.tenant.TenantExportService;
+import org.thingsboard.server.service.sync.tenant.TenantImportService;
+import org.thingsboard.server.service.sync.tenant.util.Result;
+import org.thingsboard.server.service.sync.tenant.util.TenantExportConfig;
+import org.thingsboard.server.service.sync.tenant.util.TenantImportConfig;
+
+import java.io.IOException;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_DATA_PARAMETERS;
@@ -67,6 +84,8 @@ public class TenantController extends BaseController {
 
     private final TenantService tenantService;
     private final TbTenantService tbTenantService;
+    private final TenantExportService tenantExportService;
+    private final TenantImportService tenantImportService;
 
     @ApiOperation(value = "Get Tenant (getTenantById)",
             notes = "Fetch the Tenant object based on the provided Tenant Id. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -167,6 +186,56 @@ public class TenantController extends BaseController {
     ) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return checkNotNull(tenantService.findTenantInfos(pageLink));
+    }
+
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PostMapping("/tenant/export")
+    public UUID exportTenant(@RequestBody TenantExportConfig exportConfig) {
+        return tenantExportService.exportTenant(exportConfig);
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @GetMapping("/tenant/export/result/{tenantId}")
+    public Result<ObjectType> getTenantExportResult(@PathVariable UUID tenantId) {
+        Result<ObjectType> result = tenantExportService.getResult(tenantId);
+        if (result == null) {
+            result = new Result<>();
+        }
+        return result;
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @DeleteMapping("/tenant/export/{tenantId}")
+    public void cancelTenantExport(@PathVariable UUID tenantId) {
+        tenantExportService.cancelExport(tenantId);
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @GetMapping("/tenant/export/result/{tenantId}/download")
+    public ResponseEntity<InputStreamResource> downloadTenantExportData(@PathVariable UUID tenantId) {
+        return tenantExportService.downloadResult(tenantId);
+    }
+
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @PostMapping(value = "/tenant/import", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public UUID importTenant(@RequestPart MultipartFile dataFile,
+                             @RequestPart(required = false) TenantImportConfig importConfig) throws IOException {
+        if (importConfig == null) {
+            importConfig = new TenantImportConfig();
+        }
+        return tenantImportService.importTenant(dataFile.getInputStream(), importConfig);
+    }
+
+    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+    @GetMapping("/tenant/import/result/{tenantId}")
+    public Result<ObjectType> getTenantImportResult(@PathVariable UUID tenantId) {
+        Result<ObjectType> result = tenantImportService.getResult(tenantId);
+        if (result == null) {
+            result = new Result<>();
+        }
+        return result;
     }
 
 }

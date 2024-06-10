@@ -18,8 +18,13 @@ package org.thingsboard.server.dao.sql.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.OAuth2MobileEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2MobileDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -31,7 +36,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @SqlDao
-public class JpaOAuth2MobileDao extends JpaAbstractDao<OAuth2MobileEntity, OAuth2Mobile> implements OAuth2MobileDao {
+public class JpaOAuth2MobileDao extends JpaAbstractDao<OAuth2MobileEntity, OAuth2Mobile> implements OAuth2MobileDao, TenantEntityDao<OAuth2Mobile> {
 
     private final OAuth2MobileRepository repository;
 
@@ -48,6 +53,16 @@ public class JpaOAuth2MobileDao extends JpaAbstractDao<OAuth2MobileEntity, OAuth
     @Override
     public List<OAuth2Mobile> findByOAuth2ParamsId(UUID oauth2ParamsId) {
         return DaoUtil.convertDataList(repository.findByOauth2ParamsId(oauth2ParamsId));
+    }
+
+    @Override
+    public PageData<OAuth2Mobile> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(repository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.OAUTH2_MOBILE;
     }
 
 }

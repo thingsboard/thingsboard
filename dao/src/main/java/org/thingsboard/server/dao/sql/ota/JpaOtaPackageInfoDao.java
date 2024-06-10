@@ -33,7 +33,6 @@ import org.thingsboard.server.dao.ota.OtaPackageInfoDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -91,7 +90,14 @@ public class JpaOtaPackageInfoDao extends JpaAbstractDao<OtaPackageInfoEntity, O
     }
 
     @Override
+    public PageData<OtaPackageId> findOtaPackageIdsByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
+        return DaoUtil.pageToPageData(otaPackageInfoRepository.findIdsByDeviceProfileId(deviceProfileId.getId(), DaoUtil.toPageable(pageLink)))
+                .mapData(OtaPackageId::new);
+    }
+
+    @Override
     public boolean isOtaPackageUsed(OtaPackageId otaPackageId, OtaPackageType otaPackageType, DeviceProfileId deviceProfileId) {
         return otaPackageInfoRepository.isOtaPackageUsed(otaPackageId.getId(), deviceProfileId.getId(), otaPackageType.name());
     }
+
 }

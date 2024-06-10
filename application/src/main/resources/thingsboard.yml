@@ -593,6 +593,12 @@ cache:
     mobileSecretKey:
       timeToLiveInMinutes: "${CACHE_MOBILE_SECRET_KEY_TTL:2}" # QR secret key cache TTL
       maxSize: "${CACHE_MOBILE_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
+    tenantExportResults:
+      timeToLiveInMinutes: "${CACHE_TENANT_EXPORT_RESULTS_TTL:1440}" # Tenant export results cache TTL, 24 hours by default
+      maxSize: "${CACHE_TENANT_EXPORT_RESULTS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    tenantImportResults:
+      timeToLiveInMinutes: "${CACHE_TENANT_IMPORT_RESULTS_TTL:1440}" # Tenant import results cache TTL, 24 hours by default
+      maxSize: "${CACHE_TENANT_IMPORT_RESULTS_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:

@@ -18,10 +18,15 @@ package org.thingsboard.server.dao.sql.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2RegistrationDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -33,7 +38,7 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @SqlDao
-public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationEntity, OAuth2Registration> implements OAuth2RegistrationDao {
+public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationEntity, OAuth2Registration> implements OAuth2RegistrationDao, TenantEntityDao<OAuth2Registration> {
 
     private final OAuth2RegistrationRepository repository;
 
@@ -61,6 +66,16 @@ public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationE
     @Override
     public String findAppSecret(UUID id, String pkgName) {
         return repository.findAppSecret(id, pkgName);
+    }
+
+    @Override
+    public PageData<OAuth2Registration> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(repository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.OAUTH2_REGISTRATION;
     }
 
 }

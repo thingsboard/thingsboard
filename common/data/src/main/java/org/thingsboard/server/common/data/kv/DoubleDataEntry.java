@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+
 import java.util.Objects;
 import java.util.Optional;
 
@@ -22,7 +25,8 @@ public class DoubleDataEntry extends BasicKvEntry {
 
     private final Double value;
 
-    public DoubleDataEntry(String key, Double value) {
+    @JsonCreator
+    public DoubleDataEntry(@JsonProperty("key") String key, @JsonProperty("value") Double value) {
         super(key);
         this.value = value;
     }
@@ -62,7 +66,7 @@ public class DoubleDataEntry extends BasicKvEntry {
                 "value=" + value +
                 "} " + super.toString();
     }
-    
+
     @Override
     public String getValueAsString() {
         return Double.toString(value);

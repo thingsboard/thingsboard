@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.NotificationTargetId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -103,6 +103,11 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     }
 
     @Override
+    public PageData<NotificationTarget> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     protected Class<NotificationTargetEntity> getEntityClass() {
         return NotificationTargetEntity.class;
     }
@@ -115,6 +120,11 @@ public class JpaNotificationTargetDao extends JpaAbstractDao<NotificationTargetE
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TARGET;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.NOTIFICATION_TARGET;
     }
 
 }

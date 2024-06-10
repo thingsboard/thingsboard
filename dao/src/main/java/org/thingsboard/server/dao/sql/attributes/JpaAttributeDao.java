@@ -28,9 +28,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.AttributeKv;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
@@ -179,15 +181,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Override
     public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, AttributeKvEntry attribute) {
-        AttributeKvEntity entity = new AttributeKvEntity();
-        entity.setId(new AttributeKvCompositeKey(entityId.getId(), attributeScope.getId(), keyDictionaryDao.getOrSaveKeyId(attribute.getKey())));
-        entity.setLastUpdateTs(attribute.getLastUpdateTs());
-        entity.setStrValue(attribute.getStrValue().orElse(null));
-        entity.setDoubleValue(attribute.getDoubleValue().orElse(null));
-        entity.setLongValue(attribute.getLongValue().orElse(null));
-        entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
-        entity.setJsonValue(attribute.getJsonValue().orElse(null));
-        return addToQueue(entity, attribute.getKey());
+        return addToQueue(toEntity(entityId, attributeScope, attribute), attribute.getKey());
     }
 
     private ListenableFuture<String> addToQueue(AttributeKvEntity entity, String key) {
@@ -222,4 +216,28 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 attributeType,
                 attributeKey);
     }
+
+    @Override
+    public AttributeKv save(TenantId tenantId, AttributeKv attributeKv) {
+        attributeKvInsertRepository.saveOrUpdate(List.of(toEntity(attributeKv.getEntityId(), attributeKv.getScope(), attributeKv.getEntry())));
+        return attributeKv;
+    }
+
+    private AttributeKvEntity toEntity(EntityId entityId, AttributeScope scope, AttributeKvEntry entry) {
+        AttributeKvEntity entity = new AttributeKvEntity();
+        entity.setId(new AttributeKvCompositeKey(entityId.getId(), scope.getId(), keyDictionaryDao.getOrSaveKeyId(entry.getKey())));
+        entity.setLastUpdateTs(entry.getLastUpdateTs());
+        entity.setStrValue(entry.getStrValue().orElse(null));
+        entity.setDoubleValue(entry.getDoubleValue().orElse(null));
+        entity.setLongValue(entry.getLongValue().orElse(null));
+        entity.setBooleanValue(entry.getBooleanValue().orElse(null));
+        entity.setJsonValue(entry.getJsonValue().orElse(null));
+        return entity;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.ATTRIBUTE_KV;
+    }
+
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.timeseries;
 
+import lombok.Builder;
 import lombok.Getter;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -22,6 +23,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Consumer;
 
 import static org.thingsboard.server.dao.timeseries.CassandraBaseTimeseriesDao.DESC_ORDER;
 
@@ -32,18 +34,21 @@ public class TsKvQueryCursor extends QueryCursor {
 
     @Getter
     private final List<TsKvEntry> data;
+    private final Consumer<List<TsKvEntry>> dataProcessor; // if non-null, "data" will be empty
     @Getter
     private final String orderBy;
 
     private int partitionIndex;
     private int currentLimit;
 
-    public TsKvQueryCursor(String entityType, UUID entityId, ReadTsKvQuery baseQuery, List<Long> partitions) {
+    @Builder
+    public TsKvQueryCursor(String entityType, UUID entityId, ReadTsKvQuery baseQuery, List<Long> partitions, Consumer<List<TsKvEntry>> dataProcessor) {
         super(entityType, entityId, baseQuery, partitions);
         this.orderBy = baseQuery.getOrder();
         this.partitionIndex = isDesc() ? partitions.size() - 1 : 0;
         this.data = new ArrayList<>();
         this.currentLimit = baseQuery.getLimit();
+        this.dataProcessor = dataProcessor;
     }
 
     @Override
@@ -72,10 +77,15 @@ public class TsKvQueryCursor extends QueryCursor {
 
     public void addData(List<TsKvEntry> newData) {
         currentLimit -= newData.size();
-        data.addAll(newData);
+        if (dataProcessor == null) {
+            data.addAll(newData);
+        } else {
+            dataProcessor.accept(newData);
+        }
     }
 
     private boolean isDesc() {
         return orderBy.equals(DESC_ORDER);
     }
+
 }

@@ -236,23 +236,40 @@ public class BaseOtaPackageService extends AbstractCachedEntityService<OtaPackag
     }
 
     @Override
+    public void deleteOtaPackagesByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
+        deviceProfileOtaPackageRemover.removeEntities(tenantId, deviceProfileId);
+    }
+
+    @Override
     public void deleteByTenantId(TenantId tenantId) {
         deleteOtaPackagesByTenantId(tenantId);
     }
 
-    private PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover =
-            new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, OtaPackageInfo> tenantOtaPackageRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
-                }
+        @Override
+        protected PageData<OtaPackageInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return otaPackageInfoDao.findOtaPackageInfoByTenantId(id, pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
-                    deleteOtaPackage(tenantId, entity.getId());
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, OtaPackageInfo entity) {
+            deleteOtaPackage(tenantId, entity.getId());
+        }
+    };
+
+    private final PaginatedRemover<DeviceProfileId, OtaPackageId> deviceProfileOtaPackageRemover = new PaginatedRemover<>() {
+
+        @Override
+        protected PageData<OtaPackageId> findEntities(TenantId tenantId, DeviceProfileId deviceProfileId, PageLink pageLink) {
+            return otaPackageInfoDao.findOtaPackageIdsByDeviceProfileId(tenantId, deviceProfileId, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, OtaPackageId id) {
+            deleteOtaPackage(tenantId, id);
+        }
+    };
 
     @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {

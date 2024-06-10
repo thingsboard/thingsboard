@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
+
 import java.io.Serializable;
 import java.util.Optional;
 
@@ -39,6 +41,7 @@ public interface KvEntry extends Serializable {
 
     Optional<String> getJsonValue();
 
+    @JsonIgnore
     String getValueAsString();
 
     Object getValue();

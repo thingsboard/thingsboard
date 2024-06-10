@@ -23,15 +23,18 @@ import com.datastax.oss.driver.api.querybuilder.QueryBuilder;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
+import org.thingsboard.server.common.data.kv.LatestTsKv;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
@@ -44,6 +47,7 @@ import org.thingsboard.server.dao.util.NoSqlTsLatestDao;
 import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static com.datastax.oss.driver.api.querybuilder.QueryBuilder.literal;
 
@@ -234,4 +238,17 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
         }
         return findAllLatestStmt;
     }
+
+    @SneakyThrows
+    @Override
+    public LatestTsKv save(TenantId tenantId, LatestTsKv latestTsKv) {
+        saveLatest(tenantId, latestTsKv.getEntityId(), latestTsKv.getEntry()).get(30, TimeUnit.SECONDS);
+        return latestTsKv;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.LATEST_TS_KV;
+    }
+
 }

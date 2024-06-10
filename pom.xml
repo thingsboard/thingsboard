@@ -64,6 +64,7 @@
         <commons-io.version>2.16.1</commons-io.version>
         <commons-logging.version>1.3.1</commons-logging.version>
         <commons-csv.version>1.10.0</commons-csv.version>
+        <commons-compress.version>1.26.1</commons-compress.version>
         <apache-httpclient5.version>5.3.1</apache-httpclient5.version>
         <apache-httpcore5.version>5.2.4</apache-httpcore5.version>
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
@@ -1462,6 +1463,11 @@
                 <groupId>org.apache.commons</groupId>
                 <artifactId>commons-csv</artifactId>
                 <version>${commons-csv.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.commons</groupId>
+                <artifactId>commons-compress</artifactId>
+                <version>${commons-compress.version}</version>
             </dependency>
             <dependency>
                 <groupId>org.apache.httpcomponents.client5</groupId>

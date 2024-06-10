@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ObjectType;
 import org.thingsboard.server.common.data.id.NotificationTemplateId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationType;
@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.notification.template.NotificationTemp
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.NotificationTemplateEntity;
 import org.thingsboard.server.dao.notification.NotificationTemplateDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -38,7 +39,7 @@ import java.util.UUID;
 @Component
 @SqlDao
 @RequiredArgsConstructor
-public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTemplateEntity, NotificationTemplate> implements NotificationTemplateDao {
+public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTemplateEntity, NotificationTemplate> implements NotificationTemplateDao, TenantEntityDao<NotificationTemplate> {
 
     private final NotificationTemplateRepository notificationTemplateRepository;
 
@@ -84,6 +85,11 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     }
 
     @Override
+    public PageData<NotificationTemplate> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return findByTenantId(tenantId.getId(), pageLink);
+    }
+
+    @Override
     protected JpaRepository<NotificationTemplateEntity, UUID> getRepository() {
         return notificationTemplateRepository;
     }
@@ -91,6 +97,11 @@ public class JpaNotificationTemplateDao extends JpaAbstractDao<NotificationTempl
     @Override
     public EntityType getEntityType() {
         return EntityType.NOTIFICATION_TEMPLATE;
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.NOTIFICATION_TEMPLATE;
     }
 
 }

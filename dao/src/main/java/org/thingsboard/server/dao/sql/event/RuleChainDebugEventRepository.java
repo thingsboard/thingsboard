@@ -112,4 +112,5 @@ public interface RuleChainDebugEventRepository extends EventRepository<RuleChain
                       @Param("message") String message,
                       @Param("isError") boolean isError,
                       @Param("error") String error);
+
 }

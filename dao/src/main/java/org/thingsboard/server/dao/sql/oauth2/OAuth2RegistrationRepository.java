@@ -15,10 +15,13 @@
  */
 package org.thingsboard.server.dao.sql.oauth2;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.oauth2.SchemeType;
+import org.thingsboard.server.dao.model.sql.OAuth2MobileEntity;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
 
 import java.util.List;
@@ -49,5 +52,8 @@ public interface OAuth2RegistrationRepository extends JpaRepository<OAuth2Regist
             "AND mobile.pkgName = :pkgName")
     String findAppSecret(@Param("registrationId") UUID id,
                          @Param("pkgName") String pkgName);
+
+    @Query("SELECT r FROM OAuth2RegistrationEntity r WHERE r.oauth2ParamsId IN (SELECT p.id FROM OAuth2ParamsEntity p WHERE p.tenantId = :tenantId)")
+    Page<OAuth2RegistrationEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
 }

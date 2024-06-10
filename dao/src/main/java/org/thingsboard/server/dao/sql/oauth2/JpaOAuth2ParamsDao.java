@@ -18,7 +18,13 @@ package org.thingsboard.server.dao.sql.oauth2;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ObjectType;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Params;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.TenantEntityDao;
 import org.thingsboard.server.dao.model.sql.OAuth2ParamsEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2ParamsDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -29,7 +35,8 @@ import java.util.UUID;
 @Component
 @RequiredArgsConstructor
 @SqlDao
-public class JpaOAuth2ParamsDao extends JpaAbstractDao<OAuth2ParamsEntity, OAuth2Params> implements OAuth2ParamsDao {
+public class JpaOAuth2ParamsDao extends JpaAbstractDao<OAuth2ParamsEntity, OAuth2Params> implements OAuth2ParamsDao, TenantEntityDao<OAuth2Params> {
+
     private final OAuth2ParamsRepository repository;
 
     @Override
@@ -46,4 +53,15 @@ public class JpaOAuth2ParamsDao extends JpaAbstractDao<OAuth2ParamsEntity, OAuth
     public void deleteAll() {
         repository.deleteAll();
     }
+
+    @Override
+    public PageData<OAuth2Params> findAllByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(repository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public ObjectType getType() {
+        return ObjectType.OAUTH2_PARAMS;
+    }
+
 }

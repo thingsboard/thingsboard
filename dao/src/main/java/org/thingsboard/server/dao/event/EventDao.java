@@ -21,6 +21,7 @@ import org.thingsboard.server.common.data.event.EventFilter;
 import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.dao.ObjectDao;
 
 import java.util.List;
 import java.util.UUID;
@@ -28,7 +29,7 @@ import java.util.UUID;
 /**
  * The Interface EventDao.
  */
-public interface EventDao {
+public interface EventDao extends ObjectDao<Event> {
 
     /**
      * Save or update event object async
@@ -102,4 +103,5 @@ public interface EventDao {
     void removeEvents(UUID tenantId, UUID entityId, EventFilter eventFilter, Long startTime, Long endTime);
 
     void migrateEvents(long regularEventTs, long debugEventTs);
+
 }

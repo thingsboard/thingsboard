@@ -15,56 +15,73 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
 import jakarta.validation.Valid;
+
 import java.util.Objects;
 import java.util.Optional;
 
 public class BasicTsKvEntry implements TsKvEntry {
     private static final int MAX_CHARS_PER_DATA_POINT = 512;
     protected final long ts;
+    @JsonTypeInfo(use = JsonTypeInfo.Id.CLASS)
+    @JsonIgnoreProperties(ignoreUnknown = true)
     @Valid
     private final KvEntry kv;
 
-    public BasicTsKvEntry(long ts, KvEntry kv) {
+    @JsonCreator
+    public BasicTsKvEntry(@JsonProperty("ts") long ts, @JsonProperty("kv") KvEntry kv) {
         this.ts = ts;
         this.kv = kv;
     }
 
+    @JsonIgnore
     @Override
     public String getKey() {
         return kv.getKey();
     }
 
+    @JsonIgnore
     @Override
     public DataType getDataType() {
         return kv.getDataType();
     }
 
+    @JsonIgnore
     @Override
     public Optional<String> getStrValue() {
         return kv.getStrValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<Long> getLongValue() {
         return kv.getLongValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<Boolean> getBooleanValue() {
         return kv.getBooleanValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<Double> getDoubleValue() {
         return kv.getDoubleValue();
     }
 
+    @JsonIgnore
     @Override
     public Optional<String> getJsonValue() {
         return kv.getJsonValue();
     }
 
+    @JsonIgnore
     @Override
     public Object getValue() {
         return kv.getValue();
@@ -97,6 +114,7 @@ public class BasicTsKvEntry implements TsKvEntry {
                 '}';
     }
 
+    @JsonIgnore
     @Override
     public String getValueAsString() {
         return kv.getValueAsString();
