@@ -1,42 +1,85 @@
-# ThingsBoard 
-[![Join the chat at https://gitter.im/thingsboard/chat](https://badges.gitter.im/Join%20Chat.svg)](https://gitter.im/thingsboard/chat?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge&utm_content=badge)
-[![ThingsBoard Builds Server Status](https://img.shields.io/teamcity/build/e/ThingsBoard_Build?label=TB%20builds%20server&server=https%3A%2F%2Fbuilds.thingsboard.io&logo=data:image/png;base64,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&labelColor=305680)](https://builds.thingsboard.io/viewType.html?buildTypeId=ThingsBoard_Build&guest=1)
+# ThingsBoard
 
-ThingsBoard is an open-source IoT platform for data collection, processing, visualization, and device management.
+This repository contains the ThingsBoard Community Edition. Follow the instructions below to set up your development environment.
 
-<img src="./img/logo.png?raw=true" width="100" height="100">
+## Cloning the Repository
 
-## Documentation
+```sh
+git clone git@github.com:lamah-co/thingsboard.git
+cd thingsboard
+mvn clean install -DskipTests
+```
 
-ThingsBoard documentation is hosted on [thingsboard.io](https://thingsboard.io/docs).
+## Setting Up PostgreSQL with Docker Compose
 
-## IoT use cases
+```sh
+services:
+  postgres:
+    image: postgres:latest
+    container_name: thingsboard-postgres
+    environment:
+      POSTGRES_DB: thingsboard
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
-[**Smart energy**](https://thingsboard.io/smart-energy/)
-[![Smart energy](https://user-images.githubusercontent.com/8308069/152984256-eb48564a-645c-468d-912b-f554b63104a5.gif "Smart energy")](https://thingsboard.io/smart-energy/)
+volumes:
+  postgres_data:
+  ```
+### Start the PostgreSQL container:
 
-[**Fleet tracking**](https://thingsboard.io/fleet-tracking/)
-[![Fleet tracking](https://user-images.githubusercontent.com/8308069/152984528-0054ed55-8b8b-4cda-ba45-02fe95a81222.gif "Fleet tracking")](https://thingsboard.io/fleet-tracking/)
+  ```sh
+    docker-compose up -d
+  ```
+### Connecting to PostgreSQL
 
-[**Smart farming**](https://thingsboard.io/smart-farming/)
-[![Smart farming](https://user-images.githubusercontent.com/8308069/152984443-a98b7d3d-ff7a-4037-9011-e71e1e6f755f.gif "Smart farming")](https://thingsboard.io/smart-farming/)
+Connect to the PostgreSQL container and create the ThingsBoard database:
+```sh
+psql -U postgres -d postgres -h 127.0.0.1 -W
+CREATE DATABASE thingsboard;
+\q
+```
 
-[**IoT Rule Engine**](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
-[![IoT Rule Engine](https://img.thingsboard.io/demo/send-email-rule-chain.gif "IoT Rule Engine")](https://thingsboard.io/docs/user-guide/rule-engine-2-0/re-getting-started/)
+### Creating the Database Schema 
+```sh
+cd thingsboard/application/target/bin/install
+chmod +x install_dev_db.sh
+./install_dev_db.sh # On Linux
+install_dev_db.bat # Windows
+```
 
-[**Smart metering**](https://thingsboard.io/smart-metering/)
-[![Smart metering](https://user-images.githubusercontent.com/8308069/31455788-6888a948-aec1-11e7-9819-410e0ba785e0.gif "Smart metering")](https://thingsboard.io/smart-metering/)
+### Fixing Logging Issues
+If you encounter the following error:
+```sh
+/var/log/thingsboard/install.log (No such file or directory)
+```
 
-## Getting Started
+### Fix it by running:
 
-Collect and Visualize your IoT data in minutes by following this [guide](https://thingsboard.io/docs/getting-started-guides/helloworld/).
+sudo mkdir /var/log/thingsboard
+sudo chmod 777 /var/log/thingsboard
 
-## Support
+### Running the Development Environment
+```sh
+cd thingsboard/ui-ngx
+mvn clean install -P yarn-start
+```
 
- - [Community chat](https://gitter.im/thingsboard/chat)
- - [Q&A forum](https://groups.google.com/forum/#!forum/thingsboard)
- - [Stackoverflow](http://stackoverflow.com/questions/tagged/thingsboard)
+### Running the Server-Side Container
+You can run the server in two ways:
+### Option 1: Using the Command Line
+```sh
+cd thingsboard
+java -jar application/target/thingsboard-${VERSION}-boot.jar
+```
 
-## Licenses
+### Option 2: Using Visual Studio Code (Recommended)
 
-This project is released under [Apache 2.0 License](./LICENSE).
+	1.	Install the Maven for Java Extension:
+	•	Extension ID: vscjava.vscode-maven
+	2.	Install the Spring Boot Tools Plugin Extension:
+	•	Extension ID: vmware.vscode-spring-boot
+	3.	Open the `ThingsboardServerApplication main method located in org.thingsboard.server` and run the server in Visual Studio Code.
