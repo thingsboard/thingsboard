@@ -32,4 +32,14 @@ public enum DataType {
         this.protoNumber = protoNumber;
     }
 
+    public static DataType ofChar(char c) {
+        return switch (c) {
+            case '0' -> BOOLEAN;
+            case '1' -> LONG;
+            case '2' -> DOUBLE;
+            case '3' -> STRING;
+            case '4' -> JSON;
+            default -> null;
+        };
+    }
 }

@@ -27,14 +27,15 @@ import java.io.Serializable;
 @Getter
 @AllArgsConstructor
 public class AttributeCacheKey implements Serializable {
-    private static final long serialVersionUID = 2013369077925351881L;
+    private static final long serialVersionUID = 2013369077925351882L;
 
     private final AttributeScope scope;
     private final EntityId entityId;
-    private final String key;
+//    private final String key;
+    private final int keyId;
 
     @Override
     public String toString() {
-        return "{" + entityId + "}" + scope + "_" + key;
+        return "{" + entityId + "}" + scope.getId() + "_" + keyId;
     }
 }

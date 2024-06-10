@@ -28,81 +28,117 @@ import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
+import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
-import org.thingsboard.server.gen.transport.TransportProtos.AttributeValueProto;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
+import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
+
+import java.nio.charset.StandardCharsets;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("AttributeCache")
 public class AttributeRedisCache extends RedisTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> {
 
-    public AttributeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+    public AttributeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, KeyDictionaryDao keyDictionaryDao) {
         super(CacheConstants.ATTRIBUTES_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>() {
+
+            static final int TS_LENGTH = 13;
+
             @Override
             public byte[] serialize(AttributeKvEntry attributeKvEntry) throws SerializationException {
-                AttributeValueProto.Builder builder = AttributeValueProto.newBuilder()
-                        .setLastUpdateTs(attributeKvEntry.getLastUpdateTs());
+                //Timestamp, DataType, HasV, StringValue
+                StringBuilder sb = new StringBuilder(toFixedLength(attributeKvEntry.getLastUpdateTs()));
+                sb
+                        .append(":")
+                        .append(attributeKvEntry.getDataType().getProtoNumber())
+                        .append(":");
                 switch (attributeKvEntry.getDataType()) {
                     case BOOLEAN:
-                        attributeKvEntry.getBooleanValue().ifPresent(builder::setBoolV);
-                        builder.setHasV(attributeKvEntry.getBooleanValue().isPresent());
-                        builder.setType(KeyValueType.BOOLEAN_V);
+                        if (attributeKvEntry.getBooleanValue().isPresent()) {
+                            sb.append(1);
+                            sb.append(":");
+                            sb.append(attributeKvEntry.getBooleanValue().get());
+                        } else {
+                            sb.append(0);
+                        }
                         break;
                     case STRING:
-                        attributeKvEntry.getStrValue().ifPresent(builder::setStringV);
-                        builder.setHasV(attributeKvEntry.getStrValue().isPresent());
-                        builder.setType(KeyValueType.STRING_V);
-                        break;
+                        if (attributeKvEntry.getStrValue().isPresent()) {
+                            sb.append(1);
+                            sb.append(":");
+                            sb.append(attributeKvEntry.getStrValue().get());
+                        } else {
+                            sb.append(0);
+                        }
                     case DOUBLE:
-                        attributeKvEntry.getDoubleValue().ifPresent(builder::setDoubleV);
-                        builder.setHasV(attributeKvEntry.getDoubleValue().isPresent());
-                        builder.setType(KeyValueType.DOUBLE_V);
+                        if (attributeKvEntry.getDoubleValue().isPresent()) {
+                            sb.append(1);
+                            sb.append(":");
+                            sb.append(attributeKvEntry.getDoubleValue().get());
+                        } else {
+                            sb.append(0);
+                        }
                         break;
                     case LONG:
-                        attributeKvEntry.getLongValue().ifPresent(builder::setLongV);
-                        builder.setHasV(attributeKvEntry.getLongValue().isPresent());
-                        builder.setType(KeyValueType.LONG_V);
+                        if (attributeKvEntry.getLongValue().isPresent()) {
+                            sb.append(1);
+                            sb.append(":");
+                            sb.append(attributeKvEntry.getLongValue().get());
+                        } else {
+                            sb.append(0);
+                        }
                         break;
                     case JSON:
-                        attributeKvEntry.getJsonValue().ifPresent(builder::setJsonV);
-                        builder.setHasV(attributeKvEntry.getJsonValue().isPresent());
-                        builder.setType(KeyValueType.JSON_V);
+                        if (attributeKvEntry.getJsonValue().isPresent()) {
+                            sb.append(1);
+                            sb.append(":");
+                            sb.append(attributeKvEntry.getJsonValue().get());
+                        } else {
+                            sb.append(0);
+                        }
                         break;
 
                 }
-                return builder.build().toByteArray();
+                return sb.toString().getBytes(StandardCharsets.UTF_8);
+            }
+
+            private String toFixedLength(long timestamp) {
+                if (timestamp < 0) {
+                    throw new RuntimeException("timestamp serialization failed because it is negative " + timestamp);
+                }
+                String timestampString = Long.toString(timestamp);
+                int originalLength = timestampString.length();
+                if (TS_LENGTH == originalLength) {
+                    return timestampString;
+                } else if (TS_LENGTH > originalLength) {
+                    return timestampString + " ".repeat(TS_LENGTH - originalLength);
+                } else {
+                    throw new RuntimeException("timestamp serialization broken " + timestamp + " " + timestampString + " " + TS_LENGTH);
+                }
             }
 
             @Override
             public AttributeKvEntry deserialize(AttributeCacheKey key, byte[] bytes) throws SerializationException {
                 try {
-                    AttributeValueProto proto = AttributeValueProto.parseFrom(bytes);
-                    boolean hasValue = proto.getHasV();
-                    KvEntry entry;
-                    switch (proto.getType()) {
-                        case BOOLEAN_V:
-                            entry = new BooleanDataEntry(key.getKey(), hasValue ? proto.getBoolV() : null);
-                            break;
-                        case LONG_V:
-                            entry = new LongDataEntry(key.getKey(), hasValue ? proto.getLongV() : null);
-                            break;
-                        case DOUBLE_V:
-                            entry = new DoubleDataEntry(key.getKey(), hasValue ? proto.getDoubleV() : null);
-                            break;
-                        case STRING_V:
-                            entry = new StringDataEntry(key.getKey(), hasValue ? proto.getStringV() : null);
-                            break;
-                        case JSON_V:
-                            entry = new JsonDataEntry(key.getKey(), hasValue ? proto.getJsonV() : null);
-                            break;
-                        default:
-                            throw new InvalidProtocolBufferException("Unrecognized type: " + proto.getType() + " !");
-                    }
-                    return new BaseAttributeKvEntry(proto.getLastUpdateTs(), entry);
+                    String proto = new String(bytes, StandardCharsets.UTF_8);
+                    long ts = Long.parseLong(proto.substring(0, TS_LENGTH).trim());
+                    DataType type = DataType.ofChar(proto.charAt(TS_LENGTH + 1));
+                    boolean hasValue = proto.charAt(TS_LENGTH + 1 + 2) == '1';
+                    String payload = proto.length() > TS_LENGTH + 5 ? proto.substring(TS_LENGTH + 5) : "";
+                    String keyName = keyDictionaryDao.getKey(key.getKeyId());
+                    KvEntry entry = switch (type) {
+                        case BOOLEAN ->
+                                new BooleanDataEntry(keyName, hasValue ? Boolean.parseBoolean(payload) : null);
+                        case LONG -> new LongDataEntry(keyName, hasValue ? Long.parseLong(payload) : null);
+                        case DOUBLE -> new DoubleDataEntry(keyName, hasValue ? Double.parseDouble(payload) : null);
+                        case STRING -> new StringDataEntry(keyName, hasValue ? payload : null);
+                        case JSON -> new JsonDataEntry(keyName, hasValue ? payload : null);
+                        default -> throw new InvalidProtocolBufferException("Unrecognized type: " + type + " !");
+                    };
+                    return new BaseAttributeKvEntry(ts, entry);
                 } catch (InvalidProtocolBufferException e) {
                     throw new SerializationException(e.getMessage());
                 }

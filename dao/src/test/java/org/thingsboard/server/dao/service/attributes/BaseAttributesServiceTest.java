@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.attributes.AttributeCacheKey;
 import org.thingsboard.server.dao.attributes.AttributesService;
+import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.util.ArrayList;
@@ -64,6 +65,9 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
 
     @Autowired
     private AttributesService attributesService;
+
+    @Autowired
+    KeyDictionaryDao keyDictionaryDao;
 
     @Before
     public void before() {
@@ -139,7 +143,8 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         var scope = AttributeScope.SERVER_SCOPE;
         var key = "TEST";
 
-        var attrKey = new AttributeCacheKey(scope, deviceId, "TEST");
+        int keyId = keyDictionaryDao.getOrSaveKeyId(key);
+        var attrKey = new AttributeCacheKey(scope, deviceId, keyId);
         var oldValue = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, OLD_VALUE));
         var newValue = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, NEW_VALUE));
 
