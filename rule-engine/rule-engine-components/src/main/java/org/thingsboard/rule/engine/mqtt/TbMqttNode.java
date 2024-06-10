@@ -53,6 +53,7 @@ import java.util.concurrent.TimeoutException;
         type = ComponentType.EXTERNAL,
         name = "mqtt",
         configClazz = TbMqttNodeConfiguration.class,
+        version = 1,
         clusteringMode = ComponentClusteringMode.USER_PREFERENCE,
         nodeDescription = "Publish messages to the MQTT broker",
         nodeDetails = "Will publish message payload to the MQTT broker with QoS <b>AT_LEAST_ONCE</b>.",
@@ -145,7 +146,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return client;
     }
 
-    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
+    protected void prepareMqttClientConfig(MqttClientConfig config) {
         ClientCredentials credentials = this.mqttNodeConfiguration.getCredentials();
         if (credentials.getType() == CredentialsType.BASIC) {
             BasicCredentials basicCredentials = (BasicCredentials) credentials;
@@ -154,7 +155,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         }
     }
 
-    private SslContext getSslContext() throws SSLException {
+    protected SslContext getSslContext() throws SSLException {
         return this.mqttNodeConfiguration.isSsl() ? this.mqttNodeConfiguration.getCredentials().initSslContext() : null;
     }
 
