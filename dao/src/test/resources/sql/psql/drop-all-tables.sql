@@ -37,6 +37,7 @@ DROP TABLE IF EXISTS tenant;
 DROP TABLE IF EXISTS ts_kv;
 DROP TABLE IF EXISTS ts_kv_latest;
 DROP TABLE IF EXISTS ts_kv_dictionary;
+DROP SEQUENCE IF EXISTS ts_kv_latest_seq;
 DROP TABLE IF EXISTS user_credentials;
 DROP TABLE IF EXISTS widgets_bundle_widget;
 DROP TABLE IF EXISTS widget_type;

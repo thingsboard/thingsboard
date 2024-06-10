@@ -538,6 +538,8 @@ CREATE TABLE IF NOT EXISTS entity_view (
     CONSTRAINT entity_view_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
+CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_seq cache 1000;
+
 CREATE TABLE IF NOT EXISTS ts_kv_latest
 (
     entity_id uuid   NOT NULL,
@@ -548,6 +550,7 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     long_v    bigint,
     dbl_v     double precision,
     json_v    json,
+    seq_number bigint,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 
