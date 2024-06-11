@@ -250,7 +250,7 @@ public class DashboardController extends BaseController {
     public Dashboard updateDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
-            @Parameter(description = "JSON array with the list of customer ids, or empty to remove all customers",  array = @ArraySchema(schema = @Schema(type = "string")))
+            @Parameter(description = "JSON array with the list of customer ids, or empty to remove all customers")
             @RequestBody(required = false) String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
@@ -268,7 +268,7 @@ public class DashboardController extends BaseController {
     public Dashboard addDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
-            @Parameter(description = "JSON array with the list of customer ids",  array = @ArraySchema(schema = @Schema(type = "string")))
+            @Parameter(description = "JSON array with the list of customer ids")
             @RequestBody String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
@@ -286,7 +286,7 @@ public class DashboardController extends BaseController {
     public Dashboard removeDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
-            @Parameter(description = "JSON array with the list of customer ids",  array = @ArraySchema(schema = @Schema(type = "string")))
+            @Parameter(description = "JSON array with the list of customer ids")
             @RequestBody String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
