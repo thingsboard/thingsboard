@@ -135,7 +135,6 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
         if (value) {
           formGroup.get('negate').enable({emitEvent: false});
         } else {
-          formGroup.get('negate').setValue(false, {emitEvent:false});
           formGroup.get('negate').disable({emitEvent: false});
         }
       });
