@@ -27,11 +27,13 @@ public class TbSaveToCustomCassandraTableNodeConfiguration implements NodeConfig
 
     private String tableName;
     private Map<String, String> fieldsMapping;
+    private long defaultTTL;
 
 
     @Override
     public TbSaveToCustomCassandraTableNodeConfiguration defaultConfiguration() {
         TbSaveToCustomCassandraTableNodeConfiguration configuration = new TbSaveToCustomCassandraTableNodeConfiguration();
+        configuration.setDefaultTTL(0L);
         configuration.setTableName("");
         Map<String, String> map = new HashMap<>();
         map.put("", "");

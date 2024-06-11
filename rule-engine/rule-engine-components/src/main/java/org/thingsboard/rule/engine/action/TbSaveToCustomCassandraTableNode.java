@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -28,6 +30,7 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
 import com.google.gson.JsonPrimitive;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -35,20 +38,23 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
 import org.thingsboard.server.dao.cassandra.guava.GuavaSession;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 
-import jakarta.annotation.Nullable;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
@@ -57,6 +63,7 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 @RuleNode(type = ComponentType.ACTION,
         name = "save to custom table",
         configClazz = TbSaveToCustomCassandraTableNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Node stores data from incoming Message payload to the Cassandra database into the predefined custom table" +
                 " that should have <b>cs_tb_</b> prefix, to avoid the data insertion to the common TB tables.<br>" +
                 "<b>Note:</b> rule node can be used only for Cassandra DB.",
@@ -81,6 +88,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private PreparedStatement saveStmt;
     private ExecutorService readResultsProcessingExecutor;
     private Map<String, String> fieldsMap;
+    private long ttl;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -88,15 +96,25 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
             throw new RuntimeException("Unable to connect to Cassandra database");
-        } else {
-            startExecutor();
-            saveStmt = getSaveStmt();
+        }
+        ctx.addTenantProfileListener(this::onTenantProfileUpdate);
+        onTenantProfileUpdate(ctx.getTenantProfile());
+        startExecutor();
+        saveStmt = getSaveStmt();
+    }
+
+    void onTenantProfileUpdate(TenantProfile tenantProfile) {
+        DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+        long tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
+        ttl = config.getDefaultTTL();
+        if (ttl == 0L) {
+            ttl = tenantProfileDefaultStorageTtl;
         }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(save(msg, ctx), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
+        withCallback(save(msg, ctx, ttl), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
     }
 
     @Override
@@ -163,10 +181,13 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 query.append("?, ");
             }
         }
+        if (ttl > 0) {
+            query.append(" USING TTL ?");
+        }
         return query.toString();
     }
 
-    private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
+    private ListenableFuture<Void> save(TbMsg msg, TbContext ctx, long ttl) {
         JsonElement data = JsonParser.parseString(msg.getData());
         if (!data.isJsonObject()) {
             throw new IllegalStateException("Invalid message structure, it is not a JSON Object:" + data);
@@ -204,6 +225,9 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 }
                 i.getAndIncrement();
             });
+            if (ttl > 0) {
+                stmtBuilder.setInt(i.get(), (int) ttl);
+            }
             return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
         }
     }
@@ -238,6 +262,22 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 return transformer.apply(input);
             }
         }, readResultsProcessingExecutor);
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                if (!oldConfiguration.has("defaultTTL")) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put("defaultTTL", 0);
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
