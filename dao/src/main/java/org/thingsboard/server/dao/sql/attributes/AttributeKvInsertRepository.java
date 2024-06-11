@@ -17,7 +17,7 @@ package org.thingsboard.server.dao.sql.attributes;
 
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.AbstractSequenceInsertRepository;
+import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -29,16 +29,16 @@ import java.util.List;
 @Repository
 @Transactional
 @SqlDao
-public class AttributeKvInsertRepository extends AbstractSequenceInsertRepository<AttributeKvEntity> {
+public class AttributeKvInsertRepository extends AbstractVersionedInsertRepository<AttributeKvEntity> {
 
-    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, seq_number = nextval('attribute_kv_latest_seq') " +
-            "WHERE entity_id = ? and attribute_type =? and attribute_key = ? RETURNING seq_number;";
+    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') " +
+            "WHERE entity_id = ? and attribute_type =? and attribute_key = ? RETURNING version;";
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO attribute_kv (entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, json_v, last_update_ts, seq_number) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?,  cast(? AS json), ?, nextval('attribute_kv_latest_seq')) " +
+            "INSERT INTO attribute_kv (entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, json_v, last_update_ts, version) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?,  cast(? AS json), ?, nextval('attribute_kv_version_seq')) " +
                     "ON CONFLICT (entity_id, attribute_type, attribute_key) " +
-                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, seq_number = nextval('attribute_kv_latest_seq') RETURNING seq_number;";
+                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') RETURNING version;";
 
     @Override
     protected void setOnBatchUpdateValues(PreparedStatement ps, int i, List<AttributeKvEntity> entities) throws SQLException {

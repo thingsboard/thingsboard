@@ -29,9 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractSequenceInsertRepository<T> extends AbstractInsertRepository {
+public abstract class AbstractVersionedInsertRepository<T> extends AbstractInsertRepository {
 
-    public static final String SEQ_NUMBER = "seq_number";
+    public static final String VERSION_COLUMN = "version";
 
     public List<Long> saveOrUpdate(List<T> entities) {
         return transactionTemplate.execute(status -> {
@@ -54,7 +54,7 @@ public abstract class AbstractSequenceInsertRepository<T> extends AbstractInsert
                     seqNumbers.add(0L);
                     toInsertIndexes.add(i);
                 } else {
-                    seqNumbers.add((Long) seqNumbersList.get(keyHolderIndex).get(SEQ_NUMBER));
+                    seqNumbers.add((Long) seqNumbersList.get(keyHolderIndex).get(VERSION_COLUMN));
                     keyHolderIndex++;
                 }
             }
@@ -68,7 +68,7 @@ public abstract class AbstractSequenceInsertRepository<T> extends AbstractInsert
             seqNumbersList = keyHolder.getKeyList();
 
             for (int i = 0; i < seqNumbersList.size(); i++) {
-                seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(i).get(SEQ_NUMBER));
+                seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(i).get(VERSION_COLUMN));
             }
 
             return seqNumbers;
@@ -113,7 +113,7 @@ public abstract class AbstractSequenceInsertRepository<T> extends AbstractInsert
 
     private record SequencePreparedStatementCreator(String sql) implements PreparedStatementCreator, SqlProvider {
 
-        private static final String[] COLUMNS = {SEQ_NUMBER};
+        private static final String[] COLUMNS = {VERSION_COLUMN};
 
         @Override
         public PreparedStatement createPreparedStatement(Connection con) throws SQLException {

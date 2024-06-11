@@ -19,7 +19,7 @@ import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.AbstractSequenceInsertRepository;
+import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.util.SqlDao;
@@ -35,23 +35,23 @@ import java.util.List;
 @Repository
 @Transactional
 @SqlDao
-public class SqlLatestInsertTsRepository extends AbstractSequenceInsertRepository<TsKvLatestEntity> implements InsertLatestTsRepository {
+public class SqlLatestInsertTsRepository extends AbstractVersionedInsertRepository<TsKvLatestEntity> implements InsertLatestTsRepository {
 
     @Value("${sql.ts_latest.update_by_latest_ts:true}")
     private Boolean updateByLatestTs;
 
     private static final String BATCH_UPDATE =
-            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), seq_number = nextval('ts_kv_latest_seq') WHERE entity_id = ? AND key = ?";
+            "UPDATE ts_kv_latest SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), version = nextval('ts_kv_latest_version_seq') WHERE entity_id = ? AND key = ?";
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v, seq_number) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json), nextval('ts_kv_latest_seq')) " +
-                    "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), seq_number = nextval('ts_kv_latest_seq')";
+            "INSERT INTO ts_kv_latest (entity_id, key, ts, bool_v, str_v, long_v, dbl_v,  json_v, version) VALUES(?, ?, ?, ?, ?, ?, ?, cast(? AS json), nextval('ts_kv_latest_version_seq')) " +
+                    "ON CONFLICT (entity_id, key) DO UPDATE SET ts = ?, bool_v = ?, str_v = ?, long_v = ?, dbl_v = ?, json_v = cast(? AS json), version = nextval('ts_kv_latest_version_seq')";
 
     private static final String BATCH_UPDATE_BY_LATEST_TS = BATCH_UPDATE + " AND ts_kv_latest.ts <= ?";
 
     private static final String INSERT_OR_UPDATE_BY_LATEST_TS = INSERT_OR_UPDATE + " WHERE ts_kv_latest.ts <= ?";
 
-    private static final String RETURNING = " RETURNING seq_number";
+    private static final String RETURNING = " RETURNING version";
 
     private String batchUpdateQuery;
     private String insertOrUpdateQuery;
