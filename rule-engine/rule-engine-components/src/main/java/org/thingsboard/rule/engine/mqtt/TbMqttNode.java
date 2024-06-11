@@ -115,7 +115,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return "Tenant[" + ctx.getTenantId().getId() + "]RuleNode[" + ctx.getSelf().getId().getId() + "]";
     }
 
-    protected MqttClient initClient(TbContext ctx) throws Exception {
+    public MqttClient initClient(TbContext ctx) throws Exception {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
         config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {

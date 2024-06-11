@@ -30,7 +30,6 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -73,38 +72,37 @@ import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.BDDMockito.willThrow;
 
 @ExtendWith(MockitoExtension.class)
-class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
+public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("09115d92-d333-432a-868c-ccd6e89c9287"));
 
-    @Spy
-    private TbMqttNode node;
-    private TbMqttNodeConfiguration config;
+    protected TbMqttNode mqttNode;
+    protected TbMqttNodeConfiguration mqttNodeConfig;
 
     @Mock
-    private TbContext ctxMock;
+    protected TbContext ctxMock;
     @Mock
-    private MqttClient clientMock;
+    protected MqttClient mqttClientMock;
 
     @BeforeEach
-    public void setUp() throws Exception {
-        node = spy(new TbMqttNode());
-        config = new TbMqttNodeConfiguration().defaultConfiguration();
+    protected void setUp() {
+        mqttNode = spy(new TbMqttNode());
+        mqttNodeConfig = new TbMqttNodeConfiguration().defaultConfiguration();
     }
 
     @Test
     public void verifyDefaultConfig() {
-        assertThat(config.getTopicPattern()).isEqualTo("my-topic");
-        assertThat(config.getHost()).isNull();
-        assertThat(config.getPort()).isEqualTo(1883);
-        assertThat(config.getConnectTimeoutSec()).isEqualTo(10);
-        assertThat(config.getClientId()).isNull();
-        assertThat(config.isAppendClientIdSuffix()).isFalse();
-        assertThat(config.isRetainedMessage()).isFalse();
-        assertThat(config.isCleanSession()).isTrue();
-        assertThat(config.isSsl()).isFalse();
-        assertThat(config.isParseToPlainText()).isFalse();
-        assertThat(config.getCredentials()).isInstanceOf(AnonymousCredentials.class);
+        assertThat(mqttNodeConfig.getTopicPattern()).isEqualTo("my-topic");
+        assertThat(mqttNodeConfig.getHost()).isNull();
+        assertThat(mqttNodeConfig.getPort()).isEqualTo(1883);
+        assertThat(mqttNodeConfig.getConnectTimeoutSec()).isEqualTo(10);
+        assertThat(mqttNodeConfig.getClientId()).isNull();
+        assertThat(mqttNodeConfig.isAppendClientIdSuffix()).isFalse();
+        assertThat(mqttNodeConfig.isRetainedMessage()).isFalse();
+        assertThat(mqttNodeConfig.isCleanSession()).isTrue();
+        assertThat(mqttNodeConfig.isSsl()).isFalse();
+        assertThat(mqttNodeConfig.isParseToPlainText()).isFalse();
+        assertThat(mqttNodeConfig.getCredentials()).isInstanceOf(AnonymousCredentials.class);
     }
 
     @Test
@@ -115,7 +113,7 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.getTenantId()).willReturn(TenantId.fromUUID(UUID.fromString(tenantIdStr)));
         given(ctxMock.getSelf()).willReturn(ruleNode);
 
-        String actualOwnerIdStr = node.getOwnerId(ctxMock);
+        String actualOwnerIdStr = mqttNode.getOwnerId(ctxMock);
         String expectedOwnerIdStr = "Tenant[" + tenantIdStr + "]RuleNode[" + ruleNodeIdStr + "]";
         assertThat(actualOwnerIdStr).isEqualTo(expectedOwnerIdStr);
     }
@@ -125,11 +123,11 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         BasicCredentials credentials = new BasicCredentials();
         credentials.setUsername("test_username");
         credentials.setPassword("test_password");
-        config.setCredentials(credentials);
-        ReflectionTestUtils.setField(node, "mqttNodeConfiguration", config);
-        MqttClientConfig mqttClientConfig = new MqttClientConfig(node.getSslContext());
+        mqttNodeConfig.setCredentials(credentials);
+        ReflectionTestUtils.setField(mqttNode, "mqttNodeConfiguration", mqttNodeConfig);
+        MqttClientConfig mqttClientConfig = new MqttClientConfig(mqttNode.getSslContext());
 
-        node.prepareMqttClientConfig(mqttClientConfig);
+        mqttNode.prepareMqttClientConfig(mqttClientConfig);
 
         assertThat(mqttClientConfig)
                 .hasFieldOrPropertyWithValue("username", "test_username")
@@ -139,11 +137,11 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     @ParameterizedTest
     @MethodSource
     public void verifyGetSslContextMethod(boolean ssl, ClientCredentials credentials, SslContext expectedSslContext) throws SSLException {
-        config.setSsl(ssl);
-        config.setCredentials(credentials);
-        ReflectionTestUtils.setField(node, "mqttNodeConfiguration", config);
+        mqttNodeConfig.setSsl(ssl);
+        mqttNodeConfig.setCredentials(credentials);
+        ReflectionTestUtils.setField(mqttNode, "mqttNodeConfiguration", mqttNodeConfig);
 
-        SslContext actualSslContext = node.getSslContext();
+        SslContext actualSslContext = mqttNode.getSslContext();
         assertThat(actualSslContext)
                 .usingRecursiveComparison()
                 .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock")
@@ -160,10 +158,10 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenFailedToInitializeMqttClient_whenInit_thenThrowsException() throws Exception {
         String errorMsg = "Failed to connect to MQTT broker!";
-        willThrow(new RuntimeException(errorMsg)).given(node).initClient(any());
+        willThrow(new RuntimeException(errorMsg)).given(mqttNode).initClient(any());
 
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctxMock, configuration))
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig));
+        assertThatThrownBy(() -> mqttNode.init(ctxMock, configuration))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage(RuntimeException.class.getName() + ": " + errorMsg);
     }
@@ -171,25 +169,25 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     @ParameterizedTest
     @MethodSource
     public void givenTopicPatternAndIsRetainedMsgIsTrue_whenOnMsg_thenTellSuccess(String topicPattern, TbMsgMetaData metaData, String data) throws Exception {
-        config.setRetainedMessage(true);
-        config.setTopicPattern(topicPattern);
+        mqttNodeConfig.setRetainedMessage(true);
+        mqttNodeConfig.setTopicPattern(topicPattern);
 
-        willReturn(clientMock).given(node).initClient(any());
+        willReturn(mqttClientMock).given(mqttNode).initClient(any());
         Future<Void> future = mock(Future.class);
         given(future.isSuccess()).willReturn(true);
-        given(clientMock.publish(any(String.class), any(ByteBuf.class), any(MqttQoS.class), anyBoolean())).willReturn(future);
+        given(mqttClientMock.publish(any(String.class), any(ByteBuf.class), any(MqttQoS.class), anyBoolean())).willReturn(future);
         willAnswer(invocation-> {
             GenericFutureListener<Future<Void>> listener = invocation.getArgument(0);
             listener.operationComplete(future);
             return null;
         }).given(future).addListener(any());
 
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig)));
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
-        node.onMsg(ctxMock, msg);
+        mqttNode.onMsg(ctxMock, msg);
 
-        String expectedTopic = TbNodeUtils.processPattern(config.getTopicPattern(), msg);
-        then(clientMock).should().publish(expectedTopic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, true);
+        String expectedTopic = TbNodeUtils.processPattern(mqttNodeConfig.getTopicPattern(), msg);
+        then(mqttClientMock).should().publish(expectedTopic, Unpooled.wrappedBuffer(msg.getData().getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, true);
         then(ctxMock).should().tellSuccess(msg);
     }
 
@@ -203,11 +201,11 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Test
     public void givenParseToPlainTextIsTrueAndMsgPublishingFailed_whenOnMsg_thenTellFailure() throws Exception {
-        config.setParseToPlainText(true);
+        mqttNodeConfig.setParseToPlainText(true);
 
-        willReturn(clientMock).given(node).initClient(any());
+        willReturn(mqttClientMock).given(mqttNode).initClient(any());
         Future<Void> future = mock(Future.class);
-        given(clientMock.publish(any(String.class), any(ByteBuf.class), any(MqttQoS.class), anyBoolean())).willReturn(future);
+        given(mqttClientMock.publish(any(String.class), any(ByteBuf.class), any(MqttQoS.class), anyBoolean())).willReturn(future);
         given(future.isSuccess()).willReturn(false);
         String errorMsg = "Message publishing was failed!";
         Throwable exception = new RuntimeException(errorMsg);
@@ -218,12 +216,12 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
             return null;
         }).given(future).addListener(any());
 
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig)));
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, "\"string\"");
-        node.onMsg(ctxMock, msg);
+        mqttNode.onMsg(ctxMock, msg);
 
         String expectedData = JacksonUtil.toPlainText(msg.getData());
-        then(clientMock).should().publish(config.getTopicPattern(), Unpooled.wrappedBuffer(expectedData.getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, false);
+        then(mqttClientMock).should().publish(mqttNodeConfig.getTopicPattern(), Unpooled.wrappedBuffer(expectedData.getBytes(UTF8)), MqttQoS.AT_LEAST_ONCE, false);
         TbMsgMetaData metaData = new TbMsgMetaData();
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
         TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
@@ -251,6 +249,6 @@ class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Override
     protected TbNode getTestNode() {
-        return node;
+        return mqttNode;
     }
 }
