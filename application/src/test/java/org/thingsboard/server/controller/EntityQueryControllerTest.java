@@ -691,7 +691,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"),
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"),
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "serviceId"));
 
         EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, null);
@@ -705,8 +705,12 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         Assert.assertTrue(data.hasNext());
         Assert.assertEquals(10, data.getData().size());
         data.getData().forEach(entityData -> {
-            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("queueName")).asString().isNotBlank();
-            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("serviceId")).asString().isNotBlank();
+            String queueName = entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("queueName").getValue();
+            String serviceId = entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("serviceId").getValue();
+            assertThat(queueName).isNotBlank();
+            assertThat(serviceId).isNotBlank();
+            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).isEqualTo(queueName + "_" + serviceId);
+
         });
 
         EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter);
