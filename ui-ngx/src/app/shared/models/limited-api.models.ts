@@ -46,7 +46,7 @@ export const LimitedApiTranslationMap = new Map<LimitedApi, string>(
     [LimitedApi.TRANSPORT_MESSAGES_PER_TENANT, 'api-limit.transport-messages'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE, 'api-limit.transport-messages-per-device'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY, 'api-limit.transport-messages-per-gateway'],
-    [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE, 'api-limit.transport-messages-per-gateway_device'],
+    [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE, 'api-limit.transport-messages-per-gateway-device'],
     [LimitedApi.EDGE_EVENTS, 'api-limit.edge-events'],
     [LimitedApi.EDGE_EVENTS_PER_EDGE, 'api-limit.edge-events-per-edge'],
     [LimitedApi.EDGE_UPLINK_MESSAGES, 'api-limit.edge-uplink-messages'],
