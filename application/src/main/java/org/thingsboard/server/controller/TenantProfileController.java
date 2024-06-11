@@ -251,7 +251,8 @@ public class TenantProfileController extends BaseController {
 
     @GetMapping(value = "/tenantProfiles", params = {"ids"})
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    public List<TenantProfile> getTenantProfilesByIds(@RequestParam("ids") UUID[] ids) {
+    public List<TenantProfile> getTenantProfilesByIds(@Parameter(description = "Comma-separated list of tenant profile ids")
+                                                      @RequestParam("ids") UUID[] ids) {
         return tenantProfileService.findTenantProfilesByIds(TenantId.SYS_TENANT_ID, ids);
     }
 
