@@ -46,6 +46,7 @@ import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
+import org.thingsboard.server.dao.sql.TbSqlQueueElement;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 import org.thingsboard.server.dao.sqlts.latest.TsKvLatestRepository;
@@ -81,7 +82,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     @Autowired
     private InsertLatestTsRepository insertLatestTsRepository;
 
-    private TbSqlBlockingQueueWrapper<TsKvLatestEntity> tsLatestQueue;
+    private TbSqlBlockingQueueWrapper<TsKvLatestEntity, Long> tsLatestQueue;
 
     @Value("${sql.ts_latest.batch_size:1000}")
     private int tsLatestBatchSize;
@@ -115,25 +116,26 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 .maxDelay(tsLatestMaxDelay)
                 .statsPrintIntervalMs(tsLatestStatsPrintIntervalMs)
                 .statsNamePrefix("ts.latest")
-                .batchSortEnabled(false)
+                .batchSortEnabled(batchSortEnabled)
+                .withResponse(true)
                 .build();
 
         java.util.function.Function<TsKvLatestEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
         tsLatestQueue = new TbSqlBlockingQueueWrapper<>(tsLatestParams, hashcodeFunction, tsLatestBatchThreads, statsFactory);
 
-        tsLatestQueue.init(logExecutor, v -> {
-            Map<TsKey, TsKvLatestEntity> trueLatest = new HashMap<>();
-            v.forEach(ts -> {
-                TsKey key = new TsKey(ts.getEntityId(), ts.getKey());
-                trueLatest.merge(key, ts, (oldTs, newTs) -> oldTs.getTs() <= newTs.getTs() ? newTs : oldTs);
-            });
-            List<TsKvLatestEntity> latestEntities = new ArrayList<>(trueLatest.values());
-            if (batchSortEnabled) {
-                latestEntities.sort(Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
-                        .thenComparingInt(AbstractTsKvEntity::getKey));
-            }
-            insertLatestTsRepository.saveOrUpdate(latestEntities);
-        }, (l, r) -> 0);
+        tsLatestQueue.init(logExecutor,
+                v -> insertLatestTsRepository.saveOrUpdate(v),
+                Comparator.comparing((Function<TsKvLatestEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                        .thenComparingInt(AbstractTsKvEntity::getKey),
+                v -> {
+                    Map<TsKey, TbSqlQueueElement<TsKvLatestEntity, Long>> trueLatest = new HashMap<>();
+                    v.forEach(element -> {
+                        var entity = element.getEntity();
+                        TsKey key = new TsKey(entity.getEntityId(), entity.getKey());
+                        trueLatest.merge(key, element, (oldElement, newElement) -> oldElement.getEntity().getTs() <= newElement.getEntity().getTs() ? newElement : oldElement);
+                    });
+                    return new ArrayList<>(trueLatest.values());
+                });
     }
 
     @PreDestroy
@@ -144,7 +146,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
     }
 
     @Override
-    public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
+    public ListenableFuture<Long> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         return getSaveLatestFuture(entityId, tsKvEntry);
     }
 
@@ -247,7 +249,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                         searchTsKvLatestRepository.findAllByEntityId(entityId.getId()))));
     }
 
-    protected ListenableFuture<Void> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {
+    protected ListenableFuture<Long> getSaveLatestFuture(EntityId entityId, TsKvEntry tsKvEntry) {
         TsKvLatestEntity latestEntity = new TsKvLatestEntity();
         latestEntity.setEntityId(entityId.getId());
         latestEntity.setTs(tsKvEntry.getTs());

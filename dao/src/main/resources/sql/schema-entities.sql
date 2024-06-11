@@ -102,6 +102,8 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_failure_details varchar(1000000)
 ) PARTITION BY RANGE (created_time);
 
+CREATE SEQUENCE IF NOT EXISTS attribute_kv_latest_seq cache 1000;
+
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_id uuid,
   attribute_type int,
@@ -112,6 +114,7 @@ CREATE TABLE IF NOT EXISTS attribute_kv (
   dbl_v double precision,
   json_v json,
   last_update_ts bigint,
+  seq_number bigint,
   CONSTRAINT attribute_kv_pkey PRIMARY KEY (entity_id, attribute_type, attribute_key)
 );
 

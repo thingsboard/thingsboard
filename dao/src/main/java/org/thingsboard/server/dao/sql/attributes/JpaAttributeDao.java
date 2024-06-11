@@ -88,7 +88,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
-    private TbSqlBlockingQueueWrapper<AttributeKvEntity> queue;
+    private TbSqlBlockingQueueWrapper<AttributeKvEntity, Long> queue;
 
     @PostConstruct
     private void init() {
@@ -99,6 +99,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
                 .statsPrintIntervalMs(statsPrintIntervalMs)
                 .statsNamePrefix("attributes")
                 .batchSortEnabled(batchSortEnabled)
+                .withResponse(true)
                 .build();
 
         Function<AttributeKvEntity, Integer> hashcodeFunction = entity -> entity.getId().getEntityId().hashCode();
@@ -106,7 +107,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         queue.init(logExecutor, v -> attributeKvInsertRepository.saveOrUpdate(v),
                 Comparator.comparing((AttributeKvEntity attributeKvEntity) -> attributeKvEntity.getId().getEntityId())
                         .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeType())
-                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeKey())
+                        .thenComparing(attributeKvEntity -> attributeKvEntity.getId().getAttributeKey()), l -> l
         );
     }
 
