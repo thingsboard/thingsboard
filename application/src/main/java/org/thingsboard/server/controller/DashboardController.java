@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.ExampleObject;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -249,7 +250,7 @@ public class DashboardController extends BaseController {
     public Dashboard updateDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
-            @Parameter(description = "JSON array with the list of customer ids, or empty to remove all customers")
+            @Parameter(description = "JSON array with the list of customer ids, or empty to remove all customers",  array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestBody(required = false) String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
@@ -267,7 +268,7 @@ public class DashboardController extends BaseController {
     public Dashboard addDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
-            @Parameter(description = "JSON array with the list of customer ids")
+            @Parameter(description = "JSON array with the list of customer ids",  array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestBody String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
@@ -285,7 +286,7 @@ public class DashboardController extends BaseController {
     public Dashboard removeDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
-            @Parameter(description = "JSON array with the list of customer ids")
+            @Parameter(description = "JSON array with the list of customer ids",  array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestBody String[] strCustomerIds) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
