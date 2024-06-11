@@ -152,7 +152,7 @@ public class Tenant extends ContactBased<TenantId> implements HasTenantId, HasTi
         return super.getPhone();
     }
 
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Email", example = "example@company.com")
+    @Schema(description = "Email", example = "example@company.com")
     @Override
     public String getEmail() {
         return super.getEmail();

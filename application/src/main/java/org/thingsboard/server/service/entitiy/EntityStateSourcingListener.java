@@ -51,6 +51,7 @@ import org.thingsboard.server.common.msg.rule.engine.DeviceCredentialsUpdateNoti
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.tenant.TenantService;
 
 import javax.annotation.PostConstruct;
 import java.util.Set;
@@ -61,6 +62,7 @@ import java.util.Set;
 public class EntityStateSourcingListener {
 
     private final TbClusterService tbClusterService;
+    private final TenantService tenantService;
 
     @PostConstruct
     public void init() {
@@ -71,6 +73,9 @@ public class EntityStateSourcingListener {
     public void handleEvent(SaveEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
+        if (entityId == null) {
+            return;
+        }
         EntityType entityType = entityId.getEntityType();
         log.debug("[{}][{}][{}] Handling entity save event: {}", tenantId, entityType, entityId, event);
         boolean isCreated = event.getCreated() != null && event.getCreated();
@@ -120,7 +125,14 @@ public class EntityStateSourcingListener {
     public void handleEvent(DeleteEntityEvent<?> event) {
         TenantId tenantId = event.getTenantId();
         EntityId entityId = event.getEntityId();
+        if (entityId == null) {
+            return;
+        }
         EntityType entityType = entityId.getEntityType();
+        if (!tenantId.isSysTenantId() && entityType != EntityType.TENANT  && !tenantService.tenantExists(tenantId)) {
+            log.debug("[{}] Ignoring DeleteEntityEvent because tenant does not exist: {}", tenantId, event);
+            return;
+        }
         log.debug("[{}][{}][{}] Handling entity deletion event: {}", tenantId, entityType, entityId, event);
 
         switch (entityType) {

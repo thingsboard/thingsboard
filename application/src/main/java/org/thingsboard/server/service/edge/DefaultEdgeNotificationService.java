@@ -16,6 +16,8 @@
 package org.thingsboard.server.service.edge;
 
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -42,6 +44,7 @@ import org.thingsboard.server.service.edge.rpc.processor.device.DeviceEdgeProces
 import org.thingsboard.server.service.edge.rpc.processor.device.profile.DeviceProfileEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.edge.EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewEdgeProcessor;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.ota.OtaPackageEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.queue.QueueEdgeProcessor;
@@ -54,8 +57,6 @@ import org.thingsboard.server.service.edge.rpc.processor.user.UserEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetBundleEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.widget.WidgetTypeEdgeProcessor;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.UUID;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
@@ -128,6 +129,9 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
     private ResourceEdgeProcessor resourceEdgeProcessor;
 
     @Autowired
+    private NotificationEdgeProcessor notificationEdgeProcessor;
+
+    @Autowired
     private OAuth2EdgeProcessor oAuth2EdgeProcessor;
 
     @Autowired
@@ -175,71 +179,30 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                     }
                     EdgeEventType type = EdgeEventType.valueOf(edgeNotificationMsg.getType());
                     switch (type) {
-                        case EDGE:
-                            edgeProcessor.processEdgeNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case ASSET:
-                            assetProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case ASSET_PROFILE:
-                            assetProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case DEVICE:
-                            deviceProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case DEVICE_PROFILE:
-                            deviceProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case ENTITY_VIEW:
-                            entityViewProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case DASHBOARD:
-                            dashboardProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case RULE_CHAIN:
-                            ruleChainProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case USER:
-                            userProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case CUSTOMER:
-                            customerProcessor.processCustomerNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case OTA_PACKAGE:
-                            otaPackageProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case WIDGETS_BUNDLE:
-                            widgetBundleProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case WIDGET_TYPE:
-                            widgetTypeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case QUEUE:
-                            queueProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case ALARM:
-                            alarmProcessor.processAlarmNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case ALARM_COMMENT:
-                            alarmProcessor.processAlarmCommentNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case RELATION:
-                            relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case TENANT:
-                            tenantEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case TENANT_PROFILE:
-                            tenantProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case TB_RESOURCE:
-                            resourceEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                            break;
-                        case OAUTH2:
-                            oAuth2EdgeProcessor.processOAuth2Notification(tenantId, edgeNotificationMsg);
-                            break;
-                        default:
-                            log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);
+                        case EDGE -> edgeProcessor.processEdgeNotification(tenantId, edgeNotificationMsg);
+                        case ASSET -> assetProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case ASSET_PROFILE -> assetProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case DEVICE -> deviceProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case DEVICE_PROFILE -> deviceProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case ENTITY_VIEW -> entityViewProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case DASHBOARD -> dashboardProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case RULE_CHAIN -> ruleChainProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case USER -> userProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case CUSTOMER -> customerProcessor.processCustomerNotification(tenantId, edgeNotificationMsg);
+                        case OTA_PACKAGE -> otaPackageProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case WIDGETS_BUNDLE -> widgetBundleProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case WIDGET_TYPE -> widgetTypeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case QUEUE -> queueProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case ALARM -> alarmProcessor.processAlarmNotification(tenantId, edgeNotificationMsg);
+                        case ALARM_COMMENT -> alarmProcessor.processAlarmCommentNotification(tenantId, edgeNotificationMsg);
+                        case RELATION -> relationProcessor.processRelationNotification(tenantId, edgeNotificationMsg);
+                        case TENANT -> tenantEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case TENANT_PROFILE -> tenantProfileEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case NOTIFICATION_RULE, NOTIFICATION_TARGET, NOTIFICATION_TEMPLATE ->
+                                notificationEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case TB_RESOURCE -> resourceEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
+                        case OAUTH2 -> oAuth2EdgeProcessor.processOAuth2Notification(tenantId, edgeNotificationMsg);
+                        default -> log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);
                     }
                 } catch (Exception e) {
                     callBackFailure(tenantId, edgeNotificationMsg, callback, e);
@@ -255,4 +218,5 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
         log.error("[{}] Can't push to edge updates, edgeNotificationMsg [{}]", tenantId, edgeNotificationMsg, throwable);
         callback.onFailure(throwable);
     }
+
 }

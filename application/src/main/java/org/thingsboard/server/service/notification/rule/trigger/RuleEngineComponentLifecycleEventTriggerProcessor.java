@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.notification.rule.trigger;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.stereotype.Service;
@@ -47,7 +47,7 @@ public class RuleEngineComponentLifecycleEventTriggerProcessor implements Notifi
                 return false;
             }
         }
-        if (!partitionService.resolve(ServiceType.TB_RULE_ENGINE, trigger.getTenantId(), trigger.getComponentId()).isMyPartition()) {
+        if (!partitionService.isMyPartition(ServiceType.TB_RULE_ENGINE, trigger.getTenantId(), trigger.getComponentId())) {
             return false;
         }
 

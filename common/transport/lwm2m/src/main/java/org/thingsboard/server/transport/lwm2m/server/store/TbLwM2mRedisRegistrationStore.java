@@ -90,7 +90,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     private static final Logger LOG = LoggerFactory.getLogger(RedisRegistrationStore.class);
 
     // Redis key prefixes
-    private static final String REG_EP = "REG:EP:"; // (Endpoint => Registration)
+    public static final String REG_EP = "REG:EP:"; // (Endpoint => Registration)
     private static final String REG_EP_REGID_IDX = "EP:REGID:"; // secondary index key (Registration ID => Endpoint)
     private static final String REG_EP_ADDR_IDX = "EP:ADDR:"; // secondary index key (Socket Address => Endpoint)
     private static final String REG_EP_IDENTITY = "EP:IDENTITY:"; // secondary index key (Identity => Endpoint)
@@ -222,6 +222,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     @Override
     public UpdatedRegistration updateRegistration(RegistrationUpdate update) {
+        log.trace("updateRegistration [{}]", update);
         Lock lock = null;
         try (var connection = connectionFactory.getConnection()) {
 

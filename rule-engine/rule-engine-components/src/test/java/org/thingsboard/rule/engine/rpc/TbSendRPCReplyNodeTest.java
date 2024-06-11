@@ -16,12 +16,12 @@
 package org.thingsboard.rule.engine.rpc;
 
 import com.google.common.util.concurrent.SettableFuture;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineRpcService;
@@ -43,7 +43,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbSendRPCReplyNodeTest {
 
     private static final String DUMMY_SERVICE_ID = "testServiceId";
@@ -68,7 +68,7 @@ public class TbSendRPCReplyNodeTest {
     @Mock
     private ListeningExecutor listeningExecutor;
 
-    @Before
+    @BeforeEach
     public void setUp() throws TbNodeException {
         node = new TbSendRPCReplyNode();
         TbSendRpcReplyNodeConfiguration config = new TbSendRpcReplyNodeConfiguration().defaultConfiguration();

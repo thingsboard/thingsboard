@@ -23,7 +23,12 @@ import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonObject;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
+import io.netty.handler.codec.mqtt.MqttMessage;
 import io.netty.handler.codec.mqtt.MqttQoS;
+import io.netty.handler.codec.mqtt.MqttReasonCodeAndPropertiesVariableHeader;
+import io.netty.handler.codec.mqtt.MqttReasonCodes;
+import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.awaitility.Awaitility;
@@ -33,6 +38,7 @@ import org.testng.annotations.Test;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.mqtt.MqttClient;
+import org.thingsboard.mqtt.MqttClientCallback;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.mqtt.MqttHandler;
 import org.thingsboard.server.common.data.DataConstants;
@@ -56,7 +62,9 @@ import org.thingsboard.server.msa.mapper.WsTelemetryResponse;
 
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Random;
@@ -65,6 +73,7 @@ import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.testng.Assert.fail;
@@ -75,6 +84,9 @@ import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevi
 @DisableUIListeners
 @Slf4j
 public class MqttClientTest extends AbstractContainerTest {
+
+    private static final String TRANSPORT_HOST = "localhost";
+    private static final int TRANSPORT_PORT = 1883;
 
     private Device device;
     AbstractListeningExecutor handlerExecutor;
@@ -100,6 +112,7 @@ public class MqttClientTest extends AbstractContainerTest {
             handlerExecutor.destroy();
         }
     }
+
     @Test
     public void telemetryUpload() throws Exception {
         DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
@@ -194,7 +207,7 @@ public class MqttClientTest extends AbstractContainerTest {
         String sharedAttributeValue = StringUtils.randomAlphanumeric(8);
         sharedAttributes.addProperty("sharedAttr", sharedAttributeValue);
         JsonNode sharedAttribute = mapper.readTree(sharedAttributes.toString());
-        testRestClient.postTelemetryAttribute(DataConstants.DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
+        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
 
         // Subscribe to attributes response
         mqttClient.on("v1/devices/me/attributes/response/+", listener, MqttQoS.AT_LEAST_ONCE).get();
@@ -317,8 +330,8 @@ public class MqttClientTest extends AbstractContainerTest {
         mqttClient.publish("v1/devices/me/rpc/request/" + requestId, Unpooled.wrappedBuffer(clientRequest.toString().getBytes())).get();
 
         // Check the response from the server
-        TimeUnit.SECONDS.sleep(1 * timeoutMultiplier);
-        MqttEvent responseFromServer = listener.getEvents().poll(1 * timeoutMultiplier, TimeUnit.SECONDS);
+        TimeUnit.SECONDS.sleep(3 * timeoutMultiplier);
+        MqttEvent responseFromServer = listener.getEvents().poll(3 * timeoutMultiplier, TimeUnit.SECONDS);
         Integer responseId = Integer.valueOf(Objects.requireNonNull(responseFromServer).getTopic().substring("v1/devices/me/rpc/response/".length()));
         assertThat(responseId).isEqualTo(requestId);
         assertThat(mapper.readTree(responseFromServer.getMessage()).get("response").asText()).isEqualTo("requestReceived");
@@ -444,6 +457,84 @@ public class MqttClientTest extends AbstractContainerTest {
         assertThat(provisionResponse.get("status").asText()).isEqualTo("NOT_FOUND");
     }
 
+    @Test
+    public void regularDisconnect() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
+        MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
+        mqttClient.setCallback(callbackForDisconnectWithReturnCode);
+        mqttClient.disconnect();
+        Thread.sleep(1000);
+        assertThat(returnCodeByteValue.size()).isEqualTo(1);
+        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
+        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.NORMAL_DISCONNECT);
+    }
+
+    @Test
+    public void clientSessionTakenOverDisconnect() throws Exception {
+        DeviceCredentials deviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        MqttMessageListener listener = new MqttMessageListener();
+        MqttClient mqttClient = getMqttClient(deviceCredentials, listener, MqttVersion.MQTT_5);
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
+        MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
+        mqttClient.setCallback(callbackForDisconnectWithReturnCode);
+
+        Thread.sleep(1000);
+
+        MqttMessageListener dummyListener = new MqttMessageListener();
+        MqttClient dummyMqttClient = getMqttClient(deviceCredentials, dummyListener, MqttVersion.MQTT_5);
+        final List<Byte> returnCodeByteValueSecondClient = new ArrayList<>();
+        MqttClientCallback callbackForDisconnectWithReturnCodeDummy = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValueSecondClient);
+        dummyMqttClient.setCallback(callbackForDisconnectWithReturnCodeDummy);
+
+        Awaitility
+                .await()
+                .alias("Check device disconnect.")
+                .atMost(TIMEOUT*timeoutMultiplier, TimeUnit.SECONDS)
+                .until(() -> returnCodeByteValue.size() > 0);
+
+        assertThat(returnCodeByteValueSecondClient).isEmpty();
+        assertThat(returnCodeByteValue).isNotEmpty();
+
+        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
+
+        dummyMqttClient.disconnect();
+
+        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.SESSION_TAKEN_OVER);
+    }
+
+    @Test
+    public void clientPublishForRegularTopicByProvisionClient() throws Exception {
+        MqttClient mqttClient = getMqttClient("provision", new MqttMessageListener(), MqttVersion.MQTT_5);
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
+        MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
+        mqttClient.setCallback(callbackForDisconnectWithReturnCode);
+        mqttClient.publish("v1/devices/me/telemetry", Unpooled.wrappedBuffer("test".getBytes()), MqttQoS.AT_LEAST_ONCE).get();
+        Thread.sleep(1000);
+        assertThat(returnCodeByteValue).isNotEmpty();
+        MqttReasonCodes.Disconnect returnCode = MqttReasonCodes.Disconnect.valueOf(returnCodeByteValue.get(0));
+        assertThat(returnCode).isEqualTo(MqttReasonCodes.Disconnect.TOPIC_NAME_INVALID);
+    }
+
+    @Test
+    public void clientConnectWithBadCredentials() throws Exception {
+        MqttClient mqttClient = getMqttClient("unknownAccessToken", new MqttMessageListener(), MqttVersion.MQTT_5, false);
+        final List<Byte> returnCodeByteValue = new ArrayList<>();
+        MqttClientCallback callbackForDisconnectWithReturnCode = getCallbackWrapperForDisconnectWithReturnCode(returnCodeByteValue);
+        mqttClient.setCallback(callbackForDisconnectWithReturnCode);
+        try {
+            mqttClient.connect(TRANSPORT_HOST, TRANSPORT_PORT).get(1, TimeUnit.SECONDS);
+        } catch (TimeoutException ignored) {
+        }
+        assertThat(returnCodeByteValue).isNotEmpty();
+        MqttConnectReturnCode returnCode = MqttConnectReturnCode.valueOf(returnCodeByteValue.get(0));
+        assertThat(returnCode).isIn(MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USER_NAME_OR_PASSWORD, MqttConnectReturnCode.CONNECTION_REFUSED_BAD_USERNAME_OR_PASSWORD);
+    }
+
     private RuleChainId createRootRuleChainForRpcResponse() throws Exception {
         RuleChain newRuleChain = new RuleChain();
         newRuleChain.setName("testRuleChain");
@@ -477,8 +568,34 @@ public class MqttClientTest extends AbstractContainerTest {
         return defaultRuleChain.get().getId();
     }
 
+    private MqttClientCallback getCallbackWrapperForDisconnectWithReturnCode(List<Byte> returnCodeByteValueWrapper) {
+        return new MqttClientCallback() {
+            @Override
+            public void connectionLost(Throwable cause) {
+            }
+
+            @Override
+            public void onSuccessfulReconnect() {
+            }
+
+            @Override
+            public void onDisconnect(MqttMessage mqttDisconnectMessage) {
+                log.info("Disconnected with reason: {}", mqttDisconnectMessage);
+                returnCodeByteValueWrapper.add(((MqttReasonCodeAndPropertiesVariableHeader) mqttDisconnectMessage.variableHeader()).reasonCode());
+            }
+        };
+    }
+
     private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener) throws InterruptedException, ExecutionException {
-        return getMqttClient(deviceCredentials.getCredentialsId(), listener);
+        return getMqttClient(deviceCredentials.getCredentialsId(), listener, MqttVersion.MQTT_3_1_1, true);
+    }
+
+    private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener, MqttVersion mqttVersion) throws InterruptedException, ExecutionException {
+        return getMqttClient(deviceCredentials.getCredentialsId(), listener, mqttVersion, true);
+    }
+
+    private MqttClient getMqttClient(DeviceCredentials deviceCredentials, MqttMessageListener listener, MqttVersion mqttVersion, boolean connect) throws InterruptedException, ExecutionException {
+        return getMqttClient(deviceCredentials.getCredentialsId(), listener, mqttVersion, connect);
     }
 
     private String getOwnerId() {
@@ -486,12 +603,23 @@ public class MqttClientTest extends AbstractContainerTest {
     }
 
     private MqttClient getMqttClient(String username, MqttMessageListener listener) throws InterruptedException, ExecutionException {
+        return getMqttClient(username, listener, MqttVersion.MQTT_3_1_1, true);
+    }
+
+    private MqttClient getMqttClient(String username, MqttMessageListener listener, MqttVersion mqttVersion) throws InterruptedException, ExecutionException {
+        return getMqttClient(username, listener, mqttVersion, true);
+    }
+
+    private MqttClient getMqttClient(String username, MqttMessageListener listener, MqttVersion mqttVersion, boolean connect) throws InterruptedException, ExecutionException {
         MqttClientConfig clientConfig = new MqttClientConfig();
         clientConfig.setOwnerId(getOwnerId());
         clientConfig.setClientId("MQTT client from test");
         clientConfig.setUsername(username);
+        clientConfig.setProtocolVersion(mqttVersion);
         MqttClient mqttClient = MqttClient.create(clientConfig, listener, handlerExecutor);
-        mqttClient.connect("localhost", 1883).get();
+        if (connect) {
+            mqttClient.connect(TRANSPORT_HOST, TRANSPORT_PORT).get();
+        }
         return mqttClient;
     }
 

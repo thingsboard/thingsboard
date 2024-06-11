@@ -164,6 +164,8 @@ mail:
   oauth2:
     # Interval for checking refresh token expiration in seconds(by default, 1 day).
     refreshTokenCheckingInterval: "${REFRESH_TOKEN_EXPIRATION_CHECKING_INTERVAL:86400}"
+  # Rate limits for sending mails per tenant. As example for 1000 per minute and 10000 per hour is "1000:60,10000:3600"
+  per_tenant_rate_limits: "${MAIL_PER_TENANT_RATE_LIMITS:}"
 
 # Usage statistics parameters
 usage:
@@ -193,7 +195,7 @@ ui:
   # Help parameters
   help:
     # Base URL for UI help assets
-    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.6.3}"
+    base-url: "${UI_HELP_BASE_URL:https://raw.githubusercontent.com/thingsboard/thingsboard-ui-help/release-3.7}"
 
 # Database telemetry parameters
 database:
@@ -505,6 +507,12 @@ cache:
     assets:
       timeToLiveInMinutes: "${CACHE_SPECS_ASSETS_TTL:1440}" # Asset cache TTL
       maxSize: "${CACHE_SPECS_ASSETS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    customers:
+      timeToLiveInMinutes: "${CACHE_SPECS_CUSTOMERS_TTL:1440}" # Customer cache TTL
+      maxSize: "${CACHE_SPECS_CUSTOMERS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    users:
+      timeToLiveInMinutes: "${CACHE_SPECS_USERS_TTL:1440}" # User cache TTL
+      maxSize: "${CACHE_SPECS_USERS_MAX_SIZE:10000}" # 0 means the cache is disabled
     entityViews:
       timeToLiveInMinutes: "${CACHE_SPECS_ENTITY_VIEWS_TTL:1440}" # Entity view cache TTL
       maxSize: "${CACHE_SPECS_ENTITY_VIEWS_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -579,6 +587,12 @@ cache:
     alarmTypes:
       timeToLiveInMinutes: "${CACHE_SPECS_ALARM_TYPES_TTL:60}" # Alarm types cache TTL
       maxSize: "${CACHE_SPECS_ALARM_TYPES_MAX_SIZE:10000}" # 0 means the cache is disabled
+    mobileAppSettings:
+      timeToLiveInMinutes: "${CACHE_SPECS_MOBILE_APP_SETTINGS_TTL:1440}" # Mobile application cache TTL
+      maxSize: "${CACHE_SPECS_MOBILE_APP_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    mobileSecretKey:
+      timeToLiveInMinutes: "${CACHE_MOBILE_SECRET_KEY_TTL:2}" # QR secret key cache TTL
+      maxSize: "${CACHE_MOBILE_SECRET_KEY_MAX_SIZE:10000}" # 0 means the cache is disabled
 
   # Deliberately placed outside the 'specs' group above
   notificationRules:
@@ -923,7 +937,7 @@ transport:
   client_side_rpc:
     # Processing timeout interval of the RPC command on the CLIENT SIDE. Time in milliseconds
     timeout: "${CLIENT_SIDE_RPC_TIMEOUT:60000}"
-  # Enable/disable http/mqtt/coap transport protocols (has higher priority than certain protocol's 'enabled' property)
+  # Enable/disable http/mqtt/coap/lwm2m transport protocols (has higher priority than certain protocol's 'enabled' property)
   api_enabled: "${TB_TRANSPORT_API_ENABLED:true}"
   log:
     # Enable/Disable log of transport messages to telemetry. For example, logging of LwM2M registration update
@@ -958,6 +972,8 @@ transport:
     proxy_enabled: "${MQTT_PROXY_PROTOCOL_ENABLED:false}"
     # MQTT processing timeout in milliseconds
     timeout: "${MQTT_TIMEOUT:10000}"
+    # MQTT disconnect timeout in milliseconds. The time to wait for the client to disconnect after the server sends a disconnect message.
+    disconnect_timeout: "${MQTT_DISCONNECT_TIMEOUT:1000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before the device connected state. This limit works on the low level before TenantProfileLimits mechanism
     netty:
       # Netty leak detector level
@@ -1010,10 +1026,6 @@ transport:
   coap:
     # Enable/disable CoAP transport protocol.
     enabled: "${COAP_ENABLED:true}"
-    # CoAP bind-address
-    bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
-    # CoAP bind port
-    bind_port: "${COAP_BIND_PORT:5683}"
     # CoaP processing timeout in milliseconds
     timeout: "${COAP_TIMEOUT:10000}"
     # CoaP piggyback response timeout in milliseconds
@@ -1022,56 +1034,6 @@ transport:
     psm_activity_timer: "${COAP_PSM_ACTIVITY_TIMER:10000}"
     # Default PSM Activity Timer if not specified in device profile
     paging_transmission_window: "${COAP_PAGING_TRANSMISSION_WINDOW:10000}"
-    dtls:
-      # Enable/disable DTLS 1.2 support
-      enabled: "${COAP_DTLS_ENABLED:false}"
-      # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
-      retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
-      # CoAP DTLS bind-address
-      bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
-      # CoAP DTLS bind port
-      bind_port: "${COAP_DTLS_BIND_PORT:5684}"
-      # Server DTLS credentials
-      # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
-      # Default: off
-      # Control usage of DTLS connection ID length (CID).
-      # - 'off' to deactivate it.
-      # - 'on' to activate Connection ID support (same as CID 0 or more 0).
-      # - A positive value defines generated CID size in bytes.
-      # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
-      # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
-      # - A value that are > 4: MultiNodeConnectionIdGenerator is used
-      connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
-      credentials:
-        # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
-        type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
-        # PEM server credentials
-        pem:
-          # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
-          cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
-          # Path to the server certificate private key file. Optional by default. Required if the private key is not present in the server certificate file;
-          key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
-          # Server certificate private key password (optional)
-          key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
-        # Keystore server credentials
-        keystore:
-          # Type of the key store (JKS or PKCS12)
-          type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
-          # Path to the key store that holds the SSL certificate
-          store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
-          # Password used to access the key store
-          store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
-          # Key alias
-          key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
-          # Password used to access the key
-          key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
-      x509:
-        # Skip certificate validity check for client certificates.
-        skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
-        # Inactivity timeout of DTLS session. Used to clean cache
-        dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
-        # Interval of periodic eviction of the timed-out DTLS sessions
-        dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
   # Local LwM2M transport parameters
   lwm2m:
     # Enable/disable LwM2M transport protocol.
@@ -1236,6 +1198,65 @@ transport:
     # Interval of transport statistics logging
     print-interval-ms: "${TB_TRANSPORT_STATS_PRINT_INTERVAL_MS:60000}"
 
+# CoAP server parameters
+coap:
+  # Enable/disable coap server.
+  enabled: "${COAP_SERVER_ENABLED:true}"
+  # CoAP bind address
+  bind_address: "${COAP_BIND_ADDRESS:0.0.0.0}"
+  # CoAP bind port
+  bind_port: "${COAP_BIND_PORT:5683}"
+  dtls:
+    # Enable/disable DTLS 1.2 support
+    enabled: "${COAP_DTLS_ENABLED:false}"
+    # RFC7925_RETRANSMISSION_TIMEOUT_IN_MILLISECONDS = 9000
+    retransmission_timeout: "${COAP_DTLS_RETRANSMISSION_TIMEOUT_MS:9000}"
+    # CoAP DTLS bind address
+    bind_address: "${COAP_DTLS_BIND_ADDRESS:0.0.0.0}"
+    # CoAP DTLS bind port
+    bind_port: "${COAP_DTLS_BIND_PORT:5684}"
+    # CoAP DTLS connection ID length. RFC 9146, Connection Identifier for DTLS 1.2
+    # Default: off
+    # Control usage of DTLS connection ID length (CID).
+    # - 'off' to deactivate it.
+    # - 'on' to activate Connection ID support (same as CID 0 or more 0).
+    # - A positive value defines generated CID size in bytes.
+    # - A value of 0 means we accept using CID but will not generate one for foreign peer (enables support but not for incoming traffic).
+    # - A value between 0 and <= 4: SingleNodeConnectionIdGenerator is used
+    # - A value that are > 4: MultiNodeConnectionIdGenerator is used
+    connection_id_length: "${COAP_DTLS_CONNECTION_ID_LENGTH:}"
+    # Server DTLS credentials
+    credentials:
+      # Server credentials type (PEM - pem certificate file; KEYSTORE - java keystore)
+      type: "${COAP_DTLS_CREDENTIALS_TYPE:PEM}"
+      # PEM server credentials
+      pem:
+        # Path to the server certificate file (holds server certificate or certificate chain, may include server private key)
+        cert_file: "${COAP_DTLS_PEM_CERT:coapserver.pem}"
+        # Path to the server certificate private key file. Optional by default. Required if the private key is not present in the server certificate file;
+        key_file: "${COAP_DTLS_PEM_KEY:coapserver_key.pem}"
+        # Server certificate private key password (optional)
+        key_password: "${COAP_DTLS_PEM_KEY_PASSWORD:server_key_password}"
+      # Keystore server credentials
+      keystore:
+        # Type of the key store (JKS or PKCS12)
+        type: "${COAP_DTLS_KEY_STORE_TYPE:JKS}"
+        # Path to the key store that holds the SSL certificate
+        store_file: "${COAP_DTLS_KEY_STORE:coapserver.jks}"
+        # Password used to access the key store
+        store_password: "${COAP_DTLS_KEY_STORE_PASSWORD:server_ks_password}"
+        # Key alias
+        key_alias: "${COAP_DTLS_KEY_ALIAS:serveralias}"
+        # Password used to access the key
+        key_password: "${COAP_DTLS_KEY_PASSWORD:server_key_password}"
+    x509:
+      # Skip certificate validity check for client certificates.
+      skip_validity_check_for_client_cert: "${TB_COAP_X509_DTLS_SKIP_VALIDITY_CHECK_FOR_CLIENT_CERT:false}"
+      # Inactivity timeout of DTLS session. Used to cleanup cache
+      dtls_session_inactivity_timeout: "${TB_COAP_X509_DTLS_SESSION_INACTIVITY_TIMEOUT:86400000}"
+      # Interval of periodic eviction of the timed-out DTLS sessions
+      dtls_session_report_timeout: "${TB_COAP_X509_DTLS_SESSION_REPORT_TIMEOUT:1800000}"
+
 # Device connectivity parameters
 device:
   connectivity:
@@ -1291,11 +1312,17 @@ edges:
   rpc:
     # RPC port bind
     port: "${EDGES_RPC_PORT:7070}"
-    # Maximum time of keeping alive client RPC connection. Time in seconds
+    # Specifies the minimum amount of time that should elapse between keepalive pings sent by the client
+    # This prevents clients from sending pings too frequently, which can be a nuisance to the server (potentially even a denial-of-service attack vector if abused)
+    # If a client sends pings more frequently than this interval, the server may terminate the connection.
     client_max_keep_alive_time_sec: "${EDGES_RPC_CLIENT_MAX_KEEP_ALIVE_TIME_SEC:1}"
-    # Maximum time of keep-alive connection. Time in seconds
+    # Sets the time of inactivity (no read operations on the connection) after which the server will send a keepalive ping to the client.
+    # This is used to ensure that the connection is still alive and to prevent network intermediaries from dropping connections due to inactivity.
+    # It's a way for the server to proactively check if the client is still responsive.
     keep_alive_time_sec: "${EDGES_RPC_KEEP_ALIVE_TIME_SEC:10}"
-    # Timeout of keep alive RPC connection. Time in seconds
+    # Specifies the maximum amount of time the server waits for a response to its keepalive ping.
+    # If the ping is not acknowledged within this time frame, the server considers the connection dead and may close it.
+    # This timeout helps detect unresponsive clients.
     keep_alive_timeout_sec: "${EDGES_RPC_KEEP_ALIVE_TIMEOUT_SEC:5}"
     ssl:
       # Enable/disable SSL support
@@ -1439,6 +1466,16 @@ queue:
     #      tb_rule_engine.sq:
     #        - key: max.poll.records
     #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+      tb_housekeeper:
+        # Consumer properties for Housekeeper tasks topic
+        - key: max.poll.records
+          # Amount of records to be returned in a single poll. For Housekeeper tasks topic, we should consume messages (tasks) one by one
+          value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_MAX_POLL_RECORDS:1}"
+      tb_housekeeper.reprocessing:
+        # Consumer properties for Housekeeper reprocessing topic
+        - key: max.poll.records
+          # Amount of records to be returned in a single poll. For Housekeeper reprocessing topic, we should consume messages (tasks) one by one
+          value: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_MAX_POLL_RECORDS:1}"
     other-inline: "${TB_QUEUE_KAFKA_OTHER_PROPERTIES:}" # In this section you can specify custom parameters (semicolon separated) for Kafka consumer/producer/admin # Example "metrics.recording.level:INFO;metrics.sample.window.ms:30000"
     other: # DEPRECATED. In this section, you can specify custom parameters for Kafka consumer/producer and expose the env variables to configure outside
     #  - key: "request.timeout.ms" # refer to https://docs.confluent.io/platform/current/installation/configuration/producer-configs.html#producerconfigs_request.timeout.ms
@@ -1447,19 +1484,23 @@ queue:
     #    value: "${TB_QUEUE_KAFKA_SESSION_TIMEOUT_MS:10000}" # (10 seconds)
     topic-properties:
       # Kafka properties for Rule Engine
-      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      rule-engine: "${TB_QUEUE_KAFKA_RE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Core topics
-      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      core: "${TB_QUEUE_KAFKA_CORE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for Transport Api topics
-      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      transport-api: "${TB_QUEUE_KAFKA_TA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Notifications topics
-      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      notifications: "${TB_QUEUE_KAFKA_NOTIFICATIONS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
       # Kafka properties for JS Executor topics
-      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
+      js-executor: "${TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:104857600;partitions:100;min.insync.replicas:1}"
       # Kafka properties for OTA updates topic
-      ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      ota-updates: "${TB_QUEUE_KAFKA_OTA_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Version Control topic
-      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:26214400;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      version-control: "${TB_QUEUE_KAFKA_VC_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper tasks topic
+      housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
+      # Kafka properties for Housekeeper reprocessing topic; retention.ms is set to 90 days; partitions is set to 1 since only one reprocessing service is running at a time
+      housekeeper-reprocessing: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_TOPIC_PROPERTIES:retention.ms:7776000000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1601,6 +1642,8 @@ queue:
     partitions: "${TB_QUEUE_CORE_PARTITIONS:10}"
     # Timeout for processing a message pack by Core microservices
     pack-processing-timeout: "${TB_QUEUE_CORE_PACK_PROCESSING_TIMEOUT_MS:2000}"
+    # Enable/disable a separate consumer per partition for Core queue
+    consumer-per-partition: "${TB_QUEUE_CORE_CONSUMER_PER_PARTITION:true}"
     ota:
       # Default topic name for OTA updates
       topic: "${TB_QUEUE_CORE_OTA_TOPIC:tb_ota_package}"
@@ -1615,6 +1658,29 @@ queue:
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
       # Statistics printing interval for Core microservices
       print-interval-ms: "${TB_QUEUE_CORE_STATS_PRINT_INTERVAL_MS:60000}"
+    housekeeper:
+      # Topic name for Housekeeper tasks
+      topic: "${TB_HOUSEKEEPER_TOPIC:tb_housekeeper}"
+      # Topic name for Housekeeper tasks to be reprocessed
+      reprocessing-topic: "${TB_HOUSEKEEPER_REPROCESSING_TOPIC:tb_housekeeper.reprocessing}"
+      # Poll interval for topics related to Housekeeper
+      poll-interval-ms: "${TB_HOUSEKEEPER_POLL_INTERVAL_MS:500}"
+      # Timeout in milliseconds for task processing. Tasks that fail to finish on time will be submitted for reprocessing
+      task-processing-timeout-ms: "${TB_HOUSEKEEPER_TASK_PROCESSING_TIMEOUT_MS:120000}"
+      # Comma-separated list of task types that shouldn't be processed. Available task types:
+      # DELETE_ATTRIBUTES, DELETE_TELEMETRY (both DELETE_LATEST_TS and DELETE_TS_HISTORY will be disabled),
+      # DELETE_LATEST_TS, DELETE_TS_HISTORY, DELETE_EVENTS, DELETE_ALARMS, UNASSIGN_ALARMS
+      disabled-task-types: "${TB_HOUSEKEEPER_DISABLED_TASK_TYPES:}"
+      # Delay in milliseconds between tasks reprocessing
+      task-reprocessing-delay-ms: "${TB_HOUSEKEEPER_TASK_REPROCESSING_DELAY_MS:3000}"
+      # Maximum amount of task reprocessing attempts. After exceeding, the task will be dropped
+      max-reprocessing-attempts: "${TB_HOUSEKEEPER_MAX_REPROCESSING_ATTEMPTS:10}"
+      stats:
+        # Enable/disable statistics for Housekeeper
+        enabled: "${TB_HOUSEKEEPER_STATS_ENABLED:true}"
+        # Statistics printing interval for Housekeeper
+        print-interval-ms: "${TB_HOUSEKEEPER_STATS_PRINT_INTERVAL_MS:60000}"
+
   vc:
     # Default topic name for Kafka, RabbitMQ, etc.
     topic: "${TB_QUEUE_VC_TOPIC:tb_version_control}"
@@ -1724,3 +1790,7 @@ management:
       exposure:
         # Expose metrics endpoint (use value 'prometheus' to enable prometheus metrics).
         include: '${METRICS_ENDPOINTS_EXPOSE:info}'
+  health:
+    elasticsearch:
+      # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
+      enabled: "false"

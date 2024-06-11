@@ -49,7 +49,7 @@ public class AuditLog extends BaseData<AuditLogId> {
     private ActionType actionType;
     @Schema(description = "JsonNode represented action data", accessMode = Schema.AccessMode.READ_ONLY)
     private JsonNode actionData;
-    @Schema(description = "String represented Action status", example = "SUCCESS", allowableValues = "SUCCESS,FAILURE", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "String represented Action status", example = "SUCCESS", allowableValues = {"SUCCESS", "FAILURE"}, accessMode = Schema.AccessMode.READ_ONLY)
     private ActionStatus actionStatus;
     @Schema(description = "Failure action details info. An empty string in case of action status type 'SUCCESS', otherwise includes stack trace of the caused exception.", accessMode = Schema.AccessMode.READ_ONLY)
     private String actionFailureDetails;

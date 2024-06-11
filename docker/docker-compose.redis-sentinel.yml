@@ -19,7 +19,7 @@ version: '3.0'
 services:
   # Redis sentinel
   redis-master:
-    image: 'bitnami/redis:7.0'
+    image: 'bitnami/redis:7.2'
     volumes:
       - ./tb-node/redis-sentinel-data-master:/bitnami/redis/data
     environment:
@@ -27,7 +27,7 @@ services:
       - 'REDIS_PASSWORD=thingsboard'
 
   redis-slave:
-    image: 'bitnami/redis:7.0'
+    image: 'bitnami/redis:7.2'
     volumes:
       - ./tb-node/redis-sentinel-data-slave:/bitnami/redis/data
     environment:
@@ -39,7 +39,7 @@ services:
       - redis-master
 
   redis-sentinel:
-    image: 'bitnami/redis-sentinel:7.0'
+    image: 'bitnami/redis-sentinel:7.2'
     volumes:
       - ./tb-node/redis-sentinel-data-sentinel:/bitnami/redis/data
     environment:

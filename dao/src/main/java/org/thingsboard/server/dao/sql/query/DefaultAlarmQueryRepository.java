@@ -206,8 +206,13 @@ public class DefaultAlarmQueryRepository implements AlarmQueryRepository {
             long startTs;
             long endTs;
             if (pageLink.getTimeWindow() > 0) {
-                endTs = System.currentTimeMillis();
-                startTs = endTs - pageLink.getTimeWindow();
+                if (pageLink.getStartTs() > 0) {
+                    startTs = pageLink.getStartTs();
+                    endTs = startTs + pageLink.getTimeWindow();
+                } else {
+                    endTs = System.currentTimeMillis();
+                    startTs = endTs - pageLink.getTimeWindow();
+                }
             } else {
                 startTs = pageLink.getStartTs();
                 endTs = pageLink.getEndTs();

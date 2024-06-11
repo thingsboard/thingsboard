@@ -18,6 +18,7 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -51,8 +52,17 @@ public abstract class DaoUtil {
         return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
 
-    public static <T> PageData<T> pageToPageData(Page<T> page) {
-        return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+    public static <T> PageData<T> pageToPageData(Slice<T> slice) {
+        int totalPages;
+        long totalElements;
+        if (slice instanceof Page<T> page) {
+            totalPages = page.getTotalPages();
+            totalElements = page.getTotalElements();
+        } else {
+            totalPages = 0;
+            totalElements = 0;
+        }
+        return new PageData<>(slice.getContent(), totalPages, totalElements, slice.hasNext());
     }
 
     public static Pageable toPageable(PageLink pageLink) {

@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.service.queue;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.event.EventListener;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -39,12 +39,11 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.QueueDeleteMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.QueueUpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
+import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
-import org.thingsboard.server.queue.provider.TbRuleEngineQueueFactory;
-import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbRuleEngineComponent;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
@@ -55,7 +54,6 @@ import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumer
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
@@ -76,7 +74,6 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     private final ConcurrentMap<QueueKey, TbRuleEngineQueueConsumerManager> consumers = new ConcurrentHashMap<>();
 
     public DefaultTbRuleEngineConsumerService(TbRuleEngineConsumerContext ctx,
-                                              TbRuleEngineQueueFactory tbRuleEngineQueueFactory,
                                               ActorSystemContext actorContext,
                                               TbRuleEngineDeviceRpcService tbDeviceRpcService,
                                               QueueService queueService,
@@ -87,8 +84,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                                               PartitionService partitionService,
                                               ApplicationEventPublisher eventPublisher,
                                               JwtSettingsService jwtSettingsService) {
-        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
-                eventPublisher, tbRuleEngineQueueFactory.createToRuleEngineNotificationsMsgConsumer(), jwtSettingsService);
+        super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService, eventPublisher, jwtSettingsService);
         this.ctx = ctx;
         this.tbDeviceRpcService = tbDeviceRpcService;
         this.queueService = queueService;
@@ -96,7 +92,7 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
     @PostConstruct
     public void init() {
-        super.init("tb-rule-engine-notifications-consumer");
+        super.init("tb-rule-engine");
         List<Queue> queues = queueService.findAllQueues();
         for (Queue configuration : queues) {
             if (partitionService.isManagedByCurrentService(configuration.getTenantId())) {
@@ -136,20 +132,11 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
                 });
     }
 
-    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        super.onApplicationEvent(event);
-        ctx.setReady(true);
-    }
-
-    @Override
-    protected void launchMainConsumers() {}
-
     @Override
     protected void stopConsumers() {
+        super.stopConsumers();
         consumers.values().forEach(TbRuleEngineQueueConsumerManager::stop);
         consumers.values().forEach(TbRuleEngineQueueConsumerManager::awaitStop);
-        ctx.stop();
     }
 
     @Override
@@ -165,6 +152,16 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     @Override
     protected long getNotificationPackProcessingTimeout() {
         return ctx.getPackProcessingTimeout();
+    }
+
+    @Override
+    protected int getMgmtThreadPoolSize() {
+        return ctx.getMgmtThreadPoolSize();
+    }
+
+    @Override
+    protected TbQueueConsumer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> createNotificationsConsumer() {
+        return ctx.getQueueFactory().createToRuleEngineNotificationsMsgConsumer();
     }
 
     @Override
@@ -243,7 +240,13 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private TbRuleEngineQueueConsumerManager createConsumer(QueueKey queueKey, Queue queue) {
-        var consumer = new TbRuleEngineQueueConsumerManager(ctx, queueKey);
+        var consumer = TbRuleEngineQueueConsumerManager.create()
+                .ctx(ctx)
+                .queueKey(queueKey)
+                .consumerExecutor(consumersExecutor)
+                .scheduler(scheduler)
+                .taskExecutor(mgmtExecutor)
+                .build();
         consumers.put(queueKey, consumer);
         consumer.init(queue);
         return consumer;

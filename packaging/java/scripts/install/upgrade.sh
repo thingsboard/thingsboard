@@ -51,7 +51,7 @@ su -s /bin/sh -c "java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.s
                     -Dinstall.upgrade=true \
                     -Dinstall.upgrade.from_version=${fromVersion} \
                     -Dlogging.config=${pkg.installFolder}/bin/install/logback.xml \
-                    org.springframework.boot.loader.PropertiesLauncher" "$run_user"
+                    org.springframework.boot.loader.launch.PropertiesLauncher" "$run_user"
 
 if [ $? -ne 0 ]; then
     echo "ThingsBoard upgrade failed!"

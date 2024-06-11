@@ -32,14 +32,19 @@
         <td><span class="tb-legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span></td>
         <td class="tb-legend-label"
             (click)="toggleHideData(legendKey.dataIndex)"
+            [innerHTML]="legendKey.dataKey.label | safe: 'html'"
             [ngClass]="{ 'tb-hidden-label': legendKey.dataKey.hidden, 'tb-horizontal': isHorizontal }">
-          {{ legendKey.dataKey.label }}
         </td>
-        <td class="tb-legend-value" *ngIf="legendConfig.showMin === true">{{ legendData.data[legendKey.dataIndex].min }}</td>
-        <td class="tb-legend-value" *ngIf="legendConfig.showMax === true">{{ legendData.data[legendKey.dataIndex].max }}</td>
-        <td class="tb-legend-value" *ngIf="legendConfig.showAvg === true">{{ legendData.data[legendKey.dataIndex].avg }}</td>
-        <td class="tb-legend-value" *ngIf="legendConfig.showTotal === true">{{ legendData.data[legendKey.dataIndex].total }}</td>
-        <td class="tb-legend-value" *ngIf="legendConfig.showLatest === true">{{ legendData.data[legendKey.dataIndex].latest }}</td>
+        <td class="tb-legend-value" *ngIf="legendConfig.showMin === true"
+            [innerHTML]="legendData.data[legendKey.dataIndex].min | safe: 'html'"></td>
+        <td class="tb-legend-value" *ngIf="legendConfig.showMax === true"
+            [innerHTML]="legendData.data[legendKey.dataIndex].max | safe: 'html'"></td>
+        <td class="tb-legend-value" *ngIf="legendConfig.showAvg === true"
+            [innerHTML]="legendData.data[legendKey.dataIndex].avg | safe: 'html'"></td>
+        <td class="tb-legend-value" *ngIf="legendConfig.showTotal === true"
+            [innerHTML]="legendData.data[legendKey.dataIndex].total | safe: 'html'"></td>
+        <td class="tb-legend-value" *ngIf="legendConfig.showLatest === true"
+            [innerHTML]="legendData.data[legendKey.dataIndex].latest | safe: 'html'"></td>
       </tr>
     </ng-container>
     <tr *ngIf="isRowDirection" class="tb-legend-keys" [ngClass]="{ 'tb-row-direction': !displayHeader }">
@@ -47,41 +52,36 @@
       <td *ngFor="let legendKey of legendKeys()">
         <span class="tb-legend-line" [ngStyle]="{backgroundColor: legendKey.dataKey.color}"></span>
         <span class="tb-legend-label"
+              [innerHTML]="legendKey.dataKey.label | safe: 'html'"
               (click)="toggleHideData(legendKey.dataIndex)"
               [ngClass]="{ 'tb-hidden-label': legendKey.dataKey.hidden}">
-                  {{ legendKey.dataKey.label }}
         </span>
       </td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showMin === true">
       <td class="tb-legend-type">{{ 'legend.min' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()">
-        {{ legendData.data[legendKey.dataIndex].min }}
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()"
+          [innerHTML]="legendData.data[legendKey.dataIndex].min | safe: 'html'"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showMax === true">
       <td class="tb-legend-type">{{ 'legend.max' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()">
-        {{ legendData.data[legendKey.dataIndex].max }}
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()"
+          [innerHTML]="legendData.data[legendKey.dataIndex].max | safe: 'html'"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showAvg === true">
       <td class="tb-legend-type">{{ 'legend.avg' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()">
-        {{ legendData.data[legendKey.dataIndex].avg }}
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()"
+          [innerHTML]="legendData.data[legendKey.dataIndex].avg | safe: 'html'"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showTotal === true">
       <td class="tb-legend-type">{{ 'legend.total' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()">
-        {{ legendData.data[legendKey.dataIndex].total }}
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()"
+          [innerHTML]="legendData.data[legendKey.dataIndex].total | safe: 'html'"></td>
     </tr>
     <tr class="tb-legend-keys" *ngIf="isRowDirection && legendConfig.showLatest === true">
       <td class="tb-legend-type">{{ 'legend.latest' | translate }}</td>
-      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()">
-        {{ legendData.data[legendKey.dataIndex].latest }}
-      </td>
+      <td class="tb-legend-value" *ngFor="let legendKey of legendKeys()"
+          [innerHTML]="legendData.data[legendKey.dataIndex].latest | safe: 'html'"></td>
     </tr>
   </tbody>
 </table>

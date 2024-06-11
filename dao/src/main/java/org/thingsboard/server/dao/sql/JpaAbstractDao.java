@@ -19,12 +19,15 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.BaseEntity;
+import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
@@ -40,6 +43,9 @@ import java.util.UUID;
 public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         extends JpaAbstractDaoListeningExecutorService
         implements Dao<D> {
+
+    @Autowired
+    protected JdbcTemplate jdbcTemplate;
 
     protected abstract Class<E> getEntityClass();
 
@@ -121,6 +127,25 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     public List<D> find(TenantId tenantId) {
         List<E> entities = Lists.newArrayList(getRepository().findAll());
         return DaoUtil.convertDataList(entities);
+    }
+
+    @Override
+    public List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit) {
+        String query = "SELECT id FROM " + getEntityType().getTableName() + " WHERE " + getTenantIdColumn() + " = ? ";
+        Object[] params;
+        if (idOffset == null) {
+            params = new Object[]{tenantId.getId(), limit};
+        } else {
+            query += " AND id > ? ";
+            params = new Object[]{tenantId.getId(), idOffset, limit};
+        }
+        query += " ORDER BY id LIMIT ?";
+
+        return jdbcTemplate.queryForList(query, UUID.class, params);
+    }
+
+    protected String getTenantIdColumn() {
+        return ModelConstants.TENANT_ID_COLUMN;
     }
 
 }

@@ -108,11 +108,7 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
-            case ASSIGNED_TO_EDGE:
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
+            case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Asset asset = assetService.findAssetById(edgeEvent.getTenantId(), assetId);
                 if (asset != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -129,17 +125,17 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
                     }
                     downlinkMsg = builder.build();
                 }
-                break;
-            case DELETED:
-            case UNASSIGNED_FROM_EDGE:
+            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> {
                 AssetUpdateMsg assetUpdateMsg = ((AssetMsgConstructor)
                         assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetDeleteMsg(assetId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAssetUpdateMsg(assetUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

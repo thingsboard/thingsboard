@@ -14,14 +14,16 @@
 /// limitations under the License.
 ///
 
-import {
-  BackgroundSettings,
-  BackgroundType,
-  ColorSettings,
-  constantColor,
-  Font
-} from '@shared/models/widget-settings.models';
+import { ColorSettings, constantColor, Font } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
+import { pieChartAnimationDefaultSettings, PieChartSettings } from '@home/components/widget/lib/chart/pie-chart.models';
+import { DeepPartial } from '@shared/models/common';
+import {
+  latestChartWidgetDefaultSettings,
+  LatestChartWidgetSettings
+} from '@home/components/widget/lib/chart/latest-chart.models';
+import { mergeDeep } from '@core/utils';
+import { ChartAnimationSettings } from '@home/components/widget/lib/chart/chart.models';
 
 export enum DoughnutLayout {
   default = 'default',
@@ -51,48 +53,22 @@ export const horizontalDoughnutLayoutImages = new Map<DoughnutLayout, string>(
   ]
 );
 
-export enum DoughnutTooltipValueType {
-  absolute = 'absolute',
-  percentage = 'percentage'
-}
-
-export const doughnutTooltipValueTypes = Object.keys(DoughnutTooltipValueType) as DoughnutTooltipValueType[];
-
-export const doughnutTooltipValueTypeTranslations = new Map<DoughnutTooltipValueType, string>(
-  [
-    [DoughnutTooltipValueType.absolute, 'widgets.doughnut.tooltip-value-type-absolute'],
-    [DoughnutTooltipValueType.percentage, 'widgets.doughnut.tooltip-value-type-percentage']
-  ]
-);
-
-export interface DoughnutWidgetSettings {
+export interface DoughnutWidgetSettings extends LatestChartWidgetSettings {
   layout: DoughnutLayout;
-  autoScale: boolean;
   clockwise: boolean;
-  sortSeries: boolean;
   totalValueFont: Font;
   totalValueColor: ColorSettings;
-  showLegend: boolean;
-  legendPosition: LegendPosition;
-  legendLabelFont: Font;
-  legendLabelColor: string;
-  legendValueFont: Font;
-  legendValueColor: string;
-  showTooltip: boolean;
-  tooltipValueType: DoughnutTooltipValueType;
-  tooltipValueDecimals: number;
-  tooltipValueFont: Font;
-  tooltipValueColor: string;
-  tooltipBackgroundColor: string;
-  tooltipBackgroundBlur: number;
-  background: BackgroundSettings;
 }
 
 export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSettings => ({
-  layout: DoughnutLayout.default,
+  ...latestChartWidgetDefaultSettings,
   autoScale: true,
-  clockwise: false,
   sortSeries: false,
+  animation: mergeDeep({} as ChartAnimationSettings,
+    pieChartAnimationDefaultSettings),
+  legendPosition: horizontal ? LegendPosition.right : LegendPosition.bottom,
+  layout: DoughnutLayout.default,
+  clockwise: false,
   totalValueFont: {
     family: 'Roboto',
     size: 24,
@@ -101,48 +77,33 @@ export const doughnutDefaultSettings = (horizontal: boolean): DoughnutWidgetSett
     weight: '500',
     lineHeight: '1'
   },
-  totalValueColor: constantColor('rgba(0, 0, 0, 0.87)'),
-  showLegend: true,
-  legendPosition: horizontal ? LegendPosition.right : LegendPosition.bottom,
-  legendLabelFont: {
-    family: 'Roboto',
-    size: 12,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '400',
-    lineHeight: '16px'
-  },
-  legendLabelColor: 'rgba(0, 0, 0, 0.38)',
-  legendValueFont: {
-    family: 'Roboto',
-    size: 14,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '500',
-    lineHeight: '20px'
-  },
-  legendValueColor: 'rgba(0, 0, 0, 0.87)',
-  showTooltip: true,
-  tooltipValueType: DoughnutTooltipValueType.percentage,
-  tooltipValueDecimals: 0,
-  tooltipValueFont: {
-    family: 'Roboto',
-    size: 13,
-    sizeUnit: 'px',
-    style: 'normal',
-    weight: '500',
-    lineHeight: '16px'
-  },
-  tooltipValueColor: 'rgba(0, 0, 0, 0.76)',
-  tooltipBackgroundColor: 'rgba(255, 255, 255, 0.76)',
-  tooltipBackgroundBlur: 4,
-  background: {
-    type: BackgroundType.color,
-    color: '#fff',
-    overlay: {
-      enabled: false,
-      color: 'rgba(255,255,255,0.72)',
-      blur: 3
-    }
-  }
+  totalValueColor: constantColor('rgba(0, 0, 0, 0.87)')
+});
+
+export const doughnutPieChartSettings = (settings: DoughnutWidgetSettings): DeepPartial<PieChartSettings> => ({
+  autoScale: settings.autoScale,
+  doughnut: true,
+  clockwise: settings.clockwise,
+  sortSeries: settings.sortSeries,
+  showTotal: settings.layout === DoughnutLayout.with_total,
+  animation: settings.animation,
+  showLegend: settings.showLegend,
+  totalValueFont: settings.totalValueFont,
+  totalValueColor: settings.totalValueColor,
+  showLabel: false,
+  borderWidth: 0,
+  borderColor: '#fff',
+  borderRadius: '50%',
+  emphasisScale: false,
+  emphasisBorderWidth: 2,
+  emphasisBorderColor: '#fff',
+  emphasisShadowColor: 'rgba(0, 0, 0, 0.24)',
+  emphasisShadowBlur: 8,
+  showTooltip: settings.showTooltip,
+  tooltipValueType: settings.tooltipValueType,
+  tooltipValueDecimals: settings.tooltipValueDecimals,
+  tooltipValueFont: settings.tooltipValueFont,
+  tooltipValueColor: settings.tooltipValueColor,
+  tooltipBackgroundColor: settings.tooltipBackgroundColor,
+  tooltipBackgroundBlur: settings.tooltipBackgroundBlur
 });

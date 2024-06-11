@@ -25,13 +25,13 @@ import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
-import org.junit.After;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
@@ -51,12 +51,12 @@ import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbRestApiCallNodeTest {
 
     private TbRestApiCallNode restNode;
@@ -91,7 +91,7 @@ public class TbRestApiCallNodeTest {
         }
     }
 
-    @After
+    @AfterEach
     public void teardown() {
         if (server != null) {
             server.stop();
@@ -108,9 +108,9 @@ public class TbRestApiCallNodeTest {
             public void handle(HttpRequest request, HttpResponse response, HttpContext context)
                     throws HttpException, IOException {
                 try {
-                    assertEquals("Request path matches", request.getRequestLine().getUri(), path);
-                    assertTrue("Custom header included", request.containsHeader("Foo"));
-                    assertEquals("Custom header value", "Bar", request.getFirstHeader("Foo").getValue());
+                    assertEquals(request.getRequestLine().getUri(), path, "Request path matches");
+                    assertTrue(request.containsHeader("Foo"), "Custom header included");
+                    assertEquals("Bar", request.getFirstHeader("Foo").getValue(), "Custom header value");
                     response.setStatusCode(200);
                     new Thread(new Runnable() {
                         @Override
@@ -142,7 +142,7 @@ public class TbRestApiCallNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         restNode.onMsg(ctx, msg);
 
-        assertTrue("Server handled request", latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
@@ -163,15 +163,15 @@ public class TbRestApiCallNodeTest {
             public void handle(HttpRequest request, HttpResponse response, HttpContext context)
                     throws HttpException, IOException {
                 try {
-                    assertEquals("Request path matches", path, request.getRequestLine().getUri());
-                    assertTrue("Content-Type included", request.containsHeader("Content-Type"));
-                    assertEquals("Content-Type value", "text/plain;charset=UTF-8",
-                            request.getFirstHeader("Content-Type").getValue());
-                    assertTrue("Content-Length included", request.containsHeader("Content-Length"));
-                    assertEquals("Content-Length value", "2",
-                            request.getFirstHeader("Content-Length").getValue());
-                    assertTrue("Custom header included", request.containsHeader("Foo"));
-                    assertEquals("Custom header value", "Bar", request.getFirstHeader("Foo").getValue());
+                    assertEquals(path, request.getRequestLine().getUri(), "Request path matches");
+                    assertTrue(request.containsHeader("Content-Type"), "Content-Type included");
+                    assertEquals("text/plain;charset=UTF-8",
+                            request.getFirstHeader("Content-Type").getValue(), "Content-Type value");
+                    assertTrue(request.containsHeader("Content-Length"), "Content-Length included");
+                    assertEquals("2",
+                            request.getFirstHeader("Content-Length").getValue(), "Content-Length value");
+                    assertTrue(request.containsHeader("Foo"), "Custom header included");
+                    assertEquals("Bar", request.getFirstHeader("Foo").getValue(), "Custom header value");
                     response.setStatusCode(200);
                     new Thread(new Runnable() {
                         @Override
@@ -203,7 +203,7 @@ public class TbRestApiCallNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         restNode.onMsg(ctx, msg);
 
-        assertTrue("Server handled request", latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);

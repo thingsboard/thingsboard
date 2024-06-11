@@ -53,6 +53,14 @@ VALUES ( '23199d80-6e7e-11ee-8829-ef9fd52a6141', 1697719852888, '13814000-1dd2-1
     "coaps":{"enabled":false,"host":"","port":"5684"}
 }' );
 
+INSERT INTO admin_settings ( id, created_time, tenant_id, key, json_value )
+VALUES ( '1e33c6f0-061e-11ef-b5b7-dba0ee077a1b', 1714391189727, '13814000-1dd2-11b2-8080-808080808080', 'jwt', '{
+    "tokenExpirationTime": "9000",
+    "refreshTokenExpTime": "604800",
+    "tokenIssuer": "thingsboard.io",
+    "tokenSigningKey": "QmlicmJkZk9tSzZPVFozcWY0Sm94UVhybmtBWXZ5YmZMOUZSZzZvcUFiOVhsb3VHUThhUWJGaXp3UHhtcGZ6Tw=="
+}' );
+
 INSERT INTO queue ( id, created_time, tenant_id, name, topic, poll_interval, partitions, consumer_per_partition, pack_processing_timeout, submit_strategy, processing_strategy )
 VALUES ( '6eaaefa6-4612-11e7-a919-92ebcb67fe33', 1592576748000 ,'13814000-1dd2-11b2-8080-808080808080', 'Main' ,'tb_rule_engine.main', 25, 10, true, 2000,
         '{"type": "BURST", "batchSize": 1000}',

@@ -54,6 +54,7 @@ import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.List;
 import java.util.Optional;
@@ -93,6 +94,9 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
+
+    @Autowired
+    private JpaExecutorService executor;
 
     protected void publishEvictEvent(DashboardTitleEvictEvent event) {
         if (TransactionSynchronizationManager.isActualTransactionActive()) {
@@ -171,8 +175,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     }
 
-
-
     @Override
     public Dashboard assignDashboardToCustomer(TenantId tenantId, DashboardId dashboardId, CustomerId customerId) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
@@ -216,12 +218,10 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         }
     }
 
-    private Dashboard updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
+    private void updateAssignedCustomer(TenantId tenantId, DashboardId dashboardId, Customer customer) {
         Dashboard dashboard = findDashboardById(tenantId, dashboardId);
         if (dashboard.updateAssignedCustomer(customer)) {
-            return saveDashboard(dashboard);
-        } else {
-            return dashboard;
+            saveDashboard(dashboard);
         }
     }
 
@@ -230,7 +230,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     public void deleteDashboard(TenantId tenantId, DashboardId dashboardId) {
         log.trace("Executing deleteDashboard [{}]", dashboardId);
         Validator.validateId(dashboardId, id -> INCORRECT_DASHBOARD_ID + id);
-        deleteEntityRelations(tenantId, dashboardId);
         try {
             dashboardDao.removeById(tenantId, dashboardId.getId());
             publishEvictEvent(new DashboardTitleEvictEvent(dashboardId));
@@ -244,6 +243,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
                 throw t;
             }
         }
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteDashboard(tenantId, (DashboardId) id);
     }
 
     @Override
@@ -267,6 +272,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         log.trace("Executing deleteDashboardsByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         tenantDashboardsRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteDashboardsByTenantId(tenantId);
     }
 
     @Override
@@ -359,7 +369,16 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Override
     public DashboardInfo findFirstDashboardInfoByTenantIdAndName(TenantId tenantId, String name) {
+        log.trace("Executing findFirstDashboardInfoByTenantIdAndName [{}][{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         return dashboardInfoDao.findFirstByTenantIdAndName(tenantId.getId(), name);
+    }
+
+    @Override
+    public ListenableFuture<DashboardInfo> findFirstDashboardInfoByTenantIdAndNameAsync(TenantId tenantId, String name) {
+        log.trace("Executing findFirstDashboardInfoByTenantIdAndNameAsync [{}][{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return executor.submit(() -> findFirstDashboardInfoByTenantIdAndName(tenantId, name));
     }
 
     @Override
@@ -388,12 +407,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
     @Override
     public long countByTenantId(TenantId tenantId) {
         return dashboardDao.countByTenantId(tenantId);
-    }
-
-    @Override
-    @Transactional
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteDashboard(tenantId, (DashboardId) id);
     }
 
     @Override

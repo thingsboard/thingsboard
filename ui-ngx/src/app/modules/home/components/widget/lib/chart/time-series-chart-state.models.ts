@@ -18,10 +18,10 @@ import {
   TimeSeriesChartStateSettings,
   TimeSeriesChartStateSourceType,
   TimeSeriesChartTicksFormatter,
-  TimeSeriesChartTicksGenerator
+  TimeSeriesChartTicksGenerator,
+  TimeSeriesChartTooltipValueFormatFunction
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { UtilsService } from '@core/services/utils.service';
-import { EChartsTooltipValueFormatFunction } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { FormattedData } from '@shared/models/widget.models';
 import { formatValue, isDefinedAndNotNull, isNumber, isNumeric } from '@core/utils';
 import { LabelFormatterCallback } from 'echarts';
@@ -35,7 +35,7 @@ export class TimeSeriesChartStateValueConverter {
 
   public readonly ticksGenerator: TimeSeriesChartTicksGenerator;
   public readonly ticksFormatter: TimeSeriesChartTicksFormatter;
-  public readonly tooltipFormatter: EChartsTooltipValueFormatFunction;
+  public readonly tooltipFormatter: TimeSeriesChartTooltipValueFormatFunction;
   public readonly labelFormatter: LabelFormatterCallback;
   public readonly valueConverter: (value: any) => any;
 

@@ -145,7 +145,7 @@
           </div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="interval"
-                   type="number" min="0" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" min="0" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
         <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
@@ -154,24 +154,24 @@
           </div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="splitNumber"
-                   type="number" min="1" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" min="1" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
       </ng-template>
     </mat-expansion-panel>
     <div *ngIf="axisType === 'yAxis'" class="tb-form-panel no-border no-padding-top">
       <div class="tb-form-row space-between column-xs">
-        <div translate>widgets.time-series-chart.axis.scale</div>
+        <div translate>widgets.chart.chart-axis.scale</div>
         <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <div class="tb-small-label" translate>widgets.time-series-chart.axis.scale-min</div>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="min"
-                   type="number" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
-          <div class="tb-small-label" translate>widgets.time-series-chart.axis.scale-max</div>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="max"
-                   type="number" placeholder="{{ 'widgets.time-series-chart.axis.scale-auto' | translate }}">
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
           </mat-form-field>
         </div>
       </div>

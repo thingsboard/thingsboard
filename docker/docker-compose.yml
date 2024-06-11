@@ -220,6 +220,7 @@ services:
     image: "${DOCKER_REPO}/${LWM2M_TRANSPORT_DOCKER_NAME}:${TB_VERSION}"
     ports:
       - "5685:5685/udp"
+      - "5686:5686/udp"
     environment:
       TB_SERVICE_ID: tb-lwm2m-transport
       JAVA_OPTS: "${JAVA_OPTS}"
@@ -300,7 +301,7 @@ services:
   haproxy:
     restart: always
     container_name: "${LOAD_BALANCER_NAME}"
-    image: thingsboard/haproxy-certbot:2.2.31-alpine3.18
+    image: thingsboard/haproxy-certbot:2.2.33-alpine
     volumes:
      - ./haproxy/config:/config
      - ./haproxy/letsencrypt:/etc/letsencrypt

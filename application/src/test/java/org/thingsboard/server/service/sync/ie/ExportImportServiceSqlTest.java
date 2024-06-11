@@ -532,20 +532,19 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
 
     @Test
-    public void testExportImportDeviceProfile_betweenTenants_findExistingByName() throws Exception {
+    public void testExportImportDefaultDeviceProfile_betweenTenants_findExisting() throws Exception {
         DeviceProfile defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId1);
+        defaultDeviceProfile.setName("non-default-name");
+        deviceProfileService.saveDeviceProfile(defaultDeviceProfile);
         EntityExportData<DeviceProfile> deviceProfileExportData = exportEntity(tenantAdmin1, defaultDeviceProfile.getId());
 
-        assertThatThrownBy(() -> {
-            importEntity(tenantAdmin2, deviceProfileExportData, EntityImportSettings.builder()
-                    .findExistingByName(false)
-                    .build());
-        }).hasMessageContaining("default device profile is present");
-
         importEntity(tenantAdmin2, deviceProfileExportData, EntityImportSettings.builder()
-                .findExistingByName(true)
+                .findExistingByName(false)
                 .build());
-        checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, deviceProfileService.findDefaultDeviceProfile(tenantId2));
+        DeviceProfile importedDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId2);
+        assertThat(importedDeviceProfile.isDefault()).isTrue();
+        assertThat(importedDeviceProfile.getName()).isEqualTo(defaultDeviceProfile.getName());
+        checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, importedDeviceProfile);
     }
 
 

@@ -133,7 +133,6 @@ public class TenantProfileServiceImpl extends AbstractCachedEntityService<Tenant
                 throw t;
             }
         }
-        deleteEntityRelations(tenantId, tenantProfileId);
         publishEvictEvent(new TenantProfileEvictEvent(tenantProfileId, isDefault));
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(tenantProfile).entityId(tenantProfileId).build());
     }

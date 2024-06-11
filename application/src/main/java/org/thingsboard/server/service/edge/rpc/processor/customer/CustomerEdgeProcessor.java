@@ -52,8 +52,7 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
         CustomerId customerId = new CustomerId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 Customer customer = customerService.findCustomerById(edgeEvent.getTenantId(), customerId);
                 if (customer != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -64,15 +63,15 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                             .addCustomerUpdateMsg(customerUpdateMsg)
                             .build();
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 CustomerUpdateMsg customerUpdateMsg = ((CustomerMsgConstructor)
                         customerMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructCustomerDeleteMsg(customerId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addCustomerUpdateMsg(customerUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
@@ -97,4 +96,5 @@ public class CustomerEdgeProcessor extends BaseEdgeProcessor {
                 return Futures.immediateFuture(null);
         }
     }
+
 }

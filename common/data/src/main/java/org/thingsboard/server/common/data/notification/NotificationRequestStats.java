@@ -34,7 +34,6 @@ public class NotificationRequestStats {
     @JsonIgnore
     private final AtomicInteger totalSent;
     private final Map<NotificationDeliveryMethod, Map<String, String>> errors;
-    @JsonIgnore
     private final AtomicInteger totalErrors;
     private String error;
     @JsonIgnore
@@ -51,11 +50,19 @@ public class NotificationRequestStats {
     @JsonCreator
     public NotificationRequestStats(@JsonProperty("sent") Map<NotificationDeliveryMethod, AtomicInteger> sent,
                                     @JsonProperty("errors") Map<NotificationDeliveryMethod, Map<String, String>> errors,
+                                    @JsonProperty("totalErrors") Integer totalErrors,
                                     @JsonProperty("error") String error) {
         this.sent = sent;
         this.totalSent = null;
         this.errors = errors;
-        this.totalErrors = null;
+        if (totalErrors == null) {
+            if (errors != null) {
+                totalErrors = errors.values().stream().mapToInt(Map::size).sum();
+            } else {
+                totalErrors = 0;
+            }
+        }
+        this.totalErrors = new AtomicInteger(totalErrors);
         this.error = error;
         this.processedRecipients = Collections.emptyMap();
     }
@@ -73,7 +80,10 @@ public class NotificationRequestStats {
         if (errorMessage == null) {
             errorMessage = error.getClass().getSimpleName();
         }
-        errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>()).put(recipient.getTitle(), errorMessage);
+        Map<String, String> errors = this.errors.computeIfAbsent(deliveryMethod, k -> new ConcurrentHashMap<>());
+        if (errors.size() < 100) {
+            errors.put(recipient.getTitle(), errorMessage);
+        }
         totalErrors.incrementAndGet();
     }
 

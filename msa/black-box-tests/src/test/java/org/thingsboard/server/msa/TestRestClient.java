@@ -23,6 +23,7 @@ import io.restassured.config.RestAssuredConfig;
 import io.restassured.filter.log.RequestLoggingFilter;
 import io.restassured.filter.log.ResponseLoggingFilter;
 import io.restassured.http.ContentType;
+import io.restassured.internal.ValidatableResponseImpl;
 import io.restassured.path.json.JsonPath;
 import io.restassured.response.ValidatableResponse;
 import io.restassured.specification.RequestSpecification;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EventInfo;
+import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -63,6 +65,7 @@ import java.util.List;
 import java.util.Map;
 
 import static io.restassured.RestAssured.given;
+import static java.net.HttpURLConnection.HTTP_BAD_REQUEST;
 import static java.net.HttpURLConnection.HTTP_NOT_FOUND;
 import static java.net.HttpURLConnection.HTTP_OK;
 import static org.hamcrest.Matchers.is;
@@ -546,6 +549,43 @@ public class TestRestClient {
                 .statusCode(HTTP_OK)
                 .extract()
                 .as(new TypeRef<>() {});
+    }
+
+    public ValidatableResponse postTbResourceIfNotExists(TbResource lwModel) {
+        return given().spec(requestSpec).body(lwModel)
+                .post("/api/resource")
+                .then()
+                .statusCode(anyOf(is(HTTP_OK), is(HTTP_BAD_REQUEST)));
+    }
+    public void deleteDeviceProfileIfExists(DeviceProfile deviceProfile) {
+        given().spec(requestSpec)
+                .delete("/api/deviceProfile/" + deviceProfile.getId().getId().toString())
+                .then()
+                .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
+    }
+
+    public Device getDeviceByNameIfExists(String deviceName) {
+        ValidatableResponse response = given().spec(requestSpec)
+                .pathParams("deviceName", deviceName)
+                .get("/api/tenant/devices?deviceName={deviceName}")
+                .then()
+                .statusCode(anyOf(is(HTTP_OK), is(HTTP_NOT_FOUND)));
+        if(((ValidatableResponseImpl) response).extract().response().getStatusCode()==HTTP_OK){
+            return   response.extract()
+                    .as(Device.class);
+        } else {
+            return  null;
+        }
+    }
+
+    public DeviceCredentials postDeviceCredentials(DeviceCredentials deviceCredentials) {
+        return given().spec(requestSpec).body(deviceCredentials)
+                .post("/api/device/credentials")
+                .then()
+                .assertThat()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(DeviceCredentials.class);
     }
 
     private void addTimePageLinkToParam(Map<String, String> params, TimePageLink pageLink) {

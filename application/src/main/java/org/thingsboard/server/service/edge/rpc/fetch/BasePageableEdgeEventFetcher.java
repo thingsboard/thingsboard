@@ -36,17 +36,18 @@ public abstract class BasePageableEdgeEventFetcher<T> implements EdgeEventFetche
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
         log.trace("[{}] start fetching edge events [{}]", tenantId, edge.getId());
-        PageData<T> pageData = fetchPageData(tenantId, edge, pageLink);
+        PageData<T> entities = fetchEntities(tenantId, edge, pageLink);
         List<EdgeEvent> result = new ArrayList<>();
-        if (!pageData.getData().isEmpty()) {
-            for (T entity : pageData.getData()) {
+        if (!entities.getData().isEmpty()) {
+            for (T entity : entities.getData()) {
                 result.add(constructEdgeEvent(tenantId, edge, entity));
             }
         }
-        return new PageData<>(result, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+        return new PageData<>(result, entities.getTotalPages(), entities.getTotalElements(), entities.hasNext());
     }
 
-    abstract PageData<T> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink);
+    abstract PageData<T> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink);
 
     abstract EdgeEvent constructEdgeEvent(TenantId tenantId, Edge edge, T entity);
+
 }

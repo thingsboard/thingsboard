@@ -16,6 +16,13 @@
 .tb-data-key-input {
   .mat-mdc-form-field.tb-inline-field.tb-key-field {
     width: 100%;
+    &.mat-form-field-appearance-fill {
+      .mdc-text-field--filled.mdc-text-field--disabled {
+        &:before {
+          opacity: 0;
+        }
+      }
+    }
     .mat-mdc-text-field-wrapper:not(.mdc-text-field--outlined) {
       padding-left: 8px;
       padding-right: 0;

@@ -46,6 +46,9 @@ import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
 import org.thingsboard.server.dao.entityview.EntityViewService;
+import org.thingsboard.server.dao.notification.NotificationRuleService;
+import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.notification.NotificationTemplateService;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
@@ -82,6 +85,7 @@ import org.thingsboard.server.service.edge.rpc.constructor.edge.EdgeMsgConstruct
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorV1;
 import org.thingsboard.server.service.edge.rpc.constructor.entityview.EntityViewMsgConstructorV2;
+import org.thingsboard.server.service.edge.rpc.constructor.notification.NotificationMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.oauth2.OAuth2MsgConstructor;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorFactory;
 import org.thingsboard.server.service.edge.rpc.constructor.ota.OtaPackageMsgConstructorV1;
@@ -130,6 +134,7 @@ import org.thingsboard.server.service.edge.rpc.processor.device.profile.DevicePr
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorV1;
 import org.thingsboard.server.service.edge.rpc.processor.entityview.EntityViewProcessorV2;
+import org.thingsboard.server.service.edge.rpc.processor.notification.NotificationEdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.oauth2.OAuth2EdgeProcessor;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorFactory;
 import org.thingsboard.server.service.edge.rpc.processor.relation.RelationEdgeProcessorV1;
@@ -196,6 +201,15 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected UserService userService;
+
+    @MockBean
+    protected NotificationRuleService notificationRuleService;
+
+    @MockBean
+    protected NotificationTargetService notificationTargetService;
+
+    @MockBean
+    protected NotificationTemplateService notificationTemplateService;
 
     @MockBean
     protected DeviceProfileService deviceProfileService;
@@ -367,6 +381,9 @@ public abstract class BaseEdgeProcessorTest {
     protected WidgetMsgConstructorV2 widgetMsgConstructorV2;
 
     @MockBean
+    protected NotificationMsgConstructor notificationMsgConstructor;
+
+    @MockBean
     protected OAuth2MsgConstructor oAuth2MsgConstructor;
 
     @MockBean
@@ -428,6 +445,9 @@ public abstract class BaseEdgeProcessorTest {
 
     @MockBean
     protected OAuth2EdgeProcessor oAuth2EdgeProcessor;
+
+    @MockBean
+    protected NotificationEdgeProcessor notificationEdgeProcessor;
 
     @SpyBean
     protected RuleChainMsgConstructorFactory ruleChainMsgConstructorFactory;

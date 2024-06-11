@@ -180,17 +180,25 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     public void deleteAssetProfile(TenantId tenantId, AssetProfileId assetProfileId) {
         log.trace("Executing deleteAssetProfile [{}]", assetProfileId);
         Validator.validateId(assetProfileId, id -> INCORRECT_ASSET_PROFILE_ID + id);
-        AssetProfile assetProfile = assetProfileDao.findById(tenantId, assetProfileId.getId());
-        if (assetProfile != null && assetProfile.isDefault()) {
+        deleteEntity(tenantId, assetProfileId, false);
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        AssetProfile assetProfile = assetProfileDao.findById(tenantId, id.getId());
+        if (assetProfile == null) {
+            return;
+        }
+        if (!force && assetProfile.isDefault()) {
             throw new DataValidationException("Deletion of Default Asset Profile is prohibited!");
         }
-        this.removeAssetProfile(tenantId, assetProfile);
+        removeAssetProfile(tenantId, assetProfile);
     }
 
     private void removeAssetProfile(TenantId tenantId, AssetProfile assetProfile) {
         AssetProfileId assetProfileId = assetProfile.getId();
         try {
-            deleteEntityRelations(tenantId, assetProfileId);
             assetProfileDao.removeById(tenantId, assetProfileId.getId());
             publishEvictEvent(new AssetProfileEvictEvent(assetProfile.getTenantId(), assetProfile.getName(),
                     null, assetProfile.getId(), assetProfile.isDefault()));
@@ -304,14 +312,13 @@ public class AssetProfileServiceImpl extends AbstractCachedEntityService<AssetPr
     }
 
     @Override
-    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findAssetProfileById(tenantId, new AssetProfileId(entityId.getId())));
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteAssetProfilesByTenantId(tenantId);
     }
 
     @Override
-    @Transactional
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteAssetProfile(tenantId, (AssetProfileId) id);
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findAssetProfileById(tenantId, new AssetProfileId(entityId.getId())));
     }
 
     @Override

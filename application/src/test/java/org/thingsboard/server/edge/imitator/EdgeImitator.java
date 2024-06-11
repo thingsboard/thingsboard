@@ -44,6 +44,9 @@ import org.thingsboard.server.gen.edge.v1.DownlinkResponseMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
 import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationTargetUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.NotificationTemplateUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
@@ -74,16 +77,16 @@ import java.util.stream.Collectors;
 @Slf4j
 public class EdgeImitator {
 
-    private String routingKey;
-    private String routingSecret;
+    private final String routingKey;
+    private final String routingSecret;
 
-    private EdgeRpcClient edgeRpcClient;
+    private final EdgeRpcClient edgeRpcClient;
 
     private final Lock lock = new ReentrantLock();
 
     private CountDownLatch messagesLatch;
     private CountDownLatch responsesLatch;
-    private List<Class<? extends AbstractMessage>> ignoredTypes;
+    private final List<Class<? extends AbstractMessage>> ignoredTypes;
 
     @Setter
     private boolean randomFailuresOnTimeseriesDownlink = false;
@@ -93,7 +96,7 @@ public class EdgeImitator {
     @Getter
     private EdgeConfiguration configuration;
     @Getter
-    private List<AbstractMessage> downlinkMsgs;
+    private final List<AbstractMessage> downlinkMsgs;
 
     @Getter
     private UplinkResponseMsg latestResponseMsg;
@@ -318,6 +321,21 @@ public class EdgeImitator {
         if (downlinkMsg.getOAuth2UpdateMsgCount() > 0) {
             for (OAuth2UpdateMsg oAuth2UpdateMsg : downlinkMsg.getOAuth2UpdateMsgList()) {
                 result.add(saveDownlinkMsg(oAuth2UpdateMsg));
+            }
+        }
+        if (downlinkMsg.getNotificationTemplateUpdateMsgCount() > 0) {
+            for (NotificationTemplateUpdateMsg notificationTemplateUpdateMsg : downlinkMsg.getNotificationTemplateUpdateMsgList()) {
+                result.add(saveDownlinkMsg(notificationTemplateUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getNotificationRuleUpdateMsgCount() > 0) {
+            for (NotificationRuleUpdateMsg notificationRuleUpdateMsg : downlinkMsg.getNotificationRuleUpdateMsgList()) {
+                result.add(saveDownlinkMsg(notificationRuleUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getNotificationTargetUpdateMsgCount() > 0) {
+            for (NotificationTargetUpdateMsg notificationTargetUpdateMsg : downlinkMsg.getNotificationTargetUpdateMsgList()) {
+                result.add(saveDownlinkMsg(notificationTargetUpdateMsg));
             }
         }
         if (downlinkMsg.hasEdgeConfiguration()) {

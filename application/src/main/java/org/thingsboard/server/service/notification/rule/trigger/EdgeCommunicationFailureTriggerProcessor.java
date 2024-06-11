@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.notification.rule.trigger;
 
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.notification.info.EdgeCommunicationFailureNotificationInfo;
 import org.thingsboard.server.common.data.notification.info.RuleOriginatedNotificationInfo;

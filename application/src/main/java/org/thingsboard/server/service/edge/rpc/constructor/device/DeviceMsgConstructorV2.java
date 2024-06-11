@@ -48,4 +48,5 @@ public class DeviceMsgConstructorV2 extends BaseDeviceMsgConstructor {
                 .setIdMSB(deviceProfile.getId().getId().getMostSignificantBits())
                 .setIdLSB(deviceProfile.getId().getId().getLeastSignificantBits()).build();
     }
+
 }

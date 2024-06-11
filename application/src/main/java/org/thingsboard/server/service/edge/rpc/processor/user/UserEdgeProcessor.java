@@ -39,8 +39,7 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
         UserId userId = new UserId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 User user = userService.findUserById(edgeEvent.getTenantId(), userId);
                 if (user != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -49,14 +48,12 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                             .addUserUpdateMsg(((UserMsgConstructor) userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructUserUpdatedMsg(msgType, user))
                             .build();
                 }
-                break;
-            case DELETED:
-                downlinkMsg = DownlinkMsg.newBuilder()
-                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addUserUpdateMsg(((UserMsgConstructor) userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructUserDeleteMsg(userId))
-                        .build();
-                break;
-            case CREDENTIALS_UPDATED:
+            }
+            case DELETED -> downlinkMsg = DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                    .addUserUpdateMsg(((UserMsgConstructor) userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructUserDeleteMsg(userId))
+                    .build();
+            case CREDENTIALS_UPDATED -> {
                 UserCredentials userCredentialsByUserId = userService.findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
                 if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
                     UserCredentialsUpdateMsg userCredentialsUpdateMsg =
@@ -66,8 +63,9 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                             .addUserCredentialsUpdateMsg(userCredentialsUpdateMsg)
                             .build();
                 }
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

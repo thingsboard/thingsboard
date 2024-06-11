@@ -286,4 +286,5 @@ public abstract class DeviceEdgeProcessor extends BaseDeviceProcessor implements
                 .addDeviceCredentialsRequestMsg(deviceCredentialsRequestMsg);
         return builder.build();
     }
+
 }

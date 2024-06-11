@@ -368,7 +368,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
             LwM2mPath path = entry.getKey();
             LwM2mNode node = entry.getValue();
             LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-            String stringPath = convertObjectIdToVersionedId(path.toString(), registration);
+            String stringPath = convertObjectIdToVersionedId(path.toString(), lwM2MClient);
             ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
             if (objectModelVersion != null) {
                 if (node instanceof LwM2mObject) {
@@ -584,27 +584,27 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
     private void updateResourcesValue(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String path, Mode mode, int code) {
         Registration registration = lwM2MClient.getRegistration();
         if (lwM2MClient.saveResourceValue(path, lwM2mResource, modelProvider, mode)) {
-            if (path.equals(convertObjectIdToVersionedId(FW_NAME_ID, registration))) {
+            if (path.equals(convertObjectIdToVersionedId(FW_NAME_ID, lwM2MClient))) {
                 otaService.onCurrentFirmwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_3_VER_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(FW_3_VER_ID, lwM2MClient))) {
                 otaService.onCurrentFirmwareVersion3Update(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_VER_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(FW_VER_ID, lwM2MClient))) {
                 otaService.onCurrentFirmwareVersionUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_STATE_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(FW_STATE_ID, lwM2MClient))) {
                 otaService.onCurrentFirmwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_RESULT_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(FW_RESULT_ID, lwM2MClient))) {
                 otaService.onCurrentFirmwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(FW_DELIVERY_METHOD, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(FW_DELIVERY_METHOD, lwM2MClient))) {
                 otaService.onCurrentFirmwareDeliveryMethodUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_NAME_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(SW_NAME_ID, lwM2MClient))) {
                 otaService.onCurrentSoftwareNameUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_VER_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(SW_VER_ID, lwM2MClient))) {
                 otaService.onCurrentSoftwareVersionUpdate(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_3_VER_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(SW_3_VER_ID, lwM2MClient))) {
                 otaService.onCurrentSoftwareVersion3Update(lwM2MClient, (String) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_STATE_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(SW_STATE_ID, lwM2MClient))) {
                 otaService.onCurrentSoftwareStateUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
-            } else if (path.equals(convertObjectIdToVersionedId(SW_RESULT_ID, registration))) {
+            } else if (path.equals(convertObjectIdToVersionedId(SW_RESULT_ID, lwM2MClient))) {
                 otaService.onCurrentSoftwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
             }
             if (ResponseCode.BAD_REQUEST.getCode() > code) {
@@ -968,6 +968,10 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     executor);
         }
     }
+
+    public LwM2mClientContext getClientContext(){
+        return this.clientContext;
+    };
 
     private Map<String, String> getNamesFromProfileForSharedAttributes(LwM2mClient lwM2MClient) {
         Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getProfileId());

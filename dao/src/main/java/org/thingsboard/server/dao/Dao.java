@@ -43,6 +43,8 @@ public interface Dao<T> {
 
     void removeAllByIds(Collection<UUID> ids);
 
+    List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
+
     default EntityType getEntityType() { return null; }
 
 }

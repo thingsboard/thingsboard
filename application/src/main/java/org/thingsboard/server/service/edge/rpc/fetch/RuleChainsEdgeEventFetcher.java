@@ -39,7 +39,7 @@ public class RuleChainsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Rul
     private final RuleChainService ruleChainService;
 
     @Override
-    PageData<RuleChain> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<RuleChain> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -54,4 +54,5 @@ public class RuleChainsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Rul
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN,
                 EdgeEventActionType.ADDED, ruleChain.getId(), isRootBody);
     }
+
 }

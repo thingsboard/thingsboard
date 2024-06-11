@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.service.security.model;
 
+import lombok.Getter;
+import lombok.Setter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.thingsboard.server.common.data.User;
@@ -30,9 +32,12 @@ public class SecurityUser extends User {
     private static final long serialVersionUID = -797397440703066079L;
 
     private Collection<GrantedAuthority> authorities;
+    @Getter @Setter
     private boolean enabled;
+    @Getter @Setter
     private UserPrincipal userPrincipal;
-    private String sessionId;
+    @Getter @Setter
+    private String sessionId = UUID.randomUUID().toString();
 
     public SecurityUser() {
         super();
@@ -46,7 +51,6 @@ public class SecurityUser extends User {
         super(user);
         this.enabled = enabled;
         this.userPrincipal = userPrincipal;
-        this.sessionId = UUID.randomUUID().toString();
     }
 
     public Collection<GrantedAuthority> getAuthorities() {
@@ -58,27 +62,4 @@ public class SecurityUser extends User {
         return authorities;
     }
 
-    public boolean isEnabled() {
-        return enabled;
-    }
-
-    public UserPrincipal getUserPrincipal() {
-        return userPrincipal;
-    }
-
-    public void setEnabled(boolean enabled) {
-        this.enabled = enabled;
-    }
-
-    public void setUserPrincipal(UserPrincipal userPrincipal) {
-        this.userPrincipal = userPrincipal;
-    }
-
-    public String getSessionId() {
-        return sessionId;
-    }
-
-    public void setSessionId(String sessionId) {
-        this.sessionId = sessionId;
-    }
 }

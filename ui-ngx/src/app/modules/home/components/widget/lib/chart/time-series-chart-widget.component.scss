@@ -147,11 +147,6 @@ $maxLegendHeight: 35%;
         }
       }
       .tb-time-series-chart-legend-type-label {
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 400;
-        line-height: 16px;
-        color: rgba(0, 0, 0, 0.38);
         white-space: nowrap;
         text-align: left;
         &.right {
@@ -159,11 +154,6 @@ $maxLegendHeight: 35%;
         }
       }
       .tb-time-series-chart-legend-value {
-        font-size: 12px;
-        font-style: normal;
-        font-weight: 500;
-        line-height: 16px;
-        color: rgba(0, 0, 0, 0.87);
         white-space: nowrap;
         text-align: right;
       }

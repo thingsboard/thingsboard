@@ -50,6 +50,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Notif
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.TaskProcessingFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
@@ -358,13 +359,17 @@ public class DefaultNotifications {
                     .build())
             .build();
 
-    public static final DefaultNotification jwtSigningKeyIssue = DefaultNotification.builder()
-            .name("JWT Signing Key issue notification")
-            .type(NotificationType.GENERAL)
-            .subject("WARNING: security issue")
-            .text("The platform is configured to use default JWT Signing Key. Please change it on the security settings page")
+    public static final DefaultNotification taskProcessingFailure = DefaultNotification.builder()
+            .name("Task processing failure notification")
+            .type(NotificationType.TASK_PROCESSING_FAILURE)
+            .subject("Failed to process ${taskType}")
+            .text("Failed to process ${taskDescription} for tenant ${tenantId}: ${error}")
             .icon("warning").color(YELLOW_COLOR)
-            .button("Go to settings").link("/security-settings/general")
+            .rule(DefaultRule.builder()
+                    .name("Task processing failure")
+                    .triggerConfig(TaskProcessingFailureNotificationRuleTriggerConfig.builder().build())
+                    .description("Send notification to system admins when task processing fails")
+                    .build())
             .build();
 
     private final NotificationTemplateService templateService;

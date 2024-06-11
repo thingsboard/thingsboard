@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.EntityType;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -48,7 +49,8 @@ public class DefaultEntityServiceRegistry implements EntityServiceRegistry {
 
     @Override
     public EntityDaoService getServiceByEntityType(EntityType entityType) {
-        return entityDaoServicesMap.get(entityType);
+        return Optional.ofNullable(entityDaoServicesMap.get(entityType))
+                .orElseThrow(() -> new IllegalArgumentException("Unsupported entity type " + entityType));
     }
 
 }

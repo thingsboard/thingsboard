@@ -148,11 +148,13 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       color: {
         color: 'rgba(0, 0, 0, 0.87)',
         type: ColorType.range,
-        rangeList: [
-          {to: 0, color: '#198038'},
-          {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
-          {from: 0, color: '#D12730'}
-        ],
+        rangeList: {
+          range: [
+            {to: 0, color: '#198038'},
+            {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
+            {from: 0, color: '#D12730'}
+          ]
+        },
         colorFunction: ''
       },
       showArrow: true

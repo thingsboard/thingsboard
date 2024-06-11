@@ -147,6 +147,7 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
 
     @Override
     public UpdatedRegistration updateRegistration(RegistrationUpdate update) {
+        log.trace("updateRegistration [{}]", update);
         try {
             lock.writeLock().lock();
 

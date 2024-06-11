@@ -15,7 +15,7 @@
  */
 package org.thingsboard.server.common.msg.queue;
 
-import org.junit.Test;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import static org.hamcrest.CoreMatchers.is;

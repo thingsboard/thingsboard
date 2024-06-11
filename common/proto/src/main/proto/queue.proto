@@ -96,6 +96,8 @@ message SessionInfoProto {
   int64 deviceProfileIdLSB = 13;
   int64 customerIdMSB = 14;
   int64 customerIdLSB = 15;
+  optional int64 gatewayIdMSB = 16;
+  optional int64 gatewayIdLSB = 17;
 }
 
 enum SessionEvent {
@@ -395,6 +397,11 @@ message GetOrCreateDeviceFromGatewayResponseMsg {
   TransportApiRequestErrorCode error = 3;
 }
 
+message GatewayDisconnectDeviceMsg {
+  string deviceName = 1;
+  int32 reasonCode = 2;
+}
+
 enum TransportApiRequestErrorCode {
   UNKNOWN_TRANSPORT_API_ERROR  = 0;
   ENTITY_LIMIT = 1;
@@ -417,6 +424,7 @@ message GetQueueRoutingInfoResponseMsg {
   string queueName = 5;
   string queueTopic = 6;
   int32 partitions = 7;
+  optional bool duplicateMsgToAllPartitions = 8;
 }
 
 message QueueUpdateMsg {
@@ -427,6 +435,7 @@ message QueueUpdateMsg {
   string queueName = 5;
   string queueTopic = 6;
   int32 partitions = 7;
+  optional bool duplicateMsgToAllPartitions = 8;
 }
 
 message QueueDeleteMsg {
@@ -575,8 +584,16 @@ message ResourceDeleteMsg {
   string resourceKey = 4;
 }
 
+enum SessionCloseReason {
+  UNKNOWN_REASON = 0;
+  CREDENTIALS_UPDATED = 1;
+  MAX_CONCURRENT_SESSIONS_LIMIT_REACHED = 2;
+  SESSION_TIMEOUT = 3;
+}
+
 message SessionCloseNotificationProto {
   string message = 1;
+  SessionCloseReason reason = 2;
 }
 
 message SubscribeToAttributeUpdatesMsg {
@@ -1561,4 +1578,17 @@ message LifecycleEventProto {
   string lcEventType = 6;
   bool success = 7;
   string error = 8;
+}
+
+message ToHousekeeperServiceMsg {
+  HousekeeperTaskProto task = 1;
+}
+
+message HousekeeperTaskProto {
+  string value = 1;
+  int64 ts = 2;
+
+  // reprocessing
+  int32 attempt = 50;
+  repeated string errors = 51;
 }

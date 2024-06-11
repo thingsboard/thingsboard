@@ -92,12 +92,21 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     public void deleteWidgetsBundle(TenantId tenantId, WidgetsBundleId widgetsBundleId) {
         log.trace("Executing deleteWidgetsBundle [{}]", widgetsBundleId);
         Validator.validateId(widgetsBundleId, id -> "Incorrect widgetsBundleId " + id);
-        WidgetsBundle widgetsBundle = findWidgetsBundleById(tenantId, widgetsBundleId);
+        deleteEntity(tenantId, widgetsBundleId, false);
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        WidgetsBundle widgetsBundle = findWidgetsBundleById(tenantId, (WidgetsBundleId) id);
         if (widgetsBundle == null) {
-            throw new IncorrectParameterException("Unable to delete non-existent widgets bundle.");
+            if (force) {
+                return;
+            } else {
+                throw new IncorrectParameterException("Unable to delete non-existent widgets bundle.");
+            }
         }
-        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(widgetsBundleId).build());
-        widgetsBundleDao.removeById(tenantId, widgetsBundleId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(id).build());
+        widgetsBundleDao.removeById(tenantId, id.getId());
     }
 
     @Override
@@ -180,13 +189,13 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
-    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteWidgetsBundlesByTenantId(tenantId);
     }
 
     @Override
-    public void deleteEntity(TenantId tenantId, EntityId id) {
-        deleteWidgetsBundle(tenantId, (WidgetsBundleId) id);
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findWidgetsBundleById(tenantId, new WidgetsBundleId(entityId.getId())));
     }
 
     @Override

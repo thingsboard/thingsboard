@@ -25,10 +25,10 @@ import java.util.UUID;
 /**
  * Created by nickAS21 on 26.12.22
  */
-public class GatewaySessionHandler extends AbstractGatewaySessionHandler {
+public class GatewaySessionHandler extends AbstractGatewaySessionHandler<GatewayDeviceSessionContext> {
 
-    public GatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId) {
-        super(deviceSessionCtx, sessionId);
+    public GatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
+        super(deviceSessionCtx, sessionId, overwriteDevicesActivity);
     }
 
     public void onDeviceConnect(MqttPublishMessage mqttMsg) throws AdaptorException {

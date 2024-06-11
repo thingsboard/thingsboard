@@ -19,7 +19,6 @@ import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFor
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
 import { IAliasController } from '@core/api/widget-api.models';
 import { Observable, of } from 'rxjs';
 import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
@@ -60,9 +59,15 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
   @Input()
   aliasController: IAliasController;
 
+  @Input()
+  entityAliasPlaceholder = 'widgets.value-source.source-entity-alias';
+
+  @Input()
+  entityAttributePlaceholder = 'widgets.value-source.source-entity-attribute';
+
   private modelValue: ValueSourceProperty;
 
-  private propagateChange = null;
+  private propagateChange = (v: any) => { };
 
   public valueSourceFormGroup: UntypedFormGroup;
 
@@ -78,7 +83,6 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
   private entityAliasList: Array<string> = [];
 
   constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
               private entityService: EntityService,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -247,5 +251,4 @@ export class ValueSourceComponent extends PageComponent implements OnInit, Contr
     this.valueSourceFormGroup.get('attribute').updateValueAndValidity({emitEvent: false});
     this.valueSourceFormGroup.get('value').updateValueAndValidity({emitEvent: false});
   }
-
 }

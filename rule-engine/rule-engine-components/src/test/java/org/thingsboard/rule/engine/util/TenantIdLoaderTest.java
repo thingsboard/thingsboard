@@ -15,13 +15,13 @@
  */
 package org.thingsboard.rule.engine.util;
 
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineApiUsageStateService;
@@ -88,7 +88,7 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.doReturn;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TenantIdLoaderTest {
 
     @Mock
@@ -145,7 +145,7 @@ public class TenantIdLoaderTest {
     private NotificationId notificationId;
     private AbstractListeningExecutor dbExecutor;
 
-    @Before
+    @BeforeEach
     public void before() {
         dbExecutor = new AbstractListeningExecutor() {
             @Override
@@ -165,7 +165,7 @@ public class TenantIdLoaderTest {
         }
     }
 
-    @After
+    @AfterEach
     public void after() {
         dbExecutor.destroy();
     }
@@ -384,9 +384,9 @@ public class TenantIdLoaderTest {
             TenantId targetTenantId = TenantIdLoader.findTenantId(ctx, entityId);
             String msg = "Check entity type <" + entityType.name() + ">:";
             if (equals) {
-                Assert.assertEquals(msg, targetTenantId, checkTenantId);
+                Assertions.assertEquals(targetTenantId, checkTenantId, msg);
             } else {
-                Assert.assertNotEquals(msg, targetTenantId, checkTenantId);
+                Assertions.assertNotEquals(targetTenantId, checkTenantId, msg);
             }
         }
     }

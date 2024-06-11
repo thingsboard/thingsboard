@@ -42,6 +42,12 @@ export const selectIsUserLoaded = createSelector(
   (state: AuthState) => state.isUserLoaded
 );
 
+export const selectUserReady = createSelector(
+  selectIsAuthenticated,
+  selectIsUserLoaded,
+  (isAuthenticated, isUserLoaded) => ({isAuthenticated, isUserLoaded})
+);
+
 export const selectAuthUser = createSelector(
   selectAuthState,
   (state: AuthState) => state.authUser
@@ -70,6 +76,17 @@ export const selectTbelEnabled = createSelector(
 export const selectPersistDeviceStateToTelemetry = createSelector(
   selectAuthState,
   (state: AuthState) => state.persistDeviceStateToTelemetry
+);
+
+export const selectMobileQrEnabled = createSelector(
+  selectAuthState,
+  (state: AuthState) => state.mobileQrEnabled
+);
+
+export const selectHomeDashboardParams = createSelector(
+  selectPersistDeviceStateToTelemetry,
+  selectMobileQrEnabled,
+  (persistDeviceStateToTelemetry, mobileQrEnabled) => ({persistDeviceStateToTelemetry, mobileQrEnabled})
 );
 
 export const selectUserSettings = createSelector(

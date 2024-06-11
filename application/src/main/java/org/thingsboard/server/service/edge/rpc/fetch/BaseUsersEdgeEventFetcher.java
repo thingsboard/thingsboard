@@ -35,7 +35,7 @@ public abstract class BaseUsersEdgeEventFetcher extends BasePageableEdgeEventFet
     protected final UserService userService;
 
     @Override
-    PageData<User> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<User> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return findUsers(tenantId, pageLink);
     }
 
@@ -46,4 +46,5 @@ public abstract class BaseUsersEdgeEventFetcher extends BasePageableEdgeEventFet
     }
 
     protected abstract PageData<User> findUsers(TenantId tenantId, PageLink pageLink);
+
 }

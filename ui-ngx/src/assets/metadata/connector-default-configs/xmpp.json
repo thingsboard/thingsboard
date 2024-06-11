@@ -1,0 +1,53 @@
+{
+  "server": {
+    "jid": "gateway@localhost",
+    "password": "password",
+    "host": "localhost",
+    "port": 5222,
+    "use_ssl": false,
+    "disable_starttls": false,
+    "force_starttls": true,
+    "timeout": 10000,
+    "plugins": [
+      "xep_0030",
+      "xep_0323",
+      "xep_0325"
+    ]
+  },
+  "devices": [
+    {
+      "jid": "device@localhost/TMP_1101",
+      "deviceNameExpression": "${serialNumber}",
+      "deviceTypeExpression": "default",
+      "attributes": [
+        {
+          "key": "temperature",
+          "value": "${temp}"
+        }
+      ],
+      "timeseries": [
+        {
+          "key": "humidity",
+          "value": "${hum}"
+        },
+        {
+          "key": "combination",
+          "value": "${temp}:${hum}"
+        }
+      ],
+      "attributeUpdates": [
+        {
+          "attributeOnThingsBoard": "shared",
+          "valueExpression": "{\"${attributeKey}\":\"${attributeValue}\"}"
+        }
+      ],
+      "serverSideRpc": [
+        {
+          "methodRPC": "rpc1",
+          "withResponse": true,
+          "valueExpression": "${params}"
+        }
+      ]
+    }
+  ]
+}

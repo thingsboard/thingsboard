@@ -25,10 +25,10 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue } from '@core/utils';
+import { formatValue, mergeDeep } from '@core/utils';
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
-  barChartWithLabelsDefaultSettings
+  barChartWithLabelsDefaultSettings, BarChartWithLabelsWidgetSettings
 } from '@home/components/widget/lib/chart/bar-chart-with-labels-widget.models';
 
 @Component({
@@ -68,7 +68,7 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
   }
 
   protected defaultSettings(): WidgetSettings {
-    return {...barChartWithLabelsDefaultSettings};
+    return mergeDeep<BarChartWithLabelsWidgetSettings>({} as BarChartWithLabelsWidgetSettings, barChartWithLabelsDefaultSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
@@ -88,6 +88,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       barBackgroundSettings: [settings.barBackgroundSettings, []],
       noAggregationBarWidthSettings: [settings.noAggregationBarWidthSettings, []],
 
+      grid: [settings.grid, []],
+
       yAxis: [settings.yAxis, []],
       xAxis: [settings.xAxis, []],
 
@@ -101,6 +103,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
       legendLabelColor: [settings.legendLabelColor, []],
 
       showTooltip: [settings.showTooltip, []],
+      tooltipLabelFont: [settings.tooltipLabelFont, []],
+      tooltipLabelColor: [settings.tooltipLabelColor, []],
       tooltipValueFont: [settings.tooltipValueFont, []],
       tooltipValueColor: [settings.tooltipValueColor, []],
       tooltipShowDate: [settings.tooltipShowDate, []],
@@ -162,6 +166,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
     }
 
     if (showTooltip) {
+      this.barChartWidgetSettingsForm.get('tooltipLabelFont').enable();
+      this.barChartWidgetSettingsForm.get('tooltipLabelColor').enable();
       this.barChartWidgetSettingsForm.get('tooltipValueFont').enable();
       this.barChartWidgetSettingsForm.get('tooltipValueColor').enable();
       this.barChartWidgetSettingsForm.get('tooltipShowDate').enable({emitEvent: false});
@@ -179,6 +185,8 @@ export class BarChartWithLabelsWidgetSettingsComponent extends WidgetSettingsCom
         this.barChartWidgetSettingsForm.get('tooltipDateInterval').disable();
       }
     } else {
+      this.barChartWidgetSettingsForm.get('tooltipLabelFont').disable();
+      this.barChartWidgetSettingsForm.get('tooltipLabelColor').disable();
       this.barChartWidgetSettingsForm.get('tooltipValueFont').disable();
       this.barChartWidgetSettingsForm.get('tooltipValueColor').disable();
       this.barChartWidgetSettingsForm.get('tooltipShowDate').disable({emitEvent: false});

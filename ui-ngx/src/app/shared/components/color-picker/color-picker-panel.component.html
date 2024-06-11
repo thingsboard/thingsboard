@@ -16,8 +16,7 @@
 
 -->
 <div class="tb-color-picker-panel">
-  <div class="tb-color-picker-title" translate>color.color</div>
-  <tb-color-picker [formControl]="colorPickerControl"></tb-color-picker>
+  <tb-color-picker class="tb-color-picker" [formControl]="colorPickerControl"></tb-color-picker>
   <div class="tb-color-picker-panel-buttons">
     <button *ngIf="colorClearButton"
             mat-button
@@ -27,12 +26,21 @@
             [disabled]="!colorPickerControl.value">
       {{ 'action.clear' | translate }}
     </button>
-    <button mat-raised-button
-            color="primary"
-            type="button"
-            (click)="selectColor()"
-            [disabled]="colorPickerControl.invalid || !colorPickerControl.dirty">
-      {{ 'action.select' | translate }}
-    </button>
+    <span fxFlex></span>
+    <div fxLayoutGap="8px">
+      <button *ngIf="colorCancelButton"
+              mat-button
+              type="button"
+              (click)="cancelColor()">
+        {{ 'action.cancel' | translate }}
+      </button>
+      <button mat-raised-button
+              color="primary"
+              type="button"
+              (click)="selectColor()"
+              [disabled]="colorPickerControl.invalid || !colorPickerControl.dirty">
+        {{ 'action.select' | translate }}
+      </button>
+    </div>
   </div>
 </div>
