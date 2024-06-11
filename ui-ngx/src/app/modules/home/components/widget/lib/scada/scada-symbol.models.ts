@@ -482,7 +482,13 @@ export class ScadaSymbolObject {
     this.svgShape = SVG().svg(doc.documentElement.innerHTML);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
-    this.box = this.svgShape.bbox();
+    const origSvg = SVG(doc.documentElement.outerHTML);
+    if (origSvg.type === 'svg') {
+      this.box = (origSvg as Svg).viewbox();
+    } else {
+      this.box = this.svgShape.bbox();
+    }
+    origSvg.remove();
     this.svgShape.size(this.box.width, this.box.height);
     this.svgShape.addTo(this.rootElement);
   }

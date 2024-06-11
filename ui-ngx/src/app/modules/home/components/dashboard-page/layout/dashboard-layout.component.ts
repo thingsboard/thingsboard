@@ -66,6 +66,26 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtxValue;
   }
 
+  get outerMargin(): boolean {
+    return this.layoutCtx.gridSettings.isScada ? false : this.layoutCtx.gridSettings.outerMargin;
+  }
+
+  get margin(): number {
+    return this.layoutCtx.gridSettings.isScada ? 0 : this.layoutCtx.gridSettings.margin;
+  }
+
+  get autoFillHeight(): boolean {
+    return (this.isEdit || this.layoutCtx.gridSettings.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+  }
+
+  get mobileAutoFillHeight(): boolean {
+    return (this.isEdit || this.layoutCtx.gridSettings.isScada) ? false : this.layoutCtx.gridSettings.mobileAutoFillHeight;
+  }
+
+  get isMobileDisabled(): boolean {
+    return this.widgetEditMode || this.layoutCtx.gridSettings.isScada;
+  }
+
   @Input()
   dashboardCtx: DashboardContext;
 

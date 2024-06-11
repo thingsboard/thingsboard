@@ -100,7 +100,13 @@ export class ScadaSymbolEditObject {
     this.svgShape = SVG().svg(contentData.innerSvg);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
-    this.box = this.svgShape.bbox();
+    const origSvg = SVG(svgContent);
+    if (origSvg.type === 'svg') {
+      this.box = (origSvg as Svg).viewbox();
+    } else {
+      this.box = this.svgShape.bbox();
+    }
+    origSvg.remove();
     this.svgShape.size(this.box.width, this.box.height);
     this.svgShape.viewbox(`0 0 ${this.box.width} ${this.box.height}`);
     this.svgShape.style().attr('tb:inner', true).rule('.tb-element', {cursor: 'pointer', transition: '0.2s filter ease-in-out'});

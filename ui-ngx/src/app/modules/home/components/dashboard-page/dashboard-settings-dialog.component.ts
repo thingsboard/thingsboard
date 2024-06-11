@@ -26,6 +26,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { DashboardSettings, GridSettings, StateControllerId } from '@app/shared/models/dashboard.models';
 import { isDefined, isUndefined } from '@core/utils';
 import { StatesControllerService } from './states/states-controller.service';
+import { merge } from 'rxjs';
 
 export interface DashboardSettingsDialogData {
   settings?: DashboardSettings;
@@ -156,6 +157,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
     if (this.gridSettings) {
       const mobileAutoFillHeight = isUndefined(this.gridSettings.mobileAutoFillHeight) ? false : this.gridSettings.mobileAutoFillHeight;
       this.gridSettingsFormGroup = this.fb.group({
+        isScada: [this.gridSettings.isScada, []],
         columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1000)]],
         margin: [isDefined(this.gridSettings.margin) ? this.gridSettings.margin : 10,
           [Validators.required, Validators.min(0), Validators.max(50)]],
@@ -169,18 +171,17 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
           disabled: mobileAutoFillHeight}, [Validators.required, Validators.min(5), Validators.max(200)]]
       });
       if (this.isRightLayout) {
-        const mobileDisplayLayoutFirst = isUndefined(this.gridSettings.mobileDisplayLayoutFirst) ? false : this.gridSettings.mobileDisplayLayoutFirst;
+        const mobileDisplayLayoutFirst =
+          isUndefined(this.gridSettings.mobileDisplayLayoutFirst) ? false : this.gridSettings.mobileDisplayLayoutFirst;
         this.gridSettingsFormGroup.addControl('mobileDisplayLayoutFirst', this.fb.control(mobileDisplayLayoutFirst, []));
       }
-      this.gridSettingsFormGroup.get('mobileAutoFillHeight').valueChanges.subscribe(
-        (mobileAutoFillHeightValue: boolean) => {
-          if (mobileAutoFillHeightValue) {
-            this.gridSettingsFormGroup.get('mobileRowHeight').disable();
-          } else {
-            this.gridSettingsFormGroup.get('mobileRowHeight').enable();
-          }
+      merge(this.gridSettingsFormGroup.get('isScada').valueChanges,
+            this.gridSettingsFormGroup.get('mobileAutoFillHeight').valueChanges).subscribe(
+        () => {
+          this.updateGridSettingsFormState();
         }
       );
+      this.updateGridSettingsFormState();
     } else {
       this.gridSettingsFormGroup = this.fb.group({});
     }
@@ -217,5 +218,27 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
       return this.translate.instant(this.stateControllerTranslationMap.get(stateControllerId));
     }
     return stateControllerId;
+  }
+
+  private updateGridSettingsFormState() {
+    const isScada: boolean = this.gridSettingsFormGroup.get('isScada').value;
+    if (isScada) {
+      this.gridSettingsFormGroup.get('margin').disable();
+      this.gridSettingsFormGroup.get('outerMargin').disable();
+      this.gridSettingsFormGroup.get('autoFillHeight').disable();
+      this.gridSettingsFormGroup.get('mobileAutoFillHeight').disable({emitEvent: false});
+      this.gridSettingsFormGroup.get('mobileRowHeight').disable();
+    } else {
+      this.gridSettingsFormGroup.get('margin').enable();
+      this.gridSettingsFormGroup.get('outerMargin').enable();
+      this.gridSettingsFormGroup.get('autoFillHeight').enable();
+      this.gridSettingsFormGroup.get('mobileAutoFillHeight').enable({emitEvent: false});
+      const mobileAutoFillHeight: boolean = this.gridSettingsFormGroup.get('mobileAutoFillHeight').value;
+      if (mobileAutoFillHeight) {
+        this.gridSettingsFormGroup.get('mobileRowHeight').disable();
+      } else {
+        this.gridSettingsFormGroup.get('mobileRowHeight').enable();
+      }
+    }
   }
 }

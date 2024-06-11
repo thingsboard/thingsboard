@@ -155,7 +155,7 @@ export class MenuService {
             name: 'scada.symbols',
             type: 'link',
             path: '/resources/scada-symbols',
-            icon: 'precision_manufacturing'
+            icon: 'view_in_ar'
           },
           {
             id: 'resources_library',
@@ -561,7 +561,7 @@ export class MenuService {
             name: 'scada.symbols',
             type: 'link',
             path: '/resources/scada-symbols',
-            icon: 'precision_manufacturing'
+            icon: 'view_in_ar'
           },
           {
             id: 'resources_library',

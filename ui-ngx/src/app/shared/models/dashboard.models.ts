@@ -61,6 +61,7 @@ export interface GridSettings {
   mobileRowHeight?: number;
   mobileDisplayLayoutFirst?: boolean;
   layoutDimension?: LayoutDimension;
+  isScada?: boolean;
   [key: string]: any;
 }
 

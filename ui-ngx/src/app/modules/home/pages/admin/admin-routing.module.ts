@@ -118,7 +118,7 @@ const routes: Routes = [
         data: {
           breadcrumb: {
             label: 'scada.symbols',
-            icon: 'precision_manufacturing'
+            icon: 'view_in_ar'
           }
         },
         children: [
@@ -138,7 +138,7 @@ const routes: Routes = [
             data: {
               breadcrumb: {
                 labelFunction: scadaSymbolBreadcumbLabelFunction,
-                icon: 'precision_manufacturing'
+                icon: 'view_in_ar'
               } as BreadCrumbConfig<ScadaSymbolComponent>,
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
               title: 'scada.symbol'

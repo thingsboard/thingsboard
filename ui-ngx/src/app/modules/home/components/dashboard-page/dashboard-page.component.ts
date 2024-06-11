@@ -1163,6 +1163,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.runChangeDetection();
   }
 
+  private isAddingToScadaLayout(): boolean {
+    const layouts = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts;
+    let layoutIds: DashboardLayoutId[];
+    if (this.addingLayoutCtx?.id) {
+      layoutIds = [this.addingLayoutCtx?.id];
+    } else {
+      layoutIds = Object.keys(layouts) as DashboardLayoutId[];
+    }
+    return layoutIds.every(id => layouts[id].gridSettings.isScada);
+  }
+
   private selectTargetLayout(): Observable<DashboardLayoutId> {
     const layouts = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts;
     const layoutIds = Object.keys(layouts);
@@ -1208,6 +1219,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           col: 0
         };
         newWidget = this.dashboardUtils.validateAndUpdateWidget(newWidget);
+        if (this.isAddingToScadaLayout()) {
+          newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget);
+        }
         if (widgetTypeInfo.typeParameters.useCustomDatasources) {
           this.addWidgetToDashboard(newWidget);
         } else {

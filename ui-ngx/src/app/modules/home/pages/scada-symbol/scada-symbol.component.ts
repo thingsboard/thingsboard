@@ -71,7 +71,7 @@ import {
   UploadImageDialogData, UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { MatDialog } from '@angular/material/dialog';
-import { BackgroundType } from '@shared/models/widget-settings.models';
+import { BackgroundType, colorBackground } from '@shared/models/widget-settings.models';
 import { GridType } from 'angular-gridster2';
 import {
   SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogData,
@@ -259,15 +259,7 @@ export class ScadaSymbolComponent extends PageComponent
           scadaSymbolContent: this.symbolData.scadaSymbolContent,
           scadaSymbolObjectSettings: this.previewScadaSymbolObjectSettings,
           padding: '0',
-          background: {
-            type: BackgroundType.color,
-            color: 'rgba(0,0,0,0)',
-            overlay: {
-              enabled: false,
-              color: 'rgba(255,255,255,0.72)',
-              blur: 3
-            }
-          }
+          background: colorBackground('rgba(0,0,0,0)')
          }
     };
     this.previewWidget = {
