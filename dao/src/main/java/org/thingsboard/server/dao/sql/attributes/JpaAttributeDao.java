@@ -16,9 +16,7 @@
 package org.thingsboard.server.dao.sql.attributes;
 
 import com.google.common.collect.Lists;
-import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
@@ -179,7 +177,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
     }
 
     @Override
-    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, AttributeKvEntry attribute) {
+    public ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, AttributeKvEntry attribute) {
         AttributeKvEntity entity = new AttributeKvEntity();
         entity.setId(new AttributeKvCompositeKey(entityId.getId(), attributeScope.getId(), keyDictionaryDao.getOrSaveKeyId(attribute.getKey())));
         entity.setLastUpdateTs(attribute.getLastUpdateTs());
@@ -188,11 +186,11 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         entity.setLongValue(attribute.getLongValue().orElse(null));
         entity.setBooleanValue(attribute.getBooleanValue().orElse(null));
         entity.setJsonValue(attribute.getJsonValue().orElse(null));
-        return addToQueue(entity, attribute.getKey());
+        return addToQueue(entity);
     }
 
-    private ListenableFuture<String> addToQueue(AttributeKvEntity entity, String key) {
-        return Futures.transform(queue.add(entity), v -> key, MoreExecutors.directExecutor());
+    private ListenableFuture<Long> addToQueue(AttributeKvEntity entity) {
+        return queue.add(entity);
     }
 
     @Override

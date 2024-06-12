@@ -19,6 +19,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.ListeningExecutorService;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -48,6 +49,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicLong;
 
 @DaoSqlTest
+@Slf4j
 public class LatestTimeseriesPerformanceTest extends AbstractServiceTest {
 
     private static final String STRING_KEY = "stringKey";
@@ -105,9 +107,9 @@ public class LatestTimeseriesPerformanceTest extends AbstractServiceTest {
 
         long totalTime = endTime - startTime;
 
-        System.out.println("Total time: " + totalTime);
-        System.out.println("Saved count: " + saveCounter.get());
-        System.out.println("Saved per 1 sec: " + saveCounter.get() * 1000 / totalTime);
+        log.info("Total time: {}", totalTime);
+        log.info("Saved count: {}", saveCounter.get());
+        log.warn("Saved per 1 sec: {}", saveCounter.get() * 1000 / totalTime);
     }
 
     private void warmup() throws Exception {

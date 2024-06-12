@@ -29,7 +29,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
 import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -109,12 +108,6 @@ public class CachedAttributesService implements AttributesService {
         return cacheExecutorService.executor();
     }
 
-
-    @Override
-    public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, String attributeKey) {
-        return find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKey);
-    }
-
     @Override
     public ListenableFuture<Optional<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, String attributeKey) {
         validate(entityId, scope);
@@ -145,15 +138,10 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, String scope, final Collection<String> attributeKeysNonUnique) {
-        return find(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeysNonUnique);
-    }
-
-    @Override
     public ListenableFuture<List<AttributeKvEntry>> find(TenantId tenantId, EntityId entityId, AttributeScope scope, final Collection<String> attributeKeysNonUnique) {
         validate(entityId, scope);
         final var attributeKeys = new LinkedHashSet<>(attributeKeysNonUnique); // deduplicate the attributes
-        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k ->"Incorrect attribute key " + k));
+        attributeKeys.forEach(attributeKey -> Validator.validateString(attributeKey, k -> "Incorrect attribute key " + k));
 
         //CacheExecutor for Redis or DirectExecutor for local Caffeine
         return Futures.transformAsync(cacheExecutor.submit(() -> findCachedAttributes(entityId, scope, attributeKeys)),
@@ -217,11 +205,6 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, String scope) {
-        return findAll(tenantId, entityId, AttributeScope.valueOf(scope));
-    }
-
-    @Override
     public ListenableFuture<List<AttributeKvEntry>> findAll(TenantId tenantId, EntityId entityId, AttributeScope scope) {
         validate(entityId, scope);
         // We can`t watch on cache because the keys are unknown.
@@ -231,11 +214,6 @@ public class CachedAttributesService implements AttributesService {
     @Override
     public List<String> findAllKeysByDeviceProfileId(TenantId tenantId, DeviceProfileId deviceProfileId) {
         return attributesDao.findAllKeysByDeviceProfileId(tenantId, deviceProfileId);
-    }
-
-    @Override
-    public List<String> findAllKeysByEntityIds(TenantId tenantId, EntityType entityType, List<EntityId> entityIds) {
-        return findAllKeysByEntityIds(tenantId, entityIds);
     }
 
     @Override
@@ -253,42 +231,38 @@ public class CachedAttributesService implements AttributesService {
     }
 
     @Override
-    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, String scope, AttributeKvEntry attribute) {
-        return save(tenantId, entityId, AttributeScope.valueOf(scope), attribute);
-    }
-
-    @Override
-    public ListenableFuture<String> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
+    public ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);
-        ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
-        return Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor);
+        ListenableFuture<Long> future = attributesDao.save(tenantId, entityId, scope, attribute);
+        return Futures.transform(future, version -> evict(entityId, scope, attribute, version), cacheExecutor);
     }
 
     @Override
-    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<Long>> save(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes) {
         return save(tenantId, entityId, AttributeScope.valueOf(scope), attributes);
     }
 
     @Override
-    public ListenableFuture<List<String>> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
+    public ListenableFuture<List<Long>> save(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes) {
         validate(entityId, scope);
         AttributeUtils.validate(attributes, valueNoXssValidation);
 
-        List<ListenableFuture<String>> futures = new ArrayList<>(attributes.size());
+        List<ListenableFuture<Long>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {
-            ListenableFuture<String> future = attributesDao.save(tenantId, entityId, scope, attribute);
-            futures.add(Futures.transform(future, key -> evict(entityId, scope, attribute, key), cacheExecutor));
+            ListenableFuture<Long> future = attributesDao.save(tenantId, entityId, scope, attribute);
+            futures.add(Futures.transform(future, version -> evict(entityId, scope, attribute, version), cacheExecutor));
         }
 
         return Futures.allAsList(futures);
     }
 
-    private String evict(EntityId entityId, AttributeScope scope, AttributeKvEntry attribute, String key) {
+    private Long evict(EntityId entityId, AttributeScope scope, AttributeKvEntry attribute, Long version) {
+        String key = attribute.getKey();
         log.trace("[{}][{}][{}] Before cache evict: {}", entityId, scope, key, attribute);
         cache.evictOrPut(new AttributeCacheKey(scope, entityId, key), attribute);
         log.trace("[{}][{}][{}] after cache evict.", entityId, scope, key);
-        return key;
+        return version;
     }
 
     @Override

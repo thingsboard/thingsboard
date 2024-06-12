@@ -260,14 +260,14 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
+        ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
     }
 
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
+        ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope.name(), attributes, notifyDevice));
     }
