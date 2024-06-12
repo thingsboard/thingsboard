@@ -52,14 +52,14 @@ public class DefaultTokenOutdatingService implements TokenOutdatingService {
         Claims claims = tokenFactory.parseTokenClaims(token).getBody();
         long issueTime = claims.getIssuedAt().getTime();
         String sessionId = claims.get("sessionId", String.class);
-        if (isTokenOutdated(issueTime, userId.toString())){
+        if (isTokenOutdated(issueTime, userId.toString())) {
              return true;
         } else {
              return sessionId != null && isTokenOutdated(issueTime, sessionId);
         }
     }
 
-    private Boolean isTokenOutdated(long issueTime, String sessionId) {
+    private boolean isTokenOutdated(long issueTime, String sessionId) {
         return Optional.ofNullable(cache.get(sessionId)).map(outdatageTime -> isTokenOutdated(issueTime, outdatageTime.get())).orElse(false);
     }
 

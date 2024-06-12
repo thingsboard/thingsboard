@@ -17,8 +17,9 @@ package org.thingsboard.server.common.data.security.event;
 
 import lombok.EqualsAndHashCode;
 
-@EqualsAndHashCode(callSuper = true)
-public class UserSessionInvalidationEvent extends UserAuthDataChangedEvent {
+@EqualsAndHashCode
+public class UserSessionInvalidationEvent implements UserAuthDataChangedEvent {
+
     private final String sessionId;
     private final long ts;
 
