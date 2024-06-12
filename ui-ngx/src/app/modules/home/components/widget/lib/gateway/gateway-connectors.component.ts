@@ -35,7 +35,7 @@ import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetr
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
-import { Direction, SortOrder } from '@shared/models/page/sort-order';
+import { Direction, SORT_ASC_PINNED_VALUE, SORT_DESC_PINNED_VALUE, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -238,13 +238,25 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.dataSource.sort = this.sort;
     this.dataSource.sortingDataAccessor = (data: AttributeData, sortHeaderId: string) => {
-      if (sortHeaderId === 'syncStatus') {
-        return this.isConnectorSynced(data) ? 1 : 0;
-      } else if (sortHeaderId === 'enabled') {
-        return this.activeConnectors.includes(data.key) ? 1 : 0;
+      switch (sortHeaderId) {
+        case 'syncStatus':
+          return this.isConnectorSynced(data) ? 1 : 0;
+
+        case 'enabled':
+          return this.activeConnectors.includes(data.key) ? 1 : 0;
+
+        case 'errors':
+          const errors = this.getErrorsCount(data);
+          if (typeof errors === 'string') {
+            return this.sort.direction.toUpperCase() === Direction.DESC ? SORT_DESC_PINNED_VALUE : SORT_ASC_PINNED_VALUE;
+          }
+          return errors;
+
+        default:
+          return data[sortHeaderId] || data.value[sortHeaderId];
       }
-      return data[sortHeaderId] || data.value[sortHeaderId];
     };
+
 
     if (this.device) {
       if (this.device.id === NULL_UUID) {
