@@ -31,7 +31,7 @@ import { deepClone } from '@core/utils';
 import { WidgetService } from '@core/http/widget.service';
 import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
