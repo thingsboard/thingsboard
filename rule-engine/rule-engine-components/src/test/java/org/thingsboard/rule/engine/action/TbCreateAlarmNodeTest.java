@@ -245,6 +245,7 @@ class TbCreateAlarmNodeTest {
         then(ctxMock).should().logJsEvalRequest();
         then(alarmDetailsScriptMock).should().executeJsonAsync(incomingMsg);
         then(ctxMock).should().logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
         then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
@@ -414,6 +415,7 @@ class TbCreateAlarmNodeTest {
         then(ctxMock).should().logJsEvalRequest();
         then(alarmDetailsScriptMock).should().executeJsonAsync(incomingMsg);
         then(ctxMock).should().logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
         then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
@@ -607,8 +609,9 @@ class TbCreateAlarmNodeTest {
         TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
         assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
         assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
-        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry("prevAlarmDetails", JacksonUtil.toString(oldAlarmDetails));
+        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry(TbAbstractAlarmNode.PREV_ALARM_DETAILS, JacksonUtil.toString(oldAlarmDetails));
         then(ctxMock).should().logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
         then(alarmServiceMock).should().updateAlarm(expectedUpdateAlarmRequest);
@@ -637,6 +640,162 @@ class TbCreateAlarmNodeTest {
         // verify wrong processing paths were not taken
         then(ctxMock).should(never()).tellNext(any(), eq(TbNodeConnectionType.FALSE));
         then(ctxMock).should(never()).tellNext(any(), eq("Created"));
+        then(ctxMock).should(never()).tellNext(any(), eq("Cleared"));
+        then(ctxMock).should(never()).tellSuccess(any());
+        then(ctxMock).should(never()).tellFailure(any(), any());
+    }
+
+    @Test
+    @DisplayName(
+            "When node is taking alarm data from incoming message and originator specified in alarm data is different from message originator UUID and alarm does not exists, " +
+                    "then should create new alarm using info from incoming message."
+    )
+    void whenAlarmDataIsTakenFromMsgAndAlarmDataOriginatorIsDifferentFromMsgOriginatorAndAlarmDoesNotExist_thenNewAlarmIsCreated() throws Exception {
+        // GIVEN
+
+        // node configuration
+        config = config.defaultConfiguration();
+        config.setUseMessageAlarmData(true);
+        config.setOverwriteAlarmDetails(false);
+
+        // other values
+        String alarmType = "High Temperature";
+        AlarmSeverity alarmSeverity = AlarmSeverity.MAJOR;
+        JsonNode alarmDetails = JacksonUtil.newObjectNode().put("alarmDetails", "Some alarm details");
+
+        // alarm that is inside an incoming message
+        var alarmFromIncomingMessage = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(new DeviceId(Uuids.timeBased()))
+                .cleared(false)
+                .acknowledged(false)
+                .severity(alarmSeverity)
+                .propagate(true)
+                .propagateToOwner(true)
+                .propagateToTenant(true)
+                .propagateRelationTypes(Collections.emptyList())
+                .type(alarmType)
+                .startTs(100L)
+                .endTs(300L)
+                .details(alarmDetails)
+                .build();
+
+        long metadataTs = 1711631716127L;
+        metadata.putValue("ts", Long.toString(metadataTs));
+        metadata.putValue("location", "Company office");
+
+        var ruleNodeSelfId = new RuleNodeId(Uuids.timeBased());
+
+        var incomingMsg = TbMsg.newMsg(TbMsgType.ALARM, msgOriginator, metadata, JacksonUtil.toString(alarmFromIncomingMessage));
+
+        Alarm existingAlarm = null;
+
+        // expected values
+        var expectedCreatedAlarm = Alarm.builder()
+                .tenantId(tenantId)
+                .originator(msgOriginator)
+                .cleared(false)
+                .acknowledged(false)
+                .severity(alarmSeverity)
+                .propagate(true)
+                .propagateToOwner(true)
+                .propagateToTenant(true)
+                .propagateRelationTypes(Collections.emptyList())
+                .type(alarmType)
+                .startTs(100L)
+                .endTs(300L)
+                .details(alarmDetails)
+                .build();
+        var expectedCreatedAlarmInfo = new AlarmInfo(expectedCreatedAlarm);
+        expectedCreatedAlarmInfo.setId(new AlarmId(Uuids.timeBased()));
+
+        var expectedCreateAlarmRequest = AlarmCreateOrUpdateActiveRequest.builder()
+                .tenantId(tenantId)
+                .customerId(null)
+                .type(alarmType)
+                .originator(msgOriginator)
+                .severity(alarmSeverity)
+                .startTs(100L)
+                .endTs(300L)
+                .details(alarmDetails)
+                .propagation(AlarmPropagationInfo.builder()
+                        .propagate(true)
+                        .propagateToOwner(true)
+                        .propagateToTenant(true)
+                        .propagateRelationTypes(Collections.emptyList()).build())
+                .userId(null)
+                .edgeAlarmId(null)
+                .build();
+
+        // mocks
+        given(ctxMock.getTenantId()).willReturn(tenantId);
+        given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getSelfId()).willReturn(ruleNodeSelfId);
+        given(alarmServiceMock.findLatestActiveByOriginatorAndType(tenantId, msgOriginator, alarmType)).willReturn(existingAlarm);
+        var apiCallResult = AlarmApiCallResult.builder()
+                .successful(true)
+                .created(true)
+                .modified(false)
+                .cleared(false)
+                .deleted(false)
+                .alarm(expectedCreatedAlarmInfo)
+                .old(null)
+                .propagatedEntitiesList(List.of(TenantId.fromUUID(Uuids.timeBased()), new CustomerId(Uuids.timeBased()), new AssetId(Uuids.timeBased())))
+                .build();
+        given(alarmServiceMock.createAlarm(expectedCreateAlarmRequest)).willReturn(apiCallResult);
+        given(ctxMock.alarmActionMsg(expectedCreatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_CREATED)).willReturn(alarmActionMsgMock);
+        given(ctxMock.transformMsg(any(TbMsg.class), any(TbMsgType.class), any(EntityId.class), any(TbMsgMetaData.class), anyString()))
+                .willAnswer(answer -> TbMsg.transformMsg(
+                        answer.getArgument(0, TbMsg.class),
+                        answer.getArgument(1, TbMsgType.class),
+                        answer.getArgument(2, EntityId.class),
+                        answer.getArgument(3, TbMsgMetaData.class),
+                        answer.getArgument(4, String.class))
+                );
+        given(ctxMock.createScriptEngine(ScriptLanguage.TBEL, config.getAlarmDetailsBuildTbel())).willReturn(alarmDetailsScriptMock);
+
+        // node initialization
+        nodeSpy.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // WHEN
+        nodeSpy.onMsg(ctxMock, incomingMsg);
+
+        // THEN
+
+        // verify alarm details script was not evaluated
+        then(ctxMock).should(never()).logJsEvalRequest();
+        then(alarmDetailsScriptMock).should(never()).executeJsonAsync(any());
+        then(ctxMock).should(never()).logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
+
+        // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
+        then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
+        then(alarmServiceMock).should(never()).updateAlarm(any());
+
+        // verify that we created a correct alarm action message and enqueued it
+        then(ctxMock).should().alarmActionMsg(expectedCreatedAlarmInfo, ruleNodeSelfId, TbMsgType.ENTITY_CREATED);
+        then(ctxMock).should().enqueue(eq(alarmActionMsgMock), successCaptor.capture(), any());
+
+        // run success captor to emulate successful sending and to trigger further processing on the success path
+        successCaptor.getValue().run();
+
+        // capture and verify an outgoing message
+        var outgoingMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellNext(outgoingMsgCaptor.capture(), eq("Created"));
+        var actualOutgoingMsg = outgoingMsgCaptor.getValue();
+        assertThat(actualOutgoingMsg.getType()).isEqualTo(TbMsgType.ALARM.name());
+        assertThat(actualOutgoingMsg.getOriginator()).isEqualTo(msgOriginator);
+        assertThat(actualOutgoingMsg.getData()).isEqualTo(JacksonUtil.valueToTree(expectedCreatedAlarmInfo).toString());
+
+        Map<String, String> actualOutgoingMsgMetadataContent = actualOutgoingMsg.getMetaData().getData();
+        assertThat(actualOutgoingMsgMetadataContent).containsAllEntriesOf(metadata.getData());
+        assertThat(actualOutgoingMsgMetadataContent).containsEntry(DataConstants.IS_NEW_ALARM, Boolean.TRUE.toString());
+        assertThat(actualOutgoingMsgMetadataContent).size().isEqualTo(metadata.getData().size() + 1);
+
+        // verify wrong processing paths were not taken
+        then(ctxMock).should(never()).tellNext(any(), eq(TbNodeConnectionType.FALSE));
+        then(ctxMock).should(never()).tellNext(any(), eq("Updated"));
         then(ctxMock).should(never()).tellNext(any(), eq("Cleared"));
         then(ctxMock).should(never()).tellSuccess(any());
         then(ctxMock).should(never()).tellFailure(any(), any());
@@ -776,6 +935,7 @@ class TbCreateAlarmNodeTest {
         then(ctxMock).should(never()).logJsEvalRequest();
         then(alarmDetailsScriptMock).should(never()).executeJsonAsync(any());
         then(ctxMock).should(never()).logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called createAlarm() with correct AlarmCreateOrUpdateActiveRequest
         then(alarmServiceMock).should().createAlarm(expectedCreateAlarmRequest);
@@ -966,8 +1126,9 @@ class TbCreateAlarmNodeTest {
         TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
         assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
         assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
-        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry("prevAlarmDetails", JacksonUtil.toString(oldAlarmDetails));
+        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry(TbAbstractAlarmNode.PREV_ALARM_DETAILS, JacksonUtil.toString(oldAlarmDetails));
         then(ctxMock).should().logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
         then(alarmServiceMock).should().updateAlarm(expectedUpdateAlarmRequest);
@@ -1147,8 +1308,9 @@ class TbCreateAlarmNodeTest {
         TbMsg actualDummyMsg = dummyMsgCaptor.getValue();
         assertThat(actualDummyMsg.getType()).isEqualTo(incomingMsg.getType());
         assertThat(actualDummyMsg.getData()).isEqualTo(incomingMsg.getData());
-        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry("prevAlarmDetails", JacksonUtil.toString(alarmDetails));
+        assertThat(actualDummyMsg.getMetaData().getData()).containsEntry(TbAbstractAlarmNode.PREV_ALARM_DETAILS, JacksonUtil.toString(alarmDetails));
         then(ctxMock).should().logJsEvalResponse();
+        then(ctxMock).should(never()).logJsEvalFailure();
 
         // verify we called updateAlarm() with correct AlarmUpdateRequest
         then(alarmServiceMock).should().updateAlarm(expectedUpdateAlarmRequest);
@@ -1205,6 +1367,9 @@ class TbCreateAlarmNodeTest {
         nodeSpy.onMsg(ctxMock, incomingMsg);
 
         // THEN
+        then(ctxMock).should().logJsEvalRequest();
+        then(ctxMock).should().logJsEvalFailure();
+
         var exceptionCaptor = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(eq(incomingMsg), exceptionCaptor.capture());
         Throwable actualException = exceptionCaptor.getValue();
