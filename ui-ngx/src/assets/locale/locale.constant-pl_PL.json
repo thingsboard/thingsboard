@@ -6808,7 +6808,6 @@
             "event-key-contains": "Klucz zdarzenia zawiera...",
             "show-connector": "Show for the connector",
             "connector-state-param-key": "Connector state parameter key",
-            "status": "Status",
             "message": "Message",
             "created-time": "Created time"
         },
