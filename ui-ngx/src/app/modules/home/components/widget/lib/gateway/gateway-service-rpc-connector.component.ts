@@ -22,8 +22,6 @@ import {
   FormControl,
   FormGroup,
   NG_VALUE_ACCESSOR,
-  UntypedFormControl,
-  ValidatorFn,
   Validators
 } from '@angular/forms';
 import {
