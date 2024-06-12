@@ -331,6 +331,10 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                 throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be less than 1 and more than 65534!");
             }
 
+            if (serverConfig.isBootstrapServerIs() && !(serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535)) {
+                throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must not be less than 0 and more than 65535!");
+            }
+
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
             if (!shortServerIds.add(serverConfig.getShortServerId())) {
                 throw new DeviceCredentialsValidationException(server + " \"Short server Id\" value = " + serverConfig.getShortServerId() + ". This value must be a unique value for all servers!");
