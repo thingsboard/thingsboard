@@ -20,6 +20,7 @@
     <div *ngFor="let serverConfig of serverConfigsFromArray.controls; trackBy: trackByParams; let $index = index;">
       <tb-profile-lwm2m-device-config-server
         [formControl]="serverConfig"
+        [isBootstrap]="serverConfig.value.bootstrapServerIs"
         (removeServer)="removeServerConfig($event, $index)"
         (isTransportWasRunWithBootstrapChange)="updateIsTransportWasRunWithBootstrap($event)">
       </tb-profile-lwm2m-device-config-server>
