@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -185,7 +186,7 @@ public class WidgetTypeController extends AutoCommitController {
             @RequestParam(required = false) Boolean fullSearch,
             @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
             @RequestParam(required = false) String deprecatedFilter,
-            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"}))
+            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"timeseries", "latest", "control", "alarm", "static"})))
             @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         List<String> widgetTypes = widgetTypeList != null ? Arrays.asList(widgetTypeList) : Collections.emptyList();
@@ -331,7 +332,7 @@ public class WidgetTypeController extends AutoCommitController {
             @RequestParam(required = false) Boolean fullSearch,
             @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
             @RequestParam(required = false) String deprecatedFilter,
-            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"}))
+            @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(allowableValues = {"timeseries", "latest", "control", "alarm", "static"})))
             @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
         WidgetsBundleId widgetsBundleId = new WidgetsBundleId(toUUID(strWidgetsBundleId));
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
