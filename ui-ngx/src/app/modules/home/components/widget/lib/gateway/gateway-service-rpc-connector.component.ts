@@ -439,7 +439,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
       tap((isActive: boolean) => {
         const responseControl = this.commandForm.get('responseTopicExpression');
         isActive ? responseControl.enable() : responseControl.disable();
-        responseControl.updateValueAndValidity();
       }),
       takeUntil(this.destroy$),
     ).subscribe();
