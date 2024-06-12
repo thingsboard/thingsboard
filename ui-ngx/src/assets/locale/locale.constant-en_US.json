@@ -2176,6 +2176,7 @@
         "add-entity-type": "Add entity type",
         "enter-entity-type": "Enter entity type",
         "no-entities-matching": "No entities matching '{{entity}}' were found.",
+        "no-entities-text": "No entities found",
         "no-entity-types-matching": "No entity types matching '{{entityType}}' were found.",
         "name-starts-with": "Name expression",
         "help-text": "Use '%' according to need: '%entity_name_contains%', '%entity_name_ends', 'entity_starts_with'.",
