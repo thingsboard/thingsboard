@@ -35,7 +35,7 @@ import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetr
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
 import { AttributeDatasource } from '@home/models/datasource/attribute-datasource';
-import { Direction, SORT_ASC_PINNED_VALUE, SORT_DESC_PINNED_VALUE, SortOrder } from '@shared/models/page/sort-order';
+import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
 import { MatTableDataSource } from '@angular/material/table';
@@ -248,7 +248,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         case 'errors':
           const errors = this.getErrorsCount(data);
           if (typeof errors === 'string') {
-            return this.sort.direction.toUpperCase() === Direction.DESC ? SORT_DESC_PINNED_VALUE : SORT_ASC_PINNED_VALUE;
+            return this.sort.direction.toUpperCase() === Direction.DESC ? -1 : Infinity;
           }
           return errors;
 
@@ -256,7 +256,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           return data[sortHeaderId] || data.value[sortHeaderId];
       }
     };
-
 
     if (this.device) {
       if (this.device.id === NULL_UUID) {
