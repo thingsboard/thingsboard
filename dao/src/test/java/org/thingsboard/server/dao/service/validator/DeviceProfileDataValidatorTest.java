@@ -45,6 +45,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.willReturn;
 import static org.mockito.Mockito.verify;
 
@@ -126,6 +127,69 @@ class DeviceProfileDataValidatorTest {
 
         validator.validateDataImpl(tenantId, deviceProfile);
         verify(validator).validateString("Device profile name", deviceProfile.getName());
+    }
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_null_Error() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = null;
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("Bootstrap Server ShortServerId must not be null!");
+    }
+   @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_More_65535_Error() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = 65536;
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+    }
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_Less_0_Error() {
+        Integer shortServerId = 123;
+        Integer shortServerIdBs = -1;
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+    }
+
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_null_Error_BootstrapShortServerId_Ok() {
+        Integer shortServerId = null;
+        Integer shortServerIdBs = 1;
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("LwM2M Server ShortServerId must not be null!");
+    }
+
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_More_65534_Error_BootstrapShortServerId_Ok() {
+        Integer shortServerId = 65535;
+        Integer shortServerIdBs = 111;
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+    }
+
+    @Test
+    void testValidateDeviceProfile_Lwm2mShortServerId_Less_1_Error_BootstrapShortServerId_Ok() {
+        Integer shortServerId = 0;
+        Integer shortServerIdBs = 111;
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
+        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining("LwM2M Server ShortServerId must be in range [1 - 65534]!");
     }
 
     private DeviceProfile getDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) {
