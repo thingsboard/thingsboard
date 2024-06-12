@@ -143,12 +143,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
       }
     });
     this.isMQTTWithResponse = this.fb.control(false);
-    this.isMQTTWithResponse.valueChanges.pipe(
-      tap(() => {
-        this.commandForm.get('responseTopicExpression').updateValueAndValidity();
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe();
+    this.observeMQTTWithResponse();
   }
 
   ngOnDestroy(): void {
@@ -451,5 +446,14 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
 
       return null;
     };
+  }
+
+  private observeMQTTWithResponse(): void {
+    this.isMQTTWithResponse.valueChanges.pipe(
+      tap(() => {
+        this.commandForm.get('responseTopicExpression').updateValueAndValidity();
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe();
   }
 }
