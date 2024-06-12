@@ -1860,6 +1860,7 @@
             "server": "Server",
             "short-id": "Short server ID",
             "short-id-tooltip": "Server short Id. Used as link to associate server Object Instance.\nThis identifier uniquely identifies each LwM2M Server configured for the LwM2M Client.\nResource MUST be set when the Bootstrap-Server Resource has a value of 'false'.\nThe values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.",
+            "short-id-tooltip-bootstrap": "Server short Id. Used as link to associate server Object Instance.\nThis identifier uniquely identifies each LwM2M Server configured for the LwM2M Client.\nResource MUST be set when the Bootstrap-Server Resource has a value of 'false'.",
             "short-id-required": "Short server ID is required.",
             "short-id-range": "Short server ID should be in a range from {{ min }} to {{ max }}.",
             "short-id-pattern": "Short server ID must be a positive integer.",

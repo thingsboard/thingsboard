@@ -57,7 +57,7 @@
         <mat-form-field fxFlex>
           <mat-label>{{ 'device-profile.lwm2m.short-id' | translate }}</mat-label>
           <mat-icon *ngIf="!disabled" class="mat-primary" aria-hidden="false" aria-label="help-icon" matSuffix style="cursor:pointer;"
-                    matTooltip="{{'device-profile.lwm2m.short-id-tooltip' | translate }}">help</mat-icon>
+                    matTooltip="{{ (isBootstrap ? 'device-profile.lwm2m.short-id-tooltip-bootstrap': 'device-profile.lwm2m.short-id-tooltip') | translate }}">help</mat-icon>
           <input matInput type="number" [min]="shortServerIdMin" [max]="shortServerIdMax" formControlName="shortServerId" required>
           <mat-error *ngIf="serverFormGroup.get('shortServerId').hasError('required')">
             {{ 'device-profile.lwm2m.short-id-required' | translate }}
