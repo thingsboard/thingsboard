@@ -25,9 +25,6 @@ export enum Direction {
   DESC = 'DESC'
 }
 
-export const SORT_DESC_PINNED_VALUE = -1;
-export const SORT_ASC_PINNED_VALUE = 9999;
-
 export function sortOrderFromString(strSortOrder: string): SortOrder {
   let property: string;
   let direction = Direction.ASC;
