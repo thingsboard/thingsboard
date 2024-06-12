@@ -74,6 +74,9 @@ class DeviceProfileDataValidatorTest {
                     "    \"clientOnlyObserveAfterConnect\": 1\n" +
                     "  }";
 
+    private static final String msgErrorLwm2mRange = "LwM2M Server ShortServerId must be in range [1 - 65534]!";
+    private static final String msgErrorBsRange = "Bootstrap Server ShortServerId must be in range [0 - 65535]!";
+    private static final String msgErrorNotNull = " Server ShortServerId must not be null!";
     private static final String host = "localhost";
     private static final String hostBs = "localhost";
 
@@ -121,78 +124,42 @@ class DeviceProfileDataValidatorTest {
     void testValidateDeviceProfile_Lwm2mBootstrap_ShortServerId_Ok() {
         Integer shortServerId = 123;
         Integer shortServerIdBs = 0;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
 
         validator.validateDataImpl(tenantId, deviceProfile);
         verify(validator).validateString("Device profile name", deviceProfile.getName());
     }
     @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_null_Error() {
-        Integer shortServerId = 123;
-        Integer shortServerIdBs = null;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
-                .hasMessageContaining("Bootstrap Server ShortServerId must not be null!");
+        testCreateDeviceProfileBad(123, null, "Bootstrap" + msgErrorNotNull);
     }
    @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_More_65535_Error() {
-        Integer shortServerId = 123;
-        Integer shortServerIdBs = 65536;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
-                .hasMessageContaining("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+        testCreateDeviceProfileBad(123, 65536, msgErrorBsRange);
     }
     @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_Less_0_Error() {
-        Integer shortServerId = 123;
-        Integer shortServerIdBs = -1;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
-                .hasMessageContaining("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+        testCreateDeviceProfileBad(123, -1, msgErrorBsRange);
     }
 
     @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_null_Error_BootstrapShortServerId_Ok() {
-        Integer shortServerId = null;
-        Integer shortServerIdBs = 1;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
-                .hasMessageContaining("LwM2M Server ShortServerId must not be null!");
+        testCreateDeviceProfileBad(null, 1, "LwM2M" + msgErrorNotNull);
     }
 
     @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_More_65534_Error_BootstrapShortServerId_Ok() {
-        Integer shortServerId = 65535;
-        Integer shortServerIdBs = 111;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
-                .hasMessageContaining("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+        testCreateDeviceProfileBad(65535, 111, msgErrorLwm2mRange);
     }
 
     @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_Less_1_Error_BootstrapShortServerId_Ok() {
-        Integer shortServerId = 0;
-        Integer shortServerIdBs = 111;
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
-                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
-        DeviceProfile deviceProfile = getDeviceProfile(transportConfiguration);
-        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
-                .hasMessageContaining("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+        testCreateDeviceProfileBad(0, 111, msgErrorLwm2mRange);
     }
 
-    private DeviceProfile getDeviceProfile(Lwm2mDeviceProfileTransportConfiguration transportConfiguration) {
+    private DeviceProfile getDeviceProfile(Integer shortServerId, Integer shortServerIdBs) {
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration =
+                getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsNoSec(shortServerId, shortServerIdBs));
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setName("default");
         deviceProfile.setType(DeviceProfileType.DEFAULT);
@@ -230,6 +197,13 @@ class DeviceProfileDataValidatorTest {
         bootstrapServerCredential.setHost(isBootstrap ? hostBs : host);
         bootstrapServerCredential.setPort(isBootstrap ? portBs : port);
         return bootstrapServerCredential;
+    }
+
+    private void testCreateDeviceProfileBad(Integer shortServerId, Integer shortServerIdBs, String msgError){
+        DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
+        assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
+                .hasMessageContaining(msgError);
+
     }
 
 }
