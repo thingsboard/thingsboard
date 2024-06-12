@@ -159,7 +159,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
         formGroup = this.fb.group({
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestTopicExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTopicExpression: [null, [this.requiredOnWithResponse(), Validators.pattern(noLeadTrailSpacesRegex)]],
+          responseTopicExpression: [{ value: null, disabled: true }, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTimeout: [null, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
         })
@@ -436,22 +436,12 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
     }
   }
 
-  private requiredOnWithResponse(): ValidatorFn {
-    return (control: UntypedFormControl) => {
-      const withResponse: boolean = this.isMQTTWithResponse?.value;
-
-      if (withResponse && !control.value) {
-        return { 'required': true };
-      }
-
-      return null;
-    };
-  }
-
   private observeMQTTWithResponse(): void {
     this.isMQTTWithResponse.valueChanges.pipe(
-      tap(() => {
-        this.commandForm.get('responseTopicExpression').updateValueAndValidity();
+      tap((isActive: boolean) => {
+        const responseControl = this.commandForm.get('responseTopicExpression');
+        isActive ? responseControl.enable() : responseControl.disable();
+        responseControl.updateValueAndValidity();
       }),
       takeUntil(this.destroy$),
     ).subscribe();
