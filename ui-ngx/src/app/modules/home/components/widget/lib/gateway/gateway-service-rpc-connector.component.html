@@ -35,7 +35,7 @@
           {{ 'gateway.rpc.withResponse' | translate }}
         </mat-slide-toggle>
         <mat-form-field *ngIf="isMQTTWithResponse.value">
-          <mat-label>{{ 'gateway.rpc.responseTopicExpression' | translate }}</mat-label>
+          <mat-label>{{ 'gateway.rpc.responseTopicExpression' | translate }}*</mat-label>
           <input matInput formControlName="responseTopicExpression"
                  placeholder="sensor/${deviceName}/response/${methodName}/${requestId}"/>
         </mat-form-field>
