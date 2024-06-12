@@ -74,11 +74,9 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   gradientAdvancedMode = false;
 
   @Input()
-  @coerceNumber()
   minValue: number;
 
   @Input()
-  @coerceNumber()
   maxValue: number;
 
   colorType = ColorType;
