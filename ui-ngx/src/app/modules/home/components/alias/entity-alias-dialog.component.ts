@@ -145,7 +145,7 @@ export class EntityAliasDialogComponent extends DialogComponent<EntityAliasDialo
     if (!isEmpty(this.alias.filter?.filters)) {
       this.alias.filter.filters = this.alias.filter.filters.filter((value, index, self) =>
         self.findIndex(v => v.relationType === value.relationType && isEqual(v.entityTypes, value.entityTypes)) === index &&
-        (value.relationType || value.entityTypes.length)
+        (value.relationType || value.entityTypes?.length)
       );
     }
     if (this.alias.filter.type) {
