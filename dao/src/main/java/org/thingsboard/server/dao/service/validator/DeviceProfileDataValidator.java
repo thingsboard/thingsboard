@@ -327,12 +327,20 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
             if (!isBootstrapServerUpdateEnable && serverConfig.isBootstrapServerIs()) {
                 throw new DeviceCredentialsValidationException("Bootstrap config must not include \"Bootstrap Server\". \"Include Bootstrap Server updates\" is " + isBootstrapServerUpdateEnable + ".");
             }
-            if (!serverConfig.isBootstrapServerIs() && (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534)) {
-                throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must not be less than 1 and more than 65534!");
-            }
 
-            if (serverConfig.isBootstrapServerIs() && (serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535)) {
-                throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must not be less than 0 and more than 65535!");
+            if (serverConfig.getShortServerId() != null) {
+                if (serverConfig.isBootstrapServerIs()){
+                    if(serverConfig.getShortServerId() < 0 || serverConfig.getShortServerId() > 65535){
+                        throw new DeviceCredentialsValidationException("Bootstrap Server ShortServerId must be in range [0 - 65535]!");
+                    }
+                } else {
+                    if (serverConfig.getShortServerId() < 1 || serverConfig.getShortServerId() > 65534) {
+                        throw new DeviceCredentialsValidationException("LwM2M Server ShortServerId must be in range [1 - 65534]!");
+                    }
+                }
+            } else {
+                String serverName = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
+                throw new DeviceCredentialsValidationException(serverName + " ShortServerId must not be null!");
             }
 
             String server = serverConfig.isBootstrapServerIs() ? "Bootstrap Server" : "LwM2M Server";
