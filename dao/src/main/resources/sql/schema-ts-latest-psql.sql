@@ -14,8 +14,6 @@
 -- limitations under the License.
 --
 
-CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1000;
-
 CREATE TABLE IF NOT EXISTS ts_kv_latest
 (
     entity_id uuid   NOT NULL,
@@ -26,6 +24,6 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest
     long_v    bigint,
     dbl_v     double precision,
     json_v    json,
-    version bigint,
+    version bigint default 0,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
