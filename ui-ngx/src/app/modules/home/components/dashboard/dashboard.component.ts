@@ -118,6 +118,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   isEdit: boolean;
 
   @Input()
+  isEditingWidget: boolean;
+
+  @Input()
   isPreview: boolean;
 
   @Input()
@@ -248,8 +251,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemCols: 8,
       defaultItemRows: 6,
       displayGrid: this.displayGrid,
-      resizable: {enabled: this.isEdit},
-      draggable: {enabled: this.isEdit},
+      resizable: {enabled: this.isEdit && !this.isEditingWidget, delayStart: 50},
+      draggable: {enabled: this.isEdit && !this.isEditingWidget},
       itemChangeCallback: item => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (item, itemComponent) => {
         (itemComponent.item as DashboardWidget).gridsterItemComponent = itemComponent;
@@ -300,7 +303,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
           updateMobileOpts = true;
         } else if (['outerMargin', 'margin', 'columns'].includes(propName)) {
           updateLayoutOpts = true;
-        } else if (propName === 'isEdit') {
+        } else if (['isEdit', 'isEditingWidget'].includes(propName)) {
           updateEditingOpts = true;
         } else if (['widgets', 'widgetLayouts'].includes(propName)) {
           updateWidgets = true;
@@ -580,8 +583,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   private updateEditingOpts() {
-    this.gridsterOpts.resizable.enabled = this.isEdit;
-    this.gridsterOpts.draggable.enabled = this.isEdit;
+    this.gridsterOpts.resizable.enabled = this.isEdit && !this.isEditingWidget;
+    this.gridsterOpts.draggable.enabled = this.isEdit && !this.isEditingWidget;
   }
 
   public notifyGridsterOptionsChanged() {

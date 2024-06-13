@@ -240,11 +240,20 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
   highlightWidget(widgetId: string): DashboardWidget {
     const widget = this.findWidgetById(widgetId);
     if (widget && (!this.highlightedMode || !widget.highlighted || this.highlightedMode && widget.highlighted)) {
-      this.highlightedMode = true;
+      let detectChanges = false;
+      if (!this.highlightedMode) {
+        this.highlightedMode = true;
+        detectChanges = true;
+      }
       widget.highlighted = true;
+      widget.selected = false;
       this.dashboardWidgets.forEach((dashboardWidget) => {
         if (dashboardWidget !== widget) {
           dashboardWidget.highlighted = false;
+          dashboardWidget.selected = false;
+          if (detectChanges) {
+            dashboardWidget.widgetContext?.detectContainerChanges();
+          }
         }
       });
       return widget;
@@ -330,6 +339,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   private highlightedValue = false;
   private selectedValue = false;
+  private selectedCallback: (selected: boolean) => void = () => {};
 
   isFullscreen = false;
 
@@ -399,6 +409,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
   }
 
+  onSelected(selectedCallback: (selected: boolean) => void) {
+    this.selectedCallback = selectedCallback;
+  }
+
   get selected() {
     return this.selectedValue;
   }
@@ -406,6 +420,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   set selected(selected: boolean) {
     if (this.selectedValue !== selected) {
       this.selectedValue = selected;
+      this.selectedCallback(selected);
       this.widgetContext.detectContainerChanges();
     }
   }

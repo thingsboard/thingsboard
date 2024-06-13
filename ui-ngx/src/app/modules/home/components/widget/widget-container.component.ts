@@ -22,12 +22,12 @@ import {
   ElementRef,
   EventEmitter,
   HostBinding,
-  Input,
+  Input, OnChanges,
   OnDestroy,
   OnInit,
   Output,
-  Renderer2,
-  ViewChild,
+  Renderer2, SimpleChanges,
+  ViewChild, ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -38,6 +38,8 @@ import { SafeStyle } from '@angular/platform-browser';
 import { isNotEmptyStr } from '@core/utils';
 import { GridsterItemComponent } from 'angular-gridster2';
 import { UtilsService } from '@core/services/utils.service';
+import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { from } from 'rxjs';
 
 export enum WidgetComponentActionType {
   MOUSE_DOWN,
@@ -61,7 +63,7 @@ export class WidgetComponentAction {
   encapsulation: ViewEncapsulation.None,
   changeDetection: ChangeDetectionStrategy.OnPush
 })
-export class WidgetContainerComponent extends PageComponent implements OnInit, AfterViewInit, OnDestroy {
+export class WidgetContainerComponent extends PageComponent implements OnInit, OnChanges, AfterViewInit, OnDestroy {
 
   @HostBinding('class')
   widgetContainerClass = 'tb-widget-container';
@@ -83,6 +85,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
 
   @Input()
   isEdit: boolean;
+
+  @Input()
+  isEditingWidget: boolean;
 
   @Input()
   isPreview: boolean;
@@ -111,11 +116,20 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
   @Output()
   widgetComponentAction: EventEmitter<WidgetComponentAction> = new EventEmitter<WidgetComponentAction>();
 
+  hovered = false;
+
+  get widgetEditActionsEnabled(): boolean {
+    return (this.isEditActionEnabled || this.isRemoveActionEnabled || this.isExportActionEnabled) && !this.widget?.isFullscreen;
+  }
+
   private cssClass: string;
+
+  private editWidgetActionsTooltip: ITooltipsterInstance;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
+              private container: ViewContainerRef,
               private utils: UtilsService) {
     super(store);
   }
@@ -127,15 +141,33 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
       this.cssClass =
         this.utils.applyCssToElement(this.renderer, this.gridsterItem.el, 'tb-widget-css', cssString);
     }
+    $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
+    $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
+    $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
+    this.initEditWidgetActionTooltip();
   }
 
   ngAfterViewInit(): void {
     this.widget.widgetContext.$widgetElement = $(this.tbWidgetElement.nativeElement);
   }
 
+  ngOnChanges(changes: SimpleChanges) {
+    for (const propName of Object.keys(changes)) {
+      const change = changes[propName];
+      if (!change.firstChange && change.currentValue !== change.previousValue) {
+        if (['isEditActionEnabled', 'isRemoveActionEnabled', 'isExportActionEnabled'].includes(propName)) {
+          this.updateEditWidgetActionsTooltipState();
+        }
+      }
+    }
+  }
+
   ngOnDestroy(): void {
     if (this.cssClass) {
       this.utils.clearCssElement(this.renderer, this.cssClass);
+    }
+    if (this.editWidgetActionsTooltip) {
+      this.editWidgetActionsTooltip.destroy();
     }
   }
 
@@ -198,4 +230,141 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
     });
   }
 
+  updateEditWidgetActionsTooltipState() {
+    if (this.editWidgetActionsTooltip) {
+      if (this.widgetEditActionsEnabled) {
+        this.editWidgetActionsTooltip.enable();
+      } else {
+        this.editWidgetActionsTooltip.disable();
+      }
+    }
+  }
+
+  private initEditWidgetActionTooltip() {
+    from(import('tooltipster')).subscribe(() => {
+      $(this.gridsterItem.el).tooltipster({
+        delay: this.widget.selected ? [0, 10000000] : [0, 100],
+        distance: 2,
+        zIndex: 151,
+        arrow: false,
+        theme: ['tb-widget-edit-actions-tooltip'],
+        interactive: true,
+        trigger: 'custom',
+        triggerOpen: {
+          mouseenter: true
+        },
+        triggerClose: {
+          mouseleave: true
+        },
+        side: ['top'],
+        trackOrigin: true,
+        trackerInterval: 25,
+        content: '',
+        functionPosition: (instance, helper, position) => {
+          const clientRect = helper.origin.getBoundingClientRect();
+          position.coord.left = clientRect.right - position.size.width;
+          position.target = clientRect.right;
+          return position;
+        },
+        functionReady: (_instance, helper) => {
+          const tooltipEl = $(helper.tooltip);
+          tooltipEl.on('mouseenter', () => {
+            this.hovered = true;
+            this.cd.markForCheck();
+          });
+          tooltipEl.on('mouseleave', () => {
+            this.hovered = false;
+            this.cd.markForCheck();
+          });
+        },
+        functionAfter: () => {
+          this.hovered = false;
+          this.cd.markForCheck();
+        }
+      });
+      this.editWidgetActionsTooltip = $(this.gridsterItem.el).tooltipster('instance');
+      const componentRef = this.container.createComponent(EditWidgetActionsTooltipComponent);
+      componentRef.instance.container = this;
+      componentRef.instance.viewInited.subscribe(() => {
+        if (this.editWidgetActionsTooltip.status().open) {
+          this.editWidgetActionsTooltip.reposition();
+        }
+      });
+      this.editWidgetActionsTooltip.on('destroyed', () => {
+        componentRef.destroy();
+      });
+      const parentElement = componentRef.instance.element.nativeElement;
+      const content = parentElement.firstChild;
+      parentElement.removeChild(content);
+      parentElement.style.display = 'none';
+      this.editWidgetActionsTooltip.content(content);
+      this.updateEditWidgetActionsTooltipState();
+      this.widget.onSelected((selected) =>
+        this.updateEditWidgetActionsTooltipSelectedState(selected));
+    });
+  }
+
+  private updateEditWidgetActionsTooltipSelectedState(selected: boolean) {
+    if (this.editWidgetActionsTooltip) {
+      if (selected) {
+        this.editWidgetActionsTooltip.option('delay', [0, 10000000]);
+        this.editWidgetActionsTooltip.option('triggerClose', {
+          mouseleave: false
+        });
+        if (this.widgetEditActionsEnabled) {
+          this.editWidgetActionsTooltip.open();
+        }
+      } else {
+        this.editWidgetActionsTooltip.option('delay', [0, 100]);
+        this.editWidgetActionsTooltip.option('triggerClose', {
+          mouseleave: true
+        });
+        this.editWidgetActionsTooltip.close();
+      }
+    }
+  }
+
+}
+
+@Component({
+  template: `<div class="tb-widget-actions-panel">
+    <button mat-icon-button class="tb-mat-20"
+            [fxShow]="container.isEditActionEnabled"
+            (click)="container.onEdit($event)"
+            matTooltip="{{ 'widget.edit' | translate }}"
+            matTooltipPosition="above">
+      <tb-icon>edit</tb-icon>
+    </button>
+    <button mat-icon-button class="tb-mat-20"
+            [fxShow]="container.isExportActionEnabled"
+            (click)="container.onExport($event)"
+            matTooltip="{{ 'widget.export' | translate }}"
+            matTooltipPosition="above">
+      <tb-icon>file_download</tb-icon>
+    </button>
+    <button mat-icon-button class="tb-mat-20"
+            [fxShow]="container.isRemoveActionEnabled"
+            (click)="container.onRemove($event);"
+            matTooltip="{{ 'widget.remove' | translate }}"
+            matTooltipPosition="above">
+      <tb-icon>close</tb-icon>
+    </button>
+  </div>`,
+  styles: [],
+  encapsulation: ViewEncapsulation.None
+})
+export class EditWidgetActionsTooltipComponent implements AfterViewInit {
+
+  @Input()
+  container: WidgetContainerComponent;
+
+  @Output()
+  viewInited = new EventEmitter();
+
+  constructor(public element: ElementRef<HTMLElement>) {
+  }
+
+  ngAfterViewInit() {
+    this.viewInited.emit();
+  }
 }
