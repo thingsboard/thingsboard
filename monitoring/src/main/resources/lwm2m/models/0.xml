@@ -179,7 +179,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
         <Operations></Operations>
         <MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..3</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The Matching Type Resource specifies how the certificate or raw public key in in the Server Public Key is presented. Four values are currently defined:
@@ -203,7 +203,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
         <Operations></Operations>
         <MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..3</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[The Certificate Usage Resource specifies the semantic of the certificate or 
@@ -220,7 +220,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
         <Operations></Operations>
         <MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration></RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[When this resource is present it instructs the TLS/DTLS client to propose the indicated ciphersuite(s) in the ClientHello of the handshake. A ciphersuite is indicated as a 32-bit integer value. The IANA TLS ciphersuite registry is maintained at https://www.iana.org/assignments/tls-parameters/tls-parameters.xhtml. As an example, the TLS_PSK_WITH_AES_128_CCM_8 ciphersuite is represented with the following string "0xC0,0xA8". To form an integer value the two values are concatenated. In this example, the value is 0xc0a8 or 49320.]]></Description>
@@ -239,7 +239,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what groups the LwM2M Client should use with a LwM2M Server/LwM2M Bootstrap-Server (ordered from most preferred to least preferred). Resource instance 0 indicates the most preferred group. The values are taken from Section 4.2.7 of RFC 8446. An example is secp256r1 (0x0017).]]></Description>
@@ -249,7 +249,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what signature algorithms the LwM2M Server/LwM2M Bootstrap-Server supports. The values are taken from Section 4.2.3 of RFC 8446. An example is ecdsa_secp256r1_sha256(0x0403).]]></Description>
@@ -258,7 +258,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what signature algorithms the LwM2M Client should use with a LwM2M Server/LwM2M Bootstrap-Server (ordered from most preferred to least preferred). Resource instance 0 indicates the most preferred group. The values are taken from Section 4.2.3 of RFC 8446. An example is ecdsa_secp256r1_sha256(0x0403).]]></Description>
@@ -268,7 +268,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Multiple</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what certificate-specific signature algorithms the the LwM2M Server/LwM2M Bootstrap-Server supports. The values are taken from Section 4.2.3 of RFC 8446. An example is ecdsa_secp256r1_sha256(0x0403).]]></Description>
@@ -278,7 +278,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates which features the LwM2M Client should use with the respective LwM2M Server/LwM2M Bootstrap-Server. The bitmask values listed below are defined. A bit value of '0' means the feature should not be used. bit(0) - PSK Plain, bit(1) - 0-RTT, bit(2) - PSK with PFS, bit(3) - Certificate-based Authentication. Bit(4) to bit(31) are reserved.]]></Description>
@@ -288,7 +288,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what extensions the LwM2M Server/LwM2M Bootstrap-Server supports in form of a bitmap.  The following values are defined: bit(0) - Server Name Indication (RFC 6066), bit (1) - Max Fragment Length (RFC 6066), bit (2) - Status Request (RFC 6066), bit (3) - Heartbeat (RFC 6520), bit (4) - Application Layer Protocol Negotiation (RFC 7301), bit (5) - Signed Certificate Timestamp (RFC 6962), bit (6) - Certificate Compression (draft-ietf-tls-certificate-compression), bit (7) - Record Size Limit (RFC 8449), bit (8) - Ticket Pinning (draft-ietf-tls-pinning-ticket), bit (9) - Certificate Authorities (RFC 8446), bit (10) - OID Filters (RFC 8446), bit (11) - Post Handshake Auth (RFC 8446), bit (12) - Connection ID (draft-ietf-tls-dtls-connection-id/draft-ietf-tls-dtls13). Bit(13) to bit(31) are reserved. ]]></Description>
@@ -298,7 +298,7 @@ If the value is set to 0, or if this resource is not instantiated, the Bootstrap
 				<Operations></Operations>
 				<MultipleInstances>Single</MultipleInstances>
 				<Mandatory>Optional</Mandatory>
-				<Type>Integer</Type>
+				<Type>Unsigned Integer</Type>
 				<RangeEnumeration>0..65535</RangeEnumeration>
 				<Units></Units>
 				<Description><![CDATA[If this resource is defined, it indicates what extensions the LwM2M Client should use with the LwM2M Server/LwM2M Bootstrap-Server in form of a bitmap. The following values are defined: bit(0) - Server Name Indication (RFC 6066), bit (1) - Max Fragment Length (RFC 6066), bit (2) - Status Request (RFC 6066), bit (3) - Heartbeat (RFC 6520), bit (4) - Application Layer Protocol Negotiation (RFC 7301), bit (5) - Signed Certificate Timestamp (RFC 6962), bit (6) - Certificate Compression (draft-ietf-tls-certificate-compression), bit (7) - Record Size Limit (RFC 8449), bit (8) - Ticket Pinning (draft-ietf-tls-pinning-ticket), bit (9) - Certificate Authorities (RFC 8446), bit (10) - OID Filters (RFC 8446), bit (11) - Post Handshake Auth (RFC 8446), bit (12) - Connection ID (draft-ietf-tls-dtls-connection-id/draft-ietf-tls-dtls13). Bit(13) to bit(31) are reserved. ]]></Description>

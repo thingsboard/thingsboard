@@ -48,7 +48,7 @@ public class Lwm2mTransportHealthChecker extends TransportHealthChecker<Lwm2mTra
 
     @Override
     protected void sendTestPayload(String payload) throws Exception {
-        lwm2mClient.send(payload, 0);
+        lwm2mClient.send(payload);
     }
 
     @Override
