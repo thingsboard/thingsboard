@@ -59,6 +59,7 @@
     flex-direction: row-reverse;
     align-items: center;
     margin-right: 0;
+    flex: 0;
 
     & > mat-icon {
       margin-left: 15px;
@@ -103,10 +104,6 @@
   .mat-expansion-panel-header-title {
     flex: 1;
     margin: 0;
-  }
-
-  .mat-expansion-panel-header-description {
-    flex: 0;
   }
 }
 
