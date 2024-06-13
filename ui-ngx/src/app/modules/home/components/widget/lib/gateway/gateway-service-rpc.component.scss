@@ -46,26 +46,29 @@
     flex-direction: column;
     flex: 1;
 
-    & > span {
-      font-weight: 600;
-      position: relative;
-      font-size: 14px;
-      margin-bottom: 10px;
+    .text-container {
+      display: flex;
+      margin-bottom: 8px;
+      gap: 16px;
 
+      & > span {
+        display: flex;
+        align-items: center;
+        font-weight: 600;
+        position: relative;
+        font-size: 14px;
+        line-height: 32px;
+      }
 
       .result-time {
+        display: flex;
+        justify-content: flex-start;
+        align-items: center;
+        gap: 4px;
         font-weight: 400;
         font-size: 14px;
         line-height: 32px;
-        position: absolute;
-        left: 0;
-        top: 25px;
-        z-index: 5;
         color: rgba(0, 0, 0, 0.54);
-
-        span {
-          padding-left: 10px;
-        }
       }
     }
 

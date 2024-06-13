@@ -23,6 +23,8 @@ import {
 } from '@angular/core';
 import {
   AbstractControl,
+  FormControl,
+  FormGroup,
   UntypedFormArray,
   UntypedFormBuilder,
   Validators
@@ -39,7 +41,10 @@ import {
   MappingKeysType,
   MappingValueType,
   mappingValueTypesMap,
-  noLeadTrailSpacesRegex
+  noLeadTrailSpacesRegex,
+  OPCUaSourceTypes,
+  RpcMethodsMapping,
+  SourceTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Component({
@@ -66,7 +71,16 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   keys: Array<MappingDataKey> | {[key: string]: any};
 
   @Input()
-  keysType: string;
+  keysType: MappingKeysType;
+
+  @Input()
+  valueTypeKeys: Array<MappingValueType | OPCUaSourceTypes> = Object.values(MappingValueType);
+
+  @Input()
+  valueTypeEnum = MappingValueType;
+
+  @Input()
+  valueTypes: Map<string, any> = mappingValueTypesMap;
 
   @Input()
   @coerceBoolean()
@@ -78,13 +92,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   @Output()
   keysDataApplied = new EventEmitter<Array<MappingDataKey> | {[key: string]: any}>();
 
-  valueTypeKeys = Object.values(MappingValueType);
-
   MappingKeysType = MappingKeysType;
-
-  valueTypeEnum = MappingValueType;
-
-  valueTypes = mappingValueTypesMap;
 
   dataKeyType: DataKeyType;
 
@@ -98,7 +106,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   }
 
   ngOnInit() {
-    this.keysListFormArray = this.prepareKeysFormArray(this.keys)
+    this.keysListFormArray = this.prepareKeysFormArray(this.keys);
   }
 
   trackByKey(index: number, keyControl: AbstractControl): any {
@@ -106,12 +114,21 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   }
 
   addKey(): void {
-    const dataKeyFormGroup = this.fb.group({
-      key: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      value: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
-    });
-    if (this.keysType !== MappingKeysType.CUSTOM) {
-      dataKeyFormGroup.addControl('type', this.fb.control(this.rawData ? 'raw' : MappingValueType.STRING));
+    let dataKeyFormGroup: FormGroup;
+    if (this.keysType === MappingKeysType.RPC_METHODS) {
+      dataKeyFormGroup = this.fb.group({
+        method: ['', [Validators.required]],
+        arguments: [[], []]
+      });
+    } else {
+      dataKeyFormGroup = this.fb.group({
+        key: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        value: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
+      });
+    }
+    if (this.keysType !== MappingKeysType.CUSTOM && this.keysType !== MappingKeysType.RPC_METHODS) {
+      const controlValue = this.rawData ? 'raw' : this.valueTypeKeys[0];
+      dataKeyFormGroup.addControl('type', this.fb.control(controlValue));
     }
     this.keysListFormArray.push(dataKeyFormGroup);
   }
@@ -139,7 +156,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
     this.keysDataApplied.emit(keys);
   }
 
-  private prepareKeysFormArray(keys: Array<MappingDataKey> | {[key: string]: any}): UntypedFormArray {
+  private prepareKeysFormArray(keys: Array<MappingDataKey | RpcMethodsMapping> | {[key: string]: any}): UntypedFormArray {
     const keysControlGroups: Array<AbstractControl> = [];
     if (keys) {
       if (this.keysType === MappingKeysType.CUSTOM) {
@@ -148,19 +165,28 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
         });
       }
       keys.forEach((keyData) => {
-        const { key, value, type } = keyData;
-        const dataKeyFormGroup = this.fb.group({
-          key: [key, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          value: [value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          type: [type, []]
-        });
+        let dataKeyFormGroup: FormGroup;
+        if (this.keysType === MappingKeysType.RPC_METHODS) {
+          dataKeyFormGroup = this.fb.group({
+            method: [keyData.method, [Validators.required]],
+            arguments: [[...keyData.arguments], []]
+          });
+        } else {
+          const { key, value, type } = keyData;
+          dataKeyFormGroup = this.fb.group({
+            key: [key, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+            value: [value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+            type: [type, []]
+          });
+        }
         keysControlGroups.push(dataKeyFormGroup);
       });
     }
     return this.fb.array(keysControlGroups);
   }
 
-  valueTitle(value: any): string {
+  valueTitle(keyControl: FormControl): string {
+    const value = keyControl.get(this.keysType === MappingKeysType.RPC_METHODS ? 'method' : 'value').value;
     if (isDefinedAndNotNull(value)) {
       if (typeof value === 'object') {
         return JSON.stringify(value);
@@ -168,6 +194,16 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
       return value;
     }
     return '';
+  }
+
+  helpLink(sourceType: SourceTypes | OPCUaSourceTypes) {
+    if (this.valueTypeKeys?.includes(OPCUaSourceTypes.PATH)) {
+      if (sourceType !== OPCUaSourceTypes.CONST) {
+        return `widget/lib/gateway/${this.keysType}-value-field-${sourceType}_fn`;
+      }
+    } else {
+      return 'widget/lib/gateway/expressions_fn';
+    }
   }
 
 }

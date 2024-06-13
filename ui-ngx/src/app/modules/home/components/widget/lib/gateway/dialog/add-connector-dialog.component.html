@@ -33,7 +33,7 @@
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="type">
-              <mat-option *ngFor="let type of gatewayConnectorDefaultTypesTranslatesMap | keyvalue" [value]="type.key">
+              <mat-option *ngFor="let type of filteredConnectorTypesMap | keyvalue" [value]="type.key">
                 {{ type.value }}
               </mat-option>
             </mat-select>

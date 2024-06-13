@@ -52,7 +52,8 @@
             </mat-icon>
             <div matSuffix
                  class="see-example"
-                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                 *ngIf="helpLink('name-field', mappingFormGroup.get('deviceNameExpressionSource').value)"
+                 [tb-help-popup]="helpLink('name-field', mappingFormGroup.get('deviceNameExpressionSource').value)"
                  tb-help-popup-placement="left"
                  [tb-help-popup-style]="{maxWidth: '970px'}">
             </div>
@@ -85,7 +86,8 @@
             </mat-icon>
             <div matSuffix
                  class="see-example"
-                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                 *ngIf="helpLink('profile-name', mappingFormGroup.get('deviceProfileExpressionSource').value)"
+                 [tb-help-popup]="helpLink('profile-name', mappingFormGroup.get('deviceProfileExpressionSource').value)"
                  tb-help-popup-placement="left"
                  [tb-help-popup-style]="{maxWidth: '970px'}">
             </div>

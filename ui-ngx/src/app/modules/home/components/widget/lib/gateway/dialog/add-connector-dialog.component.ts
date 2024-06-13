@@ -47,6 +47,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   connectorType = ConnectorType;
 
   gatewayConnectorDefaultTypesTranslatesMap = GatewayConnectorDefaultTypesTranslatesMap;
+  filteredConnectorTypesMap: Map<ConnectorType, string>;
   gatewayLogLevel = Object.values(GatewayLogLevel);
 
   submitted = false;
@@ -60,12 +61,16 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
               private fb: FormBuilder,
               private resourcesService: ResourcesService) {
     super(store, router, dialogRef);
+    this.filteredConnectorTypesMap = new Map(
+      Array.from(this.gatewayConnectorDefaultTypesTranslatesMap)
+        .filter(([key, _]) => key !== ConnectorType.OPCUA_ASYNCIO)
+    );
     this.connectorForm = this.fb.group({
       type: [ConnectorType.MQTT, []],
       name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],
-      sendDataOnlyOnChange: [false, []],
+      sendDataOnlyOnChange: [false, []]
     });
   }
 

@@ -60,10 +60,12 @@
     <div class="table-container">
       <table mat-table [dataSource]="dataSource">
         <ng-container [matColumnDef]="column.def" *ngFor="let column of mappingColumns; let i = index">
-          <mat-header-cell *matHeaderCellDef class="table-value-column" [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+          <mat-header-cell *matHeaderCellDef class="table-value-column"
+                           [class.request-column]="mappingType !== mappingTypeEnum.DATA">
             {{ column.title | translate }}
           </mat-header-cell>
-          <mat-cell *matCellDef="let mapping" class="table-value-column" [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+          <mat-cell *matCellDef="let mapping" class="table-value-column"
+                    [class.request-column]="mappingType !== mappingTypeEnum.DATA">
             {{ mapping[column.def] }}
           </mat-cell>
         </ng-container>
