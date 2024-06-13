@@ -89,6 +89,19 @@
     }
   }
 
+  .template-name {
+    max-width: 170px;
+    overflow: scroll;
+  }
+
+  ::ng-deep .mat-expansion-panel-header-title {
+    flex: 1;
+    margin: 0;
+  }
+
+  ::ng-deep .mat-expansion-panel-header-description {
+    flex: 0;
+  }
 }
 
 

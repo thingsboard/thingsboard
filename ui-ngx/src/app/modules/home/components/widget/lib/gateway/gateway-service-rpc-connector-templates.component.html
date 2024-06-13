@@ -18,7 +18,7 @@
 <div class="mat-subtitle-1 title">{{ 'gateway.rpc.templates-title' | translate }}</div>
 <mat-expansion-panel hideToggle *ngFor="let template of rpcTemplates">
   <mat-expansion-panel-header>
-    <mat-panel-title>
+    <mat-panel-title class="template-name">
       {{template.name}}
     </mat-panel-title>
     <mat-panel-description>
