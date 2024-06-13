@@ -50,7 +50,7 @@
         <ng-container *ngIf="config.key === 'method' else value" [ngTemplateOutlet]="SNMPMethod"></ng-container>
       </div>
       <ng-template #value>{{ config.value }}</ng-template>
-      <ng-template #SNMPMethod>{{ 'gateway.rpc.' + SNMPMethodsTitles[config.value] | translate }}</ng-template>
+      <ng-template #SNMPMethod>{{ SNMPMethodsTranslations.get(config.value) | translate }}</ng-template>
       <ng-template #RPCObjectRow>
         <ng-container
           *ngFor="let subConfig of config.value | keyvalue : originalOrder"
