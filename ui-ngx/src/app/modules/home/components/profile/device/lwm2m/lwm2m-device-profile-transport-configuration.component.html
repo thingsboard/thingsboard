@@ -18,18 +18,16 @@
 <section style="padding-bottom: 16px; margin: 0">
   <mat-tab-group dynamicHeight>
     <mat-tab label="{{ 'device-profile.lwm2m.model-tab' | translate }}">
-      <ng-template matTabContent>
-        <section [formGroup]="lwm2mDeviceProfileFormGroup">
-          <tb-profile-lwm2m-object-list
-            (addList)="addObjectsList($event)"
-            (removeList)="removeObjectsList($event)"
-            formControlName="objectIds">
-          </tb-profile-lwm2m-object-list>
-          <tb-profile-lwm2m-observe-attr-telemetry
-            formControlName="observeAttrTelemetry">
-          </tb-profile-lwm2m-observe-attr-telemetry>
-        </section>
-      </ng-template>
+      <section [formGroup]="lwm2mDeviceProfileFormGroup">
+        <tb-profile-lwm2m-object-list
+          (addList)="addObjectsList($event)"
+          (removeList)="removeObjectsList($event)"
+          formControlName="objectIds">
+        </tb-profile-lwm2m-object-list>
+        <tb-profile-lwm2m-observe-attr-telemetry
+          formControlName="observeAttrTelemetry">
+        </tb-profile-lwm2m-observe-attr-telemetry>
+      </section>
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
       <section [formGroup]="lwm2mDeviceProfileFormGroup">
