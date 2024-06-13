@@ -91,7 +91,13 @@
 
   .template-name {
     max-width: 170px;
-    overflow: scroll;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  ::ng-deep .mat-content {
+    align-items: center;
   }
 
   ::ng-deep .mat-expansion-panel-header-title {
