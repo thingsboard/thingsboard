@@ -100,12 +100,12 @@
     align-items: center;
   }
 
-  ::ng-deep .mat-expansion-panel-header-title {
+  .mat-expansion-panel-header-title {
     flex: 1;
     margin: 0;
   }
 
-  ::ng-deep .mat-expansion-panel-header-description {
+  .mat-expansion-panel-header-description {
     flex: 0;
   }
 }

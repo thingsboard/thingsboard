@@ -19,7 +19,7 @@
 <mat-expansion-panel hideToggle *ngFor="let template of rpcTemplates">
   <mat-expansion-panel-header>
     <mat-panel-title class="template-name">
-      <span matTooltip="{{template.name}}">{{template.name}}</span>
+      <span matTooltip="{{template.name}}" matTooltipPosition="above">{{template.name}}</span>
     </mat-panel-title>
     <mat-panel-description>
       <button mat-icon-button matTooltip="Delete" (click)="deleteTemplate($event, template)">
