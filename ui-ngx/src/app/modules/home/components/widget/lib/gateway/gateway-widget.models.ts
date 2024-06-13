@@ -261,6 +261,18 @@ export enum SNMPMethods {
   WALKS = "walk"
 }
 
+export enum SNMPMethodsTitles {
+  set = 'set',
+  multiset = "multiset",
+  get = "get",
+  bulkwalk = "bulk-walk",
+  table = "table",
+  multiget = "multi-get",
+  getnext = "get-next",
+  bulkget = "bulk-get",
+  walk = "walk"
+}
+
 export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
   [SNMPMethods.SET, 'gateway.rpc.set'],
   [SNMPMethods.MULTISET, 'gateway.rpc.multiset'],
@@ -269,7 +281,7 @@ export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
   [SNMPMethods.TABLE, 'gateway.rpc.table'],
   [SNMPMethods.MULTIGET, 'gateway.rpc.multi-get'],
   [SNMPMethods.GETNEXT, 'gateway.rpc.get-next'],
-  [SNMPMethods.BULKGET, 'gateway.rpc.bul-kget'],
+  [SNMPMethods.BULKGET, 'gateway.rpc.bulk-get'],
   [SNMPMethods.WALKS, 'gateway.rpc.walk']
 ])
 
