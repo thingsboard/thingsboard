@@ -33,16 +33,7 @@
   }
 
   .mat-mdc-dialog-content {
-    max-height: 670px;
     height: 670px;
-
-    @media screen and (max-height: 800px) {
-      $mat-toolbar-height: 64px;
-      $mat-mdc-dialog-actions: 53px;
-      $dialog-offset: 24px;
-      $content-height: calc(100vh - #{$mat-toolbar-height} - #{$mat-mdc-dialog-actions} - #{$dialog-offset});
-      max-height: $content-height;
-    }
   }
 
   .ellipsis-chips-container {
