@@ -391,7 +391,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           value.oid.forEach(value => {
             this.addSNMPoid(value)
           })
-          delete value.oids;
+          delete value.oid;
           break;
         case ConnectorType.REQUEST:
           this.clearFromArrayByName("httpHeaders");
