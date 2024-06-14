@@ -119,7 +119,7 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
     ).subscribe(() => this.updateModel());
     this.gradientFormGroup.get('advancedMode').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(() => Promise.resolve().then(() => this.popover?.updatePosition()));
+    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {
@@ -167,8 +167,8 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
         this.advancedGradientListFormArray.value.map((v, i) => this.pointer(shift * (i + 1), i+1, null, true)).join('') +
         `<div class="pointer end"></div>`;
     } else {
-      const min = this.gradientFormGroup.get('minValue').value;
-      const max = this.gradientFormGroup.get('maxValue').value;
+      const min = this.gradientFormGroup.get('minValue').value || 0;
+      const max = this.gradientFormGroup.get('maxValue').value || 100;
       const point = (+max - +min) / (this.gradientListFormArray.value.length + 1);
       const shift = 100 / (this.gradientListFormArray.value.length + 1);
       return `<div class="pointer start"><div class="pointer-value"><span class="pointer-value-text">${min}</span></div></div>` +
@@ -236,7 +236,7 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       this.gradientListFormArray.removeAt(index);
     }
     this.gradientFormGroup.markAsDirty();
-    Promise.resolve().then(() => this.popover?.updatePosition());
+    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   gradientDrop(event: CdkDragDrop<string[]>, advanced = false) {
@@ -255,7 +255,7 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       this.gradientListFormArray.push(this.colorGradientControl('rgba(0,0,0,0.87)'));
     }
     this.gradientFormGroup.markAsDirty();
-    Promise.resolve().then(() => this.popover?.updatePosition());
+    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   updateModel() {
