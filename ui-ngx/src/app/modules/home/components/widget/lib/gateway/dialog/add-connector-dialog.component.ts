@@ -66,6 +66,8 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],
       sendDataOnlyOnChange: [false, []],
+      class: ['', []],
+      key: ['auto', []],
     });
   }
 
