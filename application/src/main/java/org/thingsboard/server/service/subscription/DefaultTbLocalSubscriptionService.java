@@ -155,7 +155,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
                 }
             });
             if (!staleSubs.isEmpty()) {
-                subscriptionsByEntityId.keySet().removeAll(staleSubs);
+                staleSubs.forEach(subscriptionsByEntityId::remove);
             }
         }
     }
