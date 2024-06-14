@@ -1757,7 +1757,7 @@
             "short-id": "Short server ID",
             "short-id-tooltip": "Id corto del servidor. Usado como enlace para asociar las instancias de objetos del servidor.\nEste identificador sirve para identificar únicamente cada servidor LwM2M configurado para el cliente LwM2M.\nLos recursos DEBEN ser ajustados cuando el servidor Bootstrap tenga un valor de 'false'.\nLos valores ID:0 and ID:65535 NO DEBEN ser usados para identificar al servidor LwM2M.",
             "short-id-required": "Se requiere Short server ID.",
-            "short-id-range": "Short server ID debe estar en un rango de 1 a 65534.",
+            "short-id-range": "Short server ID debe estar en un rango de {{ min }} a {{ max }}.",
             "short-id-pattern": "Short server ID debe ser un número entero positivo.",
             "lifetime": "Ciclo de vida registro de cliente (Registration Lifetime)",
             "lifetime-required": "Se requiere ciclo de vida.",
