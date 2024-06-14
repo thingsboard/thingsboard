@@ -17,10 +17,12 @@
 import { Pipe, PipeTransform } from '@angular/core';
 
 @Pipe({
-  name: 'isExist'
+  name: 'keyValueIsNotEmpty'
 })
-export class IsExistPipe implements PipeTransform {
-  transform(value: unknown): boolean {
-    return value !== null && value !== undefined;
+export class KeyValueIsNotEmptyPipe implements PipeTransform {
+  transform(obj: Record<string, unknown>): Record<string, unknown> {
+    return Object.fromEntries(
+      Object.entries(obj).filter(([_, value]) => value !== null && value !== undefined)
+    );
   }
 }

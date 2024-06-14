@@ -32,13 +32,12 @@
   </mat-expansion-panel-header>
 
   <ng-container
-    *ngFor="let config of template.config | keyvalue : originalOrder"
+    *ngFor="let config of template.config | keyValueIsNotEmpty | keyvalue : originalOrder"
     [ngTemplateOutlet]="RPCTemplateRef"
     [ngTemplateOutletContext]="{ $implicit: config, innerValue: false }">
   </ng-container>
   <ng-template #RPCTemplateRef let-config let-innerValue='innerValue'>
-    <div *ngIf="config.value | isExist"
-         [fxLayout]="isObject(config.value) ? 'column': 'row'"
+    <div [fxLayout]="isObject(config.value) ? 'column': 'row'"
          [fxLayoutAlign]="!isObject(config.value) ? 'space-between center' : ''"
          [ngStyle]="{'padding-left': innerValue ? '16px': '0'}"
          class="rpc-params-row">
