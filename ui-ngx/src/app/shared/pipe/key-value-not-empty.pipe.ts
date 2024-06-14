@@ -14,15 +14,31 @@
 /// limitations under the License.
 ///
 
-import { Pipe, PipeTransform } from '@angular/core';
+import { KeyValueChanges, KeyValueDiffer, KeyValueDiffers, Pipe, PipeTransform } from '@angular/core';
+import { KeyValue, KeyValuePipe } from "@angular/common";
 
 @Pipe({
-  name: 'keyValueIsNotEmpty'
+  name: 'keyValueIsNotEmpty',
 })
-export class KeyValueIsNotEmptyPipe implements PipeTransform {
-  transform(obj: Record<string, unknown>): Record<string, unknown> {
-    return Object.fromEntries(
-      Object.entries(obj).filter(([_, value]) => value !== null && value !== undefined)
-    );
+export class KeyValueIsNotEmptyPipe extends KeyValuePipe implements PipeTransform {
+  private difference!: KeyValueDiffer<any, any>;
+
+  constructor(private readonly keyValueDiffers: KeyValueDiffers) {
+    super(keyValueDiffers);
+  }
+
+  transform<ValueType>(
+    input: Record<string, ValueType>,
+    compareFn?: (a: KeyValue<string, ValueType>, b: KeyValue<string, ValueType>) => number
+  ): KeyValue<string, ValueType>[] & null {
+    super.transform(input, compareFn);
+    this.difference ??= this.keyValueDiffers.find(input).create();
+    const differChanges: KeyValueChanges<string, ValueType> | null = this.difference.diff(input as any);
+    if (differChanges) {
+      console.log(differChanges)
+      const filteredEntries = [...Object.entries(input)]
+        .filter(([_, value]) => value !== null && value !== undefined);
+      return super.transform(new Map<string, ValueType>(filteredEntries), compareFn) as KeyValue<string, ValueType>[] & null;
+    }
   }
 }
