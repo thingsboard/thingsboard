@@ -17,6 +17,7 @@
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { QuickTimeInterval, QuickTimeIntervalTranslationMap } from '@shared/models/time/time.models';
+import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
 
 @Component({
   selector: 'tb-quick-time-interval',
@@ -42,6 +43,12 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor 
   @Input() disabled: boolean;
 
   @Input() onlyCurrentInterval = false;
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private propagateChange = (_: any) => {};
 

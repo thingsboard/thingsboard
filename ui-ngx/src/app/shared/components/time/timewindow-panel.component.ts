@@ -32,6 +32,9 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { TimeService } from '@core/services/time.service';
 import { isDefined } from '@core/utils';
 import { OverlayRef } from '@angular/cdk/overlay';
+import { WidgetConfigMode } from '@shared/models/widget.models';
+import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
+import { TranslateService } from '@ngx-translate/core';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
@@ -82,11 +85,23 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   result: Timewindow;
 
+  realtimeTimewindowOptions: ToggleHeaderOption[] = [
+    {
+      name: this.translate.instant('timewindow.last'),
+      value: this.realtimeTypes.LAST_INTERVAL
+    },
+    {
+      name: this.translate.instant('timewindow.interval'),
+      value: this.realtimeTypes.INTERVAL
+    }
+  ];
+
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
               public overlayRef: OverlayRef,
               protected store: Store<AppState>,
               public fb: UntypedFormBuilder,
               private timeService: TimeService,
+              private translate: TranslateService,
               public viewContainerRef: ViewContainerRef) {
     super(store);
     this.historyOnly = data.historyOnly;
@@ -380,4 +395,5 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.timewindowForm.markAsDirty();
   }
 
+  protected readonly WidgetConfigMode = WidgetConfigMode;
 }

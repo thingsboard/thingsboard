@@ -4694,7 +4694,8 @@
         "font": "Font",
         "color": "Color",
         "displayTypePrefix": "Display Realtime/History prefix",
-        "preview": "Preview"
+        "preview": "Preview",
+        "time-range": "Time range"
     },
     "tooltip": {
         "trigger": "Trigger",

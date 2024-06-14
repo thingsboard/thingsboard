@@ -22,6 +22,10 @@
   max-width: 100%;
   background-color: #fff;
 
+  .tb-flex {
+    gap: 16px;
+  }
+
   .mat-content {
     overflow: hidden;
   }
@@ -35,7 +39,7 @@
     margin-right: 5px;
   }
 
-  tb-timeinterval[ng-reflect-fx-show="true"] {
+  tb-timeinterval[ng-reflect-fxe-show="true"] {
     margin-bottom: -16px;
   }
 
@@ -77,5 +81,9 @@
   }
   .mat-mdc-tab-group:not(.tb-headless) {
     height: 100%;
+  }
+
+  .mat-mdc-tab-body-content {
+    padding: 16px;
   }
 }
