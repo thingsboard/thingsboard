@@ -219,6 +219,7 @@ import { ImageGalleryDialogComponent } from '@shared/components/image/image-gall
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
+import { IsExistPipe } from "@shared/pipe/is-exist.pipe";
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -366,6 +367,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     ShortNumberPipe,
     SelectableColumnsPipe,
     KeyboardShortcutPipe,
+    IsExistPipe,
     TbJsonToStringDirective,
     JsonObjectEditDialogComponent,
     HistorySelectorComponent,
@@ -619,6 +621,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
+    IsExistPipe,
     RouterModule,
     TranslateModule,
     JsonObjectEditDialogComponent,

@@ -37,7 +37,7 @@
     [ngTemplateOutletContext]="{ $implicit: config, innerValue: false }">
   </ng-container>
   <ng-template #RPCTemplateRef let-config let-innerValue='innerValue'>
-    <div *ngIf="config.value !== null"
+    <div *ngIf="config.value | isExist"
          [fxLayout]="isObject(config.value) ? 'column': 'row'"
          [fxLayoutAlign]="!isObject(config.value) ? 'space-between center' : ''"
          [ngStyle]="{'padding-left': innerValue ? '16px': '0'}"
