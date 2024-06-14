@@ -52,6 +52,7 @@ export interface WidgetLayouts {
 export interface GridSettings {
   backgroundColor?: string;
   columns?: number;
+  minColumns?: number;
   margin?: number;
   outerMargin?: boolean;
   backgroundSizeMode?: string;

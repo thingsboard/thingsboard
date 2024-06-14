@@ -114,8 +114,9 @@
         <div class="tb-form-panel-title" translate>dashboard.layout-settings</div>
         <div class="tb-form-row space-between">
           <div translate>dashboard.columns-count</div>
-          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
-            <input matInput formControlName="columns" type="number" min="10" max="1000" step="1"
+          <mat-form-field *ngIf="!gridSettingsFormGroup.get('isScada').value"
+                          appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
+            <input matInput formControlName="columns" type="number" min="10" max="1008" step="1"
                    required
                    placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
@@ -127,6 +128,32 @@
                       class="tb-error">
               warning
             </mat-icon>
+          </mat-form-field>
+          <mat-form-field *ngIf="gridSettingsFormGroup.get('isScada').value"
+                          class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select required formControlName="columns">
+              <mat-option *ngFor="let columns of scadaColumns" [value]="columns">
+                {{ columns }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>dashboard.min-layout-width</div>
+          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
+            <input matInput formControlName="minColumns" type="number" min="10" max="1008" step="1"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(gridSettingsFormGroup.get('columns').hasError('required') ? 'dashboard.columns-count-required' :
+                                     (gridSettingsFormGroup.get('columns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate"
+                      *ngIf="gridSettingsFormGroup.get('minColumns').invalid && gridSettingsFormGroup.get('minColumns').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+            <span translate matSuffix>dashboard.columns-suffix</span>
           </mat-form-field>
         </div>
         <div *ngIf="!gridSettingsFormGroup.get('isScada').value" class="tb-form-row space-between">

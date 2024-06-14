@@ -54,6 +54,8 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
 
   submitted = false;
 
+  scadaColumns: number[] = [];
+
   private stateControllerTranslationMap = new Map<string, string>([
     ['default', 'dashboard.state-controller-default'],
   ]);
@@ -155,10 +157,17 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
     }
 
     if (this.gridSettings) {
+      let columns = 24;
+      while (columns <= 1008) {
+        this.scadaColumns.push(columns);
+        columns += 24;
+      }
       const mobileAutoFillHeight = isUndefined(this.gridSettings.mobileAutoFillHeight) ? false : this.gridSettings.mobileAutoFillHeight;
       this.gridSettingsFormGroup = this.fb.group({
         isScada: [this.gridSettings.isScada, []],
-        columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1000)]],
+        columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1008)]],
+        minColumns: [this.gridSettings.minColumns || this.gridSettings.columns || 24,
+          [Validators.required, Validators.min(10), Validators.max(1008)]],
         margin: [isDefined(this.gridSettings.margin) ? this.gridSettings.margin : 10,
           [Validators.required, Validators.min(0), Validators.max(50)]],
         outerMargin: [isUndefined(this.gridSettings.outerMargin) ? true : this.gridSettings.outerMargin, []],
@@ -228,6 +237,11 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
       this.gridSettingsFormGroup.get('autoFillHeight').disable();
       this.gridSettingsFormGroup.get('mobileAutoFillHeight').disable({emitEvent: false});
       this.gridSettingsFormGroup.get('mobileRowHeight').disable();
+      const columns: number = this.gridSettingsFormGroup.get('columns').value;
+      if (columns % 24 !== 0) {
+        const newColumns = Math.min(1008, 24 * Math.ceil(columns / 24));
+        this.gridSettingsFormGroup.get('columns').patchValue(newColumns);
+      }
     } else {
       this.gridSettingsFormGroup.get('margin').enable();
       this.gridSettingsFormGroup.get('outerMargin').enable();

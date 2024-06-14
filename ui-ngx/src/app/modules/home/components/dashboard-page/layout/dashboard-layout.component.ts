@@ -36,6 +36,7 @@ import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
+import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -84,6 +85,18 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   get isMobileDisabled(): boolean {
     return this.widgetEditMode || this.layoutCtx.gridSettings.isScada;
+  }
+
+  get colWidthInteger(): boolean {
+    return this.layoutCtx.gridSettings.isScada;
+  }
+
+  get columns(): number {
+    return this.layoutCtx.gridSettings.minColumns || this.layoutCtx.gridSettings.columns || 24;
+  }
+
+  get displayGrid(): displayGrids {
+    return this.layoutCtx.displayGrid || 'onDrag&Resize';
   }
 
   @Input()

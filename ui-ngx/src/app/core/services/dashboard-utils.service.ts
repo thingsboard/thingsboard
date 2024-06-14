@@ -610,17 +610,15 @@ export class DashboardUtilsService {
       originalColumns = 24;
     }
     const gridSettings = layout.gridSettings;
-    if (!gridSettings.isScada) {
-      let columns = 24;
-      if (gridSettings && gridSettings.columns) {
-        columns = gridSettings.columns;
-      }
-      columns = columns * layoutCount;
-      if (columns !== originalColumns) {
-        const ratio = columns / originalColumns;
-        widgetLayout.sizeX *= ratio;
-        widgetLayout.sizeY *= ratio;
-      }
+    let columns = 24;
+    if (gridSettings && gridSettings.columns) {
+      columns = gridSettings.columns;
+    }
+    columns = columns * layoutCount;
+    if (columns !== originalColumns) {
+      const ratio = columns / originalColumns;
+      widgetLayout.sizeX *= ratio;
+      widgetLayout.sizeY *= ratio;
     }
 
     if (row > -1 && column > - 1) {
@@ -686,34 +684,31 @@ export class DashboardUtilsService {
     const columns = gridSettings.columns || 24;
     const ratio = columns / prevColumns;
     layout.gridSettings = gridSettings;
-    if (!gridSettings.isScada) {
-      let maxRow = 0;
-      for (const w of Object.keys(layout.widgets)) {
-        const widget = layout.widgets[w];
-        if (!widget.sizeX) {
-          widget.sizeX = 1;
-        }
-        if (!widget.sizeY) {
-          widget.sizeY = 1;
-        }
-        maxRow = Math.max(maxRow, widget.row + widget.sizeY);
+    for (const w of Object.keys(layout.widgets)) {
+      const widget = layout.widgets[w];
+      if (!widget.sizeX) {
+        widget.sizeX = 1;
       }
-      const newMaxRow = Math.round(maxRow * ratio);
-      for (const w of Object.keys(layout.widgets)) {
-        const widget = layout.widgets[w];
-        if (widget.row + widget.sizeY === maxRow) {
-          widget.row = Math.round(widget.row * ratio);
-          widget.sizeY = newMaxRow - widget.row;
-        } else {
-          widget.row = Math.round(widget.row * ratio);
-          widget.sizeY = Math.round(widget.sizeY * ratio);
-        }
-        widget.sizeX = Math.round(widget.sizeX * ratio);
-        widget.col = Math.round(widget.col * ratio);
-        if (widget.col + widget.sizeX > columns) {
-          widget.sizeX = columns - widget.col;
-        }
+      if (!widget.sizeY) {
+        widget.sizeY = 1;
       }
+    }
+    for (const w of Object.keys(layout.widgets)) {
+      const widget = layout.widgets[w];
+      widget.row = Math.round(widget.row * ratio);
+      widget.col = Math.round(widget.col * ratio);
+      widget.sizeX = Math.round(widget.sizeX * ratio);
+      widget.sizeY = Math.round(widget.sizeY * ratio);
+    }
+  }
+
+  public moveWidgets(layout: DashboardLayout, cols: number, rows: number) {
+    cols = isDefinedAndNotNull(cols) ? Math.round(cols) : 0;
+    rows = isDefinedAndNotNull(rows) ? Math.round(rows) : 0;
+    for (const w of Object.keys(layout.widgets)) {
+      const widget = layout.widgets[w];
+      widget.col = Math.max(0, widget.col + cols);
+      widget.row = Math.max(0, widget.row + rows);
     }
   }
 

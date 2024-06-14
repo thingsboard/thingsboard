@@ -21,6 +21,7 @@ import { IAliasController, IStateController } from '@core/api/widget-api.models'
 import { ILayoutController } from './layout/layout.models';
 import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/dashboard-component.models';
 import { Observable } from 'rxjs';
+import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -69,6 +70,7 @@ export interface DashboardPageLayoutContext {
   ctrl: ILayoutController;
   dashboardCtrl: IDashboardController;
   ignoreLoading: boolean;
+  displayGrid: displayGrids;
 }
 
 export interface DashboardPageLayout {

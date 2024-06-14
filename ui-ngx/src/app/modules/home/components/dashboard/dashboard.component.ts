@@ -92,6 +92,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   @coerceBoolean()
+  colWidthInteger = false;
+
+  @Input()
+  @coerceBoolean()
   setGridSize = false;
 
   @Input()
@@ -256,15 +260,22 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       itemChangeCallback: item => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (item, itemComponent) => {
         (itemComponent.item as DashboardWidget).gridsterItemComponent = itemComponent;
+      },
+      colWidthUpdateCallback: (colWidth) => {
+        if (this.colWidthInteger) {
+          return Math.floor(colWidth);
+        } else {
+          return colWidth;
+        }
       }
     };
 
-    this.updateMobileOpts();
+    this.updateGridOpts();
 
     this.breakpointObserverSubscription = this.breakpointObserver
       .observe(MediaBreakpoints['gt-sm']).subscribe(
       () => {
-        this.updateMobileOpts();
+        this.updateGridOpts();
         this.notifyGridsterOptionsChanged();
       }
     );
@@ -291,20 +302,24 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   }
 
   ngOnChanges(changes: SimpleChanges): void {
-    let updateMobileOpts = false;
-    let updateLayoutOpts = false;
+    let updateGridOpts = false;
+    let updateColumnOpts = false;
     let updateEditingOpts = false;
+    let updateDisplayGridOpts = false;
     let updateWidgets = false;
     let updateDashboardTimewindow = false;
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (['isMobile', 'isMobileDisabled', 'autofillHeight', 'mobileAutofillHeight', 'mobileRowHeight'].includes(propName)) {
-          updateMobileOpts = true;
+        if (['isMobile', 'isMobileDisabled', 'autofillHeight', 'mobileAutofillHeight',
+              'mobileRowHeight', 'colWidthInteger'].includes(propName)) {
+          updateGridOpts = true;
         } else if (['outerMargin', 'margin', 'columns'].includes(propName)) {
-          updateLayoutOpts = true;
+          updateColumnOpts = true;
         } else if (['isEdit', 'isEditingWidget'].includes(propName)) {
           updateEditingOpts = true;
+        } else if (propName === 'displayGrid') {
+          updateDisplayGridOpts = true;
         } else if (['widgets', 'widgetLayouts'].includes(propName)) {
           updateWidgets = true;
         } else if (propName === 'dashboardTimewindow') {
@@ -318,16 +333,19 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
 
-    if (updateLayoutOpts) {
-      this.updateLayoutOpts();
+    if (updateColumnOpts) {
+      this.updateColumnOpts();
     }
-    if (updateMobileOpts) {
-      this.updateMobileOpts();
+    if (updateGridOpts) {
+      this.updateGridOpts();
     }
     if (updateEditingOpts) {
       this.updateEditingOpts();
     }
-    if (updateMobileOpts || updateLayoutOpts || updateEditingOpts) {
+    if (updateDisplayGridOpts) {
+      this.updateDisplayGridOpts();
+    }
+    if (updateGridOpts || updateColumnOpts || updateEditingOpts || updateDisplayGridOpts) {
       this.notifyGridsterOptionsChanged();
     }
   }
@@ -544,7 +562,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     });
   }
 
-  private updateMobileOpts(parentHeight?: number) {
+  private onGridsterParentResize() {
+    const parentHeight = this.gridster.el.offsetHeight;
+    if (this.isMobileSize && this.mobileAutofillHeight && parentHeight) {
+      this.updateGridOpts(parentHeight);
+    }
+    this.notifyGridsterOptionsChanged();
+  }
+
+  private updateGridOpts(parentHeight?: number) {
     let updateWidgetRowsAndSort = false;
     const isMobileSize = this.checkIsMobileSize();
     if (this.isMobileSize !== isMobileSize) {
@@ -568,15 +594,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  private onGridsterParentResize() {
-    const parentHeight = this.gridster.el.offsetHeight;
-    if (this.isMobileSize && this.mobileAutofillHeight && parentHeight) {
-      this.updateMobileOpts(parentHeight);
-    }
-    this.notifyGridsterOptionsChanged();
-  }
-
-  private updateLayoutOpts() {
+  private updateColumnOpts() {
     this.gridsterOpts.minCols = this.columns ? this.columns : 24;
     this.gridsterOpts.outerMargin = isDefined(this.outerMargin) ? this.outerMargin : true;
     this.gridsterOpts.margin = isDefined(this.margin) ? this.margin : 10;
@@ -585,6 +603,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   private updateEditingOpts() {
     this.gridsterOpts.resizable.enabled = this.isEdit && !this.isEditingWidget;
     this.gridsterOpts.draggable.enabled = this.isEdit && !this.isEditingWidget;
+  }
+
+  private updateDisplayGridOpts() {
+    this.gridsterOpts.displayGrid = this.displayGrid;
   }
 
   public notifyGridsterOptionsChanged() {
