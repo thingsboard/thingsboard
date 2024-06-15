@@ -18,6 +18,7 @@ version: '3.0'
 
 services:
 # Redis standalone
+# The latest version of Redis compatible with ThingsBoard is 7.2
   redis:
     restart: always
     image: bitnami/redis:7.2
