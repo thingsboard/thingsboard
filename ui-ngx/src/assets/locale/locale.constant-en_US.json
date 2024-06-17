@@ -3248,7 +3248,7 @@
             "read-record-count": "Number of messages to retrieve from the storage and send to platform",
             "max-records-count": "Maximum number of data entries in storage before sending to platform",
             "ttl-check-hour": "How often will the Gateway check data for obsolescence",
-            "ttl-messages-day": "Maximum days that storage will save data",
+            "ttl-messages-day": "Maximum number of days that the storage will retain data",
             "commands": "Commands for collecting additional statistic",
             "attribute": "Statistic telemetry key",
             "timeout": "Timeout for command executing",
