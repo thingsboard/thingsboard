@@ -3245,7 +3245,7 @@
             "max-file-count": "Maximum number of files that will be created",
             "max-read-count": "Number of messages to retrieve from the storage and send to platform",
             "max-records": "Maximum count of records that will be stored in one file",
-            "read-record-count": "Count of messages to get from storage and send to platform",
+            "read-record-count": "Number of messages to retrieve from the storage and send to platform",
             "max-records-count": "Maximum number of data entries in storage before sending to platform",
             "ttl-check-hour": "How often will the Gateway check data for obsolescence",
             "ttl-messages-day": "Maximum days that storage will save data",
