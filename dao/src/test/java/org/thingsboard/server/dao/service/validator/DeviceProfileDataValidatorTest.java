@@ -136,7 +136,7 @@ class DeviceProfileDataValidatorTest {
         verifyValidationError(123, null, "Bootstrap" + msgErrorNotNull);
     }
 
-   @Test
+    @Test
     void testValidateDeviceProfile_Lwm2mShortServerId_Ok_BootstrapShortServerId_More_65535_Error() {
         verifyValidationError(123, 65536, msgErrorBsRange);
     }
@@ -186,7 +186,7 @@ class DeviceProfileDataValidatorTest {
         return transportConfiguration;
     }
 
-    private List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsNoSec(Integer shortServerId, Integer shortServerIdBs){
+    private List<LwM2MBootstrapServerCredential> getBootstrapServerCredentialsNoSec(Integer shortServerId, Integer shortServerIdBs) {
         List<LwM2MBootstrapServerCredential> bootstrap = new ArrayList<>();
         bootstrap.add(getBootstrapServerCredentialNoSec(false, shortServerId, shortServerIdBs));
         bootstrap.add(getBootstrapServerCredentialNoSec(true, shortServerId, shortServerIdBs));
@@ -203,7 +203,7 @@ class DeviceProfileDataValidatorTest {
         return bootstrapServerCredential;
     }
 
-    private void verifyValidationError(Integer shortServerId, Integer shortServerIdBs, String msgError){
+    private void verifyValidationError(Integer shortServerId, Integer shortServerIdBs, String msgError) {
         DeviceProfile deviceProfile = getDeviceProfile(shortServerId, shortServerIdBs);
         assertThatThrownBy(() -> validator.validateDataImpl(tenantId, deviceProfile))
                 .hasMessageContaining(msgError);
