@@ -387,11 +387,11 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       value = deepClone(value);
       switch (this.connectorType) {
         case ConnectorType.SNMP:
-          this.clearFromArrayByName("oids");
-          value.oids.forEach(value => {
+          this.clearFromArrayByName("oid");
+          value.oid.forEach(value => {
             this.addSNMPoid(value)
           })
-          delete value.oids;
+          delete value.oid;
           break;
         case ConnectorType.REQUEST:
           this.clearFromArrayByName("httpHeaders");

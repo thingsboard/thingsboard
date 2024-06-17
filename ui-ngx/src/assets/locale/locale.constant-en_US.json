@@ -2836,6 +2836,7 @@
         "enable-remote-logging": "Enable remote logging",
         "ellipsis-chips-text": "+ {{count}} more",
         "launch-gateway": "Launch gateway",
+        "launch-command": "Launch command",
         "launch-docker-compose": "Start the gateway using the following command in the terminal from folder with docker-compose.yml file",
         "logs-configuration": "Logs configuration",
         "create-new-gateway": "Create a new gateway",
