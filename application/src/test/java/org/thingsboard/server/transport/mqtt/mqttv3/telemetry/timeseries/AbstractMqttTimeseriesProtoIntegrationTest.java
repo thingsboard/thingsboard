@@ -20,8 +20,8 @@ import com.google.protobuf.Descriptors;
 import com.google.protobuf.DynamicMessage;
 import com.squareup.wire.schema.internal.parser.ProtoFileElement;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DynamicProtoUtils;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -54,7 +54,7 @@ public abstract class AbstractMqttTimeseriesProtoIntegrationTest extends Abstrac
     private static final String POST_DATA_TELEMETRY_TOPIC = "proto/telemetry";
     private static final String MALFORMED_PROTO_PAYLOAD = "invalid proto payload str";
 
-    @Before
+    @BeforeEach
     @Override
     public void beforeTest() throws Exception {
         //do nothing, processBeforeTest will be invoked in particular test methods with different parameters

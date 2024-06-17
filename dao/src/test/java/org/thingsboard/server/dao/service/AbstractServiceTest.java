@@ -19,13 +19,19 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.Ignore;
+import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.runner.RunWith;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.test.annotation.DirtiesContext;
 import org.springframework.test.context.ContextConfiguration;
+import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.AnnotationConfigContextLoader;
 import org.thingsboard.common.util.JacksonUtil;
@@ -71,6 +77,7 @@ import static org.junit.Assert.assertNotNull;
 
 
 @RunWith(SpringRunner.class)
+@SpringBootTest
 @ContextConfiguration(classes = AbstractServiceTest.class, loader = AnnotationConfigContextLoader.class)
 @DirtiesContext(classMode = DirtiesContext.ClassMode.AFTER_CLASS)
 @Configuration
@@ -88,13 +95,21 @@ public abstract class AbstractServiceTest {
     protected TenantId tenantId;
 
     @Before
+    @BeforeEach
     public void beforeAbstractService() {
         tenantId = createTenant().getId();
     }
 
     @After
+    @AfterEach
     public void afterAbstractService() {
         tenantService.deleteTenants();
+    }
+
+    @Ignore
+    @Test
+    public void testIgnoredJUni4() {
+
     }
 
     public class IdComparator<D extends HasId> implements Comparator<D> {

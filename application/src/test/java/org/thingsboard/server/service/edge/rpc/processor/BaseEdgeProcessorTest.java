@@ -150,6 +150,7 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
 import java.util.UUID;
+import java.util.function.Supplier;
 import java.util.stream.Stream;
 
 public abstract class BaseEdgeProcessorTest {
@@ -545,18 +546,15 @@ public abstract class BaseEdgeProcessorTest {
         return ruleChainId;
     }
 
-    protected static Stream<Arguments> provideParameters() {
-        UUID dashboardUUID = UUID.randomUUID();
-        UUID ruleChainUUID = UUID.randomUUID();
+    protected static Stream<Arguments> provideEdgeProcessorParameters() {
+        Supplier<UUID> randomUUID = UUID::randomUUID;
+        Supplier<UUID> zeroUUID = () -> new UUID(0, 0);
+
         return Stream.of(
-                Arguments.of(EdgeVersion.V_3_3_0, 0, 0, 0, 0),
-                Arguments.of(EdgeVersion.V_3_3_3, 0, 0, 0, 0),
-                Arguments.of(EdgeVersion.V_3_4_0, 0, 0, 0, 0),
-                Arguments.of(EdgeVersion.V_3_6_0,
-                        dashboardUUID.getMostSignificantBits(),
-                        dashboardUUID.getLeastSignificantBits(),
-                        ruleChainUUID.getMostSignificantBits(),
-                        ruleChainUUID.getLeastSignificantBits())
+                Arguments.of(EdgeVersion.V_3_3_0, zeroUUID, zeroUUID),
+                Arguments.of(EdgeVersion.V_3_3_3, zeroUUID, zeroUUID),
+                Arguments.of(EdgeVersion.V_3_4_0, zeroUUID, zeroUUID),
+                Arguments.of(EdgeVersion.V_3_6_0, randomUUID, randomUUID)
         );
     }
 

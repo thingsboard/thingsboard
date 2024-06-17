@@ -20,7 +20,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
@@ -91,6 +93,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     protected TenantId tenantId;
 
     @Before
+    @BeforeEach
     public void before() {
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
@@ -100,6 +103,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
     }
 
     @After
+    @AfterEach
     public void after() {
         tenantService.deleteTenant(tenantId);
     }

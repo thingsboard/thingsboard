@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.mqtt.mqttv3.telemetry.timeseries;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
@@ -35,7 +35,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
 
     private static final String POST_DATA_TELEMETRY_TOPIC = "data/telemetry";
 
-    @Before
+    @BeforeEach
     @Override
     public void beforeTest() throws Exception {
         //do nothing, processBeforeTest will be invoked in particular test methods with different parameters
@@ -74,7 +74,7 @@ public abstract class AbstractMqttTimeseriesJsonIntegrationTest extends Abstract
                 .telemetryTopicFilter(POST_DATA_TELEMETRY_TOPIC)
                 .build();
         processBeforeTest(configProperties);
-        super.testPushTelemetryOnShortTopic();
+        super.testPushTelemetryOnShortTopic(0);
     }
 
     @Test

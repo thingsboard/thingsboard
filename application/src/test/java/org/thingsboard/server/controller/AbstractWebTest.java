@@ -29,7 +29,10 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.junit.After;
 import org.junit.Assert;
 import org.junit.Before;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.Rule;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.junit.rules.TestRule;
 import org.junit.rules.TestWatcher;
 import org.junit.runner.Description;
@@ -154,6 +157,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.setup.MockMvcBuilders.webAppContextSetup;
 import static org.thingsboard.server.common.data.CacheConstants.CLAIM_DEVICES_CACHE;
 
+@ResourceLock(value = "Default_tenant_profile_name_unq_key")
 @Slf4j
 public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
 
@@ -277,6 +281,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
                 this.mappingJackson2HttpMessageConverter);
     }
 
+    @BeforeEach
     @Before
     public void setupWebTest() throws Exception {
         log.debug("Executing web test setup");
@@ -346,6 +351,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         }).when(mailService).sendResetPasswordEmailAsync(anyString(), anyString());
     }
 
+    @AfterEach
     @After
     public void teardownWebTest() throws Exception {
         log.debug("Executing web test teardown");

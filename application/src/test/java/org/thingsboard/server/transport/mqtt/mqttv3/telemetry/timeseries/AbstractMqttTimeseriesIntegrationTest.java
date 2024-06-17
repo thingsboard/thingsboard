@@ -18,8 +18,10 @@ package org.thingsboard.server.transport.mqtt.mqttv3.telemetry.timeseries;
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
@@ -53,7 +55,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     protected static final String MALFORMED_JSON_PAYLOAD = "{\"key1\":, \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
             " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
 
-    @Before
+    @BeforeEach
     public void beforeTest() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .deviceName("Test Post Telemetry device")
@@ -66,6 +68,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
     public void testPushTelemetry() throws Exception {
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
+
     }
 
     @Test
@@ -75,8 +78,14 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_TOPIC, expectedKeys, payloadStr.getBytes(), true);
     }
 
-    @Test
-    public void testPushTelemetryOnShortTopic() throws Exception {
+    @ParameterizedTest
+    @ValueSource(ints = {1, 3, 5})
+    public void testPushTelemetryOnShortTopic(int num) throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .deviceName("Test Post Telemetry device " + num)
+                .gatewayName("Test Post Telemetry gateway " + num)
+                .build();
+        processBeforeTest(configProperties);
         List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
         processJsonPayloadTelemetryTest(DEVICE_TELEMETRY_SHORT_TOPIC, expectedKeys, PAYLOAD_VALUES_STR.getBytes(), false);
     }
