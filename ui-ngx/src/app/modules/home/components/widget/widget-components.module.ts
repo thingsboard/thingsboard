@@ -100,6 +100,7 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import { KeyValueIsNotEmptyPipe } from "@shared/pipe/key-value-not-empty.pipe";
 
 @NgModule({
   declarations:
@@ -168,13 +169,14 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
       PolarAreaWidgetComponent,
       RadarChartWidgetComponent
     ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    RpcWidgetsModule,
-    HomePageWidgetsModule,
-    SharedHomeComponentsModule
-  ],
+    imports: [
+        CommonModule,
+        SharedModule,
+        RpcWidgetsModule,
+        HomePageWidgetsModule,
+        SharedHomeComponentsModule,
+        KeyValueIsNotEmptyPipe
+    ],
     exports: [
         EntitiesTableWidgetComponent,
         AlarmsTableWidgetComponent,

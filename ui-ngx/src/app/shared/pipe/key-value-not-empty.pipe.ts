@@ -14,31 +14,53 @@
 /// limitations under the License.
 ///
 
-import { KeyValueChanges, KeyValueDiffer, KeyValueDiffers, Pipe, PipeTransform } from '@angular/core';
-import { KeyValue, KeyValuePipe } from "@angular/common";
+import {
+  inject,
+  KeyValueChangeRecord,
+  KeyValueChanges,
+  KeyValueDiffer,
+  KeyValueDiffers,
+  Pipe,
+  PipeTransform
+} from '@angular/core';
+import { KeyValue } from "@angular/common";
 
 @Pipe({
   name: 'keyValueIsNotEmpty',
+  pure: false,
+  standalone: true,
 })
-export class KeyValueIsNotEmptyPipe extends KeyValuePipe implements PipeTransform {
-  private difference!: KeyValueDiffer<any, any>;
+export class KeyValueIsNotEmptyPipe implements PipeTransform {
+  private differs: KeyValueDiffers = inject(KeyValueDiffers);
+  private differ!: KeyValueDiffer<string, unknown>;
+  private keyValues: Array<KeyValue<string, unknown>> = [];
 
-  constructor(private readonly keyValueDiffers: KeyValueDiffers) {
-    super(keyValueDiffers);
+  // This is a custom implementation of angular keyvalue pipe
+  // https://github.com/angular/angular/blob/main/packages/common/src/pipes/keyvalue_pipe.ts
+  transform(
+    input: Record<string, unknown>,
+  ): Array<KeyValue<string, unknown>> {
+    if (!input || (!(input instanceof Map) && typeof input !== 'object')) {
+      return null;
+    }
+
+    this.differ ??= this.differs.find(input).create();
+
+    const differChanges: KeyValueChanges<string, unknown> | null = this.differ.diff(input);
+
+    if (differChanges) {
+      this.keyValues = [];
+      differChanges.forEachItem((r: KeyValueChangeRecord<string, unknown>) => {
+        if (r.currentValue !== null && r.currentValue !== undefined) {
+          this.keyValues.push(this.makeKeyValuePair(r.key, r.currentValue!));
+        }
+      });
+    }
+
+    return this.keyValues;
   }
 
-  transform<ValueType>(
-    input: Record<string, ValueType>,
-    compareFn?: (a: KeyValue<string, ValueType>, b: KeyValue<string, ValueType>) => number
-  ): KeyValue<string, ValueType>[] & null {
-    super.transform(input, compareFn);
-    this.difference ??= this.keyValueDiffers.find(input).create();
-    const differChanges: KeyValueChanges<string, ValueType> | null = this.difference.diff(input as any);
-    if (differChanges) {
-      console.log(differChanges)
-      const filteredEntries = [...Object.entries(input)]
-        .filter(([_, value]) => value !== null && value !== undefined);
-      return super.transform(new Map<string, ValueType>(filteredEntries), compareFn) as KeyValue<string, ValueType>[] & null;
-    }
+  private makeKeyValuePair(key: string, value: unknown): KeyValue<string, unknown> {
+    return {key: key, value: value};
   }
 }
