@@ -24,6 +24,7 @@ import {
   PipeTransform
 } from '@angular/core';
 import { KeyValue } from "@angular/common";
+import { isDefinedAndNotNull } from "@core/utils";
 
 @Pipe({
   name: 'keyValueIsNotEmpty',
@@ -51,7 +52,7 @@ export class KeyValueIsNotEmptyPipe implements PipeTransform {
     if (differChanges) {
       this.keyValues = [];
       differChanges.forEachItem((r: KeyValueChangeRecord<string, unknown>) => {
-        if (r.currentValue !== null && r.currentValue !== undefined) {
+        if (isDefinedAndNotNull(r.currentValue)) {
           this.keyValues.push(this.makeKeyValuePair(r.key, r.currentValue!));
         }
       });
