@@ -164,6 +164,18 @@ public class AssetProfileServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveAssetProfileWithNameDefaultAndProfileWithIsDefaultAndDifferentNameAlreadyExists() {
+        AssetProfile defaultAssetProfile = assetProfileService.findDefaultAssetProfile(tenantId);
+        Assert.assertNotNull(defaultAssetProfile);
+        defaultAssetProfile.setName("Asset Profile 1");
+        assetProfileService.saveAssetProfile(defaultAssetProfile);
+        AssetProfile createdAssetProfile = assetProfileService.findOrCreateAssetProfile(tenantId, "default");
+        Assert.assertNotNull(createdAssetProfile);
+        Assert.assertEquals("default", createdAssetProfile.getName());
+        Assert.assertFalse(createdAssetProfile.isDefault());
+    }
+
+    @Test
     public void testDeleteAssetProfileWithExistingAsset() {
         AssetProfile assetProfile = this.createAssetProfile(tenantId, "Asset Profile");
         AssetProfile savedAssetProfile = assetProfileService.saveAssetProfile(assetProfile);
