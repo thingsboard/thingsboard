@@ -103,18 +103,17 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         saveStmt = getSaveStmt();
     }
 
-    void onTenantProfileUpdate(TenantProfile tenantProfile) {
+    private void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
-        long tenantProfileDefaultStorageTtl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
         ttl = config.getDefaultTTL();
         if (ttl == 0L) {
-            ttl = tenantProfileDefaultStorageTtl;
+            ttl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
         }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        withCallback(save(msg, ctx, ttl), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
+        withCallback(save(msg, ctx), aVoid -> ctx.tellSuccess(msg), e -> ctx.tellFailure(msg, e), ctx.getDbCallbackExecutor());
     }
 
     @Override
@@ -187,7 +186,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         return query.toString();
     }
 
-    private ListenableFuture<Void> save(TbMsg msg, TbContext ctx, long ttl) {
+    private ListenableFuture<Void> save(TbMsg msg, TbContext ctx) {
         JsonElement data = JsonParser.parseString(msg.getData());
         if (!data.isJsonObject()) {
             throw new IllegalStateException("Invalid message structure, it is not a JSON Object: " + data);

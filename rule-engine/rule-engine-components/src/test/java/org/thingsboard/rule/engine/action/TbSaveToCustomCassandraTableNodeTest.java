@@ -57,6 +57,7 @@ import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSet;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 
+import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -75,10 +76,10 @@ import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.spy;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
-import static org.mockito.BDDMockito.never;
 
 @ExtendWith(MockitoExtension.class)
 public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgradeTest {
@@ -136,7 +137,9 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctxMock, configuration))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("Unable to connect to Cassandra database");
+                .hasMessage("Unable to connect to Cassandra database")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(false);
     }
 
     @Test
@@ -238,15 +241,15 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
         return Stream.of(
                 Arguments.of(0, 0, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?)",
                         (Consumer<BoundStatementBuilder>) builder -> {
-                            then(builder).should(never()).setInt(anyInt(), eq(0));
+                            then(builder).should(never()).setInt(anyInt(), anyInt());
                         }),
                 Arguments.of(0, 5, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?) USING TTL ?",
                         (Consumer<BoundStatementBuilder>) builder -> {
-                            then(builder).should().setInt(anyInt(), eq(432000));
+                            then(builder).should().setInt(1, 432000);
                         }),
                 Arguments.of(20, 1, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?) USING TTL ?",
                         (Consumer<BoundStatementBuilder>) builder -> {
-                            then(builder).should().setInt(anyInt(), eq(20));
+                            then(builder).should().setInt(1, 20);
                         })
         );
     }
@@ -255,14 +258,14 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     public void givenValidMsgStructure_whenOnMsg_thenSaveToCustomCassandraTable() throws TbNodeException {
         config.setDefaultTTL(25L);
         config.setTableName("readings");
-        config.setFieldsMapping(Map.of(
-                "$entityId", "entityIdTableColumn",
-                "doubleField", "doubleTableColumn",
-                "longField", "longTableColumn",
-                "booleanField", "booleanTableColumn",
-                "stringField", "stringTableColumn",
-                "jsonField", "jsonTableColumn"
-        ));
+        Map<String, String> mappings = new LinkedHashMap<>();
+        mappings.put("$entityId", "entityIdTableColumn");
+        mappings.put("doubleField", "doubleTableColumn");
+        mappings.put("longField", "longTableColumn");
+        mappings.put("booleanField", "booleanTableColumn");
+        mappings.put("stringField", "stringTableColumn");
+        mappings.put("jsonField", "jsonTableColumn");
+        config.setFieldsMapping(mappings);
 
         mockOnInit();
         mockBoundStatementBuilder();
@@ -350,12 +353,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     }
 
     private void verifySettingStatementBuilder() {
-        then(boundStatementBuilderMock).should().setUuid(anyInt(), eq(DEVICE_ID.getId()));
-        then(boundStatementBuilderMock).should().setDouble(anyInt(), eq(22.5));
-        then(boundStatementBuilderMock).should().setLong(anyInt(), eq(56L));
-        then(boundStatementBuilderMock).should().setBoolean(anyInt(), eq(true));
-        then(boundStatementBuilderMock).should().setString(anyInt(), eq("some string"));
-        then(boundStatementBuilderMock).should().setString(anyInt(), eq("{\"key\":\"value\"}"));
+        then(boundStatementBuilderMock).should().setUuid(0, DEVICE_ID.getId());
+        then(boundStatementBuilderMock).should().setDouble(1, 22.5);
+        then(boundStatementBuilderMock).should().setLong(2, 56L);
+        then(boundStatementBuilderMock).should().setBoolean(3, true);
+        then(boundStatementBuilderMock).should().setString(4, "some string");
+        then(boundStatementBuilderMock).should().setString(5, "{\"key\":\"value\"}");
         then(boundStatementBuilderMock).should().setInt(anyInt(), eq(25));
     }
 
