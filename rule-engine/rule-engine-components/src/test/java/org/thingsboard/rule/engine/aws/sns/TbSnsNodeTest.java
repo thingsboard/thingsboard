@@ -37,6 +37,7 @@ import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -47,10 +48,12 @@ import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.Mockito.mock;
-import static org.mockito.Mockito.verifyNoMoreInteractions;
+import static org.mockito.BDDMockito.mock;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.verifyNoMoreInteractions;
 
 @ExtendWith(MockitoExtension.class)
 class TbSnsNodeTest {
@@ -88,7 +91,8 @@ class TbSnsNodeTest {
 
     @ParameterizedTest
     @MethodSource
-    void givenTopicNamePattern_whenOnMsg_thenTellSuccess(String topicName, TbMsgMetaData metaData, String data) {
+    void givenForceAckIsTrueAndTopicNamePattern_whenOnMsg_thenEnqueueForTellNext(String topicName, TbMsgMetaData metaData, String data) {
+        ReflectionTestUtils.setField(node, "forceAck", true);
         config.setAccessKeyId("accessKeyId");
         config.setSecretAccessKey("secretAccessKey");
         config.setTopicArnPattern(topicName);
@@ -104,19 +108,25 @@ class TbSnsNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
         node.onMsg(ctxMock, msg);
 
+        then(ctxMock).should().ack(msg);
         PublishRequest publishRequest = new PublishRequest()
                 .withTopicArn(TbNodeUtils.processPattern(topicName, msg))
                 .withMessage(data);
         then(snsClientMock).should().publish(publishRequest);
-        ArgumentCaptor<TbMsg> msgArgumentCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        then(ctxMock).should().tellSuccess(msgArgumentCaptor.capture());
-        assertThat(msgArgumentCaptor.getValue().getMetaData().getData())
+        ArgumentCaptor<TbMsg> actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().enqueueForTellNext(actualMsgCaptor.capture(), eq(TbNodeConnectionType.SUCCESS));
+        TbMsg actualMsg = actualMsgCaptor.getValue();
+        assertThat(actualMsg)
+                .usingRecursiveComparison()
+                .ignoringFields("metaData", "ctx")
+                .isEqualTo(msg);
+        assertThat(actualMsg.getMetaData().getData())
                 .hasFieldOrPropertyWithValue("messageId", messageId)
                 .hasFieldOrPropertyWithValue("requestId", requestId);
         verifyNoMoreInteractions(ctxMock, snsClientMock, publishResultMock, responseMetadataMock);
     }
 
-    private static Stream<Arguments> givenTopicNamePattern_whenOnMsg_thenTellSuccess() {
+    private static Stream<Arguments> givenForceAckIsTrueAndTopicNamePattern_whenOnMsg_thenEnqueueForTellNext() {
         return Stream.of(
                 Arguments.of("arn:aws:sns:us-east-1:123456789012:NewTopic", TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT),
                 Arguments.of("arn:aws:sns:us-east-1:123456789012:$[msgTopicName]", TbMsgMetaData.EMPTY, "{\"msgTopicName\":\"msg-topic-name\"}"),
@@ -125,7 +135,8 @@ class TbSnsNodeTest {
     }
 
     @Test
-    void givenErrorOccursDuringProcessingRequest_whenOnMsg_thenTellFailure() {
+    void givenForceAckIsFalseAndErrorOccursDuringProcessingRequest_whenOnMsg_thenTellFailure() {
+        ReflectionTestUtils.setField(node, "forceAck", false);
         ListeningExecutor listeningExecutor = mock(ListeningExecutor.class);
         given(ctxMock.getExternalCallExecutor()).willReturn(listeningExecutor);
         String errorMsg = "Something went wrong";
@@ -135,12 +146,31 @@ class TbSnsNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         node.onMsg(ctxMock, msg);
 
-        ArgumentCaptor<TbMsg> msgArgumentCaptor = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should(never()).enqueueForTellNext(any(), any(String.class));
+        ArgumentCaptor<TbMsg> actualMsgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
-        then(ctxMock).should().tellFailure(msgArgumentCaptor.capture(), throwableCaptor.capture());
-        assertThat(msgArgumentCaptor.getValue().getMetaData().getData())
+        then(ctxMock).should().tellFailure(actualMsgCaptor.capture(), throwableCaptor.capture());
+        TbMsg actualMsg = actualMsgCaptor.getValue();
+        assertThat(actualMsg)
+                .usingRecursiveComparison()
+                .ignoringFields("metaData", "ctx")
+                .isEqualTo(msg);
+        assertThat(actualMsg.getMetaData().getData())
                 .hasFieldOrPropertyWithValue("error", RuntimeException.class + ": " + errorMsg);
         assertThat(throwableCaptor.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
         verifyNoMoreInteractions(ctxMock, snsClientMock);
+    }
+
+    @Test
+    void givenSnsClientIsNotNull_whenDestroy_thenShutdown() {
+        node.destroy();
+        then(snsClientMock).should().shutdown();
+    }
+
+    @Test
+    void givenSnsClientIsNull_whenDestroy_thenVerifyNoInteractions() {
+        ReflectionTestUtils.setField(node, "snsClient", null);
+        node.destroy();
+        then(snsClientMock).shouldHaveNoInteractions();
     }
 }
