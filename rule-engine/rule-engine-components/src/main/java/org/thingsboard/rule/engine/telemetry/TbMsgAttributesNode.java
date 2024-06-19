@@ -57,9 +57,9 @@ import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_R
         version = 2,
         nodeDescription = "Saves attributes data",
         nodeDetails = "Saves entity attributes based on configurable scope parameter. Expects messages with 'POST_ATTRIBUTES_REQUEST' message type. " +
-                "Additionally if checkbox <b>Send attributes updated notification</b> is set to true, rule node will put the \"Attributes Updated\" " +
+                "Additionally if slide toggle <b>Send attributes updated notification</b> is enabled, rule node will put the \"Attributes Updated\" " +
                 "event for <b>SHARED_SCOPE</b> and <b>SERVER_SCOPE</b> attributes updates to the corresponding rule engine queue." +
-                "Performance checkbox 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; " +
+                "Performance slide toggle 'Save attributes only if the value changes' will skip attributes overwrites for values with no changes (avoid concurrent writes because this check is not transactional; " +
                 "will not update 'Last updated time' for skipped attributes).<br><br>" +
                 "Output connections: <code>Success</code> - if upsert(update/insert) operation is completed successfully, otherwise <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
