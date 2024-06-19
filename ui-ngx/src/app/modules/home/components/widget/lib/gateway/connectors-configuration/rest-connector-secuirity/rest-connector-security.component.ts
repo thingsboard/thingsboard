@@ -106,7 +106,7 @@ export class RestConnectorSecurityComponent implements ControlValueAccessor, Val
     };
   }
 
-  updateView(value: any): void {
+  private updateView(value: any): void {
     this.propagateChange(value);
   }
 
