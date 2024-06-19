@@ -360,6 +360,18 @@ export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, str
   ]
 );
 
+export enum RestSecurityType {
+  ANONYMOUS = 'anonymous',
+  BASIC = 'basic',
+}
+
+export const RestSecurityTypeTranslationsMap = new Map<RestSecurityType, string>(
+  [
+    [RestSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [RestSecurityType.BASIC, 'gateway.broker.security-types.basic'],
+  ]
+);
+
 export const MqttVersions = [
   { name: 3.1, value: 3 },
   { name: 3.11, value: 4 },

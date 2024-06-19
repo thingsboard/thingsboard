@@ -114,17 +114,12 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
     this.commandForm = this.connectorParamsFormGroupByType(this.connectorType);
     this.commandForm.valueChanges.subscribe(value => {
       const httpHeaders = {};
-      const security = {};
       switch (this.connectorType) {
         case ConnectorType.REST:
           value.httpHeaders.forEach(data => {
             httpHeaders[data.headerName] = data.value;
           })
           value.httpHeaders = httpHeaders;
-          value.security.forEach(data => {
-            security[data.securityName] = data.value;
-          })
-          value.security = security;
           break;
         case ConnectorType.REQUEST:
           value.httpHeaders.forEach(data => {
@@ -252,7 +247,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           tries: [null, [Validators.required, Validators.min(1), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
-          security: this.fb.array([])
+          security: [{}, [Validators.required]]
         })
         break;
       case ConnectorType.REQUEST:
@@ -309,22 +304,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
 
   removeHTTPHeader(index: number) {
     const oidsFA = this.commandForm.get('httpHeaders') as FormArray;
-    oidsFA.removeAt(index);
-  }
-
-  addHTTPSecurity(value: { securityName: string, value: string } = {securityName: null, value: null}) {
-    const securityFA = this.commandForm.get('security') as FormArray;
-    const formGroup = this.fb.group({
-      securityName: [value.securityName, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      value: [value.value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
-    })
-    if (securityFA) {
-      securityFA.push(formGroup, {emitEvent: false});
-    }
-  }
-
-  removeHTTPSecurity(index: number) {
-    const oidsFA = this.commandForm.get('security') as FormArray;
     oidsFA.removeAt(index);
   }
 
@@ -402,11 +381,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
           break;
         case ConnectorType.REST:
           this.clearFromArrayByName("httpHeaders");
-          this.clearFromArrayByName("security");
-          value.security && Object.entries(value.security).forEach(securityHeader => {
-            this.addHTTPSecurity({securityName: securityHeader[0], value: securityHeader[1] as string})
-          })
-          delete value.security;
           value.httpHeaders && Object.entries(value.httpHeaders).forEach(httpHeader => {
             this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string})
           })
