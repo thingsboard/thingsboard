@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 import java.util.Optional;
 
 @Data
-public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, HasTenantId {
+public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasName, HasTenantId, QueueConfig {
     private TenantId tenantId;
     @NoXss
     @Length(fieldName = "name")
@@ -71,6 +71,13 @@ public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasNam
         return Optional.ofNullable(getAdditionalInfo())
                 .map(info -> info.get("customProperties"))
                 .filter(JsonNode::isTextual).map(JsonNode::asText).orElse(null);
+    }
+
+    @JsonIgnore
+    public boolean isDuplicateMsgToAllPartitions() {
+        return Optional.ofNullable(getAdditionalInfo())
+                .map(info -> info.get("duplicateMsgToAllPartitions"))
+                .filter(JsonNode::isBoolean).map(JsonNode::asBoolean).orElse(false);
     }
 
 }

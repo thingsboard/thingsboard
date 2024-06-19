@@ -101,38 +101,6 @@
         "id": "867f82cf-ecf2-2d5c-35cb-08c6f2edc3a4",
         "typeFullFqn": "system.home_page_widgets.documentation_links"
       },
-      "a23185ad-dc46-806c-0e50-5b21fb080ace": {
-        "type": "static",
-        "sizeX": 7.5,
-        "sizeY": 6.5,
-        "config": {
-          "datasources": [],
-          "timewindow": {
-            "realtime": {
-              "timewindowMs": 60000
-            }
-          },
-          "showTitle": false,
-          "backgroundColor": "rgb(255, 255, 255)",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "16px",
-          "settings": {
-            "columns": 3
-          },
-          "title": "Getting started",
-          "dropShadow": false,
-          "enableFullscreen": false,
-          "widgetStyle": {},
-          "widgetCss": "",
-          "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "showLegend": false
-        },
-        "row": 0,
-        "col": 0,
-        "id": "a23185ad-dc46-806c-0e50-5b21fb080ace",
-        "typeFullFqn": "system.home_page_widgets.getting_started"
-      },
       "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
         "type": "static",
         "sizeX": 7.5,
@@ -1143,6 +1111,112 @@
         "row": 0,
         "col": 0,
         "id": "8e71a398-caf5-540d-cec5-6e5dc264343e"
+      },
+      "35bda856-2495-4f72-e35e-925bac8b8da7": {
+        "typeFullFqn": "system.cards.markdown_card",
+        "type": "latest",
+        "sizeX": 5,
+        "sizeY": 3.5,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "#fff",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "0px",
+          "settings": {
+            "useMarkdownTextFunction": true,
+            "markdownTextPattern": "### Markdown/HTML card\n - **Current entity**: ${entityName}.\n - **Current value**: ${Random}.",
+            "markdownTextFunction": "let html = '<div style=\"width: 100%; height: 100%;\">';\nlet supportMobile = '${mobileQrEnabled:valuePlaceholder}';\nlet supportMobileValue = supportMobile.match(/\\${mobileQrEnabled:([^}]+)}/)[1];\nif (supportMobileValue === 'true') {\n    ctx.dashboardWidget.widgetLayout.mobileHide = false;\n    html += '<tb-dashboard-state stateId=\"mobile_app_qr_code\" [ctx]=\"ctx\"></tb-dashboard-state>';\n} else {\n    ctx.dashboardWidget.widgetLayout.mobileHide = true;\n    html += '<tb-getting-started-widget style=\"padding: 16px;\"></tb-getting-started-widget>';\n}\nhtml += '</div>';\nreturn html;",
+            "applyDefaultMarkdownStyle": false,
+            "markdownCss": ""
+          },
+          "title": "Select show mobile QR code",
+          "showTitleIcon": false,
+          "iconColor": "rgba(0, 0, 0, 0.87)",
+          "iconSize": "24px",
+          "titleTooltip": "",
+          "dropShadow": true,
+          "enableFullscreen": false,
+          "widgetStyle": {
+            "border": "none",
+            "boxShadow": "none",
+            "padding": 0
+          },
+          "titleStyle": {
+            "fontSize": "16px",
+            "fontWeight": 400
+          },
+          "widgetCss": "",
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "35bda856-2495-4f72-e35e-925bac8b8da7"
+      },
+      "ed33e56f-293b-aaaa-ad19-0cf499dc926f": {
+        "type": "static",
+        "sizeX": 7.5,
+        "sizeY": 6.5,
+        "config": {
+          "showTitle": false,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "columns": 3
+          },
+          "title": "Getting started",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": "",
+          "noDataDisplayMessage": ""
+        },
+        "row": 0,
+        "col": 0,
+        "id": "ed33e56f-293b-aaaa-ad19-0cf499dc926f",
+        "typeFullFqn": "system.home_page_widgets.getting_started"
+      },
+      "8c5207d8-7103-4dc2-db48-d61c0c8c61fd": {
+        "typeFullFqn": "system.mobile_app_qr_code",
+        "type": "static",
+        "sizeX": 6,
+        "sizeY": 3,
+        "config": {
+          "showTitle": true,
+          "backgroundColor": "rgb(255, 255, 255)",
+          "color": "rgba(0, 0, 0, 0.87)",
+          "padding": "16px",
+          "settings": {
+            "useSystemSettings": true,
+            "qrCodeConfig": {
+              "badgeEnabled": true,
+              "badgePosition": "RIGHT",
+              "qrCodeLabelEnabled": true,
+              "qrCodeLabel": "Scan to connect or download mobile app"
+            },
+            "background": {
+              "type": "color",
+              "color": "#fff",
+              "overlay": {
+                "enabled": false,
+                "color": "rgba(255,255,255,0.72)",
+                "blur": 3
+              }
+            }
+          },
+          "title": "{i18n:admin.mobile-app.connect-mobile-app}",
+          "dropShadow": false,
+          "enableFullscreen": false,
+          "widgetStyle": {},
+          "widgetCss": " .tb-widget-container > .tb-widget > .tb-widget-content .tb-widget-title > .title-row > .title {\n    padding: 0;\n}\n\n .tb-widget-container > .tb-widget > .tb-widget-content .tb-widget-title > .title-row > .title {\n    padding-bottom: 8px;\n    font-weight: 600;\n    font-size: 20px;\n    line-height: 24px;\n    letter-spacing: 0.1px;\n    color: rgba(0, 0, 0, 0.76);\n}\n\n.tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel {\n    padding: 0;\n}\n\n@media screen and (min-width: 960px) and (max-width: 1819px) {\n    .tb-widget-container > .tb-widget > .tb-widget-content .tb-widget-title > .title-row > .title {\n        padding-bottom: 0;\n        font-weight: 500;\n        font-size: 14px;\n        line-height: 20px;\n        letter-spacing: 0.25px;\n  }\n}\n\n@media screen and (min-width: 960px) and (max-width: 1182px) {\n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel {\n        gap: 0;\n    }\n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel .tb-qrcode {\n        min-width: 150px;\n    }\n}\n\n@media screen and (max-width: 960px) {\n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel .tb-qrcode {\n        max-width: 120px;\n    }\n    \n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel .tb-badges {\n        max-width: 160px;\n    }\n}\n\n@media screen and (min-width: 1819px) {\n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel .tb-qrcode {\n        max-width: 125px;\n    }\n    \n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel .tb-badges {\n        max-width: 160px;\n    }\n}\n\n@media screen and (min-width: 960px) and (max-height: 960px) {\n    .tb-widget-container > .tb-widget > .tb-widget-content > .tb-widget .tb-mobile-app-qrcode-panel .tb-qrcode-label {\n        display: none;\n    }\n}",
+          "showTitleIcon": false,
+          "titleTooltip": "",
+          "titleStyle": null,
+          "borderRadius": "12px"
+        },
+        "row": 0,
+        "col": 0,
+        "id": "8c5207d8-7103-4dc2-db48-d61c0c8c61fd"
       }
     },
     "states": {
@@ -1165,13 +1239,6 @@
                 "sizeY": 16,
                 "row": 42,
                 "col": 28,
-                "mobileHide": true
-              },
-              "a23185ad-dc46-806c-0e50-5b21fb080ace": {
-                "sizeX": 35,
-                "sizeY": 58,
-                "row": 0,
-                "col": 85,
                 "mobileHide": true
               },
               "ebbd0a6e-8a47-e770-5086-7f4974250f2d": {
@@ -1212,6 +1279,14 @@
                 "row": 0,
                 "col": 43,
                 "mobileOrder": 0
+              },
+              "35bda856-2495-4f72-e35e-925bac8b8da7": {
+                "sizeX": 35,
+                "sizeY": 58,
+                "row": 0,
+                "col": 85,
+                "mobileHide": false,
+                "mobileHeight": 7
               }
             },
             "gridSettings": {
@@ -1278,6 +1353,40 @@
               "backgroundImageUrl": null,
               "mobileAutoFillHeight": true,
               "mobileRowHeight": 70
+            }
+          }
+        }
+      },
+      "mobile_app_qr_code": {
+        "name": "Mobile App QR code",
+        "root": false,
+        "layouts": {
+          "main": {
+            "widgets": {
+              "ed33e56f-293b-aaaa-ad19-0cf499dc926f": {
+                "sizeX": 120,
+                "sizeY": 45,
+                "row": 0,
+                "col": 0,
+                "mobileHide": true
+              },
+              "8c5207d8-7103-4dc2-db48-d61c0c8c61fd": {
+                "sizeX": 120,
+                "sizeY": 17,
+                "row": 45,
+                "col": 0
+              }
+            },
+            "gridSettings": {
+              "backgroundColor": "#eeeeee",
+              "columns": 120,
+              "margin": 12,
+              "outerMargin": false,
+              "backgroundSizeMode": "100%",
+              "autoFillHeight": true,
+              "backgroundImageUrl": null,
+              "mobileAutoFillHeight": false,
+              "mobileRowHeight": 20
             }
           }
         }

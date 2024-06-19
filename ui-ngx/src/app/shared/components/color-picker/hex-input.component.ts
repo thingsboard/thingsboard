@@ -59,14 +59,14 @@ export class HexInputComponent {
   }
 
   public onInputChange(event: KeyboardEvent, inputValue: string): void {
-    const value = inputValue.toLowerCase();
+    const value = inputValue.replace('#', '').toLowerCase();
     if (
       ((event.keyCode === 13 || event.key.toLowerCase() === 'enter') && value.length === 3)
       || value.length === 6 || value.length === 8
     ) {
       const hex = parseInt(value, 16);
       const hexStr = hex.toString(16);
-      if (hexStr.padStart(value.length, '0') === value && this.value !== value) {
+      if (hexStr.padStart(value.length, '0') === value && this.value.toLowerCase() !== value) {
         const newColor = new Color(`#${value}`);
         this.colorChange.emit(newColor);
       }

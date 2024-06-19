@@ -17,25 +17,12 @@
 import * as CanvasGauges from 'canvas-gauges';
 import { FontStyle, FontWeight } from '@home/components/widget/lib/settings.models';
 import tinycolor from 'tinycolor2';
-import { ColorFormats } from 'tinycolor2';
-import { isDefined, isDefinedAndNotNull, isString, isUndefined, padValue } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isUndefined, padValue } from '@core/utils';
+import { ColorProcessor, constantColor } from '@shared/models/widget-settings.models';
 import GenericOptions = CanvasGauges.GenericOptions;
 import BaseGauge = CanvasGauges.BaseGauge;
 
 export type GaugeType = 'arc' | 'donut' | 'horizontalBar' | 'verticalBar';
-
-export interface DigitalGaugeColorRange {
-  pct: number;
-  color: ColorFormats.RGBA;
-  rgbString: string;
-}
-
-export interface ColorLevelSetting {
-  value: number;
-  color: string;
-}
-
-export type levelColors = Array<string | ColorLevelSetting>;
 
 export interface CanvasDigitalGaugeOptions extends GenericOptions {
   gaugeType?: GaugeType;
@@ -43,7 +30,6 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   dashThickness?: number;
   roundedLineCap?: boolean;
   gaugeColor?: string;
-  levelColors?: levelColors;
   symbol?: string;
   hideValue?: boolean;
   hideMinMax?: boolean;
@@ -65,8 +51,6 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   donutStartAngle?: number;
   donutEndAngle?: number;
 
-  colorsRange?: DigitalGaugeColorRange[];
-  neonColorsRange?: DigitalGaugeColorRange[];
   neonColorTitle?: string;
   neonColorLabel?: string;
   neonColorValue?: string;
@@ -83,10 +67,12 @@ export interface CanvasDigitalGaugeOptions extends GenericOptions {
   colorTicks?: string;
   tickWidth?: number;
 
-  labelTimestamp?: string
+  labelTimestamp?: string;
   unitTitle?: string;
   showUnitTitle?: boolean;
   showTimestamp?: boolean;
+
+  barColorProcessor: ColorProcessor;
 }
 
 const defaultDigitalGaugeOptions: CanvasDigitalGaugeOptions = { ...GenericOptions,
@@ -97,7 +83,7 @@ const defaultDigitalGaugeOptions: CanvasDigitalGaugeOptions = { ...GenericOption
     roundedLineCap: false,
 
     gaugeColor: '#777',
-    levelColors: ['blue'],
+    barColorProcessor: ColorProcessor.fromSettings(constantColor('blue')),
 
     symbol: '',
     hideValue: false,
@@ -189,7 +175,7 @@ export class Drawings {
       options['font' + target + 'Size'] * baseSize + 'px ' +
       options['font' + target];
   }
-  static normalizedValue(options: CanvasGauges.GenericOptions): {normal: number, indented: number} {
+  static normalizedValue(options: CanvasGauges.GenericOptions): {normal: number; indented: number} {
     const value = options.value;
     const min = options.minValue;
     const max = options.maxValue;
@@ -244,38 +230,6 @@ export class CanvasDigitalGauge extends BaseGauge {
       }
     }
 
-    const colorsCount = options.levelColors.length;
-    const isColorProperty = isString(options.levelColors[0]);
-    const inc = colorsCount > 1 ? (1 / (colorsCount - 1)) : 1;
-    options.colorsRange = [];
-    if (options.neonGlowBrightness) {
-      options.neonColorsRange = [];
-    }
-    for (let i = 0; i < options.levelColors.length; i++) {
-      const levelColor: any = options.levelColors[i];
-      if (levelColor !== null) {
-        let percentage: number;
-        if (isColorProperty) {
-          percentage = inc * i;
-        } else {
-          percentage = CanvasDigitalGauge.normalizeValue(levelColor.value, options.minValue, options.maxValue);
-        }
-        let tColor = tinycolor(isColorProperty ? levelColor : levelColor.color);
-        options.colorsRange.push({
-          pct: percentage,
-          color: tColor.toRgb(),
-          rgbString: tColor.toRgbString()
-        });
-        if (options.neonGlowBrightness) {
-          tColor = tinycolor(isColorProperty ? levelColor : levelColor.color).brighten(options.neonGlowBrightness);
-          options.neonColorsRange.push({
-            pct: percentage,
-            color: tColor.toRgb(),
-            rgbString: tColor.toRgbString()
-          });
-        }
-      }
-    }
     options.ticksValue = [];
     for (const tick of options.ticks) {
       if (tick !== null) {
@@ -284,10 +238,10 @@ export class CanvasDigitalGauge extends BaseGauge {
     }
 
     if (options.neonGlowBrightness) {
-      options.neonColorTitle = tinycolor(options.colorTitle).brighten(options.neonGlowBrightness).toHexString();
-      options.neonColorLabel = tinycolor(options.colorLabel).brighten(options.neonGlowBrightness).toHexString();
-      options.neonColorValue = tinycolor(options.colorValue).brighten(options.neonGlowBrightness).toHexString();
-      options.neonColorMinMax = tinycolor(options.colorMinMax).brighten(options.neonGlowBrightness).toHexString();
+      options.neonColorTitle = tinycolor(options.colorTitle).brighten(options.neonGlowBrightness).toRgbString();
+      options.neonColorLabel = tinycolor(options.colorLabel).brighten(options.neonGlowBrightness).toRgbString();
+      options.neonColorValue = tinycolor(options.colorValue).brighten(options.neonGlowBrightness).toRgbString();
+      options.neonColorMinMax = tinycolor(options.colorMinMax).brighten(options.neonGlowBrightness).toRgbString();
     }
 
     return options;
@@ -456,12 +410,12 @@ export class CanvasDigitalGauge extends BaseGauge {
       let color = this.contextProgressClone.currentColor;
       const options = this.options as CanvasDigitalGaugeOptions;
       if (!color) {
-        const progress = (Drawings.normalizedValue(options).normal - options.minValue) /
-          (options.maxValue - options.minValue);
+        options.barColorProcessor.update(options.value);
+        const calculateColor = tinycolor(options.barColorProcessor.color);
         if (options.neonGlowBrightness) {
-          color = getProgressColor(progress, options.neonColorsRange);
+          color = calculateColor.brighten(options.neonGlowBrightness).toRgbString();
         } else {
-          color = getProgressColor(progress, options.colorsRange);
+          color = calculateColor.toRgbString();
         }
       }
       return color;
@@ -569,7 +523,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
       const labelHeight = determineFontHeight(options, 'Label', bd.fontSizeFactor).height;
       const total = valueHeight + labelHeight;
       bd.labelY = bd.Cy + total / 2;
-      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
+      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor);
       bd.valueY = bd.Cy - total / 2 + valueHeight / 2;
     } else {
       bd.valueY = bd.Cy;
@@ -578,7 +532,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     bd.titleY = bd.Cy - bd.Ro - 12 * bd.fontSizeFactor;
     bd.valueY = bd.Cy;
     bd.labelY = bd.Cy + (8 + options.fontLabelSize) * bd.fontSizeFactor;
-    bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
+    bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor);
     bd.minY = bd.maxY = bd.labelY;
     if (options.roundedLineCap) {
       bd.minY += bd.strokeWidth / 2;
@@ -599,7 +553,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
 
     if (options.hideMinMax && !options.showUnitTitle && !options.showTimestamp) {
       bd.labelY = bd.barBottom;
-      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
+      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor);
       bd.barLeft = bd.origBaseX + options.fontMinMaxSize / 3 * bd.fontSizeFactor;
       bd.barRight = bd.origBaseX + w + /*bd.width*/ -options.fontMinMaxSize / 3 * bd.fontSizeFactor;
     } else {
@@ -612,7 +566,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
       bd.barLeft = bd.minX;
       bd.barRight = bd.maxX;
       bd.labelY = bd.barBottom + (8 + options.fontLabelSize) * bd.fontSizeFactor;
-      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
+      bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor);
       bd.minY = bd.maxY = bd.labelY;
     }
   } else if (options.gaugeType === 'verticalBar') {
@@ -623,11 +577,11 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
     bd.barTop = bd.valueY + 8 * bd.fontSizeFactor;
 
     bd.labelY = bd.baseY + bd.height;
-    bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor)
+    bd.timeseriesLabelY = determineTimeseriesLabelY(options, bd.labelY, bd.fontSizeFactor);
     if (options.showUnitTitle || options.showTimestamp) {
       bd.barBottom = bd.labelY - options.fontLabelSize * bd.fontSizeFactor;
     } else {
-      bd.barBottom = bd.labelY
+      bd.barBottom = bd.labelY;
     }
     bd.minX = bd.maxX = bd.baseX + bd.width / 2 + bd.strokeWidth / 2 + options.fontMinMaxSize / 3 * bd.fontSizeFactor;
     bd.minY = bd.barBottom;
@@ -637,7 +591,7 @@ function barDimensions(context: DigitalGaugeCanvasRenderingContext2D,
   }
 
   if (options.dashThickness) {
-    let circumference;
+    let circumference: number;
     if (options.gaugeType === 'donut') {
       circumference = Math.PI * bd.Rm * 2;
     } else if (options.gaugeType === 'arc') {
@@ -763,7 +717,10 @@ function drawDigitalTitle(context: DigitalGaugeCanvasRenderingContext2D, options
   context.restore();
 }
 
-function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D, options: CanvasDigitalGaugeOptions, text: string, nameTextY: string) {
+function drawDigitalLabel(context: DigitalGaugeCanvasRenderingContext2D,
+                          options: CanvasDigitalGaugeOptions,
+                          text: string,
+                          nameTextY: string) {
   if (!text || text === '') {
     return;
   }
@@ -821,31 +778,6 @@ function drawDigitalValue(context: DigitalGaugeCanvasRenderingContext2D, options
   context.lineWidth = 0;
   drawText(context, options, 'Value', text, textX, textY);
   context.restore();
-}
-
-function getProgressColor(progress: number, colorsRange: DigitalGaugeColorRange[]): string {
-
-  if (progress === 0 || colorsRange.length === 1) {
-    return colorsRange[0].rgbString;
-  }
-
-  for (let j = 1; j < colorsRange.length; j++) {
-    if (progress <= colorsRange[j].pct) {
-      const lower = colorsRange[j - 1];
-      const upper = colorsRange[j];
-      const range = upper.pct - lower.pct;
-      const rangePct = (progress - lower.pct) / range;
-      const pctLower = 1 - rangePct;
-      const pctUpper = rangePct;
-      const color = tinycolor({
-        r: Math.floor(lower.color.r * pctLower + upper.color.r * pctUpper),
-        g: Math.floor(lower.color.g * pctLower + upper.color.g * pctUpper),
-        b: Math.floor(lower.color.b * pctLower + upper.color.b * pctUpper)
-      });
-      return color.toRgbString();
-    }
-  }
-  return colorsRange[colorsRange.length - 1].rgbString;
 }
 
 function drawArcGlow(context: DigitalGaugeCanvasRenderingContext2D,
@@ -953,12 +885,14 @@ function drawTickBar(context: DigitalGaugeCanvasRenderingContext2D, tickValues: 
 
 function drawProgress(context: DigitalGaugeCanvasRenderingContext2D,
                       options: CanvasDigitalGaugeOptions, progress: number) {
-  let neonColor;
+  let neonColor: string;
   context.save();
+  options.barColorProcessor.update(options.value);
+  const color = tinycolor(options.barColorProcessor.color);
   if (options.neonGlowBrightness) {
-    context.currentColor = neonColor = getProgressColor(progress, options.neonColorsRange);
+    context.currentColor = neonColor = color.brighten(options.neonGlowBrightness).toRgbString();
   } else {
-    context.currentColor = context.strokeStyle = getProgressColor(progress, options.colorsRange);
+    context.currentColor = context.strokeStyle = color.toRgbString();
   }
 
   const {barLeft, barRight, barTop, baseX, width, barBottom, Cx, Cy, Rm, Ro, Ri, strokeWidth} =

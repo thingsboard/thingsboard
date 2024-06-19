@@ -53,6 +53,7 @@ import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
+import org.thingsboard.server.dao.eventsourcing.ActionCause;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -293,6 +294,10 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     @Override
     @Transactional
     public void deleteUser(TenantId tenantId, User user) {
+        deleteUser(tenantId, user, null);
+    }
+
+    private void deleteUser(TenantId tenantId, User user, ActionCause cause) {
         Objects.requireNonNull(user, "User is null");
         UserId userId = user.getId();
         log.trace("[{}] Executing deleteUser [{}]", tenantId, userId);
@@ -307,7 +312,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         eventPublisher.publishEvent(DeleteEntityEvent.builder()
                 .tenantId(tenantId)
                 .entityId(userId)
-                .entity(user).build());
+                .entity(user)
+                .cause(cause)
+                .build());
     }
 
     @Override
@@ -564,7 +571,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
         @Override
         protected void removeEntity(TenantId tenantId, User user) {
-            deleteUser(tenantId, user);
+            deleteUser(tenantId, user, ActionCause.TENANT_DELETION);
         }
     };
 

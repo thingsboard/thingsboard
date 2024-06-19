@@ -21,7 +21,8 @@ import {
   filterIncludingColorRanges,
   Font,
   simpleDateFormat,
-  sortedColorRange
+  sortedColorRange,
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
 import {
@@ -37,7 +38,6 @@ import {
   TimeSeriesChartSettings,
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
-  TimeSeriesChartThresholdType,
   TimeSeriesChartTooltipWidgetSettings,
   TimeSeriesChartVisualMapPiece,
   TimeSeriesChartXAxisSettings,
@@ -50,7 +50,8 @@ import {
   ChartAnimationSettings,
   chartColorScheme,
   ChartFillType,
-  ChartLabelPosition, ChartLineType,
+  ChartLabelPosition,
+  ChartLineType,
   ChartShape
 } from '@home/components/widget/lib/chart/chart.models';
 
@@ -219,7 +220,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
                                              decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
   let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
-    ...{type: TimeSeriesChartThresholdType.constant,
+    ...{type: ValueSourceType.constant,
     yAxisId: 'default',
     units,
     decimals,

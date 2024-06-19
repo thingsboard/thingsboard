@@ -18,7 +18,7 @@ package org.thingsboard.server.service.queue.ruleengine;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Set;
@@ -29,7 +29,7 @@ import java.util.Set;
 public class TbQueueConsumerManagerTask {
 
     private final QueueEvent event;
-    private Queue queue;
+    private QueueConfig config;
     private Set<TopicPartitionInfo> partitions;
     private boolean drainQueue;
 
@@ -37,8 +37,8 @@ public class TbQueueConsumerManagerTask {
         return new TbQueueConsumerManagerTask(QueueEvent.DELETE, null, null, drainQueue);
     }
 
-    public static TbQueueConsumerManagerTask configUpdate(Queue queue) {
-        return new TbQueueConsumerManagerTask(QueueEvent.CONFIG_UPDATE, queue, null, false);
+    public static TbQueueConsumerManagerTask configUpdate(QueueConfig config) {
+        return new TbQueueConsumerManagerTask(QueueEvent.CONFIG_UPDATE, config, null, false);
     }
 
     public static TbQueueConsumerManagerTask partitionChange(Set<TopicPartitionInfo> partitions) {

@@ -33,10 +33,11 @@ import {
   BLEMethodsTranslates,
   CANByteOrders,
   ConnectorType,
-  GatewayConnectorDefaultTypesTranslates,
+  GatewayConnectorDefaultTypesTranslatesMap,
   HTTPMethods,
   ModbusCodesTranslate,
   ModbusCommandTypes,
+  noLeadTrailSpacesRegex,
   RPCCommand,
   RPCTemplateConfig,
   SNMPMethods,
@@ -52,8 +53,6 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
-
-export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector',
@@ -97,7 +96,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
   bLEMethodsTranslates = BLEMethodsTranslates;
   SocketMethodProcessingsTranslates = SocketMethodProcessingsTranslates;
   SNMPMethodsTranslations = SNMPMethodsTranslations;
-  gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslates;
+  gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslatesMap;
   modbusCodesTranslate = ModbusCodesTranslate;
 
   urlPattern = /^[-a-zA-Zd_$:{}?~+=\/.0-9-]*$/;
@@ -388,11 +387,11 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, ControlValue
       value = deepClone(value);
       switch (this.connectorType) {
         case ConnectorType.SNMP:
-          this.clearFromArrayByName("oids");
-          value.oids.forEach(value => {
+          this.clearFromArrayByName("oid");
+          value.oid.forEach(value => {
             this.addSNMPoid(value)
           })
-          delete value.oids;
+          delete value.oid;
           break;
         case ConnectorType.REQUEST:
           this.clearFromArrayByName("httpHeaders");

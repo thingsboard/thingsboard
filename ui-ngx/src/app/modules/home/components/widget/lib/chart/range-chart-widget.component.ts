@@ -73,7 +73,6 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
-  overlayEnabled: boolean;
   padding: string;
 
   legendLabelStyle: ComponentStyle;
@@ -112,8 +111,7 @@ export class RangeChartWidgetComponent implements OnInit, OnDestroy, AfterViewIn
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
-    this.overlayEnabled = this.settings.background.overlay.enabled;
-    this.padding = this.overlayEnabled ? undefined : this.settings.padding;
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.rangeItems = toRangeItems(this.settings.rangeColors);
     this.visibleRangeItems = this.rangeItems.filter(item => item.visible);

@@ -207,14 +207,19 @@
       </ng-template>
     </mat-expansion-panel>
   </mat-accordion>
-  <mat-form-field class="mat-block" formGroupName="additionalInfo" subscriptSizing="dynamic">
-    <mat-label translate>queue.custom-properties</mat-label>
-    <textarea matInput formControlName="customProperties" cdkTextareaAutosize cdkAutosizeMinRows="1"></textarea>
-    <mat-hint translate>queue.custom-properties-hint</mat-hint>
-  </mat-form-field>
-  <mat-form-field class="mat-block" formGroupName="additionalInfo" appearance="fill">
-    <mat-label translate>queue.description</mat-label>
-    <textarea matInput formControlName="description" rows="2"></textarea>
-    <mat-hint translate>queue.description-hint</mat-hint>
-  </mat-form-field>
+  <div formGroupName="additionalInfo">
+    <mat-checkbox fxFlex formControlName="duplicateMsgToAllPartitions" style="padding-bottom: 16px;">
+      {{ 'queue.duplicate-msg-to-all-partitions' | translate }}
+    </mat-checkbox>
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
+      <mat-label translate>queue.custom-properties</mat-label>
+      <textarea matInput formControlName="customProperties" cdkTextareaAutosize cdkAutosizeMinRows="1"></textarea>
+      <mat-hint translate>queue.custom-properties-hint</mat-hint>
+    </mat-form-field>
+    <mat-form-field class="mat-block" appearance="fill">
+      <mat-label translate>queue.description</mat-label>
+      <textarea matInput formControlName="description" rows="2"></textarea>
+      <mat-hint translate>queue.description-hint</mat-hint>
+    </mat-form-field>
+  </div>
 </form>

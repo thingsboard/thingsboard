@@ -507,6 +507,7 @@ const ruleNodeClazzHelpLinkMap = {
   'org.thingsboard.rule.engine.flow.TbRuleChainInputNode': 'ruleNodeRuleChain',
   'org.thingsboard.rule.engine.flow.TbRuleChainOutputNode': 'ruleNodeOutputNode',
   'org.thingsboard.rule.engine.math.TbMathNode': 'ruleNodeMath',
+  'org.thingsboard.rule.engine.rest.TbSendRestApiCallReplyNode': 'ruleNodeRestCallReply',
 };
 
 export function getRuleNodeHelpLink(component: RuleNodeComponentDescriptor): string {

@@ -34,10 +34,13 @@ import org.thingsboard.server.common.data.SystemParams;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.settings.UserSettings;
 import org.thingsboard.server.common.data.settings.UserSettingsType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.dao.mobile.MobileAppSettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
@@ -45,6 +48,7 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 @Hidden
@@ -71,6 +75,9 @@ public class SystemInfoController extends BaseController {
 
     @Autowired
     private EntitiesVersionControlService versionControlService;
+
+    @Autowired
+    private MobileAppSettingsService mobileAppSettingsService;
 
     @PostConstruct
     public void init() {
@@ -135,6 +142,9 @@ public class SystemInfoController extends BaseController {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
         }
+        systemParams.setMobileQrEnabled(Optional.ofNullable(mobileAppSettingsService.getMobileAppSettings(TenantId.SYS_TENANT_ID))
+                .map(MobileAppSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
+                .orElse(false));
         return systemParams;
     }
 

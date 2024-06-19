@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClient;
+import org.thingsboard.server.transport.lwm2m.server.client.LwM2mClientContext;
 
 import java.util.Collection;
 import java.util.Optional;
@@ -77,4 +78,5 @@ public interface LwM2mUplinkMsgHandler {
 
     LwM2mValueConverter getConverter();
 
+    LwM2mClientContext getClientContext();
 }

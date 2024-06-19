@@ -90,6 +90,8 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.GATEWAY_PARAMETER;
+
 @Slf4j
 public class ProtoUtils {
 
@@ -658,6 +660,8 @@ public class ProtoUtils {
         }
         if (proto.hasDefaultRuleChainIdMSB() && proto.hasDefaultRuleChainIdLSB()) {
             deviceProfile.setDefaultRuleChainId(getEntityId(proto.getDefaultRuleChainIdMSB(), proto.getDefaultRuleChainIdLSB(), RuleChainId::new));
+        }
+        if (proto.hasDefaultDashboardIdMSB() && proto.hasDefaultDashboardIdLSB()) {
             deviceProfile.setDefaultDashboardId(getEntityId(proto.getDefaultDashboardIdMSB(), proto.getDefaultDashboardIdLSB(), DashboardId::new));
         }
         if (proto.hasDefaultQueueName()) {
@@ -1010,6 +1014,10 @@ public class ProtoUtils {
                 .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
                 .setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
+
+        if (device.getAdditionalInfo().has(GATEWAY_PARAMETER)) {
+            builder.setIsGateway(device.getAdditionalInfo().get(GATEWAY_PARAMETER).booleanValue());
+        }
 
         PowerSavingConfiguration psmConfiguration = switch (device.getDeviceData().getTransportConfiguration().getType()) {
             case LWM2M -> (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();

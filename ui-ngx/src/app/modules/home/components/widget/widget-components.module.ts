@@ -86,12 +86,20 @@ import { PowerButtonWidgetComponent } from '@home/components/widget/lib/rpc/powe
 import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-widget.component';
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
+import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
+import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
+import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
+import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
+import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
+import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
 import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-chart-widget.component';
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
+import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
 
 @NgModule({
   declarations:
@@ -112,11 +120,18 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
       NavigationCardsWidgetComponent,
       NavigationCardWidgetComponent,
       QrCodeWidgetComponent,
+      MobileAppQrcodeWidgetComponent,
       MarkdownWidgetComponent,
       SelectEntityDialogComponent,
       LegendComponent,
       FlotWidgetComponent,
       GatewayConnectorComponent,
+      AddConnectorDialogComponent,
+      MappingTableComponent,
+      MappingDialogComponent,
+      DeviceInfoTableComponent,
+      MappingDataKeysPanelComponent,
+      BrokerSecurityComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
@@ -126,6 +141,7 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
       GatewayConfigurationComponent,
       GatewayRemoteConfigurationDialogComponent,
       GatewayServiceRPCConnectorTemplateDialogComponent,
+      EllipsisChipListDirective,
       ValueCardWidgetComponent,
       AggregatedValueCardWidgetComponent,
       CountWidgetComponent,
@@ -176,13 +192,21 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
         NavigationCardsWidgetComponent,
         NavigationCardWidgetComponent,
         QrCodeWidgetComponent,
+        MobileAppQrcodeWidgetComponent,
         MarkdownWidgetComponent,
         LegendComponent,
         FlotWidgetComponent,
         GatewayConnectorComponent,
+        AddConnectorDialogComponent,
+        MappingTableComponent,
+        MappingDialogComponent,
+        DeviceInfoTableComponent,
+        MappingDataKeysPanelComponent,
+        BrokerSecurityComponent,
         GatewayLogsComponent,
         GatewayServiceRPCConnectorComponent,
         GatewayServiceRPCConnectorTemplatesComponent,
+        EllipsisChipListDirective,
         GatewayStatisticsComponent,
         GatewayServiceRPCComponent,
         DeviceGatewayCommandComponent,

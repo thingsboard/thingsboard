@@ -106,6 +106,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   private lineChart: TbTimeSeriesChart;
   private lineChartDataKey: DataKey;
@@ -169,6 +170,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   ngAfterViewInit(): void {

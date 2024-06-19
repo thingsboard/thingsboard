@@ -27,13 +27,13 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.consumer.QueueConsumerManager;
 import org.thingsboard.server.queue.housekeeper.HousekeeperConfig;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.housekeeper.processor.HousekeeperTaskProcessor;
 import org.thingsboard.server.service.housekeeper.stats.HousekeeperStatsService;
-import org.thingsboard.server.service.queue.consumer.QueueConsumerManager;
 
 import javax.annotation.PreDestroy;
 import java.util.List;

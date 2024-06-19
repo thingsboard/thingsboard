@@ -39,4 +39,5 @@ public class OtherConfiguration extends PowerSavingConfiguration {
     private Long pagingTransmissionWindow;
     private String fwUpdateResource;
     private String swUpdateResource;
+    private String defaultObjectIDVer;
 }

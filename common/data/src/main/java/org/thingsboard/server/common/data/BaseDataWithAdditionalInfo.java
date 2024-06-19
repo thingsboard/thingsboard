@@ -18,17 +18,17 @@ package org.thingsboard.server.common.data;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.ByteArrayInputStream;
 import java.io.IOException;
-import java.nio.charset.StandardCharsets;
 import java.util.Arrays;
 import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.function.Supplier;
 
 /**
@@ -62,6 +62,23 @@ public abstract class BaseDataWithAdditionalInfo<I extends UUIDBased> extends Ba
 
     public void setAdditionalInfo(JsonNode addInfo) {
         setJson(addInfo, json -> this.additionalInfo = json, bytes -> this.additionalInfoBytes = bytes);
+    }
+
+    public void setAdditionalInfoField(String field, JsonNode value) {
+        JsonNode additionalInfo = getAdditionalInfo();
+        if (!(additionalInfo instanceof ObjectNode)) {
+            additionalInfo = mapper.createObjectNode();
+        }
+        ((ObjectNode) additionalInfo).set(field, value);
+        setAdditionalInfo(additionalInfo);
+    }
+
+    public <T> T getAdditionalInfoField(String field, Function<JsonNode, T> mapper, T defaultValue) {
+        JsonNode additionalInfo = getAdditionalInfo();
+        if (additionalInfo != null && additionalInfo.has(field)) {
+            return mapper.apply(additionalInfo.get(field));
+        }
+        return defaultValue;
     }
 
     @Override

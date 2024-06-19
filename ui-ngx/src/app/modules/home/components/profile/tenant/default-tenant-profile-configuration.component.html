@@ -516,6 +516,22 @@
                       [type]="rateLimitsType.DEVICE_TELEMETRY_MESSAGES">
       </tb-rate-limits>
     </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <tb-rate-limits fxFlex formControlName="transportGatewayMsgRateLimit"
+                      [type]="rateLimitsType.GATEWAY_MESSAGES">
+      </tb-rate-limits>
+      <tb-rate-limits fxFlex formControlName="transportGatewayDeviceMsgRateLimit"
+                      [type]="rateLimitsType.GATEWAY_DEVICE_MESSAGES">
+      </tb-rate-limits>
+    </div>
+    <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+      <tb-rate-limits fxFlex formControlName="transportGatewayTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.GATEWAY_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
+      <tb-rate-limits fxFlex formControlName="transportGatewayDeviceTelemetryMsgRateLimit"
+                      [type]="rateLimitsType.GATEWAY_DEVICE_TELEMETRY_MESSAGES">
+      </tb-rate-limits>
+    </div>
     <mat-expansion-panel class="configuration-panel">
       <mat-expansion-panel-header>
         <mat-panel-description fxLayoutAlign="end" translate>
@@ -529,6 +545,14 @@
           </tb-rate-limits>
           <tb-rate-limits fxFlex formControlName="transportDeviceTelemetryDataPointsRateLimit"
                           [type]="rateLimitsType.DEVICE_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+        </div>
+        <div fxFlex fxLayout="row"  fxLayout.xs="column" fxLayoutGap.gt-xs="16px">
+          <tb-rate-limits fxFlex formControlName="transportGatewayTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.GATEWAY_TELEMETRY_DATA_POINTS">
+          </tb-rate-limits>
+          <tb-rate-limits fxFlex formControlName="transportGatewayDeviceTelemetryDataPointsRateLimit"
+                          [type]="rateLimitsType.GATEWAY_DEVICE_TELEMETRY_DATA_POINTS">
           </tb-rate-limits>
         </div>
         <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px">

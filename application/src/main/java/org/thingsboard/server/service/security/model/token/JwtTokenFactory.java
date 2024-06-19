@@ -210,11 +210,12 @@ public class JwtTokenFactory {
 
         ZonedDateTime currentTime = ZonedDateTime.now();
 
+        claimsBuilder.expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()));
+
         return Jwts.builder()
                 .claims(claimsBuilder.build())
                 .issuer(jwtSettingsService.getJwtSettings().getTokenIssuer())
                 .issuedAt(Date.from(currentTime.toInstant()))
-                .expiration(Date.from(currentTime.plusSeconds(expirationTime).toInstant()))
                 .signWith(getSecretKey(false), Jwts.SIG.HS512);
     }
 
@@ -231,6 +232,7 @@ public class JwtTokenFactory {
     }
 
     public JwtPair createTokenPair(SecurityUser securityUser) {
+        securityUser.setSessionId(UUID.randomUUID().toString());
         JwtToken accessToken = createAccessJwtToken(securityUser);
         JwtToken refreshToken = createRefreshToken(securityUser);
         return new JwtPair(accessToken.getToken(), refreshToken.getToken());

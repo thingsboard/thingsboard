@@ -29,6 +29,7 @@ const emptyUserAuthState: AuthPayload = {
   hasRepository: false,
   tbelEnabled: false,
   persistDeviceStateToTelemetry: false,
+  mobileQrEnabled: false,
   maxResourceSize: 0,
   userSettings: initialUserSettings
 };
@@ -67,6 +68,9 @@ export const authReducer = (
       return { ...state, ...action.payload};
 
     case AuthActionTypes.UPDATE_HAS_REPOSITORY:
+      return { ...state, ...action.payload};
+
+    case AuthActionTypes.UPDATE_MOBILE_QR_ENABLED:
       return { ...state, ...action.payload};
 
     case AuthActionTypes.UPDATE_OPENED_MENU_SECTION:

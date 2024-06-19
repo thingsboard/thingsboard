@@ -583,6 +583,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
             } else if (ctx.getEntityType() == EntityType.API_USAGE_STATE) {
                 return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
+            } else if (ctx.getEntityType() == EntityType.DASHBOARD) {
+                return "e.tenant_id=:permissions_tenant_id and e.assigned_customers like concat('%', :permissions_customer_id, '%')";
             } else {
                 return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
             }
@@ -729,10 +731,16 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append(entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from")
                     .append("_type in (:where_entity_types").append(")");
             ctx.addStringListParameter("where_entity_types", Arrays.stream(RELATION_QUERY_ENTITY_TYPES).map(EntityType::name).collect(Collectors.toList()));
-        }
-
-        if (!noConditions && !single) {
-            whereFilter = new StringBuilder().append("(").append(whereFilter).append(")");
+        } else {
+            if (!single) {
+                whereFilter = new StringBuilder()
+                        .append(entityFilter.isNegate() ? " NOT (" : "(")
+                        .append(whereFilter).append(")");
+            } else if (entityFilter.isNegate()) {
+                whereFilter = new StringBuilder()
+                        .append(" NOT (")
+                        .append(whereFilter).append(")");
+            }
         }
 
         if (entityFilter.isFetchLastLevelOnly()) {
@@ -768,8 +776,11 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         boolean hasRelationType = !StringUtils.isEmpty(relationType);
         if (hasRelationType) {
             ctx.addStringParameter("where_relation_type" + entityTypeFilterIdx, relationType);
-            whereFilter
-                    .append("re.relation_type = :where_relation_type").append(entityTypeFilterIdx);
+            if (etf.isNegate()) {
+                whereFilter.append("re.relation_type != :where_relation_type").append(entityTypeFilterIdx);
+            } else {
+                whereFilter.append("re.relation_type = :where_relation_type").append(entityTypeFilterIdx);
+            }
         }
         if (!whereEntityTypes.isEmpty()) {
             if (hasRelationType) {

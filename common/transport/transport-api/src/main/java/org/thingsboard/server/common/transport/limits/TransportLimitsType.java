@@ -13,28 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  display: block;
-  .mat-expansion-panel {
-    box-shadow: none;
-    &.tick-value {
-      border: 1px groove rgba(0, 0, 0, .25);
-      .mat-expansion-panel-header {
-        padding: 0 24px 0 8px;
-        &.mat-expanded {
-          height: 48px;
-        }
-      }
-    }
-  }
-}
+package org.thingsboard.server.common.transport.limits;
 
-:host ::ng-deep {
-  .mat-expansion-panel {
-    &.tick-value {
-      .mat-expansion-panel-body {
-        padding: 0 8px 8px;
-      }
-    }
-  }
+public enum TransportLimitsType {
+    TENANT_LIMITS, DEVICE_LIMITS, GATEWAY_LIMITS, GATEWAY_DEVICE_LIMITS
 }

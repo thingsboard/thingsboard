@@ -16,7 +16,13 @@
 
 import { Component, EventEmitter, Input, OnInit, Output, ViewEncapsulation } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { ColorSettings, ColorType, colorTypeTranslations } from '@shared/models/widget-settings.models';
+import {
+  ColorSettings,
+  ColorType,
+  colorTypeTranslations,
+  defaultGradient,
+  defaultRange
+} from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -24,6 +30,10 @@ import { AppState } from '@core/core.state';
 import { deepClone } from '@core/utils';
 import { WidgetService } from '@core/http/widget.service';
 import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
+import { IAliasController } from '@core/api/widget-api.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { Datasource } from '@shared/models/widget.models';
 
 @Component({
   selector: 'tb-color-settings-panel',
@@ -46,6 +56,29 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   @Output()
   colorSettingsApplied = new EventEmitter<ColorSettings>();
 
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  dataKeyCallbacks: DataKeysCallbacks;
+
+  @Input()
+  datasource: Datasource;
+
+  @Input()
+  @coerceBoolean()
+  rangeAdvancedMode = false;
+
+  @Input()
+  @coerceBoolean()
+  gradientAdvancedMode = false;
+
+  @Input()
+  minValue: number;
+
+  @Input()
+  maxValue: number;
+
   colorType = ColorType;
 
   colorTypes = Object.keys(ColorType) as ColorType[];
@@ -67,7 +100,8 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
       {
         type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
-        rangeList: [this.colorSettings?.rangeList, []],
+        gradient: [this.colorSettings?.gradient || defaultGradient(this.minValue, this.maxValue), []],
+        rangeList: [this.colorSettings?.rangeList || defaultRange(), []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );
@@ -77,13 +111,13 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   }
 
   copyColorSettings(comp: ColorSettingsComponent) {
-    const sourceSettings = deepClone(comp.modelValue);
-    this.colorSettings = sourceSettings;
+    this.colorSettings = deepClone(comp.modelValue);
     this.colorSettingsFormGroup.patchValue({
       type: this.colorSettings.type,
       color: this.colorSettings.color,
+      gradient: this.colorSettings.gradient || null,
       colorFunction: this.colorSettings.colorFunction,
-      rangeList: this.colorSettings.rangeList || []
+      rangeList: this.colorSettings.rangeList || null
     }, {emitEvent: false});
     this.colorSettingsFormGroup.markAsDirty();
   }

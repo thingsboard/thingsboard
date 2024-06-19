@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.queue.consumer;
+package org.thingsboard.server.queue.common.consumer;
 
 import lombok.Builder;
 import lombok.Getter;
@@ -106,4 +106,5 @@ public class QueueConsumerManager<M extends TbQueueMsg> {
     public interface MsgPackProcessor<M extends TbQueueMsg> {
         void process(List<M> msgs, TbQueueConsumer<M> consumer) throws Exception;
     }
+
 }

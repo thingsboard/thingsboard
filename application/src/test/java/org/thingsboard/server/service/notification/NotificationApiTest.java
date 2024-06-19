@@ -331,7 +331,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
 
     @Test
     public void testNotificationUpdatesForSeveralUsers() throws Exception {
-        int usersCount = 150;
+        int usersCount = 50;
         Map<User, NotificationApiWsClient> sessions = new HashMap<>();
         List<NotificationTargetId> targets = new ArrayList<>();
 

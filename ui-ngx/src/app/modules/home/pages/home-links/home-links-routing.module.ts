@@ -25,30 +25,81 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { map } from 'rxjs/operators';
-import { getCurrentAuthUser, selectPersistDeviceStateToTelemetry } from '@core/auth/auth.selectors';
+import {
+  getCurrentAuthUser,
+  selectHomeDashboardParams,
+  selectMobileQrEnabled,
+  selectPersistDeviceStateToTelemetry
+} from '@core/auth/auth.selectors';
 import { EntityKeyType } from '@shared/models/query/query.models';
 import { ResourcesService } from '@core/services/resources.service';
+import { isDefinedAndNotNull } from '@core/utils';
 
 const sysAdminHomePageJson = '/assets/dashboard/sys_admin_home_page.json';
 const tenantAdminHomePageJson = '/assets/dashboard/tenant_admin_home_page.json';
 const customerUserHomePageJson = '/assets/dashboard/customer_user_home_page.json';
 
-const updateDeviceActivityKeyFilterIfNeeded = (store: Store<AppState>,
-                                               dashboard$: Observable<HomeDashboard>): Observable<HomeDashboard> =>
-  store.pipe(select(selectPersistDeviceStateToTelemetry)).pipe(
-    mergeMap((persistToTelemetry) => dashboard$.pipe(
+const getHomeDashboard = (store: Store<AppState>, resourcesService: ResourcesService) => {
+  const authority = getCurrentAuthUser(store).authority;
+  switch (authority) {
+    case Authority.SYS_ADMIN:
+      return applySystemParametersToHomeDashboard(store, resourcesService.loadJsonResource(sysAdminHomePageJson), authority);
+    case Authority.TENANT_ADMIN:
+      return applySystemParametersToHomeDashboard(store, resourcesService.loadJsonResource(tenantAdminHomePageJson), authority);
+    case Authority.CUSTOMER_USER:
+      return applySystemParametersToHomeDashboard(store, resourcesService.loadJsonResource(customerUserHomePageJson), authority);
+    default:
+      return of(null);
+  }
+};
+
+const applySystemParametersToHomeDashboard = (store: Store<AppState>,
+                                              dashboard$: Observable<HomeDashboard>,
+                                              authority: Authority): Observable<HomeDashboard> => {
+  let selectParams$: Observable<{persistDeviceStateToTelemetry?: boolean, mobileQrEnabled?: boolean}>;
+  switch (authority) {
+    case Authority.SYS_ADMIN:
+      selectParams$ = store.pipe(
+        select(selectMobileQrEnabled),
+        map(mobileQrEnabled => ({mobileQrEnabled}))
+      );
+      break;
+    case Authority.TENANT_ADMIN:
+      selectParams$ = store.pipe(select(selectHomeDashboardParams));
+      break;
+    case Authority.CUSTOMER_USER:
+      selectParams$ = store.pipe(
+        select(selectPersistDeviceStateToTelemetry),
+        map(persistDeviceStateToTelemetry => ({persistDeviceStateToTelemetry}))
+      );
+      break;
+  }
+  return selectParams$.pipe(
+    mergeMap((params) => dashboard$.pipe(
       map((dashboard) => {
-        if (persistToTelemetry) {
+        if (params.persistDeviceStateToTelemetry) {
           for (const filterId of Object.keys(dashboard.configuration.filters)) {
             if (['Active Devices', 'Inactive Devices'].includes(dashboard.configuration.filters[filterId].filter)) {
               dashboard.configuration.filters[filterId].keyFilters[0].key.type = EntityKeyType.TIME_SERIES;
             }
           }
         }
+        if (isDefinedAndNotNull(params.mobileQrEnabled)) {
+          for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
+            if (dashboard.configuration.widgets[widgetId].config.title === 'Select show mobile QR code') {
+              dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction =
+                (dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction as string)
+                  .replace(/\${mobileQrEnabled:([^}]+)}/, `\${mobileQrEnabled:${String(params.mobileQrEnabled)}}`);
+              break;
+            }
+          }
+        }
+        dashboard.hideDashboardToolbar = true;
         return dashboard;
       })
     ))
   );
+};
 
 export const homeDashboardResolver: ResolveFn<HomeDashboard> = (
   route: ActivatedRouteSnapshot,
@@ -60,27 +111,7 @@ export const homeDashboardResolver: ResolveFn<HomeDashboard> = (
   dashboardService.getHomeDashboard().pipe(
     mergeMap((dashboard) => {
       if (!dashboard) {
-        let dashboard$: Observable<HomeDashboard>;
-        const authority = getCurrentAuthUser(store).authority;
-        switch (authority) {
-          case Authority.SYS_ADMIN:
-            dashboard$ = resourcesService.loadJsonResource(sysAdminHomePageJson);
-            break;
-          case Authority.TENANT_ADMIN:
-            dashboard$ = updateDeviceActivityKeyFilterIfNeeded(store, resourcesService.loadJsonResource(tenantAdminHomePageJson));
-            break;
-          case Authority.CUSTOMER_USER:
-            dashboard$ = updateDeviceActivityKeyFilterIfNeeded(store, resourcesService.loadJsonResource(customerUserHomePageJson));
-            break;
-        }
-        if (dashboard$) {
-          return dashboard$.pipe(
-            map((homeDashboard) => {
-              homeDashboard.hideDashboardToolbar = true;
-              return homeDashboard;
-            })
-          );
-        }
+        return getHomeDashboard(store, resourcesService);
       }
       return of(dashboard);
     })
