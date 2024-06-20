@@ -62,7 +62,7 @@ import {
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { takeUntil } from 'rxjs/operators';
+import { takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
 
@@ -269,6 +269,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         }
       });
     }
+
+    this.observeModeChange();
   }
 
   private uniqNameRequired(): ValidatorFn {
@@ -358,6 +360,27 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.updateData(true);
       this.connectorForm.markAsPristine();
     });
+  }
+
+  private observeModeChange(): void {
+    this.connectorForm.get('mode').valueChanges
+      .pipe(
+        tap((mode: ConnectorConfigurationModes) => {
+          const dataMapping = this.connectorForm.get('basicConfig').get('dataMapping');
+
+          if (mode === ConnectorConfigurationModes.ADVANCED) {
+            dataMapping?.disable();
+          } else {
+            dataMapping?.enable();
+          }
+
+          if (!this.connectorForm.touched) {
+            this.connectorForm.markAsPristine();
+          }
+        }),
+        takeUntil(this.destroy$),
+      )
+      .subscribe()
   }
 
   private updateData(reload: boolean = false): void {
