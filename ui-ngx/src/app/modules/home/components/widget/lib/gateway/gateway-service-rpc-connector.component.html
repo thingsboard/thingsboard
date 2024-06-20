@@ -478,9 +478,6 @@
           </button>
         </fieldset>
       </ng-template>
-      <ng-template [ngSwitchCase]="ConnectorType.OPCUA_ASYNCIO">
-        <ng-container *ngTemplateOutlet="OPCUAForm"></ng-container>
-      </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.OPCUA" #OPCUAForm>
         <mat-form-field >
           <mat-label>{{ 'gateway.rpc.method' | translate }}</mat-label>

@@ -150,7 +150,6 @@ export class GatewayServiceRPCComponent implements OnInit {
       case ConnectorType.BACNET:
       case ConnectorType.CAN:
       case ConnectorType.OPCUA:
-      case ConnectorType.OPCUA_ASYNCIO:
         return params.method;
       case ConnectorType.BLE:
       case ConnectorType.OCPP:
