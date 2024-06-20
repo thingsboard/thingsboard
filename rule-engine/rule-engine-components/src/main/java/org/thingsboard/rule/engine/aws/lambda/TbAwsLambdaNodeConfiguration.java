@@ -18,10 +18,8 @@ package org.thingsboard.rule.engine.aws.lambda;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
-import java.util.concurrent.TimeUnit;
-
 @Data
-public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNodeConfiguration> {
+public class TbAwsLambdaNodeConfiguration implements NodeConfiguration<TbAwsLambdaNodeConfiguration> {
 
     public static final String DEFAULT_QUALIFIER = "$LATEST";
 
@@ -35,22 +33,14 @@ public class TbLambdaNodeConfiguration implements NodeConfiguration<TbLambdaNode
     private boolean tellFailureIfFuncThrowsExc;
 
     @Override
-    public TbLambdaNodeConfiguration defaultConfiguration() {
-        TbLambdaNodeConfiguration configuration = new TbLambdaNodeConfiguration();
+    public TbAwsLambdaNodeConfiguration defaultConfiguration() {
+        TbAwsLambdaNodeConfiguration configuration = new TbAwsLambdaNodeConfiguration();
         configuration.setRegion("us-east-1");
         configuration.setQualifier(DEFAULT_QUALIFIER);
         configuration.setConnectionTimeout(10);
         configuration.setRequestTimeout(5);
         configuration.setTellFailureIfFuncThrowsExc(false);
         return configuration;
-    }
-
-    public int getConnectionTimeout() {
-        return (int) TimeUnit.SECONDS.toMillis(connectionTimeout);
-    }
-
-    public int getRequestTimeout() {
-        return (int) TimeUnit.SECONDS.toMillis(requestTimeout);
     }
 
 }

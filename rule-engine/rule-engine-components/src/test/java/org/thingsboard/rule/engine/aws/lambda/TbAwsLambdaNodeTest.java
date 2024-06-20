@@ -56,15 +56,15 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
-import static org.thingsboard.rule.engine.aws.lambda.TbLambdaNodeConfiguration.DEFAULT_QUALIFIER;
+import static org.thingsboard.rule.engine.aws.lambda.TbAwsLambdaNodeConfiguration.DEFAULT_QUALIFIER;
 
 @ExtendWith(MockitoExtension.class)
-public class TbLambdaNodeTest {
+public class TbAwsLambdaNodeTest {
 
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("ddb88645-7379-4a08-a51c-e84a0b4b3d88"));
 
-    private TbLambdaNode node;
-    private TbLambdaNodeConfiguration config;
+    private TbAwsLambdaNode node;
+    private TbAwsLambdaNodeConfiguration config;
 
     @Mock
     private TbContext ctx;
@@ -73,8 +73,8 @@ public class TbLambdaNodeTest {
 
     @BeforeEach
     void setUp() {
-        node = new TbLambdaNode();
-        config = new TbLambdaNodeConfiguration().defaultConfiguration();
+        node = new TbAwsLambdaNode();
+        config = new TbAwsLambdaNodeConfiguration().defaultConfiguration();
     }
 
     @Test
@@ -84,8 +84,8 @@ public class TbLambdaNodeTest {
         assertThat(config.getRegion()).isEqualTo(("us-east-1"));
         assertThat(config.getFunctionName()).isNull();
         assertThat(config.getQualifier()).isEqualTo(DEFAULT_QUALIFIER);
-        assertThat(config.getConnectionTimeout()).isEqualTo(10000);
-        assertThat(config.getRequestTimeout()).isEqualTo(5000);
+        assertThat(config.getConnectionTimeout()).isEqualTo(10);
+        assertThat(config.getRequestTimeout()).isEqualTo(5);
         assertThat(config.isTellFailureIfFuncThrowsExc()).isFalse();
     }
 
@@ -297,7 +297,7 @@ public class TbLambdaNodeTest {
 
     private String getQualifier(TbMsg msg) {
         return StringUtils.isBlank(config.getQualifier()) ?
-                TbLambdaNodeConfiguration.DEFAULT_QUALIFIER :
+                TbAwsLambdaNodeConfiguration.DEFAULT_QUALIFIER :
                 TbNodeUtils.processPattern(config.getQualifier(), msg);
     }
 
