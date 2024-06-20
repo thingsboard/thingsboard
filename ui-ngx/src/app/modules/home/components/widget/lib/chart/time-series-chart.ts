@@ -74,6 +74,7 @@ import { DeepPartial } from '@shared/models/common';
 import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 import { TimeSeriesChartStateValueConverter } from '@home/components/widget/lib/chart/time-series-chart-state.models';
 import { ChartLabelPosition, ChartShape, toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
+import { DomSanitizer } from '@angular/platform-browser';
 
 export class TbTimeSeriesChart {
 
@@ -153,6 +154,8 @@ export class TbTimeSeriesChart {
 
   private latestData: FormattedData[] = [];
 
+  private readonly sanitizer: DomSanitizer;
+
   yMin$ = this.yMinSubject.asObservable();
   yMax$ = this.yMaxSubject.asObservable();
 
@@ -171,6 +174,7 @@ export class TbTimeSeriesChart {
       this.stateValueConverter = new TimeSeriesChartStateValueConverter(this.ctx.utilsService, this.settings.states);
       this.tooltipValueFormatFunction = this.stateValueConverter.tooltipFormatter;
     }
+    this.sanitizer = this.ctx.sanitizer;
     const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
     const dashboardPageElement = $dashboardPageElement.length ? $($dashboardPageElement[$dashboardPageElement.length-1]) : null;
     this.darkMode = this.settings.darkMode || dashboardPageElement?.hasClass('dark');
@@ -603,7 +607,7 @@ export class TbTimeSeriesChart {
           type: this.noAggregation ? 'line' : 'shadow'
         },
         formatter: (params: CallbackDataParams[]) =>
-          this.settings.showTooltip ? timeSeriesChartTooltipFormatter(this.renderer, this.tooltipDateFormat,
+          this.settings.showTooltip ? timeSeriesChartTooltipFormatter(this.renderer, this.sanitizer, this.tooltipDateFormat,
             this.settings, params, this.tooltipValueFormatFunction,
             this.settings.tooltipShowFocusedSeries ? getFocusedSeriesIndex(this.timeSeriesChart) : -1,
             this.dataItems,  this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,

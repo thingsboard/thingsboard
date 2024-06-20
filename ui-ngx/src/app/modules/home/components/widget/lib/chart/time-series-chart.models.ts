@@ -80,7 +80,7 @@ import {
   WidgetTimewindow
 } from '@shared/models/time/time.models';
 import { UtilsService } from '@core/services/utils.service';
-import { Renderer2 } from '@angular/core';
+import { Renderer2, SecurityContext } from '@angular/core';
 import {
   chartAnimationDefaultSettings,
   ChartAnimationSettings,
@@ -98,6 +98,7 @@ import {
   prepareChartThemeColor
 } from '@home/components/widget/lib/chart/chart.models';
 import { BarSeriesLabelOption } from 'echarts/types/src/chart/bar/BarSeries';
+import { DomSanitizer } from '@angular/platform-browser';
 
 type TimeSeriesChartDataEntry = [number, any, number, number];
 
@@ -261,6 +262,7 @@ export const createTooltipValueFormatFunction =
   };
 
 export const timeSeriesChartTooltipFormatter = (renderer: Renderer2,
+                                                sanitizer: DomSanitizer,
                                                 tooltipDateFormat: DateFormatProcessor,
                                                 settings: TimeSeriesChartTooltipWidgetSettings,
                                                 params: CallbackDataParams[] | CallbackDataParams,
@@ -280,8 +282,9 @@ export const timeSeriesChartTooltipFormatter = (renderer: Renderer2,
   renderer.setStyle(tooltipElement, 'align-items', 'flex-start');
   renderer.setStyle(tooltipElement, 'gap', '16px');
 
-  buildItemsTooltip(tooltipElement, tooltipParams.items, renderer, tooltipDateFormat, settings, valueFormatFunction, interval);
-  buildItemsTooltip(tooltipElement, tooltipParams.comparisonItems, renderer, tooltipDateFormat, settings, valueFormatFunction, interval);
+  buildItemsTooltip(tooltipElement, tooltipParams.items, renderer, sanitizer, tooltipDateFormat, settings, valueFormatFunction, interval);
+  buildItemsTooltip(tooltipElement, tooltipParams.comparisonItems, renderer, sanitizer, tooltipDateFormat, settings,
+    valueFormatFunction, interval);
 
   return tooltipElement;
 };
@@ -299,6 +302,7 @@ interface TooltipParams {
 const buildItemsTooltip = (tooltipElement: HTMLElement,
                            items: TooltipItem[],
                            renderer: Renderer2,
+                           sanitizer: DomSanitizer,
                            tooltipDateFormat: DateFormatProcessor,
                            settings: TimeSeriesChartTooltipWidgetSettings,
                            valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction,
@@ -316,7 +320,7 @@ const buildItemsTooltip = (tooltipElement: HTMLElement,
     }
     for (const item of items) {
       renderer.appendChild(tooltipItemsElement,
-        constructTooltipSeriesElement(renderer, settings, item, valueFormatFunction));
+        constructTooltipSeriesElement(renderer, sanitizer, settings, item, valueFormatFunction));
     }
   }
 };
@@ -396,6 +400,7 @@ const constructTooltipDateElement = (renderer: Renderer2,
 };
 
 const constructTooltipSeriesElement = (renderer: Renderer2,
+                                       sanitizer: DomSanitizer,
                                        settings: TimeSeriesChartTooltipWidgetSettings,
                                        item: TooltipItem,
                                        valueFormatFunction: TimeSeriesChartTooltipValueFormatFunction): HTMLElement => {
@@ -417,7 +422,7 @@ const constructTooltipSeriesElement = (renderer: Renderer2,
   renderer.setStyle(circleElement, 'background', item.param.color);
   renderer.appendChild(labelElement, circleElement);
   const labelTextElement: HTMLElement = renderer.createElement('div');
-  renderer.appendChild(labelTextElement, renderer.createText(item.param.seriesName));
+  renderer.setProperty(labelTextElement, 'innerHTML', sanitizer.sanitize(SecurityContext.HTML, item.param.seriesName));
   renderer.setStyle(labelTextElement, 'font-family', settings.tooltipLabelFont.family);
   renderer.setStyle(labelTextElement, 'font-size', settings.tooltipLabelFont.size + settings.tooltipLabelFont.sizeUnit);
   renderer.setStyle(labelTextElement, 'font-style', settings.tooltipLabelFont.style);
