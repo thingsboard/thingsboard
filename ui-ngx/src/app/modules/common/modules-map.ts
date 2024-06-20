@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -13,6 +13,8 @@
 /// See the License for the specific language governing permissions and
 /// limitations under the License.
 ///
+
+/* eslint-disable max-len */
 
 import * as AngularAnimations from '@angular/animations';
 import * as AngularCore from '@angular/core';
@@ -95,6 +97,7 @@ import * as SelectableColumnsPipe from '@shared/pipe/selectable-columns.pipe';
 import * as ShortNumberPipe from '@shared/pipe/short-number.pipe';
 import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as TruncatePipe from '@shared/pipe/truncate.pipe';
+import * as ImagePipe from '@shared/pipe/image.pipe';
 
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
@@ -187,7 +190,21 @@ import * as UnitInputComponent from '@shared/components/unit-input.component';
 import * as MaterialIconsComponent from '@shared/components/material-icons.component';
 import * as TbIconComponent from '@shared/components/icon.component';
 import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.component';
+import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
+import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
+import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
 
+import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
+import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
+import * as FontSettingsComponent from '@home/components/widget/lib/settings/common/font-settings.component';
+import * as ColorSettingsComponent from '@home/components/widget/lib/settings/common/color-settings.component';
+import * as DisplayColumnsPanelComponent from '@home/components/widget/lib/display-columns-panel.component';
+import * as AlarmDetailsDialogComponent from '@home/components/alarm/alarm-details-dialog.component';
+import * as AlarmAssigneePanelComponent from '@home/components/alarm/alarm-assignee-panel.component';
+import * as AlarmCommentDialogComponent from '@home/components/alarm/alarm-comment-dialog.component';
+import * as AlarmFilterConfigComponent from '@home/components/alarm/alarm-filter-config.component';
+import * as DatasourceComponent from '@home/components/widget/config/datasources.component';
+import * as DataKeysPanelComponent from '@home/components/widget/config/basic/common/data-keys-panel.component';
 import * as AddEntityDialogComponent from '@home/components/entity/add-entity-dialog.component';
 import * as EntitiesTableComponent from '@home/components/entity/entities-table.component';
 import * as DetailsPanelComponent from '@home/components/details-panel.component';
@@ -222,17 +239,21 @@ import * as DataKeyConfigComponent from '@home/components/widget/config/data-key
 import * as LegendConfigComponent from '@home/components/widget/lib/settings/common/legend-config.component';
 import * as ManageWidgetActionsComponent from '@home/components/widget/action/manage-widget-actions.component';
 import * as WidgetActionDialogComponent from '@home/components/widget/action/widget-action-dialog.component';
-import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/action/custom-action-pretty-resources-tabs.component';
-import * as CustomActionPrettyEditorComponent from '@home/components/widget/action/custom-action-pretty-editor.component';
-import * as MobileActionEditorComponent from '@home/components/widget/action/mobile-action-editor.component';
+import * as CustomActionPrettyResourcesTabsComponent from '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component';
+import * as CustomActionPrettyEditorComponent from '@home/components/widget/lib/settings/common/action/custom-action-pretty-editor.component';
+import * as MobileActionEditorComponent from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
 import * as CustomDialogService from '@home/components/widget/dialog/custom-dialog.service';
 import * as CustomDialogContainerComponent from '@home/components/widget/dialog/custom-dialog-container.component';
-import * as ImportDialogComponent from '@home/components/import-export/import-dialog.component';
+import * as ImportDialogComponent from '@shared/import-export/import-dialog.component';
 import * as AddWidgetToDashboardDialogComponent from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
-import * as ImportDialogCsvComponent from '@home/components/import-export/import-dialog-csv.component';
-import * as TableColumnsAssignmentComponent from '@home/components/import-export/table-columns-assignment.component';
+import * as ImportDialogCsvComponent from '@shared/import-export/import-dialog-csv.component';
+import * as TableColumnsAssignmentComponent from '@shared/import-export/table-columns-assignment.component';
 import * as EventContentDialogComponent from '@home/components/event/event-content-dialog.component';
 import * as SharedHomeComponentsModule from '@home/components/shared-home-components.module';
+import * as WidgetConfigComponentsModule from '@home/components/widget/config/widget-config-components.module';
+import * as BasicWidgetConfigModule from '@home/components/widget/config/basic/basic-widget-config.module';
+import * as WidgetSettingsCommonModule from '@home/components/widget/lib/settings/common/widget-settings-common.module';
+import * as WidgetComponentsModule from '@home/components/widget/widget-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
 import * as SelectTargetStateDialogComponent from '@home/components/dashboard/select-target-state-dialog.component';
 import * as AliasesEntityAutocompleteComponent from '@home/components/alias/aliases-entity-autocomplete.component';
@@ -257,7 +278,6 @@ import * as FilterPredicateValueComponent from '@home/components/filter/filter-p
 import * as TenantProfileComponent from '@home/components/profile/tenant-profile.component';
 import * as TenantProfileDialogComponent from '@home/components/profile/tenant-profile-dialog.component';
 import * as TenantProfileDataComponent from '@home/components/profile/tenant-profile-data.component';
-// eslint-disable-next-line max-len
 import * as DefaultDeviceProfileConfigurationComponent from '@home/components/profile/device/default-device-profile-configuration.component';
 import * as DeviceProfileConfigurationComponent from '@home/components/profile/device/device-profile-configuration.component';
 import * as DeviceProfileComponent from '@home/components/profile/device-profile.component';
@@ -282,7 +302,6 @@ import * as AlarmScheduleInfoComponent from '@home/components/profile/alarm/alar
 import * as AlarmScheduleDialogComponent from '@home/components/profile/alarm/alarm-schedule-dialog.component';
 import * as EditAlarmDetailsDialogComponent from '@home/components/profile/alarm/edit-alarm-details-dialog.component';
 import * as AlarmRuleConditionDialogComponent from '@home/components/profile/alarm/alarm-rule-condition-dialog.component';
-// eslint-disable-next-line max-len
 import * as DefaultTenantProfileConfigurationComponent from '@home/components/profile/tenant/default-tenant-profile-configuration.component';
 import * as TenantProfileConfigurationComponent from '@home/components/profile/tenant/tenant-profile-configuration.component';
 import * as SmsProviderConfigurationComponent from '@home/components/sms/sms-provider-configuration.component';
@@ -401,10 +420,15 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/short-number.pipe': ShortNumberPipe,
     '@shared/pipe/tbJson.pipe': TbJsonPipe,
     '@shared/pipe/truncate.pipe': TruncatePipe,
+    '@shared/pipe/image.pipe': ImagePipe,
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,
     '@shared/decorators/tb-inject': TbInject,
+
+    '@shared/import-export/import-dialog.component': ImportDialogComponent,
+    '@shared/import-export/import-dialog-csv.component': ImportDialogCsvComponent,
+    '@shared/import-export/table-columns-assignment.component': TableColumnsAssignmentComponent,
 
     '@shared/components/footer.component': FooterComponent,
     '@shared/components/logo.component': LogoComponent,
@@ -494,7 +518,21 @@ class ModulesMap implements IModulesMap {
     '@shared/components/material-icons.component': MaterialIconsComponent,
     '@shared/components/icon.component': TbIconComponent,
     '@shared/components/hint-tooltip-icon.component': HintTooltipIconComponent,
+    '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
+    '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
+    '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
 
+    '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
+    '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
+    '@home/components/alarm/alarm-assignee-panel.component': AlarmAssigneePanelComponent,
+    '@home/components/alarm/alarm-details-dialog.component': AlarmDetailsDialogComponent,
+    '@home/components/widget/lib/display-columns-panel.component': DisplayColumnsPanelComponent,
+    '@home/components/widget/config/datasources.component': DatasourceComponent,
+    '@home/components/widget/config/basic/common/data-keys-panel.component': DataKeysPanelComponent,
+    '@home/components/widget/lib/settings/common/color-settings.component': ColorSettingsComponent,
+    '@home/components/widget/lib/settings/common/font-settings.component': FontSettingsComponent,
+    '@home/components/widget/config/basic/common/widget-actions-panel.component': WidgetActionsPanelComponent,
+    '@home/components/widget/lib/settings/common/css-unit-select.component': CssUnitSelectComponent,
     '@home/components/entity/add-entity-dialog.component': AddEntityDialogComponent,
     '@home/components/entity/entities-table.component': EntitiesTableComponent,
     '@home/components/details-panel.component': DetailsPanelComponent,
@@ -529,17 +567,18 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
-    '@home/components/widget/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
-    '@home/components/widget/action/custom-action-pretty-editor.component': CustomActionPrettyEditorComponent,
-    '@home/components/widget/action/mobile-action-editor.component': MobileActionEditorComponent,
+    '@home/components/widget/lib/settings/common/action/custom-action-pretty-resources-tabs.component': CustomActionPrettyResourcesTabsComponent,
+    '@home/components/widget/lib/settings/common/action/custom-action-pretty-editor.component': CustomActionPrettyEditorComponent,
+    '@home/components/widget/lib/settings/common/action/mobile-action-editor.component': MobileActionEditorComponent,
     '@home/components/widget/dialog/custom-dialog.service': CustomDialogService,
     '@home/components/widget/dialog/custom-dialog-container.component': CustomDialogContainerComponent,
-    '@home/components/import-export/import-dialog.component': ImportDialogComponent,
     '@home/components/attribute/add-widget-to-dashboard-dialog.component': AddWidgetToDashboardDialogComponent,
-    '@home/components/import-export/import-dialog-csv.component': ImportDialogCsvComponent,
-    '@home/components/import-export/table-columns-assignment.component': TableColumnsAssignmentComponent,
     '@home/components/event/event-content-dialog.component': EventContentDialogComponent,
     '@home/components/shared-home-components.module': SharedHomeComponentsModule,
+    '@home/components/widget/config/widget-config-components.module': WidgetConfigComponentsModule,
+    '@home/components/widget/config/basic/basic-widget-config.module': BasicWidgetConfigModule,
+    '@home/components/widget/lib/settings/common/widget-settings-common.module': WidgetSettingsCommonModule,
+    '@home/components/widget/widget-components.module': WidgetComponentsModule,
     '@home/components/dashboard/select-target-layout-dialog.component': SelectTargetLayoutDialogComponent,
     '@home/components/dashboard/select-target-state-dialog.component': SelectTargetStateDialogComponent,
     '@home/components/alias/aliases-entity-autocomplete.component': AliasesEntityAutocompleteComponent,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.apache.kafka.clients.producer.Producer;
 import org.apache.kafka.clients.producer.ProducerConfig;
 import org.apache.kafka.clients.producer.ProducerRecord;
 import org.apache.kafka.clients.producer.RecordMetadata;
+import org.apache.kafka.common.config.SslConfigs;
 import org.apache.kafka.common.header.Headers;
 import org.apache.kafka.common.header.internals.RecordHeader;
 import org.apache.kafka.common.header.internals.RecordHeaders;
@@ -91,7 +92,14 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         properties.put(ProducerConfig.LINGER_MS_CONFIG, config.getLinger());
         properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.getBufferMemory());
         if (config.getOtherProperties() != null) {
-            config.getOtherProperties().forEach(properties::put);
+            config.getOtherProperties().forEach((k, v) -> {
+                if (SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG.equals(k)
+                        || SslConfigs.SSL_KEYSTORE_KEY_CONFIG.equals(k)
+                        || SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG.equals(k)) {
+                    v = v.replace("\\n", "\n");
+                }
+                properties.put(k, v);
+            });
         }
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;

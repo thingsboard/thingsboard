@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setDefault')"
-          [fxShow]="!isEdit && !entity?.default && entity?.name !== TB_SERVICE_QUEUE">
+          [fxShow]="!isEdit && !entity?.default">
     {{'asset-profile.set-default' | translate }}
   </button>
   <button mat-raised-button color="primary"
@@ -83,11 +83,10 @@
         [ruleChainType]="edgeRuleChainType">
         <span tb-hint>{{'asset-profile.default-edge-rule-chain-hint' | translate}}</span>
       </tb-rule-chain-autocomplete>
-      <tb-image-input fxFlex
+      <tb-gallery-image-input fxFlex
                       label="{{'asset-profile.image' | translate}}"
-                      maxSizeByte="524288"
                       formControlName="image">
-      </tb-image-input>
+      </tb-gallery-image-input>
       <mat-form-field class="mat-block">
         <mat-label translate>asset-profile.description</mat-label>
         <textarea matInput formControlName="description" rows="2"></textarea>

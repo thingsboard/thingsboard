@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,14 @@ import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import java.util.TreeSet;
 
 @Slf4j
-public class RuleChainMetadataConstructorV340 extends AbstractRuleChainMetadataConstructor {
+public class RuleChainMetadataConstructorV340 extends BaseRuleChainMetadataConstructor {
 
     @Override
     protected void constructRuleChainMetadataUpdatedMsg(TenantId tenantId,
                                                         RuleChainMetadataUpdateMsg.Builder builder,
                                                         RuleChainMetaData ruleChainMetaData) {
+        builder.setRuleChainIdMSB(ruleChainMetaData.getRuleChainId().getId().getMostSignificantBits())
+                .setRuleChainIdLSB(ruleChainMetaData.getRuleChainId().getId().getLeastSignificantBits());
         builder.addAllNodes(constructNodes(ruleChainMetaData.getNodes()))
                 .addAllConnections(constructConnections(ruleChainMetaData.getConnections()))
                 .addAllRuleChainConnections(constructRuleChainConnections(ruleChainMetaData.getRuleChainConnections(), new TreeSet<>()));

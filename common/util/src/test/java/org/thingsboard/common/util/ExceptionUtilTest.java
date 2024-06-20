@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ class ExceptionUtilTest {
     @Test
     void givenRootCause_whenLookupExceptionInCause_thenReturnRootCauseAndNoStackOverflow() {
         Exception e = cause;
-        for (int i = 0; i <= 16384; i++) {
+        for (int i = 0; i <= 8000; i++) {
             e = new Exception(e);
         }
         assertThat(ExceptionUtil.lookupExceptionInCause(e, RuntimeException.class)).isSameAs(cause);

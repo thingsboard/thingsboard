@@ -1317,6 +1317,11 @@
   "tags": ["concentration","mass per volume","mg/mL"]
 },
 {
+    "name": "unit.milligram-per-cubic-meter",
+    "symbol": "mg/m³",
+    "tags": ["concentration","mass per volume","mg/m³"]
+},
+{
   "name": "unit.pound-per-cubic-foot",
   "symbol": "lb/ft³",
   "tags": ["Density","mass per unit volume","lb/ft³"]

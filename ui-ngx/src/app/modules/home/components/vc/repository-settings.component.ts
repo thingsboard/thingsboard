@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import { selectHasRepository } from '@core/auth/auth.selectors';
 import { catchError, mergeMap, take } from 'rxjs/operators';
 import { of } from 'rxjs';
 import { TbPopoverComponent } from '@shared/components/popover.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-repository-settings',
@@ -47,6 +48,10 @@ export class RepositorySettingsComponent extends PageComponent implements OnInit
 
   @Input()
   popoverComponent: TbPopoverComponent;
+
+  @Input()
+  @coerceBoolean()
+  hideLoadingBar = false;
 
   repositorySettingsForm: UntypedFormGroup;
   settings: RepositorySettings = null;

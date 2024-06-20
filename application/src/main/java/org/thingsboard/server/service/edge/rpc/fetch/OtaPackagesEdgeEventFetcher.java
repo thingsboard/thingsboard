@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class OtaPackagesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Ot
     private final OtaPackageService otaPackageService;
 
     @Override
-    PageData<OtaPackageInfo> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<OtaPackageInfo> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return otaPackageService.findTenantOtaPackagesByTenantId(tenantId, pageLink);
     }
 
@@ -44,4 +44,5 @@ public class OtaPackagesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Ot
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.OTA_PACKAGE,
                 EdgeEventActionType.ADDED, otaPackageInfo.getId(), null);
     }
+
 }

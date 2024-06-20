@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.coapserver;
 
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.californium.elements.util.SslContextUtil;
@@ -41,26 +42,32 @@ import java.util.Collections;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
 import static org.eclipse.californium.elements.config.CertificateAuthenticationMode.WANTED;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CLIENT_AUTHENTICATION_MODE;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_LENGTH;
+import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_CONNECTION_ID_NODE_ID;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_RETRANSMISSION_TIMEOUT;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DTLS_ROLE;
 import static org.eclipse.californium.scandium.config.DtlsConfig.DtlsRole.SERVER_ONLY;
 
+@Getter
 @Slf4j
-@ConditionalOnProperty(prefix = "transport.coap.dtls", value = "enabled", havingValue = "true", matchIfMissing = false)
+@ConditionalOnProperty(prefix = "coap.dtls", value = "enabled", havingValue = "true")
 @Component
 public class TbCoapDtlsSettings {
 
-    @Value("${transport.coap.dtls.bind_address}")
+    @Value("${coap.dtls.bind_address}")
     private String host;
 
-    @Value("${transport.coap.dtls.bind_port}")
+    @Value("${coap.dtls.bind_port}")
     private Integer port;
 
-    @Value("${transport.coap.dtls.retransmission_timeout:9000}")
+    @Value("${coap.dtls.retransmission_timeout:9000}")
     private int dtlsRetransmissionTimeout;
 
+    @Value("${coap.dtls.connection_id_length:}")
+    private Integer cIdLength;
+
     @Bean
-    @ConfigurationProperties(prefix = "transport.coap.dtls.credentials")
+    @ConfigurationProperties(prefix = "coap.dtls.credentials")
     public SslCredentialsConfig coapDtlsCredentials() {
         return new SslCredentialsConfig("COAP DTLS Credentials", false);
     }
@@ -69,19 +76,19 @@ public class TbCoapDtlsSettings {
     @Qualifier("coapDtlsCredentials")
     private SslCredentialsConfig coapDtlsCredentialsConfig;
 
-    @Value("${transport.coap.dtls.x509.skip_validity_check_for_client_cert:false}")
+    @Value("${coap.dtls.x509.skip_validity_check_for_client_cert:false}")
     private boolean skipValidityCheckForClientCert;
 
-    @Value("${transport.coap.dtls.x509.dtls_session_inactivity_timeout:86400000}")
+    @Value("${coap.dtls.x509.dtls_session_inactivity_timeout:86400000}")
     private long dtlsSessionInactivityTimeout;
 
-    @Value("${transport.coap.dtls.x509.dtls_session_report_timeout:1800000}")
+    @Value("${coap.dtls.x509.dtls_session_report_timeout:1800000}")
     private long dtlsSessionReportTimeout;
 
-    @Autowired
+    @Autowired(required = false)
     private TransportService transportService;
 
-    @Autowired
+    @Autowired(required = false)
     private TbServiceInfoProvider serviceInfoProvider;
 
     public DtlsConnectorConfig dtlsConnectorConfig(Configuration configuration) throws UnknownHostException {
@@ -93,6 +100,14 @@ public class TbCoapDtlsSettings {
         configBuilder.set(DTLS_CLIENT_AUTHENTICATION_MODE, WANTED);
         configBuilder.set(DTLS_RETRANSMISSION_TIMEOUT, dtlsRetransmissionTimeout, MILLISECONDS);
         configBuilder.set(DTLS_ROLE, SERVER_ONLY);
+        if (cIdLength != null) {
+            configBuilder.set(DTLS_CONNECTION_ID_LENGTH, cIdLength);
+            if (cIdLength > 4) {
+                configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, 0);
+            } else {
+                configBuilder.set(DTLS_CONNECTION_ID_NODE_ID, null);
+            }
+        }
         configBuilder.setAdvancedCertificateVerifier(
                 new TbCoapDtlsCertificateVerifier(
                         transportService,

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,8 +34,6 @@ import static org.mockito.Mockito.spy;
 @DaoSqlTest
 public class CoapAttributesUpdatesIntegrationTest extends AbstractCoapAttributesIntegrationTest {
 
-    CoapTransportResource coapTransportResource;
-
     @Autowired
     DefaultCoapServerService defaultCoapServerService;
 
@@ -44,10 +42,6 @@ public class CoapAttributesUpdatesIntegrationTest extends AbstractCoapAttributes
 
     @Before
     public void beforeTest() throws Exception {
-        Resource api = defaultCoapServerService.getCoapServer().getRoot().getChild("api");
-        coapTransportResource = spy( (CoapTransportResource) api.getChild("v1") );
-        api.delete(api.getChild("v1") );
-        api.add(coapTransportResource);
         CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
                 .deviceName("Test Subscribe to attribute updates")
                 .build();

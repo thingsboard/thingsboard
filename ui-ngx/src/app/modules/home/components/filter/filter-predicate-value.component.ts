@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,8 @@ import {
   EntityKeyValueType,
   FilterPredicateValue,
   getDynamicSourcesForAllowUser,
-  inheritModeForDynamicValueSourceType
+  inheritModeForDynamicValueSourceType,
+  StringOperation
 } from '@shared/models/query/query.models';
 
 @Component({
@@ -82,6 +83,15 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
   }
 
   @Input()
+  set operation(operation: StringOperation) {
+    if (operation && (operation === StringOperation.IN || operation === StringOperation.NOT_IN)) {
+      this.hintText = 'filter.default-comma-separated-values';
+    } else {
+      this.hintText = 'filter.default-value';
+    }
+  }
+
+  @Input()
   valueType: EntityKeyValueType;
 
   valueTypeEnum = EntityKeyValueType;
@@ -97,6 +107,8 @@ export class FilterPredicateValueComponent implements ControlValueAccessor, Vali
   dynamicMode = false;
 
   inheritMode = false;
+
+  hintText = 'filter.default-value';
 
   private propagateChange = null;
   private propagateChangePending = false;

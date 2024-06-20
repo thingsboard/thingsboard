@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -99,8 +99,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -147,9 +146,9 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         int currentVersion = annotation.version();
 
         String oldConfig = "{\"attrMapping\":{\"serialNumber\":\"sn\"}," +
-                        "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
-                        "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
-                        "\"fetchLastLevelOnly\":false},\"telemetry\":false}";
+                "\"relationsQuery\":{\"direction\":\"FROM\",\"maxLevel\":1," +
+                "\"filters\":[{\"relationType\":\"Contains\",\"entityTypes\":[]}]," +
+                "\"fetchLastLevelOnly\":false},\"telemetry\":false}";
 
         TbGetRelatedDataNodeConfiguration defaultConfiguration = new TbGetRelatedDataNodeConfiguration().defaultConfiguration();
         String newConfig = JacksonUtil.toString(defaultConfiguration);

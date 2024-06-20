@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,10 +38,8 @@ import java.util.concurrent.ExecutionException;
         name = "json path",
         configClazz = TbJsonPathNodeConfiguration.class,
         nodeDescription = "Transforms incoming message body using JSONPath expression.",
-        nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure. <br/>"
-                + "<b>'$'</b> represents the root object or array. <br/>"
-                + "If JSONPath expression evaluation failed, incoming message routes via <code>Failure</code> chain, "
-                + "otherwise <code>Success</code> chain is used.",
+        nodeDetails = "JSONPath expression specifies a path to an element or a set of elements in a JSON structure.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         icon = "functions",
         configDirective = "tbTransformationNodeJsonPathConfig"

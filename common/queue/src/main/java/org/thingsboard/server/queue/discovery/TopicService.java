@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,4 +64,17 @@ public class TopicService {
     public String buildTopicName(String topic) {
         return prefix.isBlank() ? topic : prefix + "." + topic;
     }
+
+    public String buildConsumerGroupId(String servicePrefix, TenantId tenantId, String queueName, Integer partitionId) {
+        return this.buildTopicName(
+                servicePrefix + queueName
+                + (tenantId.isSysTenantId() ? "" : ("-isolated-" + tenantId))
+                + "-consumer"
+                + suffix(partitionId));
+    }
+
+    String suffix(Integer partitionId) {
+        return partitionId == null ? "" : "-" + partitionId;
+    }
+
 }

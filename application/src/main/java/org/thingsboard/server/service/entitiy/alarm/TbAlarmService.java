@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public interface TbAlarmService {
 
     AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
 
-    List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, User user, long unassignTs);
+    List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs);
 
     Boolean delete(Alarm alarm, User user);
 }

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,8 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 .userInfoUri(registration.getUserInfoUri())
                 .userNameAttributeName(registration.getUserNameAttributeName())
                 .jwkSetUri(registration.getJwkSetUri())
-                .clientAuthenticationMethod(new ClientAuthenticationMethod(registration.getClientAuthenticationMethod()))
+                .clientAuthenticationMethod(registration.getClientAuthenticationMethod().equals("POST") ?
+                        ClientAuthenticationMethod.CLIENT_SECRET_POST : ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .redirectUri(defaultRedirectUriTemplate)
                 .build();
     }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ export interface WsService<T extends WsSubscriber> {
 }
 
 export abstract class CmdWrapper {
+  abstract setAuth(token: string);
   abstract hasCommands(): boolean;
   abstract clear(): void;
   abstract preparePublishCommands(maxCommands: number): CmdWrapper;

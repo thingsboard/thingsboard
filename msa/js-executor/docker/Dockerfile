@@ -1,5 +1,5 @@
 #
-# Copyright © 2016-2023 The Thingsboard Authors
+# Copyright © 2016-2024 The Thingsboard Authors
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
 # you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ COPY src/server.js ./
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-js-executor.sh /usr/bin \
     && chown -R node:node ${pkg.installFolder} \
-    && yarn install --production && yarn cache clean --all
+    && yarn install --production --non-interactive --network-concurrency 4 --network-timeout 100000 --mutex network && yarn cache clean --all
 
 USER node
 

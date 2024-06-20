@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,17 +29,19 @@
   <mat-card-content>
     <form [formGroup]="generalSettings" (ngSubmit)="save()" class="tb-form-panel no-border no-padding">
       <fieldset [disabled]="isLoading$ | async">
-        <mat-form-field class="mat-block">
-          <mat-label translate>admin.base-url</mat-label>
-          <input matInput formControlName="baseUrl" required/>
-          <mat-error *ngIf="generalSettings.get('baseUrl').hasError('required')">
-            {{ 'admin.base-url-required' | translate }}
-          </mat-error>
-        </mat-form-field>
-        <div class="tb-form-row" tb-hint-tooltip-icon="{{ 'admin.prohibit-different-url-hint' | translate }}">
-          <mat-slide-toggle class="mat-slide margin" formControlName="prohibitDifferentUrl">
-            {{ 'admin.prohibit-different-url' | translate }}
-          </mat-slide-toggle>
+        <div>
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.base-url</mat-label>
+            <input matInput formControlName="baseUrl" required/>
+            <mat-error *ngIf="generalSettings.get('baseUrl').hasError('required')">
+              {{ 'admin.base-url-required' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <div class="tb-form-row" tb-hint-tooltip-icon="{{ 'admin.prohibit-different-url-hint' | translate }}">
+            <mat-slide-toggle class="mat-slide margin" formControlName="prohibitDifferentUrl">
+              {{ 'admin.prohibit-different-url' | translate }}
+            </mat-slide-toggle>
+          </div>
         </div>
       </fieldset>
       <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap">

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,7 +33,11 @@ public interface PartitionService {
 
     TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
+    TopicPartitionInfo resolve(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId, Integer partition);
+
     TopicPartitionInfo resolve(ServiceType serviceType, TenantId tenantId, EntityId entityId);
+
+    List<TopicPartitionInfo> resolveAll(ServiceType serviceType, String queueName, TenantId tenantId, EntityId entityId);
 
     boolean isMyPartition(ServiceType serviceType, TenantId tenantId, EntityId entityId);
 
@@ -59,13 +63,15 @@ public interface PartitionService {
 
     int resolvePartitionIndex(UUID entityId, int partitions);
 
-    void removeTenant(TenantId tenantId);
+    void evictTenantInfo(TenantId tenantId);
 
     int countTransportsByType(String type);
 
-    void updateQueue(TransportProtos.QueueUpdateMsg queueUpdateMsg);
+    void updateQueues(List<TransportProtos.QueueUpdateMsg> queueUpdateMsgs);
 
-    void removeQueue(TransportProtos.QueueDeleteMsg queueDeleteMsg);
+    void removeQueues(List<TransportProtos.QueueDeleteMsg> queueDeleteMsgs);
+
+    void removeTenant(TenantId tenantId);
 
     boolean isManagedByCurrentService(TenantId tenantId);
 

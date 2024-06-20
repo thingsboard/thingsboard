@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,10 +37,12 @@ import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
@@ -52,6 +54,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -95,6 +98,8 @@ public class EntitiesFieldsAsyncLoaderTest {
     private RuleChainService ruleChainServiceMock;
     @Mock
     private EntityViewService entityViewServiceMock;
+    @Mock
+    private EdgeService edgeServiceMock;
 
     @BeforeAll
     public static void setup() {
@@ -108,7 +113,8 @@ public class EntitiesFieldsAsyncLoaderTest {
                 EntityType.DEVICE,
                 EntityType.ALARM,
                 EntityType.RULE_CHAIN,
-                EntityType.ENTITY_VIEW
+                EntityType.ENTITY_VIEW,
+                EntityType.EDGE
         );
     }
 
@@ -229,6 +235,14 @@ public class EntitiesFieldsAsyncLoaderTest {
                 doReturn(entityView).when(entityViewServiceMock).findEntityViewByIdAsync(eq(TENANT_ID), any());
 
                 break;
+            case EDGE:
+                var edge = Futures.immediateFuture(entityDoesNotExist ? null : new Edge(new EdgeId(RANDOM_UUID)));
+
+                when(ctxMock.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
+                when(ctxMock.getEdgeService()).thenReturn(edgeServiceMock);
+                doReturn(edge).when(edgeServiceMock).findEdgeByIdAsync(eq(TENANT_ID), any());
+
+                break;
             default:
                 throw new RuntimeException("Unexpected EntityType: " + entityType);
         }
@@ -252,6 +266,8 @@ public class EntitiesFieldsAsyncLoaderTest {
                 return new RuleChain((RuleChainId) entityId);
             case ENTITY_VIEW:
                 return new EntityView((EntityViewId) entityId);
+            case EDGE:
+                return new Edge((EdgeId) entityId);
             default:
                 throw new RuntimeException("Unexpected EntityType: " + entityId.getEntityType());
         }

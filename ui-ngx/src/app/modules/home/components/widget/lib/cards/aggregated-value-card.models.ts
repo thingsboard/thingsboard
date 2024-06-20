@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import {
   lastUpdateAgoDateFormat,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { ComparisonResultType, DataKey, DatasourceData } from '@shared/models/widget.models';
+import { ComparisonResultType, DataEntry, DataKey, DatasourceData } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
 
@@ -43,6 +43,7 @@ export interface AggregatedValueCardWidgetSettings {
   dateColor: string;
   showChart: boolean;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export enum AggregatedValueCardKeyPosition {
@@ -102,7 +103,7 @@ export const computeAggregatedCardValue =
   }
 };
 
-export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dataKey: DataKey): [number, any] => {
+export const getTsValueByLatestDataKey = (latestData: Array<DatasourceData>, dataKey: DataKey): DataEntry => {
   if (latestData?.length) {
     const dsData = latestData.find(data => data.dataKey === dataKey);
     if (dsData?.data?.length) {
@@ -145,7 +146,8 @@ export const aggregatedValueCardDefaultSettings: AggregatedValueCardWidgetSettin
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '18px'
 };
 
 export const aggregatedValueCardDefaultKeySettings: AggregatedValueCardKeySettings = {

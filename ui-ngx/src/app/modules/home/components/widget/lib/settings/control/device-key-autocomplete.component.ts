@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,15 +25,17 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { AttributeScope, DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { Observable, of } from 'rxjs';
 import { IAliasController } from '@core/api/widget-api.models';
 import { catchError, map, mergeMap, publishReplay, refCount, tap } from 'rxjs/operators';
-import { DataKey } from '@shared/models/widget.models';
+import { DataKey, TargetDevice, TargetDeviceType, targetDeviceValid } from '@shared/models/widget.models';
 import { EntityService } from '@core/http/entity.service';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { EntityType } from '@shared/models/entity-type.models';
+import { EntityFilter, singleEntityFilterFromDeviceId } from '@shared/models/query/query.models';
+import { AliasFilterType } from '@shared/models/alias.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-device-key-autocomplete',
@@ -58,10 +60,13 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   aliasController: IAliasController;
 
   @Input()
-  targetDeviceAliasId: string;
+  targetDevice: TargetDevice;
 
   @Input()
   keyType: DataKeyType;
+
+  @Input()
+  attributeScope: AttributeScope;
 
   @Input()
   attributeLabel = 'widgets.rpc.attribute-value-key';
@@ -69,14 +74,16 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   @Input()
   timeseriesLabel = 'widgets.rpc.timeseries-value-key';
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  requiredText: string;
+
+  @Input()
+  @coerceBoolean()
+  required: boolean;
+
+  @Input()
+  @coerceBoolean()
+  inlineField: boolean;
 
   dataKeyType = DataKeyType;
 
@@ -93,7 +100,6 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   private keysFetchObservable$: Observable<Array<string>> = null;
 
   constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
               private entityService: EntityService,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -118,7 +124,7 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
     for (const propName of Object.keys(changes)) {
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'targetDeviceAliasId' || propName === 'keyType') {
+        if (propName === 'targetDevice' || propName === 'keyType' || propName === 'attributeScope') {
           this.clearKeysCache();
         }
       }
@@ -186,9 +192,9 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
   private getKeys() {
     if (this.keysFetchObservable$ === null) {
       let fetchObservable: Observable<Array<DataKey>>;
-      if (this.targetDeviceAliasId) {
+      if (targetDeviceValid(this.targetDevice)) {
         const dataKeyTypes = [this.keyType];
-        fetchObservable = this.fetchEntityKeys(this.targetDeviceAliasId, dataKeyTypes);
+        fetchObservable = this.fetchEntityKeys(this.targetDevice, dataKeyTypes);
       } else {
         fetchObservable = of([]);
       }
@@ -201,17 +207,25 @@ export class DeviceKeyAutocompleteComponent extends PageComponent implements OnI
     return this.keysFetchObservable$;
   }
 
-  private fetchEntityKeys(entityAliasId: string, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
-    return this.aliasController.getAliasInfo(entityAliasId).pipe(
-      mergeMap((aliasInfo) => {
-        return this.entityService.getEntityKeysByEntityFilter(
-          aliasInfo.entityFilter,
+  private fetchEntityKeys(targetDevice: TargetDevice, dataKeyTypes: Array<DataKeyType>): Observable<Array<DataKey>> {
+    let entityFilter$: Observable<EntityFilter>;
+    if (targetDevice.type === TargetDeviceType.device) {
+      entityFilter$ = of(singleEntityFilterFromDeviceId(targetDevice.deviceId));
+    } else {
+      entityFilter$ = this.aliasController.getAliasInfo(targetDevice.entityAliasId).pipe(
+        map(aliasInfo => aliasInfo.entityFilter)
+      );
+    }
+    return entityFilter$.pipe(
+      mergeMap((entityFilter) =>
+        this.entityService.getEntityKeysByEntityFilterAndScope(
+          entityFilter,
           dataKeyTypes, [EntityType.DEVICE],
+          this.attributeScope,
           {ignoreLoading: true, ignoreErrors: true}
         ).pipe(
           catchError(() => of([]))
-        );
-      }),
+        )),
       catchError(() => of([] as Array<DataKey>))
     );
   }

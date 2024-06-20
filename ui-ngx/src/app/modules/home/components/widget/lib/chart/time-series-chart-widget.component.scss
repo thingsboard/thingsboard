@@ -1,0 +1,160 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+$maxLegendWidth: 25%;
+$maxLegendHeight: 35%;
+
+.tb-time-series-chart-panel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px 24px 24px;
+  > div:not(.tb-time-series-chart-overlay) {
+    z-index: 1;
+  }
+  .tb-time-series-chart-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    right: 12px;
+  }
+  div.tb-widget-title {
+    padding: 0;
+  }
+  .tb-time-series-chart-content {
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    &.legend-top {
+      flex-direction: column-reverse;
+    }
+    &.legend-right {
+      flex-direction: row;
+    }
+    &.legend-left {
+      flex-direction: row-reverse;
+    }
+    .tb-time-series-chart-shape {
+      flex: 1;
+      min-width: 0;
+      min-height: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    &.legend-right, &.legend-left {
+      .tb-time-series-chart-legend {
+        display: inline-grid;
+        grid-auto-flow: column;
+        grid-template-rows: repeat(auto-fit, minmax(16px, min-content));
+        max-width: calc($maxLegendWidth - 8px);
+        height: fit-content;
+        max-height: 100%;
+      }
+    }
+    &.legend-top, &.legend-bottom {
+      .tb-time-series-chart-legend {
+        align-self: center;
+        &.tb-simple-legend {
+          justify-content: center;
+        }
+        &:not(.tb-simple-legend) {
+          width: 100%;
+        }
+      }
+    }
+    .tb-time-series-chart-legend {
+      display: flex;
+      align-items: flex-start;
+      align-self: stretch;
+      column-gap: 16px;
+      row-gap: 8px;
+      flex-wrap: wrap;
+      overflow: auto;
+      width: fit-content;
+      max-width: 100%;
+      max-height: calc($maxLegendHeight - 8px);
+      .tb-time-series-chart-legend-table {
+        border-spacing: 0;
+        table-layout: fixed;
+        &.vertical {
+          width: 100%;
+          table-layout: auto;
+          tbody {
+            th {
+              width: 95%;
+            }
+          }
+        }
+        th, td {
+          &:not(:last-child) {
+            padding-right: 16px;
+          }
+        }
+        thead tr, tbody tr:not(:last-child) {
+          th, td {
+            padding-bottom: 8px;
+          }
+        }
+        .tb-time-series-chart-legend-item {
+          align-items: flex-end;
+          &.left {
+            align-items: flex-start;
+          }
+        }
+      }
+      .tb-time-series-chart-legend-item {
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: flex-start;
+        user-select: none;
+        .tb-time-series-chart-legend-item-label {
+          display: flex;
+          align-items: center;
+          gap: 4px;
+          color: #ccc;
+          white-space: nowrap;
+          cursor: pointer;
+          .tb-time-series-chart-legend-item-label-circle {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: #ccc;
+          }
+        }
+      }
+      .tb-time-series-chart-legend-type-label {
+        white-space: nowrap;
+        text-align: left;
+        &.right {
+          text-align: right;
+        }
+      }
+      .tb-time-series-chart-legend-value {
+        white-space: nowrap;
+        text-align: right;
+      }
+    }
+  }
+}

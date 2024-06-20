@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -47,7 +47,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       showCellActionsMenu: true,
       reserveSpaceForHiddenAction: 'true',
       showTimestamp: true,
-      showMilliseconds: false,
+      dateFormat: {format: 'yyyy-MM-dd HH:mm:ss'},
       displayPagination: true,
       useEntityLabel: false,
       defaultPageSize: 10,
@@ -59,6 +59,12 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
   }
 
   protected onSettingsSet(settings: WidgetSettings) {
+    // For backward compatibility
+    const dateFormat = settings.dateFormat;
+    if (settings?.showMilliseconds) {
+      dateFormat.format = 'yyyy-MM-dd HH:mm:ss.SSS';
+    }
+
     this.timeseriesTableWidgetSettingsForm = this.fb.group({
       enableSearch: [settings.enableSearch, []],
       enableSelectColumnDisplay: [settings.enableSelectColumnDisplay, []],
@@ -67,7 +73,7 @@ export class TimeseriesTableWidgetSettingsComponent extends WidgetSettingsCompon
       showCellActionsMenu: [settings.showCellActionsMenu, []],
       reserveSpaceForHiddenAction: [settings.reserveSpaceForHiddenAction, []],
       showTimestamp: [settings.showTimestamp, []],
-      showMilliseconds: [settings.showMilliseconds, []],
+      dateFormat: [dateFormat, []],
       displayPagination: [settings.displayPagination, []],
       useEntityLabel: [settings.useEntityLabel, []],
       defaultPageSize: [settings.defaultPageSize, [Validators.min(1)]],

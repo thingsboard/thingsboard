@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,41 +18,47 @@ package org.thingsboard.server.common.data.kv;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
+import java.time.ZoneId;
+
 @Data
 @EqualsAndHashCode(callSuper = true)
 public class BaseReadTsKvQuery extends BaseTsKvQuery implements ReadTsKvQuery {
 
-    private final long interval;
+    private final AggregationParams aggParameters;
     private final int limit;
-    private final Aggregation aggregation;
     private final String order;
 
     public BaseReadTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation) {
         this(key, startTs, endTs, interval, limit, aggregation, "DESC");
     }
 
-    public BaseReadTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation, String order) {
+    public BaseReadTsKvQuery(String key, long startTs, long endTs, long interval, int limit, Aggregation aggregation, String descOrder) {
+        this(key, startTs, endTs, AggregationParams.of(aggregation, IntervalType.MILLISECONDS, ZoneId.systemDefault(), interval), limit, descOrder);
+    }
+
+    public BaseReadTsKvQuery(String key, long startTs, long endTs, AggregationParams parameters, int limit) {
+        this(key, startTs, endTs, parameters, limit, "DESC");
+    }
+
+    public BaseReadTsKvQuery(String key, long startTs, long endTs, AggregationParams parameters, int limit, String order) {
         super(key, startTs, endTs);
-        this.interval = interval;
+        this.aggParameters = parameters;
         this.limit = limit;
-        this.aggregation = aggregation;
         this.order = order;
     }
 
     public BaseReadTsKvQuery(String key, long startTs, long endTs) {
-        this(key, startTs, endTs, endTs - startTs, 1, Aggregation.AVG, "DESC");
+        this(key, startTs, endTs, AggregationParams.milliseconds(Aggregation.AVG, endTs - startTs), 1, "DESC");
     }
 
     public BaseReadTsKvQuery(String key, long startTs, long endTs, int limit, String order) {
-        this(key, startTs, endTs, endTs - startTs, limit, Aggregation.NONE, order);
+        this(key, startTs, endTs, AggregationParams.none(), limit, order);
     }
 
     public BaseReadTsKvQuery(ReadTsKvQuery query, long startTs, long endTs) {
         super(query.getId(), query.getKey(), startTs, endTs);
-        this.interval = query.getInterval();
+        this.aggParameters = query.getAggParameters();
         this.limit = query.getLimit();
-        this.aggregation = query.getAggregation();
         this.order = query.getOrder();
     }
-
 }

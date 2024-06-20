@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,14 +18,11 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.springframework.boot.test.context.SpringBootTest;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 
-@SpringBootTest(classes = {AssetProfileEdgeProcessor.class})
+@SpringBootTest(classes = {AssetEdgeProcessorV1.class})
 class AssetProfileEdgeProcessorTest extends AbstractAssetProcessorTest{
-    @SpyBean
-    AssetProfileEdgeProcessor assetProfileEdgeProcessor;
 
     @ParameterizedTest
     @MethodSource("provideParameters")
@@ -36,7 +33,7 @@ class AssetProfileEdgeProcessorTest extends AbstractAssetProcessorTest{
 
         edgeEvent.setEntityId(assetProfileId.getId());
 
-        DownlinkMsg downlinkMsg = assetProfileEdgeProcessor.convertAssetProfileEventToDownlink(edgeEvent, edgeId, edgeVersion);
+        DownlinkMsg downlinkMsg = assetProfileProcessorV1.convertAssetProfileEventToDownlink(edgeEvent, edgeId, edgeVersion);
 
         verify(downlinkMsg, expectedDashboardIdMSB, expectedDashboardIdLSB, expectedRuleChainIdMSB, expectedRuleChainIdLSB);
     }

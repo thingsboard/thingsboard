@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -57,32 +57,36 @@ public class TBRedisStandaloneConfiguration extends TBRedisCacheConfiguration {
     @Value("${redis.password:}")
     private String password;
 
+    @Value("${redis.ssl.enabled:false}")
+    private boolean useSsl;
+
     public JedisConnectionFactory loadFactory() {
         RedisStandaloneConfiguration standaloneConfiguration = new RedisStandaloneConfiguration();
         standaloneConfiguration.setHostName(host);
         standaloneConfiguration.setPort(port);
         standaloneConfiguration.setDatabase(db);
         standaloneConfiguration.setPassword(password);
-        if (useDefaultClientConfig) {
-            return new JedisConnectionFactory(standaloneConfiguration);
-        } else {
-            return new JedisConnectionFactory(standaloneConfiguration, buildClientConfig());
-        }
+        return new JedisConnectionFactory(standaloneConfiguration, buildClientConfig());
     }
 
     private JedisClientConfiguration buildClientConfig() {
-        if (usePoolConfig) {
-            return JedisClientConfiguration.builder()
+        JedisClientConfiguration.JedisClientConfigurationBuilder jedisClientConfigurationBuilder = JedisClientConfiguration.builder();
+        if (!useDefaultClientConfig) {
+            jedisClientConfigurationBuilder
                     .clientName(clientName)
                     .connectTimeout(Duration.ofMillis(connectTimeout))
-                    .readTimeout(Duration.ofMillis(readTimeout))
-                    .usePooling().poolConfig(buildPoolConfig())
-                    .build();
-        } else {
-            return JedisClientConfiguration.builder()
-                    .clientName(clientName)
-                    .connectTimeout(Duration.ofMillis(connectTimeout))
-                    .readTimeout(Duration.ofMillis(readTimeout)).build();
+                    .readTimeout(Duration.ofMillis(readTimeout));
         }
+        if (useSsl) {
+            jedisClientConfigurationBuilder
+                    .useSsl()
+                    .sslSocketFactory(createSslSocketFactory());
+        }
+        if (usePoolConfig) {
+            jedisClientConfigurationBuilder
+                    .usePooling()
+                    .poolConfig(buildPoolConfig());
+        }
+        return jedisClientConfigurationBuilder.build();
     }
 }

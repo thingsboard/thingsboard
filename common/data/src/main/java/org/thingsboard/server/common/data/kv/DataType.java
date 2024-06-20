@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,21 @@
  */
 package org.thingsboard.server.common.data.kv;
 
+import lombok.Getter;
+
 public enum DataType {
 
-    STRING, LONG, BOOLEAN, DOUBLE, JSON;
+    BOOLEAN(0),
+    LONG(1),
+    DOUBLE(2),
+    STRING(3),
+    JSON(4);
+
+    @Getter
+    private final int protoNumber; // Corresponds to KeyValueType
+
+    DataType(int protoNumber) {
+        this.protoNumber = protoNumber;
+    }
 
 }

@@ -1574,7 +1574,7 @@
         "action-source-required": "Sorgente azione obbligatoria.",
         "action-name": "Nome",
         "action-name-required": "Nome azione obbligatorio.",
-        "action-name-not-unique": "Un'altra azione con lo stesso nome è già presente.<br/>Il nome di una azione dovrebbe essere univoco all'interno della stessa sorgente.",
+        "action-name-not-unique": "Un'altra azione con lo stesso nome è già presente.\nIl nome di una azione dovrebbe essere univoco all'interno della stessa sorgente.",
         "action-icon": "Icona",
         "action-type": "Tipo",
         "action-type-required": "Tipo azione obbligatorio.",

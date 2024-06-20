@@ -1,0 +1,1596 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+syntax = "proto3";
+
+package transport;
+
+option java_package = "org.thingsboard.server.gen.transport";
+option java_outer_classname = "TransportProtos";
+
+/**
+ * Common data structures
+ */
+enum EntityTypeProto {
+  UNSPECIFIED           = 0;
+  TENANT                = 1;
+  CUSTOMER              = 2;
+  USER                  = 3;
+  DASHBOARD             = 4;
+  ASSET                 = 5;
+  DEVICE                = 6;
+  ALARM                 = 7;
+  // next 3 reserved for PE;
+  RULE_CHAIN            = 11;
+  RULE_NODE             = 12;
+  // next 2 reserved for PE;
+  ENTITY_VIEW           = 15;
+  WIDGETS_BUNDLE        = 16;
+  WIDGET_TYPE           = 17;
+  // next 2 reserved for PE;
+  TENANT_PROFILE        = 20;
+  DEVICE_PROFILE        = 21;
+  ASSET_PROFILE         = 22;
+  API_USAGE_STATE       = 23;
+  TB_RESOURCE           = 24;
+  OTA_PACKAGE           = 25;
+  EDGE                  = 26;
+  RPC                   = 27;
+  QUEUE                 = 28;
+  NOTIFICATION_TARGET   = 29;
+  NOTIFICATION_TEMPLATE = 30;
+  NOTIFICATION_REQUEST  = 31;
+  NOTIFICATION          = 32;
+  NOTIFICATION_RULE     = 33;
+  QUEUE_STATS     = 34;
+}
+
+/**
+ * Service Discovery Data Structures;
+ */
+message ServiceInfo {
+  string serviceId = 1;
+  repeated string serviceTypes = 2;
+  repeated string transports = 6;
+  SystemInfoProto systemInfo = 10;
+  repeated string assignedTenantProfiles = 11;
+}
+
+message SystemInfoProto {
+  int64 cpuUsage = 1;
+  int64 cpuCount = 2;
+  int64 memoryUsage = 3;
+  int64 totalMemory = 4;
+  int64 diskUsage = 5;
+  int64 totalDiscSpace = 6;
+}
+
+/**
+ * Transport Service Data Structures;
+ */
+message SessionInfoProto {
+  string nodeId = 1;
+  int64 sessionIdMSB = 2;
+  int64 sessionIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  int64 deviceIdMSB = 6;
+  int64 deviceIdLSB = 7;
+  string deviceName = 8;
+  string deviceType = 9;
+  int64 gwSessionIdMSB = 10;
+  int64 gwSessionIdLSB = 11;
+  int64 deviceProfileIdMSB = 12;
+  int64 deviceProfileIdLSB = 13;
+  int64 customerIdMSB = 14;
+  int64 customerIdLSB = 15;
+  optional int64 gatewayIdMSB = 16;
+  optional int64 gatewayIdLSB = 17;
+  bool isGateway = 18;
+}
+
+enum SessionEvent {
+  OPEN = 0;
+  CLOSED = 1;
+}
+
+enum SessionType {
+  SYNC = 0;
+  ASYNC = 1;
+}
+
+enum KeyValueType {
+  BOOLEAN_V = 0;
+  LONG_V = 1;
+  DOUBLE_V = 2;
+  STRING_V = 3;
+  JSON_V = 4;
+}
+
+enum CredentialsType {
+  ACCESS_TOKEN = 0;
+  X509_CERTIFICATE = 1;
+  MQTT_BASIC = 2;
+  LWM2M_CREDENTIALS = 3;
+}
+
+message KeyValueProto {
+  string key = 1;
+  KeyValueType type = 2;
+  bool bool_v = 3;
+  int64 long_v = 4;
+  double double_v = 5;
+  string string_v = 6;
+  string json_v = 7;
+}
+
+enum AttributeScopeProto {
+    CLIENT_SCOPE = 0;
+    SERVER_SCOPE = 1;
+    SHARED_SCOPE = 2;
+}
+
+message AttributeKey {
+  AttributeScopeProto scope = 1;
+  string attributeKey = 2;
+}
+
+message AttributeValueProto {
+  int64 lastUpdateTs = 1;
+  KeyValueType type = 2;
+  bool has_v = 3;
+  bool bool_v = 4;
+  int64 long_v = 5;
+  double double_v = 6;
+  string string_v = 7;
+  string json_v = 8;
+  optional string key = 9;
+}
+
+message TsKvProto {
+  int64 ts = 1;
+  KeyValueProto kv = 2;
+}
+
+message TsKvListProto {
+  int64 ts = 1;
+  repeated KeyValueProto kv = 2;
+}
+
+message DeviceInfoProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceType = 6;
+  string additionalInfo = 7;
+  int64 deviceProfileIdMSB = 8;
+  int64 deviceProfileIdLSB = 9;
+  int64 customerIdMSB = 10;
+  int64 customerIdLSB = 11;
+  string powerMode = 12;
+  int64 edrxCycle = 13;
+  int64 psmActivityTimer = 14;
+  int64 pagingTransmissionWindow = 15;
+  bool isGateway = 16;
+}
+
+message DeviceProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 createdTime = 5;
+  string deviceName = 6;
+  optional string deviceLabel = 7;
+  string deviceType = 8;
+  optional string additionalInfo = 9;
+  int64 deviceProfileIdMSB = 10;
+  int64 deviceProfileIdLSB = 11;
+  optional int64 customerIdMSB = 12;
+  optional int64 customerIdLSB = 13;
+  optional bytes deviceData = 14;
+  optional int64 firmwareIdMSB = 15;
+  optional int64 firmwareIdLSB = 16;
+  optional int64 softwareIdMSB = 17;
+  optional int64 softwareIdLSB = 18;
+  optional int64 externalIdMSB = 19;
+  optional int64 externalIdLSB = 20;
+}
+
+message DeviceProfileProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceProfileIdMSB = 3;
+  int64 deviceProfileIdLSB = 4;
+  int64 createdTime = 5;
+  string name = 6;
+  optional string description = 7;
+  optional string image = 8;
+  bool isDefault = 9;
+  string type = 10;
+  string transportType = 11;
+  string provisionType = 12;
+  optional int64 defaultRuleChainIdMSB = 13;
+  optional int64 defaultRuleChainIdLSB = 14;
+  optional int64 defaultDashboardIdMSB = 15;
+  optional int64 defaultDashboardIdLSB = 16;
+  optional string defaultQueueName = 17;
+  optional bytes deviceProfileData = 18;
+  optional string provisionDeviceKey = 19;
+  optional int64 firmwareIdMSB = 20;
+  optional int64 firmwareIdLSB = 21;
+  optional int64 softwareIdMSB = 22;
+  optional int64 softwareIdLSB = 23;
+  optional int64 defaultEdgeRuleChainIdMSB = 24;
+  optional int64 defaultEdgeRuleChainIdLSB = 25;
+  optional int64 externalIdMSB = 26;
+  optional int64 externalIdLSB = 27;
+}
+
+message TenantProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 createdTime = 3;
+  string title = 4;
+  optional string region = 5;
+  int64 tenantProfileIdMSB = 6;
+  int64 tenantProfileIdLSB = 7;
+  optional string country = 8;
+  optional string state = 9;
+  optional string city = 10;
+  optional string address = 11;
+  optional string address2 = 12;
+  optional string zip = 13;
+  optional string phone = 14;
+  optional string email = 15;
+  optional string additionalInfo = 16;
+}
+
+message TenantProfileProto {
+  int64 tenantProfileIdMSB = 1;
+  int64 tenantProfileIdLSB = 2;
+  int64 createdTime = 3;
+  string name = 4;
+  optional string description = 5;
+  bool isDefault = 6;
+  bool isolatedTbRuleEngine = 7;
+  optional bytes profileData = 8;
+}
+
+message TbResourceProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 resourceIdMSB = 3;
+  int64 resourceIdLSB = 4;
+  int64 createdTime = 5;
+  string title = 6;
+  string resourceType = 7;
+  string resourceKey = 8;
+  bool isPublic = 9;
+  optional string publicResourceKey = 10;
+  string searchText = 11;
+  optional string etag = 12;
+  string fileName = 13;
+  optional string resourceDescriptor = 14;
+  optional int64 externalIdMSB = 15;
+  optional int64 externalIdLSB = 16;
+  optional bytes data = 17;
+  optional bytes preview = 18;
+}
+
+message ApiUsageStateProto {
+  int64 tenantProfileIdMSB = 1;
+  int64 tenantProfileIdLSB = 2;
+  int64 apiUsageStateIdMSB = 3;
+  int64 apiUsageStateIdLSB = 4;
+  int64 createdTime = 5;
+  EntityTypeProto entityType = 6;
+  int64 entityIdMSB = 7;
+  int64 entityIdLSB = 8;
+  string transportState = 9;
+  string dbStorageState = 10;
+  string reExecState = 11;
+  string jsExecState = 12;
+  string tbelExecState = 13;
+  string emailExecState = 14;
+  string smsExecState = 15;
+  string alarmExecState = 16;
+}
+
+message RepositorySettingsProto {
+  string repositoryUri = 1;
+  string authMethod = 2;
+  optional string username = 3;
+  optional string password = 4;
+  optional string privateKeyFileName = 5;
+  optional string privateKey = 6;
+  optional string privateKeyPassword = 7;
+  optional string defaultBranch = 8;
+  bool readOnly = 9;
+  bool showMergeCommits = 10;
+}
+
+/**
+ * Transport Service Messages;
+ */
+message SessionEventMsg {
+  SessionType sessionType = 1;
+  SessionEvent event = 2;
+}
+
+message PostTelemetryMsg {
+  repeated TsKvListProto tsKvList = 1;
+}
+
+message PostAttributeMsg {
+  repeated KeyValueProto kv = 1;
+  bool shared = 2;
+}
+
+message GetAttributeRequestMsg {
+  int32 requestId = 1;
+  repeated string clientAttributeNames = 2;
+  repeated string sharedAttributeNames = 3;
+  bool onlyShared = 4;
+}
+
+message GetAttributeResponseMsg {
+  int32 requestId = 1;
+  repeated TsKvProto clientAttributeList = 2;
+  repeated TsKvProto sharedAttributeList = 3;
+  bool isMultipleAttributesRequest = 4;
+  string error = 5;
+  bool sharedStateMsg = 6;
+}
+
+message AttributeUpdateNotificationMsg {
+  repeated TsKvProto sharedUpdated = 1;
+  repeated string sharedDeleted = 2;
+}
+
+message ValidateDeviceTokenRequestMsg {
+  string token = 1;
+}
+
+message ValidateDeviceX509CertRequestMsg {
+  string hash = 1;
+}
+
+message ValidateOrCreateDeviceX509CertRequestMsg {
+  string certificateChain = 1;
+}
+
+message ValidateBasicMqttCredRequestMsg {
+  string clientId = 1;
+  string userName = 2;
+  string password = 3;
+}
+
+message ValidateDeviceCredentialsResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+  string credentialsBody = 2;
+  DeviceProfileProto deviceProfile = 3;
+}
+
+message GetOrCreateDeviceFromGatewayRequestMsg {
+  int64 gatewayIdMSB = 1;
+  int64 gatewayIdLSB = 2;
+  string deviceName = 3;
+  string deviceType = 4;
+}
+
+message GetOrCreateDeviceFromGatewayResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+  DeviceProfileProto deviceProfile = 2;
+  TransportApiRequestErrorCode error = 3;
+}
+
+message GatewayDisconnectDeviceMsg {
+  string deviceName = 1;
+  int32 reasonCode = 2;
+}
+
+enum TransportApiRequestErrorCode {
+  UNKNOWN_TRANSPORT_API_ERROR  = 0;
+  ENTITY_LIMIT = 1;
+}
+
+message GetEntityProfileRequestMsg {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+}
+
+message GetAllQueueRoutingInfoRequestMsg {
+}
+
+message GetQueueRoutingInfoResponseMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+  string queueTopic = 6;
+  int32 partitions = 7;
+  optional bool duplicateMsgToAllPartitions = 8;
+}
+
+message QueueUpdateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+  string queueTopic = 6;
+  int32 partitions = 7;
+  optional bool duplicateMsgToAllPartitions = 8;
+}
+
+message QueueDeleteMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 queueIdMSB = 3;
+  int64 queueIdLSB = 4;
+  string queueName = 5;
+}
+
+message CoreStartupMsg {
+  string serviceId = 1;
+  repeated int32 partitions = 2;
+  int64 ts = 3;
+}
+
+message ResourceCacheInvalidateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  repeated ImageCacheKeyProto keys = 3;
+}
+
+message ImageCacheKeyProto {
+  optional string resourceKey = 1;
+  optional string publicResourceKey = 2;
+}
+
+message LwM2MRegistrationRequestMsg {
+  string tenantId = 1;
+  string endpoint = 2;
+}
+
+message LwM2MRegistrationResponseMsg {
+  DeviceInfoProto deviceInfo = 1;
+}
+
+message LwM2MRequestMsg {
+  LwM2MRegistrationRequestMsg registrationMsg = 1;
+}
+
+message LwM2MResponseMsg {
+  LwM2MRegistrationResponseMsg registrationMsg = 1;
+}
+
+message GetResourceRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceKey = 4;
+}
+
+message GetResourceResponseMsg {
+  TbResourceProto resource = 1;
+}
+
+message ValidateDeviceLwM2MCredentialsRequestMsg {
+  string credentialsId = 1;
+}
+
+message ToTransportUpdateCredentialsProto {
+  repeated string credentialsId = 1;
+  repeated string credentialsValue = 2;
+}
+
+message GetTenantRoutingInfoRequestMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+}
+
+message GetTenantRoutingInfoResponseMsg {
+  bool isolatedTbRuleEngine = 2;
+}
+
+message GetDeviceProfileRequestMsg {
+  int64 profileIdMSB = 1;
+  int64 profileIdLSB = 2;
+}
+
+message GetEntityProfileResponseMsg {
+  string entityType = 1;
+  oneof data {
+    TenantProfileProto tenantProfile = 2;
+    DeviceProfileProto deviceProfile = 3;
+  }
+  ApiUsageStateProto apiState = 4;
+}
+
+message GetDeviceRequestMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+}
+
+message GetDeviceResponseMsg {
+  int64 deviceProfileIdMSB = 1;
+  int64 deviceProfileIdLSB = 2;
+  //Json
+  bytes deviceTransportConfiguration = 3;
+}
+
+message GetDeviceCredentialsRequestMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+}
+
+message GetDeviceCredentialsResponseMsg {
+  DeviceCredentialsProto deviceCredentialsData = 1;
+}
+
+message GetSnmpDevicesRequestMsg {
+  int32 page = 1;
+  int32 pageSize = 2;
+}
+
+message GetSnmpDevicesResponseMsg {
+  repeated string ids = 1;
+  bool hasNextPage = 2;
+}
+
+message EntityUpdateMsg {
+  oneof entityUpdate {
+    TenantProto tenant = 1;
+    TenantProfileProto tenantProfile = 2;
+    DeviceProto device = 3;
+    DeviceProfileProto deviceProfile = 4;
+    ApiUsageStateProto apiUsageState = 5;
+  }
+}
+
+message EntityDeleteMsg {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+}
+
+message ResourceUpdateMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceKey = 4;
+}
+
+message ResourceDeleteMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string resourceType = 3;
+  string resourceKey = 4;
+}
+
+enum SessionCloseReason {
+  UNKNOWN_REASON = 0;
+  CREDENTIALS_UPDATED = 1;
+  MAX_CONCURRENT_SESSIONS_LIMIT_REACHED = 2;
+  SESSION_TIMEOUT = 3;
+}
+
+message SessionCloseNotificationProto {
+  string message = 1;
+  SessionCloseReason reason = 2;
+}
+
+message SubscribeToAttributeUpdatesMsg {
+  bool unsubscribe = 1;
+  SessionType sessionType = 2;
+}
+
+message SubscribeToRPCMsg {
+  bool unsubscribe = 1;
+  SessionType sessionType = 2;
+}
+
+message SendPendingRPCMsg {
+}
+
+message ToDeviceRpcRequestMsg {
+  int32 requestId = 1;
+  string methodName = 2;
+  string params = 3;
+  int64 expirationTime = 4;
+  int64 requestIdMSB = 5;
+  int64 requestIdLSB = 6;
+  bool oneway = 7;
+  bool persisted = 8;
+}
+
+message ToDeviceRpcResponseMsg {
+  int32 requestId = 1;
+  string payload = 2;
+  string error = 3;
+}
+
+message UplinkNotificationMsg {
+  int64 uplinkTs = 1;
+}
+
+message ToDeviceRpcResponseStatusMsg {
+  int32 requestId = 1;
+  int64 requestIdMSB = 2;
+  int64 requestIdLSB = 3;
+  string status = 4;
+}
+
+message ToServerRpcRequestMsg {
+  int32 requestId = 1;
+  string methodName = 2;
+  string params = 3;
+}
+
+message ToServerRpcResponseMsg {
+  int32 requestId = 1;
+  string payload = 2;
+  string error = 3;
+}
+
+message ClaimDeviceMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  string secretKey = 3;
+  int64 durationMs = 4;
+}
+
+message DeviceCredentialsProto {
+  int64 credentialsIdMSB = 1;
+  int64 credentialsIdLSB = 2;
+  int64 createdTime = 3;
+  int64 deviceIdMSB = 4;
+  int64 deviceIdLSB = 5;
+  CredentialsType credentialsType = 6;
+  string credentialsId = 7;
+  optional string credentialsValue = 8;
+}
+
+message CredentialsDataProto {
+  ValidateDeviceTokenRequestMsg validateDeviceTokenRequestMsg = 1;
+  ValidateDeviceX509CertRequestMsg validateDeviceX509CertRequestMsg = 2;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 3;
+}
+
+message ProvisionDeviceRequestMsg {
+  string deviceName = 1;
+  CredentialsType credentialsType = 2;
+  ProvisionDeviceCredentialsMsg provisionDeviceCredentialsMsg = 3;
+  CredentialsDataProto credentialsDataProto = 4;
+}
+
+message ProvisionDeviceCredentialsMsg {
+  string provisionDeviceKey = 1;
+  string provisionDeviceSecret = 2;
+}
+
+message ProvisionDeviceResponseMsg {
+  ResponseStatus status = 1;
+  CredentialsType credentialsType = 2;
+  string credentialsValue = 3;
+}
+
+enum ResponseStatus {
+  UNKNOWN = 0;
+  SUCCESS = 1;
+  NOT_FOUND = 2;
+  FAILURE = 3;
+}
+
+message GetOtaPackageRequestMsg {
+  int64 deviceIdMSB = 1;
+  int64 deviceIdLSB = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  string type = 5;
+}
+
+message GetOtaPackageResponseMsg {
+  ResponseStatus responseStatus = 1;
+  int64 otaPackageIdMSB = 2;
+  int64 otaPackageIdLSB = 3;
+  string type = 4;
+  string title = 5;
+  string version = 6;
+  string contentType = 7;
+  string fileName = 8;
+}
+
+message DeviceConnectProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastConnectTime = 5;
+}
+
+message DeviceActivityProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastActivityTime = 5;
+}
+
+message DeviceDisconnectProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastDisconnectTime = 5;
+}
+
+message DeviceInactivityProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int64 lastInactivityTime = 5;
+}
+
+//Used to report session state to tb-Service and persist this state in the cache on the tb-Service level.
+message SubscriptionInfoProto {
+  int64 lastActivityTime = 1;
+  bool attributeSubscription = 2;
+  bool rpcSubscription = 3;
+}
+
+message SessionSubscriptionInfoProto {
+  SessionInfoProto sessionInfo = 1;
+  SubscriptionInfoProto subscriptionInfo = 2;
+}
+
+message DeviceSessionsCacheEntry {
+  repeated SessionSubscriptionInfoProto sessions = 1;
+}
+
+message TransportToDeviceActorMsg {
+  SessionInfoProto sessionInfo = 1;
+  SessionEventMsg sessionEvent = 2;
+  GetAttributeRequestMsg getAttributes = 3;
+  SubscribeToAttributeUpdatesMsg subscribeToAttributes = 4;
+  SubscribeToRPCMsg subscribeToRPC = 5;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 6;
+  SubscriptionInfoProto subscriptionInfo = 7;
+  ClaimDeviceMsg claimDevice = 8;
+  ProvisionDeviceRequestMsg provisionDevice = 9;
+  ToDeviceRpcResponseStatusMsg rpcResponseStatusMsg = 10;
+  SendPendingRPCMsg sendPendingRPC = 11;
+  UplinkNotificationMsg uplinkNotificationMsg = 12;
+}
+
+message TransportToRuleEngineMsg {
+  SessionInfoProto sessionInfo = 1;
+  PostTelemetryMsg postTelemetry = 2;
+  PostAttributeMsg postAttributes = 3;
+  ToDeviceRpcResponseMsg toDeviceRPCCallResponse = 4;
+  ToServerRpcRequestMsg toServerRPCCallRequest = 5;
+}
+
+/**
+ * TB Core Data Structures
+ */
+
+message TbEntitySubEventProto {
+  string serviceId = 1;
+  int32 seqNumber = 2;
+  int64 tenantIdMSB = 3;
+  int64 tenantIdLSB = 4;
+  string entityType = 5;
+  int64 entityIdMSB = 6;
+  int64 entityIdLSB = 7;
+  string type = 8;
+  bool notifications = 9;
+  bool alarms = 10;
+  bool tsAllKeys = 11;
+  repeated string tsKeys = 12;
+  bool attrAllKeys = 13;
+  repeated string attrKeys = 14;
+}
+
+message TbEntitySubEventCallbackProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 seqNumber = 3;
+  int64 attributesUpdateTs = 4;
+  int64 timeSeriesUpdateTs = 5;
+}
+
+message TsValueProto {
+  int64 ts = 1;
+  KeyValueType type = 2;
+  bool bool_v = 3;
+  int64 long_v = 4;
+  double double_v = 5;
+  string string_v = 6;
+  string json_v = 7;
+}
+
+message TsValueListProto {
+  string key = 1;
+  repeated TsValueProto tsValue = 2;
+}
+
+message TbSubUpdateProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  repeated TsValueListProto data = 5;
+  string scope = 6;
+}
+
+message TbAlarmSubUpdateProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  string alarm = 5;
+  bool deleted = 6;
+}
+
+message NotificationsSubUpdateProto {
+  int64 entityIdMSB = 1;
+  int64 entityIdLSB = 2;
+  string notificationUpdate = 3;
+  string notificationRequestUpdate = 4;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbSubscriptionProto {
+  option deprecated = true;
+  string serviceId = 1;
+  string sessionId = 2;
+  int32 subscriptionId = 3;
+  string entityType = 4;
+  int64 tenantIdMSB = 5;
+  int64 tenantIdLSB = 6;
+  int64 entityIdMSB = 7;
+  int64 entityIdLSB = 8;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbTimeSeriesSubscriptionProto {
+  option deprecated = true;
+  TbSubscriptionProto sub = 1;
+  bool allKeys = 2;
+  repeated TbSubscriptionKetStateProto keyStates = 3;
+  int64 startTime = 4;
+  int64 endTime = 5;
+  bool latestValues = 6;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbAttributeSubscriptionProto {
+  option deprecated = true;
+  TbSubscriptionProto sub = 1;
+  bool allKeys = 2;
+  repeated TbSubscriptionKetStateProto keyStates = 3;
+  string scope = 4;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbAlarmSubscriptionProto {
+  option deprecated = true;
+  TbSubscriptionProto sub = 1;
+  int64 ts = 2;
+}
+
+// DEPRECATED. FOR REMOVAL
+message NotificationsSubscriptionProto {
+  option deprecated = true;
+  TbSubscriptionProto sub = 1;
+  int32 limit = 2;
+}
+
+// DEPRECATED. FOR REMOVAL
+message NotificationsCountSubscriptionProto {
+  option deprecated = true;
+  TbSubscriptionProto sub = 1;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbSubscriptionUpdateProto {
+  option deprecated = true;
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  repeated TbSubscriptionUpdateValueListProto data = 5;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbAlarmSubscriptionUpdateProto {
+  option deprecated = true;
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  int32 errorCode = 3;
+  string errorMsg = 4;
+  string alarm = 5;
+  bool deleted = 6;
+}
+
+// DEPRECATED. FOR REMOVAL
+message NotificationsSubscriptionUpdateProto {
+  option deprecated = true;
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+  string notificationUpdate = 3;
+  string notificationRequestUpdate = 4;
+}
+
+message NotificationUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 recipientIdMSB = 3;
+  int64 recipientIdLSB = 4;
+  string update = 5;
+}
+
+message NotificationRequestUpdateProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  string update = 6;
+}
+
+message TbAttributeUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string scope = 6;
+  repeated TsKvProto data = 7;
+}
+
+message TbAlarmUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string alarm = 6;
+}
+
+message TbAlarmDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string alarm = 6;
+}
+
+message TbAttributeDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  string scope = 6;
+  repeated string keys = 7;
+  bool notifyDevice = 8;
+}
+
+message TbTimeSeriesDeleteProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  repeated string keys = 6;
+}
+
+message TbTimeSeriesUpdateProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  int64 tenantIdMSB = 4;
+  int64 tenantIdLSB = 5;
+  repeated TsKvProto data = 6;
+}
+
+// DEPRECATED. FOR REMOVAL
+message TbSubscriptionCloseProto {
+  option deprecated = true;
+  string sessionId = 1;
+  int32 subscriptionId = 2;
+}
+
+message TbSubscriptionKetStateProto {
+  string key = 1;
+  int64 ts = 2;
+}
+
+message TbSubscriptionUpdateValueListProto {
+  string key = 1;
+  repeated TbSubscriptionUpdateTsValue tsValue = 2;
+}
+
+message TbSubscriptionUpdateTsValue {
+  int64 ts = 1;
+  optional string value = 2;
+}
+
+/**
+ * TB Core to TB Core messages
+ */
+
+message DeviceStateServiceMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  bool added = 5;
+  bool updated = 6;
+  bool deleted = 7;
+}
+
+message SubscriptionMgrMsgProto {
+  TbTimeSeriesSubscriptionProto telemetrySub = 1 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAttributeSubscriptionProto attributeSub = 2 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbSubscriptionCloseProto subClose = 3 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbTimeSeriesUpdateProto tsUpdate = 4;
+  TbAttributeUpdateProto attrUpdate = 5;
+  TbAttributeDeleteProto attrDelete = 6;
+  TbAlarmSubscriptionProto alarmSub = 7 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAlarmUpdateProto alarmUpdate = 8;
+  TbAlarmDeleteProto alarmDelete = 9;
+  TbTimeSeriesDeleteProto tsDelete = 10;
+  NotificationsSubscriptionProto notificationsSub = 11 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationsCountSubscriptionProto notificationsCountSub = 12 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationUpdateProto notificationUpdate = 13;
+  NotificationRequestUpdateProto notificationRequestUpdate = 14;
+  TbEntitySubEventProto subEvent = 15;
+}
+
+message LocalSubscriptionServiceMsgProto {
+  TbSubscriptionUpdateProto subUpdate = 1 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbAlarmSubscriptionUpdateProto alarmSubUpdate = 2 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  NotificationsSubscriptionUpdateProto notificationsSubUpdate = 3 [deprecated = true]; // DEPRECATED. FOR REMOVAL
+  TbEntitySubEventCallbackProto subEventCallback = 4;
+  TbSubUpdateProto tsUpdate = 5;
+  TbSubUpdateProto attrUpdate = 6;
+  TbAlarmSubUpdateProto alarmUpdate = 7;
+  NotificationsSubUpdateProto notificationsUpdate = 8;
+}
+
+message FromDeviceRPCResponseProto {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  string response = 3;
+  int32 error = 4;
+}
+
+enum ComponentLifecycleEvent {
+    CREATED       = 0;
+    STARTED       = 1;
+    ACTIVATED     = 2;
+    SUSPENDED     = 3;
+    UPDATED       = 4;
+    STOPPED       = 5;
+    DELETED       = 6;
+    FAILED        = 7;
+    DEACTIVATED   = 8;
+}
+
+message ComponentLifecycleMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  EntityTypeProto entityType = 3;
+  int64 entityIdMSB = 4;
+  int64 entityIdLSB = 5;
+  ComponentLifecycleEvent event = 6;
+}
+
+message EdgeNotificationMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 edgeIdMSB = 3;
+  int64 edgeIdLSB = 4;
+  string type = 5;
+  string action = 6;
+  int64 entityIdMSB = 7;
+  int64 entityIdLSB = 8;
+  string entityType = 9;
+  string body = 10;
+  PostTelemetryMsg postTelemetryMsg = 11;
+  PostAttributeMsg postAttributesMsg = 12;
+  int64 originatorEdgeIdMSB = 13;
+  int64 originatorEdgeIdLSB = 14;
+}
+
+message EdgeEventUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 edgeIdMSB = 3;
+  int64 edgeIdLSB = 4;
+}
+
+message ToEdgeSyncRequestMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 edgeIdMSB = 5;
+  int64 edgeIdLSB = 6;
+}
+
+message FromEdgeSyncResponseMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 responseIdMSB = 3;
+  int64 responseIdLSB = 4;
+  int64 edgeIdMSB = 5;
+  int64 edgeIdLSB = 6;
+  bool success = 7;
+}
+
+message DeviceEdgeUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  optional int64 edgeIdMSB = 5;
+  optional int64 edgeIdLSB = 6;
+}
+
+message DeviceNameOrTypeUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string deviceName = 5;
+  string deviceType = 6;
+}
+
+message DeviceAttributesEventMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  repeated AttributeKey deletedKeys = 5;
+  optional AttributeScopeProto scope = 6;
+  repeated AttributeValueProto values = 7;
+  bool deleted = 8;
+}
+
+message DeviceCredentialsUpdateMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  DeviceCredentialsProto deviceCredentials = 5;
+}
+
+message ToDeviceRpcRequestActorMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  string serviceId = 5;
+  ToDeviceRpcRequestMsg toDeviceRpcRequestMsg = 6;
+}
+
+message FromDeviceRpcResponseActorMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+  int32 requestId = 5;
+  FromDeviceRPCResponseProto rpcResponse = 6;
+}
+
+message RemoveRpcActorMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 deviceIdMSB = 5;
+  int64 deviceIdLSB = 6;
+}
+
+message DeviceDeleteMsgProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 deviceIdMSB = 3;
+  int64 deviceIdLSB = 4;
+}
+
+message ToDeviceActorNotificationMsgProto {
+  DeviceEdgeUpdateMsgProto deviceEdgeUpdateMsg = 1;
+  DeviceNameOrTypeUpdateMsgProto deviceNameOrTypeMsg = 2;
+  DeviceAttributesEventMsgProto deviceAttributesEventMsg = 3;
+  DeviceCredentialsUpdateMsgProto deviceCredentialsUpdateMsg = 4;
+  ToDeviceRpcRequestActorMsgProto toDeviceRpcRequestMsg = 5;
+  FromDeviceRpcResponseActorMsgProto fromDeviceRpcResponseMsg = 6;
+  RemoveRpcActorMsgProto removeRpcActorMsg = 7;
+  DeviceDeleteMsgProto deviceDeleteMsg = 8;
+}
+
+/**
+   TB Core to Version Control Service
+ */
+message CommitRequestMsg {
+  string txId = 1; // To correlate prepare, add, delete and push messages
+  PrepareMsg prepareMsg = 2;
+  AddMsg addMsg = 3;
+  DeleteMsg deleteMsg = 4;
+  PushMsg pushMsg = 5;
+  AbortMsg abortMsg = 6;
+}
+
+message CommitResponseMsg {
+  int64 ts = 1;
+  string commitId = 2;
+  string name = 3;
+  string author = 4;
+  int32 added = 5;
+  int32 modified = 6;
+  int32 removed = 7;
+}
+
+message PrepareMsg {
+  string commitMsg = 1;
+  string branchName = 2;
+  string authorName = 3;
+  string authorEmail = 4;
+}
+
+message AddMsg {
+  string relativePath = 1;
+  string entityDataJsonChunk = 2;
+  string chunkedMsgId = 3;
+  int32 chunkIndex = 4;
+  int32 chunksCount = 5;
+}
+
+message DeleteMsg {
+  string relativePath = 1;
+}
+
+message PushMsg {
+}
+
+message AbortMsg {
+}
+
+message ListVersionsRequestMsg {
+  string branchName = 1;
+  string entityType = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  int32 pageSize = 5;
+  int32 page = 6;
+  string textSearch = 7;
+  string sortProperty = 8;
+  string sortDirection = 9;
+}
+
+message EntityVersionProto {
+  int64 ts = 1;
+  string id = 2;
+  string name = 3;
+  string author = 4;
+}
+
+message ListVersionsResponseMsg {
+  repeated EntityVersionProto versions = 1;
+  int32 totalPages = 2;
+  int64 totalElements = 3;
+  bool hasNext = 4;
+}
+
+message ListEntitiesRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+}
+
+message VersionedEntityInfoProto {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+}
+
+message ListEntitiesResponseMsg {
+  repeated VersionedEntityInfoProto entities = 1;
+}
+
+message ListBranchesRequestMsg {
+}
+
+message BranchInfoProto {
+  string name = 1;
+  bool isDefault = 2;
+}
+
+message ListBranchesResponseMsg {
+  repeated BranchInfoProto branches = 1;
+}
+
+message EntityContentRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+}
+
+message EntityContentResponseMsg {
+  string data = 1;
+  int32 chunkIndex = 2;
+  int32 chunksCount = 3;
+}
+
+message EntitiesContentRequestMsg {
+  string versionId = 1;
+  string entityType = 2;
+  int32 offset = 3;
+  int32 limit = 4;
+}
+
+message EntitiesContentResponseMsg {
+  EntityContentResponseMsg item = 1;
+  int32 itemIdx = 2;
+  int32 itemsCount = 3;
+}
+
+message VersionsDiffRequestMsg {
+  string path = 1;
+  string versionId1 = 2;
+  string versionId2 = 3;
+}
+
+message VersionsDiffResponseMsg {
+  repeated EntityVersionsDiff diff = 1;
+}
+
+message EntityVersionsDiff {
+  string entityType = 1;
+  int64 entityIdMSB = 2;
+  int64 entityIdLSB = 3;
+  string entityDataAtVersion1 = 4;
+  string entityDataAtVersion2 = 5;
+  string rawDiff = 6;
+}
+
+message GenericRepositoryRequestMsg {}
+
+message GenericRepositoryResponseMsg {}
+
+message ToVersionControlServiceMsg {
+  string nodeId = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 requestIdMSB = 4;
+  int64 requestIdLSB = 5;
+  RepositorySettingsProto vcSettings = 6;
+  GenericRepositoryRequestMsg initRepositoryRequest = 7;
+  GenericRepositoryRequestMsg testRepositoryRequest = 8;
+  GenericRepositoryRequestMsg clearRepositoryRequest = 9;
+  CommitRequestMsg commitRequest = 10;
+  ListVersionsRequestMsg listVersionRequest = 11;
+  ListEntitiesRequestMsg listEntitiesRequest = 12;
+  ListBranchesRequestMsg listBranchesRequest = 13;
+  EntityContentRequestMsg entityContentRequest = 14;
+  EntitiesContentRequestMsg entitiesContentRequest = 15;
+  VersionsDiffRequestMsg versionsDiffRequest = 16;
+}
+
+message VersionControlResponseMsg {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  string error = 3;
+  GenericRepositoryResponseMsg genericResponse = 4;
+  CommitResponseMsg commitResponse = 5;
+  ListBranchesResponseMsg listBranchesResponse = 6;
+  ListEntitiesResponseMsg listEntitiesResponse = 7;
+  ListVersionsResponseMsg listVersionsResponse = 8;
+  EntityContentResponseMsg entityContentResponse = 9;
+  EntitiesContentResponseMsg entitiesContentResponse = 10;
+  VersionsDiffResponseMsg versionsDiffResponse = 11;
+}
+
+/**
+ * Main messages;
+ */
+
+/* Request from Transport Service to ThingsBoard Core Service */
+message TransportApiRequestMsg {
+  ValidateDeviceTokenRequestMsg validateTokenRequestMsg = 1;
+  ValidateDeviceX509CertRequestMsg validateX509CertRequestMsg = 2;
+  GetOrCreateDeviceFromGatewayRequestMsg getOrCreateDeviceRequestMsg = 3;
+  GetEntityProfileRequestMsg entityProfileRequestMsg = 4;
+  LwM2MRequestMsg lwM2MRequestMsg = 5;
+  ValidateBasicMqttCredRequestMsg validateBasicMqttCredRequestMsg = 6;
+  ProvisionDeviceRequestMsg provisionDeviceRequestMsg = 7;
+  ValidateDeviceLwM2MCredentialsRequestMsg validateDeviceLwM2MCredentialsRequestMsg = 8;
+  GetResourceRequestMsg resourceRequestMsg = 9;
+  GetOtaPackageRequestMsg otaPackageRequestMsg = 10;
+  GetSnmpDevicesRequestMsg snmpDevicesRequestMsg = 11;
+  GetDeviceRequestMsg deviceRequestMsg = 12;
+  GetDeviceCredentialsRequestMsg deviceCredentialsRequestMsg = 13;
+  GetAllQueueRoutingInfoRequestMsg getAllQueueRoutingInfoRequestMsg = 14;
+  ValidateOrCreateDeviceX509CertRequestMsg validateOrCreateX509CertRequestMsg = 15;
+}
+
+/* Response from ThingsBoard Core Service to Transport Service */
+message TransportApiResponseMsg {
+  ValidateDeviceCredentialsResponseMsg validateCredResponseMsg = 1;
+  GetOrCreateDeviceFromGatewayResponseMsg getOrCreateDeviceResponseMsg = 2;
+  GetEntityProfileResponseMsg entityProfileResponseMsg = 3;
+  ProvisionDeviceResponseMsg provisionDeviceResponseMsg = 4;
+  GetSnmpDevicesResponseMsg snmpDevicesResponseMsg = 5;
+  LwM2MResponseMsg lwM2MResponseMsg = 6;
+  GetResourceResponseMsg resourceResponseMsg = 7;
+  GetOtaPackageResponseMsg otaPackageResponseMsg = 8;
+  GetDeviceResponseMsg deviceResponseMsg = 9;
+  GetDeviceCredentialsResponseMsg deviceCredentialsResponseMsg = 10;
+  repeated GetQueueRoutingInfoResponseMsg getQueueRoutingInfoResponseMsgs = 11;
+}
+
+/* Messages that are handled by ThingsBoard Core Service */
+message ToCoreMsg {
+  TransportToDeviceActorMsg toDeviceActorMsg = 1;
+  DeviceStateServiceMsgProto deviceStateServiceMsg = 2;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 3;
+  bytes toDeviceActorNotificationMsg = 4 [deprecated = true];
+  EdgeNotificationMsgProto edgeNotificationMsg = 5;
+  DeviceActivityProto deviceActivityMsg = 6;
+  NotificationSchedulerServiceMsg notificationSchedulerServiceMsg = 7;
+  LifecycleEventProto lifecycleEventMsg = 8;
+  ErrorEventProto errorEventMsg = 9;
+  ToDeviceActorNotificationMsgProto toDeviceActorNotification = 10;
+  DeviceConnectProto deviceConnectMsg = 50;
+  DeviceDisconnectProto deviceDisconnectMsg = 51;
+  DeviceInactivityProto deviceInactivityMsg = 52;
+}
+
+/* High priority messages with low latency are handled by ThingsBoard Core Service separately */
+/* Please, adjust the TbCoreConsumerStats when modifying the ToCoreNotificationMsg */
+message ToCoreNotificationMsg {
+  LocalSubscriptionServiceMsgProto toLocalSubscriptionServiceMsg = 1;
+  FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  repeated QueueUpdateMsg queueUpdateMsgs = 3;
+  repeated QueueDeleteMsg queueDeleteMsgs = 4;
+  VersionControlResponseMsg vcResponseMsg = 5;
+  SubscriptionMgrMsgProto toSubscriptionMgrMsg = 6;
+  NotificationRuleProcessorMsg notificationRuleProcessorMsg = 7;
+  ComponentLifecycleMsgProto componentLifecycle = 8;
+  CoreStartupMsg coreStartupMsg = 9;
+  EdgeEventUpdateMsgProto edgeEventUpdate = 10;
+  ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11;
+  FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12;
+  ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+}
+
+/* Messages that are handled by ThingsBoard RuleEngine Service */
+message ToRuleEngineMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  bytes tbMsg = 3;
+  repeated string relationTypes = 4;
+  string failureMessage = 5;
+}
+
+message ToRuleEngineNotificationMsg {
+  FromDeviceRPCResponseProto fromDeviceRpcResponse = 2;
+  repeated QueueUpdateMsg queueUpdateMsgs = 3;
+  repeated QueueDeleteMsg queueDeleteMsgs = 4;
+  ComponentLifecycleMsgProto componentLifecycle = 5;
+}
+
+/* Messages that are handled by ThingsBoard Transport Service */
+message ToTransportMsg {
+  int64 sessionIdMSB = 1;
+  int64 sessionIdLSB = 2;
+  SessionCloseNotificationProto sessionCloseNotification = 3;
+  GetAttributeResponseMsg getAttributesResponse = 4;
+  AttributeUpdateNotificationMsg attributeUpdateNotification = 5;
+  ToDeviceRpcRequestMsg toDeviceRequest = 6;
+  ToServerRpcResponseMsg toServerResponse = 7;
+  EntityUpdateMsg entityUpdateMsg = 8;
+  EntityDeleteMsg entityDeleteMsg = 9;
+  ProvisionDeviceResponseMsg provisionResponse = 10;
+  ToTransportUpdateCredentialsProto toTransportUpdateCredentialsNotification = 11;
+  ResourceUpdateMsg resourceUpdateMsg = 12;
+  ResourceDeleteMsg resourceDeleteMsg = 13;
+  UplinkNotificationMsg uplinkNotificationMsg = 14;
+  repeated QueueUpdateMsg queueUpdateMsgs = 15;
+  repeated QueueDeleteMsg queueDeleteMsgs = 16;
+}
+
+message UsageStatsKVProto{
+  string key = 1;
+  int64 value = 2;
+}
+
+message ToUsageStatsServiceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  repeated UsageStatsKVProto values = 5;
+  int64 customerIdMSB = 6;
+  int64 customerIdLSB = 7;
+  string serviceId = 8;
+}
+
+message ToOtaPackageStateServiceMsg {
+  int64 ts = 1;
+  int64 tenantIdMSB = 2;
+  int64 tenantIdLSB = 3;
+  int64 deviceIdMSB = 4;
+  int64 deviceIdLSB = 5;
+  int64 otaPackageIdMSB = 6;
+  int64 otaPackageIdLSB = 7;
+  string type = 8;
+}
+
+message NotificationSchedulerServiceMsg {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 requestIdMSB = 3;
+  int64 requestIdLSB = 4;
+  int64 ts = 5;
+}
+
+message NotificationRuleProcessorMsg {
+  bytes trigger = 1;
+}
+
+message ErrorEventProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  string serviceId = 5;
+  string method = 6;
+  string error = 7;
+}
+
+message LifecycleEventProto {
+  int64 tenantIdMSB = 1;
+  int64 tenantIdLSB = 2;
+  int64 entityIdMSB = 3;
+  int64 entityIdLSB = 4;
+  string serviceId = 5;
+  string lcEventType = 6;
+  bool success = 7;
+  string error = 8;
+}
+
+message ToHousekeeperServiceMsg {
+  HousekeeperTaskProto task = 1;
+}
+
+message HousekeeperTaskProto {
+  string value = 1;
+  int64 ts = 2;
+
+  // reprocessing
+  int32 attempt = 50;
+  repeated string errors = 51;
+}

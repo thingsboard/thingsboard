@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -28,9 +29,8 @@ import org.springframework.cache.CacheManager;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
-import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -51,9 +51,7 @@ import org.thingsboard.server.dao.device.claim.ReclaimResult;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import javax.annotation.Nullable;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 
@@ -67,8 +65,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     private static final String CLAIM_ATTRIBUTE_NAME = "claimingAllowed";
     private static final String CLAIM_DATA_ATTRIBUTE_NAME = "claimingData";
 
-    @Autowired
-    private TbClusterService clusterService;
     @Autowired
     private DeviceService deviceService;
     @Autowired
@@ -91,16 +87,16 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         Device device = deviceService.findDeviceById(tenantId, deviceId);
         Cache cache = cacheManager.getCache(CLAIM_DEVICES_CACHE);
         List<Object> key = constructCacheKey(device.getId());
+        String deviceName = device.getName();
         if (isAllowedClaimingByDefault) {
             if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                 persistInCache(secretKey, durationMs, cache, key);
                 return Futures.immediateFuture(null);
             }
-            log.warn("The device [{}] has been already claimed!", device.getName());
-            return Futures.immediateFailedFuture(new IllegalArgumentException());
+            return Futures.immediateFailedFuture(new IllegalArgumentException("Device [" + deviceName + "] has been already claimed!"));
         } else {
             ListenableFuture<List<AttributeKvEntry>> claimingAllowedFuture = attributesService.find(tenantId, device.getId(),
-                    DataConstants.SERVER_SCOPE, Collections.singletonList(CLAIM_ATTRIBUTE_NAME));
+                    AttributeScope.SERVER_SCOPE, List.of(CLAIM_ATTRIBUTE_NAME));
             return Futures.transform(claimingAllowedFuture, list -> {
                 if (list != null && !list.isEmpty()) {
                     Optional<Boolean> claimingAllowedOptional = list.get(0).getBooleanValue();
@@ -110,8 +106,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                         return null;
                     }
                 }
-                log.warn("Failed to find claimingAllowed attribute for device or it is already claimed![{}]", device.getName());
-                throw new IllegalArgumentException();
+                throw new IllegalArgumentException("Failed to find claimingAllowed attribute for device [" + deviceName + "] or it is already claimed!");
             }, MoreExecutors.directExecutor());
         }
     }
@@ -123,7 +118,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             return Futures.immediateFuture(new ClaimDataInfo(true, key, claimDataFromCache));
         } else {
             ListenableFuture<Optional<AttributeKvEntry>> claimDataAttrFuture = attributesService.find(device.getTenantId(), device.getId(),
-                    DataConstants.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
+                    AttributeScope.SERVER_SCOPE, CLAIM_DATA_ATTRIBUTE_NAME);
 
             return Futures.transform(claimDataAttrFuture, claimDataAttr -> {
                 if (claimDataAttr.isPresent()) {
@@ -153,7 +148,6 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
                     if (device.getCustomerId().getId().equals(ModelConstants.NULL_UUID)) {
                         device.setCustomerId(customerId);
                         Device savedDevice = deviceService.saveDevice(device);
-                        clusterService.onDeviceUpdated(savedDevice, device);
                         return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(savedDevice, ClaimResponse.SUCCESS), MoreExecutors.directExecutor());
                     }
                     return Futures.transform(removeClaimingSavedData(cache, claimData, device), result -> new ClaimResult(null, ClaimResponse.CLAIMED), MoreExecutors.directExecutor());
@@ -180,13 +174,12 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
             Customer unassignedCustomer = customerService.findCustomerById(tenantId, device.getCustomerId());
             device.setCustomerId(null);
             Device savedDevice = deviceService.saveDevice(device);
-            clusterService.onDeviceUpdated(savedDevice, device);
             if (isAllowedClaimingByDefault) {
                 return Futures.immediateFuture(new ReclaimResult(unassignedCustomer));
             }
             SettableFuture<ReclaimResult> result = SettableFuture.create();
             telemetryService.saveAndNotify(
-                    tenantId, savedDevice.getId(), DataConstants.SERVER_SCOPE, Collections.singletonList(
+                    tenantId, savedDevice.getId(), AttributeScope.SERVER_SCOPE, List.of(
                             new BaseAttributeKvEntry(new BooleanDataEntry(CLAIM_ATTRIBUTE_NAME, true), System.currentTimeMillis())
                     ),
                     new FutureCallback<>() {
@@ -207,7 +200,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
     }
 
     private List<Object> constructCacheKey(DeviceId deviceId) {
-        return Collections.singletonList(deviceId);
+        return List.of(deviceId);
     }
 
     private void persistInCache(String secretKey, long durationMs, Cache cache, List<Object> key) {
@@ -229,7 +222,7 @@ public class ClaimDevicesServiceImpl implements ClaimDevicesService {
         }
         SettableFuture<Void> result = SettableFuture.create();
         telemetryService.deleteAndNotify(device.getTenantId(),
-                device.getId(), DataConstants.SERVER_SCOPE, Arrays.asList(CLAIM_ATTRIBUTE_NAME, CLAIM_DATA_ATTRIBUTE_NAME), new FutureCallback<>() {
+                device.getId(), AttributeScope.SERVER_SCOPE, Arrays.asList(CLAIM_ATTRIBUTE_NAME, CLAIM_DATA_ATTRIBUTE_NAME), new FutureCallback<>() {
                     @Override
                     public void onSuccess(@Nullable Void tmp) {
                         result.set(tmp);

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 @import "../../../../../../theme";
 
 :host {
-  width: 840px;
+  width: 780px;
   height: 100%;
   max-width: 100%;
   max-height: 100vh;
@@ -62,44 +62,15 @@
     }
   }
 
-  .tb-mat-error {
-    font-size: 13px;
-  }
-
   .tb-hint {
     padding: 0 0 8px;
   }
 
-  .tb-hint-available-params {
-    border-radius: 6px;
-    background-color: rgba(48, 86, 128, 0.04);
-    margin-bottom: 8px;
-    padding: 8px 16px;
-
-    .content {
-      vertical-align: middle;
-    }
-  }
-
   .delivery-methods-container {
     margin-bottom: 20px;
-    display: flex;
-    flex-wrap: wrap;
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, auto));
     gap: 8px;
-
-    .delivery-method-container {
-      display: inline-flex;
-      flex: 1 1 calc(50% - 8px);
-      max-width: calc(50% - 8px);
-      padding: 16px 12px;
-      border: 1px solid rgba(0, 0, 0, 0.1);
-      border-radius: 6px;
-
-      .delivery-method {
-        width: 100%;
-        height: 100%;
-      }
-    }
   }
 }
 
@@ -112,6 +83,7 @@
 
       .mat-horizontal-stepper-wrapper {
         flex: 1 1 100%;
+        width: 100%;
       }
 
       .mat-horizontal-content-container {
@@ -123,14 +95,6 @@
         @media #{$mat-gt-sm} {
           min-width: 500px;
         }
-      }
-    }
-
-    .tb-form-panel .mat-expansion-panel.tb-settings {
-      padding: 11px 16px;
-
-      & > .mat-expansion-panel-content > .mat-expansion-panel-body {
-        gap: 0;
       }
     }
   }

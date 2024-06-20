@@ -1415,7 +1415,7 @@
 		"action-source-required": "アクションソースが必要です。",
 		"action-name": "名",
 		"action-name-required": "アクション名は必須です。",
-		"action-name-not-unique": "同じ名前の別のアクションがすでに存在します。<br/>アクション名は、同じアクションソース内で一意である必要があります。",
+		"action-name-not-unique": "同じ名前の別のアクションがすでに存在します。\nアクション名は、同じアクションソース内で一意である必要があります。",
 		"action-icon": "アイコン",
 		"action-type": "タイプ",
 		"action-type-required": "アクションタイプが必要です。",

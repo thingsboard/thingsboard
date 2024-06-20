@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,59 +15,39 @@
     limitations under the License.
 
 -->
-<div mat-dialog-content fxLayout="column" style="padding: 0 8px 8px">
-  <div fxLayout="row" fxLayoutAlign="space-between center">
-    <span class="tb-no-data-text">{{ 'gateway.docker-label' | translate }}</span>
-    <div fxFlexAlign="end" class="tb-help" [tb-help]="helpLink"></div>
+<div mat-dialog-content style="padding: 16px 16px 8px" class="tb-form-panel no-border">
+  <div class="tb-no-data-text">{{ 'gateway.docker-label' | translate }}</div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>device.connectivity.install-necessary-client-tools</div>
+    <div class="tb-form-row no-border no-padding space-between">
+      <div class="tb-no-data-text tb-commands-hint" translate>gateway.install-docker-compose</div>
+      <a mat-stroked-button color="primary" href="https://docs.docker.com/compose/install/" target="_blank">
+        <mat-icon>description</mat-icon>
+        {{ 'common.documentation' | translate }}
+      </a>
+    </div>
   </div>
-  <div fxFlex fxLayout="row" style="justify-content: space-between; flex-grow: 0; align-items: center">
-  </div>
-  <mat-tab-group [(selectedIndex)]="tabIndex">
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon class="tabs-icon" svgIcon="windows"></mat-icon>
-        Windows
-      </ng-template>
-      <ng-template matTabContent>
-        <ng-container
-          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.windows }">
-        </ng-container>
-      </ng-template>
-    </mat-tab>
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon class="tabs-icon" svgIcon="linux"></mat-icon>
-        Linux
-      </ng-template>
-      <ng-template matTabContent>
-        <ng-container
-          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.linux }">
-        </ng-container>
-      </ng-template>
-    </mat-tab>
-    <mat-tab>
-      <ng-template mat-tab-label>
-        <mat-icon class="tabs-icon" svgIcon="macos"></mat-icon>
-        MacOS
-      </ng-template>
-      <ng-template matTabContent>
-        <ng-container
-          *ngTemplateOutlet="commandsExample; context: {command: commands?.mqtt?.linux }">
-        </ng-container>
-      </ng-template>
-    </mat-tab>
-  </mat-tab-group>
-</div>
 
-<ng-template #commandsExample let-command="command">
-  <div class="tb-form-panel stroked tb-tab-body">
-    <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>gateway.download-configuration-file</div>
+    <div class="tb-form-row no-border no-padding space-between">
+      <div class="tb-no-data-text tb-commands-hint" translate>gateway.download-docker-compose</div>
+      <button mat-stroked-button color="primary" (click)="download($event)">
+        <mat-icon>download</mat-icon>
+        {{ 'action.download' | translate }}
+      </button>
+    </div>
+  </div>
+
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>gateway.launch-gateway</div>
+    <div class="tb-no-data-text tb-commands-hint" translate>gateway.launch-docker-compose</div>
     <tb-markdown usePlainMarkdown containerClass="start-code"
-       data="
+                 data="
           ```bash
-          {{ command }}
+          docker compose up
           {:copy-code}
           ```
       "></tb-markdown>
   </div>
-</ng-template>
+</div>

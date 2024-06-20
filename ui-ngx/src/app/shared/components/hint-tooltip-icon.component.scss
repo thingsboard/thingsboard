@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,13 +17,15 @@
   display: flex;
   flex-direction: row;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 :host {
   .tb-hint-tooltip-icon {
     color: #E0E0E0;
     overflow: visible;
+    order: 3;
+    margin-left: 4px;
     &:hover {
       color: #9E9E9E;
     }

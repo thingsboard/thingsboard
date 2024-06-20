@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,12 +28,14 @@ import org.junit.Before;
 import org.junit.Ignore;
 import org.junit.Test;
 import org.mockito.AdditionalAnswers;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.testcontainers.shaded.org.awaitility.Awaitility;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Customer;
@@ -51,7 +53,6 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
-import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -73,7 +74,9 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.service.gateway_device.GatewayNotificationsService;
+import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -81,7 +84,9 @@ import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.awaitility.Awaitility.await;
 import static org.hamcrest.Matchers.containsString;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.times;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -106,6 +111,9 @@ public class DeviceControllerTest extends AbstractControllerTest {
     @SpyBean
     private GatewayNotificationsService gatewayNotificationsService;
 
+    @SpyBean
+    private DeviceStateService deviceStateService;
+
     @Autowired
     private DeviceDao deviceDao;
 
@@ -125,7 +133,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -144,8 +152,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -680,7 +687,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
@@ -714,9 +721,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         testNotificationUpdateGatewayNever();
 
         loginSysAdmin();
-
-        doDelete("/api/tenant/" + savedTenant2.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant2.getId());
     }
 
     @Test
@@ -907,7 +912,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAnyAdditionalInfoAny(new Device(), new Device(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity,1);
+                ActionType.DELETED, ActionType.DELETED, cntEntity, cntEntity, 1);
         testNotificationUpdateGatewayNever();
     }
 
@@ -1312,7 +1317,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         loginSysAdmin();
         Tenant tenant = new Tenant();
         tenant.setTitle("Different tenant");
-        Tenant savedDifferentTenant = doPost("/api/tenant", tenant, Tenant.class);
+        Tenant savedDifferentTenant = saveTenant(tenant);
         Assert.assertNotNull(savedDifferentTenant);
 
         User user = new User();
@@ -1340,6 +1345,28 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 ActionType.ASSIGNED_TO_TENANT, savedDifferentTenant.getId().getId().toString(), savedDifferentTenant.getTitle());
         testNotificationUpdateGatewayNever();
 
+        ArgumentCaptor<TransportProtos.DeviceStateServiceMsgProto> protoCaptor = ArgumentCaptor.forClass(TransportProtos.DeviceStateServiceMsgProto.class);
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Mockito.verify(deviceStateService, Mockito.atLeastOnce()).onQueueMsg(protoCaptor.capture(), any());
+            return protoCaptor.getAllValues().stream().anyMatch(proto ->
+                    proto.getTenantIdMSB() == savedTenant.getUuidId().getMostSignificantBits() &&
+                            proto.getTenantIdLSB() == savedTenant.getUuidId().getLeastSignificantBits() &&
+                            proto.getDeviceIdMSB() == savedDevice.getUuidId().getMostSignificantBits() &&
+                            proto.getDeviceIdLSB() == savedDevice.getUuidId().getLeastSignificantBits() &&
+                            proto.getDeleted());
+        });
+
+        Awaitility.await().atMost(5, TimeUnit.SECONDS).until(() -> {
+            Mockito.verify(deviceStateService, Mockito.atLeastOnce()).onQueueMsg(protoCaptor.capture(), any());
+            return protoCaptor.getAllValues().stream().anyMatch(proto ->
+                    proto.getTenantIdMSB() == savedDifferentTenant.getUuidId().getMostSignificantBits() &&
+                            proto.getTenantIdLSB() == savedDifferentTenant.getUuidId().getLeastSignificantBits() &&
+                            proto.getDeviceIdMSB() == savedDevice.getUuidId().getMostSignificantBits() &&
+                            proto.getDeviceIdLSB() == savedDevice.getUuidId().getLeastSignificantBits() &&
+                            proto.getAdded());
+        });
+
         login("tenant9@thingsboard.org", "testPassword1");
 
         Device foundDevice1 = doGet("/api/device/" + assignedDevice.getId().getId(), Device.class);
@@ -1351,8 +1378,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
                 .andExpect(statusReason(containsString(msgErrorNoFound("Device", savedAnotherDevice.getId().getId().toString()))));
 
         loginSysAdmin();
-        doDelete("/api/tenant/" + savedDifferentTenant.getId().getId())
-                .andExpect(status().isOk());
+        deleteTenant(savedDifferentTenant.getId());
     }
 
     @Test
@@ -1516,17 +1542,24 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Device savedDevice = doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class);
 
         //check server attribute value
-        List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(attributeValue, actualAttribute.get("value"));
         });
-        Map<String, Object> serverAttribute = values.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(attributeValue, serverAttribute.get("value"));
 
         //update server attribute value
         String newAttributeValue = "testValue2";
         JsonNode content = JacksonUtil.toJsonNode("{\"DATA\": \"" + newAttributeValue + "\"}");
         doPost("/api/plugins/telemetry/" + EntityType.DEVICE.name() + "/" + savedDevice.getUuidId() + "/SERVER_SCOPE", content)
                 .andExpect(status().isOk());
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
+        });
 
         //reimport devices
         String deviceName2 = "secondDevice";
@@ -1538,19 +1571,19 @@ public class DeviceControllerTest extends AbstractControllerTest {
         doPostWithTypedResponse("/api/device/bulk_import", request, new TypeReference<>() {});
         Device savedDevice2 = doGet("/api/tenant/devices?deviceName=" + deviceName2, Device.class);
 
-        //check attribute value was not changed after reimport
-        List<Map<String, Object>> values2 = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
-        });
-        Map<String, Object> retrievedServerAttribute2 = values2.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(newAttributeValue, retrievedServerAttribute2.get("value"));
-
         //check attribute for second device
-        List<Map<String, Object>> values3 = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice2.getId() +
-                "/values/attributes/SERVER_SCOPE", new TypeReference<>() {
+        await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
+            Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice2.getId() +
+                    "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                    .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+            Assert.assertEquals(attributeValue2, actualAttribute.get("value"));
         });
-        Map<String, Object> retrievedServerAttribute3 = values3.stream().filter(att -> att.get("key").equals("DATA")).findFirst().get();
-        Assert.assertEquals(attributeValue2, retrievedServerAttribute3.get("value"));
+
+        //check attribute value was not changed after reimport
+        Map<String, Object> actualAttribute = doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" + savedDevice.getId() +
+                "/values/attributes/SERVER_SCOPE", new TypeReference<List<Map<String, Object>>>() {}).stream()
+                .filter(att -> att.get("key").equals("DATA")).findFirst().get();
+        Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
     }
 
     private Device createDevice(String name) {

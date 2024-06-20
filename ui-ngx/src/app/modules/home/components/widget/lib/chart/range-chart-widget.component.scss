@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,15 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 .tb-range-chart-panel {
   width: 100%;
   height: 100%;
   position: relative;
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 20px 24px 24px 24px;
+  gap: 8px;
+  &.overlay {
+    padding: 20px 24px 24px 24px;
+  }
   > div:not(.tb-range-chart-overlay) {
     z-index: 1;
   }
@@ -41,7 +42,7 @@
     min-height: 0;
     display: flex;
     flex-direction: column;
-    gap: 16px;
+    gap: 8px;
     &.legend-top {
       flex-direction: column-reverse;
     }
@@ -89,8 +90,9 @@
       }
     }
     &.legend-right, &.legend-left {
-      gap: 24px;
+      gap: 16px;
       .tb-range-chart-legend {
+        padding-top: 8px;
         flex-direction: column-reverse;
         justify-content: flex-end;
         align-items: stretch;

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,10 +26,8 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { widgetType as WidgetDataType, WidgetTypeInfo } from '@shared/models/widget.models';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { WidgetService } from '@core/http/widget.service';
-import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
-import { isDefinedAndNotNull } from '@core/utils';
 import { FormControl, Validators } from '@angular/forms';
 import { MatDialog } from '@angular/material/dialog';
 import { SelectWidgetTypeDialogComponent } from '@home/pages/widget/select-widget-type-dialog.component';
@@ -61,7 +59,6 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
               private route: ActivatedRoute,
               private widgetsService: WidgetService,
               private importExport: ImportExportService,
-              private sanitizer: DomSanitizer,
               private cd: ChangeDetectorRef,
               private dialog: MatDialog) {
     super(store);
@@ -84,13 +81,6 @@ export class WidgetsBundleWidgetsComponent extends PageComponent implements OnIn
   }
 
   ngOnInit(): void {
-  }
-
-  getPreviewImage(imageUrl: string | null): SafeUrl | string {
-    if (isDefinedAndNotNull(imageUrl)) {
-      return this.sanitizer.bypassSecurityTrustUrl(imageUrl);
-    }
-    return '/assets/widget-preview-empty.svg';
   }
 
   trackByWidget(index: number, widget: WidgetTypeBundle): any {

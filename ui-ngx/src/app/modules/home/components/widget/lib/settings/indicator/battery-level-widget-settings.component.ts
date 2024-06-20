@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, Injector } from '@angular/core';
-import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
+import { Datasource, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -48,6 +48,15 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
     return [BatteryLevelLayout.vertical_divided, BatteryLevelLayout.horizontal_divided].includes(layout);
   }
 
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.widgetConfig.config.datasources;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
+  }
+
   constructor(protected store: Store<AppState>,
               private $injector: Injector,
               private fb: UntypedFormBuilder) {
@@ -75,7 +84,8 @@ export class BatteryLevelWidgetSettingsComponent extends WidgetSettingsComponent
       batteryLevelColor: [settings.batteryLevelColor, []],
       batteryShapeColor: [settings.batteryShapeColor, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 

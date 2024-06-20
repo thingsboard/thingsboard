@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,7 +33,7 @@ import { UserService } from '@core/http/user.service';
 import { AlarmService } from '@core/http/alarm.service';
 import { Router } from '@angular/router';
 import { BroadcastService } from '@core/services/broadcast.service';
-import { ImportExportService } from '@home/components/import-export/import-export.service';
+import { ImportExportService } from '@shared/import-export/import-export.service';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { AssetProfileService } from '@core/http/asset-profile.service';
 import { OtaPackageService } from '@core/http/ota-package.service';
@@ -44,12 +44,19 @@ import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service'
 import { NotificationService } from '@core/http/notification.service';
 import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
 import { UserSettingsService } from '@core/http/user-settings.service';
+import { ImageService } from '@core/http/image.service';
+import { AlarmCommentService } from '@core/http/alarm-comment.service';
+import { TenantService } from '@core/http/tenant.service';
+import { TenantProfileService } from '@core/http/tenant-profile.service';
+import { UiSettingsService } from '@core/http/ui-settings.service';
+import { UsageInfoService } from '@core/http/usage-info.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
    ['broadcastService', BroadcastService],
    ['deviceService', DeviceService],
    ['alarmService', AlarmService],
+   ['alarmCommentService', AlarmCommentService],
    ['assetService', AssetService],
    ['entityViewService', EntityViewService],
    ['customerService', CustomerService],
@@ -66,6 +73,7 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['translate', TranslateService],
    ['http', HttpClient],
    ['router', Router],
+   ['imageService', ImageService],
    ['importExport', ImportExportService],
    ['deviceProfileService', DeviceProfileService],
    ['assetProfileService', AssetProfileService],
@@ -74,7 +82,11 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['resourceService', ResourceService],
    ['twoFactorAuthenticationService', TwoFactorAuthenticationService],
    ['telemetryWsService', TelemetryWebsocketService],
+   ['tenantService', TenantService],
+   ['tenantProfileService', TenantProfileService],
    ['userSettingsService', UserSettingsService],
+   ['uiSettingsService', UiSettingsService],
+   ['usageInfoService', UsageInfoService],
    ['notificationService', NotificationService]
   ]
 );

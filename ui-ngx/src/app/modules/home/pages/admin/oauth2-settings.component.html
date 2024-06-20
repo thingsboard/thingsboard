@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -29,13 +29,18 @@
     <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
     <mat-card-content style="padding-top: 16px;">
       <form [formGroup]="oauth2SettingsForm" (ngSubmit)="save()">
-        <fieldset [disabled]="isLoading$ | async">
-          <mat-checkbox formControlName="enabled">
-            {{ 'admin.oauth2.enable' | translate }}
-          </mat-checkbox>
-          <section *ngIf="oauth2SettingsForm.get('enabled').value" style="margin-top: 1em;">
+        <fieldset class="tb-form-panel stroked gap-xs-12" style="margin-bottom: 16px" [disabled]="isLoading$ | async">
+          <div class="tb-form-row no-border no-padding column-xs">
+            <mat-chip-listbox formControlName="enabled">
+              <mat-chip-option [value]="true">{{ 'admin.oauth2.enable' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+            <mat-chip-listbox formControlName="edgeEnabled">
+              <mat-chip-option [value]="true">{{ 'admin.oauth2.edge-enable' | translate }}</mat-chip-option>
+            </mat-chip-listbox>
+          </div>
+          <section *ngIf="oauth2SettingsForm.get('enabled').value && oauth2ParamsInfos.controls.length">
             <ng-container formArrayName="oauth2ParamsInfos">
-              <div class="container">
+              <div>
                 <mat-accordion multi>
                   <ng-container *ngFor="let oauth2ParamsInfo of oauth2ParamsInfos.controls; let i = index; trackBy: trackByItem">
                     <mat-expansion-panel [formGroupName]="i">
@@ -100,7 +105,7 @@
                                           [copyText]="redirectURI(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                       </mat-form-field>
                                       <mat-form-field fxFlex *ngIf="domainInfo.get('scheme').value === 'MIXED'" class="mat-block">
@@ -112,7 +117,7 @@
                                           [copyText]="redirectURIMixed(domainInfo)"
                                           tooltipText="{{ 'admin.oauth2.copy-redirect-uri' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
                                       </mat-form-field>
                                     </div>
@@ -151,7 +156,7 @@
                                 <div [formGroupName]="n" fxLayout="row" fxLayoutGap="8px">
                                   <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap="8px">
                                     <div fxFlex fxLayout="column">
-                                      <mat-form-field fxFlex class="mat-block" floatLabel="always">
+                                      <mat-form-field fxFlex class="mat-block" floatLabel="always" subscriptSizing="dynamic">
                                         <mat-label translate>admin.oauth2.mobile-package</mat-label>
                                         <input matInput formControlName="pkgName" placeholder="{{ 'admin.oauth2.mobile-package-placeholder' | translate }}" required>
                                         <mat-hint translate>admin.oauth2.mobile-package-hint</mat-hint>
@@ -161,9 +166,9 @@
                                       </mat-error>
                                     </div>
                                     <div fxFlex fxLayout="row">
-                                      <mat-form-field fxFlex class="mat-block">
+                                      <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
                                         <mat-label translate>admin.oauth2.mobile-app-secret</mat-label>
-                                        <textarea matInput formControlName="appSecret" rows="1" required></textarea>
+                                        <input matInput formControlName="appSecret" required>
                                         <tb-copy-button
                                           matSuffix
                                           miniButton="false"
@@ -171,10 +176,17 @@
                                           [copyText]="mobileInfo.get('appSecret').value"
                                           tooltipText="{{ 'admin.oauth2.copy-mobile-app-secret' | translate }}"
                                           tooltipPosition="above"
-                                          mdiIcon="mdi:clipboard-arrow-left">
+                                          icon="mdi:clipboard-arrow-left">
                                         </tb-copy-button>
-                                        <mat-error *ngIf="mobileInfo.get('appSecret').invalid">
-                                          {{ 'admin.oauth2.invalid-mobile-app-secret' | translate }}
+                                        <mat-hint translate>admin.oauth2.mobile-app-secret-hint</mat-hint>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').hasError('required')">
+                                          {{ 'admin.oauth2.mobile-app-secret-required' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').hasError('base64')">
+                                          {{ 'admin.oauth2.mobile-app-secret-min-length' | translate }}
+                                        </mat-error>
+                                        <mat-error *ngIf="mobileInfo.get('appSecret').hasError('minLength')">
+                                          {{ 'admin.oauth2.mobile-app-secret-base64' | translate }}
                                         </mat-error>
                                       </mat-form-field>
                                     </div>

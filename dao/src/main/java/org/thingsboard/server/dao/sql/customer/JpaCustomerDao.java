@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,6 @@ import org.thingsboard.server.dao.model.sql.CustomerEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -63,9 +62,13 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     }
 
     @Override
-    public Optional<Customer> findCustomersByTenantIdAndTitle(UUID tenantId, String title) {
-        Customer customer = DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title));
-        return Optional.ofNullable(customer);
+    public Optional<Customer> findCustomerByTenantIdAndTitle(UUID tenantId, String title) {
+        return Optional.ofNullable(DaoUtil.getData(customerRepository.findByTenantIdAndTitle(tenantId, title)));
+    }
+
+    @Override
+    public Optional<Customer> findPublicCustomerByTenantId(UUID tenantId) {
+        return Optional.ofNullable(DaoUtil.getData(customerRepository.findPublicCustomerByTenantId(tenantId)));
     }
 
     @Override
@@ -80,7 +83,7 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
 
     @Override
     public Customer findByTenantIdAndName(UUID tenantId, String name) {
-        return findCustomersByTenantIdAndTitle(tenantId, name).orElse(null);
+        return findCustomerByTenantIdAndTitle(tenantId, name).orElse(null);
     }
 
     @Override
@@ -92,6 +95,13 @@ public class JpaCustomerDao extends JpaAbstractDao<CustomerEntity, Customer> imp
     public CustomerId getExternalIdByInternal(CustomerId internalId) {
         return Optional.ofNullable(customerRepository.getExternalIdById(internalId.getId()))
                 .map(CustomerId::new).orElse(null);
+    }
+
+    @Override
+    public PageData<Customer> findCustomersWithTheSameTitle(PageLink pageLink) {
+        return DaoUtil.toPageData(
+                customerRepository.findCustomersWithTheSameTitle(DaoUtil.toPageable(pageLink))
+        );
     }
 
     @Override

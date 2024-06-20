@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class RuleChainsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Rul
     private final RuleChainService ruleChainService;
 
     @Override
-    PageData<RuleChain> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<RuleChain> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return ruleChainService.findRuleChainsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -54,4 +54,5 @@ public class RuleChainsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Rul
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN,
                 EdgeEventActionType.ADDED, ruleChain.getId(), isRootBody);
     }
+
 }

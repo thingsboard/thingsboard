@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,12 @@
 package org.thingsboard.server.common.data.widget;
 
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
@@ -29,17 +30,16 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @JsonPropertyOrder({ "fqn", "name", "deprecated", "image", "description", "descriptor", "externalId" })
-public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, ExportableEntity<WidgetTypeId> {
+public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
-    @Length(fieldName = "image", max = 1000000)
-    @ApiModelProperty(position = 9, value = "Base64 encoded thumbnail")
+    @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")
     private String image;
     @NoXss
     @Length(fieldName = "description", max = 1024)
-    @ApiModelProperty(position = 10, value = "Description of the widget")
+    @Schema(description = "Description of the widget")
     private String description;
     @NoXss
-    @ApiModelProperty(position = 11, value = "Tags of the widget type")
+    @Schema(description = "Tags of the widget type")
     private String[] tags;
 
     @Getter

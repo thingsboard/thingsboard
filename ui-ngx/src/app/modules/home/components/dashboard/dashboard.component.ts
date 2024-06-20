@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ import { IAliasController, IStateController } from '@app/core/api/widget-api.mod
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
-import { distinct } from 'rxjs/operators';
+import { distinct, take } from 'rxjs/operators';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
@@ -96,6 +96,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   isEdit: boolean;
+
+  @Input()
+  isPreview: boolean;
 
   @Input()
   autofillHeight: boolean;
@@ -211,7 +214,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       disableAutoPositionOnConflict: false,
       pushItems: false,
       swap: false,
-      maxRows: 100,
+      maxRows: 3000,
       minCols: this.columns ? this.columns : 24,
       maxCols: 3000,
       maxItemCols: 1000,
@@ -290,11 +293,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       this.dashboardTimewindowChangedSubject.next(this.dashboardTimewindow);
     }
 
-    if (updateMobileOpts) {
-      this.updateMobileOpts();
-    }
     if (updateLayoutOpts) {
       this.updateLayoutOpts();
+    }
+    if (updateMobileOpts) {
+      this.updateMobileOpts();
     }
     if (updateEditingOpts) {
       this.updateEditingOpts();
@@ -433,7 +436,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       $event.stopPropagation();
     }
     if (this.isExportActionEnabled && this.callbacks && this.callbacks.onExportWidget) {
-      this.callbacks.onExportWidget($event, widget.widget);
+      widget.title$.pipe(
+        take(1)
+      ).subscribe((widgetTitle) => {
+        this.callbacks.onExportWidget($event, widget.widget, widgetTitle);
+      });
     }
   }
 

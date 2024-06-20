@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,6 +39,8 @@ import { TwoFactorAuthSettingsComponent } from '@home/pages/admin/two-factor-aut
 import { widgetsLibraryRoutes } from '@home/pages/widget/widget-library-routing.module';
 import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
+import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
+import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
 
 @Injectable()
 export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
@@ -71,6 +73,25 @@ const routes: Routes = [
         }
       },
       ...widgetsLibraryRoutes,
+      {
+        path: 'images',
+        data: {
+          breadcrumb: {
+            label: 'image.gallery',
+            icon: 'filter'
+          }
+        },
+        children: [
+          {
+            path: '',
+            component: ImageGalleryComponent,
+            data: {
+              auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
+              title: 'image.gallery',
+            },
+          }
+        ]
+      },
       {
         path: 'resources-library',
         data: {
@@ -116,6 +137,7 @@ const routes: Routes = [
     component: RouterTabsComponent,
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
+      showMainLoadingBar: false,
       breadcrumb: {
         label: 'admin.settings',
         icon: 'settings'
@@ -246,6 +268,19 @@ const routes: Routes = [
           breadcrumb: {
             label: 'admin.auto-commit',
             icon: 'settings_backup_restore'
+          }
+        }
+      },
+      {
+        path: 'mobile-app',
+        component: MobileAppSettingsComponent,
+        canDeactivate: [ConfirmOnExitGuard],
+        data: {
+          auth: [Authority.SYS_ADMIN],
+          title: 'admin.mobile-app.mobile-app',
+          breadcrumb: {
+            label: 'admin.mobile-app.mobile-app',
+            icon: 'smartphone'
           }
         }
       },

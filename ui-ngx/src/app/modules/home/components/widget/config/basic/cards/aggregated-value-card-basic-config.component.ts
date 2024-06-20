@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -148,11 +148,13 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
       color: {
         color: 'rgba(0, 0, 0, 0.87)',
         type: ColorType.range,
-        rangeList: [
-          {to: 0, color: '#198038'},
-          {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
-          {from: 0, color: '#D12730'}
-        ],
+        rangeList: {
+          range: [
+            {to: 0, color: '#198038'},
+            {from: 0, to: 0, color: 'rgba(0, 0, 0, 0.87)'},
+            {from: 0, color: '#D12730'}
+          ]
+        },
         colorFunction: ''
       },
       showArrow: true
@@ -255,6 +257,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -302,6 +305,7 @@ export class AggregatedValueCardBasicConfigComponent extends BasicWidgetConfigCo
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;

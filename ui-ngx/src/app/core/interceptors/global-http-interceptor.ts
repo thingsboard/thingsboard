@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,7 +31,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { parseHttpErrorMessage } from '@core/utils';
 
-let tmpHeaders = {};
+const tmpHeaders = {};
 
 @Injectable()
 export class GlobalHttpInterceptor implements HttpInterceptor {
@@ -85,7 +85,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     if (newReq) {
       return this.handleRequest(newReq, next);
     } else {
-      return throwError(new Error('Could not get JWT token from store.'));
+      return throwError(() => new Error('Could not get JWT token from store.'));
     }
   }
 
@@ -136,37 +136,34 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
       const errorMessageWithTimeout = parseHttpErrorMessage(errorResponse, this.translate, req.responseType);
       this.showError(errorMessageWithTimeout.message, errorMessageWithTimeout.timeout);
     }
-    return throwError(errorResponse);
+    return throwError(() => errorResponse);
   }
 
   private retryRequest(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     const thisTimeout =  1000 + Math.random() * 3000;
     return of(null).pipe(
       delay(thisTimeout),
-      mergeMap(() => {
-        return this.jwtIntercept(req, next);
-      }
+      mergeMap(() => this.jwtIntercept(req, next)
     ));
   }
 
   private refreshTokenAndRetry(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
-    return this.authService.refreshJwtToken().pipe(switchMap(() => {
-      return this.jwtIntercept(req, next);
-    }),
-    catchError((err: Error) => {
-      this.authService.logout(true, true);
-      const message = err ? err.message : 'Unauthorized!';
-      return this.handleResponseError(req, next, new HttpErrorResponse({error: {message, timeout: 200}, status: 401}));
-    }));
+    return this.authService.refreshJwtToken().pipe(
+      catchError((err: Error) => {
+        this.authService.logout(true, true);
+        const message = err ? err.message : 'Unauthorized!';
+        return this.handleResponseError(req, next, new HttpErrorResponse({error: {message, timeout: 200}, status: 401}));
+      }),
+      switchMap(() => this.jwtIntercept(req, next)),
+    );
   }
 
   private updateAuthorizationHeader(req: HttpRequest<any>): HttpRequest<any> {
     const jwtToken = AuthService.getJwtToken();
     if (jwtToken) {
+      tmpHeaders[this.AUTH_HEADER_NAME] = `${this.AUTH_SCHEME}${jwtToken}`;
       req = req.clone({
-        setHeaders: (tmpHeaders = {},
-          tmpHeaders[this.AUTH_HEADER_NAME] = '' + this.AUTH_SCHEME + jwtToken,
-          tmpHeaders)
+        setHeaders: tmpHeaders
       });
       return req;
     } else {
@@ -174,7 +171,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     }
   }
 
-  private isInternalUrlPrefix(url): boolean {
+  private isInternalUrlPrefix(url: string): boolean {
     for (const index in this.internalUrlPrefixes) {
       if (url.startsWith(this.internalUrlPrefixes[index])) {
         return true;
@@ -183,7 +180,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     return false;
   }
 
-  private isTokenBasedAuthEntryPoint(url): boolean {
+  private isTokenBasedAuthEntryPoint(url: string): boolean {
     return  url.startsWith('/api/') &&
       !url.startsWith(Constants.entryPoints.login) &&
       !url.startsWith(Constants.entryPoints.tokenRefresh) &&

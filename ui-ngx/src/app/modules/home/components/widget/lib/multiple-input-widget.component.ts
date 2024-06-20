@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -103,8 +103,8 @@ interface MultipleInputWidgetDataKeySettings {
   invalidJsonErrorMessage?: string;
   useCustomIcon: boolean;
   icon: string;
-  customIcon: string ;
-  safeCustomIcon?: SafeUrl;
+  customIcon: string;
+  customIconUrl?: string;
   inputTypeNumber?: boolean;
   readOnly?: boolean;
   disabledOnCondition?: boolean;
@@ -312,7 +312,7 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
             }
 
             if (dataKey.settings.useCustomIcon && isDefinedAndNotNull(dataKey.settings.customIcon)) {
-              dataKey.settings.safeCustomIcon = this.sanitizer.bypassSecurityTrustUrl(dataKey.settings.customIcon);
+              dataKey.settings.customIconUrl = dataKey.settings.customIcon;
             }
 
             if (dataKey.settings.useGetValueFunction && dataKey.settings.getValueFunctionBody.length) {
@@ -783,10 +783,10 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
       }
     }).afterClosed().subscribe(
       (res) => {
-        if (!isEqual(res, formControl.value)) {
+        if (isDefined(res) && !isEqual(res, formControl.value)) {
           formControl.patchValue(res);
           formControl.markAsDirty();
-          if(!this.settings.showActionButtons) {
+          if (!this.settings.showActionButtons) {
             this.inputChanged(source, key);
           }
         }

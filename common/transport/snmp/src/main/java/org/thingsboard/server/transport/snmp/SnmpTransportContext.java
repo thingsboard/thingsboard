@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,12 +152,14 @@ public class SnmpTransportContext extends TransportContext {
         try {
             if (!newProfileTransportConfiguration.equals(sessionContext.getProfileTransportConfiguration())) {
                 sessionContext.setProfileTransportConfiguration(newProfileTransportConfiguration);
+                sessionContext.setDevice(device);
                 sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
                 snmpTransportService.cancelQueryingTasks(sessionContext);
                 snmpTransportService.createQueryingTasks(sessionContext);
                 transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.UPDATED, true, null);
             } else if (!newDeviceTransportConfiguration.equals(sessionContext.getDeviceTransportConfiguration())) {
                 sessionContext.setDeviceTransportConfiguration(newDeviceTransportConfiguration);
+                sessionContext.setDevice(device);
                 sessionContext.initializeTarget(newProfileTransportConfiguration, newDeviceTransportConfiguration);
                 transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.UPDATED, true, null);
             } else {

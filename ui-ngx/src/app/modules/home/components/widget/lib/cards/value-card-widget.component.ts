@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import {
   ViewChild
 } from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
+import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import {
   backgroundStyle,
   ColorProcessor,
@@ -44,6 +44,8 @@ import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } fr
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
 
 const squareLayoutSize = 160;
 const squareLayoutPadding = 48;
@@ -92,7 +94,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   dateStyle: ComponentStyle = {};
   dateColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
 
   private panelResize$: ResizeObserver;
@@ -101,7 +103,9 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   private decimals = 0;
   private units = '';
 
-  constructor(private renderer: Renderer2,
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
@@ -142,7 +146,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
   }
 
@@ -179,7 +183,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     const tsValue = getSingleTsValue(this.ctx.data);
     let ts;
     let value;
-    if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
+    if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       ts = tsValue[0];
       value = tsValue[1];
       this.valueText = formatValue(value, this.decimals, this.units, false);

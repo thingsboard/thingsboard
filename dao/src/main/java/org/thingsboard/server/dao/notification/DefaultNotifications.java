@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,9 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Alarm
 import org.thingsboard.server.common.data.notification.rule.trigger.config.ApiUsageLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig.DeviceEvent;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig.EdgeConnectivityEvent;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntitiesLimitNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.EntityActionNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NewPlatformVersionNotificationRuleTriggerConfig;
@@ -47,6 +50,7 @@ import org.thingsboard.server.common.data.notification.rule.trigger.config.Notif
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RateLimitsNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.TaskProcessingFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplate;
 import org.thingsboard.server.common.data.notification.template.NotificationTemplateConfig;
 import org.thingsboard.server.common.data.notification.template.WebDeliveryMethodNotificationTemplate;
@@ -325,14 +329,47 @@ public class DefaultNotifications {
                     .description("Send notification to tenant admins when any Rule chain or Rule node failed to start, update or stop")
                     .build())
             .build();
+    public static final DefaultNotification edgeConnection = DefaultNotification.builder()
+            .name("Edge connection notification")
+            .type(NotificationType.EDGE_CONNECTION)
+            .subject("Edge connection status change")
+            .text("Edge '${edgeName}' is now ${eventType}")
+            .icon("info").color(null)
+            .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")
+            .rule(DefaultRule.builder()
+                    .name("Edge connection status change")
+                    .triggerConfig(EdgeConnectionNotificationRuleTriggerConfig.builder()
+                            .edges(null)
+                            .notifyOn(Set.of(EdgeConnectivityEvent.CONNECTED, EdgeConnectivityEvent.DISCONNECTED))
+                            .build())
+                    .description("Send notification to tenant admins when the connection status between TB and Edge changes")
+                    .build())
+            .build();
+    public static final DefaultNotification edgeCommunicationFailures = DefaultNotification.builder()
+            .name("Edge communication failure notification")
+            .type(NotificationType.EDGE_COMMUNICATION_FAILURE)
+            .subject("Edge '${edgeName}' communication failure occurred")
+            .text("Failure message: '${failureMsg}'")
+            .icon("error").color(RED_COLOR)
+            .button("Go to Edge").link("/edgeManagement/instances/${edgeId}")
+            .rule(DefaultRule.builder()
+                    .name("Edge communication failure")
+                    .triggerConfig(EdgeCommunicationFailureNotificationRuleTriggerConfig.builder().edges(null).build())
+                    .description("Send notification to tenant admins when communication failures occur")
+                    .build())
+            .build();
 
-    public static final DefaultNotification jwtSigningKeyIssue = DefaultNotification.builder()
-            .name("JWT Signing Key issue notification")
-            .type(NotificationType.GENERAL)
-            .subject("WARNING: security issue")
-            .text("The platform is configured to use default JWT Signing Key. Please change it on the security settings page")
+    public static final DefaultNotification taskProcessingFailure = DefaultNotification.builder()
+            .name("Task processing failure notification")
+            .type(NotificationType.TASK_PROCESSING_FAILURE)
+            .subject("Failed to process ${taskType}")
+            .text("Failed to process ${taskDescription} for tenant ${tenantId}: ${error}")
             .icon("warning").color(YELLOW_COLOR)
-            .button("Go to settings").link("/security-settings/general")
+            .rule(DefaultRule.builder()
+                    .name("Task processing failure")
+                    .triggerConfig(TaskProcessingFailureNotificationRuleTriggerConfig.builder().build())
+                    .description("Send notification to system admins when task processing fails")
+                    .build())
             .build();
 
     private final NotificationTemplateService templateService;
@@ -346,7 +383,7 @@ public class DefaultNotifications {
         if (defaultNotification.getRule() != null && targets.length > 0) {
             NotificationRule rule = defaultNotification.toRule(template.getId(), targets);
             rule.setTenantId(tenantId);
-            rule = ruleService.saveNotificationRule(tenantId, rule);
+            ruleService.saveNotificationRule(tenantId, rule);
         }
     }
 

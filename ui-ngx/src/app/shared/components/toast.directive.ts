@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,6 +84,7 @@ export class ToastDirective implements AfterViewInit, OnDestroy {
         if (hideNotification) {
           const target = hideNotification.target || 'root';
           if (this.toastTarget === target) {
+            this.currentMessage = null;
             this.ngZone.run(() => {
               if (this.snackBarRef) {
                 this.snackBarRef.dismiss();
@@ -280,7 +281,7 @@ export type ToastAnimationState = 'default' | 'opened' | 'closing';
 })
 export class TbSnackBarComponent implements AfterViewInit, OnDestroy {
 
-  @ViewChild('actionButton', {static: true}) actionButton: MatButton;
+  @ViewChild('actionButton') actionButton: MatButton;
 
   @HostBinding('class')
   get panelClass(): string[] {

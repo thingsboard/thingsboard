@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
+import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
@@ -38,6 +39,7 @@ import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
+import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.asset.Asset;
@@ -61,6 +63,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -70,6 +73,7 @@ import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -82,6 +86,7 @@ import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
+import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
@@ -92,7 +97,6 @@ import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -122,9 +126,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     protected EdgeEventService edgeEventService;
 
     @Autowired
-    protected DataDecodingEncodingService dataDecodingEncodingService;
-
-    @Autowired
     protected TbClusterService clusterService;
 
     @Before
@@ -141,6 +142,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
+        edgeImitator.ignoreType(OAuth2UpdateMsg.class);
         edgeImitator.expectMessageAmount(21);
         edgeImitator.connect();
 
@@ -162,7 +164,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     private RuleChainId getEdgeRootRuleChainId() throws Exception {
         List<RuleChain> edgeRuleChains = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/ruleChains?",
-                new TypeReference<PageData<RuleChain>>() {}, new PageLink(100)).getData();
+                new TypeReference<PageData<RuleChain>>() {
+                }, new PageLink(100)).getData();
         for (RuleChain edgeRuleChain : edgeRuleChains) {
             if (edgeRuleChain.isRoot()) {
                 return edgeRuleChain.getId();
@@ -179,7 +182,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
             doDelete("/api/edge/" + edge.getId().toString())
                     .andExpect(status().isOk());
             edgeImitator.disconnect();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
     }
 
     private void installation() throws Exception {
@@ -318,8 +322,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(tenantUpdateMsgOpt.isPresent());
         TenantUpdateMsg tenantUpdateMsg = tenantUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantUpdateMsg.getMsgType());
-        UUID tenantUUID = new UUID(tenantUpdateMsg.getIdMSB(), tenantUpdateMsg.getIdLSB());
-        Tenant tenant = doGet("/api/tenant/" + tenantUUID, Tenant.class);
+        Tenant tenantMsg = JacksonUtil.fromString(tenantUpdateMsg.getEntity(), Tenant.class, true);
+        Assert.assertNotNull(tenantMsg);
+        Tenant tenant = doGet("/api/tenant/" + tenantMsg.getUuidId(), Tenant.class);
         Assert.assertNotNull(tenant);
         testAutoGeneratedCodeByProtobuf(tenantUpdateMsg);
     }
@@ -329,10 +334,11 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(tenantProfileUpdateMsgOpt.isPresent());
         TenantProfileUpdateMsg tenantProfileUpdateMsg = tenantProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, tenantProfileUpdateMsg.getMsgType());
-        UUID tenantProfileUUID = new UUID(tenantProfileUpdateMsg.getIdMSB(), tenantProfileUpdateMsg.getIdLSB());
+        TenantProfile tenantProfile = JacksonUtil.fromString(tenantProfileUpdateMsg.getEntity(), TenantProfile.class, true);
+        Assert.assertNotNull(tenantProfile);
         Tenant tenant = doGet("/api/tenant/" + tenantId.getId(), Tenant.class);
         Assert.assertNotNull(tenant);
-        Assert.assertEquals(tenantProfileUUID, tenant.getTenantProfileId().getId());
+        Assert.assertEquals(tenantProfile.getId(), tenant.getTenantProfileId());
         testAutoGeneratedCodeByProtobuf(tenantProfileUpdateMsg);
     }
 
@@ -344,7 +350,11 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // thermostat msg from device fetcher
         Assert.assertEquals(expectedMsgCnt, deviceProfileUpdateMsgList.size());
         Optional<DeviceProfileUpdateMsg> thermostatProfileUpdateMsgOpt =
-                deviceProfileUpdateMsgList.stream().filter(dfum -> THERMOSTAT_DEVICE_PROFILE_NAME.equals(dfum.getName())).findAny();
+                deviceProfileUpdateMsgList.stream().filter(dfum -> {
+                    DeviceProfile deviceProfile = JacksonUtil.fromString(dfum.getEntity(), DeviceProfile.class, true);
+                    Assert.assertNotNull(deviceProfile);
+                    return THERMOSTAT_DEVICE_PROFILE_NAME.equals(deviceProfile.getName());
+                }).findAny();
         Assert.assertTrue(thermostatProfileUpdateMsgOpt.isPresent());
         DeviceProfileUpdateMsg thermostatProfileUpdateMsg = thermostatProfileUpdateMsgOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, thermostatProfileUpdateMsg.getMsgType());
@@ -370,7 +380,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Device device = doGet("/api/device/" + deviceUUID, Device.class);
         Assert.assertNotNull(device);
         List<DeviceInfo> edgeDevices = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/devices?",
-                new TypeReference<PageData<DeviceInfo>>() {}, new PageLink(100)).getData();
+                new TypeReference<PageData<DeviceInfo>>() {
+                }, new PageLink(100)).getData();
         Assert.assertTrue(edgeDevices.stream().map(DeviceInfo::getId).anyMatch(id -> id.equals(device.getId())));
 
         testAutoGeneratedCodeByProtobuf(deviceUpdateMsg);
@@ -389,7 +400,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Asset asset = doGet("/api/asset/" + assetUUID, Asset.class);
         Assert.assertNotNull(asset);
         List<Asset> edgeAssets = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/assets?",
-                new TypeReference<PageData<Asset>>() {}, new PageLink(100)).getData();
+                new TypeReference<PageData<Asset>>() {
+                }, new PageLink(100)).getData();
         Assert.assertTrue(edgeAssets.contains(asset));
 
         testAutoGeneratedCodeByProtobuf(assetUpdateMsg);
@@ -409,7 +421,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         RuleChain ruleChain = doGet("/api/ruleChain/" + ruleChainUUID, RuleChain.class);
         Assert.assertNotNull(ruleChain);
         List<RuleChain> edgeRuleChains = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/ruleChains?",
-                new TypeReference<PageData<RuleChain>>() {}, new PageLink(100)).getData();
+                new TypeReference<PageData<RuleChain>>() {
+                }, new PageLink(100)).getData();
         Assert.assertTrue(edgeRuleChains.contains(ruleChain));
         testAutoGeneratedCodeByProtobuf(ruleChainUpdateMsg);
     }
@@ -419,8 +432,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(ruleChainMetadataUpdateOpt.isPresent());
         RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = ruleChainMetadataUpdateOpt.get();
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, ruleChainMetadataUpdateMsg.getMsgType());
-        UUID ruleChainUUID = new UUID(ruleChainMetadataUpdateMsg.getRuleChainIdMSB(), ruleChainMetadataUpdateMsg.getRuleChainIdLSB());
-        Assert.assertEquals(expectedRuleChainUUID, ruleChainUUID);
+        RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class, true);
+        Assert.assertNotNull(ruleChainMetaData);
+        Assert.assertEquals(expectedRuleChainUUID, ruleChainMetaData.getRuleChainId().getId());
     }
 
     private void validateAdminSettings(int expectedMsgCnt) {
@@ -428,25 +442,29 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertEquals(expectedMsgCnt, adminSettingsUpdateMsgs.size());
 
         for (AdminSettingsUpdateMsg adminSettingsUpdateMsg : adminSettingsUpdateMsgs) {
-            if (adminSettingsUpdateMsg.getKey().equals("general")) {
-                validateGeneralAdminSettings(adminSettingsUpdateMsg);
+            AdminSettings adminSettings = JacksonUtil.fromString(adminSettingsUpdateMsg.getEntity(), AdminSettings.class, true);
+            Assert.assertNotNull(adminSettings);
+            if (adminSettings.getKey().equals("general")) {
+                validateGeneralAdminSettings(adminSettings);
             }
-            if (adminSettingsUpdateMsg.getKey().equals("mail")) {
-                validateMailAdminSettings(adminSettingsUpdateMsg);
+            if (adminSettings.getKey().equals("mail")) {
+                validateMailAdminSettings(adminSettings);
             }
-            if (adminSettingsUpdateMsg.getKey().equals("connectivity")) {
-                validateConnectivityAdminSettings(adminSettingsUpdateMsg);
+            if (adminSettings.getKey().equals("connectivity")) {
+                validateConnectivityAdminSettings(adminSettings);
+            }
+            if (adminSettings.getKey().equals("jwt")) {
+                validateJwtAdminSettings(adminSettings);
             }
         }
     }
 
-    private void validateGeneralAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
-        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
-        Assert.assertNotNull(jsonNode.get("baseUrl"));
+    private void validateGeneralAdminSettings(AdminSettings adminSettings) {
+        Assert.assertNotNull(adminSettings.getJsonValue().get("baseUrl"));
     }
 
-    private void validateMailAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
-        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
+    private void validateMailAdminSettings(AdminSettings adminSettings) {
+        JsonNode jsonNode = adminSettings.getJsonValue();
         Assert.assertNotNull(jsonNode.get("mailFrom"));
         Assert.assertNotNull(jsonNode.get("smtpProtocol"));
         Assert.assertNotNull(jsonNode.get("smtpHost"));
@@ -454,14 +472,22 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertNotNull(jsonNode.get("timeout"));
     }
 
-    private void validateConnectivityAdminSettings(AdminSettingsUpdateMsg adminSettingsUpdateMsg) {
-        JsonNode jsonNode = JacksonUtil.toJsonNode(adminSettingsUpdateMsg.getJsonValue());
+    private void validateConnectivityAdminSettings(AdminSettings adminSettings) {
+        JsonNode jsonNode = adminSettings.getJsonValue();
         Assert.assertNotNull(jsonNode.get("http"));
         Assert.assertNotNull(jsonNode.get("https"));
         Assert.assertNotNull(jsonNode.get("mqtt"));
         Assert.assertNotNull(jsonNode.get("mqtts"));
         Assert.assertNotNull(jsonNode.get("coap"));
         Assert.assertNotNull(jsonNode.get("coaps"));
+    }
+
+    private void validateJwtAdminSettings(AdminSettings adminSettings) {
+        JsonNode jsonNode = adminSettings.getJsonValue();
+        Assert.assertNotNull(jsonNode.get("tokenExpirationTime"));
+        Assert.assertNotNull(jsonNode.get("refreshTokenExpTime"));
+        Assert.assertNotNull(jsonNode.get("tokenIssuer"));
+        Assert.assertNotNull(jsonNode.get("tokenSigningKey"));
     }
 
     private void validateAssetProfiles(int expectedMsgCnt) throws Exception {
@@ -485,10 +511,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         UUID queueUUID = new UUID(queueUpdateMsg.getIdMSB(), queueUpdateMsg.getIdLSB());
         Queue queue = doGet("/api/queues/" + queueUUID, Queue.class);
         Assert.assertNotNull(queue);
-        Assert.assertEquals(DataConstants.MAIN_QUEUE_NAME, queueUpdateMsg.getName());
-        Assert.assertEquals(DataConstants.MAIN_QUEUE_TOPIC, queueUpdateMsg.getTopic());
-        Assert.assertEquals(10, queueUpdateMsg.getPartitions());
-        Assert.assertEquals(25, queueUpdateMsg.getPollInterval());
+        Assert.assertEquals(DataConstants.MAIN_QUEUE_NAME, queue.getName());
+        Assert.assertEquals(DataConstants.MAIN_QUEUE_TOPIC, queue.getTopic());
+        Assert.assertEquals(10, queue.getPartitions());
+        Assert.assertEquals(25, queue.getPollInterval());
         testAutoGeneratedCodeByProtobuf(queueUpdateMsg);
     }
 
@@ -500,7 +526,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         UUID userUUID = new UUID(userUpdateMsg.getIdMSB(), userUpdateMsg.getIdLSB());
         User user = doGet("/api/user/" + userUUID, User.class);
         Assert.assertNotNull(user);
-        Assert.assertEquals("testtenant@thingsboard.org", userUpdateMsg.getEmail());
+        Assert.assertEquals("testtenant@thingsboard.org", user.getEmail());
         testAutoGeneratedCodeByProtobuf(userUpdateMsg);
     }
 
@@ -513,6 +539,18 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Customer customer = doGet("/api/customer/" + customerUUID, Customer.class);
         Assert.assertNotNull(customer);
         Assert.assertTrue(customer.isPublic());
+    }
+
+    private void validateOAuth2() throws Exception {
+        Optional<OAuth2UpdateMsg> oAuth2UpdateMsgOpt = edgeImitator.findMessageByType(OAuth2UpdateMsg.class);
+        Assert.assertTrue(oAuth2UpdateMsgOpt.isPresent());
+        OAuth2UpdateMsg oAuth2UpdateMsg = oAuth2UpdateMsgOpt.get();
+        OAuth2Info oAuth2Info = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
+        Assert.assertNotNull(oAuth2Info);
+        OAuth2Info auth2Info = doGet("/api/oauth2/config", OAuth2Info.class);
+        Assert.assertNotNull(auth2Info);
+        Assert.assertEquals(oAuth2Info, auth2Info);
+        testAutoGeneratedCodeByProtobuf(oAuth2UpdateMsg);
     }
 
     private void validateSyncCompleted() {

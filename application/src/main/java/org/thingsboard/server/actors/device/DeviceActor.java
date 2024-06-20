@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -63,6 +63,9 @@ public class DeviceActor extends ContextAwareActor {
                 break;
             case DEVICE_ATTRIBUTES_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processAttributesUpdate((DeviceAttributesEventNotificationMsg) msg);
+                break;
+            case DEVICE_DELETE_TO_DEVICE_ACTOR_MSG:
+                ctx.stop(ctx.getSelf());
                 break;
             case DEVICE_CREDENTIALS_UPDATE_TO_DEVICE_ACTOR_MSG:
                 processor.processCredentialsUpdate(msg);

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import {
 import { filter, startWith, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isDefinedAndNotNull } from '@core/utils';
+import { getCurrentAuthState } from '@core/auth/auth.selectors';
 
 @Component({
   selector: 'tb-resources-library',
@@ -42,6 +43,8 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   readonly resourceType = ResourceType;
   readonly resourceTypes: ResourceType[] = Object.values(this.resourceType);
   readonly resourceTypesTranslationMap = ResourceTypeTranslationMap;
+
+  maxResourceSize = getCurrentAuthState(this.store).maxResourceSize;
 
   private destroy$ = new Subject<void>();
 

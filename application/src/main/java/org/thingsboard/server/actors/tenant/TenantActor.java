@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.actors.tenant;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.actors.ProcessFailureStrategy;
 import org.thingsboard.server.actors.TbActor;
 import org.thingsboard.server.actors.TbActorCtx;
 import org.thingsboard.server.actors.TbActorException;
@@ -53,10 +54,13 @@ import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 import org.thingsboard.server.common.msg.queue.QueueToRuleEngineMsg;
 import org.thingsboard.server.common.msg.queue.RuleEngineException;
 import org.thingsboard.server.common.msg.queue.ServiceType;
+import org.thingsboard.server.common.msg.rule.engine.DeviceDeleteMsg;
 import org.thingsboard.server.service.edge.rpc.EdgeRpcService;
 import org.thingsboard.server.service.transport.msg.TransportToDeviceActorMsgWrapper;
 
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 @Slf4j
 public class TenantActor extends RuleChainManagerActor {
@@ -65,8 +69,11 @@ public class TenantActor extends RuleChainManagerActor {
     private boolean isCore;
     private ApiUsageState apiUsageState;
 
+    private Set<DeviceId> deletedDevices;
+
     private TenantActor(ActorSystemContext systemContext, TenantId tenantId) {
         super(systemContext, tenantId);
+        this.deletedDevices = new HashSet<>();
     }
 
     boolean cantFindTenant = false;
@@ -96,6 +103,8 @@ public class TenantActor extends RuleChainManagerActor {
                             log.info("Failed to check ApiUsage \"ReExecEnabled\"!!!", e);
                             cantFindTenant = true;
                         }
+                    } else {
+                        log.info("Tenant {} is not managed by current service, skipping rule chains init", tenantId);
                     }
                 }
                 log.debug("[{}] Tenant actor started.", tenantId);
@@ -125,20 +134,7 @@ public class TenantActor extends RuleChainManagerActor {
         }
         switch (msg.getMsgType()) {
             case PARTITION_CHANGE_MSG:
-                PartitionChangeMsg partitionChangeMsg = (PartitionChangeMsg) msg;
-                ServiceType serviceType = partitionChangeMsg.getServiceType();
-                if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
-                    //To Rule Chain Actors
-                    broadcast(msg);
-                } else if (ServiceType.TB_CORE.equals(serviceType)) {
-                    List<TbActorId> deviceActorIds = ctx.filterChildren(new TbEntityTypeActorIdPredicate(EntityType.DEVICE) {
-                        @Override
-                        protected boolean testEntityId(EntityId entityId) {
-                            return super.testEntityId(entityId) && !isMyPartition(entityId);
-                        }
-                    });
-                    deviceActorIds.forEach(id -> ctx.stop(id));
-                }
+                onPartitionChangeMsg((PartitionChangeMsg) msg);
                 break;
             case COMPONENT_LIFE_CYCLE_MSG:
                 onComponentLifecycleMsg((ComponentLifecycleMsg) msg);
@@ -221,11 +217,44 @@ public class TenantActor extends RuleChainManagerActor {
         if (!isCore) {
             log.warn("RECEIVED INVALID MESSAGE: {}", msg);
         }
+        if (deletedDevices.contains(msg.getDeviceId())) {
+            log.debug("RECEIVED MESSAGE FOR DELETED DEVICE: {}", msg);
+            return;
+        }
         TbActorRef deviceActor = getOrCreateDeviceActor(msg.getDeviceId());
         if (priority) {
             deviceActor.tellWithHighPriority(msg);
         } else {
             deviceActor.tell(msg);
+        }
+    }
+
+    private void onPartitionChangeMsg(PartitionChangeMsg msg) {
+        ServiceType serviceType = msg.getServiceType();
+        if (ServiceType.TB_RULE_ENGINE.equals(serviceType)) {
+            if (systemContext.getPartitionService().isManagedByCurrentService(tenantId)) {
+                if (!ruleChainsInitialized) {
+                    log.info("Tenant {} is now managed by this service, initializing rule chains", tenantId);
+                    initRuleChains();
+                }
+            } else {
+                if (ruleChainsInitialized) {
+                    log.info("Tenant {} is no longer managed by this service, stopping rule chains", tenantId);
+                    destroyRuleChains();
+                }
+                return;
+            }
+
+            //To Rule Chain Actors
+            broadcast(msg);
+        } else if (ServiceType.TB_CORE.equals(serviceType)) {
+            List<TbActorId> deviceActorIds = ctx.filterChildren(new TbEntityTypeActorIdPredicate(EntityType.DEVICE) {
+                @Override
+                protected boolean testEntityId(EntityId entityId) {
+                    return super.testEntityId(entityId) && !isMyPartition(entityId);
+                }
+            });
+            deviceActorIds.forEach(id -> ctx.stop(id));
         }
     }
 
@@ -240,7 +269,8 @@ public class TenantActor extends RuleChainManagerActor {
                 log.info("[{}] Received API state update. Going to ENABLE Rule Engine execution.", tenantId);
                 initRuleChains();
             }
-        } else if (msg.getEntityId().getEntityType() == EntityType.EDGE) {
+        }
+        if (msg.getEntityId().getEntityType() == EntityType.EDGE) {
             EdgeId edgeId = new EdgeId(msg.getEntityId().getId());
             EdgeRpcService edgeRpcService = systemContext.getEdgeRpcService();
             if (msg.getEvent() == ComponentLifecycleEvent.DELETED) {
@@ -249,7 +279,13 @@ public class TenantActor extends RuleChainManagerActor {
                 Edge edge = systemContext.getEdgeService().findEdgeById(tenantId, edgeId);
                 edgeRpcService.updateEdge(tenantId, edge);
             }
-        } else if (isRuleEngine) {
+        }
+        if (msg.getEntityId().getEntityType() == EntityType.DEVICE && ComponentLifecycleEvent.DELETED == msg.getEvent() && isMyPartition(msg.getEntityId())) {
+            DeviceId deviceId = (DeviceId) msg.getEntityId();
+            onToDeviceActorMsg(new DeviceDeleteMsg(tenantId, deviceId), true);
+            deletedDevices.add(deviceId);
+        }
+        if (isRuleEngine && ruleChainsInitialized) {
             TbActorRef target = getEntityActorRef(msg.getEntityId());
             if (target != null) {
                 if (msg.getEntityId().getEntityType() == EntityType.RULE_CHAIN) {
@@ -282,6 +318,12 @@ public class TenantActor extends RuleChainManagerActor {
             apiUsageState = new ApiUsageState(systemContext.getApiUsageStateService().getApiUsageState(tenantId));
         }
         return apiUsageState;
+    }
+
+    @Override
+    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
+        log.error("[{}] Failed to process msg: {}", tenantId, msg, t);
+        return doProcessFailure(t);
     }
 
     public static class ActorCreator extends ContextBasedCreator {

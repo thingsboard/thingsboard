@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
 import { Filter } from '@material-ui/icons';
 import { DatePipe } from '@angular/common';
 import { UserId } from '../id/user-id';
+import { Direction } from '@shared/models/page/sort-order';
 
 export enum EntityKeyType {
   ATTRIBUTE = 'ATTRIBUTE',
@@ -699,11 +700,6 @@ export interface EntityFilter extends EntityFilters {
   type?: AliasFilterType;
 }
 
-export enum Direction {
-  ASC = 'ASC',
-  DESC = 'DESC'
-}
-
 export interface EntityDataSortOrder {
   key: EntityKey;
   direction: Direction;
@@ -888,6 +884,9 @@ export function entityDataToEntityInfo(entityData: EntityData): EntityInfo {
           }
         } catch (e) {}
       }
+    }
+    if (fields.queueName && fields.serviceId) {
+      entityInfo.name = fields.queueName.value + '_' + fields.serviceId.value;
     }
   }
   return entityInfo;

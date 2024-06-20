@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -23,11 +23,10 @@ import {
   PosFunction,
   WidgetUnitedMapSettings
 } from '../map-models';
-import { Observable, ReplaySubject } from 'rxjs';
+import { Observable, of, ReplaySubject, switchMap } from 'rxjs';
 import { catchError, map, mergeMap } from 'rxjs/operators';
 import {
-  aspectCache,
-  calculateNewPointCoordinate
+  calculateNewPointCoordinate, loadImageWithAspect
 } from '@home/components/widget/lib/maps/common-maps-utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { DataSet, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
@@ -35,6 +34,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { isDefinedAndNotNull, isEmptyStr, isNotEmptyStr, parseFunction } from '@core/utils';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
 
 const maxZoom = 4; // ?
 
@@ -122,39 +122,43 @@ export class ImageMap extends LeafletMap {
     }
 
     private imageFromUrl(url: string): Observable<MapImage> {
-      return aspectCache(url).pipe(
-        map( aspect => {
-            const mapImage: MapImage = {
-              imageUrl: url,
-              aspect,
-              update: false
-            };
-            return mapImage;
+      return loadImageWithAspect(this.ctx.$injector.get(ImagePipe), url).pipe(
+        switchMap( aspectImage => {
+            if (aspectImage) {
+              return of({
+                imageUrl: aspectImage.url,
+                aspect: aspectImage.aspect,
+                update: false
+              });
+            } else {
+              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+            }
           }
         ),
-        catchError((e) => {
-          return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
-        })
+        catchError((e) => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
       );
     }
 
     private imageFromAlias(alias: Observable<[DataSet, boolean]>): Observable<MapImage> {
       return alias.pipe(
-        mergeMap(res => {
+        switchMap(res => {
+          const url = res[0][0][1];
           const mapImage: MapImage = {
-            imageUrl: res[0][0][1],
+            imageUrl: null,
             aspect: null,
             update: res[1]
           };
-          return aspectCache(mapImage.imageUrl).pipe(
-            map((aspect) => {
-                mapImage.aspect = aspect;
-                return mapImage;
-              }
-            ),
-            catchError((e) => {
-              return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
-            })
+          return loadImageWithAspect(this.ctx.$injector.get(ImagePipe), url).pipe(
+            switchMap((aspectImage) => {
+                if (aspectImage) {
+                  mapImage.aspect = aspectImage.aspect;
+                  mapImage.imageUrl = aspectImage.url;
+                  return of(mapImage);
+                } else {
+                  return this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl);
+                }
+              }),
+            catchError((e) => this.imageFromUrl(defaultImageMapProviderSettings.mapImageUrl))
           );
         })
       );
@@ -249,7 +253,7 @@ export class ImageMap extends LeafletMap {
       }
     }
 
-    extractPosition(data: FormattedData): {x: number, y: number} {
+    extractPosition(data: FormattedData): {x: number; y: number} {
       if (!data) {
         return null;
       }
@@ -261,7 +265,7 @@ export class ImageMap extends LeafletMap {
       return {x: xPos, y: yPos};
     }
 
-    positionToLatLng(position: {x: number, y: number}): L.LatLng {
+    positionToLatLng(position: {x: number; y: number}): L.LatLng {
       return this.pointToLatLng(
         position.x * this.width,
         position.y * this.height);

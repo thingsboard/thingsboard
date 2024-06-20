@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,13 @@ $previewSize: 100px !default;
 
   .tb-container {
     margin-top: 0;
+    padding: 0 0 16px;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
     label.tb-title {
       display: flex;
-      padding-bottom: 8px;
+      padding-bottom: 0;
     }
   }
 
@@ -78,19 +82,46 @@ $previewSize: 100px !default;
       text-align: center;
       .mat-icon {
         margin-right: 17px;
+        color: rgba(0,0,0,0.12);
       }
     }
+  }
+
+  .tb-file-info-container {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 13px;
+    font-style: normal;
+    line-height: 16px;
+    letter-spacing: normal;
+  }
+
+  .tb-file-name {
+    color: rgba(0, 0, 0, 0.54);
+    font-weight: 500;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .tb-file-hint {
+    color: rgba(0, 0, 0, 0.38);
+    font-weight: 400;
+    overflow: hidden;
+    text-overflow: ellipsis;
   }
 }
 
 :host ::ng-deep {
-  button.browse-file {
+  button.mat-mdc-button.mat-mdc-button-base.browse-file {
     padding: 0;
+    min-width: 0;
+    height: 24px;
     font-size: 16px;
     label {
       display: block;
       cursor: pointer;
-      padding: 0 16px;
+      padding: 0 8px;
     }
   }
 

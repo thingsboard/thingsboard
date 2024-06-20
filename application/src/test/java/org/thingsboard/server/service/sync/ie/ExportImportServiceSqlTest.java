@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -532,20 +532,19 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
 
 
     @Test
-    public void testExportImportDeviceProfile_betweenTenants_findExistingByName() throws Exception {
+    public void testExportImportDefaultDeviceProfile_betweenTenants_findExisting() throws Exception {
         DeviceProfile defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId1);
+        defaultDeviceProfile.setName("non-default-name");
+        deviceProfileService.saveDeviceProfile(defaultDeviceProfile);
         EntityExportData<DeviceProfile> deviceProfileExportData = exportEntity(tenantAdmin1, defaultDeviceProfile.getId());
 
-        assertThatThrownBy(() -> {
-            importEntity(tenantAdmin2, deviceProfileExportData, EntityImportSettings.builder()
-                    .findExistingByName(false)
-                    .build());
-        }).hasMessageContaining("default device profile is present");
-
         importEntity(tenantAdmin2, deviceProfileExportData, EntityImportSettings.builder()
-                .findExistingByName(true)
+                .findExistingByName(false)
                 .build());
-        checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, deviceProfileService.findDefaultDeviceProfile(tenantId2));
+        DeviceProfile importedDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId2);
+        assertThat(importedDeviceProfile.isDefault()).isTrue();
+        assertThat(importedDeviceProfile.getName()).isEqualTo(defaultDeviceProfile.getName());
+        checkImportedEntity(tenantId1, defaultDeviceProfile, tenantId2, importedDeviceProfile);
     }
 
 
@@ -630,8 +629,7 @@ public class ExportImportServiceSqlTest extends BaseExportImportServiceTest {
         DeviceProfile importedDeviceProfile = (DeviceProfile) importEntity(tenantAdmin2, getAndClone(entitiesExportData, EntityType.DEVICE_PROFILE)).getSavedEntity();
         verify(entityActionService).logEntityAction(any(), eq(importedDeviceProfile.getId()), eq(importedDeviceProfile),
                 any(), eq(ActionType.ADDED), isNull());
-        verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any());
-        verify(tbClusterService).broadcastEntityStateChangeEvent(any(), eq(importedDeviceProfile.getId()), eq(ComponentLifecycleEvent.CREATED));
+        verify(tbClusterService).onDeviceProfileChange(eq(importedDeviceProfile), any(), any());
         verify(tbClusterService).sendNotificationMsgToEdge(any(), any(), eq(importedDeviceProfile.getId()), any(), any(), eq(EdgeEventActionType.ADDED), any());
         verify(otaPackageStateService).update(eq(importedDeviceProfile), eq(false), eq(false));
 

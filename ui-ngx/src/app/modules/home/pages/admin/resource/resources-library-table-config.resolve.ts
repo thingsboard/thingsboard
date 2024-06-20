@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -84,7 +84,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     this.config.deleteEntitiesContent = () => this.translate.instant('resource.delete-resources-text');
 
     this.config.entitiesFetchFunction = pageLink => this.resourceService.getResources(pageLink, this.config.componentsData.resourceType);
-    this.config.loadEntity = id => this.resourceService.getResource(id.id);
+    this.config.loadEntity = id => this.resourceService.getResourceInfo(id.id);
     this.config.saveEntity = resource => this.saveResource(resource);
     this.config.deleteEntity = id => this.resourceService.deleteResource(id.id);
 

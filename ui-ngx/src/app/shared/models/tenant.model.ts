@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 import { ContactBased } from '@shared/models/contact-based.model';
 import { TenantId } from './id/tenant-id';
 import { TenantProfileId } from '@shared/models/id/tenant-profile-id';
-import { BaseData } from '@shared/models/base-data';
+import { BaseData, ExportableEntity } from '@shared/models/base-data';
 import { QueueInfo } from '@shared/models/queue.models';
 
 export enum TenantProfileType {
@@ -33,6 +33,7 @@ export interface DefaultTenantProfileConfiguration {
   maxRuleChains: number;
   maxResourcesInBytes: number;
   maxOtaPackagesInBytes: number;
+  maxResourceSize: number;
 
   transportTenantMsgRateLimit?: string;
   transportTenantTelemetryMsgRateLimit?: string;
@@ -101,6 +102,7 @@ export function createTenantProfileConfiguration(type: TenantProfileType): Tenan
           maxRuleChains: 0,
           maxResourcesInBytes: 0,
           maxOtaPackagesInBytes: 0,
+          maxResourceSize: 0,
           maxTransportMessages: 0,
           maxTransportDataPoints: 0,
           maxREExecutions: 0,
@@ -143,7 +145,7 @@ export interface TenantProfileData {
   queueConfiguration?: Array<QueueInfo>;
 }
 
-export interface TenantProfile extends BaseData<TenantProfileId> {
+export interface TenantProfile extends BaseData<TenantProfileId>, ExportableEntity<TenantProfileId> {
   name: string;
   description?: string;
   default?: boolean;

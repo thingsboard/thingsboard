@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ public class QueueRoutingInfo {
     private final String queueName;
     private final String queueTopic;
     private final int partitions;
+    private final boolean duplicateMsgToAllPartitions;
 
     public QueueRoutingInfo(Queue queue) {
         this.tenantId = queue.getTenantId();
@@ -40,21 +41,25 @@ public class QueueRoutingInfo {
         this.queueName = queue.getName();
         this.queueTopic = queue.getTopic();
         this.partitions = queue.getPartitions();
+        this.duplicateMsgToAllPartitions = queue.isDuplicateMsgToAllPartitions();
     }
 
     public QueueRoutingInfo(GetQueueRoutingInfoResponseMsg routingInfo) {
-        this.tenantId = new TenantId(new UUID(routingInfo.getTenantIdMSB(), routingInfo.getTenantIdLSB()));
+        this.tenantId = TenantId.fromUUID(new UUID(routingInfo.getTenantIdMSB(), routingInfo.getTenantIdLSB()));
         this.queueId = new QueueId(new UUID(routingInfo.getQueueIdMSB(), routingInfo.getQueueIdLSB()));
         this.queueName = routingInfo.getQueueName();
         this.queueTopic = routingInfo.getQueueTopic();
         this.partitions = routingInfo.getPartitions();
+        this.duplicateMsgToAllPartitions = routingInfo.hasDuplicateMsgToAllPartitions() && routingInfo.getDuplicateMsgToAllPartitions();
     }
 
     public QueueRoutingInfo(QueueUpdateMsg queueUpdateMsg) {
-        this.tenantId = new TenantId(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
+        this.tenantId = TenantId.fromUUID(new UUID(queueUpdateMsg.getTenantIdMSB(), queueUpdateMsg.getTenantIdLSB()));
         this.queueId = new QueueId(new UUID(queueUpdateMsg.getQueueIdMSB(), queueUpdateMsg.getQueueIdLSB()));
         this.queueName = queueUpdateMsg.getQueueName();
         this.queueTopic = queueUpdateMsg.getQueueTopic();
         this.partitions = queueUpdateMsg.getPartitions();
+        this.duplicateMsgToAllPartitions = queueUpdateMsg.hasDuplicateMsgToAllPartitions() && queueUpdateMsg.getDuplicateMsgToAllPartitions();
     }
+
 }

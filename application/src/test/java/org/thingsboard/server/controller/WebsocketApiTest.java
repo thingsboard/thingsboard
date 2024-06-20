@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -667,7 +667,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
         ObjectNode wrapperNode = JacksonUtil.newObjectNode();
         wrapperNode.set("entityCountCmds", entityCountCmds);
 
-        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry");
+        wsClient = buildAndConnectWebSocketClient("/api/ws/plugins/telemetry?token=" + token);
         wsClient.send(JacksonUtil.toString(wrapperNode));
 
         EntityCountUpdate update = wsClient.parseCountReply(wsClient.waitForReply());
@@ -700,7 +700,7 @@ public class WebsocketApiTest extends AbstractControllerTest {
 
     private void sendAttributes(TenantId tenantId, EntityId entityId, TbAttributeSubscriptionScope scope, List<AttributeKvEntry> attrData) throws InterruptedException {
         CountDownLatch latch = new CountDownLatch(1);
-        tsService.saveAndNotify(tenantId, entityId, scope.name(), attrData, new FutureCallback<Void>() {
+        tsService.saveAndNotify(tenantId, entityId, scope.getAttributeScope(), attrData, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void result) {
                 log.debug("sendAttributes callback onSuccess");

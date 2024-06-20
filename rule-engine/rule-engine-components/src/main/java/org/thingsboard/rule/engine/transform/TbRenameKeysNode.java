@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,15 @@ import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
-import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.Arrays;
 import java.util.Map;
 import java.util.concurrent.ExecutionException;
 
@@ -36,62 +37,86 @@ import java.util.concurrent.ExecutionException;
 @RuleNode(
         type = ComponentType.TRANSFORMATION,
         name = "rename keys",
+        version = 2,
         configClazz = TbRenameKeysNodeConfiguration.class,
-        nodeDescription = "Renames msg data or metadata keys to the new key names selected in the key mapping.",
-        nodeDetails = "If the key that is selected in the key mapping is missed in the selected msg source(data or metadata), it will be ignored." +
-                " Returns transformed messages via <code>Success</code> chain",
+        nodeDescription = "Renames message or message metadata keys.",
+        nodeDetails = "Renames keys in the message or message metadata according to the provided mapping. " +
+                "If key to rename doesn't exist in the specified source (message or message metadata) it will be ignored.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbTransformationNodeRenameKeysConfig",
         icon = "find_replace"
 )
-public class TbRenameKeysNode implements TbNode {
+public class TbRenameKeysNode extends TbAbstractTransformNodeWithTbMsgSource {
 
     private TbRenameKeysNodeConfiguration config;
     private Map<String, String> renameKeysMapping;
-    private boolean fromMetadata;
+    private TbMsgSource renameIn;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbRenameKeysNodeConfiguration.class);
+        this.renameIn = config.getRenameIn();
         this.renameKeysMapping = config.getRenameKeysMapping();
-        this.fromMetadata = config.isFromMetadata();
+        if (renameIn == null) {
+            throw new TbNodeException("RenameIn can't be null! Allowed values: " + Arrays.toString(TbMsgSource.values()));
+        }
+        if (renameKeysMapping == null || renameKeysMapping.isEmpty()) {
+            throw new TbNodeException("At least one mapping entry should be specified!");
+        }
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        TbMsgMetaData metaData = msg.getMetaData();
+        TbMsgMetaData metaDataCopy = msg.getMetaData().copy();
         String data = msg.getData();
         boolean msgChanged = false;
-        if (fromMetadata) {
-            Map<String, String> metaDataMap = metaData.getData();
-            for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
-                String nameKey = entry.getKey();
-                if (metaDataMap.containsKey(nameKey)) {
-                    msgChanged = true;
-                    metaDataMap.put(entry.getValue(), metaDataMap.get(nameKey));
-                    metaDataMap.remove(nameKey);
-                }
-            }
-            metaData = new TbMsgMetaData(metaDataMap);
-        } else {
-            JsonNode dataNode = JacksonUtil.toJsonNode(data);
-            if (dataNode.isObject()) {
-                ObjectNode msgData = (ObjectNode) dataNode;
+        switch (renameIn) {
+            case METADATA:
+                Map<String, String> metaDataMap = metaDataCopy.getData();
                 for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
-                    String nameKey = entry.getKey();
-                    if (msgData.has(nameKey)) {
+                    String currentKeyName = entry.getKey();
+                    String newKeyName = entry.getValue();
+                    if (metaDataMap.containsKey(currentKeyName)) {
                         msgChanged = true;
-                        msgData.set(entry.getValue(), msgData.get(nameKey));
-                        msgData.remove(nameKey);
+                        String value = metaDataMap.get(currentKeyName);
+                        metaDataMap.put(newKeyName, value);
+                        metaDataMap.remove(currentKeyName);
                     }
                 }
-                data = JacksonUtil.toString(msgData);
-            }
+                metaDataCopy = new TbMsgMetaData(metaDataMap);
+                break;
+            case DATA:
+                JsonNode dataNode = JacksonUtil.toJsonNode(data);
+                if (dataNode.isObject()) {
+                    ObjectNode msgData = (ObjectNode) dataNode;
+                    for (Map.Entry<String, String> entry : renameKeysMapping.entrySet()) {
+                        String currentKeyName = entry.getKey();
+                        String newKeyName = entry.getValue();
+                        if (msgData.has(currentKeyName)) {
+                            msgChanged = true;
+                            JsonNode value = msgData.get(currentKeyName);
+                            msgData.set(newKeyName, value);
+                            msgData.remove(currentKeyName);
+                        }
+                    }
+                    data = JacksonUtil.toString(msgData);
+                }
+                break;
+            default:
+                log.debug("Unexpected RenameIn value: {}. Allowed values: {}", renameIn, TbMsgSource.values());
         }
-        if (msgChanged) {
-            ctx.tellSuccess(TbMsg.transformMsg(msg, metaData, data));
-        } else {
-            ctx.tellSuccess(msg);
-        }
+        ctx.tellSuccess(msgChanged ? TbMsg.transformMsg(msg, metaDataCopy, data) : msg);
     }
+
+    @Override
+    protected String getNewKeyForUpgradeFromVersionZero() {
+        return "renameIn";
+    }
+
+    @Override
+    protected String getKeyToUpgradeFromVersionOne() {
+        return FROM_METADATA_PROPERTY;
+    }
+
 }

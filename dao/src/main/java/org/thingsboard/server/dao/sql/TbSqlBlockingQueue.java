@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -54,7 +54,7 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
             String logName = params.getLogName();
             int batchSize = params.getBatchSize();
             long maxDelay = params.getMaxDelay();
-            List<TbSqlQueueElement<E>> entities = new ArrayList<>(batchSize);
+            final List<TbSqlQueueElement<E>> entities = new ArrayList<>(batchSize);
             while (!Thread.interrupted()) {
                 try {
                     long currentTs = System.currentTimeMillis();
@@ -83,19 +83,24 @@ public class TbSqlBlockingQueue<E> implements TbSqlQueue<E> {
                             Thread.sleep(remainingDelay);
                         }
                     }
-                } catch (Exception e) {
-                    stats.incrementFailed(entities.size());
-                    entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().setException(e));
-                    if (e instanceof InterruptedException) {
+                } catch (Throwable t) {
+                    if (t instanceof InterruptedException) {
                         log.info("[{}] Queue polling was interrupted", logName);
                         break;
                     } else {
-                        log.error("[{}] Failed to save {} entities", logName, entities.size(), e);
+                        log.error("[{}] Failed to save {} entities", logName, entities.size(), t);
+                        try {
+                            stats.incrementFailed(entities.size());
+                            entities.forEach(entityFutureWrapper -> entityFutureWrapper.getFuture().setException(t));
+                        } catch (Throwable th) {
+                            log.error("[{}] Failed to set future exception", logName, th);
+                        }
                     }
                 } finally {
                     entities.clear();
                 }
             }
+            log.info("[{}] Queue polling completed", logName);
         });
 
         logExecutor.scheduleAtFixedRate(() -> {

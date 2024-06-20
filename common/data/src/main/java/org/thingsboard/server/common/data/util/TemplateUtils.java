@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ import org.apache.commons.lang3.StringUtils;
 
 import java.util.Map;
 import java.util.function.UnaryOperator;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.google.common.base.Strings.nullToEmpty;
@@ -49,7 +50,7 @@ public class TemplateUtils {
                     value = FUNCTIONS.get(function).apply(value);
                 }
             }
-            return value;
+            return Matcher.quoteReplacement(value);
         });
     }
 

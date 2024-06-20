@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.NotificationRuleId;
@@ -33,10 +32,11 @@ import org.thingsboard.server.common.data.notification.rule.EscalatedNotificatio
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
 import org.thingsboard.server.common.data.notification.rule.NotificationRuleRecipientsConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.DeviceActivityNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeConnectionNotificationRuleTriggerConfig;
+import org.thingsboard.server.common.data.notification.rule.trigger.config.EdgeCommunicationFailureNotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerConfig;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.NotificationRuleTriggerType;
 import org.thingsboard.server.common.data.notification.rule.trigger.config.RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.service.ConstraintValidator;
@@ -86,7 +86,7 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
                 }
                 break;
             }
-            case RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT:
+            case RULE_ENGINE_COMPONENT_LIFECYCLE_EVENT: {
                 RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig triggerConfig = (RuleEngineComponentLifecycleEventNotificationRuleTriggerConfig) ruleTriggerConfig;
                 Set<UUID> ruleChains = triggerConfig.getRuleChains();
                 if (ruleChains != null) {
@@ -95,6 +95,17 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
                             .collect(Collectors.toSet()));
                 }
                 break;
+            }
+            case EDGE_CONNECTION: {
+                EdgeConnectionNotificationRuleTriggerConfig triggerConfig = (EdgeConnectionNotificationRuleTriggerConfig) ruleTriggerConfig;
+                triggerConfig.setEdges(null);
+                break;
+            }
+            case EDGE_COMMUNICATION_FAILURE: {
+                EdgeCommunicationFailureNotificationRuleTriggerConfig triggerConfig = (EdgeCommunicationFailureNotificationRuleTriggerConfig) ruleTriggerConfig;
+                triggerConfig.setEdges(null);
+                break;
+            }
         }
         if (!triggerType.isTenantLevel()) {
             throw new IllegalArgumentException("Trigger type " + triggerType + " is not available for tenants");
@@ -130,11 +141,9 @@ public class NotificationRuleImportService extends BaseEntityImportService<Notif
     }
 
     @Override
-    protected void onEntitySaved(User user, NotificationRule savedEntity, NotificationRule oldEntity) throws ThingsboardException {
+    protected void onEntitySaved(User user, NotificationRule savedEntity, NotificationRule oldEntity) {
         entityActionService.logEntityAction(user, savedEntity.getId(), savedEntity, null,
                 oldEntity == null ? ActionType.ADDED : ActionType.UPDATED, null);
-        clusterService.broadcastEntityStateChangeEvent(user.getTenantId(), savedEntity.getId(),
-                oldEntity == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
     }
 
     @Override

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,25 +15,24 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.UserId;
 
-@ApiModel
+@Schema
 @Data
 @AllArgsConstructor
 public class UserEmailInfo implements HasId<UserId> {
 
-    @ApiModelProperty(position = 1, value = "User id")
+    @Schema(description = "User id")
     private UserId id;
-    @ApiModelProperty(position = 2, value = "User email", example = "john@gmail.com")
+    @Schema(description = "User email", example = "john@gmail.com")
     private String email;
-    @ApiModelProperty(position = 3, value = "User first name", example = "John")
+    @Schema(description = "User first name", example = "John")
     private String firstName;
-    @ApiModelProperty(position = 4, value = "User last name", example = "Brown")
+    @Schema(description = "User last name", example = "Brown")
     private String lastName;
 
 }

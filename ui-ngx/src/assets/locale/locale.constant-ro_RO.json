@@ -1648,7 +1648,7 @@
         "action-source-required": "Sursa acțiunii este obligatorie",
         "action-name": "Numele Acțiunii",
         "action-name-required": "Numele acțiunii este obligatoriu",
-        "action-name-not-unique": "O acţiune cu acelaşi nume este deja definită<br/>Numele definit al acțiunii trebuie să fie unic in aceeaşi sursă de date",
+        "action-name-not-unique": "O acţiune cu acelaşi nume este deja definită\nNumele definit al acțiunii trebuie să fie unic in aceeaşi sursă de date",
         "action-icon": "Pictogramă",
         "action-type": "Tipul",
         "action-type-required": "Tipul acțiunii este obligatoriu",

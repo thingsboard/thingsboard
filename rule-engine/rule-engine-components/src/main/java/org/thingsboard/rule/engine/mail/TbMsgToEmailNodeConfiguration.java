@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,7 +19,7 @@ import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
 @Data
-public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
+public class TbMsgToEmailNodeConfiguration implements NodeConfiguration<TbMsgToEmailNodeConfiguration> {
 
     private String fromTemplate;
     private String toTemplate;
@@ -28,16 +28,16 @@ public class TbMsgToEmailNodeConfiguration implements NodeConfiguration {
     private String subjectTemplate;
     private String bodyTemplate;
     private String isHtmlTemplate;
-    private String mailBodyType;
+    private String mailBodyType; // Plain Text -> false. HTML - true. Dynamic - value used from isHtmlTemplate.
 
     @Override
     public TbMsgToEmailNodeConfiguration defaultConfiguration() {
-        TbMsgToEmailNodeConfiguration configuration = new TbMsgToEmailNodeConfiguration();
-        configuration.fromTemplate = "info@testmail.org";
-        configuration.toTemplate = "${userEmail}";
-        configuration.subjectTemplate = "Device ${deviceType} temperature high";
-        configuration.bodyTemplate = "Device ${deviceName} has high temperature ${temp}";
-        configuration.mailBodyType = "false";
+        var configuration = new TbMsgToEmailNodeConfiguration();
+        configuration.setFromTemplate("info@testmail.org");
+        configuration.setToTemplate("${userEmail}");
+        configuration.setSubjectTemplate("Device ${deviceType} temperature high");
+        configuration.setBodyTemplate("Device ${deviceName} has high temperature $[temperature]");
+        configuration.setMailBodyType("false");
         return configuration;
     }
 }

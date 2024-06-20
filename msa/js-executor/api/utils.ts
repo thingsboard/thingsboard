@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -61,4 +61,8 @@ export function parseJsErrorDetails(err: any): string | undefined {
 
 export function isNotUUID(candidate: string) {
     return candidate.length != 36 || !candidate.includes('-');
+}
+
+export function isNotEmptyStr(value: any): boolean {
+    return typeof value === 'string' && value.trim().length > 0;
 }

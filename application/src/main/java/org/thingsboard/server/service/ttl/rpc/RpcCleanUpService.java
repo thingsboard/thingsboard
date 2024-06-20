@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,7 +68,7 @@ public class RpcCleanUpService {
                     long ttl = TimeUnit.DAYS.toMillis(tenantProfileConfiguration.get().getRpcTtlDays());
                     long expirationTime = System.currentTimeMillis() - ttl;
 
-                    long totalRemoved = rpcDao.deleteOutdatedRpcByTenantId(tenantId, expirationTime);
+                    int totalRemoved = rpcDao.deleteOutdatedRpcByTenantId(tenantId, expirationTime);
 
                     if (totalRemoved > 0) {
                         log.info("Removed {} outdated rpc(s) for tenant {} older than {}", totalRemoved, tenantId, new Date(expirationTime));

@@ -3439,7 +3439,7 @@
     "action-source-required": "Handlingskilde er påkrævet.",
     "action-name": "Navn",
     "action-name-required": "Handlingsnavn er påkrævet.",
-    "action-name-not-unique": "Der findes allerede en anden handling med samme navn.<br/>Handlingsnavnet skal være unikt inden for den samme handlingskilde.",
+    "action-name-not-unique": "Der findes allerede en anden handling med samme navn.\nHandlingsnavnet skal være unikt inden for den samme handlingskilde.",
     "action-icon": "Ikon",
     "action-type": "Type",
     "action-type-required": "Handlingstype er påkrævet.",

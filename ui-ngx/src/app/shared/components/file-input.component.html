@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-container">
-  <label class="tb-title"
+  <label class="tb-title" *ngIf="label"
          [class.tb-required]="!disabled && required"
          [class.pointer-event]="hint"
          tb-hint-tooltip-icon="{{ hint }}">{{ label }}
@@ -38,7 +38,7 @@
            flowDrop
            [flow]="flow.flowJs">
         <div class="upload-label">
-          <mat-icon>cloud_upload</mat-icon>
+          <mat-icon class="tb-mat-32">cloud_upload</mat-icon>
           <span>{{ dropLabel }}</span>
           <button type="button" mat-button color="primary" class="browse-file">
             <label
@@ -50,9 +50,10 @@
       </div>
     </div>
   </ng-container>
-</div>
-<div>
-  <tb-error *ngIf="!fileName && required && requiredAsError" error="{{ noFileText | translate }}"></tb-error>
-  <div *ngIf="!fileName && !requiredAsError" translate>{{ noFileText }}</div>
-  <div *ngIf="fileName">{{ fileName }}</div>
+  <div class="tb-file-info-container">
+    <tb-error *ngIf="!fileName && required && requiredAsError" class="tb-file-name" error="{{ noFileText | translate }}"></tb-error>
+    <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" translate>{{ noFileText }}</div>
+    <div *ngIf="fileName" class="tb-file-name" [title]="fileName">{{ fileName }}</div>
+    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
+  </div>
 </div>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
-import javax.annotation.PostConstruct;
+import jakarta.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -70,6 +70,10 @@ public class MqttTransportContext extends TransportContext {
     @Getter
     @Value("${transport.mqtt.timeout:10000}")
     private long timeout;
+
+    @Getter
+    @Value("${transport.mqtt.disconnect_timeout:1000}")
+    private long disconnectTimeout;
 
     @Getter
     @Value("${transport.mqtt.proxy_enabled:false}")

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,33 +15,34 @@
  */
 package org.thingsboard.server.service.queue.ruleengine;
 
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.ToString;
-import org.thingsboard.server.common.data.queue.Queue;
+import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
 import java.util.Set;
 
 @Getter
 @ToString
+@AllArgsConstructor
 public class TbQueueConsumerManagerTask {
 
     private final QueueEvent event;
-    private Queue queue;
+    private QueueConfig config;
     private Set<TopicPartitionInfo> partitions;
+    private boolean drainQueue;
 
-    public TbQueueConsumerManagerTask(QueueEvent event) {
-        this.event = event;
+    public static TbQueueConsumerManagerTask delete(boolean drainQueue) {
+        return new TbQueueConsumerManagerTask(QueueEvent.DELETE, null, null, drainQueue);
     }
 
-    public TbQueueConsumerManagerTask(QueueEvent event, Queue queue) {
-        this.event = event;
-        this.queue = queue;
+    public static TbQueueConsumerManagerTask configUpdate(QueueConfig config) {
+        return new TbQueueConsumerManagerTask(QueueEvent.CONFIG_UPDATE, config, null, false);
     }
 
-    public TbQueueConsumerManagerTask(QueueEvent event, Set<TopicPartitionInfo> partitions) {
-        this.event = event;
-        this.partitions = partitions;
+    public static TbQueueConsumerManagerTask partitionChange(Set<TopicPartitionInfo> partitions) {
+        return new TbQueueConsumerManagerTask(QueueEvent.PARTITION_CHANGE, null, partitions, false);
     }
 
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -184,6 +184,38 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         Validators.max(this.maxDatapointsLimit())]);
     }
     this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
+  }
+
+  onTimewindowTypeChange() {
+    this.timewindowForm.markAsDirty();
+    const timewindowFormValue = this.timewindowForm.getRawValue();
+    if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
+      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
+        this.timewindowForm.get('realtime').patchValue({
+          realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
+            RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
+            timewindowFormValue.realtime.realtimeType,
+          timewindowMs: timewindowFormValue.history.timewindowMs,
+          quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
+            timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
+        });
+        setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+      }
+    } else {
+      this.timewindowForm.get('history').patchValue({
+        historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
+        timewindowMs: timewindowFormValue.realtime.timewindowMs,
+        quickInterval: timewindowFormValue.realtime.quickInterval
+      });
+      setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
+    }
+    this.timewindowForm.patchValue({
+      aggregation: {
+        type: timewindowFormValue.aggregation.type,
+        limit: timewindowFormValue.aggregation.limit
+      },
+      timezone: timewindowFormValue.timezone
+    });
   }
 
   update() {

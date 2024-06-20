@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,14 +32,14 @@ import {
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { EntityAlias, EntityAliases, EntityAliasFilter } from '@shared/models/alias.models';
-import { DatasourceType, Widget, widgetType } from '@shared/models/widget.models';
+import { DatasourceType, TargetDeviceType, Widget, widgetType } from '@shared/models/widget.models';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
-import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { deepClone, isUndefined } from '@core/utils';
 import { EntityAliasDialogComponent, EntityAliasDialogData } from './entity-alias-dialog.component';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface EntityAliasesDialogData {
   entityAliases: EntityAliases;
@@ -77,7 +77,7 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               public dialogRef: MatDialogRef<EntityAliasesDialogComponent, EntityAliases>,
               private fb: UntypedFormBuilder,
-              private utils: UtilsService,
+              private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
               private dialogs: DialogService,
               private dialog: MatDialog) {
@@ -97,15 +97,15 @@ export class EntityAliasesDialogComponent extends DialogComponent<EntityAliasesD
       } else {
         this.data.widgets.forEach((widget) => {
           if (widget.type === widgetType.rpc) {
-            if (widget.config.targetDeviceAliasIds && widget.config.targetDeviceAliasIds.length > 0) {
-              this.addWidgetTitleToWidgetsMap(widget.config.targetDeviceAliasIds[0], widget.config.title);
+            if (widget.config.targetDevice?.type === TargetDeviceType.entity && widget.config.targetDevice.entityAliasId) {
+              this.addWidgetTitleToWidgetsMap(widget.config.targetDevice.entityAliasId, widget.config.title);
             }
           } else if (widget.type === widgetType.alarm) {
             if (widget.config.alarmSource) {
               this.addWidgetTitleToWidgetsMap(widget.config.alarmSource.entityAliasId, widget.config.title);
             }
           } else {
-            const datasources = this.utils.validateDatasources(widget.config.datasources);
+            const datasources = this.dashboardUtils.validateAndUpdateDatasources(widget.config.datasources);
             datasources.forEach((datasource) => {
               if ([DatasourceType.entity, DatasourceType.entityCount, DatasourceType.alarmCount].includes(datasource.type)
                 && datasource.entityAliasId) {

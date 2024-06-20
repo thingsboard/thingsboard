@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,17 +32,15 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
 @Getter
-public class NotificationsSubscription extends TbSubscription<NotificationsSubscriptionUpdate> {
+public class NotificationsSubscription extends AbstractNotificationSubscription<NotificationsSubscriptionUpdate> {
 
     private final Map<UUID, Notification> latestUnreadNotifications = new HashMap<>();
     private final int limit;
     private final Set<NotificationType> notificationTypes;
-    private final AtomicInteger totalUnreadCounter = new AtomicInteger();
 
     @Builder
     public NotificationsSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,

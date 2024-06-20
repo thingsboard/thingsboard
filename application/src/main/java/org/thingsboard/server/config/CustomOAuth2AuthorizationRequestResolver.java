@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.config;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.crypto.keygen.Base64StringKeyGenerator;
@@ -38,11 +39,11 @@ import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.oauth2.TbOAuth2ParameterNames;
 import org.thingsboard.server.service.security.model.token.OAuth2AppTokenFactory;
 import org.thingsboard.server.utils.MiscUtils;
 
-import javax.servlet.http.HttpServletRequest;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -51,6 +52,7 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
 
+@TbCoreComponent
 @Service
 @Slf4j
 public class CustomOAuth2AuthorizationRequestResolver implements OAuth2AuthorizationRequestResolver {
@@ -113,7 +115,6 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return request.getParameter("appToken");
     }
 
-    @SuppressWarnings("deprecation")
     private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction, String appPackage, String appToken) {
         if (registrationId == null) {
             return null;
@@ -154,8 +155,6 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
                 addPkceParameters(attributes, additionalParameters);
             }
             builder.additionalParameters(additionalParameters);
-        } else if (AuthorizationGrantType.IMPLICIT.equals(clientRegistration.getAuthorizationGrantType())) {
-            builder = OAuth2AuthorizationRequest.implicit();
         } else {
             throw new IllegalArgumentException("Invalid Authorization Grant Type ("  +
                     clientRegistration.getAuthorizationGrantType().getValue() +

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import org.thingsboard.common.util.ListeningExecutor;
 
 public interface MqttClient {
@@ -32,7 +33,7 @@ public interface MqttClient {
      * @param host The ip address or host to connect to
      * @return A future which will be completed when the connection is opened and we received an CONNACK
      */
-    Future<MqttConnectResult> connect(String host);
+    Promise<MqttConnectResult> connect(String host);
 
     /**
      * Connect to the specified hostname/ip using the specified port
@@ -41,7 +42,7 @@ public interface MqttClient {
      * @param port The tcp port to connect to
      * @return A future which will be completed when the connection is opened and we received an CONNACK
      */
-    Future<MqttConnectResult> connect(String host, int port);
+    Promise<MqttConnectResult> connect(String host, int port);
 
     /**
      *
@@ -55,7 +56,7 @@ public interface MqttClient {
      * @return A future which will be completed when the connection is opened and we received an CONNACK
      * @throws IllegalStateException if no previous {@link #connect(String, int)} calls were attempted
      */
-    Future<MqttConnectResult> reconnect();
+    Promise<MqttConnectResult> reconnect();
 
     /**
      * Retrieve the netty {@link EventLoopGroup} we are using

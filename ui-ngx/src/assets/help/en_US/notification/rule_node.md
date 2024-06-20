@@ -13,6 +13,7 @@ Available template parameters:
 * values from the incoming message data referenced using the data key name;
 * `originatorType` - type of the originator, e.g. 'Device';
 * `originatorId` - id of the originator
+* `customerId` - id of the customer if any
 * `msgType` - type of the message
 * `recipientTitle` - title of the recipient (first and last name if specified, email otherwise);
 * `recipientEmail` - email of the recipient;

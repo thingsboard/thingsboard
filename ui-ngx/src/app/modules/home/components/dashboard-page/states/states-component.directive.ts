@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import { DashboardState } from '@shared/models/dashboard.models';
 import { IDashboardController } from '@home/components/dashboard-page/dashboard-page.models';
 import { StatesControllerService } from '@home/components/dashboard-page/states/states-controller.service';
 import { IStateControllerComponent } from '@home/components/dashboard-page/states/state-controller.models';
-import { Subject } from 'rxjs';
+import { BehaviorSubject, Subject } from 'rxjs';
 
 @Directive({
   // eslint-disable-next-line @angular-eslint/directive-selector
@@ -64,18 +64,21 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
   stateControllerComponent: IStateControllerComponent;
 
   private stateChangedSubject = new Subject<string>();
+  private stateIdSubject: BehaviorSubject<string>;
 
   constructor(private viewContainerRef: ViewContainerRef,
               private statesControllerService: StatesControllerService) {
   }
 
   ngOnInit(): void {
+    this.stateIdSubject = new BehaviorSubject<string>(this.dashboardCtrl.dashboardCtx.state);
     this.init();
   }
 
   ngOnDestroy(): void {
     this.destroy();
     this.stateChangedSubject.complete();
+    this.stateIdSubject.complete();
   }
 
   ngOnChanges(changes: SimpleChanges): void {
@@ -128,8 +131,12 @@ export class StatesComponentDirective implements OnInit, OnDestroy, OnChanges {
     this.stateControllerComponent = this.stateControllerComponentRef.instance;
     this.dashboardCtrl.dashboardCtx.stateController = this.stateControllerComponent;
     this.dashboardCtrl.dashboardCtx.stateChanged = this.stateChangedSubject.asObservable();
+    this.dashboardCtrl.dashboardCtx.stateId = this.stateIdSubject.asObservable();
     this.stateControllerComponent.stateChanged().subscribe((state) => {
       this.stateChangedSubject.next(state);
+    });
+    this.stateControllerComponent.stateId().subscribe((stateId) => {
+      this.stateIdSubject.next(stateId);
     });
     this.stateControllerComponent.preservedState = preservedState;
     this.stateControllerComponent.dashboardCtrl = this.dashboardCtrl;

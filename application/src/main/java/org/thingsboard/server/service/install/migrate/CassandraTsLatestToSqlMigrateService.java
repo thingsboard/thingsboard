@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,10 +24,10 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.UUIDConverter;
 import org.thingsboard.server.dao.cassandra.CassandraCluster;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionary;
-import org.thingsboard.server.dao.model.sqlts.dictionary.TsKvDictionaryCompositeKey;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
+import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.latest.TsKvLatestEntity;
-import org.thingsboard.server.dao.sqlts.dictionary.TsKvDictionaryRepository;
+import org.thingsboard.server.dao.sqlts.dictionary.KeyDictionaryRepository;
 import org.thingsboard.server.dao.sqlts.insert.latest.InsertLatestTsRepository;
 import org.thingsboard.server.dao.util.NoSqlTsDao;
 import org.thingsboard.server.dao.util.SqlTsLatestDao;
@@ -64,6 +64,8 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     private static final int MAX_KEY_LENGTH = 255;
     private static final int MAX_STR_V_LENGTH = 10000000;
 
+    private static final String SQL_DIR = "sql";
+
     @Autowired
     private InsertLatestTsRepository insertLatestTsRepository;
 
@@ -71,7 +73,7 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     protected CassandraCluster cluster;
 
     @Autowired
-    protected TsKvDictionaryRepository dictionaryRepository;
+    protected KeyDictionaryRepository keyDictionaryRepository;
 
     @Autowired
     private InstallScripts installScripts;
@@ -93,7 +95,7 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
     public void migrate() throws Exception {
         log.info("Performing migration of latest timeseries data from cassandra to SQL database ...");
         try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.0.1", "schema_ts_latest.sql");
+            Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), SQL_DIR, "schema-ts-latest-psql.sql");
             loadSql(schemaUpdateFile, conn);
             conn.setAutoCommit(false);
             for (CassandraToSqlTable table : tables) {
@@ -192,22 +194,22 @@ public class CassandraTsLatestToSqlMigrateService implements TsLatestMigrateServ
 
         Integer keyId = tsKvDictionaryMap.get(strKey);
         if (keyId == null) {
-            Optional<TsKvDictionary> tsKvDictionaryOptional;
-            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+            Optional<KeyDictionaryEntry> tsKvDictionaryOptional;
+            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
             if (!tsKvDictionaryOptional.isPresent()) {
                 tsCreationLock.lock();
                 try {
-                    tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
+                    tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
                     if (!tsKvDictionaryOptional.isPresent()) {
-                        TsKvDictionary tsKvDictionary = new TsKvDictionary();
-                        tsKvDictionary.setKey(strKey);
+                        KeyDictionaryEntry keyDictionaryEntry = new KeyDictionaryEntry();
+                        keyDictionaryEntry.setKey(strKey);
                         try {
-                            TsKvDictionary saved = dictionaryRepository.save(tsKvDictionary);
+                            KeyDictionaryEntry saved = keyDictionaryRepository.save(keyDictionaryEntry);
                             tsKvDictionaryMap.put(saved.getKey(), saved.getKeyId());
                             keyId = saved.getKeyId();
                         } catch (ConstraintViolationException e) {
-                            tsKvDictionaryOptional = dictionaryRepository.findById(new TsKvDictionaryCompositeKey(strKey));
-                            TsKvDictionary dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
+                            tsKvDictionaryOptional = keyDictionaryRepository.findById(new KeyDictionaryCompositeKey(strKey));
+                            KeyDictionaryEntry dictionary = tsKvDictionaryOptional.orElseThrow(() -> new RuntimeException("Failed to get TsKvDictionary entity from DB!"));
                             tsKvDictionaryMap.put(dictionary.getKey(), dictionary.getKeyId());
                             keyId = dictionary.getKeyId();
                         }

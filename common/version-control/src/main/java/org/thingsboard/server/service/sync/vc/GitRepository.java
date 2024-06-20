@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import org.eclipse.jgit.diff.EditList;
 import org.eclipse.jgit.diff.HistogramDiff;
 import org.eclipse.jgit.diff.RawText;
 import org.eclipse.jgit.diff.RawTextComparator;
+import org.eclipse.jgit.errors.LargeObjectException;
 import org.eclipse.jgit.lib.Constants;
 import org.eclipse.jgit.lib.ObjectId;
 import org.eclipse.jgit.lib.ObjectLoader;
@@ -236,8 +237,12 @@ public class GitRepository {
             ObjectId blobId = treeWalk.getObjectId(0);
             try (ObjectReader objectReader = git.getRepository().newObjectReader()) {
                 ObjectLoader objectLoader = objectReader.open(blobId);
-                byte[] bytes = objectLoader.getBytes();
-                return new String(bytes, StandardCharsets.UTF_8);
+                try {
+                    byte[] bytes = objectLoader.getBytes();
+                    return new String(bytes, StandardCharsets.UTF_8);
+                } catch (LargeObjectException e) {
+                    throw new RuntimeException("File " + file + " is too big to load");
+                }
             }
         }
     }

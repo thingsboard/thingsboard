@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,17 @@
 package org.thingsboard.rule.engine.action;
 
 import lombok.Data;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 
 @Data
 public abstract class TbAbstractRelationActionNodeConfiguration {
 
-    private String direction;
+    private EntitySearchDirection direction;
     private String relationType;
 
-    private String entityType;
+    private EntityType entityType;
     private String entityNamePattern;
     private String entityTypePattern;
-
-    private long entityCacheExpiration;
 
 }

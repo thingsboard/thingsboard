@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
 ///
 
 import { Component, ElementRef, forwardRef, Input, OnInit, ViewChild } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { catchError, debounceTime, distinctUntilChanged, map, share, switchMap, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -30,6 +30,7 @@ import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import { RuleChainService } from '@core/http/rule-chain.service';
 import { MatAutocompleteTrigger } from '@angular/material/autocomplete';
 import { RuleChainType } from '@app/shared/models/rule-chain.models';
+import { getEntityDetailsPageURL } from '@core/utils';
 
 @Component({
   selector: 'tb-rule-chain-autocomplete',
@@ -74,6 +75,7 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
   filteredRuleChains: Observable<Array<BaseData<EntityId>>>;
 
   searchText = '';
+  ruleChainURL: string;
 
   private dirty = false;
 
@@ -151,6 +153,10 @@ export class RuleChainAutocompleteComponent implements ControlValueAccessor, OnI
       this.entityService.getEntity(targetEntityType, value, {ignoreLoading: true, ignoreErrors: true}).subscribe(
         (entity) => {
           this.modelValue = entity.id.id;
+          this.ruleChainURL = getEntityDetailsPageURL(this.modelValue,EntityType.RULE_CHAIN);
+          if (this.ruleChainType === RuleChainType.EDGE) {
+            this.ruleChainURL = '/edgeManagement' + this.ruleChainURL;
+          }
           this.selectRuleChainFormGroup.get('ruleChainId').patchValue(entity, {emitEvent: false});
         },
         () => {

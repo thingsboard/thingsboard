@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -114,9 +114,15 @@ export class GatewayLogsComponent implements AfterViewInit {
         const result = {
           ts: data[0],
           key: this.activeLink.key,
-          message: /\[(.*)/.exec(data[1])[0],
+          message: data[1],
           status: 'INVALID LOG FORMAT' as GatewayStatus
         };
+
+        try {
+          result.message = /\[(.*)/.exec(data[1])[0];
+        } catch (e) {
+          result.message = data[1];
+        }
 
         try {
           result.status = data[1].match(/\|(\w+)\|/)[1];
