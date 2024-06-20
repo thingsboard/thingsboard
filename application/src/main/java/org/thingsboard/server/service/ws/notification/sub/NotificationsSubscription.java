@@ -17,6 +17,7 @@ package org.thingsboard.server.service.ws.notification.sub;
 
 import lombok.Builder;
 import lombok.Getter;
+import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -52,7 +53,7 @@ public class NotificationsSubscription extends AbstractNotificationSubscription<
     }
 
     public boolean checkNotificationType(NotificationType type) {
-        return notificationTypes.contains(type);
+        return CollectionUtils.isEmpty(notificationTypes) || notificationTypes.contains(type);
     }
 
     public UnreadNotificationsUpdate createFullUpdate() {

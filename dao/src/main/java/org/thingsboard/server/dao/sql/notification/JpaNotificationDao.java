@@ -63,7 +63,7 @@ public class JpaNotificationDao extends JpaPartitionedAbstractDao<NotificationEn
     @Override
     public PageData<Notification> findUnreadByDeliveryMethodAndRecipientIdAndNotificationTypesAndPageLink(TenantId tenantId, NotificationDeliveryMethod deliveryMethod, UserId recipientId, Set<NotificationType> types, PageLink pageLink) {
         if (CollectionUtils.isEmpty(types)) {
-            types = NotificationType.all;
+            return findUnreadByDeliveryMethodAndRecipientIdAndPageLink(tenantId, deliveryMethod, recipientId, pageLink);
         }
         return DaoUtil.toPageData(notificationRepository.findByDeliveryMethodAndRecipientIdAndTypeInAndStatusNot(deliveryMethod,
                 recipientId.getId(), types, NotificationStatus.READ, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));

@@ -15,9 +15,6 @@
  */
 package org.thingsboard.server.common.data.notification;
 
-import java.util.EnumSet;
-import java.util.Set;
-
 public enum NotificationType {
 
     GENERAL,
@@ -34,8 +31,6 @@ public enum NotificationType {
     RATE_LIMITS,
     EDGE_CONNECTION,
     EDGE_COMMUNICATION_FAILURE,
-    TASK_PROCESSING_FAILURE;
-
-    public static final Set<NotificationType> all = EnumSet.allOf(NotificationType.class);
+    TASK_PROCESSING_FAILURE
 
 }

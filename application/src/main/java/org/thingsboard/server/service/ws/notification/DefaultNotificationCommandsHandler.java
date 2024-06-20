@@ -17,7 +17,6 @@ package org.thingsboard.server.service.ws.notification;
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -80,7 +79,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsSubscriptionUpdate)
                 .limit(cmd.getLimit())
-                .notificationTypes(CollectionUtils.isNotEmpty(cmd.getTypes()) ? cmd.getTypes() : NotificationType.all)
+                .notificationTypes(cmd.getTypes())
                 .build();
         localSubscriptionService.addSubscription(subscription);
 
