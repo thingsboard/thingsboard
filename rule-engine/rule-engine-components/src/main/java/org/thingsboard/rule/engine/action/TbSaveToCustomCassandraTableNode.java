@@ -95,7 +95,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         config = TbNodeUtils.convert(configuration, TbSaveToCustomCassandraTableNodeConfiguration.class);
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
-            throw new TbNodeException("Unable to connect to Cassandra database");
+            throw new TbNodeException("Unable to connect to Cassandra database", true);
         }
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());

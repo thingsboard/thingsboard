@@ -139,7 +139,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Unable to connect to Cassandra database")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(false);
+                .isEqualTo(true);
     }
 
     @Test
