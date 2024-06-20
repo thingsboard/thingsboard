@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
+import io.netty.handler.codec.mqtt.MqttConnectReturnCode;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -29,12 +30,17 @@ import org.thingsboard.rule.engine.credentials.CertPemCredentials;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeTest;
 
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
+
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.spy;
-import static org.mockito.BDDMockito.willReturn;
-import static org.mockito.BDDMockito.willThrow;
 
 public class TbAzureIotHubNodeTest extends TbMqttNodeTest {
 
@@ -72,42 +78,63 @@ public class TbAzureIotHubNodeTest extends TbMqttNodeTest {
 
         azureIotHubNode.prepareMqttClientConfig(mqttClientConfig);
 
-        assertThat(mqttClientConfig)
-                .hasFieldOrPropertyWithValue("protocolVersion", MqttVersion.MQTT_3_1_1)
-                .hasFieldOrPropertyWithValue("username", AzureIotHubUtil.buildUsername(mqttNodeConfig.getHost(), mqttClientConfig.getClientId()))
-                .hasFieldOrPropertyWithValue("password", AzureIotHubUtil.buildSasToken(mqttNodeConfig.getHost(), credentials.getSasKey()));
+        assertThat(mqttClientConfig.getProtocolVersion()).isEqualTo(MqttVersion.MQTT_3_1_1);
+        assertThat(mqttClientConfig.getUsername()).isEqualTo(AzureIotHubUtil.buildUsername(mqttNodeConfig.getHost(), mqttClientConfig.getClientId()));
+        assertThat(mqttClientConfig.getPassword()).isEqualTo(AzureIotHubUtil.buildSasToken(mqttNodeConfig.getHost(), credentials.getSasKey()));
     }
 
     @Test
-    public void givenPemCredentialsAndSuccessfulInitClient_whenInit_thenOk() throws Exception {
+    public void givenPemCredentialsAndSuccessfulConnectResult_whenInit_thenOk() throws Exception {
         CertPemCredentials credentials = new CertPemCredentials();
         credentials.setCaCert("test-ca-cert.pem");
         credentials.setPassword("test-password");
         azureIotHubNodeConfig.setCredentials(credentials);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig));
 
-        willReturn(mqttClientMock).given(azureIotHubNode).initClient(any());
+        mockConnectClient(azureIotHubNode);
+        given(promiseMock.get(anyLong(), any(TimeUnit.class))).willReturn(resultMock);
+        given(resultMock.isSuccess()).willReturn(true);
 
-        azureIotHubNode.init(ctxMock, configuration);
+        assertThatNoException().isThrownBy(
+                () -> azureIotHubNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig))));
 
-        assertThat(azureIotHubNode.getMqttNodeConfiguration())
-                .hasFieldOrPropertyWithValue("port", 8883)
-                .hasFieldOrPropertyWithValue("cleanSession", true);
+        TbMqttNodeConfiguration mqttNodeConfiguration = azureIotHubNode.getMqttNodeConfiguration();
+        assertThat(mqttNodeConfiguration.getPort()).isEqualTo(8883);
+        assertThat(mqttNodeConfiguration.isCleanSession()).isTrue();
     }
 
     @Test
-    public void givenAzureIotHubSasCredentialsAndFailedInitClient_whenInit_thenThrowsException() throws Exception {
+    public void givenAzureIotHubSasCredentialsAndFailedByTimeoutConnectResult_whenInit_thenThrowsException() throws ExecutionException, InterruptedException, TimeoutException {
         AzureIotHubSasCredentials credentials = new AzureIotHubSasCredentials();
         credentials.setSasKey("testSasKey");
         credentials.setCaCert("test-ca-cert.pem");
         azureIotHubNodeConfig.setCredentials(credentials);
 
-        String errorMsg = "Failed to connect to MQTT broker!";
-        willThrow(new RuntimeException(errorMsg)).given(azureIotHubNode).initClient(any());
+        mockConnectClient(azureIotHubNode);
+        given(promiseMock.get(anyLong(), any(TimeUnit.class))).willThrow(new TimeoutException("Failed to connect"));
 
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig));
-        assertThatThrownBy(() -> azureIotHubNode.init(ctxMock, configuration))
+        assertThatThrownBy(() -> azureIotHubNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig))))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage(RuntimeException.class.getName() + ": " + errorMsg);
+                .hasMessage("java.lang.RuntimeException: Failed to connect to MQTT broker at <iot-hub-name>.azure-devices.net:8883.")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(false);
+    }
+
+    @Test
+    public void givenFailedConnectResult_whenInit_thenThrowsException() throws ExecutionException, InterruptedException, TimeoutException {
+        AzureIotHubSasCredentials credentials = new AzureIotHubSasCredentials();
+        credentials.setSasKey("testSasKey");
+        credentials.setCaCert("test-ca-cert.pem");
+        azureIotHubNodeConfig.setCredentials(credentials);
+
+        mockConnectClient(azureIotHubNode);
+        given(promiseMock.get(anyLong(), any(TimeUnit.class))).willReturn(resultMock);
+        given(resultMock.isSuccess()).willReturn(false);
+        given(resultMock.getReturnCode()).willReturn(MqttConnectReturnCode.CONNECTION_REFUSED_NOT_AUTHORIZED);
+
+        assertThatThrownBy(() -> azureIotHubNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("java.lang.RuntimeException: Failed to connect to MQTT broker at <iot-hub-name>.azure-devices.net:8883. Result code is: CONNECTION_REFUSED_NOT_AUTHORIZED")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(false);
     }
 }

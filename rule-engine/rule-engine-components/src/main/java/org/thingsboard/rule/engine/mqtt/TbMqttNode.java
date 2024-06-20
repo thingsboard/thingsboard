@@ -115,7 +115,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return "Tenant[" + ctx.getTenantId().getId() + "]RuleNode[" + ctx.getSelf().getId().getId() + "]";
     }
 
-    public MqttClient initClient(TbContext ctx) throws Exception {
+    protected MqttClient initClient(TbContext ctx) throws Exception {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
         config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
@@ -127,7 +127,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         prepareMqttClientConfig(config);
         MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
         client.setEventLoop(ctx.getSharedEventLoop());
-        Promise<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
+        Promise<MqttConnectResult> connectFuture = connectMqttClient(client);
         MqttConnectResult result;
         try {
             result = connectFuture.get(this.mqttNodeConfiguration.getConnectTimeoutSec(), TimeUnit.SECONDS);
@@ -144,6 +144,10 @@ public class TbMqttNode extends TbAbstractExternalNode {
             throw new RuntimeException(String.format("Failed to connect to MQTT broker at %s. Result code is: %s", hostPort, result.getReturnCode()));
         }
         return client;
+    }
+
+    protected Promise<MqttConnectResult> connectMqttClient(MqttClient client) {
+        return client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
     }
 
     protected void prepareMqttClientConfig(MqttClientConfig config) {
