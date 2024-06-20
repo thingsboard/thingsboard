@@ -21,7 +21,6 @@ import {
   createTimeSeriesVisualMapOption,
   createTimeSeriesXAxis,
   createTimeSeriesYAxis,
-  createTooltipValueFormatFunction,
   defaultTimeSeriesChartYAxisSettings,
   generateChartData,
   LineSeriesStepType,
@@ -37,9 +36,6 @@ import {
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
   TimeSeriesChartThresholdItem,
-  timeSeriesChartTooltipFormatter,
-  TimeSeriesChartTooltipTrigger,
-  TimeSeriesChartTooltipValueFormatFunction,
   TimeSeriesChartType,
   TimeSeriesChartXAxis,
   TimeSeriesChartYAxis,
@@ -74,7 +70,12 @@ import { DeepPartial } from '@shared/models/common';
 import { BarRenderSharedContext } from '@home/components/widget/lib/chart/time-series-chart-bar.models';
 import { TimeSeriesChartStateValueConverter } from '@home/components/widget/lib/chart/time-series-chart-state.models';
 import { ChartLabelPosition, ChartShape, toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
-import { DomSanitizer } from '@angular/platform-browser';
+import {
+  createTooltipValueFormatFunction,
+  TimeSeriesChartTooltip,
+  TimeSeriesChartTooltipTrigger,
+  TimeSeriesChartTooltipValueFormatFunction
+} from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 
 export class TbTimeSeriesChart {
 
@@ -134,7 +135,7 @@ export class TbTimeSeriesChart {
   private timeSeriesChartOptions: EChartsOption;
 
   private readonly tooltipDateFormat: DateFormatProcessor;
-  private readonly tooltipValueFormatFunction: TimeSeriesChartTooltipValueFormatFunction;
+  private readonly timeSeriesChartTooltip: TimeSeriesChartTooltip;
   private readonly stateValueConverter: TimeSeriesChartStateValueConverter;
 
   private yMinSubject = new BehaviorSubject(-1);
@@ -154,8 +155,6 @@ export class TbTimeSeriesChart {
 
   private latestData: FormattedData[] = [];
 
-  private readonly sanitizer: DomSanitizer;
-
   yMin$ = this.yMinSubject.asObservable();
   yMax$ = this.yMaxSubject.asObservable();
 
@@ -165,6 +164,8 @@ export class TbTimeSeriesChart {
               private renderer: Renderer2,
               private autoResize = true) {
 
+    let tooltipValueFormatFunction: TimeSeriesChartTooltipValueFormatFunction;
+
     this.settings = mergeDeep({} as TimeSeriesChartSettings,
       timeSeriesChartDefaultSettings,
       this.inputSettings as TimeSeriesChartSettings);
@@ -172,9 +173,8 @@ export class TbTimeSeriesChart {
     this.stackMode = !this.comparisonEnabled && this.settings.stack;
     if (this.settings.states && this.settings.states.length) {
       this.stateValueConverter = new TimeSeriesChartStateValueConverter(this.ctx.utilsService, this.settings.states);
-      this.tooltipValueFormatFunction = this.stateValueConverter.tooltipFormatter;
+      tooltipValueFormatFunction = this.stateValueConverter.tooltipFormatter;
     }
-    this.sanitizer = this.ctx.sanitizer;
     const $dashboardPageElement = this.ctx.$containerParent.parents('.tb-dashboard-page');
     const dashboardPageElement = $dashboardPageElement.length ? $($dashboardPageElement[$dashboardPageElement.length-1]) : null;
     this.darkMode = this.settings.darkMode || dashboardPageElement?.hasClass('dark');
@@ -187,14 +187,20 @@ export class TbTimeSeriesChart {
       if (this.settings.tooltipShowDate) {
         this.tooltipDateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.tooltipDateFormat);
       }
-      if (!this.tooltipValueFormatFunction) {
-        this.tooltipValueFormatFunction =
-          createTooltipValueFormatFunction(this.settings.tooltipValueFormatter);
-        if (!this.tooltipValueFormatFunction) {
-          this.tooltipValueFormatFunction = (value, _latestData, units, decimals) => formatValue(value, decimals, units, false);
+      if (!tooltipValueFormatFunction) {
+        tooltipValueFormatFunction = createTooltipValueFormatFunction(this.settings.tooltipValueFormatter);
+        if (!tooltipValueFormatFunction) {
+          tooltipValueFormatFunction = (value, _latestData, units, decimals) => formatValue(value, decimals, units, false);
         }
       }
     }
+    this.timeSeriesChartTooltip = new TimeSeriesChartTooltip(
+      this.renderer,
+      this.ctx.sanitizer,
+      this.settings,
+      this.tooltipDateFormat,
+      tooltipValueFormatFunction
+    );
     this.onResize();
     if (this.autoResize) {
       this.shapeResize$ = new ResizeObserver(() => {
@@ -607,10 +613,12 @@ export class TbTimeSeriesChart {
           type: this.noAggregation ? 'line' : 'shadow'
         },
         formatter: (params: CallbackDataParams[]) =>
-          this.settings.showTooltip ? timeSeriesChartTooltipFormatter(this.renderer, this.sanitizer, this.tooltipDateFormat,
-            this.settings, params, this.tooltipValueFormatFunction,
+          this.timeSeriesChartTooltip.formatted(
+            params,
             this.settings.tooltipShowFocusedSeries ? getFocusedSeriesIndex(this.timeSeriesChart) : -1,
-            this.dataItems,  this.noAggregation ? null : this.ctx.timeWindow.interval) : undefined,
+            this.dataItems,
+            this.noAggregation ? null : this.ctx.timeWindow.interval,
+          ),
         padding: [8, 12],
         backgroundColor: this.settings.tooltipBackgroundColor,
         borderWidth: 0,
