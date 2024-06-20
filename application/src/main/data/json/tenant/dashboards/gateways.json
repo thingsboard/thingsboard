@@ -5632,33 +5632,6 @@
           }
         }
       },
-      "gateway_devices_5": {
-        "name": "gateway_devices_opcua_async",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "e3a9539d-2ccb-96e0-2afa-36f93e40233d": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
-            }
-          }
-        }
-      },
       "gateway_devices_6": {
         "name": "gateway_devices_ble",
         "root": false,
