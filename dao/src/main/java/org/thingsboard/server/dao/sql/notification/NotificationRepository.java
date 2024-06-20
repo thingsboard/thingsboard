@@ -44,8 +44,9 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
                                                                             @Param("searchText") String searchText,
                                                                             Pageable pageable);
 
-    @Query("SELECT n FROM NotificationEntity n WHERE n.recipientId = :recipientId " +
-            "AND n.status <> :status AND (n.type IN :types) " +
+    @Query("SELECT n FROM NotificationEntity n WHERE n.deliveryMethod = :deliveryMethod " +
+            "AND n.recipientId = :recipientId AND n.status <> :status " +
+            "AND (n.type IN :types) " +
             "AND (:searchText is NULL OR ilike(n.subject, concat('%', :searchText, '%')) = true " +
             "OR ilike(n.text, concat('%', :searchText, '%')) = true)")
     Page<NotificationEntity> findByDeliveryMethodAndRecipientIdAndTypeInAndStatusNot(@Param("deliveryMethod") NotificationDeliveryMethod deliveryMethod,
@@ -55,7 +56,8 @@ public interface NotificationRepository extends JpaRepository<NotificationEntity
                                                                                      @Param("searchText") String searchText,
                                                                                      Pageable pageable);
 
-    @Query("SELECT n FROM NotificationEntity n WHERE n.deliveryMethod = :deliveryMethod AND n.recipientId = :recipientId " +
+    @Query("SELECT n FROM NotificationEntity n WHERE n.deliveryMethod = :deliveryMethod " +
+            "AND n.recipientId = :recipientId " +
             "AND (:searchText is NULL OR ilike(n.subject, concat('%', :searchText, '%')) = true " +
             "OR ilike(n.text, concat('%', :searchText, '%')) = true)")
     Page<NotificationEntity> findByDeliveryMethodAndRecipientId(@Param("deliveryMethod") NotificationDeliveryMethod deliveryMethod,
