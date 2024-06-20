@@ -30,7 +30,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
+import { forkJoin, merge, Observable, of, Subject, Subscription } from 'rxjs';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
@@ -118,6 +118,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   mode: ConnectorConfigurationModes = this.connectorConfigurationModes.BASIC;
 
   initialConnector: GatewayConnector;
+
+  private connectorConfigChange = new Subject<void>();
 
   private inactiveConnectors: Array<string>;
 
@@ -363,15 +365,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private observeModeChange(): void {
-    this.connectorForm.get('mode').valueChanges
+    merge(this.connectorForm.get('mode').valueChanges, this.connectorConfigChange.asObservable())
       .pipe(
         tap((mode: ConnectorConfigurationModes) => {
           const dataMapping = this.connectorForm.get('basicConfig').get('dataMapping');
 
-          if (mode === ConnectorConfigurationModes.ADVANCED) {
-            dataMapping?.disable();
-          } else {
+          if (mode === ConnectorConfigurationModes.BASIC) {
             dataMapping?.enable();
+          } else {
+            dataMapping?.disable();
           }
 
           if (!this.connectorForm.touched) {
@@ -678,6 +680,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.connectorForm.addControl('basicConfig', configControl, {emitEvent: false});
     }
     this.createBasicConfigWatcher();
+    this.connectorConfigChange.next();
   }
 
   private createBasicConfigWatcher(): void {
