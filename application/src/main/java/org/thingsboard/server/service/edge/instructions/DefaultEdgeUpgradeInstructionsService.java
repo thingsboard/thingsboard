@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -32,47 +31,37 @@ import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Optional;
 
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
-public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstructionsService {
+public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgradeInstructionsService implements EdgeUpgradeInstructionsService {
 
     private static final Map<String, EdgeUpgradeInfo> upgradeVersionHashMap = new HashMap<>();
 
-    private static final String EDGE_DIR = "edge";
-    private static final String INSTRUCTIONS_DIR = "instructions";
     private static final String UPGRADE_DIR = "upgrade";
 
-    private final InstallScripts installScripts;
     private final AttributesService attributesService;
 
-    @Value("${app.version:unknown}")
-    @Setter
-    private String appVersion;
+    public DefaultEdgeUpgradeInstructionsService(AttributesService attributesService, InstallScripts installScripts) {
+        super(installScripts);
+        this.attributesService = attributesService;
+    }
 
     @Override
     public EdgeInstructions getUpgradeInstructions(String edgeVersion, String upgradeMethod) {
         String tbVersion = appVersion.replace("-SNAPSHOT", "");
         String currentEdgeVersion = convertEdgeVersionToDocsFormat(edgeVersion);
-        switch (upgradeMethod.toLowerCase()) {
-            case "docker":
-                return getDockerUpgradeInstructions(tbVersion, currentEdgeVersion);
-            case "ubuntu":
-            case "centos":
-                return getLinuxUpgradeInstructions(tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
-            default:
-                throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
-        }
+        return switch (upgradeMethod.toLowerCase()) {
+            case "docker" -> getDockerUpgradeInstructions(tbVersion, currentEdgeVersion);
+            case "ubuntu", "centos" ->
+                    getLinuxUpgradeInstructions(tbVersion, currentEdgeVersion, upgradeMethod.toLowerCase());
+            default -> throw new IllegalArgumentException("Unsupported upgrade method for Edge: " + upgradeMethod);
+        };
     }
 
     @Override
@@ -167,28 +156,12 @@ public class DefaultEdgeUpgradeInstructionsService implements EdgeUpgradeInstruc
         return new EdgeInstructions(result.toString());
     }
 
-    private String getTagVersion(String version) {
-        return version.endsWith(".0") ? version.substring(0, version.length() - 2) : version;
-    }
-
     private String convertEdgeVersionToDocsFormat(String edgeVersion) {
         return edgeVersion.replace("_", ".").substring(2);
     }
 
-    private String readFile(Path file) {
-        try {
-            return Files.readString(file);
-        } catch (IOException e) {
-            log.warn("Failed to read file: {}", file, e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Path resolveFile(String subDir, String... subDirs) {
-        return getEdgeInstallInstructionsDir().resolve(Paths.get(subDir, subDirs));
-    }
-
-    private Path getEdgeInstallInstructionsDir() {
-        return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, INSTRUCTIONS_DIR, UPGRADE_DIR);
+    @Override
+    protected String getBaseDirName() {
+        return UPGRADE_DIR;
     }
 }
