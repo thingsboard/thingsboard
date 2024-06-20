@@ -367,7 +367,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private observeModeChange(): void {
     merge(this.connectorForm.get('mode').valueChanges, this.connectorConfigChange.asObservable())
       .pipe(
-        tap((mode: ConnectorConfigurationModes) => {
+        tap((mode: ConnectorConfigurationModes | null) => {
           const dataMapping = this.connectorForm.get('basicConfig').get('dataMapping');
 
           if (mode === ConnectorConfigurationModes.BASIC) {
