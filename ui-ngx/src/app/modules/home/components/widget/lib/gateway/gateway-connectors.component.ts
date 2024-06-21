@@ -238,12 +238,23 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.dataSource.sort = this.sort;
     this.dataSource.sortingDataAccessor = (data: AttributeData, sortHeaderId: string) => {
-      if (sortHeaderId === 'syncStatus') {
-        return this.isConnectorSynced(data) ? 1 : 0;
-      } else if (sortHeaderId === 'enabled') {
-        return this.activeConnectors.includes(data.key) ? 1 : 0;
+      switch (sortHeaderId) {
+        case 'syncStatus':
+          return this.isConnectorSynced(data) ? 1 : 0;
+
+        case 'enabled':
+          return this.activeConnectors.includes(data.key) ? 1 : 0;
+
+        case 'errors':
+          const errors = this.getErrorsCount(data);
+          if (typeof errors === 'string') {
+            return this.sort.direction.toUpperCase() === Direction.DESC ? -1 : Infinity;
+          }
+          return errors;
+
+        default:
+          return data[sortHeaderId] || data.value[sortHeaderId];
       }
-      return data[sortHeaderId] || data.value[sortHeaderId];
     };
 
     if (this.device) {
