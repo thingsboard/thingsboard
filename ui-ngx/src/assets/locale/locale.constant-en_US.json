@@ -6080,8 +6080,8 @@
             "event-key-contains": "Event key contains...",
             "show-connector": "Show for the connector",
             "connector-state-param-key": "Connector state parameter key",
-            "status": "Status",
             "message": "Message",
+            "level": "Level",
             "created-time": "Created time"
         },
         "gauge": {
