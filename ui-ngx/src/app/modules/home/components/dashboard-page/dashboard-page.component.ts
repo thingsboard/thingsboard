@@ -51,6 +51,7 @@ import {
   DashboardStateLayouts,
   GridSettings,
   LayoutDimension,
+  LayoutType,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
@@ -1199,7 +1200,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       layoutIds = Object.keys(layouts) as DashboardLayoutId[];
     }
-    return layoutIds.every(id => layouts[id].gridSettings.isScada);
+    return layoutIds.every(id => layouts[id].gridSettings.layoutType === LayoutType.scada);
   }
 
   private selectTargetLayout(): Observable<DashboardLayoutId> {
@@ -1395,6 +1396,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, widgetTitle: string) {
     $event.stopPropagation();
     this.importExport.exportWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widget, widgetTitle);
+  }
+
+  dashboardMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext) {
+    if (this.isEdit && !this.isEditingWidget) {
+      layoutCtx.ctrl.resetHighlight();
+    }
   }
 
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {

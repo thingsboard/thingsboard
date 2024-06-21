@@ -23,7 +23,13 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { DashboardSettings, GridSettings, StateControllerId } from '@app/shared/models/dashboard.models';
+import {
+  DashboardSettings,
+  GridSettings,
+  LayoutType,
+  layoutTypes, layoutTypeTranslationMap,
+  StateControllerId
+} from '@app/shared/models/dashboard.models';
 import { isDefined, isUndefined } from '@core/utils';
 import { StatesControllerService } from './states/states-controller.service';
 import { merge } from 'rxjs';
@@ -42,6 +48,10 @@ export interface DashboardSettingsDialogData {
 })
 export class DashboardSettingsDialogComponent extends DialogComponent<DashboardSettingsDialogComponent, DashboardSettingsDialogData>
   implements OnInit, ErrorStateMatcher {
+
+  layoutTypes = layoutTypes;
+
+  layoutTypeTranslations = layoutTypeTranslationMap;
 
   settings: DashboardSettings;
   gridSettings: GridSettings;
@@ -164,7 +174,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
       }
       const mobileAutoFillHeight = isUndefined(this.gridSettings.mobileAutoFillHeight) ? false : this.gridSettings.mobileAutoFillHeight;
       this.gridSettingsFormGroup = this.fb.group({
-        isScada: [this.gridSettings.isScada, []],
+        layoutType: [this.gridSettings.layoutType || LayoutType.default, []],
         columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1008)]],
         minColumns: [this.gridSettings.minColumns || this.gridSettings.columns || 24,
           [Validators.required, Validators.min(10), Validators.max(1008)]],
@@ -184,7 +194,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
           isUndefined(this.gridSettings.mobileDisplayLayoutFirst) ? false : this.gridSettings.mobileDisplayLayoutFirst;
         this.gridSettingsFormGroup.addControl('mobileDisplayLayoutFirst', this.fb.control(mobileDisplayLayoutFirst, []));
       }
-      merge(this.gridSettingsFormGroup.get('isScada').valueChanges,
+      merge(this.gridSettingsFormGroup.get('layoutType').valueChanges,
             this.gridSettingsFormGroup.get('mobileAutoFillHeight').valueChanges).subscribe(
         () => {
           this.updateGridSettingsFormState();
@@ -197,6 +207,14 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
   }
 
   ngOnInit(): void {
+  }
+
+  isScada() {
+    if (this.gridSettingsFormGroup) {
+      return this.gridSettingsFormGroup.get('layoutType').value === LayoutType.scada;
+    } else {
+      return false;
+    }
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -230,7 +248,7 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
   }
 
   private updateGridSettingsFormState() {
-    const isScada: boolean = this.gridSettingsFormGroup.get('isScada').value;
+    const isScada: boolean = this.gridSettingsFormGroup.get('layoutType').value === LayoutType.scada;
     if (isScada) {
       this.gridSettingsFormGroup.get('margin').disable();
       this.gridSettingsFormGroup.get('outerMargin').disable();

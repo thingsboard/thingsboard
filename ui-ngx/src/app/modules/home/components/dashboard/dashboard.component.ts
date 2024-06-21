@@ -395,6 +395,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
+  onDashboardMouseDown($event: MouseEvent) {
+    if (this.callbacks && this.callbacks.onDashboardMouseDown) {
+      if ($event) {
+        $event.stopPropagation();
+      }
+      this.callbacks.onDashboardMouseDown($event);
+    }
+  }
+
   openDashboardContextMenu($event: MouseEvent) {
     if (this.callbacks && this.callbacks.prepareDashboardContextMenu) {
       const items = this.callbacks.prepareDashboardContextMenu($event);

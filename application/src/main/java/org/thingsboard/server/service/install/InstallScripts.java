@@ -265,6 +265,7 @@ public class InstallScripts {
                 );
             }
         }
+        this.loadSystemScadaSymbols();
         for (var widgetsBundleDescriptorEntry : widgetsBundlesMap.entrySet()) {
             Path path = widgetsBundleDescriptorEntry.getKey();
             try {
@@ -302,12 +303,11 @@ public class InstallScripts {
         }
     }
 
-    public void loadSystemScadaSymbols() throws Exception {
+    private void loadSystemScadaSymbols() throws Exception {
         log.info("Loading system SCADA symbols");
         Path scadaSymbolsDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, SCADA_SYMBOLS_DIR);
         if (Files.exists(scadaSymbolsDir)) {
-            WidgetTypeDetails widgetTypeDetailsTemplate = widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "scada_symbol");
-            List<String> widgetTypeFqns = new ArrayList<>();
+            WidgetTypeDetails scadaSymbolWidgetTemplate = widgetTypeService.findWidgetTypeDetailsByTenantIdAndFqn(TenantId.SYS_TENANT_ID, "scada_symbol");
             try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(scadaSymbolsDir, path -> path.toString().endsWith(SVG_EXT))) {
                 dirStream.forEach(
                         path -> {
@@ -316,8 +316,8 @@ public class InstallScripts {
                                 var scadaSymbolData = Files.readAllBytes(path);
                                 var metadata = ImageUtils.processScadaSymbolMetadata(fileName, scadaSymbolData);
                                 TbResourceInfo savedScadaSymbol = saveScadaSymbol(metadata, fileName, scadaSymbolData);
-                                if (widgetTypeDetailsTemplate != null) {
-                                    widgetTypeFqns.add(saveScadaSymbolWidget(widgetTypeDetailsTemplate, savedScadaSymbol, metadata));
+                                if (scadaSymbolWidgetTemplate != null) {
+                                    saveScadaSymbolWidget(scadaSymbolWidgetTemplate, savedScadaSymbol, metadata);
                                 }
                             } catch (Exception e) {
                                 log.error("Unable to load SCADA symbol from file: [{}]", path.toString());
@@ -325,11 +325,6 @@ public class InstallScripts {
                             }
                         }
                 );
-            }
-            var scadaSymbolsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(TenantId.SYS_TENANT_ID, "scada_symbols");
-            if (scadaSymbolsBundle != null) {
-                widgetTypeFqns.add("scada_symbol");
-                widgetTypeService.updateWidgetsBundleWidgetFqns(TenantId.SYS_TENANT_ID, scadaSymbolsBundle.getId(), widgetTypeFqns);
             }
         }
     }
@@ -355,7 +350,7 @@ public class InstallScripts {
         }
     }
 
-    private String saveScadaSymbolWidget(WidgetTypeDetails template, TbResourceInfo scadaSymbol,
+    private WidgetTypeDetails saveScadaSymbolWidget(WidgetTypeDetails template, TbResourceInfo scadaSymbol,
                                          ImageUtils.ScadaSymbolMetadataInfo metadata) {
         String symbolUrl = DataConstants.TB_IMAGE_PREFIX + scadaSymbol.getLink();
         WidgetTypeDetails scadaSymbolWidget = new WidgetTypeDetails();
@@ -388,8 +383,7 @@ public class InstallScripts {
         controllerScript = controllerScript.replaceAll("previewWidth: '\\d*px'", "previewWidth: '" + (metadata.getWidgetSizeX() * 100) + "px'");
         controllerScript = controllerScript.replaceAll("previewHeight: '\\d*px'", "previewHeight: '" + (metadata.getWidgetSizeY() * 100 + 20) + "px'");
         ((ObjectNode)descriptor).put("controllerScript", controllerScript);
-        var savedWidget = widgetTypeService.saveWidgetType(scadaSymbolWidget);
-        return savedWidget.getFqn();
+        return widgetTypeService.saveWidgetType(scadaSymbolWidget);
     }
 
     private void deleteSystemWidgetBundle(String bundleAlias) {

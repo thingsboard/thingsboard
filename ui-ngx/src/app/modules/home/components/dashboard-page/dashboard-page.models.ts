@@ -53,6 +53,7 @@ export interface IDashboardController {
   exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, widgetTitle: string);
   removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  dashboardMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext);
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem>;
   prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget): Array<WidgetContextMenuItem>;

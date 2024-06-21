@@ -105,16 +105,21 @@
       </mat-expansion-panel>
     </div>
     <div *ngIf="gridSettings" class="tb-form-panel no-border no-padding" [formGroup]="gridSettingsFormGroup">
-      <div class="tb-form-row">
-        <mat-slide-toggle class="mat-slide" formControlName="isScada">
-          {{ 'dashboard.scada-layout' | translate }}
-        </mat-slide-toggle>
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width" translate>dashboard.layout</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layoutType">
+            <mat-option *ngFor="let type of layoutTypes" [value]="type">
+              {{ layoutTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
       </div>
       <div class="tb-form-panel stroked">
         <div class="tb-form-panel-title" translate>dashboard.layout-settings</div>
         <div class="tb-form-row space-between">
           <div translate>dashboard.columns-count</div>
-          <mat-form-field *ngIf="!gridSettingsFormGroup.get('isScada').value"
+          <mat-form-field *ngIf="!isScada()"
                           appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
             <input matInput formControlName="columns" type="number" min="10" max="1008" step="1"
                    required
@@ -129,7 +134,7 @@
               warning
             </mat-icon>
           </mat-form-field>
-          <mat-form-field *ngIf="gridSettingsFormGroup.get('isScada').value"
+          <mat-form-field *ngIf="isScada()"
                           class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select required formControlName="columns">
               <mat-option *ngFor="let columns of scadaColumns" [value]="columns">
@@ -156,7 +161,7 @@
             <span translate matSuffix>dashboard.columns-suffix</span>
           </mat-form-field>
         </div>
-        <div *ngIf="!gridSettingsFormGroup.get('isScada').value" class="tb-form-row space-between">
+        <div *ngIf="!isScada()" class="tb-form-row space-between">
           <div translate>dashboard.widgets-margins</div>
           <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
             <input matInput formControlName="margin" type="number" min="0" max="50" step="any"
@@ -173,12 +178,12 @@
             </mat-icon>
           </mat-form-field>
         </div>
-        <div *ngIf="!gridSettingsFormGroup.get('isScada').value" class="tb-form-row">
+        <div *ngIf="!isScada()" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="outerMargin">
             {{ 'dashboard.apply-outer-margin' | translate }}
           </mat-slide-toggle>
         </div>
-        <div *ngIf="!gridSettingsFormGroup.get('isScada').value" class="tb-form-row">
+        <div *ngIf="!isScada()" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="autoFillHeight">
             {{ 'dashboard.autofill-height' | translate }}
           </mat-slide-toggle>
@@ -207,19 +212,19 @@
           </mat-form-field>
         </div>
       </div>
-      <div *ngIf="!gridSettingsFormGroup.get('isScada').value || isRightLayout" class="tb-form-panel stroked">
+      <div *ngIf="!isScada() || isRightLayout" class="tb-form-panel stroked">
         <div class="tb-form-panel-title" translate>dashboard.mobile-layout</div>
         <div *ngIf="isRightLayout" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="mobileDisplayLayoutFirst">
             {{ 'dashboard.display-first-in-mobile-view' | translate }}
           </mat-slide-toggle>
         </div>
-        <div *ngIf="!gridSettingsFormGroup.get('isScada').value" class="tb-form-row">
+        <div *ngIf="!isScada()" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="mobileAutoFillHeight">
             {{ 'dashboard.autofill-height' | translate }}
           </mat-slide-toggle>
         </div>
-        <div *ngIf="!gridSettingsFormGroup.get('isScada').value" class="tb-form-row space-between">
+        <div *ngIf="!isScada()" class="tb-form-row space-between">
           <div translate>dashboard.mobile-row-height</div>
           <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
             <input matInput formControlName="mobileRowHeight" type="number" min="5" max="200" step="any"

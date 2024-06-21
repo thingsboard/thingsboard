@@ -31,8 +31,6 @@ public interface SystemDataLoaderService {
 
     void loadSystemWidgets() throws Exception;
 
-    void loadSystemScadaSymbols() throws Exception;
-
     void loadDemoData() throws Exception;
 
     void createQueues();

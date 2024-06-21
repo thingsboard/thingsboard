@@ -526,11 +526,6 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         installScripts.loadSystemWidgets();
     }
 
-    @Override
-    public void loadSystemScadaSymbols() throws Exception {
-        installScripts.loadSystemScadaSymbols();
-    }
-
     private User createUser(Authority authority,
                             TenantId tenantId,
                             CustomerId customerId,

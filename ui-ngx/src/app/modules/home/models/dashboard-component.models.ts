@@ -68,6 +68,7 @@ export interface DashboardCallbacks {
   onExportWidget?: ($event: Event, widget: Widget, widgeTitle: string) => void;
   onRemoveWidget?: ($event: Event, widget: Widget) => void;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
+  onDashboardMouseDown?: ($event: Event) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;
   prepareDashboardContextMenu?: ($event: Event) => Array<DashboardContextMenuItem>;
   prepareWidgetContextMenu?: ($event: Event, widget: Widget) => Array<WidgetContextMenuItem>;

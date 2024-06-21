@@ -26,6 +26,7 @@
      fxFlex class="tb-dashboard-content" [class.autofill-height]="isAutofillHeight()"
                 [class.center-vertical]="centerVertical"
                 [class.center-horizontal]="centerHorizontal"
+                (mousedown)="onDashboardMouseDown($event)"
                 (contextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"

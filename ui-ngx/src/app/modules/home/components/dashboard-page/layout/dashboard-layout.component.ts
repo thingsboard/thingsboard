@@ -37,6 +37,7 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
+import { LayoutType } from '@shared/models/dashboard.models';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -67,28 +68,32 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtxValue;
   }
 
+  get isScada(): boolean {
+    return this.layoutCtx.gridSettings.layoutType === LayoutType.scada;
+  }
+
   get outerMargin(): boolean {
-    return this.layoutCtx.gridSettings.isScada ? false : this.layoutCtx.gridSettings.outerMargin;
+    return this.isScada ? false : this.layoutCtx.gridSettings.outerMargin;
   }
 
   get margin(): number {
-    return this.layoutCtx.gridSettings.isScada ? 0 : this.layoutCtx.gridSettings.margin;
+    return this.isScada ? 0 : this.layoutCtx.gridSettings.margin;
   }
 
   get autoFillHeight(): boolean {
-    return (this.isEdit || this.layoutCtx.gridSettings.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
   }
 
   get mobileAutoFillHeight(): boolean {
-    return (this.isEdit || this.layoutCtx.gridSettings.isScada) ? false : this.layoutCtx.gridSettings.mobileAutoFillHeight;
+    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.mobileAutoFillHeight;
   }
 
   get isMobileDisabled(): boolean {
-    return this.widgetEditMode || this.layoutCtx.gridSettings.isScada;
+    return this.widgetEditMode || this.isScada;
   }
 
   get colWidthInteger(): boolean {
-    return this.layoutCtx.gridSettings.isScada;
+    return this.isScada;
   }
 
   get columns(): number {
@@ -269,6 +274,10 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   onWidgetMouseDown($event: Event, widget: Widget): void {
     this.layoutCtx.dashboardCtrl.widgetMouseDown($event, this.layoutCtx, widget);
+  }
+
+  onDashboardMouseDown($event: Event): void {
+    this.layoutCtx.dashboardCtrl.dashboardMouseDown($event, this.layoutCtx);
   }
 
   onWidgetClicked($event: Event, widget: Widget): void {

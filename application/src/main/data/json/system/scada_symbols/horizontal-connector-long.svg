@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="112" height="56" viewBox="0 0 112 56" fill="none"><tb:metadata xmlns=""><![CDATA[{
+  "title": "Horizontal connector long",
+  "widgetSizeX": 2,
+  "widgetSizeY": 1,
+  "tags": [],
+  "behavior": [],
+  "properties": []
+}]]></tb:metadata>
+
+<path d="M108 38L4 38V18L108 18V38Z" fill="url(#paint0_linear_909_16496)"/><path d="M107.5 37.5L4.5 37.5V18.5L107.5 18.5V37.5Z" stroke="black" stroke-opacity="0.12"/><rect x="111.5" y="41.5" width="3" height="27" rx="1.5" transform="rotate(-180 111.5 41.5)" fill="#D9D9D9" stroke="#727171"/><rect x="3.5" y="41.5" width="3" height="27" rx="1.5" transform="rotate(-180 3.5 41.5)" fill="#D9D9D9" stroke="#727171"/><defs>
+<linearGradient id="paint0_linear_909_16496" x1="24.5432" y1="38" x2="24.5432" y2="18" gradientUnits="userSpaceOnUse">
+<stop stop-color="#727171"/>
+<stop offset="0.498292" stop-color="white"/>
+<stop offset="1" stop-color="#727171"/>
+</linearGradient>
+</defs>
+
+</svg>

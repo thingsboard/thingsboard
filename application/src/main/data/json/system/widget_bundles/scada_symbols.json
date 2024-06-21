@@ -7,5 +7,7 @@
     "order": 9200,
     "name": "SCADA symbols"
   },
-  "widgetTypeFqns": []
+  "widgetTypeFqns": [
+    "scada_symbol"
+  ]
 }
