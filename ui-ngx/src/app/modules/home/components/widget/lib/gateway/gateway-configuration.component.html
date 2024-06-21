@@ -67,36 +67,38 @@
             </mat-form-field>
           </div>
         </div>
-        <div class="tb-form-panel">
-          <div translate class="tb-form-panel-title">security.security</div>
-          <ng-container formGroupName="security">
-            <tb-toggle-select class="toggle-group" formControlName="type">
-              <tb-toggle-option *ngFor="let securityType of securityTypes | keyvalue"
-                                [value]="securityType.key">{{ securityType.value | translate }}</tb-toggle-option>
-            </tb-toggle-select>
-            <mat-form-field appearance="outline"
-                            *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value.toLowerCase().includes('accesstoken')">
-              <mat-label translate>security.access-token</mat-label>
-              <input matInput formControlName="accessToken"/>
-              <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').hasError('required')">
-                {{ 'security.access-token-required' | translate }}
-              </mat-error>
-              <tb-copy-button
-                matSuffix
-                miniButton="false"
-                *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').value"
-                [copyText]="gatewayConfigGroup.get('thingsboard.security.accessToken').value"
-                tooltipText="{{ 'device.copy-access-token' | translate }}"
-                tooltipPosition="above"
-                icon="content_copy">
-              </tb-copy-button>
-              <mat-icon matIconSuffix style="cursor:pointer;"
-                        matTooltip="{{ 'gateway.hints.token' | translate }}">info_outlined
-              </mat-icon>
-            </mat-form-field>
+      </div>
+      <div class="tb-form-panel">
+        <div translate class="tb-form-panel-title">security.security</div>
+        <ng-container formGroupName="security">
+          <tb-toggle-select class="toggle-group" formControlName="type">
+            <tb-toggle-option *ngFor="let securityType of securityTypes | keyvalue"
+                              [value]="securityType.key">{{ securityType.value | translate }}</tb-toggle-option>
+          </tb-toggle-select>
+          <mat-form-field appearance="outline"
+                          *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value.toLowerCase().includes('accesstoken')">
+            <mat-label translate>security.access-token</mat-label>
+            <input matInput formControlName="accessToken"/>
+            <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').hasError('required')">
+              {{ 'security.access-token-required' | translate }}
+            </mat-error>
+            <tb-copy-button
+              matSuffix
+              miniButton="false"
+              *ngIf="gatewayConfigGroup.get('thingsboard.security.accessToken').value"
+              [copyText]="gatewayConfigGroup.get('thingsboard.security.accessToken').value"
+              tooltipText="{{ 'device.copy-access-token' | translate }}"
+              tooltipPosition="above"
+              icon="content_copy">
+            </tb-copy-button>
+            <mat-icon matIconSuffix style="cursor:pointer;"
+                      matTooltip="{{ 'gateway.hints.token' | translate }}">info_outlined
+            </mat-icon>
+          </mat-form-field>
+          <section>
             <div class="tb-form-row no-border no-padding tb-standard-fields"
                  *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'">
-              <mat-form-field appearance="outline" class="flex" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>security.clientId</mat-label>
                 <input matInput formControlName="clientId"/>
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.clientId').hasError('required')">
@@ -115,7 +117,7 @@
                           matTooltip="{{ 'gateway.hints.client-id' | translate }}">info_outlined
                 </mat-icon>
               </mat-form-field>
-              <mat-form-field appearance="outline" class="flex" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>security.username</mat-label>
                 <input matInput formControlName="username"/>
                 <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.security.username').hasError('required')">
@@ -152,9 +154,10 @@
                         matTooltip="{{ 'gateway.hints.password' | translate }}">info_outlined
               </mat-icon>
             </mat-form-field>
-            <tb-error style="margin-top: -12px; display: block;" fxFlex="100"
-                      *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'"
-                      [error]="gatewayConfigGroup.get('thingsboard.security').hasError('atLeastOne') ?
+          </section>
+          <tb-error style="margin-top: -12px; display: block;" fxFlex="100"
+                    *ngIf="gatewayConfigGroup.get('thingsboard.security.type').value === 'usernamePassword'"
+                    [error]="gatewayConfigGroup.get('thingsboard.security').hasError('atLeastOne') ?
           ('device.client-id-or-user-name-necessary' | translate) : ''"></tb-error>
             <tb-file-input
               fxFlex="100"
