@@ -100,6 +100,8 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
+import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -166,7 +168,9 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
       PieChartWidgetComponent,
       BarChartWidgetComponent,
       PolarAreaWidgetComponent,
-      RadarChartWidgetComponent
+      RadarChartWidgetComponent,
+      LabelCardWidgetComponent,
+      LabelValueCardWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -236,7 +240,9 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
         PieChartWidgetComponent,
         BarChartWidgetComponent,
         PolarAreaWidgetComponent,
-        RadarChartWidgetComponent
+        RadarChartWidgetComponent,
+        LabelCardWidgetComponent,
+        LabelValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
