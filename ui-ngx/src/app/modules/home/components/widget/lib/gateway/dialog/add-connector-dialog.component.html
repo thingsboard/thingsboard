@@ -84,7 +84,8 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div *ngIf="connectorForm.get('type').value !== connectorType.GRPC && connectorForm.get('type').value !== connectorType.CUSTOM"
+           class="tb-form-row column-xs" fxLayoutAlign="space-between center">
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="useDefaults">
           <mat-label tb-hint-tooltip-icon="{{ 'gateway.fill-connector-defaults-hint' | translate }}">
             {{ 'gateway.fill-connector-defaults' | translate }}
