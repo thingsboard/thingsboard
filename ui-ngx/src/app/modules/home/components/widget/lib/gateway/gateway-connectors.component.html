@@ -46,7 +46,7 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             <mat-slide-toggle [checked]="activeConnectors.includes(attribute.key)"
-                              (click)="$event.stopPropagation(); enableConnector(attribute)"></mat-slide-toggle>
+                              (click)="$event.stopPropagation(); onEnableConnector(attribute)"></mat-slide-toggle>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">
