@@ -526,12 +526,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) throws Exception {
-        if (repositorySettingsService.delete(tenantId)) {
-            return gitServiceQueue.clearRepository(tenantId);
-        } else {
-            return Futures.immediateFuture(null);
-        }
+    public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) {
+        return gitServiceQueue.clearRepository(tenantId);
     }
 
     @Override
