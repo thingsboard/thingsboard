@@ -269,7 +269,7 @@ export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
   [SNMPMethods.TABLE, 'gateway.rpc.table'],
   [SNMPMethods.MULTIGET, 'gateway.rpc.multi-get'],
   [SNMPMethods.GETNEXT, 'gateway.rpc.get-next'],
-  [SNMPMethods.BULKGET, 'gateway.rpc.bul-kget'],
+  [SNMPMethods.BULKGET, 'gateway.rpc.bulk-get'],
   [SNMPMethods.WALKS, 'gateway.rpc.walk']
 ])
 
