@@ -21,7 +21,7 @@
      [active]="activeLink.name === link.name"> {{ link.name }} </a>
 </nav>
 <mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>
-<table mat-table [dataSource]="dataSource"
+<table mat-table [dataSource]="dataSource" [trackBy]="trackByLogTs"
        matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
        matSortDisableClear>
   <ng-container matColumnDef="ts">
