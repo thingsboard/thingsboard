@@ -273,7 +273,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
         })
         break;
       case ConnectorType.OPCUA:
-      case ConnectorType.OPCUA_ASYNCIO:
         formGroup = this.fb.group({
           method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           arguments: this.fb.array([]),
@@ -396,7 +395,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           delete value.httpHeaders;
           break;
         case ConnectorType.OPCUA:
-        case ConnectorType.OPCUA_ASYNCIO:
           this.clearFromArrayByName("arguments");
           value.arguments.forEach(value => {
             this.addOCPUAArguments(value)
