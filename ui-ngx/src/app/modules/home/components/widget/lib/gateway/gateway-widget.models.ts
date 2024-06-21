@@ -125,7 +125,6 @@ export enum ConnectorType {
   MODBUS = 'modbus',
   GRPC = 'grpc',
   OPCUA = 'opcua',
-  OPCUA_ASYNCIO = 'opcua_asyncio',
   BLE = 'ble',
   REQUEST = 'request',
   CAN = 'can',
@@ -145,7 +144,6 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
   [ConnectorType.MODBUS, 'MODBUS'],
   [ConnectorType.GRPC, 'GRPC'],
   [ConnectorType.OPCUA, 'OPCUA'],
-  [ConnectorType.OPCUA_ASYNCIO, 'OPCUA ASYNCIO'],
   [ConnectorType.BLE, 'BLE'],
   [ConnectorType.REQUEST, 'REQUEST'],
   [ConnectorType.CAN, 'CAN'],
@@ -269,7 +267,7 @@ export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
   [SNMPMethods.TABLE, 'gateway.rpc.table'],
   [SNMPMethods.MULTIGET, 'gateway.rpc.multi-get'],
   [SNMPMethods.GETNEXT, 'gateway.rpc.get-next'],
-  [SNMPMethods.BULKGET, 'gateway.rpc.bul-kget'],
+  [SNMPMethods.BULKGET, 'gateway.rpc.bulk-get'],
   [SNMPMethods.WALKS, 'gateway.rpc.walk']
 ])
 
@@ -357,6 +355,18 @@ export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, str
     [BrokerSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
     [BrokerSecurityType.BASIC, 'gateway.broker.security-types.basic'],
     [BrokerSecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
+  ]
+);
+
+export enum RestSecurityType {
+  ANONYMOUS = 'anonymous',
+  BASIC = 'basic',
+}
+
+export const RestSecurityTypeTranslationsMap = new Map<RestSecurityType, string>(
+  [
+    [RestSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [RestSecurityType.BASIC, 'gateway.broker.security-types.basic'],
   ]
 );
 

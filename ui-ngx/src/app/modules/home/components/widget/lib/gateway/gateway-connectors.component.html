@@ -46,7 +46,7 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let attribute">
             <mat-slide-toggle [checked]="activeConnectors.includes(attribute.key)"
-                              (click)="$event.stopPropagation(); enableConnector(attribute)"></mat-slide-toggle>
+                              (click)="$event.stopPropagation(); onEnableConnector(attribute)"></mat-slide-toggle>
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="key">
@@ -187,6 +187,22 @@
                             class="tb-error">
                     warning
                   </mat-icon>
+                </mat-form-field>
+              </div>
+            </div>
+            <div *ngIf="connectorForm.get('type').value === connectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="class" placeholder="{{ 'gateway.set' | translate }}"/>
+                </mat-form-field>
+              </div>
+            </div>
+            <div *ngIf="connectorForm.get('type').value === connectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
                 </mat-form-field>
               </div>
             </div>

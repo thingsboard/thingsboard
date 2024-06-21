@@ -100,6 +100,7 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import { RestConnectorSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/rest-connector-secuirity/rest-connector-security.component';
 
 @NgModule({
   declarations:
@@ -168,13 +169,14 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
       PolarAreaWidgetComponent,
       RadarChartWidgetComponent
     ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    RpcWidgetsModule,
-    HomePageWidgetsModule,
-    SharedHomeComponentsModule
-  ],
+    imports: [
+        CommonModule,
+        SharedModule,
+        RpcWidgetsModule,
+        HomePageWidgetsModule,
+        SharedHomeComponentsModule,
+        RestConnectorSecurityComponent
+    ],
     exports: [
         EntitiesTableWidgetComponent,
         AlarmsTableWidgetComponent,
