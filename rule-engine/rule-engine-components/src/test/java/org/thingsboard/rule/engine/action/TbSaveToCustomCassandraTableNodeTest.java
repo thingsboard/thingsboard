@@ -34,6 +34,7 @@ import org.junit.jupiter.params.provider.MethodSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
@@ -57,7 +58,8 @@ import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSet;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 
-import java.util.LinkedHashMap;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Map;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -74,7 +76,6 @@ import static org.mockito.ArgumentMatchers.anyDouble;
 import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.spy;
@@ -255,16 +256,17 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     }
 
     @Test
-    public void givenValidMsgStructure_whenOnMsg_thenSaveToCustomCassandraTable() throws TbNodeException {
+    public void givenValidMsgStructure_whenOnMsg_thenVerifyMatchOfValuesInsertionOrderIntoStatementAndSaveToCustomCassandraTable() throws TbNodeException {
         config.setDefaultTTL(25L);
         config.setTableName("readings");
-        Map<String, String> mappings = new LinkedHashMap<>();
-        mappings.put("$entityId", "entityIdTableColumn");
-        mappings.put("doubleField", "doubleTableColumn");
-        mappings.put("longField", "longTableColumn");
-        mappings.put("booleanField", "booleanTableColumn");
-        mappings.put("stringField", "stringTableColumn");
-        mappings.put("jsonField", "jsonTableColumn");
+        Map<String, String> mappings = Map.of(
+                "$entityId", "entityIdTableColumn",
+                "doubleField", "doubleTableColumn",
+                "longField", "longTableColumn",
+                "booleanField", "booleanTableColumn",
+                "stringField", "stringTableColumn",
+                "jsonField", "jsonTableColumn"
+        );
         config.setFieldsMapping(mappings);
 
         mockOnInit();
@@ -353,13 +355,15 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     }
 
     private void verifySettingStatementBuilder() {
-        then(boundStatementBuilderMock).should().setUuid(0, DEVICE_ID.getId());
-        then(boundStatementBuilderMock).should().setDouble(1, 22.5);
-        then(boundStatementBuilderMock).should().setLong(2, 56L);
-        then(boundStatementBuilderMock).should().setBoolean(3, true);
-        then(boundStatementBuilderMock).should().setString(4, "some string");
-        then(boundStatementBuilderMock).should().setString(5, "{\"key\":\"value\"}");
-        then(boundStatementBuilderMock).should().setInt(anyInt(), eq(25));
+        Map<String, String> fieldsMap = (Map<String, String>) ReflectionTestUtils.getField(node, "fieldsMap");
+        List<String> values = new ArrayList<>(fieldsMap.values());
+        then(boundStatementBuilderMock).should().setUuid(values.indexOf("entityIdTableColumn"), DEVICE_ID.getId());
+        then(boundStatementBuilderMock).should().setDouble(values.indexOf("doubleTableColumn"), 22.5);
+        then(boundStatementBuilderMock).should().setLong(values.indexOf("longTableColumn"), 56L);
+        then(boundStatementBuilderMock).should().setBoolean(values.indexOf("booleanTableColumn"), true);
+        then(boundStatementBuilderMock).should().setString(values.indexOf("stringTableColumn"), "some string");
+        then(boundStatementBuilderMock).should().setString(values.indexOf("jsonTableColumn"), "{\"key\":\"value\"}");
+        then(boundStatementBuilderMock).should().setInt(values.size(), 25);
     }
 
     private TenantProfile getTenantProfileWithTtl(int ttlInDays) {
