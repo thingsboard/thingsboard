@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
-import lombok.RequiredArgsConstructor;
-import lombok.Setter;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,24 +26,13 @@ import org.thingsboard.server.dao.util.DeviceConnectivityUtil;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.install.InstallScripts;
 
-import jakarta.servlet.http.HttpServletRequest;
-import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-
 @Service
 @Slf4j
-@RequiredArgsConstructor
 @ConditionalOnProperty(prefix = "edges", value = "enabled", havingValue = "true")
 @TbCoreComponent
-public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstructionsService {
+public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgradeInstructionsService implements EdgeInstallInstructionsService {
 
-    private static final String EDGE_DIR = "edge";
-    private static final String INSTRUCTIONS_DIR = "instructions";
     private static final String INSTALL_DIR = "install";
-
-    private final InstallScripts installScripts;
 
     @Value("${edges.rpc.port}")
     private int rpcPort;
@@ -52,22 +40,18 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
     @Value("${edges.rpc.ssl.enabled}")
     private boolean sslEnabled;
 
-    @Value("${app.version:unknown}")
-    @Setter
-    private String appVersion;
+    public DefaultEdgeInstallInstructionsService(InstallScripts installScripts) {
+        super(installScripts);
+    }
 
     @Override
     public EdgeInstructions getInstallInstructions(Edge edge, String installationMethod, HttpServletRequest request) {
-        switch (installationMethod.toLowerCase()) {
-            case "docker":
-                return getDockerInstallInstructions(edge, request);
-            case "ubuntu":
-                return getUbuntuInstallInstructions(edge, request);
-            case "centos":
-                return getCentosInstallInstructions(edge, request);
-            default:
-                throw new IllegalArgumentException("Unsupported installation method for Edge: " + installationMethod);
-        }
+        return switch (installationMethod.toLowerCase()) {
+            case "docker" -> getDockerInstallInstructions(edge, request);
+            case "ubuntu", "centos" -> getLinuxInstallInstructions(edge, request, installationMethod.toLowerCase());
+            default ->
+                    throw new IllegalArgumentException("Unsupported installation method for Edge: " + installationMethod);
+        };
     }
 
     private EdgeInstructions getDockerInstallInstructions(Edge edge, HttpServletRequest request) {
@@ -88,23 +72,14 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
         return new EdgeInstructions(dockerInstallInstructions);
     }
 
-    private EdgeInstructions getUbuntuInstallInstructions(Edge edge, HttpServletRequest request) {
-        String ubuntuInstallInstructions = readFile(resolveFile("ubuntu", "instructions.md"));
+    private EdgeInstructions getLinuxInstallInstructions(Edge edge, HttpServletRequest request, String os) {
+        String ubuntuInstallInstructions = readFile(resolveFile(os, "instructions.md"));
         ubuntuInstallInstructions = replacePlaceholders(ubuntuInstallInstructions, edge);
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${BASE_URL}", request.getServerName());
         String edgeVersion = appVersion.replace("-SNAPSHOT", "");
         ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
+        ubuntuInstallInstructions = ubuntuInstallInstructions.replace("${TB_EDGE_TAG}", getTagVersion(edgeVersion));
         return new EdgeInstructions(ubuntuInstallInstructions);
-    }
-
-
-    private EdgeInstructions getCentosInstallInstructions(Edge edge, HttpServletRequest request) {
-        String centosInstallInstructions = readFile(resolveFile("centos", "instructions.md"));
-        centosInstallInstructions = replacePlaceholders(centosInstallInstructions, edge);
-        centosInstallInstructions = centosInstallInstructions.replace("${BASE_URL}", request.getServerName());
-        String edgeVersion = appVersion.replace("-SNAPSHOT", "");
-        centosInstallInstructions = centosInstallInstructions.replace("${TB_EDGE_VERSION}", edgeVersion);
-        return new EdgeInstructions(centosInstallInstructions);
     }
 
     private String replacePlaceholders(String instructions, Edge edge) {
@@ -115,20 +90,8 @@ public class DefaultEdgeInstallInstructionsService implements EdgeInstallInstruc
         return instructions;
     }
 
-    private String readFile(Path file) {
-        try {
-            return Files.readString(file);
-        } catch (IOException e) {
-            log.warn("Failed to read file: {}", file, e);
-            throw new RuntimeException(e);
-        }
-    }
-
-    private Path resolveFile(String subDir, String... subDirs) {
-        return getEdgeInstallInstructionsDir().resolve(Paths.get(subDir, subDirs));
-    }
-
-    private Path getEdgeInstallInstructionsDir() {
-        return Paths.get(installScripts.getDataDir(), InstallScripts.JSON_DIR, EDGE_DIR, INSTRUCTIONS_DIR, INSTALL_DIR);
+    @Override
+    protected String getBaseDirName() {
+        return INSTALL_DIR;
     }
 }
