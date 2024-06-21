@@ -880,7 +880,7 @@
             "isConnectorLog": true,
             "connectorLogState": "connector_logs"
           },
-          "title": "Gateway Logs",
+          "title": "${entityNameLogs}",
           "showTitleIcon": false,
           "dropShadow": true,
           "enableFullscreen": true,

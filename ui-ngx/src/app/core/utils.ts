@@ -415,6 +415,8 @@ export const createLabelFromDatasource = (datasource: Datasource, pattern: strin
       label = label.replace(variable, datasource.name);
     } else if (variableName === 'entityName') {
       label = label.replace(variable, datasource.entityName);
+    } else if (variableName === 'entityNameLogs') {
+      label = label.replace(variable, datasource.entityName + ' Logs');
     } else if (variableName === 'deviceName') {
       label = label.replace(variable, datasource.entityName);
     } else if (variableName === 'entityLabel') {
