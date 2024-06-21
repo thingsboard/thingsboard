@@ -1,15 +1,15 @@
 Here is the list of commands, that can be used to quickly install ThingsBoard Edge on Ubuntu Server and connect to the server.
 
-#### Install Java 11 (OpenJDK)
-ThingsBoard service is running on Java 11. Follow these instructions to install OpenJDK 11:
+#### Install Java 17 (OpenJDK)
+ThingsBoard service is running on Java 17. Follow these instructions to install OpenJDK 17:
 
 ```bash
 sudo apt update
-sudo apt install openjdk-11-jdk
+sudo apt install openjdk-17-jdk
 {:copy-code}
 ```
 
-Please don't forget to configure your operating system to use OpenJDK 11 by default.
+Please don't forget to configure your operating system to use OpenJDK 17 by default.
 You can configure which version is the default using the following command:
 
 ```bash
@@ -27,7 +27,7 @@ java -version
 Expected command output is:
 
 ```text
-openjdk version "11.0.xx"
+openjdk version "17.x.xx"
 OpenJDK Runtime Environment (...)
 OpenJDK 64-Bit Server VM (build ...)
 ```
@@ -76,14 +76,14 @@ CREATE DATABASE tb_edge;
 Download installation package:
 
 ```bash
-wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_VERSION}/tb-edge-${TB_EDGE_VERSION}.deb
+wget https://github.com/thingsboard/thingsboard-edge/releases/download/v${TB_EDGE_TAG}/tb-edge-${TB_EDGE_TAG}.deb
 {:copy-code}
 ```
 
 Go to the download repository and install ThingsBoard Edge service:
 
 ```bash
-sudo dpkg -i tb-edge-${TB_EDGE_VERSION}.deb
+sudo dpkg -i tb-edge-${TB_EDGE_TAG}.deb
 {:copy-code}
 ```
 
