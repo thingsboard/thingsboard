@@ -301,6 +301,7 @@ public class AdminController extends BaseController {
     @PostMapping("/repositorySettings")
     public DeferredResult<RepositorySettings> saveRepositorySettings(@RequestBody RepositorySettings settings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
+        settings.setLocalOnly(false); // overriding, since local repositories are supported only for testing
         ListenableFuture<RepositorySettings> future = versionControlService.saveVersionControlSettings(getTenantId(), settings);
         return wrapFuture(Futures.transform(future, savedSettings -> {
             savedSettings.setPassword(null);
