@@ -29,16 +29,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -119,6 +116,9 @@ public class AdminController extends BaseController {
     private final UpdateService updateService;
     private final SystemInfoService systemInfoService;
     private final AuditLogService auditLogService;
+
+    @Value("${queue.vc.request-timeout:180000}")
+    private int vcRequestTimeout;
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -308,7 +308,7 @@ public class AdminController extends BaseController {
             savedSettings.setPrivateKey(null);
             savedSettings.setPrivateKeyPassword(null);
             return savedSettings;
-        }, MoreExecutors.directExecutor()));
+        }, MoreExecutors.directExecutor()), vcRequestTimeout);
     }
 
     @ApiOperation(value = "Delete repository settings (deleteRepositorySettings)",
@@ -319,7 +319,7 @@ public class AdminController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public DeferredResult<Void> deleteRepositorySettings() throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.DELETE);
-        return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()));
+        return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()), vcRequestTimeout);
     }
 
     @ApiOperation(value = "Check repository access (checkRepositoryAccess)",
@@ -331,7 +331,7 @@ public class AdminController extends BaseController {
             @RequestBody RepositorySettings settings) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
         settings = checkNotNull(settings);
-        return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
+        return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings), vcRequestTimeout);
     }
 
     @ApiOperation(value = "Get auto commit settings (getAutoCommitSettings)",

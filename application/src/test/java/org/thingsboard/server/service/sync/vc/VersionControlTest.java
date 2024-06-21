@@ -119,6 +119,7 @@ public class VersionControlTest extends AbstractControllerTest {
     protected User tenantAdmin2;
 
     private String repoKey;
+    private String branch;
 
     @Before
     public void beforeEach() throws Exception {
@@ -146,6 +147,7 @@ public class VersionControlTest extends AbstractControllerTest {
         this.tenantAdmin2 = createUser(tenantAdmin2, tenantAdmin2.getEmail());
 
         this.repoKey = UUID.randomUUID().toString();
+        this.branch = "test_" + repoKey;
         configureRepository(tenantId1);
         configureRepository(tenantId2);
 
@@ -618,7 +620,7 @@ public class VersionControlTest extends AbstractControllerTest {
     private String createVersion(String name, EntityType... entityTypes) throws Exception {
         ComplexVersionCreateRequest request = new ComplexVersionCreateRequest();
         request.setVersionName(name);
-        request.setBranch("test");
+        request.setBranch(branch);
         request.setSyncStrategy(SyncStrategy.MERGE);
         request.setEntityTypes(Arrays.stream(entityTypes).collect(Collectors.toMap(t -> t, entityType -> {
             EntityTypeVersionCreateConfig config = new EntityTypeVersionCreateConfig();
@@ -645,7 +647,7 @@ public class VersionControlTest extends AbstractControllerTest {
     private String createVersion(String name, EntityId... entities) throws Exception {
         ComplexVersionCreateRequest request = new ComplexVersionCreateRequest();
         request.setVersionName(name);
-        request.setBranch("test");
+        request.setBranch(branch);
         request.setSyncStrategy(SyncStrategy.MERGE);
         request.setEntityTypes(new HashMap<>());
         Map<EntityType, List<EntityId>> entitiesByType = Arrays.stream(entities)
@@ -677,11 +679,13 @@ public class VersionControlTest extends AbstractControllerTest {
         return result.getVersion().getId();
     }
 
-    private Map<EntityType, EntityTypeLoadResult> loadVersion(String versionId, EntityType... entityTypes) {
+    private Map<EntityType, EntityTypeLoadResult> loadVersion(String versionId, EntityType... entityTypes) throws Exception {
         return loadVersion(versionId, config -> {}, entityTypes);
     }
 
-    private Map<EntityType, EntityTypeLoadResult> loadVersion(String versionId, Consumer<EntityTypeVersionLoadConfig> configModifier, EntityType... entityTypes) {
+    private Map<EntityType, EntityTypeLoadResult> loadVersion(String versionId, Consumer<EntityTypeVersionLoadConfig> configModifier, EntityType... entityTypes) throws Exception {
+        assertThat(listVersions()).extracting(EntityVersion::getId).contains(versionId);
+
         EntityTypeVersionLoadRequest request = new EntityTypeVersionLoadRequest();
         request.setVersionId(versionId);
         request.setRollbackOnError(true);
@@ -698,17 +702,14 @@ public class VersionControlTest extends AbstractControllerTest {
 
         UUID requestId = doPost("/api/entities/vc/entity", request, UUID.class);
         VersionLoadResult result = await().atMost(30, TimeUnit.SECONDS)
-                .until(() -> doGet("/api/entities/vc/entity/" + requestId + "/status", VersionLoadResult.class), r -> {
-                    if (r.getError() != null) {
-                        throw new RuntimeException("Failed to load version: " + r.getError());
-                    }
-                    return r.isDone();
-                });
+                .until(() -> doGet("/api/entities/vc/entity/" + requestId + "/status", VersionLoadResult.class), VersionLoadResult::isDone);
+        if (result.getError() != null) {
+            throw new RuntimeException("Failed to load version: " + result);
+        }
         return result.getResult().stream().collect(Collectors.toMap(EntityTypeLoadResult::getEntityType, r -> r));
     }
 
     private List<EntityVersion> listVersions() throws Exception {
-        String branch = "test";
         PageData<EntityVersion> versions = doGetAsyncTyped("/api/entities/vc/version?branch=" + branch + "&pageSize=100&page=0&sortProperty=timestamp&sortOrder=DESC", new TypeReference<PageData<EntityVersion>>() {});
         return versions.getData();
     }
@@ -716,7 +717,7 @@ public class VersionControlTest extends AbstractControllerTest {
     private void configureRepository(TenantId tenantId) throws Exception {
         RepositorySettings repositorySettings = new RepositorySettings();
         repositorySettings.setLocalOnly(true);
-        repositorySettings.setDefaultBranch("test");
+        repositorySettings.setDefaultBranch(branch);
         repositorySettings.setAuthMethod(RepositoryAuthMethod.USERNAME_PASSWORD);
         repositorySettings.setRepositoryUri(repoKey);
         versionControlService.saveVersionControlSettings(tenantId, repositorySettings).get();

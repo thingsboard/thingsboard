@@ -81,8 +81,6 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         GitRepository repository = checkRepository(commit.getTenantId());
         String branch = commit.getBranch();
         try {
-            repository.fetch();
-
             List<String> branches = repository.listBranches().stream().map(BranchInfo::getName).toList();
             if (repository.getSettings().isLocalOnly()) {
                 if (branches.contains(commit.getBranch())) {
