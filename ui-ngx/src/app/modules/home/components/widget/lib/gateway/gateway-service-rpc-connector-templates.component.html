@@ -18,8 +18,8 @@
 <div class="mat-subtitle-1 title">{{ 'gateway.rpc.templates-title' | translate }}</div>
 <mat-expansion-panel hideToggle *ngFor="let template of rpcTemplates">
   <mat-expansion-panel-header>
-    <mat-panel-title>
-      {{template.name}}
+    <mat-panel-title class="template-name">
+      <span matTooltip="{{template.name}}" matTooltipPosition="above">{{template.name}}</span>
     </mat-panel-title>
     <mat-panel-description>
       <button mat-icon-button matTooltip="Delete" (click)="deleteTemplate($event, template)">
