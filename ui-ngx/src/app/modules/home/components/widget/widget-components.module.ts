@@ -100,6 +100,8 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
+import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 
 @NgModule({
@@ -168,6 +170,8 @@ import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/sc
       BarChartWidgetComponent,
       PolarAreaWidgetComponent,
       RadarChartWidgetComponent,
+      LabelCardWidgetComponent,
+      LabelValueCardWidgetComponent,
       ScadaSymbolWidgetComponent
     ],
   imports: [
@@ -239,6 +243,8 @@ import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/sc
         BarChartWidgetComponent,
         PolarAreaWidgetComponent,
         RadarChartWidgetComponent,
+        LabelCardWidgetComponent,
+        LabelValueCardWidgetComponent,
         ScadaSymbolWidgetComponent
     ],
   providers: [

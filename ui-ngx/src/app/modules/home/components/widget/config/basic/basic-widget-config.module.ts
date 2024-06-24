@@ -133,6 +133,12 @@ import {
   DigitalSimpleGaugeBasicConfigComponent
 } from '@home/components/widget/config/basic/gauge/digital-simple-gauge-basic-config.component';
 import { MobileAppQrCodeBasicConfigComponent } from '@home/components/widget/config/basic/cards/mobile-app-qr-code-basic-config.component';
+import {
+  LabelCardBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/label-card-basic-config.component';
+import {
+  LabelValueCardBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/label-value-card-basic-config.component';
 import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/basic/scada/scada-symbol-basic-config.component';
 
 @NgModule({
@@ -179,6 +185,8 @@ import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/
     RadarChartBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
+    LabelCardBasicConfigComponent,
+    LabelValueCardBasicConfigComponent,
     ScadaSymbolBasicConfigComponent
   ],
   imports: [
@@ -227,7 +235,9 @@ import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/
     RadarChartBasicConfigComponent,
     ScadaSymbolBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent,
-    MobileAppQrCodeBasicConfigComponent
+    MobileAppQrCodeBasicConfigComponent,
+    LabelCardBasicConfigComponent,
+    LabelValueCardBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -269,5 +279,7 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-radar-chart-basic-config': RadarChartBasicConfigComponent,
   'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent,
   'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
+  'tb-label-card-basic-config': LabelCardBasicConfigComponent,
+  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent,
   'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent
 };
