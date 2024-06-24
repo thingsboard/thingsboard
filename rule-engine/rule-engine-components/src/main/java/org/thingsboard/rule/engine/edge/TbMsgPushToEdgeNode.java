@@ -57,8 +57,8 @@ import java.util.UUID;
                 "<br><code>ATTRIBUTES_UPDATED</code>" +
                 "<br><code>ATTRIBUTES_DELETED</code>" +
                 "<br><code>ALARM</code><br><br>" +
-                "Message will be routed via <b>Failure</b> route if node was not able to save edge event to database or unsupported message type arrived. " +
-                "In case successful storage edge event to database message will be routed via <b>Success</b> route.",
+                "Output connections: <code>Success</code> - in case of successful storage edge event to database, " +
+                "<code>Failure</code> - if node was not able to save edge event to database or unsupported message type arrived. ",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodePushToEdgeConfig",
         icon = "cloud_download",

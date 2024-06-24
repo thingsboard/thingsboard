@@ -55,7 +55,8 @@ import java.util.Set;
                 "<li>Activity event</li>" +
                 "<li>Inactivity event</li>" +
                 "</ul>" +
-                "This node is particularly useful when device isn't using transports to receive data, such as when fetching data from external API or computing new data within the rule chain.",
+                "This node is particularly useful when device isn't using transports to receive data, such as when fetching data from external API or computing new data within the rule chain.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code> or <code>Rate limited</code>.",
         configClazz = TbDeviceStateNodeConfiguration.class,
         relationTypes = {TbNodeConnectionType.SUCCESS, TbNodeConnectionType.FAILURE, "Rate limited"},
         uiResources = {"static/rulenode/rulenode-core-config.js"},

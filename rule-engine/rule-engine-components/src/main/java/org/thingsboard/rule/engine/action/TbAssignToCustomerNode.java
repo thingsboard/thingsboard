@@ -39,7 +39,8 @@ import org.thingsboard.server.common.msg.TbMsg;
         configClazz = TbAssignToCustomerNodeConfiguration.class,
         nodeDescription = "Assign message originator entity to customer",
         nodeDetails = "Finds target customer by title and assign message originator entity to this customer. " +
-                "Rule node will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.",
+                "Rule node will create a new customer if it doesn't exist, and 'Create new customer if it doesn't exist' enabled.<br><br>" +
+                "Output connections: <code>Success</code>, <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeAssignToCustomerConfig",
         icon = "add_circle",
