@@ -46,7 +46,6 @@ public abstract class TbAbstractAlarmNodeConfiguration {
             "\n" +
             "return details;";
 
-
     @NoXss
     private String alarmType;
     private ScriptLanguage scriptLang;
