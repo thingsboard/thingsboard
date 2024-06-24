@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Injector } from '@angular/core';
+import { Component } from '@angular/core';
 import { WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
@@ -31,7 +31,6 @@ export class LabelCardWidgetSettingsComponent extends WidgetSettingsComponent {
   labelCardWidgetSettingsForm: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store);
   }

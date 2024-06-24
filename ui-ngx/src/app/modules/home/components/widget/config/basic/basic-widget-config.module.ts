@@ -136,6 +136,9 @@ import { MobileAppQrCodeBasicConfigComponent } from '@home/components/widget/con
 import {
   LabelCardBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/label-card-basic-config.component';
+import {
+  LabelValueCardBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/label-value-card-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -181,7 +184,8 @@ import {
     RadarChartBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
-    LabelCardBasicConfigComponent
+    LabelCardBasicConfigComponent,
+    LabelValueCardBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -229,7 +233,8 @@ import {
     RadarChartBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
-    LabelCardBasicConfigComponent
+    LabelCardBasicConfigComponent,
+    LabelValueCardBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -271,5 +276,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-radar-chart-basic-config': RadarChartBasicConfigComponent,
   'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent,
   'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
-  'tb-label-card-basic-config': LabelCardBasicConfigComponent
+  'tb-label-card-basic-config': LabelCardBasicConfigComponent,
+  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent
 };

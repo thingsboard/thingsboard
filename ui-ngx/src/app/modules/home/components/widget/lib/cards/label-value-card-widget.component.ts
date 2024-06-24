@@ -165,10 +165,8 @@ export class LabelValueCardWidgetComponent implements OnInit, AfterViewInit, OnD
 
   public onDataUpdated() {
     const tsValue = getSingleTsValue(this.ctx.data);
-    let ts;
     let value;
     if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
-      ts = tsValue[0];
       value = tsValue[1];
       this.valueText = formatValue(value, this.decimals, this.units, false);
     } else {

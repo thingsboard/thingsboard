@@ -359,6 +359,9 @@ import {
 import {
   LabelCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/label-card-widget-settings.component';
+import {
+  LabelValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-value-card-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -486,7 +489,8 @@ import {
     BarChartWidgetSettingsComponent,
     PolarAreaChartWidgetSettingsComponent,
     RadarChartWidgetSettingsComponent,
-    LabelCardWidgetSettingsComponent
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -619,7 +623,8 @@ import {
     BarChartWidgetSettingsComponent,
     PolarAreaChartWidgetSettingsComponent,
     RadarChartWidgetSettingsComponent,
-    LabelCardWidgetSettingsComponent
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -719,5 +724,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-bar-chart-widget-settings': BarChartWidgetSettingsComponent,
   'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent,
   'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent,
-  'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent
+  'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
+  'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent
 };
