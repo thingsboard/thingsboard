@@ -75,7 +75,7 @@ public class TbAwsLambdaNode extends TbAbstractExternalNode {
                             .withRequestTimeout((int) TimeUnit.SECONDS.toMillis(config.getRequestTimeout())))
                     .build();
         } catch (Exception e) {
-            throw new TbNodeException(e, false);
+            throw new TbNodeException(e);
         }
     }
 
