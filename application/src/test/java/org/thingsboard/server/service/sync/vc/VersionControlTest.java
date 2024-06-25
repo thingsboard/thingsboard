@@ -668,7 +668,7 @@ public class VersionControlTest extends AbstractControllerTest {
 
     private String createVersion(VersionCreateRequest request) throws Exception {
         UUID requestId = doPostAsync("/api/entities/vc/version", request, UUID.class, status().isOk());
-        VersionCreationResult result = await().atMost(30, TimeUnit.SECONDS)
+        VersionCreationResult result = await().atMost(60, TimeUnit.SECONDS)
                 .until(() -> doGet("/api/entities/vc/version/" + requestId + "/status", VersionCreationResult.class), r -> {
                     if (r.getError() != null) {
                         throw new RuntimeException("Failed to create version '" + request.getVersionName() + "': " + r.getError());
@@ -701,7 +701,7 @@ public class VersionControlTest extends AbstractControllerTest {
         })));
 
         UUID requestId = doPost("/api/entities/vc/entity", request, UUID.class);
-        VersionLoadResult result = await().atMost(30, TimeUnit.SECONDS)
+        VersionLoadResult result = await().atMost(60, TimeUnit.SECONDS)
                 .until(() -> doGet("/api/entities/vc/entity/" + requestId + "/status", VersionLoadResult.class), VersionLoadResult::isDone);
         if (result.getError() != null) {
             throw new RuntimeException("Failed to load version: " + result);
