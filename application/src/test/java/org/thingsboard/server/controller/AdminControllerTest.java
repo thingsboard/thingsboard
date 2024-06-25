@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.util.concurrent.Futures;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.Test;
@@ -113,7 +114,7 @@ public class AdminControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSendTestMail() throws Exception {
-        Mockito.doNothing().when(mailService).sendTestMail(any(), anyString());
+        Mockito.doReturn(Futures.immediateVoidFuture()).when(mailService).sendTestMail(any(), anyString());
         loginSysAdmin();
         AdminSettings adminSettings = doGet("/api/admin/settings/mail", AdminSettings.class);
         doPost("/api/admin/settings/testMail", adminSettings)

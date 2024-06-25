@@ -26,6 +26,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordKey;
@@ -36,7 +37,6 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -65,7 +65,6 @@ import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.service.apiusage.BaseApiUsageState.StatsCalculationResult;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
-import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.partition.AbstractPartitionBasedService;
 import org.thingsboard.server.service.telemetry.InternalTelemetryService;
 
@@ -108,7 +107,6 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
     private final MailService mailService;
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final DbCallbackExecutorService dbExecutor;
-    private final MailExecutorService mailExecutor;
 
     @Lazy
     @Autowired
@@ -363,13 +361,10 @@ public class DefaultTbApiUsageStateService extends AbstractPartitionBasedService
                         .status(stateValue)
                         .build());
                 if (StringUtils.isNotEmpty(email)) {
-                    mailExecutor.submit(() -> {
-                        try {
-                            mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, recordState);
-                        } catch (ThingsboardException e) {
-                            log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, e);
-                        }
-                    });
+                    ListenableFuture<Void> future = mailService.sendApiFeatureStateEmail(apiFeature, stateValue, email, recordState);
+                    DonAsynchron.withCallback(future,
+                            x -> {},
+                            t -> log.warn("[{}] Can't send update of the API state to tenant with provided email [{}]", state.getTenantId(), email, t));
                 }
             });
         }

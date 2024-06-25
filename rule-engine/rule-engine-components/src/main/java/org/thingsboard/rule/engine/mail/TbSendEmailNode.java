@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.mail;
 
+import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.mail.javamail.JavaMailSenderImpl;
 import org.thingsboard.common.util.JacksonUtil;
@@ -30,7 +31,6 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.io.IOException;
 import java.util.Properties;
 
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
@@ -73,10 +73,7 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
             validateType(msg);
             TbEmail email = getEmail(msg);
             var tbMsg = ackIfNeeded(ctx, msg);
-            withCallback(ctx.getMailExecutor().executeAsync(() -> {
-                        sendEmail(ctx, tbMsg, email);
-                        return null;
-                    }),
+            withCallback(sendEmail(ctx, tbMsg, email),
                     ok -> tellSuccess(ctx, tbMsg),
                     fail -> tellFailure(ctx, tbMsg, fail));
         } catch (Exception ex) {
@@ -84,15 +81,16 @@ public class TbSendEmailNode extends TbAbstractExternalNode {
         }
     }
 
-    private void sendEmail(TbContext ctx, TbMsg msg, TbEmail email) throws Exception {
+    private ListenableFuture<Void> sendEmail(TbContext ctx, TbMsg msg, TbEmail email){
         if (this.config.isUseSystemSmtpSettings()) {
-            ctx.getMailService(true).send(ctx.getTenantId(), msg.getCustomerId(), email);
+            return ctx.getMailService(true).send(ctx.getTenantId(), msg.getCustomerId(), email);
         } else {
-            ctx.getMailService(false).send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender, config.getTimeout());
+            return ctx.getMailService(false).send(ctx.getTenantId(), msg.getCustomerId(), email, this.mailSender, config.getTimeout(
+            ));
         }
     }
 
-    private TbEmail getEmail(TbMsg msg) throws IOException {
+    private TbEmail getEmail(TbMsg msg) {
         TbEmail email = JacksonUtil.fromString(msg.getData(), TbEmail.class);
         if (StringUtils.isBlank(email.getTo())) {
             throw new IllegalStateException("Email destination can not be blank [" + email.getTo() + "]");
