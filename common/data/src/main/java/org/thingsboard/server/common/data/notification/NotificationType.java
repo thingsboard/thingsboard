@@ -32,4 +32,5 @@ public enum NotificationType {
     EDGE_CONNECTION,
     EDGE_COMMUNICATION_FAILURE,
     TASK_PROCESSING_FAILURE
+
 }

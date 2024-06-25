@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.util.Objects;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 @Data
@@ -52,4 +51,5 @@ public abstract class TbSubscription<T> {
     public int hashCode() {
         return Objects.hash(sessionId, subscriptionId, tenantId, entityId, type);
     }
+
 }

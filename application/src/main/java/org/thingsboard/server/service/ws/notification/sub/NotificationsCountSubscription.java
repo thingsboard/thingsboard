@@ -23,7 +23,6 @@ import org.thingsboard.server.service.subscription.TbSubscription;
 import org.thingsboard.server.service.subscription.TbSubscriptionType;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 @Getter

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
@@ -34,6 +35,7 @@ import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.sql.query.EntityKeyMapping;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Service
 @Slf4j
@@ -72,10 +74,10 @@ public class DefaultNotificationService implements NotificationService, EntityDa
     }
 
     @Override
-    public PageData<Notification> findLatestUnreadNotificationsByRecipientId(TenantId tenantId, NotificationDeliveryMethod deliveryMethod, UserId recipientId, int limit) {
+    public PageData<Notification> findLatestUnreadNotificationsByRecipientIdAndNotificationTypes(TenantId tenantId, NotificationDeliveryMethod deliveryMethod, UserId recipientId, Set<NotificationType> types, int limit) {
         SortOrder sortOrder = new SortOrder(EntityKeyMapping.CREATED_TIME, SortOrder.Direction.DESC);
         PageLink pageLink = new PageLink(limit, 0, null, sortOrder);
-        return findNotificationsByRecipientIdAndReadStatus(tenantId, deliveryMethod, recipientId, true, pageLink);
+        return notificationDao.findUnreadByDeliveryMethodAndRecipientIdAndNotificationTypesAndPageLink(tenantId, deliveryMethod, recipientId, types, pageLink);
     }
 
     @Override
