@@ -487,6 +487,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.widgetContext.destroyed = false;
       this.dashboardWidget.updateWidgetParams();
       this.widgetContext.detectContainerChanges();
       if (this.cafs.init) {
@@ -1544,19 +1545,20 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private checkSize(): boolean {
-    const width = this.widgetContext.$containerParent.width();
-    const height = this.widgetContext.$containerParent.height();
+    const parentWidth = this.widgetContext.$containerParent.width();
+    const parentHeight = this.widgetContext.$containerParent.height();
+    const width = this.widgetContext.$container?.width();
+    const height = this.widgetContext.$container?.height();
     let sizeChanged = false;
 
-    if (!this.widgetContext.width || this.widgetContext.width !== width ||
-      !this.widgetContext.height || this.widgetContext.height !== height) {
-      if (width > 0 && height > 0) {
+    if (parentWidth > 0 && parentHeight > 0) {
+      if (!this.widgetContext.width || !this.widgetContext.height || width !== parentWidth  || height !== parentHeight) {
         if (this.widgetContext.$container) {
-          this.widgetContext.$container.css('height', height + 'px');
-          this.widgetContext.$container.css('width', width + 'px');
+          this.widgetContext.$container.css('height', parentHeight + 'px');
+          this.widgetContext.$container.css('width', parentWidth + 'px');
         }
-        this.widgetContext.width = width;
-        this.widgetContext.height = height;
+        this.widgetContext.width = parentWidth;
+        this.widgetContext.height = parentHeight;
         sizeChanged = true;
         this.widgetSizeDetected = true;
       }
