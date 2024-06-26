@@ -4088,7 +4088,7 @@
         "target-device-is-not-set": "Target device is not set!",
         "invalid-target-entity": "RPC commands are not supported by <b>{{entityType}}</b> entity.",
         "failed-to-resolve-target-device": "Failed to resolve target device!",
-        "request-timeout": "Request Timeout.",
+        "request-timeout": "Request timeout",
         "rpc-http-error": "Error: {{status}} - {{statusText}}"
       }
     },
@@ -6894,6 +6894,16 @@
             "date": "Date",
             "value-card-style": "Value card style",
             "auto-scale": "Auto scale"
+        },
+        "label-card": {
+            "auto-scale": "Auto scale",
+            "label": "Label",
+            "icon": "Icon",
+            "label-card-style": "Label card style"
+        },
+        "label-value-card": {
+            "value": "Value",
+            "label-value-card-style": "Label & value card style"
         },
         "liquid-level-card": {
             "layout-simple": "Simple",
