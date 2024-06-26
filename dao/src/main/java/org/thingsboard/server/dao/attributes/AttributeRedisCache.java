@@ -21,9 +21,9 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.serializer.SerializationException;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
-import org.thingsboard.server.cache.RedisTbTransactionalCache;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbRedisSerializer;
+import org.thingsboard.server.cache.VersionedRedisTbTransactionalCache;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -38,7 +38,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("AttributeCache")
-public class AttributeRedisCache extends RedisTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> {
+public class AttributeRedisCache extends VersionedRedisTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> {
 
     public AttributeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
         super(CacheConstants.ATTRIBUTES_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>() {
@@ -82,26 +82,15 @@ public class AttributeRedisCache extends RedisTbTransactionalCache<AttributeCach
                 try {
                     AttributeValueProto proto = AttributeValueProto.parseFrom(bytes);
                     boolean hasValue = proto.getHasV();
-                    KvEntry entry;
-                    switch (proto.getType()) {
-                        case BOOLEAN_V:
-                            entry = new BooleanDataEntry(key.getKey(), hasValue ? proto.getBoolV() : null);
-                            break;
-                        case LONG_V:
-                            entry = new LongDataEntry(key.getKey(), hasValue ? proto.getLongV() : null);
-                            break;
-                        case DOUBLE_V:
-                            entry = new DoubleDataEntry(key.getKey(), hasValue ? proto.getDoubleV() : null);
-                            break;
-                        case STRING_V:
-                            entry = new StringDataEntry(key.getKey(), hasValue ? proto.getStringV() : null);
-                            break;
-                        case JSON_V:
-                            entry = new JsonDataEntry(key.getKey(), hasValue ? proto.getJsonV() : null);
-                            break;
-                        default:
-                            throw new InvalidProtocolBufferException("Unrecognized type: " + proto.getType() + " !");
-                    }
+                    KvEntry entry = switch (proto.getType()) {
+                        case BOOLEAN_V -> new BooleanDataEntry(key.getKey(), hasValue ? proto.getBoolV() : null);
+                        case LONG_V -> new LongDataEntry(key.getKey(), hasValue ? proto.getLongV() : null);
+                        case DOUBLE_V -> new DoubleDataEntry(key.getKey(), hasValue ? proto.getDoubleV() : null);
+                        case STRING_V -> new StringDataEntry(key.getKey(), hasValue ? proto.getStringV() : null);
+                        case JSON_V -> new JsonDataEntry(key.getKey(), hasValue ? proto.getJsonV() : null);
+                        default ->
+                                throw new InvalidProtocolBufferException("Unrecognized type: " + proto.getType() + " !");
+                    };
                     return new BaseAttributeKvEntry(proto.getLastUpdateTs(), entry);
                 } catch (InvalidProtocolBufferException e) {
                     throw new SerializationException(e.getMessage());

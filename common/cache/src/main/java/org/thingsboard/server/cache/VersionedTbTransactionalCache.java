@@ -13,25 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.util;
+package org.thingsboard.server.cache;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
+import org.thingsboard.server.common.data.HasVersion;
 
-@Data
-@AllArgsConstructor
-public class TbPair<S, T> {
-    public static final TbPair EMPTY = new TbPair<>(null, null);
+import java.io.Serializable;
 
-    private S first;
-    private T second;
+public interface VersionedTbTransactionalCache<K extends Serializable, V extends Serializable & HasVersion> {
 
-    public static <S, T> TbPair<S, T> of(S first, T second) {
-        return new TbPair<>(first, second);
-    }
+    TbCacheValueWrapper<V> get(K key);
 
-    @SuppressWarnings("unchecked")
-    public static <S, T> TbPair<S, T> emptyPair() {
-        return (TbPair<S, T>) EMPTY;
-    }
+    void put(K key, V value);
+
+    void put(K key, V value, Long version);
+
+    void evict(K key);
+
+    void evict(K key, Long version);
 }

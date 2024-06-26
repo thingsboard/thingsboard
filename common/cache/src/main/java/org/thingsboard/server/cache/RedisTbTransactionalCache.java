@@ -29,7 +29,6 @@ import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.RedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.FstStatsService;
-import redis.clients.jedis.Connection;
 import redis.clients.jedis.Jedis;
 import redis.clients.jedis.JedisPool;
 import redis.clients.jedis.util.JedisClusterCRC16;
@@ -44,7 +43,7 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 public abstract class RedisTbTransactionalCache<K extends Serializable, V extends Serializable> implements TbTransactionalCache<K, V> {
 
-    private static final byte[] BINARY_NULL_VALUE = RedisSerializer.java().serialize(NullValue.INSTANCE);
+    static final byte[] BINARY_NULL_VALUE = RedisSerializer.java().serialize(NullValue.INSTANCE);
     static final JedisPool MOCK_POOL = new JedisPool(); //non-null pool required for JedisConnection to trigger closing jedis connection
 
     @Autowired
@@ -79,7 +78,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public TbCacheValueWrapper<V> get(K key) {
         try (var connection = connectionFactory.getConnection()) {
             byte[] rawKey = getRawKey(key);
-            byte[] rawValue = connection.get(rawKey);
+            byte[] rawValue = doGet(connection, rawKey);
             if (rawValue == null) {
                 return null;
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
@@ -94,6 +93,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
                 return SimpleTbCacheValueWrapper.wrap(value);
             }
         }
+    }
+
+    protected byte[] doGet(RedisConnection connection, byte[] rawKey) {
+        return connection.stringCommands().get(rawKey);
     }
 
     @Override
@@ -153,7 +156,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return new RedisTbCacheTransaction<>(this, connection);
     }
 
-    private RedisConnection getConnection(byte[] rawKey) {
+    protected RedisConnection getConnection(byte[] rawKey) {
         if (!connectionFactory.isRedisClusterAware()) {
             return connectionFactory.getConnection();
         }
@@ -180,7 +183,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return connection;
     }
 
-    private byte[] getRawKey(K key) {
+    protected byte[] getRawKey(K key) {
         String keyString = cacheName + key.toString();
         byte[] rawKey;
         try {
@@ -196,7 +199,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         return rawKey;
     }
 
-    private byte[] getRawValue(V value) {
+    protected byte[] getRawValue(V value) {
         if (value == null) {
             return BINARY_NULL_VALUE;
         } else {

@@ -29,9 +29,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
-public abstract class AbstractVersionedInsertRepository<T> extends AbstractInsertRepository {
+import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
-    public static final String VERSION_COLUMN = "version";
+public abstract class AbstractVersionedInsertRepository<T> extends AbstractInsertRepository {
 
     public List<Long> saveOrUpdate(List<T> entities) {
         return transactionTemplate.execute(status -> {
@@ -51,7 +51,7 @@ public abstract class AbstractVersionedInsertRepository<T> extends AbstractInser
             for (int i = 0; i < updateResult.length; i++) {
                 if (updateResult[i] == 0) {
                     insertEntities.add(entities.get(i));
-                    seqNumbers.add(0L);
+                    seqNumbers.add(null);
                     toInsertIndexes.add(i);
                 } else {
                     seqNumbers.add((Long) seqNumbersList.get(keyHolderIndex).get(VERSION_COLUMN));
@@ -63,12 +63,14 @@ public abstract class AbstractVersionedInsertRepository<T> extends AbstractInser
                 return seqNumbers;
             }
 
-            onInsertOrUpdate(insertEntities, keyHolder);
+            int[] insertResult = onInsertOrUpdate(insertEntities, keyHolder);
 
             seqNumbersList = keyHolder.getKeyList();
 
-            for (int i = 0; i < seqNumbersList.size(); i++) {
-                seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(i).get(VERSION_COLUMN));
+            for (int i = 0; i < insertResult.length; i++) {
+                if (updateResult[i] != 0) {
+                    seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(i).get(VERSION_COLUMN));
+                }
             }
 
             return seqNumbers;
@@ -89,8 +91,8 @@ public abstract class AbstractVersionedInsertRepository<T> extends AbstractInser
         }, keyHolder);
     }
 
-    private void onInsertOrUpdate(List<T> insertEntities, KeyHolder keyHolder) {
-        jdbcTemplate.batchUpdate(new SequencePreparedStatementCreator(getInsertOrUpdateQuery()), new BatchPreparedStatementSetter() {
+    private int[] onInsertOrUpdate(List<T> insertEntities, KeyHolder keyHolder) {
+        return jdbcTemplate.batchUpdate(new SequencePreparedStatementCreator(getInsertOrUpdateQuery()), new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 setOnInsertOrUpdateValues(ps, i, insertEntities);

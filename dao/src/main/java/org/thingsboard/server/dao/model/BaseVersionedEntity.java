@@ -13,25 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.util;
+package org.thingsboard.server.dao.model;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-
-@Data
-@AllArgsConstructor
-public class TbPair<S, T> {
-    public static final TbPair EMPTY = new TbPair<>(null, null);
-
-    private S first;
-    private T second;
-
-    public static <S, T> TbPair<S, T> of(S first, T second) {
-        return new TbPair<>(first, second);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <S, T> TbPair<S, T> emptyPair() {
-        return (TbPair<S, T>) EMPTY;
-    }
+public interface BaseVersionedEntity {
+    long getVersion();
 }

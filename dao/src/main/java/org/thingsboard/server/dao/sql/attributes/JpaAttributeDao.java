@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.attributes.AttributesDao;
@@ -144,7 +145,7 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
 
     @Override
     public List<AttributeKvEntry> findAll(TenantId tenantId, EntityId entityId, AttributeScope attributeScope) {
-        List<AttributeKvEntity> attributes = attributeKvRepository.findAllEntityIdAndAttributeType(
+        List<AttributeKvEntity> attributes = attributeKvRepository.findAllByEntityIdAndAttributeType(
                 entityId.getId(),
                 attributeScope.getId());
         attributes.forEach(attributeKvEntity -> attributeKvEntity.setStrKey(keyDictionaryDao.getKey(attributeKvEntity.getId().getAttributeKey())));
@@ -200,6 +201,18 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
             futuresList.add(service.submit(() -> {
                 attributeKvRepository.delete(entityId.getId(), attributeScope.getId(), keyDictionaryDao.getOrSaveKeyId(key));
                 return key;
+            }));
+        }
+        return futuresList;
+    }
+
+    @Override
+    public List<ListenableFuture<TbPair<String, Long>>> removeAllWithVersions(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, List<String> keys) {
+        List<ListenableFuture<TbPair<String, Long>>> futuresList = new ArrayList<>(keys.size());
+        for (String key : keys) {
+            futuresList.add(service.submit(() -> {
+                Long version = attributeKvRepository.delete(entityId.getId(), attributeScope.getId(), keyDictionaryDao.getOrSaveKeyId(key));
+                return TbPair.of(key, version);
             }));
         }
         return futuresList;
