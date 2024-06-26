@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -97,7 +97,8 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder) {}
+  constructor(private fb: UntypedFormBuilder,
+              private cd: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.colorRangeListFormGroup = this.fb.group({
@@ -139,7 +140,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       } else {
         rangeList = deepClone(value);
       }
-      this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode, {emitEvent: false});
+      this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode || false, {emitEvent: false});
       if (isDefinedAndNotNull(rangeList?.range)) {
         rangeList.range.forEach((r) => this.rangeListFormArray.push(this.colorRangeControl(r), {emitEvent: false}));
       }
@@ -225,6 +226,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       this.rangeListFormArray.push(this.colorRangeControl(newRange));
       this.colorRangeListFormGroup.markAsDirty();
       setTimeout(() => {this.popover?.updatePosition();}, 0);
+      this.cd.detectChanges();
     }
   }
 

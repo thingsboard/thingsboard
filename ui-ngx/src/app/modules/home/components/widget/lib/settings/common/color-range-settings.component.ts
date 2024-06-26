@@ -25,7 +25,7 @@ import {
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
-import { ColorRange, ComponentStyle } from '@shared/models/widget-settings.models';
+import { ColorRange, ColorRangeSettings, ComponentStyle } from '@shared/models/widget-settings.models';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ColorRangePanelComponent } from '@home/components/widget/lib/settings/common/color-range-panel.component';
@@ -109,7 +109,7 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
   }
 
   writeValue(value: Array<ColorRange>): void {
-    this.modelValue = value;
+    this.modelValue = ('range' in value) ? value.range as Array<ColorRange> : value;
     this.updateColorStyle();
   }
 
@@ -131,9 +131,9 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
         {},
         {}, {}, true);
       colorRangeSettingsPanelPopover.tbComponentRef.instance.popover = colorRangeSettingsPanelPopover;
-      colorRangeSettingsPanelPopover.tbComponentRef.instance.colorRangeApplied.subscribe((colorRangeSettings) => {
+      colorRangeSettingsPanelPopover.tbComponentRef.instance.colorRangeApplied.subscribe((colorRangeSettings: ColorRangeSettings) => {
         colorRangeSettingsPanelPopover.hide();
-        this.modelValue = colorRangeSettings;
+        this.modelValue = colorRangeSettings.range;
         this.updateColorStyle();
         this.propagateChange(this.modelValue);
       });

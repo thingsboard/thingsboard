@@ -104,15 +104,7 @@ export interface RangeChartWidgetSettings extends TimeSeriesChartTooltipWidgetSe
 
 export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   dataZoom: true,
-  rangeColors: [
-    {to: -20, color: '#234CC7'},
-    {from: -20, to: 0, color: '#305AD7'},
-    {from: 0, to: 10, color: '#7191EF'},
-    {from: 10, to: 20, color: '#FFA600'},
-    {from: 20, to: 30, color: '#F36900'},
-    {from: 30, to: 40, color: '#F04022'},
-    {from: 40, color: '#D81838'}
-  ],
+  rangeColors: [],
   outOfRangeColor: '#ccc',
   showRangeThresholds: true,
   rangeThreshold: mergeDeep({} as Partial<TimeSeriesChartThreshold>,
