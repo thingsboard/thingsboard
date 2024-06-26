@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
+import { Component, forwardRef, Input, OnDestroy, OnInit, ViewEncapsulation } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -97,8 +97,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   private propagateChange = (v: any) => { };
 
-  constructor(private fb: UntypedFormBuilder,
-              private cd: ChangeDetectorRef) {}
+  constructor(private fb: UntypedFormBuilder) {}
 
   ngOnInit(): void {
     this.colorRangeListFormGroup = this.fb.group({
@@ -226,7 +225,6 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       this.rangeListFormArray.push(this.colorRangeControl(newRange));
       this.colorRangeListFormGroup.markAsDirty();
       setTimeout(() => {this.popover?.updatePosition();}, 0);
-      this.cd.detectChanges();
     }
   }
 
