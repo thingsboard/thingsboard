@@ -12,7 +12,7 @@
   "tags": [
     {
       "tag": "fan",
-      "stateRenderFunction": "var on = ctx.values.on;\nif (on) {\n    var level = ctx.values.level; \n    var minLevel = ctx.properties.minLevel; \n    var maxLevel = ctx.properties.maxLevel;\n\n    var speed = (level - minLevel) / (maxLevel - minLevel);\n    speed = Math.max(0, Math.min(1, speed))*2; \n\n    var t = element.timeline();\n    if (!t.active()) {\n      ctx.api.animate(element, 1000).ease('-').rotate(360).loop();\n      t = element.timeline();\n    }\n    t.speed(speed);\n} else {\n    element.timeline().stop();\n}\n",
+      "stateRenderFunction": "var on = ctx.values.on;\nvar hasAnimation = element.remember('hasAnimation');\nif (on) {\n\n    var level = ctx.values.level; \n    var minLevel = ctx.properties.minLevel; \n    var maxLevel = ctx.properties.maxLevel;\n\n    var speed = (level - minLevel) / (maxLevel - minLevel);\n    speed = Math.max(0, Math.min(1, speed))*2; \n\n    if (!hasAnimation) {\n        element.remember('hasAnimation', true);\n        element.animate(1000).ease('-').rotate(360).loop();\n    } else {\n        element.timeline().play();\n    }\n    element.timeline().speed(speed);\n} else {\n    if (hasAnimation) {\n      element.timeline().pause();\n    }\n}\n",
       "actions": null
     },
     {
@@ -68,7 +68,7 @@
     },
     {
       "tag": "ramka",
-      "stateRenderFunction": "var on = ctx.values.on;\nif (on) {\n    if (!element.timeline().active()) {\n        ctx.api.animate(element, 1000).scale(1.1).loop(0, true);\n    }\n} else {\n    element.timeline().stop();\n}",
+      "stateRenderFunction": "var on = ctx.values.on;\nvar hasAnimation = element.remember('hasAnimation');\nif (on) {\n    if (!hasAnimation) {\n        element.remember('hasAnimation', true);\n        ctx.api.animate(element, 1000).scale(1.1).loop(0, true);\n    } else {\n        element.timeline().play();\n    }\n} else {\n    if (hasAnimation) {\n        element.timeline().pause();\n    }\n}",
       "actions": null
     }
   ],

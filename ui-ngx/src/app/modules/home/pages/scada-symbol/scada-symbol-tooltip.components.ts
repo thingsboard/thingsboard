@@ -58,7 +58,7 @@ abstract class ScadaSymbolPanelComponent implements AfterViewInit {
 
 @Component({
   template: `<div class="tb-scada-symbol-tooltip-panel">
-    <span>{{ symbolElement?.element?.type }}:</span>
+    <span>{{ symbolElement?.element?.type }}{{ symbolElement?.invisible ? ' (' + ('scada.hidden' | translate) + ')' : '' }}</span>
     <button mat-stroked-button color="primary" (click)="onAddTag()">
       <mat-icon>add</mat-icon>
       <span translate>scada.tag.add-tag</span>
@@ -182,7 +182,7 @@ class ScadaSymbolTagInputPanelComponent extends ScadaSymbolPanelComponent implem
 
 @Component({
   template: `<div class="tb-scada-symbol-tooltip-panel">
-    <span>{{ symbolElement?.element?.type }}:</span>
+    <span>{{ symbolElement?.element?.type }}{{ symbolElement?.invisible ? ' (' + ('scada.hidden' | translate) + ')' : '' }}:</span>
     <span><b>{{ symbolElement?.tag }}</b></span>
     <button *ngIf="!symbolElement?.readonly" type="button" mat-icon-button class="tb-mat-20"
             matTooltip="{{ 'scada.tag.update-tag' | translate }}"

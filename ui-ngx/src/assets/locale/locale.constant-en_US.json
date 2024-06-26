@@ -3480,6 +3480,7 @@
         "zoom-out": "Zoom Out",
         "create-widget": "Create widget",
         "create-widget-from-symbol": "Create widget from SCADA symbol",
+        "hidden": "hidden",
         "tag": {
             "tag": "Tag",
             "on-click-action": "On click action",

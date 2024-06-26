@@ -100,9 +100,12 @@ export class ScadaSymbolEditObject {
     this.svgShape = SVG().svg(contentData.innerSvg);
     this.svgShape.node.style.overflow = 'visible';
     this.svgShape.node.style['user-select'] = 'none';
-    const origSvg = SVG(svgContent);
+    const origSvg = SVG(`${contentData.svgRootNode}\n${contentData.innerSvg}\n</svg>`);
     if (origSvg.type === 'svg') {
       this.box = (origSvg as Svg).viewbox();
+      if (origSvg.fill()) {
+        this.svgShape.fill(origSvg.fill());
+      }
     } else {
       this.box = this.svgShape.bbox();
     }
@@ -415,7 +418,12 @@ export class ScadaSymbolEditObject {
 const hasBBox = (e: Element): boolean => {
   try {
     if (e.bbox) {
-      const box = e.bbox();
+      let box = e.bbox();
+      if (!box.width && !box.height && !e.visible()) {
+          e.show();
+          box = e.bbox();
+          e.hide();
+      }
       return !!box.width || !!box.height;
     } else {
       return false;
@@ -424,13 +432,6 @@ const hasBBox = (e: Element): boolean => {
     return false;
   }
 };
-
-/*const isDomRectContained = (target: DOMRect, container: DOMRect, horizontalGap = 0, verticalGap = 0): boolean => (
-  target.left >= container.left - horizontalGap &&
-  target.left + target.width <= container.left + container.width + horizontalGap &&
-  target.top >= container.top - verticalGap &&
-  target.top + target.height <= container.top + container.height + verticalGap
-);*/
 
 const elementTooltipMinHeight = 36 + 8;
 const elementTooltipMinWidth = 100;
@@ -442,6 +443,8 @@ export class ScadaSymbolElement {
 
   private highlightRect: Rect;
   private highlightRectTimeline: Timeline;
+
+  private elementPlaceholder: Rect;
 
   public tooltip: ITooltipsterInstance;
 
@@ -456,6 +459,8 @@ export class ScadaSymbolElement {
 
   private highlighted = false;
 
+  public invisible = false;
+
   private tooltipMouseX: number;
   private tooltipMouseY: number;
 
@@ -463,13 +468,37 @@ export class ScadaSymbolElement {
     return this.editObject.readonly;
   }
 
+  get activeElement(): Element {
+    return this.invisible ? this.elementPlaceholder : this.element;
+  }
+
   constructor(private editObject: ScadaSymbolEditObject,
               public element: Element) {
     this.tag = element.attr('tb:tag');
-    this.box = element.rbox(this.editObject.svgShape);
+    if (element.visible()) {
+      this.box = element.rbox(this.editObject.svgShape);
+    } else {
+      element.show();
+      this.box = element.rbox(this.editObject.svgShape);
+      element.hide();
+      this.invisible = true;
+    }
   }
 
   public init() {
+    if (this.invisible) {
+      this.elementPlaceholder = this.editObject.svgShape
+      .rect(this.box.width, this.box.height)
+      .x(this.box.x)
+      .y(this.box.y)
+      .attr({
+        'tb:inner': true,
+        fill: 'none',
+        stroke: 'rgba(0, 0, 0, 0.58)',
+        'stroke-width': this.unscaled(4),
+        opacity: 1});
+      this.element.after(this.elementPlaceholder);
+    }
     if (this.isGroup()) {
       this.highlightRect =
         this.editObject.svgShape
@@ -488,12 +517,12 @@ export class ScadaSymbolElement {
       this.highlightRect.timeline(this.highlightRectTimeline);
       this.highlightRect.hide();
     } else {
-      this.element.addClass('tb-element');
+      this.activeElement.addClass('tb-element');
     }
-    this.element.on('mouseenter', (_event) => {
+    this.activeElement.on('mouseenter', (_event) => {
       this.highlight();
     });
-    this.element.on('mouseleave', (_event) => {
+    this.activeElement.on('mouseleave', (_event) => {
       this.unhighlight();
     });
     if (this.hasTag()) {
@@ -524,7 +553,7 @@ export class ScadaSymbolElement {
         this.highlightRect.show();
         this.highlightRect.animate(300).attr({opacity: 1});
       } else {
-        this.element.addClass('hovered');
+        this.activeElement.addClass('hovered');
       }
       if (this.hasTag()) {
         this.tooltip.reposition();
@@ -542,7 +571,7 @@ export class ScadaSymbolElement {
           this.highlightRect.hide();
         });
       } else {
-        this.element.removeClass('hovered');
+        this.activeElement.removeClass('hovered');
       }
       if (this.hasTag() && !this.editing) {
         $(this.tooltip.elementTooltip()).removeClass('tb-active');
@@ -668,7 +697,7 @@ export class ScadaSymbolElement {
   }
 
   private createTagTooltip() {
-    const el = $(this.element.node);
+    const el = $(this.activeElement.node);
     el.tooltipster(
       {
         parent: this.tooltipContainer,
@@ -706,7 +735,7 @@ export class ScadaSymbolElement {
   }
 
   private createAddTagTooltip() {
-    const el = $(this.element.node);
+    const el = $(this.activeElement.node);
     el.tooltipster(
       {
         parent: this.tooltipContainer,
@@ -930,8 +959,8 @@ export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
     ctx: ctxCompletion,
     svg: {
       meta: 'argument',
-      type: 'Svg',
-      description: 'A root svg node. Instance of SVG.Svg.'
+      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
+      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
     }
   });
 
@@ -940,8 +969,10 @@ export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
     element: {
       meta: 'argument',
       type: 'Element',
-      description: 'An SVG element.'
-    },
+      description: 'SVG element.<br>' +
+        'See <a href="https://svgjs.dev/docs/3.2/manipulating/">Manipulating</a> section to manipulate the element.<br>' +
+        'See <a href="https://svgjs.dev/docs/3.2/animating/">Animating</a> section to animate the element.'
+    }
   });
 
 export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => {
@@ -959,7 +990,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
   const properties: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
-    description: 'An object holding all defined SVG object properties.',
+    description: 'An object holding all defined SCADA symbol properties.',
     children: {}
   };
   for (const property of metadata.properties) {
@@ -968,7 +999,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
   const values: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
-    description: 'An object holding all values obtained using behaviors of type \'Value\'',
+    description: 'An object holding all values obtained using behaviors of type <b>"Value"</b>',
     children: {}
   };
   const getValues = metadata.behavior.filter(b => b.type === ScadaSymbolBehaviorType.value);
@@ -993,16 +1024,16 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
   return {
     meta: 'argument',
     type: 'ScadaSymbolContext',
-    description: 'Context of svg object.',
+    description: 'Context of the SCADA symbol.',
     children: {
       api: {
         meta: 'object',
         type: 'ScadaSymbolApi',
-        description: 'Svg object API',
+        description: 'SCADA symbol API',
         children: {
           animate: {
             meta: 'function',
-            description: 'Animate SVG element',
+            description: 'Finishes any previous animation and starts new animation for SVG element.',
             args: [
               {
                 name: 'element',
@@ -1017,8 +1048,101 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
             ],
             return: {
               description: 'Instance of SVG.Runner which has the same methods as any element and additional methods to control the runner.',
-              type: 'SVG.Runner'
+              type: '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a>'
             }
+          },
+          resetAnimation: {
+            meta: 'function',
+            description: 'Stops animation if any and restore SVG element initial state, resets animation timeline.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+            ]
+          },
+          finishAnimation: {
+            meta: 'function',
+            description: 'Finishes animation if any, SVG element state updated according to the end animation values, ' +
+              'resets animation timeline.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+            ]
+          },
+          formatValue: {
+            meta: 'function',
+            description: 'Formats numeric value according to specified decimals and units',
+            args: [
+              {
+                name: 'value',
+                description: 'Numeric value to be formatted',
+                type: 'any'
+              },
+              {
+                name: 'dec',
+                description: 'Number of decimal digits',
+                type: 'number',
+                optional: true
+              },
+              {
+                name: 'units',
+                description: 'Units to append to the formatted value',
+                type: 'string',
+                optional: true
+              },
+              {
+                name: 'showZeroDecimals',
+                description: 'Whether to keep zero decimal digits',
+                type: 'boolean',
+                optional: true
+              }
+            ],
+            return: {
+              type: 'string',
+              description: 'Formatted value'
+            }
+          },
+          text: {
+            meta: 'function',
+            description: 'Set text to element(s). Only applicable for elements of type ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+            args: []
+          },
+          font: {
+            meta: 'function',
+            description: 'Set element(s) text font and color. Only applicable for elements of type ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+            args: []
+          },
+          disable: {
+            meta: 'function',
+            description: 'Disables element(s). Disabled element doesn\'t accept any user interaction. ' +
+              'For ex. if disabled element has click action, no click action will be performed on user click.',
+            args: []
+          },
+          enable: {
+            meta: 'function',
+            description: 'Enables disabled element(s). Enabled element accepts user interaction. ' +
+              'For ex. if element has click action, click action will be performed on user click.',
+            args: []
+          },
+          callAction: {
+            meta: 'function',
+            description: 'Invokes action specified by behavior of type <b>"Action"</b> found by <b>behaviorId</b>.',
+            args: []
+          },
+          setValue: {
+            meta: 'function',
+            description: 'Updates value by <b>valueId</b>. See <code>ctx.values</code> for reference. ' +
+              'Value update triggers all render functions.',
+            args: []
           }
         }
       },

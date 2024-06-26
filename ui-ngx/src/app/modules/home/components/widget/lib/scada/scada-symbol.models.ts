@@ -48,6 +48,8 @@ export interface ScadaSymbolApi {
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
   animate: (element: Element, duration: number) => Runner;
+  resetAnimation: (element: Element) => void;
+  finishAnimation: (element: Element) => void;
   disable: (element: Element | Element[]) => void;
   enable: (element: Element | Element[]) => void;
   callAction: (event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) => void;
@@ -480,11 +482,15 @@ export class ScadaSymbolObject {
       elements.item(i).remove();
     }
     this.svgShape = SVG().svg(doc.documentElement.innerHTML);
-    this.svgShape.node.style.overflow = 'visible';
+    this.svgShape.node.style.overflow = 'hidden';
+    this.svgShape.node.style.position = 'absolute';
     this.svgShape.node.style['user-select'] = 'none';
     const origSvg = SVG(doc.documentElement.outerHTML);
     if (origSvg.type === 'svg') {
       this.box = (origSvg as Svg).viewbox();
+      if (origSvg.fill()) {
+        this.svgShape.fill(origSvg.fill());
+      }
     } else {
       this.box = this.svgShape.bbox();
     }
@@ -500,6 +506,8 @@ export class ScadaSymbolObject {
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
         animate: this.animate.bind(this),
+        resetAnimation: this.resetAnimation.bind(this),
+        finishAnimation: this.finishAnimation.bind(this),
         disable: this.disableElement.bind(this),
         enable: this.enableElement.bind(this),
         callAction: this.callAction.bind(this),
@@ -767,9 +775,18 @@ export class ScadaSymbolObject {
   }
 
   private animate(element: Element, duration: number): Runner {
+    this.finishAnimation(element);
+    return element.animate(duration, 0, 'now');
+  }
+
+  private resetAnimation(element: Element) {
+    element.timeline().stop();
+    element.timeline(new Timeline());
+  }
+
+  private finishAnimation(element: Element) {
     element.timeline().finish();
     element.timeline(new Timeline());
-    return element.animate(duration, 0, 'now');
   }
 
   private disableElement(e: Element | Element[]) {
