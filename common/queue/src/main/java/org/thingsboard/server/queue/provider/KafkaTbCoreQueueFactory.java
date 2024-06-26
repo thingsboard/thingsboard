@@ -16,45 +16,26 @@
 package org.thingsboard.server.queue.provider;
 
 import com.google.protobuf.util.JsonFormat;
+import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.kafka.TbKafkaAdmin;
-import org.thingsboard.server.queue.kafka.TbKafkaConsumerStatsService;
-import org.thingsboard.server.queue.kafka.TbKafkaConsumerTemplate;
-import org.thingsboard.server.queue.kafka.TbKafkaProducerTemplate;
-import org.thingsboard.server.queue.kafka.TbKafkaSettings;
-import org.thingsboard.server.queue.kafka.TbKafkaTopicConfigs;
-import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
-import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
-import org.thingsboard.server.queue.settings.TbQueueVersionControlSettings;
+import org.thingsboard.server.queue.kafka.*;
+import org.thingsboard.server.queue.settings.*;
 
-import jakarta.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 import java.util.concurrent.atomic.AtomicLong;
 
@@ -84,6 +65,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     private final TbQueueAdmin vcAdmin;
     private final TbQueueAdmin housekeeperAdmin;
     private final TbQueueAdmin housekeeperReprocessingAdmin;
+    private final TbQueueAdmin clickhouseEventsAdmin;
 
     private final AtomicLong consumerCount = new AtomicLong();
 
@@ -120,6 +102,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         this.vcAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getVcConfigs());
         this.housekeeperAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperConfigs());
         this.housekeeperReprocessingAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getHousekeeperReprocessingConfigs());
+        this.clickhouseEventsAdmin = new TbKafkaAdmin(kafkaSettings, kafkaTopicConfigs.getClickhouseEventsConfigs());
     }
 
     @Override
@@ -357,6 +340,15 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
                 .build();
     }
 
+    @Override
+    public TbQueueProducer<DefaultTbQueueMsg> createToClickHouseMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<DefaultTbQueueMsg> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-core-clickhouse-producer-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(coreSettings.getClickhouseTopic());
+        requestBuilder.admin(clickhouseEventsAdmin);
+        return requestBuilder.build();
+    }
 
     @PreDestroy
     private void destroy() {
@@ -386,6 +378,9 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
         }
         if (vcAdmin != null) {
             vcAdmin.destroy();
+        }
+        if (clickhouseEventsAdmin != null) {
+            clickhouseEventsAdmin.destroy();
         }
     }
 }

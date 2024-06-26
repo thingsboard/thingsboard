@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.queue.azure.servicebus;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
-import jakarta.annotation.PostConstruct;
 import java.util.Map;
 
 @Component
@@ -39,6 +39,8 @@ public class TbServiceBusQueueConfigs {
     private String jsExecutorProperties;
     @Value("${queue.service-bus.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.service-bus.queue-properties.clickhouse-events:}")
+    private String clickhouseEventsProperties;
     @Getter
     private Map<String, String> coreConfigs;
     @Getter
@@ -51,6 +53,8 @@ public class TbServiceBusQueueConfigs {
     private Map<String, String> jsExecutorConfigs;
     @Getter
     private Map<String, String> vcConfigs;
+    @Getter
+    private Map<String, String> clickhouseEventsConfigs;
 
     @PostConstruct
     private void init() {
@@ -60,6 +64,7 @@ public class TbServiceBusQueueConfigs {
         notificationsConfigs = PropertyUtils.getProps(notificationsProperties);
         jsExecutorConfigs = PropertyUtils.getProps(jsExecutorProperties);
         vcConfigs = PropertyUtils.getProps(vcProperties);
+        clickhouseEventsConfigs = PropertyUtils.getProps(clickhouseEventsProperties);
     }
 
 }

@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.provider;
 
 import com.google.protobuf.util.JsonFormat;
+import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -24,38 +25,20 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos.RemoteJsRequest;
 import org.thingsboard.server.gen.js.JsInvokeProtos.RemoteJsResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToOtaPackageStateServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiRequestMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.TransportApiResponseMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.discovery.TopicService;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqAdmin;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqQueueArguments;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
-import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
-import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
-import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
-import org.thingsboard.server.queue.settings.TbQueueTransportApiSettings;
-import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
-import org.thingsboard.server.queue.settings.TbQueueVersionControlSettings;
+import org.thingsboard.server.queue.rabbitmq.*;
+import org.thingsboard.server.queue.settings.*;
 
-import jakarta.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -78,6 +61,7 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
     private final TbQueueAdmin transportApiAdmin;
     private final TbQueueAdmin notificationAdmin;
     private final TbQueueAdmin vcAdmin;
+    private final TbQueueAdmin clickhouseEventsAdmin;
 
     public RabbitMqMonolithQueueFactory(TopicService topicService, TbQueueCoreSettings coreSettings,
                                         TbQueueRuleEngineSettings ruleEngineSettings,
@@ -104,6 +88,7 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         this.transportApiAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getTransportApiArgs());
         this.notificationAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getNotificationsArgs());
         this.vcAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getVcArgs());
+        this.clickhouseEventsAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getClickhouseEventsArgs());
     }
 
     @Override
@@ -247,6 +232,11 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), ToHousekeeperServiceMsg.parseFrom(msg.getData()), msg.getHeaders()));
     }
 
+    @Override
+    public TbQueueProducer<DefaultTbQueueMsg> createToClickHouseMsgProducer() {
+        return new TbRabbitMqProducerTemplate(this.clickhouseEventsAdmin, this.rabbitMqSettings, this.coreSettings.getClickhouseTopic());
+    }
+
     @PreDestroy
     private void destroy() {
         if (coreAdmin != null) {
@@ -266,6 +256,9 @@ public class RabbitMqMonolithQueueFactory implements TbCoreQueueFactory, TbRuleE
         }
         if (vcAdmin != null) {
             vcAdmin.destroy();
+        }
+        if (clickhouseEventsAdmin != null) {
+            clickhouseEventsAdmin.destroy();
         }
     }
 }

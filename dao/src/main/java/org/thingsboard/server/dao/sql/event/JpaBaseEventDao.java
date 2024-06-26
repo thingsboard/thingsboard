@@ -22,16 +22,10 @@ import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.event.ErrorEventFilter;
-import org.thingsboard.server.common.data.event.Event;
-import org.thingsboard.server.common.data.event.EventFilter;
-import org.thingsboard.server.common.data.event.EventType;
-import org.thingsboard.server.common.data.event.LifeCycleEventFilter;
-import org.thingsboard.server.common.data.event.RuleChainDebugEventFilter;
-import org.thingsboard.server.common.data.event.RuleNodeDebugEventFilter;
-import org.thingsboard.server.common.data.event.StatisticsEventFilter;
+import org.thingsboard.server.common.data.event.*;
 import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -46,11 +40,7 @@ import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-import java.util.Objects;
-import java.util.UUID;
+import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
@@ -60,6 +50,7 @@ import java.util.function.Function;
 @Slf4j
 @Component
 @SqlDao
+@ConditionalOnProperty(prefix = "event.debug", value = "type", havingValue = "sql", matchIfMissing = true)
 public class JpaBaseEventDao implements EventDao {
 
     @Autowired

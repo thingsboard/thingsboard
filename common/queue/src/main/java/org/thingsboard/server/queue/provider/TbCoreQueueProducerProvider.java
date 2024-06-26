@@ -15,20 +15,13 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToHousekeeperServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToVersionControlServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-
-import jakarta.annotation.PostConstruct;
 
 @Service
 @TbCoreComponent
@@ -38,6 +31,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransport;
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> toRuleEngine;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreMsg>> toTbCore;
+    private TbQueueProducer<DefaultTbQueueMsg> tbEventClickhouse;
     private TbQueueProducer<TbProtoQueueMsg<ToRuleEngineNotificationMsg>> toRuleEngineNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToCoreNotificationMsg>> toTbCoreNotifications;
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
@@ -58,6 +52,7 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toVersionControl = tbQueueProvider.createVersionControlMsgProducer();
         this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
+        this.tbEventClickhouse = this.tbQueueProvider.createToClickHouseMsgProducer();
     }
 
     @Override
@@ -98,6 +93,11 @@ public class TbCoreQueueProducerProvider implements TbQueueProducerProvider {
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> getHousekeeperMsgProducer() {
         return toHousekeeper;
+    }
+
+    @Override
+    public TbQueueProducer<DefaultTbQueueMsg> getTbEventClickhouseMsgProducer() {
+        return tbEventClickhouse;
     }
 
 }

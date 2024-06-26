@@ -40,6 +40,9 @@ public class TbQueueCoreSettings {
     @Value("${queue.core.housekeeper.reprocessing-topic:tb_housekeeper.reprocessing}")
     private String housekeeperReprocessingTopic;
 
+    @Value("${queue.core.event-clickhouse-topic:tb_event_clickhouse}")
+    private String clickhouseTopic;
+
     @Value("${queue.core.partitions}")
     private int partitions;
 }

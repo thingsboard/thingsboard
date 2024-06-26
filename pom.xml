@@ -166,6 +166,7 @@
         <apache-xmlgraphics.version>1.17</apache-xmlgraphics.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
+        <clickhouse-jdbc.version>0.6.1</clickhouse-jdbc.version>
     </properties>
 
     <modules>
@@ -2268,6 +2269,11 @@
                 <groupId>com.drewnoakes</groupId>
                 <artifactId>metadata-extractor</artifactId>
                 <version>${drewnoakes-metadata-extractor.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>com.clickhouse</groupId>
+                <artifactId>clickhouse-jdbc</artifactId>
+                <version>${clickhouse-jdbc.version}</version>
             </dependency>
         </dependencies>
     </dependencyManagement>

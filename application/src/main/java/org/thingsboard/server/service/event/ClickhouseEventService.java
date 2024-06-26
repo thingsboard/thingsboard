@@ -13,84 +13,122 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.event;
+package org.thingsboard.server.service.event;
 
+import com.datastax.oss.driver.api.core.uuid.Uuids;
+import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.event.*;
+import org.thingsboard.server.common.data.event.Event;
+import org.thingsboard.server.common.data.event.EventFilter;
+import org.thingsboard.server.common.data.event.EventType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EventId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
+import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
+import org.thingsboard.server.common.stats.DefaultCounter;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.dao.event.EventDao;
+import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.queue.TbQueueMsg;
+import org.thingsboard.server.queue.TbQueueMsgHeaders;
+import org.thingsboard.server.queue.TbQueueProducer;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
+import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 
+import javax.annotation.PostConstruct;
+import javax.annotation.PreDestroy;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
-import java.util.function.BiConsumer;
-import java.util.function.Function;
+import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
+/**
+ * @author baigod
+ * @version : ClickhouseEventService.java, v 0.1 2024年05月30日 23:02 baigod Exp $
+ */
 @Service
 @Slf4j
-@ConditionalOnProperty(prefix = "event.debug", value = "type", havingValue = "sql", matchIfMissing = true)
-public class BaseEventService implements EventService {
+@ConditionalOnProperty(prefix = "event.debug", value = "type", havingValue = "clickhouse")
+@RequiredArgsConstructor
+public class ClickhouseEventService implements EventService {
 
-    @Value("${sql.ttl.events.events_ttl:0}")
-    private long ttlInSec;
-    @Value("${sql.ttl.events.debug_events_ttl:604800}")
-    private long debugTtlInSec;
+    final TbQueueProducerProvider producerProvider;
+    final DataValidator<Event> eventValidator;
+    final EventDao eventDao;
+    final StatsFactory statsFactory;
 
-    @Value("${event.debug.max-symbols:4096}")
-    private int maxDebugEventSymbols;
+    private final Map<EventType, DefaultCounter> ckEventCounterMap = new ConcurrentHashMap<>();
 
-    @Autowired
-    public EventDao eventDao;
+    private TbQueueProducer<DefaultTbQueueMsg> tbEventClickhouseProducer;
 
-    @Autowired
-    private DataValidator<Event> eventValidator;
+    @PostConstruct
+    public void init() {
+        this.tbEventClickhouseProducer = producerProvider.getTbEventClickhouseMsgProducer();
+    }
+
+    @PreDestroy
+    public void destroy() {
+        this.tbEventClickhouseProducer.stop();
+    }
 
     @Override
     public ListenableFuture<Void> saveAsync(Event event) {
         eventValidator.validate(event, Event::getTenantId);
-        checkAndTruncateDebugEvent(event);
-        return eventDao.saveAsync(event);
-    }
 
-    private void checkAndTruncateDebugEvent(Event event) {
-        switch (event.getType()) {
-            case DEBUG_RULE_NODE:
-                RuleNodeDebugEvent rnEvent = (RuleNodeDebugEvent) event;
-                truncateField(rnEvent, RuleNodeDebugEvent::getData, RuleNodeDebugEvent::setData);
-                truncateField(rnEvent, RuleNodeDebugEvent::getMetadata, RuleNodeDebugEvent::setMetadata);
-                truncateField(rnEvent, RuleNodeDebugEvent::getError, RuleNodeDebugEvent::setError);
-                break;
-            case DEBUG_RULE_CHAIN:
-                RuleChainDebugEvent rcEvent = (RuleChainDebugEvent) event;
-                truncateField(rcEvent, RuleChainDebugEvent::getMessage, RuleChainDebugEvent::setMessage);
-                truncateField(rcEvent, RuleChainDebugEvent::getError, RuleChainDebugEvent::setError);
-                break;
-            case LC_EVENT:
-                LifecycleEvent lcEvent = (LifecycleEvent) event;
-                truncateField(lcEvent, LifecycleEvent::getError, LifecycleEvent::setError);
-                break;
-            case ERROR:
-                ErrorEvent eEvent = (ErrorEvent) event;
-                truncateField(eEvent, ErrorEvent::getError, ErrorEvent::setError);
-                break;
+        log.trace("Save event [{}] ", event);
+        if (event.getId() == null) {
+            UUID timeBased = Uuids.timeBased();
+            event.setId(new EventId(timeBased));
+            event.setCreatedTime(Uuids.unixTimestamp(timeBased));
+        } else if (event.getCreatedTime() == 0L) {
+            UUID eventId = event.getId().getId();
+            if (eventId.version() == 1) {
+                event.setCreatedTime(Uuids.unixTimestamp(eventId));
+            } else {
+                event.setCreatedTime(System.currentTimeMillis());
+            }
         }
-    }
 
-    private <T extends Event> void truncateField(T event, Function<T, String> getter, BiConsumer<T, String> setter) {
-        var str = getter.apply(event);
-        str = StringUtils.truncate(str, maxDebugEventSymbols);
-        setter.accept(event, str);
+        TopicPartitionInfo tpi = new TopicPartitionInfo(tbEventClickhouseProducer.getDefaultTopic(), null, null, false);
+
+        TbQueueMsg tbQueueMsg = new TbQueueMsg() {
+            @Override
+            public UUID getKey() {
+                return event.getId().getId();
+            }
+
+            @Override
+            public TbQueueMsgHeaders getHeaders() {
+                return new DefaultTbQueueMsgHeaders();
+            }
+
+            @Override
+            public byte[] getData() {
+                return JacksonUtil.writeValueAsBytes(EventConverter.convert(event));
+            }
+        };
+
+
+        tbEventClickhouseProducer.send(tpi, new DefaultTbQueueMsg(tbQueueMsg), null);
+
+        ckEventCounterMap.computeIfAbsent(event.getType(),
+                        k -> statsFactory.createDefaultCounter("clickhouse_event_counter", "eventType", event.getType().getTable()))
+                .increment();
+
+        return Futures.immediateFuture(null);
     }
 
     @Override
@@ -129,7 +167,7 @@ public class BaseEventService implements EventService {
 
     @Override
     public void cleanupEvents(long regularEventExpTs, long debugEventExpTs, boolean cleanupDb) {
-        eventDao.cleanupEvents(regularEventExpTs, debugEventExpTs, cleanupDb);
+
     }
 
     private PageData<EventInfo> convert(EntityType entityType, PageData<? extends Event> pd) {

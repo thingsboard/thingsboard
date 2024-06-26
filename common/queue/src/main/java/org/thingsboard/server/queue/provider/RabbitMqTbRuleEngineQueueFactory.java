@@ -16,6 +16,7 @@
 package org.thingsboard.server.queue.provider;
 
 import com.google.protobuf.util.JsonFormat;
+import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.stereotype.Component;
@@ -23,32 +24,23 @@ import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToRuleEngineNotificationMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToTransportMsg;
-import org.thingsboard.server.gen.transport.TransportProtos.ToUsageStatsServiceMsg;
+import org.thingsboard.server.gen.transport.TransportProtos.*;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.TbQueueRequestTemplate;
+import org.thingsboard.server.queue.common.DefaultTbQueueMsg;
 import org.thingsboard.server.queue.common.DefaultTbQueueRequestTemplate;
 import org.thingsboard.server.queue.common.TbProtoJsQueueMsg;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
-import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqAdmin;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqConsumerTemplate;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqProducerTemplate;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqQueueArguments;
-import org.thingsboard.server.queue.rabbitmq.TbRabbitMqSettings;
+import org.thingsboard.server.queue.discovery.TopicService;
+import org.thingsboard.server.queue.rabbitmq.*;
 import org.thingsboard.server.queue.settings.TbQueueCoreSettings;
 import org.thingsboard.server.queue.settings.TbQueueRemoteJsInvokeSettings;
 import org.thingsboard.server.queue.settings.TbQueueRuleEngineSettings;
 import org.thingsboard.server.queue.settings.TbQueueTransportNotificationSettings;
 
-import jakarta.annotation.PreDestroy;
 import java.nio.charset.StandardCharsets;
 
 @Component
@@ -67,6 +59,7 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
     private final TbQueueAdmin ruleEngineAdmin;
     private final TbQueueAdmin jsExecutorAdmin;
     private final TbQueueAdmin notificationAdmin;
+    private final TbQueueAdmin clickhouseEventsAdmin;
 
     public RabbitMqTbRuleEngineQueueFactory(TopicService topicService, TbQueueCoreSettings coreSettings,
                                             TbQueueRuleEngineSettings ruleEngineSettings,
@@ -87,6 +80,7 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
         this.ruleEngineAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getRuleEngineArgs());
         this.jsExecutorAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getJsExecutorArgs());
         this.notificationAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getNotificationsArgs());
+        this.clickhouseEventsAdmin = new TbRabbitMqAdmin(rabbitMqSettings, queueArguments.getClickhouseEventsArgs());
     }
 
     @Override
@@ -151,6 +145,11 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
     }
 
     @Override
+    public TbQueueProducer<DefaultTbQueueMsg> createToClickHouseMsgProducer() {
+        return new TbRabbitMqProducerTemplate(this.clickhouseEventsAdmin, this.rabbitMqSettings, this.coreSettings.getClickhouseTopic());
+    }
+
+    @Override
     public TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> createToUsageStatsServiceMsgProducer() {
         return new TbRabbitMqProducerTemplate<>(coreAdmin, rabbitMqSettings, topicService.buildTopicName(coreSettings.getUsageStatsTopic()));
     }
@@ -178,6 +177,9 @@ public class RabbitMqTbRuleEngineQueueFactory implements TbRuleEngineQueueFactor
         }
         if (notificationAdmin != null) {
             notificationAdmin.destroy();
+        }
+        if (clickhouseEventsAdmin != null) {
+            clickhouseEventsAdmin.destroy();
         }
     }
 }
