@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -24,16 +26,9 @@ import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionCallbackWithoutResult;
 import org.springframework.transaction.support.TransactionTemplate;
-import org.thingsboard.server.common.data.event.ErrorEvent;
-import org.thingsboard.server.common.data.event.Event;
-import org.thingsboard.server.common.data.event.EventType;
-import org.thingsboard.server.common.data.event.LifecycleEvent;
-import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
-import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
-import org.thingsboard.server.common.data.event.StatisticsEvent;
+import org.thingsboard.server.common.data.event.*;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -47,6 +42,7 @@ import java.util.stream.Collectors;
 @Repository
 @Transactional
 @SqlDao
+@ConditionalOnProperty(prefix = "event.debug", value = "type", havingValue = "sql", matchIfMissing = true)
 public class EventInsertRepository {
 
     private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
