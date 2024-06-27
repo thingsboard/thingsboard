@@ -14,15 +14,27 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, ChangeDetectorRef, Component, ElementRef, Input, NgZone, ViewChild } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  NgZone,
+  QueryList,
+  ViewChild,
+  ViewChildren
+} from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
+  FormArray,
   FormBuilder,
   FormControl,
   FormGroup,
   FormGroupDirective,
   NgForm,
+  UntypedFormArray,
   UntypedFormControl,
   ValidatorFn,
   Validators
@@ -30,7 +42,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
-import { forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
@@ -42,7 +54,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { camelCase, deepClone, generateSecret, isEqual, isString } from '@core/utils';
+import { camelCase, deepClone, generateSecret, isEqual, isObject, isString } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
@@ -51,20 +63,22 @@ import { EntityType } from '@shared/models/entity-type.models';
 import {
   AddConnectorConfigData,
   ConnectorConfigurationModes,
+  ConnectorMapping,
   ConnectorType,
   GatewayConnector,
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
   MappingType,
-  MqttVersions,
   noLeadTrailSpacesRegex,
-  PortLimits
+  RequestMappingData,
+  RequestType,
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { takeUntil } from 'rxjs/operators';
+import { distinctUntilChanged, filter, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
+import { MatTab } from '@angular/material/tabs';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -88,6 +102,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   @ViewChild('nameInput') nameInput: ElementRef;
   @ViewChild(MatSort, {static: false}) sort: MatSort;
+  @ViewChildren(MatTab) tabs: QueryList<MatTab>;
 
   pageLink: PageLink;
 
@@ -96,8 +111,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   dataSource: MatTableDataSource<AttributeData>;
 
   displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
-
-  mqttVersions = MqttVersions;
 
   gatewayConnectorDefaultTypes = GatewayConnectorDefaultTypesTranslatesMap;
 
@@ -113,11 +126,11 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   mappingTypes = MappingType;
 
-  portLimits = PortLimits;
-
   mode: ConnectorConfigurationModes = this.connectorConfigurationModes.BASIC;
 
   initialConnector: GatewayConnector;
+
+  private tabsCountSubject = new BehaviorSubject<number>(0);
 
   private inactiveConnectors: Array<string>;
 
@@ -182,20 +195,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.disable();
   }
 
-  get portErrorTooltip(): string {
-    if (this.connectorForm.get('basicConfig.broker.port').hasError('required')) {
-      return this.translate.instant('gateway.port-required');
-    } else if (
-      this.connectorForm.get('basicConfig.broker.port').hasError('min') ||
-      this.connectorForm.get('basicConfig.broker.port').hasError('max')
-    ) {
-      return this.translate.instant('gateway.port-limits-error',
-        {min: PortLimits.MIN, max: PortLimits.MAX});
-    }
-    return '';
-  }
-
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.connectorForm.get('type').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(type => {
@@ -229,7 +229,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const mode = this.connectorForm.get('mode').value;
       if (
         !isEqual(config, basicConfig?.value) &&
-        type === ConnectorType.MQTT &&
+        (type === ConnectorType.MQTT || type === ConnectorType.OPCUA) &&
         mode === ConnectorConfigurationModes.ADVANCED
       ) {
         this.connectorForm.get('basicConfig').patchValue(config, {emitEvent: false});
@@ -269,37 +269,18 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         }
       });
     }
+    this.observeModeChange();
+    this.observeTabsChanges();
   }
 
-  private uniqNameRequired(): ValidatorFn {
-    return (c: UntypedFormControl) => {
-      const newName = c.value.trim().toLowerCase();
-      const found = this.dataSource.data.find((connectorAttr) => {
-        const connectorData = connectorAttr.value;
-        return connectorData.name.toLowerCase() === newName;
-      });
-      if (found) {
-        if (this.initialConnector && this.initialConnector.name.toLowerCase() === newName) {
-          return null;
-        }
-        return {
-          duplicateName: {
-            valid: false
-          }
-        };
-      }
-      return null;
-    };
-  }
-
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
     super.ngOnDestroy();
   }
 
   saveConnector(): void {
-    const value = this.connectorForm.value;
+    const value = this.connectorForm.get('type').value === ConnectorType.MQTT ? this.getMappedMQTTValue() :  this.connectorForm.value;
     value.configuration = camelCase(value.name) + '.json';
     delete value.basicConfig;
     if (value.type !== ConnectorType.GRPC) {
@@ -358,6 +339,20 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.updateData(true);
       this.connectorForm.markAsPristine();
     });
+  }
+
+  private getMappedMQTTValue(): GatewayConnector {
+    const value = this.connectorForm.value;
+    return {
+      ...value,
+      configurationJson: {
+        ...value.configurationJson,
+        broker: {
+          ...value.basicConfig.broker,
+          ...value.basicConfig.workers,
+        }
+      }
+    }
   }
 
   private updateData(reload: boolean = false): void {
@@ -581,12 +576,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
               value.configurationJson = {};
             }
             value.basicConfig = value.configurationJson;
-            if (value.type === ConnectorType.MQTT) {
-              this.addMQTTConfigControls();
-            } else {
-              this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
-            }
-            this.connectorForm.patchValue(value, {emitEvent: false});
+            this.updateConnector(value);
             this.generate('basicConfig.broker.clientId');
             this.saveConnector();
           }
@@ -634,29 +624,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
   }
 
-  private addMQTTConfigControls(): void {
-    const configControl = this.fb.group({});
-    const brokerGroup = this.fb.group({
-      name: ['', []],
-      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
-      version: [5, []],
-      clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-      maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],
-      maxMessageNumberPerWorker: [10, [Validators.required, Validators.min(1)]],
-      security: [{}, [Validators.required]]
-    });
-    configControl.addControl('broker', brokerGroup);
-    configControl.addControl('dataMapping', this.fb.control([], Validators.required));
-    configControl.addControl('requestsMapping', this.fb.control({}));
-    if (this.connectorForm.get('basicConfig')) {
-      this.connectorForm.setControl('basicConfig', configControl, {emitEvent: false});
-    } else {
-      this.connectorForm.addControl('basicConfig', configControl, {emitEvent: false});
-    }
-    this.createBasicConfigWatcher();
-  }
-
   private createBasicConfigWatcher(): void {
     if (this.basicConfigSub) {
       this.basicConfigSub.unsubscribe();
@@ -669,7 +636,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const mode = this.connectorForm.get('mode').value;
       if (
         !isEqual(config, configJson?.value) &&
-        type === ConnectorType.MQTT &&
+        (type === ConnectorType.MQTT || type === ConnectorType.OPCUA) &&
         mode === ConnectorConfigurationModes.BASIC
       ) {
         const newConfig = { ...configJson.value, ...config };
@@ -691,6 +658,47 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     return of(true);
   }
 
+  private observeTabsChanges(): void {
+    this.tabs.changes
+      .pipe(
+        tap(() => this.tabsCountSubject.next(this.tabs.length)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+  }
+
+  private observeModeChange(): void {
+    this.connectorForm.get('mode').valueChanges
+      .pipe(
+        distinctUntilChanged(),
+        filter(Boolean),
+        tap(mode => this.updateConnector({...this.initialConnector, basicConfig: this.initialConnector?.configurationJson || {}, mode })),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+  }
+
+  private uniqNameRequired(): ValidatorFn {
+    return (c: UntypedFormControl) => {
+      const newName = c.value.trim().toLowerCase();
+      const found = this.dataSource.data.find((connectorAttr) => {
+        const connectorData = connectorAttr.value;
+        return connectorData.name.toLowerCase() === newName;
+      });
+      if (found) {
+        if (this.initialConnector && this.initialConnector.name.toLowerCase() === newName) {
+          return null;
+        }
+        return {
+          duplicateName: {
+            valid: false
+          }
+        };
+      }
+      return null;
+    };
+  }
+
   private setFormValue(connector: GatewayConnector): void {
     if (this.connectorForm.disabled) {
       this.connectorForm.enable();
@@ -708,14 +716,115 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.initialConnector = connector;
 
-    if (connector.type === ConnectorType.MQTT) {
-      this.addMQTTConfigControls();
+    this.updateConnector(connector);
+  }
+
+  private updateConnector(connector: GatewayConnector): void {
+    switch (connector.type) {
+      case ConnectorType.MQTT:
+        this.patchToMQTT(connector);
+        this.createBasicConfigWatcher();
+        break;
+      case ConnectorType.OPCUA:
+        this.patchToOPCUA(connector);
+        this.createBasicConfigWatcher();
+        break;
+      default:
+        this.connectorForm.patchValue({...connector, mode: null});
+        this.connectorForm.markAsPristine();
+    }
+  }
+
+  private isTabsInitialized(tabsCount: number, isAdvanced?: boolean): boolean {
+    return isAdvanced ? tabsCount === 2 : tabsCount > 2;
+  }
+
+  private patchToOPCUA(connector: GatewayConnector): void {
+    const connectorBase = {...connector, basicConfig: {}};
+
+    if (!connector.mode || connector.mode === ConnectorConfigurationModes.BASIC) {
+      if (!connector.mode) {
+        this.connectorForm.get('mode').patchValue(ConnectorConfigurationModes.BASIC, {emitEvent: false});
+      }
+      this.connectorForm.patchValue(connectorBase, {emitEvent: false});
+      this.tabsCountSubject.pipe(filter(count => this.isTabsInitialized(count)), take(1)).subscribe(() => {
+        (this.connectorForm.get('basicConfig.mapping') as FormArray)?.clear();
+        this.connectorForm.patchValue(connector);
+        this.pushDataAsFormArrays('basicConfig.mapping', connector.basicConfig.mapping);
+        this.connectorForm.markAsPristine();
+      })
     } else {
-      this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
+      this.updateInAdvanced(connector);
+    }
+  }
+
+  private updateInAdvanced(connector: GatewayConnector): void {
+    this.connectorForm.patchValue({...connector, basicConfig: {}}, {emitEvent: false});
+    this.tabsCountSubject.pipe(filter(count => this.isTabsInitialized(count, true)), take(1)).subscribe(() => {
+      this.connectorForm.patchValue({...connector, basicConfig: {}});
+      this.connectorForm.markAsPristine();
+    })
+  }
+
+  private pushDataAsFormArrays(controlKey: string, data: ConnectorMapping[]): void {
+    const control: UntypedFormArray = this.connectorForm.get(controlKey) as FormArray;
+
+    if (control && data?.length) {
+      data.forEach((mapping: ConnectorMapping) => control.push(this.fb.control(mapping)));
+    }
+  }
+
+  private patchToMQTT(connector: GatewayConnector): void {
+    if (!connector.mode || connector.mode === ConnectorConfigurationModes.BASIC) {
+      if (!connector.mode) {
+        this.connectorForm.get('mode').patchValue(ConnectorConfigurationModes.BASIC, {emitEvent: false});
+      }
+      this.connectorForm.patchValue({...connector, basicConfig: {}}, {emitEvent: false});
+
+      this.tabsCountSubject.pipe(filter(count => this.isTabsInitialized(count)), take(1)).subscribe(() => {
+        const editedConnector = {
+          ...connector,
+          basicConfig: {
+            ...connector.basicConfig,
+            workers: {
+              maxNumberOfWorkers: connector.basicConfig?.broker?.maxNumberOfWorkers,
+              maxMessageNumberPerWorker: connector.basicConfig?.broker?.maxMessageNumberPerWorker,
+            },
+            requestsMapping: [],
+          }
+        };
+
+        (this.connectorForm.get('basicConfig.dataMapping') as FormArray)?.clear();
+        (this.connectorForm.get('basicConfig.requestsMapping') as FormArray)?.clear();
+        this.connectorForm.patchValue(editedConnector);
+        this.pushDataAsFormArrays('basicConfig.dataMapping', editedConnector.basicConfig.dataMapping);
+        this.pushDataAsFormArrays('basicConfig.requestsMapping',
+          Array.isArray(connector.basicConfig.requestsMapping)
+            ? connector.basicConfig.requestsMapping
+            : this.getRequestDataArray(connector.basicConfig.requestsMapping)
+        );
+        this.connectorForm.markAsPristine();
+      })
+    } else {
+      this.updateInAdvanced(connector);
+    }
+  }
+
+  private getRequestDataArray(value: Record<RequestType, RequestMappingData>): RequestMappingData[] {
+    const mappingConfigs = [];
+
+    if (isObject(value)) {
+      Object.keys(value).forEach((configKey: string) => {
+        for (let mapping of value[configKey]) {
+          mappingConfigs.push({
+            requestType: configKey,
+            requestValue: mapping
+          });
+        }
+      });
     }
 
-    this.connectorForm.patchValue(connector, {emitEvent: false});
-    this.connectorForm.markAsPristine();
+    return mappingConfigs;
   }
 
   private setClientData(data: PageData<AttributeData>): void {

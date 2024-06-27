@@ -87,11 +87,7 @@ import { SliderWidgetComponent } from '@home/components/widget/lib/rpc/slider-wi
 import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/toggle-button-widget.component';
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
-import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
-import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
-import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
 import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
@@ -102,6 +98,17 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
 import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
 import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
+
+import { GatewayHelpLinkPipe } from '@home/pipes';
+import {
+  DeviceInfoTableComponent,
+  MappingDataKeysPanelComponent,
+  MappingTableComponent,
+  ServerConfigComponent,
+  TypeValuePanelComponent,
+  BrokerConfigControlComponent,
+  WorkersConfigControlComponent,
+} from '@home/components/widget/lib/gateway/connectors-configuration';
 
 @NgModule({
   declarations:
@@ -133,7 +140,7 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
       MappingDialogComponent,
       DeviceInfoTableComponent,
       MappingDataKeysPanelComponent,
-      BrokerSecurityComponent,
+      TypeValuePanelComponent,
       GatewayLogsComponent,
       GatewayStatisticsComponent,
       GatewayServiceRPCComponent,
@@ -177,7 +184,11 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
     SharedModule,
     RpcWidgetsModule,
     HomePageWidgetsModule,
-    SharedHomeComponentsModule
+    SharedHomeComponentsModule,
+    GatewayHelpLinkPipe,
+    BrokerConfigControlComponent,
+    WorkersConfigControlComponent,
+    ServerConfigComponent,
   ],
     exports: [
         EntitiesTableWidgetComponent,
@@ -206,7 +217,7 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
         MappingDialogComponent,
         DeviceInfoTableComponent,
         MappingDataKeysPanelComponent,
-        BrokerSecurityComponent,
+        TypeValuePanelComponent,
         GatewayLogsComponent,
         GatewayServiceRPCConnectorComponent,
         GatewayServiceRPCConnectorTemplatesComponent,

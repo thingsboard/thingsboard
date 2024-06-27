@@ -17,41 +17,43 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
+  inject,
   Input,
-  NgZone,
   OnDestroy,
   OnInit,
   ViewChild,
-  ViewContainerRef
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
-import { Overlay } from '@angular/cdk/overlay';
-import { UtilsService } from '@core/services/utils.service';
-import { EntityService } from '@core/http/entity.service';
-import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR, UntypedFormArray } from '@angular/forms';
+import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
 import {
-  ConvertorTypeTranslationsMap,
+  ControlContainer,
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALUE_ACCESSOR,
+  UntypedFormArray,
+} from '@angular/forms';
+import {
+  ConnectorMapping, ConverterConnectorMapping,
+  ConvertorTypeTranslationsMap, DeviceConnectorMapping,
   MappingInfo,
   MappingType,
-  MappingTypeTranslationsMap,
+  MappingTypeTranslationsMap, MappingValue, RequestMappingData,
   RequestType,
   RequestTypesTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { validateArrayIsNotEmpty } from '@shared/validators/form-array.validators';
 
 @Component({
   selector: 'tb-mapping-table',
@@ -66,8 +68,13 @@ import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
     }
   ]
 })
-export class MappingTableComponent extends PageComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
+export class MappingTableComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
+  @Input() controlKey = 'dataMapping';
 
+  @coerceBoolean()
+  @Input() required = false;
+
+  parentContainer = inject(ControlContainer);
   mappingTypeTranslationsMap = MappingTypeTranslationsMap;
   mappingTypeEnum = MappingType;
   displayedColumns = [];
@@ -79,12 +86,14 @@ export class MappingTableComponent extends PageComponent implements ControlValue
   activeValue = false;
   dirtyValue = false;
 
-  viewsInited = false;
-
   mappingTypeValue: MappingType;
 
   get mappingType(): MappingType {
     return this.mappingTypeValue;
+  }
+
+  get parentFormGroup(): FormGroup {
+    return this.parentContainer.control as FormGroup;
   }
 
   @Input()
@@ -100,54 +109,34 @@ export class MappingTableComponent extends PageComponent implements ControlValue
   textSearch = this.fb.control('', {nonNullable: true});
 
   private destroy$ = new Subject<void>();
-  private propagateChange = (v: any) => {};
 
-  constructor(protected store: Store<AppState>,
-              public translate: TranslateService,
+  constructor(public translate: TranslateService,
               public dialog: MatDialog,
-              private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef,
               private dialogService: DialogService,
-              private entityService: EntityService,
-              private utils: UtilsService,
-              private zone: NgZone,
-              private cd: ChangeDetectorRef,
-              private elementRef: ElementRef,
               private fb: FormBuilder) {
-    super(store);
     this.mappingFormGroup = this.fb.array([]);
     this.dirtyValue = !this.activeValue;
     this.dataSource = new MappingDatasource();
   }
 
-  ngOnInit() {
-    if (this.mappingType === MappingType.DATA) {
-      this.mappingColumns.push(
-        {def: 'topicFilter', title: 'gateway.topic-filter'},
-        {def: 'QoS', title: 'gateway.mqtt-qos'},
-        {def: 'converter', title: 'gateway.payload-type'}
-      )
-    } else {
-      this.mappingColumns.push(
-        {def: 'type', title: 'gateway.type'},
-        {def: 'details', title: 'gateway.details'}
-      );
-    }
+  ngOnInit(): void {
+    this.setMappingColumns();
     this.displayedColumns.push(...this.mappingColumns.map(column => column.def), 'actions');
     this.mappingFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.updateTableData(value);
-      this.updateView(value);
     });
+    this.addSelfControl();
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
+    this.removeSelfControl();
   }
 
-  ngAfterViewInit() {
+  ngAfterViewInit(): void {
     this.textSearch.valueChanges.pipe(
       debounceTime(150),
       distinctUntilChanged((prev, current) => (prev ?? '') === current.trim()),
@@ -158,55 +147,13 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     });
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
+  registerOnChange(fn: any): void {}
 
   registerOnTouched(fn: any): void {}
 
-  writeValue(config: any) {
-    if (isUndefinedOrNull(config)) {
-      config = this.mappingType === MappingType.REQUESTS ? {} : [];
-    }
-    let mappingConfigs = config;
-    if (this.mappingType === MappingType.REQUESTS) {
-      mappingConfigs = [];
+  writeValue(obj: any): void {}
 
-      Object.keys(config).forEach((configKey) => {
-        for (let mapping of config[configKey]) {
-          mappingConfigs.push({
-            requestType: configKey,
-            requestValue: mapping
-          });
-        }
-      });
-    }
-    this.mappingFormGroup.clear({emitEvent: false});
-    for (let mapping of mappingConfigs) {
-      this.mappingFormGroup.push(this.fb.group(mapping), {emitEvent: false});
-    }
-    this.updateTableData(mappingConfigs);
-  }
-
-  updateView(mappingConfigs: Array<{[key: string]: any}>) {
-    let config;
-    if (this.mappingType === MappingType.REQUESTS) {
-      config = {};
-      for (let mappingConfig of mappingConfigs) {
-        if (config[mappingConfig.requestType]) {
-          config[mappingConfig.requestType].push(mappingConfig.requestValue);
-        } else {
-          config[mappingConfig.requestType] = [mappingConfig.requestValue];
-        }
-      }
-    } else {
-      config = mappingConfigs;
-    }
-
-    this.propagateChange(config);
-  }
-
-  enterFilterMode() {
+  enterFilterMode(): void {
     this.textSearchMode = true;
     setTimeout(() => {
       this.searchInputField.nativeElement.focus();
@@ -214,18 +161,18 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     }, 10);
   }
 
-  exitFilterMode() {
+  exitFilterMode(): void {
     this.updateTableData(this.mappingFormGroup.value);
     this.textSearchMode = false;
     this.textSearch.reset();
   }
 
-  manageMapping($event: Event, index?: number) {
+  manageMapping($event: Event, index?: number): void {
     if ($event) {
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, MappingInfo, boolean>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, MappingValue>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -233,45 +180,23 @@ export class MappingTableComponent extends PageComponent implements ControlValue
         value,
         buttonTitle: isUndefinedOrNull(index) ?  'action.add' : 'action.apply'
       }
-    }).afterClosed().subscribe(
-      (res) => {
+    }).afterClosed()
+      .pipe(take(1), takeUntil(this.destroy$))
+      .subscribe(res => {
         if (res) {
           if (isDefinedAndNotNull(index)) {
             this.mappingFormGroup.at(index).patchValue(res);
           } else {
             this.mappingFormGroup.push(this.fb.group(res));
           }
+          this.mappingFormGroup.markAsDirty();
         }
-      }
-    );
+    });
   }
 
-  updateTableData(value: Array<{[key: string]: any}>, textSearch?: string): void {
-    let tableValue = value;
-    if (this.mappingType === MappingType.DATA) {
-      tableValue = tableValue.map((value) => {
-        return {
-          topicFilter: value.topicFilter,
-          QoS: value.subscriptionQos,
-          converter: this.translate.instant(ConvertorTypeTranslationsMap.get(value.converter.type))
-        };
-      });
-    } else {
-      tableValue = tableValue.map((value) => {
-        let details;
-        if (value.requestType === RequestType.ATTRIBUTE_UPDATE) {
-          details = value.requestValue.attributeFilter;
-        } else if (value.requestType === RequestType.SERVER_SIDE_RPC) {
-          details = value.requestValue.methodFilter;
-        } else {
-          details = value.requestValue.topicFilter;
-        }
-        return {
-          type: this.translate.instant(RequestTypesTranslationsMap.get(value.requestType)),
-          details
-        };
-      });
-    }
+  updateTableData(value: ConnectorMapping[], textSearch?: string): void {
+    let tableValue =
+      value.map((value: ConnectorMapping) => this.getMappingValue(value));
     if (textSearch) {
       tableValue = tableValue.filter(value =>
         Object.values(value).some(val =>
@@ -282,7 +207,7 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     this.dataSource.loadMappings(tableValue);
   }
 
-  deleteMapping($event: Event, index: number) {
+  deleteMapping($event: Event, index: number): void {
     if ($event) {
       $event.stopPropagation();
     }
@@ -295,10 +220,81 @@ export class MappingTableComponent extends PageComponent implements ControlValue
     ).subscribe((result) => {
       if (result) {
         this.mappingFormGroup.removeAt(index);
+        this.mappingFormGroup.markAsDirty();
       }
     });
   }
 
+  private getMappingValue(value: ConnectorMapping): MappingValue {
+    switch (this.mappingType) {
+      case MappingType.DATA:
+        return {
+          topicFilter: (value as ConverterConnectorMapping).topicFilter,
+          QoS: (value as ConverterConnectorMapping).subscriptionQos,
+          converter: this.translate.instant(ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter.type))
+        };
+      case MappingType.REQUESTS:
+        let details;
+        if ((value as RequestMappingData).requestType === RequestType.ATTRIBUTE_UPDATE) {
+          details = (value as RequestMappingData).requestValue.attributeFilter;
+        } else if ((value as RequestMappingData).requestType === RequestType.SERVER_SIDE_RPC) {
+          details = (value as RequestMappingData).requestValue.methodFilter;
+        } else {
+          details = (value as RequestMappingData).requestValue.topicFilter;
+        }
+        return {
+          requestType: (value as RequestMappingData).requestType,
+          type: this.translate.instant(RequestTypesTranslationsMap.get((value as RequestMappingData).requestType)),
+          details
+        };
+      case MappingType.OPCUA:
+        const deviceNamePattern = (value as DeviceConnectorMapping).deviceInfo?.deviceNameExpression;
+        const deviceProfileExpression = (value as DeviceConnectorMapping).deviceInfo?.deviceProfileExpression;
+        const { deviceNodePattern } = value as DeviceConnectorMapping;
+        return {
+          deviceNodePattern,
+          deviceNamePattern,
+          deviceProfileExpression
+        };
+      default:
+        return {} as MappingValue;
+    }
+  }
+
+  private setMappingColumns(): void {
+    switch (this.mappingType) {
+      case MappingType.DATA:
+        this.mappingColumns.push(
+          { def: 'topicFilter', title: 'gateway.topic-filter' },
+          { def: 'QoS', title: 'gateway.mqtt-qos' },
+          { def: 'converter', title: 'gateway.payload-type' }
+        );
+        break;
+      case MappingType.REQUESTS:
+        this.mappingColumns.push(
+          { def: 'type', title: 'gateway.type' },
+          { def: 'details', title: 'gateway.details' }
+        );
+        break;
+      case MappingType.OPCUA:
+        this.mappingColumns.push(
+          { def: 'deviceNodePattern', title: 'gateway.device-node' },
+          { def: 'deviceNamePattern', title: 'gateway.device-name' },
+          { def: 'deviceProfileExpression', title: 'gateway.device-profile' }
+        );
+    }
+  }
+
+  private addSelfControl(): void {
+    this.parentFormGroup.addControl(this.controlKey,  this.mappingFormGroup);
+    if (this.required) {
+      this.mappingFormGroup.addValidators(validateArrayIsNotEmpty());
+    }
+  }
+
+  private removeSelfControl(): void {
+    this.parentFormGroup.removeControl(this.controlKey);
+  }
 }
 
 export class MappingDatasource implements DataSource<{[key: string]: any}> {
@@ -335,5 +331,4 @@ export class MappingDatasource implements DataSource<{[key: string]: any}> {
       map((mappings) => mappings.length)
     );
   }
-
 }

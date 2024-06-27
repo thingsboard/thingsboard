@@ -16,85 +16,72 @@
 
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  ElementRef,
   forwardRef,
-  NgZone,
+  Input,
   OnDestroy,
-  ViewContainerRef
+  OnInit,
 } from '@angular/core';
-import { PageComponent } from '@shared/components/page.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
-import { DialogService } from '@core/services/dialog.service';
 import { Subject } from 'rxjs';
-import { Overlay } from '@angular/cdk/overlay';
-import { UtilsService } from '@core/services/utils.service';
-import { EntityService } from '@core/http/entity.service';
 import {
   ControlValueAccessor,
   FormBuilder,
-  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormGroup,
-  ValidationErrors,
-  Validator,
   Validators
 } from '@angular/forms';
 import {
   BrokerSecurityType,
   BrokerSecurityTypeTranslationsMap,
+  ModeType,
   noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { SharedModule } from '@shared/shared.module';
+import { CommonModule } from '@angular/common';
 
 @Component({
-  selector: 'tb-broker-security',
-  templateUrl: './broker-security.component.html',
-  styleUrls: ['./broker-security.component.scss'],
+  selector: 'tb-security-config',
+  templateUrl: './security-config.component.html',
+  styleUrls: ['./security-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => BrokerSecurityComponent),
+      useExisting: forwardRef(() => SecurityConfigComponent),
       multi: true
     },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => BrokerSecurityComponent),
-      multi: true
-    }
+  ],
+  standalone: true,
+  imports:[
+    CommonModule,
+    SharedModule,
   ]
 })
-export class BrokerSecurityComponent extends PageComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class SecurityConfigComponent implements ControlValueAccessor, OnInit, OnDestroy {
+  @Input()
+  title: string = 'gateway.security';
+
+  @Input()
+  @coerceBoolean()
+  extendCertificatesModel = false;
 
   BrokerSecurityType = BrokerSecurityType;
 
   securityTypes = Object.values(BrokerSecurityType);
+
+  modeTypes = Object.values(ModeType);
 
   SecurityTypeTranslationsMap = BrokerSecurityTypeTranslationsMap;
 
   securityFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
-  private propagateChange = (v: any) => {};
 
-  constructor(protected store: Store<AppState>,
-              public translate: TranslateService,
-              public dialog: MatDialog,
-              private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef,
-              private dialogService: DialogService,
-              private entityService: EntityService,
-              private utils: UtilsService,
-              private zone: NgZone,
-              private cd: ChangeDetectorRef,
-              private elementRef: ElementRef,
-              private fb: FormBuilder) {
-    super(store);
+  constructor(private fb: FormBuilder) {}
+
+  ngOnInit(): void {
     this.securityFormGroup = this.fb.group({
       type: [BrokerSecurityType.ANONYMOUS, []],
       username: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -103,11 +90,9 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
       pathToPrivateKey: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       pathToClientCert: ['', [Validators.pattern(noLeadTrailSpacesRegex)]]
     });
-    this.securityFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      this.updateView(value);
-    });
+    if (this.extendCertificatesModel) {
+      this.securityFormGroup.addControl('mode', this.fb.control(ModeType.NONE, []));
+    }
     this.securityFormGroup.get('type').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((type) => {
@@ -115,43 +100,25 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
     });
   }
 
-  ngOnDestroy() {
+  ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    super.ngOnDestroy();
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
-  }
+  registerOnChange(fn: any): void {}
 
   registerOnTouched(fn: any): void {}
 
-  writeValue(deviceInfo: any) {
-    if (!deviceInfo.type) {
-      deviceInfo.type = BrokerSecurityType.ANONYMOUS;
-    }
-    this.securityFormGroup.reset(deviceInfo);
-    this.updateView(deviceInfo);
-  }
+  writeValue(obj: any): void {}
 
-  validate(): ValidationErrors | null {
-    return this.securityFormGroup.valid ? null : {
-      securityForm: { valid: false }
-    };
-  }
-
-  updateView(value: any) {
-    this.propagateChange(value);
-  }
-
-  private updateValidators(type) {
+  private updateValidators(type): void {
     if (type) {
       this.securityFormGroup.get('username').disable({emitEvent: false});
       this.securityFormGroup.get('password').disable({emitEvent: false});
       this.securityFormGroup.get('pathToCACert').disable({emitEvent: false});
       this.securityFormGroup.get('pathToPrivateKey').disable({emitEvent: false});
       this.securityFormGroup.get('pathToClientCert').disable({emitEvent: false});
+      this.securityFormGroup.get('mode')?.disable({emitEvent: false});
       if (type === BrokerSecurityType.BASIC) {
         this.securityFormGroup.get('username').enable({emitEvent: false});
         this.securityFormGroup.get('password').enable({emitEvent: false});
@@ -159,6 +126,16 @@ export class BrokerSecurityComponent extends PageComponent implements ControlVal
         this.securityFormGroup.get('pathToCACert').enable({emitEvent: false});
         this.securityFormGroup.get('pathToPrivateKey').enable({emitEvent: false});
         this.securityFormGroup.get('pathToClientCert').enable({emitEvent: false});
+        if (this.extendCertificatesModel) {
+          const modeControl = this.securityFormGroup.get('mode');
+          if (modeControl && !modeControl.value) {
+            modeControl.setValue(ModeType.NONE, {emitEvent: false});
+          }
+
+          modeControl?.enable({emitEvent: false});
+          this.securityFormGroup.get('username').enable({emitEvent: false});
+          this.securityFormGroup.get('password').enable({emitEvent: false});
+        }
       }
     }
   }
