@@ -41,11 +41,15 @@ import {
   UntypedFormArray,
 } from '@angular/forms';
 import {
-  ConnectorMapping, ConverterConnectorMapping,
-  ConvertorTypeTranslationsMap, DeviceConnectorMapping,
+  ConnectorMapping,
+  ConverterConnectorMapping,
+  ConvertorTypeTranslationsMap,
+  DeviceConnectorMapping,
   MappingInfo,
   MappingType,
-  MappingTypeTranslationsMap, MappingValue, RequestMappingData,
+  MappingTypeTranslationsMap,
+  MappingValue,
+  RequestMappingData,
   RequestType,
   RequestTypesTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
