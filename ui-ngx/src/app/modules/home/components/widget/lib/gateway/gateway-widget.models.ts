@@ -474,7 +474,7 @@ export enum ConnectorConfigurationModes {
   ADVANCED = 'advanced'
 }
 
-export enum BrokerSecurityType {
+export enum SecurityType {
   ANONYMOUS = 'anonymous',
   BASIC = 'basic',
   CERTIFICATES = 'certificates'
@@ -486,11 +486,11 @@ export enum ModeType {
   SIGNANDENCRYPT = 'SignAndEncrypt'
 }
 
-export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, string>(
+export const SecurityTypeTranslationsMap = new Map<SecurityType, string>(
   [
-    [BrokerSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
-    [BrokerSecurityType.BASIC, 'gateway.broker.security-types.basic'],
-    [BrokerSecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
+    [SecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [SecurityType.BASIC, 'gateway.broker.security-types.basic'],
+    [SecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
   ]
 );
 

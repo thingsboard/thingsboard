@@ -26,13 +26,15 @@ import { Subject } from 'rxjs';
 import {
   ControlValueAccessor,
   FormBuilder,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormGroup,
+  ValidationErrors,
   Validators
 } from '@angular/forms';
 import {
-  BrokerSecurityType,
-  BrokerSecurityTypeTranslationsMap,
+  SecurityType,
+  SecurityTypeTranslationsMap,
   ModeType,
   noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -52,6 +54,11 @@ import { CommonModule } from '@angular/common';
       useExisting: forwardRef(() => SecurityConfigComponent),
       multi: true
     },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => SecurityConfigComponent),
+      multi: true
+    }
   ],
   standalone: true,
   imports:[
@@ -67,23 +74,25 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
   @coerceBoolean()
   extendCertificatesModel = false;
 
-  BrokerSecurityType = BrokerSecurityType;
+  BrokerSecurityType = SecurityType;
 
-  securityTypes = Object.values(BrokerSecurityType);
+  securityTypes = Object.values(SecurityType);
 
   modeTypes = Object.values(ModeType);
 
-  SecurityTypeTranslationsMap = BrokerSecurityTypeTranslationsMap;
+  SecurityTypeTranslationsMap = SecurityTypeTranslationsMap;
 
   securityFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
 
+  private propagateChange = (v: any) => {};
+
   constructor(private fb: FormBuilder) {}
 
   ngOnInit(): void {
     this.securityFormGroup = this.fb.group({
-      type: [BrokerSecurityType.ANONYMOUS, []],
+      type: [SecurityType.ANONYMOUS, []],
       username: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       pathToCACert: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -93,11 +102,12 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
     if (this.extendCertificatesModel) {
       this.securityFormGroup.addControl('mode', this.fb.control(ModeType.NONE, []));
     }
+    this.securityFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => this.updateView(value));
     this.securityFormGroup.get('type').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe((type) => {
-      this.updateValidators(type);
-    });
+    ).subscribe((type) => this.updateValidators(type));
   }
 
   ngOnDestroy(): void {
@@ -105,13 +115,31 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: any): void {}
+  writeValue(deviceInfo: any) {
+    if (!deviceInfo.type) {
+      deviceInfo.type = SecurityType.ANONYMOUS;
+    }
+    this.securityFormGroup.reset(deviceInfo);
+    this.updateView(deviceInfo);
+  }
+
+  validate(): ValidationErrors | null {
+    return this.securityFormGroup.valid ? null : {
+      securityForm: { valid: false }
+    };
+  }
+
+  updateView(value: any) {
+    this.propagateChange(value);
+  }
+
+  registerOnChange(fn: any): void {
+    this.propagateChange = fn;
+  }
 
   registerOnTouched(fn: any): void {}
 
-  writeValue(obj: any): void {}
-
-  private updateValidators(type): void {
+  private updateValidators(type: SecurityType): void {
     if (type) {
       this.securityFormGroup.get('username').disable({emitEvent: false});
       this.securityFormGroup.get('password').disable({emitEvent: false});
@@ -119,10 +147,10 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
       this.securityFormGroup.get('pathToPrivateKey').disable({emitEvent: false});
       this.securityFormGroup.get('pathToClientCert').disable({emitEvent: false});
       this.securityFormGroup.get('mode')?.disable({emitEvent: false});
-      if (type === BrokerSecurityType.BASIC) {
+      if (type === SecurityType.BASIC) {
         this.securityFormGroup.get('username').enable({emitEvent: false});
         this.securityFormGroup.get('password').enable({emitEvent: false});
-      } else if (type === BrokerSecurityType.CERTIFICATES) {
+      } else if (type === SecurityType.CERTIFICATES) {
         this.securityFormGroup.get('pathToCACert').enable({emitEvent: false});
         this.securityFormGroup.get('pathToPrivateKey').enable({emitEvent: false});
         this.securityFormGroup.get('pathToClientCert').enable({emitEvent: false});

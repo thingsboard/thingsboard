@@ -84,6 +84,7 @@ export class ServerConfigComponent implements OnInit, ControlValueAccessor, OnDe
 
   ngOnInit(): void {
     this.addSelfControl();
+
   }
 
   ngOnDestroy(): void {
