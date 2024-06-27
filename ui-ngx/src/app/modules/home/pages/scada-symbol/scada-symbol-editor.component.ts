@@ -15,19 +15,24 @@
 ///
 
 import {
-  AfterViewInit, ChangeDetectorRef,
+  AfterViewInit,
+  ChangeDetectorRef,
   Component,
-  ElementRef, EventEmitter,
+  ElementRef,
+  EventEmitter,
   Input,
   OnChanges,
   OnDestroy,
-  OnInit, Output,
+  OnInit,
+  Output,
   SimpleChanges,
   ViewChild,
-  ViewContainerRef,
   ViewEncapsulation
 } from '@angular/core';
-import { ScadaSymbolEditObject, ScadaSymbolEditObjectCallbacks } from '@home/pages/scada-symbol/scada-symbol-editor.models';
+import {
+  ScadaSymbolEditObject,
+  ScadaSymbolEditObjectCallbacks
+} from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 
 export interface ScadaSymbolEditorData {
@@ -71,6 +76,14 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   zoomInDisabled = false;
   zoomOutDisabled = false;
 
+  @Input()
+  showHiddenElements = false;
+
+  @Output()
+  showHiddenElementsChange = new EventEmitter<boolean>();
+
+  displayShowHidden = false;
+
   constructor(private cd: ChangeDetectorRef) {
   }
 
@@ -80,6 +93,13 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   ngAfterViewInit() {
     this.editObjectCallbacks.onZoom = () => {
       this.updateZoomButtonsState();
+    };
+    this.editObjectCallbacks.hasHiddenElements = (hasHidden) => {
+      this.displayShowHidden = hasHidden;
+      if (hasHidden) {
+        this.scadaSymbolEditObject.showHiddenElements(this.showHiddenElements);
+      }
+      this.cd.markForCheck();
     };
     this.scadaSymbolEditObject = new ScadaSymbolEditObject(this.scadaSymbolShape.nativeElement,
       this.tooltipsContainer.nativeElement,
@@ -122,7 +142,14 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     this.scadaSymbolEditObject.zoomOut();
   }
 
+  toggleShowHidden() {
+    this.showHiddenElements = !this.showHiddenElements;
+    this.showHiddenElementsChange.emit(this.showHiddenElements);
+    this.scadaSymbolEditObject.showHiddenElements(this.showHiddenElements);
+  }
+
   private updateContent(content: string) {
+    this.displayShowHidden = false;
     this.scadaSymbolEditObject.setContent(content);
     setTimeout(() => {
       this.updateZoomButtonsState();

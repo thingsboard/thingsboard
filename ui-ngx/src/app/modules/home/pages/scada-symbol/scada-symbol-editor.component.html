@@ -20,21 +20,31 @@
   <tb-anchor #tooltipsContainerComponent></tb-anchor>
 </div>
 <div class="tb-scada-symbol-editor-buttons">
-  <div class="tb-scada-symbol-editor-zoom-buttons tb-primary-fill">
-    <button mat-icon-button
-            [disabled]="zoomInDisabled"
-            (click)="zoomIn()"
-            matTooltip="{{ 'scada.zoom-in' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>add</mat-icon>
-    </button>
-    <button mat-icon-button
-            [disabled]="zoomOutDisabled"
-            (click)="zoomOut()"
-            matTooltip="{{ 'scada.zoom-out' | translate }}"
-            matTooltipPosition="above">
-      <mat-icon>remove</mat-icon>
-    </button>
+  <div class="tb-scada-symbol-editor-view-buttons">
+    <div class="tb-scada-symbol-editor-zoom-buttons tb-primary-fill">
+      <button mat-icon-button
+              [disabled]="zoomInDisabled"
+              (click)="zoomIn()"
+              matTooltip="{{ 'scada.zoom-in' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>add</mat-icon>
+      </button>
+      <button mat-icon-button
+              [disabled]="zoomOutDisabled"
+              (click)="zoomOut()"
+              matTooltip="{{ 'scada.zoom-out' | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>remove</mat-icon>
+      </button>
+    </div>
+    <div *ngIf="displayShowHidden" class="tb-primary-fill">
+      <button mat-icon-button
+              (click)="toggleShowHidden()"
+              matTooltip="{{ (showHiddenElements ? 'scada.hide-hidden-elements' : 'scada.show-hidden-elements') | translate }}"
+              matTooltipPosition="above">
+        <mat-icon>{{ showHiddenElements ? 'visibility_off' : 'visibility' }}</mat-icon>
+      </button>
+    </div>
   </div>
   <div class="tb-scada-symbol-editor-upload-buttons">
     <div class="tb-primary-fill">

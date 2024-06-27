@@ -143,6 +143,8 @@ export class ScadaSymbolComponent extends PageComponent
 
   readonly: boolean;
 
+  showHiddenElements = false;
+
   get isDirty(): boolean {
     return (this.scadaSymbolFormGroup.dirty || this.symbolEditorDirty) && !this.forcePristine;
   }

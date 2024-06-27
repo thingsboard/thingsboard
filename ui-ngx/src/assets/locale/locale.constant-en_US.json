@@ -3453,6 +3453,8 @@
         "edit-symbol": "Edit SCADA symbol",
         "symbol-details": "SCADA symbol details",
         "no-symbols": "No symbols found",
+        "show-hidden-elements": "Show hidden elements",
+        "hide-hidden-elements": "Hide hidden elements",
         "delete-symbol": "Delete SCADA symbol",
         "delete-symbol-title": "Are you sure you want to delete SCADA symbol '{{imageTitle}}'?",
         "delete-symbol-text": "Be careful, after the confirmation SCADA symbol will become unrecoverable.",

@@ -35,6 +35,21 @@
   justify-content: space-between;
   align-items: flex-start;
 
+  .tb-primary-fill {
+    background: #fff;
+    border-radius: 50%;
+    &:before {
+      opacity: 0.1;
+    }
+  }
+
+  .tb-scada-symbol-editor-view-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 101;
+  }
+
   .tb-scada-symbol-editor-zoom-buttons {
     display: flex;
     flex-direction: column;
@@ -42,6 +57,7 @@
     background: #fff;
     border-radius: 24px;
     &.tb-primary-fill {
+      border-radius: 24px;
       &:before {
         opacity: 0.1;
       }
@@ -53,13 +69,6 @@
     flex-direction: row;
     gap: 8px;
     z-index: 101;
-    .tb-primary-fill {
-      background: #fff;
-      border-radius: 50%;
-      &:before {
-        opacity: 0.1;
-      }
-    }
   }
 }
 

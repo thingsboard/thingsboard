@@ -120,6 +120,7 @@
         <mat-drawer-content class="tb-scada-symbol-editor-content" [class.preview]="previewMode">
           <tb-scada-symbol-editor *ngIf="!previewMode" #symbolEditor
                                   [readonly]="readonly"
+                                  [(showHiddenElements)]="showHiddenElements"
                                   [data]="symbolEditorData"
                                   [editObjectCallbacks]="editObjectCallbacks"
                                   (updateScadaSymbol)="updateScadaSymbol()"

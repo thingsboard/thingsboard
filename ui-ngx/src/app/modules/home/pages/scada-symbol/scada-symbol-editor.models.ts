@@ -52,6 +52,7 @@ export interface ScadaSymbolEditObjectCallbacks {
   editTagStateRenderFunction: (tag: string) => void;
   editTagClickAction: (tag: string) => void;
   tagsUpdated: (tags: string[]) => void;
+  hasHiddenElements?: (hasHidden: boolean) => void;
   onSymbolEditObjectDirty: (dirty: boolean) => void;
   onZoom?: () => void;
 }
@@ -68,6 +69,7 @@ export class ScadaSymbolEditObject {
   private readonly shapeResize$: ResizeObserver;
   private performSetup = false;
   private hoverFilterStyle: Style;
+  private showHidden = false;
   public scale = 1;
 
   public tags: string[] = [];
@@ -95,6 +97,7 @@ export class ScadaSymbolEditObject {
       this.svgShape.remove();
     }
     this.scale = 1;
+    this.showHidden = false;
     const contentData = scadaSymbolContentData(svgContent);
     this.svgRootNodePart = contentData.svgRootNode;
     this.svgShape = SVG().svg(contentData.innerSvg);
@@ -121,6 +124,7 @@ export class ScadaSymbolEditObject {
 
   public getContent(): string {
     if (this.svgShape) {
+      this.elements.forEach(e => e.restoreOrigVisibility());
       const svgContent = this.svgShape.svg((e: Element) => {
         if (e.node.hasAttribute('tb:inner')) {
           return false;
@@ -132,6 +136,7 @@ export class ScadaSymbolEditObject {
           e.attr('svgjs:data', null);
         }
       }, false);
+      this.showHiddenElements(this.showHidden);
       return `${this.svgRootNodePart}\n${svgContent}\n</svg>`;
     } else {
       return null;
@@ -150,6 +155,11 @@ export class ScadaSymbolEditObject {
   public zoomOut() {
     const level = Math.max(Math.pow(1 + this.zoomFactor, -1.2) * this.svgShape.zoom(), minSymbolZoom);
     this.zoomAnimate(level);
+  }
+
+  public showHiddenElements(show: boolean) {
+    this.showHidden = show;
+    this.elements.forEach(e => show ? e.showInvisible() : e.hideInvisible());
   }
 
   private zoomAnimate(level: number, animationMs = 200) {
@@ -294,15 +304,20 @@ export class ScadaSymbolEditObject {
       el.init();
     }
     this.updateTags();
+    const hasHidden = this.elements.some(e => e.invisible);
+    if (this.callbacks.hasHiddenElements) {
+      this.callbacks.hasHiddenElements(hasHidden);
+    }
   }
 
-  private addElement(e: Element) {
+  private addElement(e: Element, parentInvisible = false) {
     if (hasBBox(e)) {
-      const scadaSymbolElement = new ScadaSymbolElement(this, e);
+      const invisible = parentInvisible || !e.visible();
+      const scadaSymbolElement = new ScadaSymbolElement(this, e, invisible);
       this.elements.push(scadaSymbolElement);
       e.children().forEach(child => {
         if (!(child.type === 'tspan' && e.type === 'text')) {
-          this.addElement(child);
+          this.addElement(child, invisible);
         }
       }, true);
     }
@@ -444,8 +459,6 @@ export class ScadaSymbolElement {
   private highlightRect: Rect;
   private highlightRectTimeline: Timeline;
 
-  private elementPlaceholder: Rect;
-
   public tooltip: ITooltipsterInstance;
 
   public tag: string;
@@ -459,46 +472,38 @@ export class ScadaSymbolElement {
 
   private highlighted = false;
 
-  public invisible = false;
-
   private tooltipMouseX: number;
   private tooltipMouseY: number;
+
+  private origVisibility = true;
 
   get readonly(): boolean {
     return this.editObject.readonly;
   }
 
-  get activeElement(): Element {
-    return this.invisible ? this.elementPlaceholder : this.element;
-  }
-
   constructor(private editObject: ScadaSymbolEditObject,
-              public element: Element) {
+              public element: Element,
+              public invisible = false) {
     this.tag = element.attr('tb:tag');
-    if (element.visible()) {
+    this.origVisibility = element.visible();
+    if (this.invisible) {
+      element.show();
+    }
+    this.box = element.rbox(this.editObject.svgShape);
+/*    if (element.visible()) {
       this.box = element.rbox(this.editObject.svgShape);
+      if (parentGroup && parentGroup.invisible) {
+        this.invisible = true;
+      }
     } else {
       element.show();
       this.box = element.rbox(this.editObject.svgShape);
       element.hide();
       this.invisible = true;
-    }
+    }*/
   }
 
   public init() {
-    if (this.invisible) {
-      this.elementPlaceholder = this.editObject.svgShape
-      .rect(this.box.width, this.box.height)
-      .x(this.box.x)
-      .y(this.box.y)
-      .attr({
-        'tb:inner': true,
-        fill: 'none',
-        stroke: 'rgba(0, 0, 0, 0.58)',
-        'stroke-width': this.unscaled(4),
-        opacity: 1});
-      this.element.after(this.elementPlaceholder);
-    }
     if (this.isGroup()) {
       this.highlightRect =
         this.editObject.svgShape
@@ -517,18 +522,52 @@ export class ScadaSymbolElement {
       this.highlightRect.timeline(this.highlightRectTimeline);
       this.highlightRect.hide();
     } else {
-      this.activeElement.addClass('tb-element');
+      this.element.addClass('tb-element');
     }
-    this.activeElement.on('mouseenter', (_event) => {
+    this.element.on('mouseenter', (_event) => {
       this.highlight();
     });
-    this.activeElement.on('mouseleave', (_event) => {
+    this.element.on('mouseleave', (_event) => {
       this.unhighlight();
     });
+    if (!this.invisible) {
+      this.setupTooltips();
+    }
+    this.hideInvisible();
+  }
+
+  private setupTooltips() {
     if (this.hasTag()) {
       this.createTagTooltip();
     } else if (!this.readonly) {
       this.createAddTagTooltip();
+    }
+  }
+
+  public showInvisible() {
+    if (this.invisible) {
+      this.element.show();
+      if (!this.tooltip) {
+        this.setupTooltips();
+      }
+    }
+  }
+
+  public hideInvisible() {
+    if (this.invisible) {
+      this.element.hide();
+      if (this.tooltip) {
+        this.tooltip.destroy();
+        this.tooltip = null;
+      }
+    }
+  }
+
+  public restoreOrigVisibility() {
+    if (this.origVisibility) {
+      this.element.show();
+    } else {
+      this.element.hide();
     }
   }
 
@@ -553,7 +592,7 @@ export class ScadaSymbolElement {
         this.highlightRect.show();
         this.highlightRect.animate(300).attr({opacity: 1});
       } else {
-        this.activeElement.addClass('hovered');
+        this.element.addClass('hovered');
       }
       if (this.hasTag()) {
         this.tooltip.reposition();
@@ -571,7 +610,7 @@ export class ScadaSymbolElement {
           this.highlightRect.hide();
         });
       } else {
-        this.activeElement.removeClass('hovered');
+        this.element.removeClass('hovered');
       }
       if (this.hasTag() && !this.editing) {
         $(this.tooltip.elementTooltip()).removeClass('tb-active');
@@ -697,7 +736,7 @@ export class ScadaSymbolElement {
   }
 
   private createTagTooltip() {
-    const el = $(this.activeElement.node);
+    const el = $(this.element.node);
     el.tooltipster(
       {
         parent: this.tooltipContainer,
@@ -716,7 +755,6 @@ export class ScadaSymbolElement {
           this.innerTagTooltipPosition(instance, helper, position),
         functionReady: (_instance, helper) => {
           const tooltipEl = $(helper.tooltip);
-          // tooltipEl.detach().appendTo($(this.editObject.tooltipsContainer));
           tooltipEl.on('mouseenter', () => {
             this.highlight();
           });
@@ -735,7 +773,7 @@ export class ScadaSymbolElement {
   }
 
   private createAddTagTooltip() {
-    const el = $(this.activeElement.node);
+    const el = $(this.element.node);
     el.tooltipster(
       {
         parent: this.tooltipContainer,
@@ -920,6 +958,10 @@ const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
     regex: /(?<=ctx\.)(api)\b/
   },
   {
+    class: 'scada-symbol-ctx-svg',
+    regex: /(?<=ctx\.)(svg)\b/
+  },
+  {
     class: 'scada-symbol-ctx-property',
     regex: /(?<=ctx\.properties\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   },
@@ -934,6 +976,10 @@ const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
   {
     class: 'scada-symbol-ctx-api-method',
     regex: /(?<=ctx\.api\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
+  },
+  {
+    class: 'scada-symbol-ctx-svg-method',
+    regex: /(?<=ctx\.svg\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
   }
 ];
 
@@ -1074,6 +1120,15 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               },
             ]
           },
+          generateElementId: {
+            meta: 'function',
+            description: 'Generates new unique element id.',
+            args: [],
+            return: {
+              type: 'string',
+              description: 'Newly generated element id.'
+            }
+          },
           formatValue: {
             meta: 'function',
             description: 'Formats numeric value according to specified decimals and units',
@@ -1148,7 +1203,12 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
       },
       properties,
       values,
-      tags: tagsCompletions
+      tags: tagsCompletions,
+      svg: {
+        meta: 'argument',
+        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
+        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+      }
     }
   };
 };

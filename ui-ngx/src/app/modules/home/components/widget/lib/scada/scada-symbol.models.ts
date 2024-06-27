@@ -28,6 +28,7 @@ import {
 import {
   createLabelFromSubscriptionEntityInfo,
   formatValue,
+  guid,
   isDefinedAndNotNull,
   isUndefinedOrNull,
   mergeDeep,
@@ -44,6 +45,7 @@ import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
 
 export interface ScadaSymbolApi {
+  generateElementId: () => string;
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
@@ -61,6 +63,7 @@ export interface ScadaSymbolContext {
   tags: {[id: string]: Element[]};
   values: {[id: string]: any};
   properties: {[id: string]: any};
+  svg: Svg;
 }
 
 export type ScadaSymbolStateRenderFunction = (ctx: ScadaSymbolContext, svg: Svg) => void;
@@ -502,6 +505,15 @@ export class ScadaSymbolObject {
   private init() {
     this.context = {
       api: {
+        generateElementId: () => {
+          const id = guid();
+          const firstChar = id.charAt(0);
+          if (firstChar >= '0' && firstChar <= '9') {
+            return 'a' + id;
+          } else {
+            return id;
+          }
+        },
         formatValue,
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
@@ -515,7 +527,8 @@ export class ScadaSymbolObject {
       },
       tags: {},
       properties: {},
-      values: {}
+      values: {},
+      svg: this.svgShape
     };
     const taggedElements = this.svgShape.find(`[tb\\:tag]`);
     for (const element of taggedElements) {
