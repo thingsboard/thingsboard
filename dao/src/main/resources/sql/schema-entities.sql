@@ -340,6 +340,7 @@ CREATE TABLE IF NOT EXISTS device (
     firmware_id uuid,
     software_id uuid,
     external_id uuid,
+    version INT DEFAULT 0,
     CONSTRAINT device_name_unq_key UNIQUE (tenant_id, name),
     CONSTRAINT device_external_id_unq_key UNIQUE (tenant_id, external_id),
     CONSTRAINT fk_device_profile FOREIGN KEY (device_profile_id) REFERENCES device_profile(id),

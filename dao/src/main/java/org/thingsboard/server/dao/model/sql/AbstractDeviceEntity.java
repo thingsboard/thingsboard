@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -41,7 +41,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> {
+public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersionedSqlEntity<T>  {
 
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -111,6 +111,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         if (device.getExternalId() != null) {
             this.externalId = device.getExternalId().getId();
         }
+        this.version = device.getVersion();
     }
 
     public AbstractDeviceEntity(DeviceEntity deviceEntity) {
@@ -127,6 +128,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         this.firmwareId = deviceEntity.getFirmwareId();
         this.softwareId = deviceEntity.getSoftwareId();
         this.externalId = deviceEntity.getExternalId();
+        this.version = deviceEntity.getVersion();
     }
 
     protected Device toDevice() {
@@ -155,6 +157,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         if (externalId != null) {
             device.setExternalId(new DeviceId(externalId));
         }
+        device.setVersion(version);
         return device;
     }
 

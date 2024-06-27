@@ -13,20 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.dao.model;
 
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.SqlDao;
+import jakarta.persistence.Column;
+import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.Version;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.HasVersion;
 
-@SqlDao
-public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {
+@Data
+@EqualsAndHashCode(callSuper = true)
+@MappedSuperclass
+public abstract class BaseVersionedSqlEntity<D> extends BaseSqlEntity<D> implements HasVersion {
 
-    @Override
-    protected E doSave(E entity, boolean isNew) {
-        createPartition(entity);
-        return super.doSave(entity, isNew);
-    }
-
-    public abstract void createPartition(E entity);
+    @Version
+    @Column(name = ModelConstants.VERSION_PROPERTY)
+    protected Integer version;
 
 }

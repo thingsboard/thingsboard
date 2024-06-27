@@ -192,7 +192,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         savedDevice.setName("My new device");
-        doPost("/api/device", savedDevice, Device.class);
+        savedDevice = doPost("/api/device", savedDevice, Device.class);
 
         testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
@@ -247,7 +247,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         savedDevice.setName("My new device");
-        doPost("/api/device", savedDevice, Device.class);
+        savedDevice = doPost("/api/device", savedDevice, Device.class);
 
         testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
@@ -1592,4 +1592,5 @@ public class DeviceControllerTest extends AbstractControllerTest {
         device.setType("default");
         return doPost("/api/device", device, Device.class);
     }
+
 }

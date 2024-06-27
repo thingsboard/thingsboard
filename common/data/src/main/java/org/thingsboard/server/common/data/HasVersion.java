@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.common.data;
 
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.SqlDao;
+public interface HasVersion {
 
-@SqlDao
-public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {
+    Integer getVersion();
 
-    @Override
-    protected E doSave(E entity, boolean isNew) {
-        createPartition(entity);
-        return super.doSave(entity, isNew);
-    }
-
-    public abstract void createPartition(E entity);
+    void setVersion(Integer version);
 
 }
