@@ -91,8 +91,23 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       value: this.realtimeTypes.LAST_INTERVAL
     },
     {
-      name: this.translate.instant('timewindow.interval'),
+      name: this.translate.instant('timewindow.relative'),
       value: this.realtimeTypes.INTERVAL
+    }
+  ];
+
+  historyTimewindowOptions: ToggleHeaderOption[] = [
+    {
+      name: this.translate.instant('timewindow.last'),
+      value: this.historyTypes.LAST_INTERVAL
+    },
+    {
+      name: this.translate.instant('timewindow.fixed'),
+      value: this.historyTypes.FIXED
+    },
+    {
+      name: this.translate.instant('timewindow.relative'),
+      value: this.historyTypes.INTERVAL
     }
   ];
 
@@ -106,6 +121,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     super(store);
     this.historyOnly = data.historyOnly;
     this.forAllTimeEnabled = data.forAllTimeEnabled;
+    if (this.forAllTimeEnabled) {
+      this.historyTimewindowOptions.unshift({
+        name: this.translate.instant('timewindow.for-all-time'),
+        value: this.historyTypes.FOR_ALL_TIME
+      });
+    }
     this.quickIntervalOnly = data.quickIntervalOnly;
     this.timewindow = data.timewindow;
     this.aggregation = data.aggregation;
@@ -271,6 +292,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   maxDatapointsLimit() {
     return this.timeService.getMaxDatapointsLimit();
+  }
+
+  // TODO: find more accurate step size for slider
+  datapointsLimitSliderStep() {
+    return Math.round(this.maxDatapointsLimit() / 10);
   }
 
   minRealtimeAggInterval() {

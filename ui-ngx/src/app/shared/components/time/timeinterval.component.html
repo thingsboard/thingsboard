@@ -22,19 +22,19 @@
   </section>
   <section class="interval-section" fxLayout="column" fxFlex [fxShow]="advanced && (isEdit || !hideFlag)">
     <section fxLayout="row wrap" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px">
-      <mat-form-field class="number-input" [appearance]="appearance">
+      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.days</mat-label>
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" min="0" [(ngModel)]="days" (ngModelChange)="onTimeInputChange('days')"/>
       </mat-form-field>
-      <mat-form-field class="number-input" [appearance]="appearance">
+      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.hours</mat-label>
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="hours" (ngModelChange)="onTimeInputChange('hours')"/>
       </mat-form-field>
-      <mat-form-field class="number-input" [appearance]="appearance">
+      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.minutes</mat-label>
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="mins" (ngModelChange)="onTimeInputChange('mins')"/>
       </mat-form-field>
-      <mat-form-field class="number-input" [appearance]="appearance">
+      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.seconds</mat-label>
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="secs" (ngModelChange)="onTimeInputChange('secs')"/>
       </mat-form-field>

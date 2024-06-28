@@ -4695,7 +4695,9 @@
         "color": "Color",
         "displayTypePrefix": "Display Realtime/History prefix",
         "preview": "Preview",
-        "time-range": "Time range"
+        "time-range": "Time range",
+        "relative": "Relative",
+        "fixed": "Fixed"
     },
     "tooltip": {
         "trigger": "Trigger",

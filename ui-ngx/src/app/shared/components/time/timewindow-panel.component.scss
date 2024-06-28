@@ -22,6 +22,11 @@
   max-width: 100%;
   background-color: #fff;
 
+  .tb-form-panel {
+    padding: 12px;
+    gap: 12px;
+  }
+
   .tb-flex {
     gap: 16px;
   }
@@ -84,6 +89,6 @@
   }
 
   .mat-mdc-tab-body-content {
-    padding: 16px;
+    padding: 12px 16px;
   }
 }

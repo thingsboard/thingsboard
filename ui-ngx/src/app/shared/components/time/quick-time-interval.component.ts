@@ -18,6 +18,7 @@ import { Component, forwardRef, Input, OnInit } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { QuickTimeInterval, QuickTimeIntervalTranslationMap } from '@shared/models/time/time.models';
 import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-field';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-quick-time-interval',
@@ -39,6 +40,10 @@ export class QuickTimeIntervalComponent implements OnInit, ControlValueAccessor 
   timeIntervalTranslationMap = QuickTimeIntervalTranslationMap;
 
   rendered = false;
+
+  @Input()
+  @coerceBoolean()
+  displayLabel = true;
 
   @Input() disabled: boolean;
 
