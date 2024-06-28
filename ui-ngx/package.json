@@ -45,6 +45,7 @@
     "@ngx-translate/core": "^14.0.0",
     "@svgdotjs/svg.filter.js": "^3.0.8",
     "@svgdotjs/svg.js": "^3.2.0",
+    "@svgdotjs/svg.panzoom.js": "^2.1.2",
     "@tinymce/tinymce-angular": "^7.0.0",
     "ace-builds": "1.4.13",
     "ace-diff": "^3.0.3",

@@ -1,0 +1,30 @@
+{
+  "widgetsBundle": {
+    "alias": "scada_water_system_symbols",
+    "title": "SCADA water system symbols",
+    "image": null,
+    "description": "Bundle with SCADA symbols for water system",
+    "order": 9300,
+    "name": "SCADA water system symbols"
+  },
+  "widgetTypeFqns": [
+    "horizontal_pipe",
+    "long_horizontal_pipe",
+    "vertical_pipe",
+    "long_vertical_pipe",
+    "cross_pipe",
+    "horizontal_tank_with_screen",
+    "horizontal_faucet",
+    "top_white_counter",
+    "right_top_angle_connector",
+    "left_top_angle_connector",
+    "water_blower_right_connector",
+    "vertical_tank_with_level",
+    "left_bottom_angle_connector",
+    "top_black_counter",
+    "right_bottom_angle_connector",
+    "pump_left",
+    "pump",
+    "level_and_fan"
+  ]
+}

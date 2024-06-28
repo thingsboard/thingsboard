@@ -14,8 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, OnInit } from '@angular/core';
-import { MatDialogRef } from '@angular/material/dialog';
+import { Component, Inject, OnInit } from '@angular/core';
+import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
@@ -29,6 +29,12 @@ export interface SaveWidgetTypeAsDialogResult {
   widgetBundleId?: string;
 }
 
+export interface SaveWidgetTypeAsDialogData {
+  dialogTitle?: string;
+  title?: string;
+  saveAsActionTitle?: string;
+}
+
 @Component({
   selector: 'tb-save-widget-type-as-dialog',
   templateUrl: './save-widget-type-as-dialog.component.html',
@@ -39,9 +45,12 @@ export class SaveWidgetTypeAsDialogComponent extends
 
   saveWidgetTypeAsFormGroup: FormGroup;
   bundlesScope: string;
+  dialogTitle = 'widget.save-widget-as';
+  saveAsActionTitle = 'action.saveAs';
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
+              @Inject(MAT_DIALOG_DATA) private data: SaveWidgetTypeAsDialogData,
               public dialogRef: MatDialogRef<SaveWidgetTypeAsDialogComponent, SaveWidgetTypeAsDialogResult>,
               public fb: FormBuilder) {
     super(store, router, dialogRef);
@@ -52,11 +61,18 @@ export class SaveWidgetTypeAsDialogComponent extends
     } else {
       this.bundlesScope = 'system';
     }
+
+    if (this.data?.dialogTitle) {
+      this.dialogTitle = this.data.dialogTitle;
+    }
+    if (this.data?.saveAsActionTitle) {
+      this.saveAsActionTitle = this.data.saveAsActionTitle;
+    }
   }
 
   ngOnInit(): void {
     this.saveWidgetTypeAsFormGroup = this.fb.group({
-      title: [null, [Validators.required]],
+      title: [this.data?.title, [Validators.required]],
       widgetsBundle: [null]
     });
   }

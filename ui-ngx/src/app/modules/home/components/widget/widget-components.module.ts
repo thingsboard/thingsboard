@@ -102,6 +102,7 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
 import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
 import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
+import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 
 @NgModule({
   declarations:
@@ -170,7 +171,8 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
       PolarAreaWidgetComponent,
       RadarChartWidgetComponent,
       LabelCardWidgetComponent,
-      LabelValueCardWidgetComponent
+      LabelValueCardWidgetComponent,
+      ScadaSymbolWidgetComponent
     ],
   imports: [
     CommonModule,
@@ -242,7 +244,8 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
         PolarAreaWidgetComponent,
         RadarChartWidgetComponent,
         LabelCardWidgetComponent,
-        LabelValueCardWidgetComponent
+        LabelValueCardWidgetComponent,
+        ScadaSymbolWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }

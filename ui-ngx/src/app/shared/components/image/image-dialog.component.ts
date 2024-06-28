@@ -25,7 +25,7 @@ import { ImageService } from '@core/http/image.service';
 import { ImageResource, ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
 import {
   UploadImageDialogComponent,
-  UploadImageDialogData
+  UploadImageDialogData, UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { UrlHolder } from '@shared/pipe/image.pipe';
 import { ImportExportService } from '@shared/import-export/import-export.service';
@@ -142,19 +142,20 @@ export class ImageDialogComponent extends
       $event.stopPropagation();
     }
     this.dialog.open<UploadImageDialogComponent, UploadImageDialogData,
-      ImageResource>(UploadImageDialogComponent, {
+      UploadImageDialogResult>(UploadImageDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
+        imageSubType: this.image.resourceSubType,
         image: this.image
       }
     }).afterClosed().subscribe((result) => {
-      if (result) {
+      if (result?.image) {
         this.imageChanged = true;
-        this.image = result;
+        this.image = result.image;
         let url;
-        if (result.base64) {
-          url = result.base64;
+        if (result.image.base64) {
+          url = result.image.base64;
         } else {
           url = this.image.link;
         }

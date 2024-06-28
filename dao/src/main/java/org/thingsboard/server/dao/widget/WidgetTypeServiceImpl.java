@@ -190,6 +190,15 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public WidgetTypeDetails findWidgetTypeDetailsByTenantIdAndFqn(TenantId tenantId, String fqn) {
+        log.trace("Executing findWidgetTypeDetailsByTenantIdAndFqn, tenantId [{}], fqn [{}]", tenantId, fqn);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        Validator.validateString(fqn, f -> "Incorrect fqn " + f);
+        return widgetTypeDao.findDetailsByTenantIdAndFqn(tenantId.getId(), fqn);
+    }
+
+
+    @Override
     public void updateWidgetsBundleWidgetTypes(TenantId tenantId, WidgetsBundleId widgetsBundleId, List<WidgetTypeId> widgetTypeIds) {
         log.trace("Executing updateWidgetsBundleWidgetTypes, tenantId [{}], widgetsBundleId [{}], widgetTypeIds [{}]", tenantId, widgetsBundleId, widgetTypeIds);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);

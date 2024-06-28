@@ -70,8 +70,8 @@
     </mat-form-field>
     <mat-chip-listbox *ngIf="valueType === valueTypeEnum.BOOLEAN" fxFlex class="tb-boolean-input center-stretch"
                       [disabled]="disabled" name="value" #value="ngModel" [(ngModel)]="modelValue" (ngModelChange)="onValueChanged()">
-      <mat-chip-option [selectable]="!modelValue" [value]="true">{{ trueLabel | translate }}</mat-chip-option>
-      <mat-chip-option [selectable]="modelValue" [value]="false">{{ falseLabel | translate }}</mat-chip-option>
+      <mat-chip-option [selectable]="!modelValue" [value]="true">{{ trueLabel }}</mat-chip-option>
+      <mat-chip-option [selectable]="modelValue" [value]="false">{{ falseLabel }}</mat-chip-option>
     </mat-chip-listbox>
     <div *ngIf="valueType === valueTypeEnum.JSON" fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">

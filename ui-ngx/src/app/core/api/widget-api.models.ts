@@ -23,7 +23,7 @@ import {
   DatasourceType,
   KeyInfo,
   LegendConfig,
-  LegendData, TargetDevice,
+  LegendData, TargetDevice, WidgetAction,
   WidgetActionDescriptor,
   widgetType
 } from '@shared/models/widget.models';
@@ -95,6 +95,7 @@ export interface WidgetActionsApi {
   getActionDescriptors: (actionSourceId: string) => Array<WidgetActionDescriptor>;
   handleWidgetAction: ($event: Event, descriptor: WidgetActionDescriptor,
                        entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string) => void;
+  onWidgetAction: ($event: Event, action: WidgetAction) => void;
   elementClick: ($event: Event) => void;
   cardClick: ($event: Event) => void;
   click: ($event: Event) => void;

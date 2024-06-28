@@ -347,3 +347,9 @@ export class Range implements Ace.Range {
   }
 
 }
+
+export interface TbHighlightRule {
+  class: string;
+  regex: RegExp;
+}
+

@@ -139,6 +139,7 @@ import {
 import {
   LabelValueCardBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/label-value-card-basic-config.component';
+import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/basic/scada/scada-symbol-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -185,7 +186,8 @@ import {
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
-    LabelValueCardBasicConfigComponent
+    LabelValueCardBasicConfigComponent,
+    ScadaSymbolBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -231,6 +233,7 @@ import {
     BarChartBasicConfigComponent,
     PolarAreaChartBasicConfigComponent,
     RadarChartBasicConfigComponent,
+    ScadaSymbolBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
@@ -277,5 +280,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent,
   'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
   'tb-label-card-basic-config': LabelCardBasicConfigComponent,
-  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent
+  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent,
+  'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent
 };

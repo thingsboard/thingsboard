@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -35,10 +36,12 @@ public interface TbResourceDao extends Dao<TbResource>, TenantEntityWithDataDao,
 
     PageData<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
                                                                 ResourceType resourceType,
+                                                                ResourceSubType resourceSubType,
                                                                 PageLink pageLink);
 
     List<TbResource> findResourcesByTenantIdAndResourceType(TenantId tenantId,
                                                             ResourceType resourceType,
+                                                            ResourceSubType resourceSubType,
                                                             String[] objectIds,
                                                             String searchText);
 

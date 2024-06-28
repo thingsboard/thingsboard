@@ -498,6 +498,7 @@ public class ModelConstants {
     public static final String RESOURCE_TABLE_NAME = "resource";
     public static final String RESOURCE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
     public static final String RESOURCE_TYPE_COLUMN = "resource_type";
+    public static final String RESOURCE_SUB_TYPE_COLUMN = "resource_sub_type";
     public static final String RESOURCE_KEY_COLUMN = "resource_key";
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
