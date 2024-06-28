@@ -67,6 +67,10 @@ public class TbLogNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
+        if (!log.isInfoEnabled()) {
+            ctx.tellSuccess(msg);
+            return;
+        }
         if (standard) {
             logStandard(ctx, msg);
             return;
