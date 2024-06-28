@@ -8,10 +8,12 @@
     "name": "SCADA water system symbols"
   },
   "widgetTypeFqns": [
-    "level_and_fan",
-    "vertical_connector_long",
+    "horizontal_pipe",
+    "long_horizontal_pipe",
+    "vertical_pipe",
+    "long_vertical_pipe",
+    "cross_pipe",
     "horizontal_tank_with_screen",
-    "quadro_connector",
     "horizontal_faucet",
     "top_white_counter",
     "right_top_angle_connector",
@@ -19,12 +21,10 @@
     "water_blower_right_connector",
     "vertical_tank_with_level",
     "left_bottom_angle_connector",
-    "horizontal_connector_long",
     "top_black_counter",
     "right_bottom_angle_connector",
-    "vertical_connector",
-    "horizontal_pipe",
     "pump_left",
-    "pump"
+    "pump",
+    "level_and_fan"
   ]
 }

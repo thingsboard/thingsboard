@@ -3441,7 +3441,6 @@
         }
     },
     "scada": {
-        "symbol": "SCADA symbol",
         "symbols": "SCADA symbols",
         "search": "Search symbol",
         "selected-symbols": "{ count, plural, =1 {1 symbol} other {# symbols} } selected",
@@ -3545,6 +3544,27 @@
             "property-row-classes": "Property row classes",
             "property-field-classes": "Property field classes",
             "not-unique-property-ids-error": "Property Ids must be unique!"
+        },
+        "symbol": {
+            "symbol": "SCADA symbol",
+            "fluid-presence": "Fluid presence",
+            "fluid-presence-hint": "Indicates whether fluid is present in pipe.",
+            "fluid-present": "Fluid present",
+            "present": "Present",
+            "absent": "Absent",
+            "flow-presence": "Flow presence",
+            "flow-presence-hint": "Indicates whether fluid is flowing in pipe.",
+            "flow-present": "Flow present",
+            "flow-direction": "Flow direction",
+            "flow-direction-hint": "Indicates fluid flow direction.",
+            "forward": "Forward",
+            "reverse": "Reverse",
+            "flow-animation-speed": "Flow animation speed",
+            "flow-animation-speed-hint": "Double value indicating animation speed of the flow. 1 - normal speed, 0 - no animation, < 1 - slower animation, > 1 - faster animation.",
+            "leak": "Leak",
+            "leak-hint": "Indicates whether is leak present in pipe.",
+            "leak-present": "Leak present",
+            "fluid-color": "Fluid color"
         }
     },
     "item": {

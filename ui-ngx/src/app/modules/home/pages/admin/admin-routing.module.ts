@@ -141,7 +141,7 @@ const routes: Routes = [
                 icon: 'view_in_ar'
               } as BreadCrumbConfig<ScadaSymbolComponent>,
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
-              title: 'scada.symbol'
+              title: 'scada.symbol.symbol'
             },
             resolve: {
               symbolData: scadaSymbolResolver
