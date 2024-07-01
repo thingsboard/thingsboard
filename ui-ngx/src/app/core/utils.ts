@@ -364,14 +364,14 @@ export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);
 }
 
-function customizer(target: any, sources: any) {
+function ignoreArrayMergeFunc(target: any, sources: any) {
   if (_.isArray(target)) {
     return sources;
   }
 }
 
 export function mergeDeepIgnoreArray<T>(target: T, ...sources: T[]): T {
-  return _.mergeWith(target, ...sources, customizer);
+  return _.mergeWith(target, ...sources, ignoreArrayMergeFunc);
 }
 
 export function guid(): string {
