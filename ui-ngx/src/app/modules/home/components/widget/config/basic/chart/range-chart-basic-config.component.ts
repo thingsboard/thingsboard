@@ -33,7 +33,7 @@ import {
   getTimewindowConfig,
   setTimewindowConfig
 } from '@home/components/widget/config/timewindow-config-panel.component';
-import { formatValue, isUndefined, mergeDeep } from '@core/utils';
+import { formatValue, isUndefined, mergeDeepIgnoreArray } from '@core/utils';
 import {
   cssSizeToStrSize,
   DateFormatProcessor,
@@ -117,7 +117,7 @@ export class RangeChartBasicConfigComponent extends BasicWidgetConfigComponent {
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
-    const settings: RangeChartWidgetSettings = mergeDeep<RangeChartWidgetSettings>({} as RangeChartWidgetSettings,
+    const settings: RangeChartWidgetSettings = mergeDeepIgnoreArray<RangeChartWidgetSettings>({} as RangeChartWidgetSettings,
       rangeChartDefaultSettings, configData.config.settings as RangeChartWidgetSettings);
     const iconSize = resolveCssSize(configData.config.iconSize);
     this.rangeChartWidgetConfigForm = this.fb.group({

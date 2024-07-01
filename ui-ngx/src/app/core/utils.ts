@@ -364,6 +364,16 @@ export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);
 }
 
+function customizer(target: any, sources: any) {
+  if (_.isArray(target)) {
+    return sources;
+  }
+}
+
+export function mergeDeepIgnoreArray<T>(target: T, ...sources: T[]): T {
+  return _.mergeWith(target, ...sources, customizer);
+}
+
 export function guid(): string {
   function s4(): string {
     return Math.floor((1 + Math.random()) * 0x10000)

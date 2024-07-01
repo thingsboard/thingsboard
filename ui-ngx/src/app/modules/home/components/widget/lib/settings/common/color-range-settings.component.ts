@@ -108,8 +108,8 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
     this.updateColorStyle();
   }
 
-  writeValue(value: Array<ColorRange>): void {
-    this.modelValue = ('range' in value) ? value.range as Array<ColorRange> : value;
+  writeValue(value: Array<ColorRange> | ColorRangeSettings): void {
+    this.modelValue = Array.isArray(value) ? value : value.range;
     this.updateColorStyle();
   }
 
