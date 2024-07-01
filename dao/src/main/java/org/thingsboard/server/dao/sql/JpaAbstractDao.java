@@ -93,11 +93,13 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         } else {
             if (entity instanceof HasVersion versionedEntity) {
                 if (versionedEntity.getVersion() == null) {
-                    // fixme tmp
-                    throw new IllegalArgumentException("TEST - unexpected null version for " + versionedEntity);
-
-//                    HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
-//                    versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                    HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
+                    if (existingEntity != null) {
+                        throw new IllegalArgumentException("TEST - unexpected null version for " + versionedEntity);
+//      fixme tmp                  versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                    } else {
+                        return doSave(entity, true);
+                    }
                 }
                 entity = entityManager.merge(entity);
                 entityManager.flush();
