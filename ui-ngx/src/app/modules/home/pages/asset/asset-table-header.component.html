@@ -19,6 +19,7 @@
   subscriptSizing="dynamic"
   [ngModel]="entitiesTableConfig.componentsData.assetProfileId"
   (ngModelChange)="assetProfileChanged($event)"
+  [addNewProfile]="false"
   [displayAllOnEmpty]="true"
   [editProfileEnabled]="false">
 </tb-asset-profile-autocomplete>
