@@ -165,7 +165,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Table 'cs_tb_test_table' does not exist in Cassandra cluster.")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+                .isEqualTo(false);
     }
 
     @Test

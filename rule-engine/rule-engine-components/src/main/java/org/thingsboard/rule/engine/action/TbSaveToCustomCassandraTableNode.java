@@ -21,8 +21,6 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
-import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
-import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
@@ -100,7 +98,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             throw new TbNodeException("Unable to connect to Cassandra database", true);
         }
         if (!isTableExists()) {
-            throw new TbNodeException("Table '" + TABLE_PREFIX + config.getTableName() + "' does not exist in Cassandra cluster.", true);
+            throw new TbNodeException("Table '" + TABLE_PREFIX + config.getTableName() + "' does not exist in Cassandra cluster.");
         }
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
@@ -138,12 +136,9 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     }
 
     private boolean isTableExists() {
-        KeyspaceMetadata keyspaceMetadata = getSession().getMetadata().getKeyspace(cassandraCluster.getKeyspaceName()).orElse(null);
-        if (keyspaceMetadata != null) {
-            TableMetadata tableMetadata = keyspaceMetadata.getTable(TABLE_PREFIX + config.getTableName()).orElse(null);
-            return tableMetadata != null;
-        }
-        return false;
+        var keyspaceMdOpt = getSession().getMetadata().getKeyspace(cassandraCluster.getKeyspaceName());
+        return keyspaceMdOpt.map(keyspaceMetadata ->
+                keyspaceMetadata.getTable(TABLE_PREFIX + config.getTableName()).isPresent()).orElse(false);
     }
 
     private PreparedStatement prepare(String query) {
