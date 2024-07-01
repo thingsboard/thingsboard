@@ -20,15 +20,42 @@ import jakarta.persistence.MappedSuperclass;
 import jakarta.persistence.Version;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasVersion;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class BaseVersionedSqlEntity<D> extends BaseSqlEntity<D> implements HasVersion {
+public abstract class BaseVersionedSqlEntity<D extends BaseData & HasVersion> extends BaseSqlEntity<D> implements HasVersion {
 
+    @Getter @Setter
     @Version
     @Column(name = ModelConstants.VERSION_PROPERTY)
     protected Integer version;
+
+    public BaseVersionedSqlEntity() {
+        super();
+    }
+
+    public BaseVersionedSqlEntity(D domain) {
+        super(domain);
+        this.version = domain.getVersion();
+    }
+
+    public BaseVersionedSqlEntity(BaseVersionedSqlEntity<?> entity) {
+        super(entity);
+        this.version = entity.version;
+    }
+
+    @Override
+    public String toString() {
+        return "BaseVersionedSqlEntity{" +
+                "id=" + id +
+                ", createdTime=" + createdTime +
+                ", version=" + version +
+                '}';
+    }
 
 }

@@ -41,7 +41,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersionedSqlEntity<T>  {
+public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersionedSqlEntity<T> {
 
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -83,11 +83,8 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersion
         super();
     }
 
-    public AbstractDeviceEntity(Device device) {
-        if (device.getId() != null) {
-            this.setUuid(device.getUuidId());
-        }
-        this.setCreatedTime(device.getCreatedTime());
+    public AbstractDeviceEntity(T device) {
+        super(device);
         if (device.getTenantId() != null) {
             this.tenantId = device.getTenantId().getId();
         }
@@ -111,12 +108,10 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersion
         if (device.getExternalId() != null) {
             this.externalId = device.getExternalId().getId();
         }
-        this.version = device.getVersion();
     }
 
-    public AbstractDeviceEntity(DeviceEntity deviceEntity) {
-        this.setId(deviceEntity.getId());
-        this.setCreatedTime(deviceEntity.getCreatedTime());
+    public AbstractDeviceEntity(AbstractDeviceEntity<T> deviceEntity) {
+        super(deviceEntity);
         this.tenantId = deviceEntity.getTenantId();
         this.customerId = deviceEntity.getCustomerId();
         this.deviceProfileId = deviceEntity.getDeviceProfileId();
@@ -128,12 +123,12 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersion
         this.firmwareId = deviceEntity.getFirmwareId();
         this.softwareId = deviceEntity.getSoftwareId();
         this.externalId = deviceEntity.getExternalId();
-        this.version = deviceEntity.getVersion();
     }
 
     protected Device toDevice() {
         Device device = new Device(new DeviceId(getUuid()));
         device.setCreatedTime(createdTime);
+        device.setVersion(version);
         if (tenantId != null) {
             device.setTenantId(TenantId.fromUUID(tenantId));
         }
@@ -157,7 +152,6 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersion
         if (externalId != null) {
             device.setExternalId(new DeviceId(externalId));
         }
-        device.setVersion(version);
         return device;
     }
 

@@ -56,7 +56,7 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
             .comparing(AttributeExportData::getKey).thenComparing(AttributeExportData::getLastUpdateTs);
 
     @JsonProperty(index = 2)
-    @JsonTbEntity
+    @JsonTbEntity // FIXME: version is serialized. also check single entity export/import from UI!
     private E entity;
     @JsonProperty(index = 1)
     private EntityType entityType;

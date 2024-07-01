@@ -85,12 +85,18 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     protected E doSave(E entity, boolean isNew) {
         if (isNew) {
+            if (entity instanceof HasVersion versionedEntity) {
+                versionedEntity.setVersion(1);
+            }
             entityManager.persist(entity);
         } else {
             if (entity instanceof HasVersion versionedEntity) {
                 if (versionedEntity.getVersion() == null) {
-                    HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
-                    versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                    // fixme tmp
+                    throw new IllegalArgumentException("TEST - unexpected null version for " + versionedEntity);
+
+//                    HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
+//                    versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
                 }
                 entity = entityManager.merge(entity);
                 entityManager.flush();
@@ -137,6 +143,8 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Override
     @Transactional
     public boolean removeById(TenantId tenantId, UUID id) {
+//        jdbcTemplate.queryForObject("DELETE FROM " + getEntityType().getTableName() + " WHERE id = ? RETURNING version", Integer.class, id);
+        // TODO: increment version...
         getRepository().deleteById(id);
         log.debug("Remove request: {}", id);
         return !getRepository().existsById(id);
