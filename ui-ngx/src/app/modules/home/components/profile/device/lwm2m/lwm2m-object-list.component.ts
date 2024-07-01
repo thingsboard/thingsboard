@@ -31,7 +31,7 @@ import { distinctUntilChanged, filter, mergeMap, share, tap } from 'rxjs/operato
 import { ObjectLwM2M, PAGE_SIZE_LIMIT } from './lwm2m-profile-config.models';
 import { DeviceProfileService } from '@core/http/device-profile.service';
 import { Direction } from '@shared/models/page/sort-order';
-import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, isObject, isString } from '@core/utils';
 import { PageLink } from '@shared/models/page/page-link';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 
@@ -90,12 +90,14 @@ export class Lwm2mObjectListComponent implements ControlValueAccessor, OnInit, V
       objectsList: [this.objectsList],
       objectLwm2m: ['']
     });
-    this.lwm2mListFormGroup.valueChanges.subscribe((value) => {
-      let formValue = null;
-      if (this.lwm2mListFormGroup.valid) {
-        formValue = value.objectsList;
+    this.lwm2mListFormGroup.get('objectsList').valueChanges.subscribe((value) => {
+      if (!value.length || (value.length && isObject(value[0]))) {
+        let formValue = null;
+        if (this.lwm2mListFormGroup.valid) {
+          formValue = value;
+        }
+        this.propagateChange(formValue);
       }
-      this.propagateChange(formValue);
     });
   }
 
