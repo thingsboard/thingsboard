@@ -46,12 +46,12 @@ import {
   TimeSeriesChartWidgetSettings
 } from '@home/components/widget/lib/chart/time-series-chart-widget.models';
 import {
-  TimeSeriesChartTooltipTrigger,
   TimeSeriesChartKeySettings,
   TimeSeriesChartType,
   TimeSeriesChartYAxes,
   TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { TimeSeriesChartTooltipTrigger } from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 
 @Component({
   selector: 'tb-time-series-chart-basic-config',

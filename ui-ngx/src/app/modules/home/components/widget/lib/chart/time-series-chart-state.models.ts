@@ -18,13 +18,15 @@ import {
   TimeSeriesChartStateSettings,
   TimeSeriesChartStateSourceType,
   TimeSeriesChartTicksFormatter,
-  TimeSeriesChartTicksGenerator,
-  TimeSeriesChartTooltipValueFormatFunction
+  TimeSeriesChartTicksGenerator
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { UtilsService } from '@core/services/utils.service';
 import { FormattedData } from '@shared/models/widget.models';
 import { formatValue, isDefinedAndNotNull, isNumber, isNumeric } from '@core/utils';
 import { LabelFormatterCallback } from 'echarts';
+import {
+  TimeSeriesChartTooltipValueFormatFunction
+} from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 
 export class TimeSeriesChartStateValueConverter {
 
