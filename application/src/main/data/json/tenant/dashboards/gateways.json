@@ -1085,13 +1085,14 @@
           "showLegend": false,
           "actions": {},
           "datasources": [],
-          "targetDeviceAliasIds": [
-            "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
-          ],
           "showTitleIcon": false,
           "widgetCss": "",
           "pageSize": 1024,
-          "noDataDisplayMessage": ""
+          "noDataDisplayMessage": "",
+          "targetDevice": {
+            "type": "entity",
+            "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
+          }
         },
         "row": 0,
         "col": 0,
@@ -1494,15 +1495,16 @@
           "showLegend": false,
           "actions": {},
           "datasources": [],
-          "targetDeviceAliasIds": [
-            "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
-          ],
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
-          "borderRadius": "4px"
+          "borderRadius": "4px",
+          "targetDevice": {
+            "type": "entity",
+            "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
+          }
         },
         "row": 0,
         "col": 0,
@@ -1557,9 +1559,6 @@
           },
           "title": "Service RPC",
           "datasources": [],
-          "targetDeviceAliasIds": [
-            "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
-          ],
           "showTitleIcon": false,
           "titleTooltip": "",
           "dropShadow": true,
@@ -1574,7 +1573,11 @@
           "noDataDisplayMessage": "",
           "enableDataExport": false,
           "showLegend": false,
-          "borderRadius": "4px"
+          "borderRadius": "4px",
+          "targetDevice": {
+            "type": "entity",
+            "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
+          }
         },
         "row": 0,
         "col": 0,
@@ -1596,9 +1599,6 @@
           },
           "title": "Service RPC",
           "datasources": [],
-          "targetDeviceAliasIds": [
-            "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
-          ],
           "showTitleIcon": false,
           "titleTooltip": "",
           "dropShadow": true,
@@ -1613,7 +1613,11 @@
           "noDataDisplayMessage": "",
           "enableDataExport": false,
           "showLegend": false,
-          "borderRadius": "4px"
+          "borderRadius": "4px",
+          "targetDevice": {
+            "type": "entity",
+            "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
+          }
         },
         "row": 0,
         "col": 0,
@@ -1802,15 +1806,16 @@
           "showLegend": false,
           "actions": {},
           "datasources": [],
-          "targetDeviceAliasIds": [
-            "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
-          ],
           "showTitleIcon": false,
           "titleTooltip": "",
           "widgetCss": "",
           "pageSize": 1024,
           "noDataDisplayMessage": "",
-          "borderRadius": "4px"
+          "borderRadius": "4px",
+          "targetDevice": {
+            "type": "entity",
+            "entityAliasId": "a2f01c66-96cf-49c5-303f-e6f21c559ee8"
+          }
         },
         "row": 0,
         "col": 0,
@@ -2102,6 +2107,448 @@
                   "ACTIVE"
                 ]
               }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "bd9176e1-9e04-3e9b-d5a5-07b72bb9ae90",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "mqttCount",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.9590451878027946,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entity",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "44038462-1bae-e075-7b31-283341cb2295",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "entityField",
+                  "label": "modbusCount",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.9300660062254784,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "884e9c34-7534-a483-99be-81b56cd91185",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "grcpCount",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.16110429492126088,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "e91ca0e9-1653-4fbc-5f3d-3da021b1b415",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "opcuaCount",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.13973521146913304,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "3f74cbaa-6353-5e88-a7e8-708fc0e18039",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "bleCount",
+                  "color": "#607d8b",
+                  "settings": {},
+                  "_hash": 0.7205723252294653,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "c08eee84-64ee-73c4-8d96-c0df813a92cd",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "requestCount",
+                  "color": "#9c27b0",
+                  "settings": {},
+                  "_hash": 0.6993292961463216,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "2f0af7f5-22ea-c0d5-3aef-7f2bb1b534ec",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "canCount",
+                  "color": "#8bc34a",
+                  "settings": {},
+                  "_hash": 0.4850065031079176,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "92a7d208-c143-ea20-5162-1da584532830",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "bacnetCount",
+                  "color": "#3f51b5",
+                  "settings": {},
+                  "_hash": 0.36987531665233075,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "498f090c-b1e5-df74-35d1-3ecf89d33f1c",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "odbcCount",
+                  "color": "#e91e63",
+                  "settings": {},
+                  "_hash": 0.8279345016611896,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "9175179d-a8db-848b-0762-e78da150e768",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "restCount",
+                  "color": "#ffeb3b",
+                  "settings": {},
+                  "_hash": 0.07245826389852739,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "9175179d-a8db-848b-0762-e78da150e768",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "restCount",
+                  "color": "#03a9f4",
+                  "settings": {},
+                  "_hash": 0.4321492578560704,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "1b70460b-428b-2aed-f23a-65927d3e67bb",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "snmpCount",
+                  "color": "#ff9800",
+                  "settings": {},
+                  "_hash": 0.7395574625078822,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "ae357478-b4c2-eee8-dde6-a6942fe6202f",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "ftpCount",
+                  "color": "#673ab7",
+                  "settings": {},
+                  "_hash": 0.9999791065203374,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "6eef4979-369f-c2cc-4894-96a84b6a668a",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "socketCount",
+                  "color": "#cddc39",
+                  "settings": {},
+                  "_hash": 0.47563823619478685,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "9c8e3a63-01a1-64b5-fe44-4f58f8350340",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "xmppCount",
+                  "color": "#009688",
+                  "settings": {},
+                  "_hash": 0.5679285702280172,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "c6501413-d823-29c4-992f-9ae6e8e25549",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "ocppCount",
+                  "color": "#795548",
+                  "settings": {},
+                  "_hash": 0.38390880166484287,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
+            },
+            {
+              "type": "entityCount",
+              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
+              "filterId": "2f04d6e5-8438-857a-ca78-ae78cc8b0c03",
+              "dataKeys": [
+                {
+                  "name": "count",
+                  "type": "count",
+                  "label": "customCount",
+                  "color": "#00bcd4",
+                  "settings": {},
+                  "_hash": 0.9282529984749979,
+                  "aggregationType": null,
+                  "units": null,
+                  "decimals": null,
+                  "funcBody": null,
+                  "usePostProcessing": null,
+                  "postFuncBody": null
+                }
+              ],
+              "alarmFilterConfig": {
+                "statusList": [
+                  "ACTIVE"
+                ]
+              }
             }
           ],
           "timewindow": {
@@ -2134,7 +2581,7 @@
           "padding": "0px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div style=\"width: 100%; height: 100%; padding: 0;\" fxFlex fxLayout=\"column\">\r\n  <mat-tab-group [(selectedIndex)]=\"selectedTabIndex\">\r\n    <mat-tab label=\"All\" value=\"gateway_devices_0\"></mat-tab>\r\n    <mat-tab label=\"MQTT\" value=\"gateway_devices_1\"></mat-tab>\r\n    <mat-tab label=\"MODBUS\" value=\"gateway_devices_2\"></mat-tab>\r\n    <mat-tab label=\"GRPC\" value=\"gateway_devices_3\"></mat-tab>\r\n    <mat-tab label=\"OPCUA\" value=\"gateway_devices_4\"> </mat-tab>\r\n    <mat-tab label=\"OPCUA ASYNCIO\" value=\"gateway_devices_5\"></mat-tab>\r\n    <mat-tab label=\"BLE\" value=\"gateway_devices_6\"></mat-tab>\r\n    <mat-tab label=\"REQUEST\" value=\"gateway_devices_7\"></mat-tab>\r\n    <mat-tab label=\"CAN\" value=\"gateway_devices_8\"></mat-tab>\r\n    <mat-tab label=\"BACNET\" value=\"gateway_devices_9\"></mat-tab>\r\n    <mat-tab label=\"ODBC\" value=\"gateway_devices_10\"></mat-tab>\r\n    <mat-tab label=\"REST\" value=\"gateway_devices_11\"></mat-tab>\r\n    <mat-tab label=\"SNMP\" value=\"gateway_devices_12\"></mat-tab>\r\n    <mat-tab label=\"FTP\" value=\"gateway_devices_13\"></mat-tab>\r\n    <mat-tab label=\"SOCKET\" value=\"gateway_devices_14\"></mat-tab>\r\n    <mat-tab label=\"XMPP\" value=\"gateway_devices_15\"></mat-tab>\r\n    <mat-tab label=\"OCCP\" value=\"gateway_devices_16\"></mat-tab>\r\n    <mat-tab label=\"CUSTOM\" value=\"gateway_devices_17\"></mat-tab>\r\n  </mat-tab-group><tb-dashboard-state *ngIf=\"selectedTabIndex == 1\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_1\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 2\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_2\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 3\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_3\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 4\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_4\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 5\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_5\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 6\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_6\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 7\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_7\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 8\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_8\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 9\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_9\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 10\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_10\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 11\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_11\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 12\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_12\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 13\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_13\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 14\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_14\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 15\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_15\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 16\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_16\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 17\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_17\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"!selectedTabIndex\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_0\"></tb-dashboard-state>\r\n</div>\r\n",
+            "markdownTextPattern": "<div style=\"width: 100%; height: 100%; padding: 0;\" fxFlex fxLayout=\"column\">\r\n  <mat-tab-group [(selectedIndex)]=\"selectedTabIndex\">\r\n    <mat-tab label=\"All\" value=\"gateway_devices_0\"></mat-tab>\r\n    <mat-tab *ngIf=\"${mqttCount}\" label=\"MQTT\" value=\"gateway_devices_1\"></mat-tab>\r\n    <mat-tab *ngIf=\"${modbusCount}\" label=\"MODBUS\" value=\"gateway_devices_2\"></mat-tab>\r\n    <mat-tab *ngIf=\"${grpcCount}\" label=\"GRPC\" value=\"gateway_devices_3\"></mat-tab>\r\n    <mat-tab *ngIf=\"${opcuaCount}\" label=\"OPCUA\" value=\"gateway_devices_4\"> </mat-tab>\r\n    <mat-tab label=\"OPCUA ASYNCIO\" value=\"gateway_devices_5\"></mat-tab>\r\n    <mat-tab *ngIf=\"${bleCount}\" label=\"BLE\" value=\"gateway_devices_6\"></mat-tab>\r\n    <mat-tab *ngIf=\"${requestCount}\" label=\"REQUEST\" value=\"gateway_devices_7\"></mat-tab>\r\n    <mat-tab *ngIf=\"${canCount}\" label=\"CAN\" value=\"gateway_devices_8\"></mat-tab>\r\n    <mat-tab *ngIf=\"${bacnetCount}\" label=\"BACNET\" value=\"gateway_devices_9\"></mat-tab>\r\n    <mat-tab *ngIf=\"${odbcCount}\" label=\"ODBC\" value=\"gateway_devices_10\"></mat-tab>\r\n    <mat-tab *ngIf=\"${restCount}\" label=\"REST\" value=\"gateway_devices_11\"></mat-tab>\r\n    <mat-tab *ngIf=\"${snmpCount}\" label=\"SNMP\" value=\"gateway_devices_12\"></mat-tab>\r\n    <mat-tab *ngIf=\"${ftpCount}\" label=\"FTP\" value=\"gateway_devices_13\"></mat-tab>\r\n    <mat-tab *ngIf=\"${socketCount}\" label=\"SOCKET\" value=\"gateway_devices_14\"></mat-tab>\r\n    <mat-tab *ngIf=\"${xmppCount}\" label=\"XMPP\" value=\"gateway_devices_15\"></mat-tab>\r\n    <mat-tab *ngIf=\"${occpCount}\" label=\"OCCP\" value=\"gateway_devices_16\"></mat-tab>\r\n    <mat-tab *ngIf=\"${customCount}\" label=\"CUSTOM\" value=\"gateway_devices_17\"></mat-tab>\r\n  </mat-tab-group><tb-dashboard-state *ngIf=\"selectedTabIndex == 1\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_1\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 2\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_2\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 3\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_3\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 4\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_4\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 5\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_5\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 6\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_6\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 7\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_7\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 8\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_8\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 9\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_9\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 10\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_10\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 11\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_11\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 12\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_12\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 13\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_13\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 14\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_14\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 15\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_15\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 16\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_16\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 17\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_17\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"!selectedTabIndex\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_0\"></tb-dashboard-state>\r\n</div>\r\n",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".mat-mdc-form-field-subscript-wrapper {\n    display: none !important;\n}"
           },
