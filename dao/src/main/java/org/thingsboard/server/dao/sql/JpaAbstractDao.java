@@ -95,8 +95,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
                 if (versionedEntity.getVersion() == null) {
                     HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
                     if (existingEntity != null) {
-                        throw new IllegalArgumentException("TEST - unexpected null version for " + versionedEntity);
-//      fixme tmp                  versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                        versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
                     } else {
                         return doSave(entity, true);
                     }

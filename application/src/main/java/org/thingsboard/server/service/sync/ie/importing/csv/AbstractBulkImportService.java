@@ -148,9 +148,9 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         if (entity.getId() != null) {
             importedEntityInfo.setOldEntity((E) entity.getClass().getConstructor(entity.getClass()).newInstance(entity));
             importedEntityInfo.setUpdated(true);
-//            if (entity instanceof HasVersion versionedEntity) { // FIXME: TMP
-//                versionedEntity.setVersion(null); // to overwrite the entity regardless of concurrent changes
-//            }
+            if (entity instanceof HasVersion versionedEntity) {
+                versionedEntity.setVersion(null); // to overwrite the entity regardless of concurrent changes
+            }
         } else {
             setOwners(entity, user);
         }
