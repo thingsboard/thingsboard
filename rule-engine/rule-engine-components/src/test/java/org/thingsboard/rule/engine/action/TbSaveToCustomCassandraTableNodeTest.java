@@ -21,7 +21,10 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.ColumnDefinitions;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
+import com.datastax.oss.driver.api.core.metadata.Metadata;
 import com.datastax.oss.driver.api.core.metadata.Node;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.datastax.oss.driver.api.core.type.codec.registry.CodecRegistry;
 import com.google.common.util.concurrent.SettableFuture;
 import org.junit.jupiter.api.AfterEach;
@@ -61,6 +64,7 @@ import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
@@ -114,6 +118,12 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     private ProtocolVersion protocolVersionMock;
     @Mock
     private Node nodeMock;
+    @Mock
+    private Metadata metadataMock;
+    @Mock
+    private KeyspaceMetadata keyspaceMetadataMock;
+    @Mock
+    private TableMetadata tableMetadataMock;
 
     @BeforeEach
     public void setUp() {
@@ -130,7 +140,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     public void verifyDefaultConfig() {
         assertThat(config.getTableName()).isEqualTo("");
         assertThat(config.getFieldsMapping()).isEqualTo(Map.of("", ""));
-        assertThat(config.getDefaultTTL()).isEqualTo(0L);
+        assertThat(config.getDefaultTTL()).isEqualTo(0);
     }
 
     @Test
@@ -144,11 +154,27 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
     }
 
     @Test
+    public void givenTableDoesNotExist_whenInit_thenThrowsException() {
+        config.setTableName("test_table");
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        mockCassandraCluster();
+        given(keyspaceMetadataMock.getTable(anyString())).willReturn(Optional.empty());
+
+        assertThatThrownBy(() -> node.init(ctxMock, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Table 'cs_tb_test_table' does not exist in Cassandra cluster.")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
     public void givenFieldsMapIsEmpty_whenInit_thenThrowsException() {
+        config.setTableName("test_table");
         config.setFieldsMapping(emptyMap());
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        given(ctxMock.getCassandraCluster()).willReturn(cassandraClusterMock);
+        mockCassandraCluster();
         given(ctxMock.getTenantProfile()).willReturn(getTenantProfileWithTtl(5));
 
         assertThatThrownBy(() -> node.init(ctxMock, configuration))
@@ -215,7 +241,7 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
 
     @ParameterizedTest
     @MethodSource
-    public void givenTtl_whenOnMsg_thenVerifyStatement(long ttlFromConfig,
+    public void givenTtl_whenOnMsg_thenVerifyStatement(Integer ttlFromConfig,
                                                        int ttlFromTenantProfileInDays,
                                                        String expectedQuery,
                                                        Consumer<BoundStatementBuilder> verifyBuilder) throws TbNodeException {
@@ -251,13 +277,17 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 Arguments.of(20, 1, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?) USING TTL ?",
                         (Consumer<BoundStatementBuilder>) builder -> {
                             then(builder).should().setInt(1, 20);
+                        }),
+                Arguments.of(null, 2, "INSERT INTO cs_tb_readings(entityIdTableColumn) VALUES(?)",
+                        (Consumer<BoundStatementBuilder>) builder -> {
+                            then(builder).should(never()).setInt(anyInt(), anyInt());
                         })
         );
     }
 
     @Test
     public void givenValidMsgStructure_whenOnMsg_thenVerifyMatchOfValuesInsertionOrderIntoStatementAndSaveToCustomCassandraTable() throws TbNodeException {
-        config.setDefaultTTL(25L);
+        config.setDefaultTTL(25);
         config.setTableName("readings");
         Map<String, String> mappings = Map.of(
                 "$entityId", "entityIdTableColumn",
@@ -311,17 +341,31 @@ public class TbSaveToCustomCassandraTableNodeTest extends AbstractRuleNodeUpgrad
                 Arguments.of(0,
                         "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"}}",
                         true,
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTTL\":null}"
+                ),
+                // default config for version 1 with upgrade from version 1
+                Arguments.of(1,
+                        "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTTL\":0}",
+                        false,
                         "{\"tableName\":\"\",\"fieldsMapping\":{\"\":\"\"},\"defaultTTL\":0}"
                 )
         );
     }
 
     private void mockOnInit() {
-        given(ctxMock.getCassandraCluster()).willReturn(cassandraClusterMock);
+        mockCassandraCluster();
         given(ctxMock.getTenantProfile()).willReturn(getTenantProfileWithTtl(5));
-        given(cassandraClusterMock.getSession()).willReturn(sessionMock);
         given(cassandraClusterMock.getDefaultWriteConsistencyLevel()).willReturn(DefaultConsistencyLevel.ONE);
         given(sessionMock.prepare(anyString())).willReturn(preparedStatementMock);
+    }
+
+    private void mockCassandraCluster() {
+        given(ctxMock.getCassandraCluster()).willReturn(cassandraClusterMock);
+        given(cassandraClusterMock.getSession()).willReturn(sessionMock);
+        given(sessionMock.getMetadata()).willReturn(metadataMock);
+        given(cassandraClusterMock.getKeyspaceName()).willReturn("test_keyspace");
+        given(metadataMock.getKeyspace(anyString())).willReturn(Optional.of(keyspaceMetadataMock));
+        given(keyspaceMetadataMock.getTable(anyString())).willReturn(Optional.of(tableMetadataMock));
     }
 
     private void mockBoundStatement() {

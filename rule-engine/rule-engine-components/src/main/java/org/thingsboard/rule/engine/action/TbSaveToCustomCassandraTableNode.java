@@ -21,6 +21,8 @@ import com.datastax.oss.driver.api.core.cql.BoundStatement;
 import com.datastax.oss.driver.api.core.cql.BoundStatementBuilder;
 import com.datastax.oss.driver.api.core.cql.PreparedStatement;
 import com.datastax.oss.driver.api.core.cql.Statement;
+import com.datastax.oss.driver.api.core.metadata.schema.KeyspaceMetadata;
+import com.datastax.oss.driver.api.core.metadata.schema.TableMetadata;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Function;
@@ -88,7 +90,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private PreparedStatement saveStmt;
     private ExecutorService readResultsProcessingExecutor;
     private Map<String, String> fieldsMap;
-    private long ttl;
+    private Integer ttl;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
@@ -96,6 +98,9 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         cassandraCluster = ctx.getCassandraCluster();
         if (cassandraCluster == null) {
             throw new TbNodeException("Unable to connect to Cassandra database", true);
+        }
+        if (!isTableExists()) {
+            throw new TbNodeException("Table '" + TABLE_PREFIX + config.getTableName() + "' does not exist in Cassandra cluster.", true);
         }
         ctx.addTenantProfileListener(this::onTenantProfileUpdate);
         onTenantProfileUpdate(ctx.getTenantProfile());
@@ -106,8 +111,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
     private void onTenantProfileUpdate(TenantProfile tenantProfile) {
         DefaultTenantProfileConfiguration configuration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
         ttl = config.getDefaultTTL();
-        if (ttl == 0L) {
-            ttl = TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
+        if (ttl != null && ttl == 0) {
+            ttl = (int) TimeUnit.DAYS.toSeconds(configuration.getDefaultStorageTtlDays());
         }
     }
 
@@ -130,6 +135,15 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
         if (readResultsProcessingExecutor != null) {
             readResultsProcessingExecutor.shutdownNow();
         }
+    }
+
+    private boolean isTableExists() {
+        KeyspaceMetadata keyspaceMetadata = getSession().getMetadata().getKeyspace(cassandraCluster.getKeyspaceName()).orElse(null);
+        if (keyspaceMetadata != null) {
+            TableMetadata tableMetadata = keyspaceMetadata.getTable(TABLE_PREFIX + config.getTableName()).orElse(null);
+            return tableMetadata != null;
+        }
+        return false;
     }
 
     private PreparedStatement prepare(String query) {
@@ -180,7 +194,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 query.append("?, ");
             }
         }
-        if (ttl > 0) {
+        if (ttl != null && ttl > 0) {
             query.append(" USING TTL ?");
         }
         return query.toString();
@@ -224,8 +238,8 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
                 }
                 i.getAndIncrement();
             });
-            if (ttl > 0) {
-                stmtBuilder.setInt(i.get(), (int) ttl);
+            if (ttl != null && ttl > 0) {
+                stmtBuilder.setInt(i.get(), ttl);
             }
             return getFuture(executeAsyncWrite(ctx, stmtBuilder.build()), rs -> null);
         }
@@ -274,7 +288,7 @@ public class TbSaveToCustomCassandraTableNode implements TbNode {
             case 0:
                 if (!oldConfiguration.has("defaultTTL")) {
                     hasChanges = true;
-                    ((ObjectNode) oldConfiguration).put("defaultTTL", 0);
+                    ((ObjectNode) oldConfiguration).putNull("defaultTTL");
                 }
                 break;
             default:
