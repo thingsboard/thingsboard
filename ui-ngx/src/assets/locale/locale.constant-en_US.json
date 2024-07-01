@@ -3564,7 +3564,23 @@
             "leak": "Leak",
             "leak-hint": "Indicates whether is leak present in pipe.",
             "leak-present": "Leak present",
-            "fluid-color": "Fluid color"
+            "fluid-color": "Fluid color",
+            "horizontal-fluid-presence": "Horizontal fluid presence",
+            "horizontal-fluid-presence-hint": "Indicates whether fluid is present in horizontal pipe.",
+            "horizontal-flow-presence": "Horizontal flow presence",
+            "horizontal-flow-presence-hint": "Indicates whether fluid is flowing in horizontal pipe.",
+            "horizontal-flow-direction": "Horizontal flow direction",
+            "horizontal-flow-direction-hint": "Indicates fluid flow direction in horizontal pipe.",
+            "horizontal-flow-animation-speed": "Horizontal flow animation speed",
+            "vertical-fluid-presence": "Vertical fluid presence",
+            "vertical-fluid-presence-hint": "Indicates whether fluid is present in vertical pipe.",
+            "vertical-flow-presence": "Vertical flow presence",
+            "vertical-flow-presence-hint": "Indicates whether fluid is flowing in vertical pipe.",
+            "vertical-flow-direction": "Vertical flow direction",
+            "vertical-flow-direction-hint": "Indicates fluid flow direction in vertical pipe.",
+            "vertical-flow-animation-speed": "Vertical flow animation speed",
+            "horizontal-fluid-color": "Horizontal fluid color",
+            "vertical-fluid-color": "Vertical fluid color"
         }
     },
     "item": {
