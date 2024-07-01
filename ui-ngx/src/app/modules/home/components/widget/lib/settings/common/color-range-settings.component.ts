@@ -131,9 +131,9 @@ export class ColorRangeSettingsComponent implements OnInit, ControlValueAccessor
         {},
         {}, {}, true);
       colorRangeSettingsPanelPopover.tbComponentRef.instance.popover = colorRangeSettingsPanelPopover;
-      colorRangeSettingsPanelPopover.tbComponentRef.instance.colorRangeApplied.subscribe((colorRangeSettings: ColorRangeSettings) => {
+      colorRangeSettingsPanelPopover.tbComponentRef.instance.colorRangeApplied.subscribe((colorRangeSettings: Array<ColorRange>) => {
         colorRangeSettingsPanelPopover.hide();
-        this.modelValue = colorRangeSettings.range;
+        this.modelValue = colorRangeSettings;
         this.updateColorStyle();
         this.propagateChange(this.modelValue);
       });
