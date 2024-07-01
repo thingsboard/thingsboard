@@ -59,6 +59,7 @@
     flex-direction: row-reverse;
     align-items: center;
     margin-right: 0;
+    flex: 0;
 
     & > mat-icon {
       margin-left: 15px;
@@ -89,6 +90,20 @@
     }
   }
 
+  .template-name {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: block;
+  }
+
+  ::ng-deep .mat-content {
+    align-items: center;
+  }
+
+  .mat-expansion-panel-header-title {
+    flex: 1;
+    margin: 0;
+  }
 }
 
 

@@ -102,6 +102,9 @@ import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/rad
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
 import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
 import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
+import {
+  RestConnectorSecurityComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rest-connector-secuirity/rest-connector-security.component';
 
 @NgModule({
   declarations:
@@ -172,13 +175,14 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
       LabelCardWidgetComponent,
       LabelValueCardWidgetComponent
     ],
-  imports: [
-    CommonModule,
-    SharedModule,
-    RpcWidgetsModule,
-    HomePageWidgetsModule,
-    SharedHomeComponentsModule
-  ],
+    imports: [
+        CommonModule,
+        SharedModule,
+        RpcWidgetsModule,
+        HomePageWidgetsModule,
+        SharedHomeComponentsModule,
+        RestConnectorSecurityComponent
+    ],
     exports: [
         EntitiesTableWidgetComponent,
         AlarmsTableWidgetComponent,
