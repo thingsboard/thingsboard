@@ -13,6 +13,8 @@
     "vertical_pipe",
     "long_vertical_pipe",
     "cross_pipe",
+    "left_bottom_elbow_pipe",
+    "bottom_right_elbow_pipe",
     "horizontal_tank_with_screen",
     "horizontal_faucet",
     "top_white_counter",
@@ -20,9 +22,7 @@
     "left_top_angle_connector",
     "water_blower_right_connector",
     "vertical_tank_with_level",
-    "left_bottom_angle_connector",
     "top_black_counter",
-    "right_bottom_angle_connector",
     "pump_left",
     "pump",
     "level_and_fan"
