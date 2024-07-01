@@ -348,8 +348,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configurationJson: {
         ...value.configurationJson,
         broker: {
-          ...value.basicConfig.broker,
-          ...value.basicConfig.workers,
+          ...value.configurationJson.broker,
+          ...value.configurationJson.workers,
         }
       }
     }
