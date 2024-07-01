@@ -23,7 +23,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.CacheSpecsMap;
 import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.cache.TbRedisSerializer;
-import org.thingsboard.server.cache.VersionedRedisTbTransactionalCache;
+import org.thingsboard.server.cache.VersionedRedisTbCache;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -38,7 +38,7 @@ import org.thingsboard.server.gen.transport.TransportProtos.KeyValueType;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("AttributeCache")
-public class AttributeRedisCache extends VersionedRedisTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> {
+public class AttributeRedisCache extends VersionedRedisTbCache<AttributeCacheKey, AttributeKvEntry> {
 
     public AttributeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
         super(CacheConstants.ATTRIBUTES_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>() {

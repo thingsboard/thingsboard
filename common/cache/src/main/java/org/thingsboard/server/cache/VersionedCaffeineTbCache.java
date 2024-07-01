@@ -26,7 +26,7 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
 @RequiredArgsConstructor
-public abstract class VersionedCaffeineTbTransactionalCache<K extends Serializable, V extends Serializable & HasVersion> implements VersionedTbTransactionalCache<K, V> {
+public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends Serializable & HasVersion> implements VersionedTbCache<K, V> {
 
     private final CacheManager cacheManager;
     private final String cacheName;
@@ -53,7 +53,7 @@ public abstract class VersionedCaffeineTbTransactionalCache<K extends Serializab
         try {
             TbPair<Long, V> versionValuePair = doGet(key);
             Long currentVersion = versionValuePair.getFirst();
-            if (currentVersion == null || version >= currentVersion) {
+            if (currentVersion == null || version > currentVersion) {
                 cacheManager.getCache(cacheName).put(key, TbPair.of(version, value));
             }
         } finally {

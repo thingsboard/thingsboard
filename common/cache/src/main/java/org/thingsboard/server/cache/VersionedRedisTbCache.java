@@ -22,6 +22,7 @@ import org.springframework.dao.InvalidDataAccessApiUsageException;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.ReturnType;
+import org.springframework.data.redis.core.types.Expiration;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 import org.thingsboard.server.common.data.HasVersion;
 
@@ -31,34 +32,29 @@ import java.util.Collection;
 import java.util.List;
 
 @Slf4j
-public abstract class VersionedRedisTbTransactionalCache<K extends Serializable, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbTransactionalCache<K, V> {
+public abstract class VersionedRedisTbCache<K extends Serializable, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
 
     private static final int VERSION_SIZE = 8;
     private static final int VALUE_END_OFFSET = -1;
 
     static final byte[] SET_VERSIONED_VALUE_LUA_SCRIPT = StringRedisSerializer.UTF_8.serialize("""
-            -- KEYS[1] is the key
-            -- ARGV[1] is the new value
-            -- ARGV[2] is the new version
-
             local key = KEYS[1]
             local newValue = ARGV[1]
             local newVersion = tonumber(ARGV[2])
+            local expiration = tonumber(ARGV[3])
 
-            -- Function to set the new value with the version
             local function setNewValue()
                 local newValueWithVersion = struct.pack(">I8", newVersion) .. newValue:sub(9)
-                redis.call('SET', key, newValueWithVersion)
+                redis.call('SET', key, newValueWithVersion, 'EX', expiration)
             end
 
             -- Get the current version (first 8 bytes) of the current value
             local currentVersionBytes = redis.call('GETRANGE', key, 0, 7)
 
             if currentVersionBytes and #currentVersionBytes == 8 then
-                -- Extract the current version from the first 8 bytes
                 local currentVersion = tonumber(struct.unpack(">I8", currentVersionBytes))
 
-                if newVersion >= currentVersion then
+                if newVersion > currentVersion then
                     setNewValue()
                 end
             else
@@ -66,9 +62,9 @@ public abstract class VersionedRedisTbTransactionalCache<K extends Serializable,
                 setNewValue()
             end
             """);
-    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("041b109dd56f6c8afb55090076e754727a5d3da0");
+    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("1d0cb3f1d1f899b8e456789fc5000196d5bb3025");
 
-    public VersionedRedisTbTransactionalCache(String cacheName, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration, TbRedisSerializer<K, V> valueSerializer) {
+    public VersionedRedisTbCache(String cacheName, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration, TbRedisSerializer<K, V> valueSerializer) {
         super(cacheName, cacheSpecsMap, connectionFactory, configuration, valueSerializer);
     }
 
@@ -92,23 +88,27 @@ public abstract class VersionedRedisTbTransactionalCache<K extends Serializable,
 
     @Override
     public void put(K key, V value) {
-        Long version = value!= null ? value.getVersion() : 0;
+        Long version = value != null ? value.getVersion() : 0;
         put(key, value, version);
     }
 
     @Override
     public void put(K key, V value, Long version) {
-        //TODO: use expiration
         log.trace("put [{}][{}][{}]", key, value, version);
+        doPut(key, value, version, cacheTtl);
+    }
+
+    private void doPut(K key, V value, Long version, Expiration expiration) {
         if (version == null) {
             return;
         }
         final byte[] rawKey = getRawKey(key);
+        byte[] rawValue = getRawValue(value);
+        byte[] rawVersion = StringRedisSerializer.UTF_8.serialize(String.valueOf(version));
+        byte[] rawExpiration = StringRedisSerializer.UTF_8.serialize(String.valueOf(expiration.getExpirationTimeInSeconds()));
         try (var connection = getConnection(rawKey)) {
-            byte[] rawValue = getRawValue(value);
-            byte[] rawVersion = StringRedisSerializer.UTF_8.serialize(String.valueOf(version));
             try {
-                connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion);
+                connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
             } catch (InvalidDataAccessApiUsageException e) {
                 log.debug("loading LUA [{}]", connection.getNativeConnection());
                 String sha = connection.scriptingCommands().scriptLoad(SET_VERSIONED_VALUE_LUA_SCRIPT);
@@ -116,10 +116,10 @@ public abstract class VersionedRedisTbTransactionalCache<K extends Serializable,
                     log.error("SHA for SET_VERSIONED_VALUE_LUA_SCRIPT wrong! Expected [{}], but actual [{}]", new String(SET_VERSIONED_VALUE_SHA), sha);
                 }
                 try {
-                    connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion);
+                    connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
                 } catch (InvalidDataAccessApiUsageException ignored) {
                     log.debug("Slowly executing eval instead of fast evalsha");
-                    connection.scriptingCommands().eval(SET_VERSIONED_VALUE_LUA_SCRIPT, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion);
+                    connection.scriptingCommands().eval(SET_VERSIONED_VALUE_LUA_SCRIPT, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
                 }
             }
         }
@@ -129,8 +129,7 @@ public abstract class VersionedRedisTbTransactionalCache<K extends Serializable,
     public void evict(K key, Long version) {
         log.trace("evict [{}][{}]", key, version);
         if (version != null) {
-            //TODO: use evict expiration
-            put(key, null, version);
+            doPut(key, null, version, evictExpiration);
         }
     }
 

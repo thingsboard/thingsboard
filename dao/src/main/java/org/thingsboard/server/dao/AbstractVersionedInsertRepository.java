@@ -68,7 +68,7 @@ public abstract class AbstractVersionedInsertRepository<T> extends AbstractInser
             seqNumbersList = keyHolder.getKeyList();
 
             for (int i = 0; i < insertResult.length; i++) {
-                if (updateResult[i] != 0) {
+                if (insertResult[i] != 0) {
                     seqNumbers.set(toInsertIndexes.get(i), (Long) seqNumbersList.get(i).get(VERSION_COLUMN));
                 }
             }

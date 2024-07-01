@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.HasVersion;
 
 import java.io.Serializable;
 
-public interface VersionedTbTransactionalCache<K extends Serializable, V extends Serializable & HasVersion> {
+public interface VersionedTbCache<K extends Serializable, V extends Serializable & HasVersion> {
 
     TbCacheValueWrapper<V> get(K key);
 

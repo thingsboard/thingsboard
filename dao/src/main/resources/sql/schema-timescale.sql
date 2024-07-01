@@ -45,7 +45,7 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     long_v bigint,
     dbl_v double precision,
     json_v json,
-    version bigint default 1,
+    version bigint default 0,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 

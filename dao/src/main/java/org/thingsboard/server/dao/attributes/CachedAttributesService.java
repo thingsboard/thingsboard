@@ -27,7 +27,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
-import org.thingsboard.server.cache.VersionedTbTransactionalCache;
+import org.thingsboard.server.cache.VersionedTbCache;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -68,7 +68,7 @@ public class CachedAttributesService implements AttributesService {
     private final CacheExecutorService cacheExecutorService;
     private final DefaultCounter hitCounter;
     private final DefaultCounter missCounter;
-    private final VersionedTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache;
+    private final VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache;
     private ListeningExecutorService cacheExecutor;
 
     @Value("${cache.type:caffeine}")
@@ -80,7 +80,7 @@ public class CachedAttributesService implements AttributesService {
                                    JpaExecutorService jpaExecutorService,
                                    StatsFactory statsFactory,
                                    CacheExecutorService cacheExecutorService,
-                                   VersionedTbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache) {
+                                   VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache) {
         this.attributesDao = attributesDao;
         this.jpaExecutorService = jpaExecutorService;
         this.cacheExecutorService = cacheExecutorService;

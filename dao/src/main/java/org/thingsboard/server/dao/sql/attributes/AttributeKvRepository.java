@@ -37,7 +37,7 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     @Modifying
     @Query(value = "DELETE FROM attribute_kv WHERE entity_id = :entityId " +
             "AND attribute_type = :attributeType " +
-            "AND attribute_key = :attributeKey RETURNING version", nativeQuery = true)
+            "AND attribute_key = :attributeKey RETURNING nextval('attribute_kv_version_seq')", nativeQuery = true)
     Long delete(@Param("entityId") UUID entityId,
                 @Param("attributeType") int attributeType,
                 @Param("attributeKey") int attributeKey);
@@ -60,4 +60,3 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     List<Integer> findAllKeysByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
                                                          @Param("attributeType") int attributeType);
 }
-
