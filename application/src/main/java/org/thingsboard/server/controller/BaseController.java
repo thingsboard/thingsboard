@@ -64,6 +64,7 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
+import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
@@ -381,6 +382,8 @@ public abstract class BaseController {
                 log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
             }
             return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
+        } else if (exception instanceof EntityVersionMismatchException) {
+            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.CONFLICT);
         }
         return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }

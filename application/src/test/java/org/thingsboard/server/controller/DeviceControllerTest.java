@@ -1585,6 +1585,22 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
     }
 
+    @Test
+    public void testSaveDeviceWithOutdatedVersion() throws Exception {
+        Device device = createDevice("Device v1");
+        assertThat(device.getVersion()).isOne();
+
+        device.setName("Device v2");
+        device = doPost("/api/device", device, Device.class);
+        assertThat(device.getVersion()).isEqualTo(2);
+
+        device.setVersion(1);
+        String response = doPost("/api/device", device).andExpect(status().isConflict())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(JacksonUtil.toJsonNode(response).get("message").asText())
+                .containsIgnoringCase("already changed by someone else");
+    }
+
     private Device createDevice(String name) {
         Device device = new Device();
         device.setName(name);

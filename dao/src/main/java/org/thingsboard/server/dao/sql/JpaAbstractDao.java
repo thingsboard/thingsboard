@@ -27,6 +27,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
@@ -78,7 +79,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         try {
             entity = doSave(entity, isNew);
         } catch (OptimisticLockException e) {
-            throw new IllegalStateException("The entity was already changed by someone else");
+            throw new EntityVersionMismatchException("The entity was already changed by someone else", e);
         }
         return DaoUtil.getData(entity);
     }
