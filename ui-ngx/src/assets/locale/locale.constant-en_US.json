@@ -6895,6 +6895,16 @@
             "value-card-style": "Value card style",
             "auto-scale": "Auto scale"
         },
+        "label-card": {
+            "auto-scale": "Auto scale",
+            "label": "Label",
+            "icon": "Icon",
+            "label-card-style": "Label card style"
+        },
+        "label-value-card": {
+            "value": "Value",
+            "label-value-card-style": "Label & value card style"
+        },
         "liquid-level-card": {
             "layout-simple": "Simple",
             "layout-percentage": "Percentage",
