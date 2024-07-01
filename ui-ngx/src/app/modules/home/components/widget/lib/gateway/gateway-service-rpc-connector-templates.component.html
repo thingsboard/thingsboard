@@ -32,7 +32,7 @@
   </mat-expansion-panel-header>
 
   <ng-container
-    *ngFor="let config of template.config | keyvalue : originalOrder"
+    *ngFor="let config of template.config | keyValueIsNotEmpty"
     [ngTemplateOutlet]="RPCTemplateRef"
     [ngTemplateOutletContext]="{ $implicit: config, innerValue: false }">
   </ng-container>
