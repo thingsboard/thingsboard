@@ -195,8 +195,8 @@ export const colorRangeIncludes = (range: ColorRange, toCheck: ColorRange): bool
   }
 };
 
-export const filterIncludingColorRanges = (ranges: Array<ColorRange>): Array<ColorRange> => {
-  const result = [...ranges];
+export const filterIncludingColorRanges = (ranges: Array<ColorRange> | ColorRangeSettings): Array<ColorRange> => {
+  const result = [...(Array.isArray(ranges) ? ranges : ranges.range)];
   let includes = true;
   while (includes) {
     let index = -1;

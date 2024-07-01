@@ -139,7 +139,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       } else {
         rangeList = deepClone(value);
       }
-      this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode, {emitEvent: false});
+      this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode || false, {emitEvent: false});
       if (isDefinedAndNotNull(rangeList?.range)) {
         rangeList.range.forEach((r) => this.rangeListFormArray.push(this.colorRangeControl(r), {emitEvent: false}));
       }
