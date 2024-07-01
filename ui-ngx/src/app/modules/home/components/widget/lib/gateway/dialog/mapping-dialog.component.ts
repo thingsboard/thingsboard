@@ -50,7 +50,7 @@ import { startWith, takeUntil } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { TranslateService } from '@ngx-translate/core';
-import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration';
+import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 
 @Component({
   selector: 'tb-mapping-dialog',

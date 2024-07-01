@@ -99,7 +99,7 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
 import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
 import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
 
-import { GatewayHelpLinkPipe } from '@home/pipes';
+import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
 import {
   DeviceInfoTableComponent,
   MappingDataKeysPanelComponent,
@@ -108,7 +108,7 @@ import {
   TypeValuePanelComponent,
   BrokerConfigControlComponent,
   WorkersConfigControlComponent,
-} from '@home/components/widget/lib/gateway/connectors-configuration';
+} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 
 @NgModule({
   declarations:

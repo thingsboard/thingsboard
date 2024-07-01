@@ -35,7 +35,7 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration';
+import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 
 @Component({
   selector: 'tb-server-config',

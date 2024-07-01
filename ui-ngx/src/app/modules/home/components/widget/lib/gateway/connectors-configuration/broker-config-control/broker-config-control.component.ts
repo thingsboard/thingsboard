@@ -41,7 +41,7 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { generateSecret } from '@core/utils';
-import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration';
+import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 
 @Component({
   selector: 'tb-broker-config-control',
