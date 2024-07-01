@@ -101,6 +101,8 @@ import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/pola
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
 import { KeyValueIsNotEmptyPipe } from "@shared/pipe/key-value-not-empty.pipe";
+import { LabelCardWidgetComponent } from '@home/components/widget/lib/cards/label-card-widget.component';
+import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards/label-value-card-widget.component';
 
 @NgModule({
   declarations:
@@ -167,7 +169,9 @@ import { KeyValueIsNotEmptyPipe } from "@shared/pipe/key-value-not-empty.pipe";
       PieChartWidgetComponent,
       BarChartWidgetComponent,
       PolarAreaWidgetComponent,
-      RadarChartWidgetComponent
+      RadarChartWidgetComponent,
+      LabelCardWidgetComponent,
+      LabelValueCardWidgetComponent
     ],
     imports: [
         CommonModule,
@@ -238,7 +242,9 @@ import { KeyValueIsNotEmptyPipe } from "@shared/pipe/key-value-not-empty.pipe";
         PieChartWidgetComponent,
         BarChartWidgetComponent,
         PolarAreaWidgetComponent,
-        RadarChartWidgetComponent
+        RadarChartWidgetComponent,
+        LabelCardWidgetComponent,
+        LabelValueCardWidgetComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
