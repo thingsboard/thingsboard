@@ -206,12 +206,15 @@ public class JpaAttributeDao extends JpaAbstractDaoListeningExecutorService impl
         return futuresList;
     }
 
+    @Transactional
     @Override
     public List<ListenableFuture<TbPair<String, Long>>> removeAllWithVersions(TenantId tenantId, EntityId entityId, AttributeScope attributeScope, List<String> keys) {
         List<ListenableFuture<TbPair<String, Long>>> futuresList = new ArrayList<>(keys.size());
         for (String key : keys) {
             futuresList.add(service.submit(() -> {
-                Long version = attributeKvRepository.delete(entityId.getId(), attributeScope.getId(), keyDictionaryDao.getOrSaveKeyId(key));
+                Long version = jdbcTemplate.query("DELETE FROM attribute_kv WHERE entity_id = ? AND attribute_type = ? " +
+                                "AND attribute_key = ? RETURNING nextval('attribute_kv_version_seq')",
+                        rs -> rs.next() ? rs.getLong(1) : null, entityId.getId(), attributeScope.getId(), keyDictionaryDao.getOrSaveKeyId(key));
                 return TbPair.of(key, version);
             }));
         }
