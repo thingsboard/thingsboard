@@ -15,51 +15,25 @@
  */
 
 :host {
-  display: grid;
-  height: 100%;
 
-  .key-mapping {
-    max-width: 900px;
-    display: flex;
-    flex-direction: column;
-
-    .mat-toolbar {
-      min-height: 64px;
-    }
-
-    tb-toggle-select {
-      padding: 4px 0;
-    }
+  .title-container {
+    max-width: 11vw;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap
   }
 
-  .mat-mdc-dialog-content {
-    height: 670px;
+  .key-panel {
+    height: 250px;
+    overflow: auto;
   }
 
-  .ellipsis-chips-container {
-    max-width: 70%;
-  }
-}
-
-:host ::ng-deep {
-  .key-mapping {
-    .mat-mdc-chip-listbox {
-      .mdc-evolution-chip-set__chips {
-        justify-content: flex-end;
-        align-items: center;
-      }
-    }
-  }
-  .tb-form-row {
-    .fixed-title-width {
-      min-width: 40px;
-      width: 35%;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-    .mat-mdc-form-field {
-      width: 0;
+  .tb-form-panel {
+    .mat-mdc-icon-button {
+      width: 56px;
+      height: 56px;
+      padding: 16px;
+      color: rgba(0, 0, 0, 0.54);
     }
   }
 
@@ -68,12 +42,11 @@
     height: 32px;
     margin: 4px;
   }
+}
 
+:host ::ng-deep {
   .mat-mdc-form-field-icon-suffix {
     display: flex;
   }
-
-  .device-config {
-    padding-left: 10px;
-  }
 }
+

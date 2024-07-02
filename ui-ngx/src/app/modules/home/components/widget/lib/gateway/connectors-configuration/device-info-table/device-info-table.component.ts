@@ -16,27 +16,19 @@
 
 import {
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
-  ElementRef,
   forwardRef,
   Input,
-  NgZone,
   OnDestroy,
   OnInit,
-  ViewContainerRef
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
-import { DialogService } from '@core/services/dialog.service';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { Overlay } from '@angular/cdk/overlay';
-import { UtilsService } from '@core/services/utils.service';
-import { EntityService } from '@core/http/entity.service';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -50,6 +42,7 @@ import {
 import {
   DeviceInfoType,
   noLeadTrailSpacesRegex,
+  OPCUaSourceTypes,
   SourceTypes,
   SourceTypeTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -88,7 +81,7 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   required = false;
 
   @Input()
-  sourceTypes: Array<SourceTypes> = Object.values(SourceTypes);
+  sourceTypes: Array<SourceTypes | OPCUaSourceTypes> = Object.values(SourceTypes);
 
   deviceInfoTypeValue: any;
 
@@ -111,14 +104,6 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   constructor(protected store: Store<AppState>,
               public translate: TranslateService,
               public dialog: MatDialog,
-              private overlay: Overlay,
-              private viewContainerRef: ViewContainerRef,
-              private dialogService: DialogService,
-              private entityService: EntityService,
-              private utils: UtilsService,
-              private zone: NgZone,
-              private cd: ChangeDetectorRef,
-              private elementRef: ElementRef,
               private fb: FormBuilder) {
     super(store);
   }
@@ -131,13 +116,13 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
 
     if (this.useSource) {
       this.mappingFormGroup.addControl('deviceNameExpressionSource',
-        this.fb.control(SourceTypes.MSG, []));
+        this.fb.control(this.sourceTypes[0], []));
     }
 
     if (this.deviceInfoType === DeviceInfoType.FULL) {
       if (this.useSource) {
         this.mappingFormGroup.addControl('deviceProfileExpressionSource',
-          this.fb.control(SourceTypes.MSG, []));
+          this.fb.control(this.sourceTypes[0], []));
       }
       this.mappingFormGroup.addControl('deviceProfileExpression',
         this.fb.control('', this.required ?
@@ -154,6 +139,7 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+    super.ngOnDestroy();
   }
 
   registerOnChange(fn: any): void {
@@ -175,5 +161,4 @@ export class DeviceInfoTableComponent extends PageComponent implements ControlVa
   updateView(value: any) {
     this.propagateChange(value);
   }
-
 }

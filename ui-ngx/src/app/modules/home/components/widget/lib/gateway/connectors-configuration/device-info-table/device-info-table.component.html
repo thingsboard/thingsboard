@@ -50,9 +50,10 @@
                       class="tb-error">
               warning
             </mat-icon>
-            <div matSuffix
+            <div *ngIf="'name-field' | getGatewayHelpLink : mappingFormGroup.get('deviceNameExpressionSource').value : sourceTypes"
+                 matSuffix
                  class="see-example"
-                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                 [tb-help-popup]="'name-field' | getGatewayHelpLink : mappingFormGroup.get('deviceNameExpressionSource').value : sourceTypes"
                  tb-help-popup-placement="left"
                  [tb-help-popup-style]="{maxWidth: '970px'}">
             </div>
@@ -83,9 +84,10 @@
                       class="tb-error">
               warning
             </mat-icon>
-            <div matSuffix
+            <div *ngIf="'profile-name' | getGatewayHelpLink: mappingFormGroup.get('deviceProfileExpressionSource').value : sourceTypes"
+                 matSuffix
                  class="see-example"
-                 [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                 [tb-help-popup]="'profile-name' | getGatewayHelpLink: mappingFormGroup.get('deviceProfileExpressionSource').value : sourceTypes"
                  tb-help-popup-placement="left"
                  [tb-help-popup-style]="{maxWidth: '970px'}">
             </div>
