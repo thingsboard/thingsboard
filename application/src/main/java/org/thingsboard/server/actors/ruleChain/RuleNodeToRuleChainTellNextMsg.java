@@ -34,7 +34,7 @@ import java.util.Set;
  */
 @EqualsAndHashCode(callSuper = true)
 @ToString
-class RuleNodeToRuleChainTellNextMsg extends TbRuleEngineActorMsg implements Serializable {
+public class RuleNodeToRuleChainTellNextMsg extends TbRuleEngineActorMsg implements Serializable {
 
     private static final long serialVersionUID = 4577026446412871820L;
     @Getter
