@@ -371,10 +371,10 @@ public final class EdgeGrpcSession implements Closeable {
                 @Override
                 public void onSuccess(@Nullable Pair<Long, Long> newStartTsAndSeqId) {
                     if (newStartTsAndSeqId != null) {
-                        ListenableFuture<List<String>> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
+                        ListenableFuture<List<Long>> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
                         Futures.addCallback(updateFuture, new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable List<String> list) {
+                            public void onSuccess(@Nullable List<Long> list) {
                                 log.debug("[{}][{}] queue offset was updated [{}]", tenantId, sessionId, newStartTsAndSeqId);
                                 if (fetcher.isSeqIdNewCycleStarted()) {
                                     seqIdEnd = fetcher.getSeqIdEnd();
@@ -626,7 +626,7 @@ public final class EdgeGrpcSession implements Closeable {
         return startSeqId;
     }
 
-    private ListenableFuture<List<String>> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
+    private ListenableFuture<List<Long>> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
         this.newStartTs = pair.getFirst();
         this.newStartSeqId = pair.getSecond();
         log.trace("[{}] updateQueueStartTsAndSeqId [{}][{}][{}]", this.sessionId, edge.getId(), this.newStartTs, this.newStartSeqId);

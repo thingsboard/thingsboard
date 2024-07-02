@@ -30,8 +30,8 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
 
     @Query("SELECT a FROM AttributeKvEntity a WHERE a.id.entityId = :entityId " +
             "AND a.id.attributeType = :attributeType")
-    List<AttributeKvEntity> findAllEntityIdAndAttributeType(@Param("entityId") UUID entityId,
-                                                            @Param("attributeType") int attributeType);
+    List<AttributeKvEntity> findAllByEntityIdAndAttributeType(@Param("entityId") UUID entityId,
+                                                              @Param("attributeType") int attributeType);
 
     @Transactional
     @Modifying
@@ -60,4 +60,3 @@ public interface AttributeKvRepository extends JpaRepository<AttributeKvEntity, 
     List<Integer> findAllKeysByEntityIdsAndAttributeType(@Param("entityIds") List<UUID> entityIds,
                                                          @Param("attributeType") int attributeType);
 }
-

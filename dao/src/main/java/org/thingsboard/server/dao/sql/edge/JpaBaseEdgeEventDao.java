@@ -90,7 +90,7 @@ public class JpaBaseEdgeEventDao extends JpaPartitionedAbstractDao<EdgeEventEnti
 
     private static final String TABLE_NAME = ModelConstants.EDGE_EVENT_TABLE_NAME;
 
-    private TbSqlBlockingQueueWrapper<EdgeEventEntity> queue;
+    private TbSqlBlockingQueueWrapper<EdgeEventEntity, Void> queue;
 
     @Override
     protected Class<EdgeEventEntity> getEntityClass() {

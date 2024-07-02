@@ -240,7 +240,7 @@ public class DeviceProvisionServiceImpl implements DeviceProvisionService {
         return deviceCredentialsService.updateDeviceCredentials(tenantId, deviceCredentials);
     }
 
-    private ListenableFuture<List<String>> saveProvisionStateAttribute(Device device) {
+    private ListenableFuture<List<Long>> saveProvisionStateAttribute(Device device) {
         return attributesService.save(device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry(DEVICE_PROVISION_STATE, PROVISIONED_STATE),
                         System.currentTimeMillis())));

@@ -15,162 +15,110 @@
  */
 package org.thingsboard.server.dao.sql.attributes;
 
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.jdbc.core.BatchPreparedStatementSetter;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.TransactionStatus;
-import org.springframework.transaction.support.TransactionCallbackWithoutResult;
-import org.springframework.transaction.support.TransactionTemplate;
+import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.dao.AbstractVersionedInsertRepository;
 import org.thingsboard.server.dao.model.sql.AttributeKvEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Pattern;
 
 @Repository
-@Slf4j
+@Transactional
 @SqlDao
-public abstract class AttributeKvInsertRepository {
+public class AttributeKvInsertRepository extends AbstractVersionedInsertRepository<AttributeKvEntity> {
 
-    private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
-    private static final String EMPTY_STR = "";
-
-    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ? " +
-            "WHERE entity_id = ? and attribute_type =? and attribute_key = ?;";
+    private static final String BATCH_UPDATE = "UPDATE attribute_kv SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') " +
+            "WHERE entity_id = ? and attribute_type =? and attribute_key = ? RETURNING version;";
 
     private static final String INSERT_OR_UPDATE =
-            "INSERT INTO attribute_kv (entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, json_v, last_update_ts) " +
-                    "VALUES(?, ?, ?, ?, ?, ?, ?,  cast(? AS json), ?) " +
+            "INSERT INTO attribute_kv (entity_id, attribute_type, attribute_key, str_v, long_v, dbl_v, bool_v, json_v, last_update_ts, version) " +
+                    "VALUES(?, ?, ?, ?, ?, ?, ?,  cast(? AS json), ?, nextval('attribute_kv_version_seq')) " +
                     "ON CONFLICT (entity_id, attribute_type, attribute_key) " +
-                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?;";
+                    "DO UPDATE SET str_v = ?, long_v = ?, dbl_v = ?, bool_v = ?, json_v =  cast(? AS json), last_update_ts = ?, version = nextval('attribute_kv_version_seq') RETURNING version;";
 
-    @Autowired
-    protected JdbcTemplate jdbcTemplate;
+    @Override
+    protected void setOnBatchUpdateValues(PreparedStatement ps, int i, List<AttributeKvEntity> entities) throws SQLException {
+        AttributeKvEntity kvEntity = entities.get(i);
+        ps.setString(1, replaceNullChars(kvEntity.getStrValue()));
 
-    @Autowired
-    private TransactionTemplate transactionTemplate;
+        if (kvEntity.getLongValue() != null) {
+            ps.setLong(2, kvEntity.getLongValue());
+        } else {
+            ps.setNull(2, Types.BIGINT);
+        }
 
-    @Value("${sql.remove_null_chars:true}")
-    private boolean removeNullChars;
+        if (kvEntity.getDoubleValue() != null) {
+            ps.setDouble(3, kvEntity.getDoubleValue());
+        } else {
+            ps.setNull(3, Types.DOUBLE);
+        }
 
-    public void saveOrUpdate(List<AttributeKvEntity> entities) {
-        transactionTemplate.execute(new TransactionCallbackWithoutResult() {
-            @Override
-            protected void doInTransactionWithoutResult(TransactionStatus status) {
-                int[] result = jdbcTemplate.batchUpdate(BATCH_UPDATE, new BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        AttributeKvEntity kvEntity = entities.get(i);
-                        ps.setString(1, replaceNullChars(kvEntity.getStrValue()));
+        if (kvEntity.getBooleanValue() != null) {
+            ps.setBoolean(4, kvEntity.getBooleanValue());
+        } else {
+            ps.setNull(4, Types.BOOLEAN);
+        }
 
-                        if (kvEntity.getLongValue() != null) {
-                            ps.setLong(2, kvEntity.getLongValue());
-                        } else {
-                            ps.setNull(2, Types.BIGINT);
-                        }
+        ps.setString(5, replaceNullChars(kvEntity.getJsonValue()));
 
-                        if (kvEntity.getDoubleValue() != null) {
-                            ps.setDouble(3, kvEntity.getDoubleValue());
-                        } else {
-                            ps.setNull(3, Types.DOUBLE);
-                        }
-
-                        if (kvEntity.getBooleanValue() != null) {
-                            ps.setBoolean(4, kvEntity.getBooleanValue());
-                        } else {
-                            ps.setNull(4, Types.BOOLEAN);
-                        }
-
-                        ps.setString(5, replaceNullChars(kvEntity.getJsonValue()));
-
-                        ps.setLong(6, kvEntity.getLastUpdateTs());
-                        ps.setObject(7, kvEntity.getId().getEntityId());
-                        ps.setInt(8, kvEntity.getId().getAttributeType());
-                        ps.setInt(9, kvEntity.getId().getAttributeKey());
-                    }
-
-                    @Override
-                    public int getBatchSize() {
-                        return entities.size();
-                    }
-                });
-
-                int updatedCount = 0;
-                for (int i = 0; i < result.length; i++) {
-                    if (result[i] == 0) {
-                        updatedCount++;
-                    }
-                }
-
-                List<AttributeKvEntity> insertEntities = new ArrayList<>(updatedCount);
-                for (int i = 0; i < result.length; i++) {
-                    if (result[i] == 0) {
-                        insertEntities.add(entities.get(i));
-                    }
-                }
-
-                jdbcTemplate.batchUpdate(INSERT_OR_UPDATE, new BatchPreparedStatementSetter() {
-                    @Override
-                    public void setValues(PreparedStatement ps, int i) throws SQLException {
-                        AttributeKvEntity kvEntity = insertEntities.get(i);
-                        ps.setObject(1, kvEntity.getId().getEntityId());
-                        ps.setInt(2, kvEntity.getId().getAttributeType());
-                        ps.setInt(3, kvEntity.getId().getAttributeKey());
-
-                        ps.setString(4, replaceNullChars(kvEntity.getStrValue()));
-                        ps.setString(10, replaceNullChars(kvEntity.getStrValue()));
-
-                        if (kvEntity.getLongValue() != null) {
-                            ps.setLong(5, kvEntity.getLongValue());
-                            ps.setLong(11, kvEntity.getLongValue());
-                        } else {
-                            ps.setNull(5, Types.BIGINT);
-                            ps.setNull(11, Types.BIGINT);
-                        }
-
-                        if (kvEntity.getDoubleValue() != null) {
-                            ps.setDouble(6, kvEntity.getDoubleValue());
-                            ps.setDouble(12, kvEntity.getDoubleValue());
-                        } else {
-                            ps.setNull(6, Types.DOUBLE);
-                            ps.setNull(12, Types.DOUBLE);
-                        }
-
-                        if (kvEntity.getBooleanValue() != null) {
-                            ps.setBoolean(7, kvEntity.getBooleanValue());
-                            ps.setBoolean(13, kvEntity.getBooleanValue());
-                        } else {
-                            ps.setNull(7, Types.BOOLEAN);
-                            ps.setNull(13, Types.BOOLEAN);
-                        }
-
-                        ps.setString(8, replaceNullChars(kvEntity.getJsonValue()));
-                        ps.setString(14, replaceNullChars(kvEntity.getJsonValue()));
-
-                        ps.setLong(9, kvEntity.getLastUpdateTs());
-                        ps.setLong(15, kvEntity.getLastUpdateTs());
-                    }
-
-                    @Override
-                    public int getBatchSize() {
-                        return insertEntities.size();
-                    }
-                });
-            }
-        });
+        ps.setLong(6, kvEntity.getLastUpdateTs());
+        ps.setObject(7, kvEntity.getId().getEntityId());
+        ps.setInt(8, kvEntity.getId().getAttributeType());
+        ps.setInt(9, kvEntity.getId().getAttributeKey());
     }
 
-    private String replaceNullChars(String strValue) {
-        if (removeNullChars && strValue != null) {
-            return PATTERN_THREAD_LOCAL.get().matcher(strValue).replaceAll(EMPTY_STR);
+    @Override
+    protected void setOnInsertOrUpdateValues(PreparedStatement ps, int i, List<AttributeKvEntity> insertEntities) throws SQLException {
+        AttributeKvEntity kvEntity = insertEntities.get(i);
+        ps.setObject(1, kvEntity.getId().getEntityId());
+        ps.setInt(2, kvEntity.getId().getAttributeType());
+        ps.setInt(3, kvEntity.getId().getAttributeKey());
+
+        ps.setString(4, replaceNullChars(kvEntity.getStrValue()));
+        ps.setString(10, replaceNullChars(kvEntity.getStrValue()));
+
+        if (kvEntity.getLongValue() != null) {
+            ps.setLong(5, kvEntity.getLongValue());
+            ps.setLong(11, kvEntity.getLongValue());
+        } else {
+            ps.setNull(5, Types.BIGINT);
+            ps.setNull(11, Types.BIGINT);
         }
-        return strValue;
+
+        if (kvEntity.getDoubleValue() != null) {
+            ps.setDouble(6, kvEntity.getDoubleValue());
+            ps.setDouble(12, kvEntity.getDoubleValue());
+        } else {
+            ps.setNull(6, Types.DOUBLE);
+            ps.setNull(12, Types.DOUBLE);
+        }
+
+        if (kvEntity.getBooleanValue() != null) {
+            ps.setBoolean(7, kvEntity.getBooleanValue());
+            ps.setBoolean(13, kvEntity.getBooleanValue());
+        } else {
+            ps.setNull(7, Types.BOOLEAN);
+            ps.setNull(13, Types.BOOLEAN);
+        }
+
+        ps.setString(8, replaceNullChars(kvEntity.getJsonValue()));
+        ps.setString(14, replaceNullChars(kvEntity.getJsonValue()));
+
+        ps.setLong(9, kvEntity.getLastUpdateTs());
+        ps.setLong(15, kvEntity.getLastUpdateTs());
+    }
+
+    @Override
+    protected String getBatchUpdateQuery() {
+        return BATCH_UPDATE;
+    }
+
+    @Override
+    protected String getInsertOrUpdateQuery() {
+        return INSERT_OR_UPDATE;
     }
 }

@@ -13,23 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.cache;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
-import lombok.ToString;
+import org.thingsboard.server.common.data.HasVersion;
 
-@ToString(exclude = "future")
-public final class TbSqlQueueElement<E, R> {
-    @Getter
-    private final SettableFuture<R> future;
-    @Getter
-    private final E entity;
+import java.io.Serializable;
 
-    public TbSqlQueueElement(SettableFuture<R> future, E entity) {
-        this.future = future;
-        this.entity = entity;
-    }
+public interface VersionedTbCache<K extends Serializable, V extends Serializable & HasVersion> {
+
+    TbCacheValueWrapper<V> get(K key);
+
+    void put(K key, V value);
+
+    void put(K key, V value, Long version);
+
+    void evict(K key);
+
+    void evict(K key, Long version);
 }
-
-

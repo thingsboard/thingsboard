@@ -26,7 +26,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.cache.VersionedTbCache;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -60,7 +60,7 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
     private static final String NEW_VALUE = "NEW VALUE";
 
     @Autowired
-    private TbTransactionalCache<AttributeCacheKey, AttributeKvEntry> cache;
+    private VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache;
 
     @Autowired
     private AttributesService attributesService;
@@ -130,24 +130,6 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(future);
         var result = future.get(10, TimeUnit.SECONDS);
         Assert.assertTrue(result.isEmpty());
-    }
-
-    @Test
-    public void testConcurrentTransaction() throws Exception {
-        var tenantId = new TenantId(UUID.randomUUID());
-        var deviceId = new DeviceId(UUID.randomUUID());
-        var scope = AttributeScope.SERVER_SCOPE;
-        var key = "TEST";
-
-        var attrKey = new AttributeCacheKey(scope, deviceId, "TEST");
-        var oldValue = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, OLD_VALUE));
-        var newValue = new BaseAttributeKvEntry(System.currentTimeMillis(), new StringDataEntry(key, NEW_VALUE));
-
-        var trx = cache.newTransactionForKey(attrKey);
-        cache.putIfAbsent(attrKey, newValue);
-        trx.putIfAbsent(attrKey, oldValue);
-        Assert.assertFalse(trx.commit());
-        Assert.assertEquals(NEW_VALUE, getAttributeValue(tenantId, deviceId, scope, key));
     }
 
     @Test

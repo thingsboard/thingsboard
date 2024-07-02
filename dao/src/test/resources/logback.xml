@@ -12,6 +12,7 @@
 
     <!-- Log Hibernate SQL queries -->
     <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->
+    <!-- <logger name="org.springframework.jdbc.core.JdbcTemplate" level="DEBUG" /> -->
 
     <root level="WARN">
         <appender-ref ref="console"/>
