@@ -54,7 +54,8 @@
       formControlName="deviceProfileId"
       [displayAllOnEmpty]="true"
       (deviceProfileChanged)="deviceProfileChanged($event)"
-      [editProfileEnabled]="false">
+      [editProfileEnabled]="false"
+      [addNewProfile]="false">
     </tb-device-profile-autocomplete>
     <mat-form-field>
       <mat-label translate>device.device-state</mat-label>
