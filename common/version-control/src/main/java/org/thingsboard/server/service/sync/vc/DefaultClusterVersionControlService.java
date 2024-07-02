@@ -202,7 +202,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
         try {
             Futures.allAsList(futures).get(packProcessingTimeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.info("Timeout for processing the version control tasks.", e);
+            log.error("Timeout for processing the version control tasks.", e);
         }
         consumer.commit();
     }

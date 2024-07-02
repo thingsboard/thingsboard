@@ -906,7 +906,8 @@ public class ProtoUtils {
                 .setRepositoryUri(repositorySettings.getRepositoryUri())
                 .setAuthMethod(repositorySettings.getAuthMethod().name())
                 .setReadOnly(repositorySettings.isReadOnly())
-                .setShowMergeCommits(repositorySettings.isShowMergeCommits());
+                .setShowMergeCommits(repositorySettings.isShowMergeCommits())
+                .setLocalOnly(repositorySettings.isLocalOnly());
 
         if (isNotNull(repositorySettings.getUsername())) {
             builder.setUsername(repositorySettings.getUsername());
@@ -935,6 +936,7 @@ public class ProtoUtils {
         repositorySettings.setAuthMethod(RepositoryAuthMethod.valueOf(proto.getAuthMethod()));
         repositorySettings.setReadOnly(proto.getReadOnly());
         repositorySettings.setShowMergeCommits(proto.getShowMergeCommits());
+        repositorySettings.setLocalOnly(proto.getLocalOnly());
         if (proto.hasUsername()) {
             repositorySettings.setUsername(proto.getUsername());
         }
