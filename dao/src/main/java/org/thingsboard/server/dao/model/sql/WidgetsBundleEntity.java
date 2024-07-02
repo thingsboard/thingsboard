@@ -16,24 +16,24 @@
 package org.thingsboard.server.dao.model.sql;
 
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.WIDGETS_BUNDLE_TABLE_NAME)
-public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
+public final class WidgetsBundleEntity extends BaseVersionedSqlEntity<WidgetsBundle> {
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -61,10 +61,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
     }
 
     public WidgetsBundleEntity(WidgetsBundle widgetsBundle) {
-        if (widgetsBundle.getId() != null) {
-            this.setUuid(widgetsBundle.getId().getId());
-        }
-        this.setCreatedTime(widgetsBundle.getCreatedTime());
+        super(widgetsBundle);
         if (widgetsBundle.getTenantId() != null) {
             this.tenantId = widgetsBundle.getTenantId().getId();
         }
@@ -82,6 +79,7 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
     public WidgetsBundle toData() {
         WidgetsBundle widgetsBundle = new WidgetsBundle(new WidgetsBundleId(id));
         widgetsBundle.setCreatedTime(createdTime);
+        widgetsBundle.setVersion(version);
         if (tenantId != null) {
             widgetsBundle.setTenantId(TenantId.fromUUID(tenantId));
         }
@@ -95,4 +93,5 @@ public final class WidgetsBundleEntity extends BaseSqlEntity<WidgetsBundle> {
         }
         return widgetsBundle;
     }
+
 }

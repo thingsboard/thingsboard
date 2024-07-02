@@ -95,4 +95,5 @@ public class EntityExportData<E extends ExportableEntity<? extends EntityId>> {
     public boolean hasRelations() {
         return relations != null;
     }
+
 }

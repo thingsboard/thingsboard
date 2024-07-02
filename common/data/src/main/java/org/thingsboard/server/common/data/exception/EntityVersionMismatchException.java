@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.common.data.exception;
 
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.util.SqlDao;
+public class EntityVersionMismatchException extends RuntimeException {
 
-@SqlDao
-public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {
-
-    @Override
-    protected E doSave(E entity, boolean isNew) {
-        createPartition(entity);
-        return super.doSave(entity, isNew);
+    public EntityVersionMismatchException(String message, Throwable cause) {
+        super(message, cause);
     }
-
-    public abstract void createPartition(E entity);
 
 }

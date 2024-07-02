@@ -19,7 +19,6 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -50,14 +49,6 @@ public class JpaDeviceCredentialsDao extends JpaAbstractDao<DeviceCredentialsEnt
     @Override
     protected JpaRepository<DeviceCredentialsEntity, UUID> getRepository() {
         return deviceCredentialsRepository;
-    }
-
-    @Transactional
-    @Override
-    public DeviceCredentials saveAndFlush(TenantId tenantId, DeviceCredentials deviceCredentials) {
-        DeviceCredentials result = save(tenantId, deviceCredentials);
-        deviceCredentialsRepository.flush();
-        return result;
     }
 
     @Override
