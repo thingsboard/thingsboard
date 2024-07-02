@@ -3840,6 +3840,51 @@ public class RestClient implements Closeable {
         }
     }
 
+    public JsonNode handleRuleEngineRequest(JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                }).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequest(EntityId entityId, JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/{entityType}/{entityId}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                },
+                entityId.getEntityType(),
+                entityId.getId()).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequest(EntityId entityId, int timeout, JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/{entityType}/{entityId}/{timeout}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                },
+                entityId.getEntityType(),
+                entityId.getId(),
+                timeout).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequest(EntityId entityId, String queueName, int timeout, JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/{entityType}/{entityId}/{queueName}/{timeout}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                },
+                entityId.getEntityType(),
+                entityId.getId(),
+                queueName,
+                timeout).getBody();
+    }
+
     private String getTimeUrlParams(TimePageLink pageLink) {
         String urlParams = getUrlParams(pageLink);
         if (pageLink.getStartTime() != null) {

@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.state.DeviceStateService;
 
 import java.util.UUID;
@@ -48,6 +49,8 @@ public class DefaultTbCoreConsumerServiceTest {
     private DeviceStateService stateServiceMock;
     @Mock
     private TbCoreConsumerStats statsMock;
+    @Mock
+    private RuleEngineCallService ruleEngineCallServiceMock;
 
     @Mock
     private TbCallback tbCallbackMock;
@@ -529,4 +532,17 @@ public class DefaultTbCoreConsumerServiceTest {
         then(statsMock).should(never()).log(inactivityMsg);
     }
 
+    @Test
+    public void givenRestApiCallResponseMsgProto_whenForwardToRuleEngineCallService_thenCallOnQueueMsg() {
+        // GIVEN
+        ReflectionTestUtils.setField(defaultTbCoreConsumerServiceMock, "ruleEngineCallService", ruleEngineCallServiceMock);
+        var restApiCallResponseMsgProto = TransportProtos.RestApiCallResponseMsgProto.getDefaultInstance();
+        doCallRealMethod().when(defaultTbCoreConsumerServiceMock).forwardToRuleEngineCallService(restApiCallResponseMsgProto, tbCallbackMock);
+
+        // WHEN
+        defaultTbCoreConsumerServiceMock.forwardToRuleEngineCallService(restApiCallResponseMsgProto, tbCallbackMock);
+
+        // THEN
+        then(ruleEngineCallServiceMock).should().onQueueMsg(restApiCallResponseMsgProto, tbCallbackMock);
+    }
 }

@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcError;
 import org.thingsboard.server.common.data.rpc.ToDeviceRpcRequestBody;
+import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.rpc.ToDeviceRpcRequestActorMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -125,6 +126,16 @@ public class DefaultTbRuleEngineRpcService implements TbRuleEngineDeviceRpcServi
                     .response(response.getResponse())
                     .build());
         });
+    }
+
+    @Override
+    public void sendRestApiCallReply(String serviceId, UUID requestId, TbMsg tbMsg) {
+        TransportProtos.RestApiCallResponseMsgProto msg = TransportProtos.RestApiCallResponseMsgProto.newBuilder()
+                .setRequestIdMSB(requestId.getMostSignificantBits())
+                .setRequestIdLSB(requestId.getLeastSignificantBits())
+                .setResponse(TbMsg.toByteString(tbMsg))
+                .build();
+        clusterService.pushNotificationToCore(serviceId, msg, null);
     }
 
     @Override

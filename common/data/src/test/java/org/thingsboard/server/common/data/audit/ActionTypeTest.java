@@ -28,6 +28,7 @@ import static org.thingsboard.server.common.data.audit.ActionType.DELETED_COMMEN
 import static org.thingsboard.server.common.data.audit.ActionType.LOCKOUT;
 import static org.thingsboard.server.common.data.audit.ActionType.LOGIN;
 import static org.thingsboard.server.common.data.audit.ActionType.LOGOUT;
+import static org.thingsboard.server.common.data.audit.ActionType.REST_API_RULE_ENGINE_CALL;
 import static org.thingsboard.server.common.data.audit.ActionType.RPC_CALL;
 import static org.thingsboard.server.common.data.audit.ActionType.SMS_SENT;
 import static org.thingsboard.server.common.data.audit.ActionType.SUSPENDED;
@@ -45,7 +46,8 @@ class ActionTypeTest {
             LOGOUT,
             LOCKOUT,
             DELETED_COMMENT,
-            SMS_SENT
+            SMS_SENT,
+            REST_API_RULE_ENGINE_CALL
     );
 
     // backward-compatibility tests

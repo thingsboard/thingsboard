@@ -386,6 +386,15 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                 actionType, cntTime, extractMatcherAdditionalInfo(additionalInfo));
     }
 
+    protected void testLogEntityActionError(EntityId originatorId, TenantId tenantId,
+                                            CustomerId customerId, UserId userId, String userName,
+                                            ActionType actionType, Exception exception, Object... additionalInfo) {
+        ArgumentMatcher<Exception> matcherError = argument -> argument.getMessage().contains(exception.getMessage())
+                & argument.getClass().equals(exception.getClass());
+        testLogEntityActionErrorAdditionalInfo(Objects::isNull, originatorId, tenantId, customerId, userId, userName,
+                actionType, 1, matcherError, extractMatcherAdditionalInfo(additionalInfo));
+    }
+
     private void testLogEntityActionAdditionalInfo(ArgumentMatcher<HasName> matcherEntity, ArgumentMatcher<EntityId> matcherOriginatorId,
                                                    TenantId tenantId, ArgumentMatcher<CustomerId> matcherCustomerId,
                                                    ArgumentMatcher<UserId> matcherUserId, String userName, ActionType actionType,
@@ -529,8 +538,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                 Mockito.argThat(matcherEntity),
                                 Mockito.eq(actionType),
                                 Mockito.argThat(matcherError),
-                                Mockito.argThat(Mockito.eq(matcherAdditionalInfos.get(0))),
-                                Mockito.argThat(Mockito.eq(matcherAdditionalInfos.get(1))));
+                                Mockito.argThat(matcherAdditionalInfos.get(0)),
+                                Mockito.argThat(matcherAdditionalInfos.get(1)));
+                break;
             case 3:
                 Mockito.verify(auditLogService, times(cntTime))
                         .logEntityAction(Mockito.eq(tenantId),
@@ -541,9 +551,9 @@ public abstract class AbstractNotifyEntityTest extends AbstractWebTest {
                                 Mockito.argThat(matcherEntity),
                                 Mockito.eq(actionType),
                                 Mockito.argThat(matcherError),
-                                Mockito.argThat(Mockito.eq(matcherAdditionalInfos.get(0))),
-                                Mockito.argThat(Mockito.eq(matcherAdditionalInfos.get(1))),
-                                Mockito.argThat(Mockito.eq(matcherAdditionalInfos.get(2))));
+                                Mockito.argThat(matcherAdditionalInfos.get(0)),
+                                Mockito.argThat(matcherAdditionalInfos.get(1)),
+                                Mockito.argThat(matcherAdditionalInfos.get(2)));
                 break;
             default:
                 Mockito.verify(auditLogService, times(cntTime))

@@ -40,6 +40,7 @@ public enum ActionType {
     RELATION_ADD_OR_UPDATE(false, TbMsgType.RELATION_ADD_OR_UPDATE),
     RELATION_DELETED(false, TbMsgType.RELATION_DELETED),
     RELATIONS_DELETED(false, TbMsgType.RELATIONS_DELETED),
+    REST_API_RULE_ENGINE_CALL(false, null), // log call to rule engine from REST API
     ALARM_ACK(false, TbMsgType.ALARM_ACK),
     ALARM_CLEAR(false, TbMsgType.ALARM_CLEAR),
     ALARM_DELETE(false, TbMsgType.ALARM_DELETE),
