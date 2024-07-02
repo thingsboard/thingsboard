@@ -335,6 +335,10 @@ public class InstallScripts {
         if (existingImage != null && ResourceSubType.SCADA_SYMBOL.equals(existingImage.getResourceSubType())) {
             return existingImage;
         } else {
+            var existing = imageService.getImageInfoByTenantIdAndKey(TenantId.SYS_TENANT_ID, fileName);
+            if (existing != null && ResourceSubType.SCADA_SYMBOL.equals(existing.getResourceSubType())) {
+                imageService.deleteImage(existing, true);
+            }
             TbResource image = new TbResource();
             image.setTenantId(TenantId.SYS_TENANT_ID);
             image.setFileName(fileName);
