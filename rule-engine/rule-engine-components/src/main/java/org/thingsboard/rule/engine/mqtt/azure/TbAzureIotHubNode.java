@@ -32,8 +32,6 @@ import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 
-import javax.net.ssl.SSLException;
-
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -66,12 +64,16 @@ public class TbAzureIotHubNode extends TbMqttNode {
         }
     }
 
-    protected void prepareMqttClientConfig(MqttClientConfig config) throws SSLException {
+    protected void prepareMqttClientConfig(MqttClientConfig config) {
         config.setProtocolVersion(MqttVersion.MQTT_3_1_1);
         config.setUsername(AzureIotHubUtil.buildUsername(mqttNodeConfiguration.getHost(), config.getClientId()));
         ClientCredentials credentials = mqttNodeConfiguration.getCredentials();
         if (CredentialsType.SAS == credentials.getType()) {
             config.setPassword(AzureIotHubUtil.buildSasToken(mqttNodeConfiguration.getHost(), ((AzureIotHubSasCredentials) credentials).getSasKey()));
         }
+    }
+
+    protected TbMqttNodeConfiguration getMqttNodeConfiguration() {
+        return this.mqttNodeConfiguration;
     }
 }
