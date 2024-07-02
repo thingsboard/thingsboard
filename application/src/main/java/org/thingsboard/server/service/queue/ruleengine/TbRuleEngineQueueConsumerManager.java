@@ -60,8 +60,8 @@ public class TbRuleEngineQueueConsumerManager extends MainQueueConsumerManager<T
     public static final String SUCCESSFUL_STATUS = "successful";
     public static final String FAILED_STATUS = "failed";
 
-    private final TbRuleEngineConsumerContext ctx;
-    private final TbRuleEngineConsumerStats stats;
+    protected final TbRuleEngineConsumerContext ctx;
+    protected final TbRuleEngineConsumerStats stats;
 
     @Builder(builderMethodName = "create") // not to conflict with super.builder()
     public TbRuleEngineQueueConsumerManager(TbRuleEngineConsumerContext ctx,

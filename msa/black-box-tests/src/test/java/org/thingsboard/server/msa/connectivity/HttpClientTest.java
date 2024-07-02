@@ -34,7 +34,6 @@ import java.util.Arrays;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.thingsboard.server.common.data.DataConstants.DEVICE;
 import static org.thingsboard.server.common.data.DataConstants.SHARED_SCOPE;
 import static org.thingsboard.server.msa.prototypes.DevicePrototypes.defaultDevicePrototype;
 
@@ -76,7 +75,7 @@ public class HttpClientTest extends AbstractContainerTest {
         assertThat(accessToken).isNotNull();
 
         JsonNode sharedAttribute = mapper.readTree(createPayload().toString());
-        testRestClient.postTelemetryAttribute(DEVICE, device.getId(), SHARED_SCOPE, sharedAttribute);
+        testRestClient.postTelemetryAttribute(device.getId(), SHARED_SCOPE, sharedAttribute);
 
         JsonNode clientAttribute = mapper.readTree(createPayload().toString());
         testRestClient.postAttribute(accessToken, clientAttribute);

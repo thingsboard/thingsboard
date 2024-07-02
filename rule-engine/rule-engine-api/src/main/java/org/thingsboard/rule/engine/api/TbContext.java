@@ -37,14 +37,12 @@ import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -377,16 +375,6 @@ public interface TbContext {
 
     TbResultSetFuture submitCassandraWriteTask(CassandraStatementTask task);
 
-    PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink);
-
-    RuleNodeState findRuleNodeStateForEntity(EntityId entityId);
-
-    void removeRuleNodeStateForEntity(EntityId entityId);
-
-    RuleNodeState saveRuleNodeState(RuleNodeState state);
-
-    void clearRuleNodeStates();
-
     void addTenantProfileListener(Consumer<TenantProfile> listener);
 
     void addDeviceProfileListeners(Consumer<DeviceProfile> listener, BiConsumer<DeviceId, DeviceProfile> deviceListener);
@@ -405,7 +393,12 @@ public interface TbContext {
 
     EntityService getEntityService();
 
+    AlarmRuleService getAlarmRuleService();
+
+    TbAlarmRuleStateService getAlarmRuleStateService();
+
     EventService getEventService();
 
     AuditLogService getAuditLogService();
+
 }

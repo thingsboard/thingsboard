@@ -41,15 +41,30 @@ import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.alarm.AlarmSeverity;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionFilterKey;
+import org.thingsboard.server.common.data.alarm.rule.condition.AlarmConditionKeyType;
+import org.thingsboard.server.common.data.alarm.rule.utils.AlarmRuleMigrator;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.device.profile.JsonTransportPayloadConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.ProtoTransportPayloadConfiguration;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.OldAlarmCondition;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.OldAlarmConditionFilter;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.OldAlarmRule;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.OldSimpleAlarmConditionSpec;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.query.EntityKeyValueType;
+import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.common.data.query.NumericFilterPredicate;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleDao;
 import org.thingsboard.server.dao.device.DeviceProfileDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -58,6 +73,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
+import java.util.TreeMap;
 import java.util.stream.Collectors;
 
 import static org.hamcrest.Matchers.containsString;
@@ -78,6 +94,8 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
     @Autowired
     private DeviceProfileDao deviceProfileDao;
+    @Autowired
+    private AlarmRuleDao alarmRuleDao;
 
     static class Config {
         @Bean
@@ -142,6 +160,67 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
         testNotifyEntityBroadcastEntityStateChangeEventOneTime(foundDeviceProfile, foundDeviceProfile.getId(), foundDeviceProfile.getId(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
                 ActionType.UPDATED);
+    }
+
+    @Test
+    public void testSaveDeviceProfileWithAlarmRules() throws Exception {
+        TenantId tenantId = savedTenant.getId();
+        DeviceProfile deviceProfile = this.createDeviceProfile("Device Profile");
+
+        DeviceProfileAlarm deviceProfileAlarm = new DeviceProfileAlarm();
+        deviceProfileAlarm.setAlarmType("High Temperature");
+        OldAlarmRule alarmRule = new OldAlarmRule();
+        alarmRule.setAlarmDetails("Alarm Details");
+        OldAlarmCondition alarmCondition = new OldAlarmCondition();
+        alarmCondition.setSpec(new OldSimpleAlarmConditionSpec());
+        List<OldAlarmConditionFilter> condition = new ArrayList<>();
+        OldAlarmConditionFilter alarmConditionFilter = new OldAlarmConditionFilter();
+        alarmConditionFilter.setKey(new AlarmConditionFilterKey(AlarmConditionKeyType.ATTRIBUTE, "temperature"));
+        NumericFilterPredicate predicate = new NumericFilterPredicate();
+        predicate.setOperation(NumericFilterPredicate.NumericOperation.GREATER);
+        predicate.setValue(new FilterPredicateValue<>(55.0));
+        alarmConditionFilter.setPredicate(predicate);
+        alarmConditionFilter.setValueType(EntityKeyValueType.NUMERIC);
+        condition.add(alarmConditionFilter);
+        alarmCondition.setCondition(condition);
+        alarmRule.setCondition(alarmCondition);
+        deviceProfileAlarm.setClearRule(alarmRule);
+        TreeMap<AlarmSeverity, OldAlarmRule> createRules = new TreeMap<>();
+        createRules.put(AlarmSeverity.CRITICAL, alarmRule);
+        deviceProfileAlarm.setCreateRules(createRules);
+        deviceProfile.getProfileData().setAlarms(List.of(deviceProfileAlarm));
+
+        DeviceProfile savedDeviceProfile = doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+        deviceProfile.getProfileData().setAlarms(null);
+
+        AlarmRule foundRule = alarmRuleDao.findByTenantIdAndName(tenantId.getId(), deviceProfile.getName() + " - " + deviceProfileAlarm.getAlarmType());
+
+        Assert.assertNotNull(savedDeviceProfile);
+        Assert.assertNotNull(foundRule);
+        Assert.assertNotNull(foundRule.getId());
+        Assert.assertTrue(foundRule.getCreatedTime() > 0);
+
+        AlarmRule expectedAlarmRule = AlarmRuleMigrator.migrate(tenantId, savedDeviceProfile, deviceProfileAlarm);
+        expectedAlarmRule.setId(foundRule.getId());
+        expectedAlarmRule.setCreatedTime(foundRule.getCreatedTime());
+
+        Assert.assertEquals(expectedAlarmRule, foundRule);
+
+        testNotifyEntityAllOneTime(expectedAlarmRule, expectedAlarmRule.getId(), expectedAlarmRule.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ADDED);
+
+        alarmRule.setAlarmDetails("Updated Alarm Details");
+        savedDeviceProfile.getProfileData().setAlarms(List.of(deviceProfileAlarm));
+        savedDeviceProfile = doPost("/api/deviceProfile", savedDeviceProfile, DeviceProfile.class);
+        foundRule = alarmRuleDao.findByTenantIdAndName(tenantId.getId(), deviceProfile.getName() + " - " + deviceProfileAlarm.getAlarmType());
+        expectedAlarmRule = AlarmRuleMigrator.migrate(tenantId, savedDeviceProfile, deviceProfileAlarm);
+        expectedAlarmRule.setId(foundRule.getId());
+        expectedAlarmRule.setCreatedTime(foundRule.getCreatedTime());
+
+        Assert.assertEquals(expectedAlarmRule, foundRule);
+
+        testNotifyEntityAllOneTime(expectedAlarmRule, expectedAlarmRule.getId(), expectedAlarmRule.getId(), savedTenant.getId(),
+                tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
     }
 
     @Test
@@ -254,7 +333,7 @@ public class DeviceProfileControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveDeviceProfileWithEmptyName() throws Exception {
-        DeviceProfile deviceProfile = new DeviceProfile();
+        DeviceProfile deviceProfile = createDeviceProfile(null);
 
         Mockito.reset(tbClusterService, auditLogService);
 

@@ -33,6 +33,7 @@ import org.thingsboard.rule.engine.api.RuleEngineRpcService;
 import org.thingsboard.rule.engine.api.RuleEngineTelemetryService;
 import org.thingsboard.rule.engine.api.ScriptEngine;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.notification.SlackService;
@@ -61,10 +62,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
-import org.thingsboard.server.common.data.rule.RuleNodeState;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbActorMsg;
 import org.thingsboard.server.common.msg.TbMsg;
@@ -73,6 +71,7 @@ import org.thingsboard.server.common.msg.TbMsgProcessingStackItem;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.attributes.AttributesService;
@@ -858,47 +857,6 @@ class DefaultTbContext implements TbContext {
     }
 
     @Override
-    public PageData<RuleNodeState> findRuleNodeStates(PageLink pageLink) {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}][{}] Fetch Rule Node States.", getTenantId(), getSelfId());
-        }
-        return mainCtx.getRuleNodeStateService().findByRuleNodeId(getTenantId(), getSelfId(), pageLink);
-    }
-
-    @Override
-    public RuleNodeState findRuleNodeStateForEntity(EntityId entityId) {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}][{}][{}] Fetch Rule Node State for entity.", getTenantId(), getSelfId(), entityId);
-        }
-        return mainCtx.getRuleNodeStateService().findByRuleNodeIdAndEntityId(getTenantId(), getSelfId(), entityId);
-    }
-
-    @Override
-    public RuleNodeState saveRuleNodeState(RuleNodeState state) {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}][{}][{}] Persist Rule Node State for entity: {}", getTenantId(), getSelfId(), state.getEntityId(), state.getStateData());
-        }
-        state.setRuleNodeId(getSelfId());
-        return mainCtx.getRuleNodeStateService().save(getTenantId(), state);
-    }
-
-    @Override
-    public void clearRuleNodeStates() {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}][{}] Going to clear rule node states", getTenantId(), getSelfId());
-        }
-        mainCtx.getRuleNodeStateService().removeByRuleNodeId(getTenantId(), getSelfId());
-    }
-
-    @Override
-    public void removeRuleNodeStateForEntity(EntityId entityId) {
-        if (log.isDebugEnabled()) {
-            log.debug("[{}][{}][{}] Remove Rule Node State for entity.", getTenantId(), getSelfId(), entityId);
-        }
-        mainCtx.getRuleNodeStateService().removeByRuleNodeIdAndEntityId(getTenantId(), getSelfId(), entityId);
-    }
-
-    @Override
     public void addTenantProfileListener(Consumer<TenantProfile> listener) {
         mainCtx.getTenantProfileCache().addListener(getTenantId(), getSelfId(), listener);
     }
@@ -943,6 +901,16 @@ class DefaultTbContext implements TbContext {
     @Override
     public EntityService getEntityService() {
         return mainCtx.getEntityService();
+    }
+
+    @Override
+    public TbAlarmRuleStateService getAlarmRuleStateService() {
+        return mainCtx.getAlarmRuleStateService();
+    }
+
+    @Override
+    public AlarmRuleService getAlarmRuleService() {
+        return mainCtx.getAlarmRuleService();
     }
 
     @Override

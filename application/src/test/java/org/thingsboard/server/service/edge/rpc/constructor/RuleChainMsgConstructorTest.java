@@ -256,7 +256,7 @@ public class RuleChainMsgConstructorTest {
         result.add(getOutputNode(ruleChainId));
         result.add(getAcknowledgeNode(ruleChainId));
         result.add(getCheckpointNode(ruleChainId));
-        result.add(getDeviceProfileNode(ruleChainId));
+        result.add(getAlarmRulesNode(ruleChainId));
         result.add(getSaveTimeSeriesNode(ruleChainId));
         result.add(getSaveClientAttributesNode(ruleChainId));
         result.add(getMessageTypeSwitchNode(ruleChainId));
@@ -308,7 +308,7 @@ public class RuleChainMsgConstructorTest {
         result.add(getMessageTypeSwitchNode(ruleChainId));
         result.add(getSaveClientAttributesNode(ruleChainId));
         result.add(getSaveTimeSeriesNode(ruleChainId));
-        result.add(getDeviceProfileNode(ruleChainId));
+        result.add(getAlarmRulesNode(ruleChainId));
         result.add(getCheckpointNode(ruleChainId));
         result.add(getAcknowledgeNode(ruleChainId));
         result.add(getOutputNode(ruleChainId));
@@ -372,12 +372,12 @@ public class RuleChainMsgConstructorTest {
                 JacksonUtil.toJsonNode("{\"description\":\"\",\"layoutX\":177,\"layoutY\":703}"));
     }
 
-    private RuleNode getDeviceProfileNode(RuleChainId ruleChainId) {
+    private RuleNode getAlarmRulesNode(RuleChainId ruleChainId) {
         return createRuleNode(ruleChainId,
-                "org.thingsboard.rule.engine.profile.TbDeviceProfileNode",
-                "Device Profile Node",
-                JacksonUtil.toJsonNode("{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
-                JacksonUtil.toJsonNode("{\"description\":\"Process incoming messages from devices with the alarm rules defined in the device profile. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));
+                "org.thingsboard.rule.engine.action.TbAlarmRulesNode",
+                "Alarm Rules Node",
+                null,
+                JacksonUtil.toJsonNode("{\"description\":\"Process incoming messages from devices with the alarm rules. Dispatch all incoming messages with \\\"Success\\\" relation type.\",\"layoutX\":187,\"layoutY\":468}"));
     }
 
     private RuleNode getSaveClientAttributesNode(RuleChainId ruleChainId) {

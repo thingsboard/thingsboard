@@ -30,7 +30,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
+import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.alarm.AlarmService;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.model.ModelConstants;
@@ -56,6 +58,7 @@ public abstract class AbstractTbEntityService {
     @Autowired
     protected DbCallbackExecutorService dbExecutor;
     @Autowired(required = false)
+    @Lazy
     protected TbLogEntityActionService logEntityActionService;
     @Autowired(required = false)
     protected EdgeService edgeService;
@@ -64,6 +67,10 @@ public abstract class AbstractTbEntityService {
     @Autowired
     @Lazy
     protected AlarmSubscriptionService alarmSubscriptionService;
+    @Autowired
+    protected AlarmRuleService alarmRuleService;
+    @Autowired
+    protected AlarmCommentService alarmCommentService;
     @Autowired
     protected CustomerService customerService;
     @Autowired

@@ -47,7 +47,7 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
 
     protected final ConcurrentMap<TopicPartitionInfo, Set<T>> partitionedEntities = new ConcurrentHashMap<>();
     protected final ConcurrentMap<TopicPartitionInfo, List<ListenableFuture<?>>> partitionedFetchTasks = new ConcurrentHashMap<>();
-    final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
+    protected final Queue<Set<TopicPartitionInfo>> subscribeQueue = new ConcurrentLinkedQueue<>();
 
     @Autowired
     protected PartitionService partitionService;
@@ -58,6 +58,10 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
     abstract protected String getSchedulerExecutorName();
 
     abstract protected Map<TopicPartitionInfo, List<ListenableFuture<?>>> onAddedPartitions(Set<TopicPartitionInfo> addedPartitions);
+
+    protected void cleanupEntitiesOnPartitionRemoval(Set<T> ids) {
+        ids.forEach(this::cleanupEntityOnPartitionRemoval);
+    }
 
     abstract protected void cleanupEntityOnPartitionRemoval(T entityId);
 
@@ -128,7 +132,7 @@ public abstract class AbstractPartitionBasedService<T extends EntityId> extends 
             for (var partition : removedPartitions) {
                 Set<T> entities = partitionedEntities.remove(partition);
                 if (entities != null) {
-                    entities.forEach(this::cleanupEntityOnPartitionRemoval);
+                    cleanupEntitiesOnPartitionRemoval(entities);
                 }
                 List<ListenableFuture<?>> fetchTasks = partitionedFetchTasks.remove(partition);
                 if (fetchTasks != null) {

@@ -28,6 +28,7 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.discovery.PartitionService;
 
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 
 @Service
@@ -38,7 +39,7 @@ public class TbRuleEngineProducerService {
     private final PartitionService partitionService;
 
     public void sendToRuleEngine(TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer,
-                                 TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
+                                 TenantId tenantId, TbMsg tbMsg, Set<String> relations, TbQueueCallback callback) {
         List<TopicPartitionInfo> tpis = partitionService.resolveAll(ServiceType.TB_RULE_ENGINE, tbMsg.getQueueName(), tenantId, tbMsg.getOriginator());
         if (tpis.size() > 1) {
             UUID correlationId = UUID.randomUUID();

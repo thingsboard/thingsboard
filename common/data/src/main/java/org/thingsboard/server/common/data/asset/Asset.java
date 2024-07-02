@@ -54,7 +54,8 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
 
     private AssetProfileId assetProfileId;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private AssetId externalId;
 
     public Asset() {
@@ -157,7 +158,7 @@ public class Asset extends BaseDataWithAdditionalInfo<AssetId> implements HasLab
         this.assetProfileId = assetProfileId;
     }
 
-    @Schema(description = "Additional parameters of the asset",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the asset", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

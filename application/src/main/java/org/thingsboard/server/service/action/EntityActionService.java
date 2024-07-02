@@ -66,6 +66,7 @@ public class EntityActionService {
     public void pushEntityActionToRuleEngine(EntityId entityId, HasName entity, TenantId tenantId, CustomerId customerId,
                                              ActionType actionType, User user, Object... additionalInfo) {
         Optional<TbMsgType> msgType = actionType.getRuleEngineMsgType();
+
         if (msgType.isPresent()) {
             try {
                 TbMsgMetaData metaData = new TbMsgMetaData();

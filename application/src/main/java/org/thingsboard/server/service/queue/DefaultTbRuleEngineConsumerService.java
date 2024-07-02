@@ -50,6 +50,7 @@ import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineConsumerContext;
+import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineInternalQueueConsumerManager;
 import org.thingsboard.server.service.queue.ruleengine.TbRuleEngineQueueConsumerManager;
 import org.thingsboard.server.service.rpc.TbRuleEngineDeviceRpcService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
@@ -61,6 +62,10 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_TOPIC;
+import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 
 @Service
 @TbRuleEngineComponent
@@ -201,6 +206,13 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
 
                 getConsumer(queueKey).ifPresentOrElse(consumer -> consumer.update(queue),
                         () -> createConsumer(queueKey, queue));
+
+                if (queueKey.isMain()) {
+                    var intQueueKey = queueKey.withQueueName(INTERNAL_QUEUE_NAME);
+                    var intQueue = queue.withName(INTERNAL_QUEUE_NAME).withTopic(INTERNAL_QUEUE_TOPIC);
+                    getConsumer(intQueueKey).ifPresentOrElse(consumer -> consumer.update(intQueue),
+                            () -> createConsumer(intQueueKey, intQueue));
+                }
             }
         }
 
@@ -214,7 +226,12 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
             log.info("Received queue delete msg: [{}]", queueDeleteMsg);
             TenantId tenantId = new TenantId(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
-            removeConsumer(queueKey).ifPresent(consumer -> consumer.delete(true));
+            removeConsumer(queueKey).ifPresent(consumer -> {
+                consumer.delete(true);
+                if (queueKey.isMain()) {
+                    removeConsumer(queueKey.withQueueName(INTERNAL_QUEUE_NAME)).ifPresent(internal -> internal.delete(true));
+                }
+            });
         }
 
         partitionService.removeQueues(queueDeleteMsgs);
@@ -240,16 +257,26 @@ public class DefaultTbRuleEngineConsumerService extends AbstractConsumerService<
     }
 
     private TbRuleEngineQueueConsumerManager createConsumer(QueueKey queueKey, Queue queue) {
-        var consumer = TbRuleEngineQueueConsumerManager.create()
+        TbRuleEngineQueueConsumerManager consumer;
+        if (queueKey.getQueueName().equals(INTERNAL_QUEUE_NAME)) {
+            consumer = createConsumer(queueKey, TbRuleEngineInternalQueueConsumerManager.create());
+        } else {
+            consumer = createConsumer(queueKey, TbRuleEngineQueueConsumerManager.create());
+        }
+
+        consumers.put(queueKey, consumer);
+        consumer.init(queue);
+        return consumer;
+    }
+
+    private <T extends TbRuleEngineQueueConsumerManager> TbRuleEngineQueueConsumerManager createConsumer(QueueKey queueKey, T.TbRuleEngineQueueConsumerManagerBuilder builder) {
+        return builder
                 .ctx(ctx)
                 .queueKey(queueKey)
                 .consumerExecutor(consumersExecutor)
                 .scheduler(scheduler)
                 .taskExecutor(mgmtExecutor)
                 .build();
-        consumers.put(queueKey, consumer);
-        consumer.init(queue);
-        return consumer;
     }
 
     private Optional<TbRuleEngineQueueConsumerManager> removeConsumer(QueueKey queueKey) {

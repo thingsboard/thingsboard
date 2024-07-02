@@ -63,7 +63,8 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     private OtaPackageId firmwareId;
     private OtaPackageId softwareId;
 
-    @Getter @Setter
+    @Getter
+    @Setter
     private DeviceId externalId;
 
     public Device() {
@@ -106,7 +107,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     @Schema(description = "JSON object with the Device Id. " +
             "Specify this field to update the Device. " +
             "Referencing non-existing Device Id will cause error. " +
-            "Omit this field to create new Device." )
+            "Omit this field to create new Device.")
     @Override
     public DeviceId getId() {
         return super.getId();
@@ -219,7 +220,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.softwareId = softwareId;
     }
 
-    @Schema(description = "Additional parameters of the device",implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the device", implementation = com.fasterxml.jackson.databind.JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();

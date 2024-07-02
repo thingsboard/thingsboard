@@ -30,18 +30,25 @@ import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
+import org.thingsboard.server.common.data.alarm.rule.utils.AlarmRuleMigrator;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
+import org.thingsboard.server.common.data.device.profile.DeviceProfileSaveResult;
 import org.thingsboard.server.common.data.device.profile.DisabledDeviceProfileProvisionConfiguration;
 import org.thingsboard.server.common.data.device.profile.X509CertificateChainProvisionConfiguration;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.util.CollectionsUtil;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.EncryptionUtil;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -56,6 +63,8 @@ import java.security.cert.Certificate;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
@@ -88,6 +97,9 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
 
     @Autowired
     private DataValidator<DeviceProfile> deviceProfileValidator;
+
+    @Autowired
+    private AlarmRuleService alarmRuleService;
 
     @Autowired
     private ImageService imageService;
@@ -151,6 +163,30 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         log.trace("Executing findDeviceProfileById [{}]", deviceProfileId);
         validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
         return toDeviceProfileInfo(findDeviceProfileById(tenantId, deviceProfileId));
+    }
+
+    @Override
+    public DeviceProfileSaveResult saveDeviceProfileWithAlarmRules(DeviceProfile deviceProfile) {
+        List<DeviceProfileAlarm> oldRules = deviceProfile.getProfileData().getAlarms();
+        deviceProfile.getProfileData().setAlarms(null);
+        DeviceProfile savedProfile = saveDeviceProfile(deviceProfile);
+        return new DeviceProfileSaveResult(savedProfile, saveAlarmRules(savedProfile, oldRules));
+    }
+
+    private List<TbPair<AlarmRule, Boolean>> saveAlarmRules(DeviceProfile deviceProfile, List<DeviceProfileAlarm> oldRules) {
+        if (CollectionsUtil.isNotEmpty(oldRules)) {
+            TenantId tenantId = deviceProfile.getTenantId();
+            return oldRules.stream().map(dpAlarm -> {
+                AlarmRule alarmRule = AlarmRuleMigrator.migrate(tenantId, deviceProfile, dpAlarm);
+                AlarmRule foundAlarmRule = alarmRuleService.findAlarmRuleByName(tenantId, alarmRule.getName());
+                if (foundAlarmRule != null) {
+                    alarmRule.setId(foundAlarmRule.getId());
+                    alarmRule.setCreatedTime(foundAlarmRule.getCreatedTime());
+                }
+                return new TbPair<>(alarmRuleService.saveAlarmRule(tenantId, alarmRule), alarmRule.getId() == null);
+            }).toList();
+        }
+        return Collections.emptyList();
     }
 
     @Override
@@ -382,6 +418,11 @@ public class DeviceProfileServiceImpl extends AbstractCachedEntityService<Device
         return deviceProfileDao.findTenantDeviceProfileNames(tenantId.getId(), activeOnly)
                 .stream().sorted(Comparator.comparing(EntityInfo::getName))
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public PageData<DeviceProfile> findDeviceProfilesWithAlarmRules(TenantId tenantId, PageLink pageLink) {
+        return deviceProfileDao.findDeviceProfilesWithAlarmRules(tenantId, pageLink);
     }
 
     private final PaginatedRemover<TenantId, DeviceProfile> tenantDeviceProfilesRemover =

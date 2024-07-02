@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +37,6 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -51,6 +51,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_NAME;
+import static org.thingsboard.server.common.data.DataConstants.INTERNAL_QUEUE_TOPIC;
 import static org.thingsboard.server.common.data.DataConstants.MAIN_QUEUE_NAME;
 
 @Service
@@ -132,9 +134,7 @@ public class HashPartitionService implements PartitionService {
         List<QueueRoutingInfo> queueRoutingInfoList = getQueueRoutingInfos();
         queueRoutingInfoList.forEach(queue -> {
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queue);
-            partitionTopicsMap.put(queueKey, queue.getQueueTopic());
-            partitionSizesMap.put(queueKey, queue.getPartitions());
-            queueConfigs.put(queueKey, new QueueConfig(queue));
+            updateQueue(queueKey, queue.getQueueTopic(), queue);
         });
     }
 
@@ -180,23 +180,36 @@ public class HashPartitionService implements PartitionService {
             QueueRoutingInfo queueRoutingInfo = new QueueRoutingInfo(queueUpdateMsg);
             TenantId tenantId = queueRoutingInfo.getTenantId();
             QueueKey queueKey = new QueueKey(ServiceType.TB_RULE_ENGINE, queueRoutingInfo.getQueueName(), tenantId);
-            partitionTopicsMap.put(queueKey, queueRoutingInfo.getQueueTopic());
-            partitionSizesMap.put(queueKey, queueRoutingInfo.getPartitions());
-            queueConfigs.put(queueKey, new QueueConfig(queueRoutingInfo));
+            updateQueue(queueKey, queueUpdateMsg.getQueueTopic(), queueRoutingInfo);
             if (!tenantId.isSysTenantId()) {
                 tenantRoutingInfoMap.remove(tenantId);
             }
         }
     }
 
+    private void updateQueue(QueueKey queueKey, String topic, QueueRoutingInfo queueRoutingInfo) {
+        partitionTopicsMap.put(queueKey, topic);
+        partitionSizesMap.put(queueKey, queueRoutingInfo.getPartitions());
+        queueConfigs.put(queueKey, new QueueConfig(queueRoutingInfo));
+        if (queueKey.isMain()) {
+            updateQueue(queueKey.withQueueName(INTERNAL_QUEUE_NAME), INTERNAL_QUEUE_TOPIC, queueRoutingInfo);
+        }
+    }
+
     @Override
     public void removeQueues(List<TransportProtos.QueueDeleteMsg> queueDeleteMsgs) {
-        List<QueueKey> queueKeys = queueDeleteMsgs.stream()
+        List<QueueKey> queueKeys = new ArrayList<>();
+        queueDeleteMsgs.stream()
                 .map(queueDeleteMsg -> {
                     TenantId tenantId = TenantId.fromUUID(new UUID(queueDeleteMsg.getTenantIdMSB(), queueDeleteMsg.getTenantIdLSB()));
                     return new QueueKey(ServiceType.TB_RULE_ENGINE, queueDeleteMsg.getQueueName(), tenantId);
                 })
-                .collect(Collectors.toList());
+                .forEach(queueKey -> {
+                    queueKeys.add(queueKey);
+                    if (queueKey.isMain()) {
+                        queueKeys.add(queueKey.withQueueName(INTERNAL_QUEUE_NAME));
+                    }
+                });
         queueKeys.forEach(queueKey -> {
             removeQueue(queueKey);
             evictTenantInfo(queueKey.getTenantId());

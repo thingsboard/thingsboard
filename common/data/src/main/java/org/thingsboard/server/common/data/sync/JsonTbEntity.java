@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.TbResource;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.notification.rule.NotificationRule;
@@ -58,7 +59,8 @@ import java.lang.annotation.Target;
         @Type(name = "NOTIFICATION_TEMPLATE", value = NotificationTemplate.class),
         @Type(name = "NOTIFICATION_TARGET", value = NotificationTarget.class),
         @Type(name = "NOTIFICATION_RULE", value = NotificationRule.class),
-        @Type(name = "TB_RESOURCE", value = TbResource.class)
+        @Type(name = "TB_RESOURCE", value = TbResource.class),
+        @Type(name = "ALARM_RULE", value = AlarmRule.class)
 })
 @JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
 public @interface JsonTbEntity {

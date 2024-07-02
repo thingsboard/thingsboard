@@ -415,13 +415,6 @@ public class ModelConstants {
     public static final String RULE_NODE_CONFIGURATION_PROPERTY = "configuration";
 
     /**
-     * Node state constants.
-     */
-    public static final String RULE_NODE_STATE_TABLE_NAME = "rule_node_state";
-    public static final String RULE_NODE_STATE_NODE_ID_PROPERTY = "rule_node_id";
-    public static final String RULE_NODE_STATE_ENTITY_TYPE_PROPERTY = "entity_type";
-    public static final String RULE_NODE_STATE_ENTITY_ID_PROPERTY = "entity_id";
-    public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
 
     /**
      * OAuth2 client registration constants.
@@ -619,6 +612,17 @@ public class ModelConstants {
     public static final String QUEUE_STATS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String QUEUE_STATS_QUEUE_NAME_PROPERTY = "queue_name";
     public static final String QUEUE_STATS_SERVICE_ID_PROPERTY = "service_id";
+
+    /**
+     * Alarm rule constants.
+     */
+    public static final String ALARM_RULE_COLUMN_FAMILY_NAME = "alarm_rule";
+    public static final String ALARM_RULE_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String ALARM_RULE_NAME_PROPERTY = "name";
+    public static final String ALARM_RULE_ALARM_TYPE_PROPERTY = "alarm_type";
+    public static final String ALARM_RULE_ENABLED_PROPERTY = "enabled";
+    public static final String ALARM_RULE_CONFIGURATION_PROPERTY = "configuration";
+    public static final String ALARM_RULE_DESCRIPTION_PROPERTY = "description";
 
     /**
      * Notification constants

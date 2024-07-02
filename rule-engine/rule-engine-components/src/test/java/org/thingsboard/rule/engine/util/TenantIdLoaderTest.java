@@ -41,6 +41,7 @@ import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
+import org.thingsboard.server.common.data.alarm.rule.AlarmRule;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.edge.Edge;
@@ -62,6 +63,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.dashboard.DashboardService;
@@ -139,6 +141,9 @@ public class TenantIdLoaderTest {
     private NotificationRuleService notificationRuleService;
     @Mock
     private QueueStatsService queueStatsService;
+
+    @Mock
+    private AlarmRuleService alarmRuleService;
 
     private TenantId tenantId;
     private TenantProfileId tenantProfileId;
@@ -355,6 +360,12 @@ public class TenantIdLoaderTest {
                 notificationRule.setTenantId(tenantId);
                 when(ctx.getNotificationRuleService()).thenReturn(notificationRuleService);
                 doReturn(notificationRule).when(notificationRuleService).findNotificationRuleById(eq(tenantId), any());
+                break;
+            case ALARM_RULE:
+                AlarmRule alarmRule = new AlarmRule();
+                alarmRule.setTenantId(tenantId);
+                when(ctx.getAlarmRuleService()).thenReturn(alarmRuleService);
+                doReturn(alarmRule).when(alarmRuleService).findAlarmRuleById(eq(tenantId), any());
                 break;
             case QUEUE_STATS:
                 QueueStats queueStats = new QueueStats();

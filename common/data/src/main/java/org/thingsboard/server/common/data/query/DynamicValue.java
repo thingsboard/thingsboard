@@ -26,6 +26,8 @@ import java.io.Serializable;
 @RequiredArgsConstructor
 public class DynamicValue<T> implements Serializable {
 
+    private static final long serialVersionUID = 1501601025943556077L;
+
     @JsonIgnore
     private T resolvedValue;
 

@@ -465,6 +465,7 @@ export const createDeviceTransportConfiguration = (type: DeviceTransportType): D
 export enum AlarmConditionType {
   SIMPLE = 'SIMPLE',
   DURATION = 'DURATION',
+  NO_UPDATE = 'NO_UPDATE',
   REPEATING = 'REPEATING'
 }
 
@@ -472,14 +473,26 @@ export const AlarmConditionTypeTranslationMap = new Map<AlarmConditionType, stri
   [
     [AlarmConditionType.SIMPLE, 'device-profile.condition-type-simple'],
     [AlarmConditionType.DURATION, 'device-profile.condition-type-duration'],
+    [AlarmConditionType.NO_UPDATE, 'device-profile.condition-type-no-update'],
     [AlarmConditionType.REPEATING, 'device-profile.condition-type-repeating']
   ]
 );
 
-export interface AlarmConditionSpec{
-  type?: AlarmConditionType;
-  unit?: TimeUnit;
-  predicate: FilterPredicateValue<number>;
+export type AlarmConditionSpec = SimpleAlarmConditionSpec | NoUpdateAlarmConditionSpec |
+  RepeatingAlarmConditionSpec | DurationAlarmConditionSpec;
+
+interface AlarmConditionSpecType<T extends AlarmConditionType>{
+  type: T;
+  argumentId: string;
+  predicate: FilterPredicateValue<number>; // TODO: Need to delete
+}
+
+type SimpleAlarmConditionSpec = AlarmConditionSpecType<AlarmConditionType.SIMPLE>;
+type NoUpdateAlarmConditionSpec = AlarmConditionSpecType<AlarmConditionType.NO_UPDATE>;
+type RepeatingAlarmConditionSpec = AlarmConditionSpecType<AlarmConditionType.REPEATING>;
+
+interface DurationAlarmConditionSpec extends AlarmConditionSpecType<AlarmConditionType.DURATION>{
+  unit: TimeUnit;
 }
 
 export interface AlarmCondition {

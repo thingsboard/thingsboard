@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MSecurity
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceTypeConfiguration;
 import org.thingsboard.server.common.data.device.profile.DefaultCoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.data.device.profile.DeviceProfileAlarm;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.MqttDeviceProfileTransportConfiguration;
@@ -168,21 +167,6 @@ public class DeviceProfileDataValidator extends AbstractHasOtaPackageValidator<D
                         ((Lwm2mDeviceProfileTransportConfiguration) transportConfiguration).isBootstrapServerUpdateEnable());
                 for (LwM2MBootstrapServerCredential bootstrapServerCredential : lwM2MBootstrapServersConfigurations) {
                     validateLwm2mServersCredentialOfBootstrapForClient(bootstrapServerCredential);
-                }
-            }
-        }
-
-        List<DeviceProfileAlarm> profileAlarms = deviceProfile.getProfileData().getAlarms();
-
-        if (!CollectionUtils.isEmpty(profileAlarms)) {
-            Set<String> alarmTypes = new HashSet<>();
-            for (DeviceProfileAlarm alarm : profileAlarms) {
-                String alarmType = alarm.getAlarmType();
-                if (StringUtils.isEmpty(alarmType)) {
-                    throw new DataValidationException("Alarm rule type should be specified!");
-                }
-                if (!alarmTypes.add(alarmType)) {
-                    throw new DataValidationException(String.format("Can't create device profile with the same alarm rule types: \"%s\"!", alarmType));
                 }
             }
         }

@@ -92,4 +92,7 @@ public interface DeviceProfileRepository extends JpaRepository<DeviceProfileEnti
             "FROM DeviceProfileEntity d WHERE d.tenantId = :tenantId")
     List<EntityInfo> findAllTenantDeviceProfileNames(@Param("tenantId") UUID tenantId);
 
+    @Query(value = "SELECT * FROM device_profile d WHERE d.tenant_id = :tenantId AND d.profile_data ->> 'alarms' IS NOT NULL", nativeQuery = true)
+    Page<DeviceProfileEntity> findDeviceProfilesWIthAlarmRules(@Param("tenantId") UUID tenantId,
+                                                               Pageable pageable);
 }

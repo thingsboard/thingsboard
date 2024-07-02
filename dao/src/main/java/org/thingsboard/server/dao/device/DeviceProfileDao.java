@@ -53,4 +53,5 @@ public interface DeviceProfileDao extends Dao<DeviceProfile>, ExportableEntityDa
 
     List<EntityInfo> findTenantDeviceProfileNames(UUID tenantId, boolean activeOnly);
 
+    PageData<DeviceProfile> findDeviceProfilesWithAlarmRules(TenantId tenantId, PageLink pageLink);
 }

@@ -382,7 +382,23 @@ export class MenuService {
         name: 'alarm.alarms',
         type: 'link',
         path: '/alarms',
-        icon: 'mdi:alert-outline'
+        icon: 'mdi:alert-outline',
+        pages: [
+          {
+            id: 'alarm_list',
+            name: 'alarm.alarms',
+            type: 'link',
+            path: '/alarms/alarms',
+            icon: 'mdi:alert-outline'
+          },
+          {
+            id: 'alarms_rules',
+            name: 'alarm-rule.alarm-rules',
+            type: 'link',
+            path: '/alarms/alarm-rules',
+            icon: 'mdi:list-status'
+          }
+        ]
       },
       {
         id: 'dashboards',

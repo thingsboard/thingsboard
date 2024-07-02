@@ -47,13 +47,11 @@ import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.eclipse.leshan.server.registration.UpdatedRegistration;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.data.redis.connection.RedisClusterConnection;
 import org.springframework.data.redis.connection.RedisConnection;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
-import org.springframework.data.redis.core.Cursor;
-import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.RedisUtil;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
@@ -63,7 +61,6 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -131,7 +128,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
 
     public TbLwM2mRedisRegistrationStore(LwM2MTransportServerConfig config, RedisConnectionFactory connectionFactory, long cleanPeriodInSec, long lifetimeGracePeriodInSec, int cleanLimit, LwM2mVersionedModelProvider modelProvider) {
         this(config, connectionFactory, Executors.newScheduledThreadPool(1,
-                new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
+                        new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
                 cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit, modelProvider);
     }
 
@@ -341,24 +338,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     @Override
     public Iterator<Registration> getAllRegistrations() {
         try (var connection = connectionFactory.getConnection()) {
-            Collection<Registration> list = new LinkedList<>();
-            ScanOptions scanOptions = ScanOptions.scanOptions().count(100).match(REG_EP + "*").build();
-            List<Cursor<byte[]>> scans = new ArrayList<>();
-            if (connection instanceof RedisClusterConnection) {
-                ((RedisClusterConnection) connection).clusterGetNodes().forEach(node -> {
-                    scans.add(((RedisClusterConnection) connection).scan(node, scanOptions));
-                });
-            } else {
-                scans.add(connection.scan(scanOptions));
-            }
-
-            scans.forEach(scan -> {
-                scan.forEachRemaining(key -> {
-                    byte[] element = connection.get(key);
-                    list.add(deserializeReg(element));
-                });
-            });
-            return list.iterator();
+            return RedisUtil.getAll(connection, REG_EP, this::deserializeReg).listIterator();
         }
     }
 

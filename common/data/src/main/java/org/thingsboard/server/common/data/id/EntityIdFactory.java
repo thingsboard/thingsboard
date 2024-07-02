@@ -105,6 +105,8 @@ public class EntityIdFactory {
                 return new NotificationId(uuid);
             case QUEUE_STATS:
                 return new QueueStatsId(uuid);
+            case ALARM_RULE:
+                return new AlarmRuleId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

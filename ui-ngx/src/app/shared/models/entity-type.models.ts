@@ -44,7 +44,8 @@ export enum EntityType {
   NOTIFICATION_REQUEST = 'NOTIFICATION_REQUEST',
   NOTIFICATION_RULE = 'NOTIFICATION_RULE',
   NOTIFICATION_TARGET = 'NOTIFICATION_TARGET',
-  NOTIFICATION_TEMPLATE = 'NOTIFICATION_TEMPLATE'
+  NOTIFICATION_TEMPLATE = 'NOTIFICATION_TEMPLATE',
+  ALARM_RULE = 'ALARM_RULE'
 }
 
 export enum AliasEntityType {
@@ -261,6 +262,19 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         noEntities: 'alarm.no-alarms-prompt',
         search: 'alarm.search',
         selectedEntities: 'alarm.selected-alarms'
+      }
+    ],
+    [
+      EntityType.ALARM_RULE,
+      {
+        type: 'entity.type-alarm-rule',
+        typePlural: 'entity.type-alarm-rules',
+        list: 'entity.list-of-alarm-rules',
+        noEntities: 'alarm-rule.no-alarm-rules',
+        search: 'alarm-rule.search',
+        selectedEntities: 'alarm-rule.selected',
+        details: 'alarm-rule.alarm-rule-details',
+        add: 'alarm-rule.add',
       }
     ],
     [
@@ -529,6 +543,12 @@ export const entityTypeResources = new Map<EntityType, EntityTypeResource<BaseDa
       EntityType.QUEUE,
       {
         helpLinkId: 'queue'
+      }
+    ],
+    [
+      EntityType.ALARM_RULE,
+      {
+        helpLinkId: 'alarmRules'
       }
     ]
   ]

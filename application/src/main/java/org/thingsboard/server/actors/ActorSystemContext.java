@@ -35,6 +35,7 @@ import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.rule.engine.api.NotificationCenter;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceStateManager;
 import org.thingsboard.rule.engine.api.SmsService;
+import org.thingsboard.rule.engine.api.TbAlarmRuleStateService;
 import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.script.api.js.JsInvokeService;
@@ -56,6 +57,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.common.msg.tools.TbRateLimits;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
+import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
 import org.thingsboard.server.dao.alarm.AlarmCommentService;
 import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
@@ -85,7 +87,6 @@ import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
-import org.thingsboard.server.dao.rule.RuleNodeStateService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -246,10 +247,6 @@ public class ActorSystemContext {
 
     @Autowired
     @Getter
-    private RuleNodeStateService ruleNodeStateService;
-
-    @Autowired
-    @Getter
     private PartitionService partitionService;
 
     @Autowired
@@ -292,6 +289,15 @@ public class ActorSystemContext {
     @Autowired
     @Getter
     private AlarmSubscriptionService alarmService;
+
+    @Lazy
+    @Getter
+    @Autowired(required = false)
+    private TbAlarmRuleStateService alarmRuleStateService;
+
+    @Getter
+    @Autowired(required = false)
+    private AlarmRuleService alarmRuleService;
 
     @Autowired
     @Getter

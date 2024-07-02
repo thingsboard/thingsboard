@@ -15,15 +15,18 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
-
 import jakarta.validation.Valid;
+import lombok.Data;
+import org.thingsboard.server.common.data.device.profile.alarm.rule.DeviceProfileAlarm;
+
 import java.io.Serializable;
 import java.util.List;
 
 @Schema
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class DeviceProfileData implements Serializable {
 
     private static final long serialVersionUID = -3864805547939495272L;
@@ -35,8 +38,7 @@ public class DeviceProfileData implements Serializable {
     private DeviceProfileTransportConfiguration transportConfiguration;
     @Schema(description = "JSON object of provisioning strategy type per device profile")
     private DeviceProfileProvisionConfiguration provisionConfiguration;
-    @Valid
-    @Schema(description = "JSON array of alarm rules configuration per device profile")
+    @Schema(description = "JSON array of alarm rules configuration per device profile", hidden = true)
     private List<DeviceProfileAlarm> alarms;
 
 }
