@@ -111,25 +111,25 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
         HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, ENTITY_SOURCE);
         if (!knownSources.contains(conf.getOriginatorSource())) {
             log.error("Unsupported source [{}] for TbChangeOriginatorNode", conf.getOriginatorSource());
-            throw new IllegalArgumentException("Unsupported source TbChangeOriginatorNode" + conf.getOriginatorSource());
+            throw new IllegalArgumentException("Source '" + conf.getOriginatorSource() + "' is unsupported.");
         }
 
         if (conf.getOriginatorSource().equals(RELATED_SOURCE)) {
             if (conf.getRelationsQuery() == null) {
                 log.error("Related source for TbChangeOriginatorNode should have relations query. Actual [{}]",
                         conf.getRelationsQuery());
-                throw new IllegalArgumentException("Wrong config for RElated Source in TbChangeOriginatorNode" + conf.getOriginatorSource());
+                throw new IllegalArgumentException("Relations query should be specified for the related entity.");
             }
         }
 
         if (conf.getOriginatorSource().equals(ENTITY_SOURCE)) {
             if (conf.getEntityType() == null) {
                 log.error("Entity type not specified for [{}]", ENTITY_SOURCE);
-                throw new IllegalArgumentException("Wrong config for [{}] in TbChangeOriginatorNode!" + ENTITY_SOURCE);
+                throw new IllegalArgumentException("Entity type should be specified for the entity.");
             }
             if (StringUtils.isEmpty(conf.getEntityNamePattern())) {
                 log.error("EntityNamePattern not specified for type [{}]", conf.getEntityType());
-                throw new IllegalArgumentException("Wrong config for [{}] in TbChangeOriginatorNode!" + ENTITY_SOURCE);
+                throw new IllegalArgumentException("Entity name pattern should be specified for the entity.");
             }
             EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }
