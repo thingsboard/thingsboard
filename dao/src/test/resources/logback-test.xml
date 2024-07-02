@@ -9,6 +9,11 @@
 
     <logger name="org.thingsboard.server.dao" level="WARN"/>
     <logger name="org.testcontainers" level="INFO" />
+    <logger name="org.thingsboard.server.dao.sqlts" level="INFO" />
+    <logger name="org.thingsboard.server.dao.sqlts.CachedRedisSqlTimeseriesLatestDao" level="DEBUG" />
+    <logger name="org.thingsboard.server.dao.sqlts.SqlTimeseriesLatestDao" level="TRACE" />
+    <logger name="org.thingsboard.server.dao.timeseries.TsLatestRedisCache" level="TRACE" />
+
 
     <!-- Log Hibernate SQL queries -->
     <!-- <logger name="org.hibernate.SQL" level="DEBUG"/> -->
