@@ -249,8 +249,8 @@ public class TbUtilsTest {
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt(".456", 10));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("4562.", 10));
 
-        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseInt("KonaIn", MAX_RADIX+1));
-        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseInt("KonaIn", MIN_RADIX-1));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseInt("KonaIn", MAX_RADIX + 1));
+        Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseInt("KonaIn", MIN_RADIX - 1));
         Assertions.assertThrows(IllegalArgumentException.class, () -> TbUtils.parseInt("KonaIn", 12));
     }
 
@@ -541,6 +541,7 @@ public class TbUtilsTest {
         Assertions.assertEquals("0xCD", TbUtils.intToHex(0xABCD, true, true, 2));
         Assertions.assertEquals("AB", TbUtils.intToHex(0xABCD, false, false, 2));
     }
+
     @Test
     public void longToHex_Test() {
         Assertions.assertEquals("0x7FFFFFFFFFFFFFFF", TbUtils.longToHex(Long.MAX_VALUE, true, true));
@@ -614,6 +615,7 @@ public class TbUtilsTest {
         valueActual = TbUtils.parseHexToFloat(valueHexRev, false);
         Assertions.assertEquals(value, valueActual);
     }
+
     @Test
     public void doubleToHex_Test() {
         String expectedHex = "0x409B04B10CB295EA";
@@ -645,9 +647,27 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void isNumeric_Test() {
+    public void isBinary_Test() {
+        Assertions.assertEquals(2, TbUtils.isBinary("1100110"));
+        Assertions.assertEquals(-1, TbUtils.isBinary("2100110"));
+    }
 
+    @Test
+    public void isOctal_Test() {
+        Assertions.assertEquals(8, TbUtils.isOctal("4567734"));
+        Assertions.assertEquals(-1, TbUtils.isOctal("8100110"));
+    }
 
+    @Test
+    public void isDecimal_Test() {
+        Assertions.assertEquals(10, TbUtils.isDecimal("4567039"));
+        Assertions.assertEquals(-1, TbUtils.isDecimal("C100110"));
+    }
+
+    @Test
+    public void isHexadecimal_Test() {
+        Assertions.assertEquals(16, TbUtils.isHexadecimal("F5D7039"));
+        Assertions.assertEquals(-1, TbUtils.isHexadecimal("K100110"));
     }
 
     private static List<Byte> toList(byte[] data) {
