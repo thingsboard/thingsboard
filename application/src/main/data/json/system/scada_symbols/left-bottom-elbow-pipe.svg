@@ -108,7 +108,7 @@
       "id": "fluidColor",
       "name": "{i18n:scada.symbol.fluid-color}",
       "type": "color",
-      "default": "#1EC1F4",
+      "default": "#1EC1F480",
       "required": null,
       "subLabel": null,
       "divider": null,
