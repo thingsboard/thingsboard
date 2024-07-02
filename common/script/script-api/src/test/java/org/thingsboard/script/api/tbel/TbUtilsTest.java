@@ -560,8 +560,6 @@ public class TbUtilsTest {
 
     @Test
     public void numberToString_Test() {
-        //       0011 0011 0110 0110 == 13158L
-        //       1100 1100 1001 1010 == -13158L
         Assertions.assertEquals("11001101100110", TbUtils.intLongToString(13158L, 2));
         Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToString(-102L, 2));
         Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToString(-13158L, 2));
@@ -572,6 +570,12 @@ public class TbUtilsTest {
         Assertions.assertEquals("3366", TbUtils.intLongToString(13158L, 16));
         Assertions.assertEquals("FFCC9A", TbUtils.intLongToString(-13158L, 16));
         Assertions.assertEquals("0xFFCC9A", TbUtils.intLongToString(-13158L, 16, true, true));
+
+        Assertions.assertEquals("0x0400", TbUtils.intLongToString(1024L, 16, true, true));
+        Assertions.assertNotEquals("400", TbUtils.intLongToString(1024L, 16));
+        Assertions.assertEquals("0xFFFC00", TbUtils.intLongToString(-1024L, 16, true, true));
+        Assertions.assertNotEquals("0xFC00", TbUtils.intLongToString(-1024L, 16, true, true));
+
         Assertions.assertEquals("hazelnut", TbUtils.intLongToString(1356099454469L, MAX_RADIX));
     }
 

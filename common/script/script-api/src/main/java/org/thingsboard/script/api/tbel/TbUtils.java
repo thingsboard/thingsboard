@@ -61,6 +61,7 @@ public class TbUtils {
     private static final int hexLenMin = -1;
     private static final int hexLenIntMax = 8;
     private static final int hexLenLongMax = 16;
+    private static final int bytesLenLongMax = 8;
 
     private static final LinkedHashMap<String, String> mdnEncodingReplacements = new LinkedHashMap<>();
 
@@ -398,10 +399,10 @@ public class TbUtils {
         if (binaryString.charAt(0) == '1') {
             // Calculate the two's complement
             String invertedBinaryString = invertBinaryString(binaryString);
-            int positiveValue = Integer.parseInt(invertedBinaryString, 2) + 1;
+            int positiveValue = Integer.parseInt(invertedBinaryString, MIN_RADIX) + 1;
             return -positiveValue;
         } else {
-            return Integer.parseInt(binaryString, 2);
+            return Integer.parseInt(binaryString, MIN_RADIX);
         }
     }
     private static long parseBinaryStringAsSignedLong(String binaryString) {
@@ -414,10 +415,10 @@ public class TbUtils {
         if (binaryString.charAt(0) == '1') {
             // Calculate the two's complement
             String invertedBinaryString = invertBinaryString(binaryString);
-            long positiveValue = Long.parseLong(invertedBinaryString, 2) + 1;
+            long positiveValue = Long.parseLong(invertedBinaryString, MIN_RADIX) + 1;
             return -positiveValue;
         } else {
-            return Long.parseLong(binaryString, 2);
+            return Long.parseLong(binaryString, MIN_RADIX);
         }
     }
 
@@ -516,7 +517,7 @@ public class TbUtils {
     public static Long parseHexToLong(String value, boolean bigEndian) {
         String hexValue = prepareNumberString(value);
         String hex = bigEndian ? value : reverseHexStringByOrder(hexValue);
-        return parseLong(hex, 16);
+        return parseLong(hex, hexRadix);
     }
 
     public static float parseLittleEndianHexToFloat(String hex) {
@@ -566,7 +567,7 @@ public class TbUtils {
             // Extract two characters from the hex string
             String byteString = hex.substring(i, i + 2);
             // Parse the hex string to a byte
-            byte byteValue = (byte) Integer.parseInt(byteString, 16);
+            byte byteValue = (byte) Integer.parseInt(byteString, hexRadix);
             // Add the byte to the ArrayList
             data.add(byteValue);
         }
@@ -615,7 +616,7 @@ public class TbUtils {
     }
 
     public static String intLongToString(Long number) {
-        return intLongToString(number, 10);
+        return intLongToString(number, decRadix);
     }
 
     public static String intLongToString(Long number, int radix) {
@@ -632,9 +633,9 @@ public class TbUtils {
         }
         return switch (radix) {
             case MIN_RADIX ->  Long.toBinaryString(number);
-            case 8 -> Long.toOctalString(number);
-            case 10 -> Long.toString(number);
-            case 16 -> prepareNumberHexString(number, bigEndian, pref, -1, -1);
+            case octalRadix -> Long.toOctalString(number);
+            case decRadix -> Long.toString(number);
+            case hexRadix -> prepareNumberHexString(number, bigEndian, pref, -1, -1);
             default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
         };
     }
@@ -660,6 +661,7 @@ public class TbUtils {
 
     private static String removeLeadingZero_FF(String hex, Long number, int hexLenMax) {
         String hexWithoutZero = hex.replaceFirst("^0+(?!$)", ""); // Remove leading zeros except for the last one
+        hexWithoutZero = hexWithoutZero.length() % 2 > 0 ?  "0" + hexWithoutZero : hexWithoutZero;
         if (number >= 0) {
             return hexWithoutZero;
         } else {
@@ -768,8 +770,8 @@ public class TbUtils {
         if (offset > data.length) {
             throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
         }
-        if (length > 8) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum 4 bytes is allowed!");
+        if (length > bytesLenLongMax) {
+            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + bytesLenLongMax + " bytes is allowed!");
         }
         if (offset + length > data.length) {
             throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
@@ -815,7 +817,7 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, boolean bigEndian) {
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, 8, bigEndian);
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, bytesLenLongMax, bigEndian);
         return ByteBuffer.wrap(bytesToNumber).getDouble();
     }
 
@@ -963,17 +965,17 @@ public class TbUtils {
         } else {
             radixValue = switch (radix) {
                 case MIN_RADIX -> isBinary(valueP);
-                case 8 -> isOctal(valueP);
-                case 10 -> isDecimal(valueP);
-                case 16 -> isHexadecimal(valueP);
+                case octalRadix -> isOctal(valueP);
+                case decRadix -> isDecimal(valueP);
+                case hexRadix -> isHexadecimal(valueP);
                 default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
 
             };
         }
 
         if (radixValue > 0) {
-            if (value.startsWith("0x")) radixValue = 16;
-            if (radixValue == 16) {
+            if (value.startsWith("0x")) radixValue = hexRadix;
+            if (radixValue == hexRadix) {
                 valueP = value.startsWith("-") ? value.substring(1) : value;
                 if (valueP.length() % 2 > 0) {
                     throw new NumberFormatException("The hexadecimal value: \"" + value + "\" must be of even length, or if the decimal value must be a number!");
@@ -1036,7 +1038,7 @@ public class TbUtils {
             throw new IllegalArgumentException("The hexadecimal string must be even-length.");
         }
         // Split the hex string into bytes (2 characters each)
-        StringBuilder reversedHex = new StringBuilder(8);
+        StringBuilder reversedHex = new StringBuilder(bytesLenLongMax);
         for (int i = hex.length() - 2; i >= 0; i -= 2) {
             reversedHex.append(hex, i, i + 2);
         }
