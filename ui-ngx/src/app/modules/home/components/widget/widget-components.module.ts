@@ -90,7 +90,9 @@ import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway
 import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
-import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import {
+  MappingDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
 import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
 import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
@@ -100,6 +102,12 @@ import { BarChartWidgetComponent } from '@home/components/widget/lib/chart/bar-c
 import { PolarAreaWidgetComponent } from '@home/components/widget/lib/chart/polar-area-widget.component';
 import { RadarChartWidgetComponent } from '@home/components/widget/lib/chart/radar-chart-widget.component';
 import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobile-app-qrcode-widget.component';
+import {
+  UnreadNotificationWidgetComponent
+} from '@home/components/widget/lib/cards/unread-notification-widget.component';
+import {
+  NotificationTypeFilterPanelComponent
+} from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
 
 @NgModule({
   declarations:
@@ -166,7 +174,9 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
       PieChartWidgetComponent,
       BarChartWidgetComponent,
       PolarAreaWidgetComponent,
-      RadarChartWidgetComponent
+      RadarChartWidgetComponent,
+      UnreadNotificationWidgetComponent,
+      NotificationTypeFilterPanelComponent
     ],
   imports: [
     CommonModule,
@@ -236,7 +246,9 @@ import { MobileAppQrcodeWidgetComponent } from '@home/components/widget/lib/mobi
         PieChartWidgetComponent,
         BarChartWidgetComponent,
         PolarAreaWidgetComponent,
-        RadarChartWidgetComponent
+        RadarChartWidgetComponent,
+        UnreadNotificationWidgetComponent,
+        NotificationTypeFilterPanelComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
