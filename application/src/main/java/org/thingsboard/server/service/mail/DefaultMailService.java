@@ -264,7 +264,11 @@ public class DefaultMailService implements MailService {
                         byte[] bytes = javax.xml.bind.DatatypeConverter.parseBase64Binary(value);
                         String contentType = helper.getFileTypeMap().getContentType(imgId);
                         InputStreamSource iss = () -> new ByteArrayInputStream(bytes);
-                        helper.addInline(imgId, iss, contentType);
+                        if (tbEmail.isAddFileName()){
+                          helper.addInline(imgId, iss, contentType+"; name=\""+imgId+"\";");
+                        } else {
+                          helper.addInline(imgId, iss, contentType);
+                        }
                     }
                 }
                 sendMailWithTimeout(javaMailSender, helper.getMimeMessage(), timeout);
