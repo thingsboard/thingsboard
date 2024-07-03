@@ -49,7 +49,7 @@ import java.util.concurrent.TimeUnit;
                 "Deprecated because the acknowledged message still stays in memory (to be delayed) and this " +
                 "does not guarantee that message will be processed even if the \"retry failures and timeouts\" processing strategy will be chosen.",
         icon = "pause",
-        uiResources = {""},
+        uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeMsgDelayConfig"
 )
 public class TbMsgDelayNode implements TbNode {
