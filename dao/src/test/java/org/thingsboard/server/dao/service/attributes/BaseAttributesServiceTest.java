@@ -60,9 +60,6 @@ public abstract class BaseAttributesServiceTest extends AbstractServiceTest {
     private static final String NEW_VALUE = "NEW VALUE";
 
     @Autowired
-    private VersionedTbCache<AttributeCacheKey, AttributeKvEntry> cache;
-
-    @Autowired
     private AttributesService attributesService;
 
     @Before

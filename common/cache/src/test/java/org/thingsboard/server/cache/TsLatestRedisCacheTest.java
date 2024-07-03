@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.timeseries;
+package org.thingsboard.server.cache;
 
 import lombok.SneakyThrows;
 import org.junit.jupiter.api.Test;
@@ -22,11 +22,11 @@ import java.security.MessageDigest;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-class TsLatestRedisCacheTest {
+class VersionedRedisTbCacheTest {
 
     @Test
     void testUpsertTsLatestLUAScriptHash() {
-        assertThat(getSHA1(TsLatestRedisCache.UPSERT_TS_LATEST_LUA_SCRIPT)).isEqualTo(new String(TsLatestRedisCache.UPSERT_TS_LATEST_SHA));
+        assertThat(getSHA1(VersionedRedisTbCache.SET_VERSIONED_VALUE_LUA_SCRIPT)).isEqualTo(new String(VersionedRedisTbCache.SET_VERSIONED_VALUE_SHA));
     }
 
     @SneakyThrows

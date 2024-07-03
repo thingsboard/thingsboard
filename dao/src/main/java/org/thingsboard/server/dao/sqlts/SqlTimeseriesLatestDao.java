@@ -190,7 +190,7 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
         return Futures.transformAsync(future, entryList -> {
             if (entryList.size() == 1) {
                 TsKvEntry entry = entryList.get(0);
-                return Futures.transform(getSaveLatestFuture(entityId, entry), v -> new TsKvLatestRemovingResult(entry), MoreExecutors.directExecutor());
+                return Futures.transform(getSaveLatestFuture(entityId, entry), v -> new TsKvLatestRemovingResult(entry, v), MoreExecutors.directExecutor());
             } else {
                 log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
             }
@@ -229,18 +229,18 @@ public class SqlTimeseriesLatestDao extends BaseAbstractSqlTimeseriesDao impleme
                 return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), false));
             }
             boolean isRemoved = false;
+            Long version = null;
             long ts = latest.getTs();
             if (ts >= query.getStartTs() && ts < query.getEndTs()) {
-                TsKvLatestEntity latestEntity = new TsKvLatestEntity();
-                latestEntity.setEntityId(entityId.getId());
-                latestEntity.setKey(keyDictionaryDao.getOrSaveKeyId(query.getKey()));
-                tsKvLatestRepository.delete(latestEntity);
+                version = transactionTemplate.execute(status -> jdbcTemplate.query("DELETE FROM ts_kv_latest WHERE entity_id = ? " +
+                                "AND key = ? RETURNING nextval('ts_kv_latest_version_seq')",
+                        rs -> rs.next() ? rs.getLong(1) : null, entityId.getId(), keyDictionaryDao.getOrSaveKeyId(query.getKey())));
                 isRemoved = true;
                 if (query.getRewriteLatestIfDeleted()) {
                     return getNewLatestEntryFuture(tenantId, entityId, query);
                 }
             }
-            return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), isRemoved));
+            return Futures.immediateFuture(new TsKvLatestRemovingResult(query.getKey(), isRemoved, version));
         }, MoreExecutors.directExecutor());
     }
 

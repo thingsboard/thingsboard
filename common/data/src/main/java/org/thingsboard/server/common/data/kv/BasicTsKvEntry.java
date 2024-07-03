@@ -25,9 +25,18 @@ public class BasicTsKvEntry implements TsKvEntry {
     @Valid
     private final KvEntry kv;
 
+    private final Long version;
+
     public BasicTsKvEntry(long ts, KvEntry kv) {
         this.ts = ts;
         this.kv = kv;
+        this.version = null;
+    }
+
+    public BasicTsKvEntry(long ts, KvEntry kv, Long version) {
+        this.ts = ts;
+        this.kv = kv;
+        this.version = version;
     }
 
     @Override
@@ -118,4 +127,8 @@ public class BasicTsKvEntry implements TsKvEntry {
         return Math.max(1, (length + MAX_CHARS_PER_DATA_POINT - 1) / MAX_CHARS_PER_DATA_POINT);
     }
 
+    @Override
+    public Long getVersion() {
+        return version;
+    }
 }

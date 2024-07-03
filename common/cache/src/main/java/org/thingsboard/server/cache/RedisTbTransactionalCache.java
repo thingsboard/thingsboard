@@ -80,7 +80,7 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         try (var connection = connectionFactory.getConnection()) {
             byte[] rawKey = getRawKey(key);
             byte[] rawValue = doGet(connection, rawKey);
-            if (rawValue == null) {
+            if (rawValue == null || rawValue.length == 0) {
                 return null;
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
                 return SimpleTbCacheValueWrapper.empty();

@@ -25,7 +25,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.cache.TbCacheValueWrapper;
-import org.thingsboard.server.cache.TbTransactionalCache;
+import org.thingsboard.server.cache.VersionedTbCache;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -52,7 +52,7 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     final CacheExecutorService cacheExecutorService;
     final SqlTimeseriesLatestDao sqlDao;
     final StatsFactory statsFactory;
-    final TbTransactionalCache<TsLatestCacheKey, TsKvEntry> cache;
+    final VersionedTbCache<TsLatestCacheKey, TsKvEntry> cache;
     DefaultCounter hitCounter;
     DefaultCounter missCounter;
 
@@ -64,17 +64,17 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     }
 
     @Override
-    public ListenableFuture<Void> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
-        ListenableFuture<Void> future = sqlDao.saveLatest(tenantId, entityId, tsKvEntry);
+    public ListenableFuture<Long> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
+        ListenableFuture<Long> future = sqlDao.saveLatest(tenantId, entityId, tsKvEntry);
         future = Futures.transform(future, x -> {
-                    cache.put(new TsLatestCacheKey(entityId, tsKvEntry.getKey()), tsKvEntry);
+                    cache.put(new TsLatestCacheKey(entityId, tsKvEntry.getKey()), tsKvEntry, x);
                     return x;
                 },
                 cacheExecutorService);
         if (log.isTraceEnabled()) {
             Futures.addCallback(future, new FutureCallback<>() {
                 @Override
-                public void onSuccess(Void result) {
+                public void onSuccess(Long result) {
                     log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, tsKvEntry.getKey(), tsKvEntry);
                 }
 
@@ -91,7 +91,15 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     public ListenableFuture<TsKvLatestRemovingResult> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         ListenableFuture<TsKvLatestRemovingResult> future = sqlDao.removeLatest(tenantId, entityId, query);
         future = Futures.transform(future, x -> {
-                    cache.evict(new TsLatestCacheKey(entityId, query.getKey()));
+                    if (x.isRemoved()) {
+                        TsLatestCacheKey key = new TsLatestCacheKey(entityId, query.getKey());
+                        Long version = x.getVersion();
+                        if (x.getData() != null) {
+                            cache.put(key, x.getData(), version);
+                        } else {
+                            cache.evict(key, version);
+                        }
+                    }
                     return x;
                 },
                 cacheExecutorService);
@@ -133,32 +141,11 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
                 return Futures.immediateFuture(Optional.ofNullable(tsKvEntry));
             }
             log.debug("findLatest cache miss [{}][{}]", entityId, key);
-            ListenableFuture<Optional<TsKvEntry>> daoFuture = sqlDao.findLatestOpt(tenantId,entityId, key);
+            ListenableFuture<Optional<TsKvEntry>> daoFuture = sqlDao.findLatestOpt(tenantId, entityId, key);
 
-            return Futures.transformAsync(daoFuture, (daoValue) -> {
-
-                if (daoValue.isEmpty()) {
-                    //TODO implement the cache logic if no latest found in TS DAO. Currently we are always getting from DB to stay on the safe side
-                    return Futures.immediateFuture(daoValue);
-                }
-                ListenableFuture<Optional<TsKvEntry>> cachePutFuture = cacheExecutorService.submit(() -> {
-                    cache.put(new TsLatestCacheKey(entityId, key), daoValue.get());
-                    return daoValue;
-                });
-
-                Futures.addCallback(cachePutFuture, new FutureCallback<>() {
-                    @Override
-                    public void onSuccess(Optional<TsKvEntry> result) {
-                        log.trace("saveLatest onSuccess [{}][{}][{}]", entityId, key, result);
-                    }
-
-                    @Override
-                    public void onFailure(Throwable t) {
-                        log.info("saveLatest onFailure [{}][{}][{}]", entityId, key, daoValue, t);
-                    }
-
-                }, MoreExecutors.directExecutor());
-                return cachePutFuture;
+            return Futures.transform(daoFuture, daoValue -> {
+                cache.put(cacheKey, daoValue.orElse(null));
+                return daoValue;
             }, MoreExecutors.directExecutor());
         }, MoreExecutors.directExecutor());
     }

@@ -98,7 +98,7 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     }
 
     @Override
-    public long getVersion() {
+    public Long getVersion() {
         return version;
     }
 

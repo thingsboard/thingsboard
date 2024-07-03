@@ -44,17 +44,25 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
             local expiration = tonumber(ARGV[3])
 
             local function setNewValue()
-                local newValueWithVersion = struct.pack(">I8", newVersion) .. newValue:sub(9)
+                local newValueWithVersion = struct.pack(">I8", newVersion) .. newValue
                 redis.call('SET', key, newValueWithVersion, 'EX', expiration)
+            end
+            
+            local function bytes_to_number(bytes)
+                local n = 0
+                for i = 1, 8 do
+                    n = n * 256 + string.byte(bytes, i)
+                end
+                return n
             end
 
             -- Get the current version (first 8 bytes) of the current value
             local currentVersionBytes = redis.call('GETRANGE', key, 0, 7)
 
             if currentVersionBytes and #currentVersionBytes == 8 then
-                local currentVersion = tonumber(struct.unpack(">I8", currentVersionBytes))
+                local currentVersion = bytes_to_number(currentVersionBytes)
 
-                if newVersion > currentVersion then
+                if newVersion > currentVersion or newVersion == 1 and currentVersion > 1 then
                     setNewValue()
                 end
             else
@@ -62,7 +70,7 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
                 setNewValue()
             end
             """);
-    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("1d0cb3f1d1f899b8e456789fc5000196d5bb3025");
+    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("05a09f34f523429c96c6eaabbe6f2595f5cba2c3");
 
     public VersionedRedisTbCache(String cacheName, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration, TbRedisSerializer<K, V> valueSerializer) {
         super(cacheName, cacheSpecsMap, connectionFactory, configuration, valueSerializer);

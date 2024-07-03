@@ -161,7 +161,7 @@ public class CassandraBaseTimeseriesLatestDao extends AbstractCassandraBaseTimes
             var entryList = result.getData();
             if (entryList.size() == 1) {
                 TsKvEntry entry = entryList.get(0);
-                return Futures.transform(saveLatest(tenantId, entityId, entryList.get(0)), v -> new TsKvLatestRemovingResult(entry), MoreExecutors.directExecutor());
+                return Futures.transform(saveLatest(tenantId, entityId, entryList.get(0)), v -> new TsKvLatestRemovingResult(entry, v), MoreExecutors.directExecutor());
             } else {
                 log.trace("Could not find new latest value for [{}], key - {}", entityId, query.getKey());
             }

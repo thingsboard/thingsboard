@@ -16,5 +16,5 @@
 package org.thingsboard.server.common.data;
 
 public interface HasVersion {
-    long getVersion();
+    Long getVersion();
 }
