@@ -89,7 +89,7 @@ export class AttributeDatasource implements DataSource<AttributeData> {
                   pageLink: PageLink): Observable<PageData<AttributeData>> {
     return this.getAllAttributes(entityId, attributesScope).pipe(
       map((data) => {
-        const filteredData = data.filter(attrData => attrData.lastUpdateTs !== 0 && attrData.value !== '');
+        const filteredData = data.filter(attrData => attrData.lastUpdateTs !== 0);
         return pageLink.filterData(filteredData);
       })
     );

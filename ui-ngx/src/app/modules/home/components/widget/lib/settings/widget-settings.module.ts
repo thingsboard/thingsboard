@@ -357,6 +357,12 @@ import {
   MobileAppQrCodeWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/mobile-app-qr-code-widget-settings.component';
 import {
+  LabelCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-card-widget-settings.component';
+import {
+  LabelValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-value-card-widget-settings.component';
+import {
   UnreadNotificationWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/unread-notification-widget-settings.component';
 
@@ -486,6 +492,8 @@ import {
     BarChartWidgetSettingsComponent,
     PolarAreaChartWidgetSettingsComponent,
     RadarChartWidgetSettingsComponent,
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent,
   ],
   imports: [
@@ -619,6 +627,8 @@ import {
     BarChartWidgetSettingsComponent,
     PolarAreaChartWidgetSettingsComponent,
     RadarChartWidgetSettingsComponent,
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent,
     UnreadNotificationWidgetSettingsComponent
   ]
 })
@@ -719,5 +729,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-bar-chart-widget-settings': BarChartWidgetSettingsComponent,
   'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent,
   'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent,
+  'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
+  'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent,
   'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent
 };

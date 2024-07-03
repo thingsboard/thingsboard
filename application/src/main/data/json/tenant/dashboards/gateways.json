@@ -248,7 +248,7 @@
                 "type": "customPretty",
                 "customHtml": "<form #addEntityForm=\"ngForm\" [formGroup]=\"addEntityFormGroup\"\r\n      (ngSubmit)=\"save($event)\" class=\"add-entity-form\">\r\n    <mat-toolbar fxLayout=\"row\" color=\"primary\">\r\n        <h2>Add gateway</h2>\r\n        <span fxFlex></span>\r\n        <button mat-icon-button (click)=\"cancel()\" type=\"button\">\r\n            <mat-icon class=\"material-icons\">close</mat-icon>\r\n        </button>\r\n    </mat-toolbar>\r\n    <mat-progress-bar color=\"warn\" mode=\"indeterminate\" *ngIf=\"isLoading$ | async\">\r\n    </mat-progress-bar>\r\n    <div style=\"height: 4px;\" *ngIf=\"!(isLoading$ | async)\"></div>\r\n    <div mat-dialog-content fxLayout=\"column\">\r\n        <div fxLayout=\"row\" fxLayoutGap=\"8px\" fxLayout.xs=\"column\"  fxLayoutGap.xs=\"0\">\r\n            <mat-form-field fxFlex class=\"mat-block\">\r\n                <mat-label>Name</mat-label>\r\n                <input matInput formControlName=\"entityName\" required>\r\n                <mat-error *ngIf=\"addEntityFormGroup.get('entityName').hasError('required')\">\r\n                    Gateway name is required.\r\n                </mat-error>\r\n            </mat-form-field>\r\n        </div>\r\n        <div fxLayout=\"row\" fxLayoutGap=\"8px\" fxLayout.xs=\"column\"  fxLayoutGap.xs=\"0\">\r\n            <tb-entity-subtype-autocomplete\r\n                    fxFlex\r\n                    class=\"mat-block\"\r\n                    formControlName=\"type\"\r\n                    [required]=\"true\"\r\n                    [entityType]=\"'DEVICE'\"\r\n            ></tb-entity-subtype-autocomplete>\r\n        </div>\r\n    </div>\r\n    <div mat-dialog-actions fxLayout=\"row\" fxLayoutAlign=\"end center\">\r\n        <button mat-button color=\"primary\"\r\n                type=\"button\"\r\n                [disabled]=\"(isLoading$ | async)\"\r\n                (click)=\"cancel()\" cdkFocusInitial>\r\n            Cancel\r\n        </button>\r\n        <button mat-button mat-raised-button color=\"primary\"\r\n                type=\"submit\"\r\n                [disabled]=\"(isLoading$ | async) || addEntityForm.invalid || !addEntityForm.dirty\">\r\n            Create\r\n        </button>\r\n    </div>\r\n</form>\r\n",
                 "customCss": ".add-entity-form {\r\n    min-width: 400px !important;\r\n}\r\n\r\n.add-entity-form .boolean-value-input {\r\n    padding-left: 5px;\r\n}\r\n\r\n.add-entity-form .boolean-value-input .checkbox-label {\r\n    margin-bottom: 8px;\r\n    color: rgba(0,0,0,0.54);\r\n    font-size: 12px;\r\n}\r\n\r\n.relations-list .header {\r\n    padding-right: 5px;\r\n    padding-bottom: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .header .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n    font-size: 12px;\r\n    font-weight: 700;\r\n    color: rgba(0, 0, 0, .54);\r\n    white-space: nowrap;\r\n}\r\n\r\n.relations-list .mat-form-field-infix {\r\n    width: auto !important;\r\n}\r\n\r\n.relations-list .body {\r\n    padding-right: 5px;\r\n    padding-bottom: 15px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .row {\r\n    padding-top: 5px;\r\n}\r\n\r\n.relations-list .body .cell {\r\n    padding-right: 5px;\r\n    padding-left: 5px;\r\n}\r\n\r\n.relations-list .body .md-button {\r\n    margin: 0;\r\n}\r\n\r\n",
-                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet assetService = $injector.get(widgetContext.servicesMap.get('assetService'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\r\nlet entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));\r\nlet userSettingsService = $injector.get(widgetContext.servicesMap.get('userSettingsService'));\r\n\r\nopenAddEntityDialog();\r\n\r\nfunction openAddEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\r\n}\r\n\r\nfunction AddEntityDialogController(instance) {\r\n    let vm = instance;\r\n    let userSettings;\r\n    userSettingsService.loadUserSettings().subscribe(settings=> {\r\n        userSettings = settings;\r\n        if (!userSettings.createdGatewaysCount) userSettings.createdGatewaysCount = 0;\r\n    });\r\n    \r\n\r\n    vm.addEntityFormGroup = vm.fb.group({\r\n     entityName: ['', [vm.validators.required]],\r\n     entityType: ['DEVICE'],\r\n     entityLabel: [''],\r\n     type: ['', [vm.validators.required]],\r\n    });\r\n\r\n    vm.cancel = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n    vm.save = function($event) {\r\n        vm.addEntityFormGroup.markAsPristine();\r\n        saveEntityObservable().subscribe(\r\n            function (device) {\r\n                widgetContext.updateAliases();\r\n                userSettingsService.putUserSettings({ createdGatewaysCount: ++userSettings.createdGatewaysCount }).subscribe(_=>{\r\n                });\r\n                vm.dialogRef.close(null);\r\n                openCommandDialog(device, $event);\r\n            }\r\n        );\r\n    };\r\n    \r\n    function openCommandDialog(device, $event) {\r\n        vm.device = device;\r\n        let openCommandAction = widgetContext.actionsApi.getActionDescriptors(\"actionCellButton\").find(action => action.name == \"Docker commands\");\r\n        widgetContext.actionsApi.handleWidgetAction($event, openCommandAction, device.id, device.name, {newDevice: true});\r\n        goToConfigState();\r\n    }\r\n\r\n    \r\n    function goToConfigState() {\r\n        const stateParams = {};\r\n        stateParams.entityId = vm.device.id;\r\n        stateParams.entityName = vm.device.name;\r\n        const newStateParams = {\r\n            targetEntityParamName: 'default',\r\n            new_gateway: {\r\n                entityId: vm.device.id,\r\n                entityName: vm.device.name\r\n            }\r\n        }\r\n        const params = {...stateParams, ...newStateParams};\r\n        widgetContext.stateController.openState('gateway_details', params, false);\r\n    }\r\n\r\n    function saveEntityObservable() {\r\n        const formValues = vm.addEntityFormGroup.value;\r\n        let entity = {\r\n            name: formValues.entityName,\r\n            type: formValues.type,\r\n            label: formValues.entityLabel,\r\n            additionalInfo: {\r\n                gateway: true\r\n            }\r\n        };\r\n        return deviceService.saveDevice(entity);\r\n    }\r\n}\r\n",
+                "customFunction": "let $injector = widgetContext.$scope.$injector;\r\nlet customDialog = $injector.get(widgetContext.servicesMap.get('customDialog'));\r\nlet assetService = $injector.get(widgetContext.servicesMap.get('assetService'));\r\nlet deviceService = $injector.get(widgetContext.servicesMap.get('deviceService'));\r\nlet attributeService = $injector.get(widgetContext.servicesMap.get('attributeService'));\r\nlet entityRelationService = $injector.get(widgetContext.servicesMap.get('entityRelationService'));\r\nlet userSettingsService = $injector.get(widgetContext.servicesMap.get('userSettingsService'));\r\n\r\nopenAddEntityDialog();\r\n\r\nfunction openAddEntityDialog() {\r\n    customDialog.customDialog(htmlTemplate, AddEntityDialogController).subscribe();\r\n}\r\n\r\nfunction AddEntityDialogController(instance) {\r\n    let vm = instance;\r\n    let userSettings;\r\n    userSettingsService.loadUserSettings().subscribe(settings=> {\r\n        userSettings = settings;\r\n        if (!userSettings.createdGatewaysCount) userSettings.createdGatewaysCount = 0;\r\n    });\r\n    \r\n\r\n    vm.addEntityFormGroup = vm.fb.group({\r\n     entityName: ['', [vm.validators.required]],\r\n     entityType: ['DEVICE'],\r\n     entityLabel: [''],\r\n     type: ['', [vm.validators.required]],\r\n    });\r\n\r\n    vm.cancel = function() {\r\n        vm.dialogRef.close(null);\r\n    };\r\n\r\n\r\n    vm.save = function($event) {\r\n        vm.addEntityFormGroup.markAsPristine();\r\n        saveEntityObservable().subscribe(\r\n            function (device) {\r\n                widgetContext.updateAliases();\r\n                userSettingsService.putUserSettings({ createdGatewaysCount: ++userSettings.createdGatewaysCount }).subscribe(_=>{\r\n                });\r\n                vm.dialogRef.close(null);\r\n                openCommandDialog(device, $event);\r\n            }\r\n        );\r\n    };\r\n    \r\n    function openCommandDialog(device, $event) {\r\n        vm.device = device;\r\n        let openCommandAction = widgetContext.actionsApi.getActionDescriptors(\"actionCellButton\").find(action => action.name == \"Launch command\");\r\n        widgetContext.actionsApi.handleWidgetAction($event, openCommandAction, device.id, device.name, {newDevice: true});\r\n        goToConfigState();\r\n    }\r\n\r\n    \r\n    function goToConfigState() {\r\n        const stateParams = {};\r\n        stateParams.entityId = vm.device.id;\r\n        stateParams.entityName = vm.device.name;\r\n        const newStateParams = {\r\n            targetEntityParamName: 'default',\r\n            new_gateway: {\r\n                entityId: vm.device.id,\r\n                entityName: vm.device.name\r\n            }\r\n        }\r\n        const params = {...stateParams, ...newStateParams};\r\n        widgetContext.stateController.openState('gateway_details', params, false);\r\n    }\r\n\r\n    function saveEntityObservable() {\r\n        const formValues = vm.addEntityFormGroup.value;\r\n        let entity = {\r\n            name: formValues.entityName,\r\n            type: formValues.type,\r\n            label: formValues.entityLabel,\r\n            additionalInfo: {\r\n                gateway: true\r\n            }\r\n        };\r\n        return deviceService.saveDevice(entity);\r\n    }\r\n}\r\n",
                 "customResources": [],
                 "openInSeparateDialog": false,
                 "openInPopover": false,
@@ -880,7 +880,7 @@
             "isConnectorLog": true,
             "connectorLogState": "connector_logs"
           },
-          "title": "Gateway Logs",
+          "title": "${entityName} Logs",
           "showTitleIcon": false,
           "dropShadow": true,
           "enableFullscreen": true,
@@ -2134,7 +2134,7 @@
           "padding": "0px",
           "settings": {
             "useMarkdownTextFunction": false,
-            "markdownTextPattern": "<div style=\"width: 100%; height: 100%; padding: 0;\" fxFlex fxLayout=\"column\">\r\n  <mat-tab-group [(selectedIndex)]=\"selectedTabIndex\">\r\n    <mat-tab label=\"All\" value=\"gateway_devices_0\"></mat-tab>\r\n    <mat-tab label=\"MQTT\" value=\"gateway_devices_1\"></mat-tab>\r\n    <mat-tab label=\"MODBUS\" value=\"gateway_devices_2\"></mat-tab>\r\n    <mat-tab label=\"GRPC\" value=\"gateway_devices_3\"></mat-tab>\r\n    <mat-tab label=\"OPCUA\" value=\"gateway_devices_4\"> </mat-tab>\r\n    <mat-tab label=\"OPCUA ASYNCIO\" value=\"gateway_devices_5\"></mat-tab>\r\n    <mat-tab label=\"BLE\" value=\"gateway_devices_6\"></mat-tab>\r\n    <mat-tab label=\"REQUEST\" value=\"gateway_devices_7\"></mat-tab>\r\n    <mat-tab label=\"CAN\" value=\"gateway_devices_8\"></mat-tab>\r\n    <mat-tab label=\"BACNET\" value=\"gateway_devices_9\"></mat-tab>\r\n    <mat-tab label=\"ODBC\" value=\"gateway_devices_10\"></mat-tab>\r\n    <mat-tab label=\"REST\" value=\"gateway_devices_11\"></mat-tab>\r\n    <mat-tab label=\"SNMP\" value=\"gateway_devices_12\"></mat-tab>\r\n    <mat-tab label=\"FTP\" value=\"gateway_devices_13\"></mat-tab>\r\n    <mat-tab label=\"SOCKET\" value=\"gateway_devices_14\"></mat-tab>\r\n    <mat-tab label=\"XMPP\" value=\"gateway_devices_15\"></mat-tab>\r\n    <mat-tab label=\"OCCP\" value=\"gateway_devices_16\"></mat-tab>\r\n    <mat-tab label=\"CUSTOM\" value=\"gateway_devices_17\"></mat-tab>\r\n  </mat-tab-group><tb-dashboard-state *ngIf=\"selectedTabIndex == 1\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_1\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 2\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_2\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 3\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_3\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 4\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_4\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 5\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_5\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 6\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_6\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 7\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_7\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 8\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_8\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 9\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_9\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 10\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_10\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 11\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_11\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 12\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_12\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 13\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_13\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 14\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_14\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 15\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_15\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 16\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_16\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 17\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_17\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"!selectedTabIndex\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_0\"></tb-dashboard-state>\r\n</div>\r\n",
+            "markdownTextPattern": "<div style=\"width: 100%; height: 100%; padding: 0;\" fxFlex fxLayout=\"column\">\r\n  <tb-dashboard-state *ngIf=\"selectedTabIndex == 6\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_6\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 7\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_7\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 8\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_8\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 9\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_9\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 10\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_10\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 11\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_11\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 12\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_12\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 13\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_13\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 14\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_14\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 15\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_15\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 16\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_16\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"selectedTabIndex == 17\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_17\"></tb-dashboard-state>\r\n   <tb-dashboard-state *ngIf=\"!selectedTabIndex\" [ctx]=\"ctx\" fxFlex syncParentStateParams=\"true\" stateId=\"gateway_devices_0\"></tb-dashboard-state>\r\n</div>\r\n",
             "applyDefaultMarkdownStyle": false,
             "markdownCss": ".mat-mdc-form-field-subscript-wrapper {\n    display: none !important;\n}"
           },
@@ -2994,172 +2994,6 @@
         "row": 0,
         "col": 0,
         "id": "bb27723a-989c-2327-5808-b56d490b93ab",
-        "typeFullFqn": "system.cards.entities_table"
-      },
-      "e3a9539d-2ccb-96e0-2afa-36f93e40233d": {
-        "type": "latest",
-        "sizeX": 7.5,
-        "sizeY": 6.5,
-        "config": {
-          "timewindow": {
-            "displayValue": "",
-            "selectedTab": 0,
-            "realtime": {
-              "realtimeType": 1,
-              "interval": 1000,
-              "timewindowMs": 86400000,
-              "quickInterval": "CURRENT_DAY"
-            },
-            "history": {
-              "historyType": 0,
-              "interval": 1000,
-              "timewindowMs": 60000,
-              "fixedTimewindow": {
-                "startTimeMs": 1684327643501,
-                "endTimeMs": 1684414043501
-              },
-              "quickInterval": "CURRENT_DAY"
-            },
-            "aggregation": {
-              "type": "NONE",
-              "limit": 200
-            }
-          },
-          "showTitle": true,
-          "backgroundColor": "rgb(255, 255, 255)",
-          "color": "rgba(0, 0, 0, 0.87)",
-          "padding": "4px",
-          "settings": {
-            "entitiesTitle": "Devices",
-            "enableSearch": true,
-            "enableSelectColumnDisplay": true,
-            "enableStickyHeader": true,
-            "enableStickyAction": true,
-            "reserveSpaceForHiddenAction": "true",
-            "displayEntityName": true,
-            "entityNameColumnTitle": "Device Name",
-            "displayEntityLabel": false,
-            "displayEntityType": false,
-            "displayPagination": true,
-            "defaultPageSize": 10,
-            "defaultSortOrder": "entityName",
-            "useRowStyleFunction": false
-          },
-          "title": "Devices",
-          "dropShadow": true,
-          "enableFullscreen": true,
-          "titleStyle": {
-            "fontSize": "16px",
-            "fontWeight": 400,
-            "padding": "5px 10px 5px 10px"
-          },
-          "useDashboardTimewindow": false,
-          "showLegend": false,
-          "datasources": [
-            {
-              "type": "entity",
-              "name": null,
-              "entityAliasId": "a75d9031-ba51-8da4-81be-de65061b72f4",
-              "filterId": "3931abd5-2205-9386-6ea9-8e8a8131bb9d",
-              "dataKeys": [
-                {
-                  "name": "type",
-                  "type": "entityField",
-                  "label": "Device Type",
-                  "color": "#2196f3",
-                  "settings": {},
-                  "_hash": 0.3129929097366162,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
-                  "name": "active",
-                  "type": "attribute",
-                  "label": "Status",
-                  "color": "#4caf50",
-                  "settings": {
-                    "columnWidth": "0px",
-                    "useCellStyleFunction": false,
-                    "useCellContentFunction": true,
-                    "cellContentFunction": "let cssClass;\r\nswitch (value) {\r\n      case \"Active\":\r\n        cssClass = \"status status-active\";\r\n        break;\r\n      case \"Inactive\":\r\n           default:\r\n        cssClass = \"status status-inactive\";\r\n        break;\r\n    }\r\n    \r\n    return `<span class='${cssClass}'>${value}</span>`;",
-                    "defaultColumnVisibility": "visible",
-                    "columnSelectionToDisplay": "enabled"
-                  },
-                  "_hash": 0.5969880627410065,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": true,
-                  "postFuncBody": "return value == 'true' ? \"Active\": \"Inactive\";"
-                },
-                {
-                  "name": "connectorName",
-                  "type": "attribute",
-                  "label": "Connector Name",
-                  "color": "#f44336",
-                  "settings": {},
-                  "_hash": 0.012483045440007778,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                },
-                {
-                  "name": "connectorType",
-                  "type": "attribute",
-                  "label": "Connector Type",
-                  "color": "#ffc107",
-                  "settings": {},
-                  "_hash": 0.6004192233378134,
-                  "aggregationType": null,
-                  "units": null,
-                  "decimals": null,
-                  "funcBody": null,
-                  "usePostProcessing": null,
-                  "postFuncBody": null
-                }
-              ],
-              "alarmFilterConfig": {
-                "statusList": [
-                  "ACTIVE"
-                ]
-              }
-            }
-          ],
-          "displayTimewindow": true,
-          "showTitleIcon": false,
-          "titleTooltip": "",
-          "widgetStyle": {},
-          "widgetCss": ".status {\r\n    border-radius: 20px;\r\n    font-weight: 500;\r\n    padding: 5px 15px;\r\n  }\r\n\r\n  .status-active {\r\n    color: green;\r\n    background: rgba(0, 128, 0, 0.1);\r\n  }\r\n\r\n  .status-inactive {\r\n    color: red;\r\n    background: rgba(255, 0, 0, 0.1);\r\n  }\r\n",
-          "pageSize": 1024,
-          "noDataDisplayMessage": "",
-          "enableDataExport": false,
-          "actions": {
-            "actionCellButton": [
-              {
-                "name": "Show Device Info",
-                "icon": "info",
-                "useShowWidgetActionFunction": null,
-                "showWidgetActionFunction": "return true;",
-                "type": "custom",
-                "customFunction": "const url = `${window.location.origin + widgetContext.utils.getEntityDetailsPageURL(entityId.id, entityId.entityType)}`;\nwindow.open(url, '_blank');",
-                "openInSeparateDialog": false,
-                "openInPopover": false,
-                "id": "94de7690-f91d-b032-6771-85af99abd749"
-              }
-            ]
-          }
-        },
-        "row": 0,
-        "col": 0,
-        "id": "e3a9539d-2ccb-96e0-2afa-36f93e40233d",
         "typeFullFqn": "system.cards.entities_table"
       },
       "cf2eba6b-44f6-9cc2-6089-35c735f54898": {
@@ -5612,33 +5446,6 @@
           "main": {
             "widgets": {
               "bb27723a-989c-2327-5808-b56d490b93ab": {
-                "sizeX": 24,
-                "sizeY": 11,
-                "row": 0,
-                "col": 0
-              }
-            },
-            "gridSettings": {
-              "backgroundColor": "#eeeeee",
-              "columns": 24,
-              "margin": 0,
-              "outerMargin": true,
-              "backgroundSizeMode": "100%",
-              "autoFillHeight": false,
-              "backgroundImageUrl": null,
-              "mobileAutoFillHeight": false,
-              "mobileRowHeight": 70
-            }
-          }
-        }
-      },
-      "gateway_devices_5": {
-        "name": "gateway_devices_opcua_async",
-        "root": false,
-        "layouts": {
-          "main": {
-            "widgets": {
-              "e3a9539d-2ccb-96e0-2afa-36f93e40233d": {
                 "sizeX": 24,
                 "sizeY": 11,
                 "row": 0,

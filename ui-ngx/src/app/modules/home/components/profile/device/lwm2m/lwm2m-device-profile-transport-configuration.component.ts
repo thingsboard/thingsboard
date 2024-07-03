@@ -296,11 +296,7 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
   }
 
   private updateModel = (): void => {
-    let configuration: Lwm2mProfileConfigModels = null;
-    if (this.lwm2mDeviceProfileFormGroup.valid) {
-      configuration = this.configurationValue;
-    }
-    this.propagateChange(configuration);
+    this.propagateChange(this.configurationValue);
   }
 
   private updateObserveAttrTelemetryObjectFormGroup = (objectsList: ObjectLwM2M[]): void => {
