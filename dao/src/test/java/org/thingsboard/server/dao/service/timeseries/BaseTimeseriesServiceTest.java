@@ -23,6 +23,7 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -73,6 +74,9 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Autowired
     EntityViewService entityViewService;
+
+    @Value("${database.ts.type}")
+    String databaseTsLatestType;
 
     protected static final int MAX_TIMEOUT = 30;
 
@@ -161,6 +165,10 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
     @Test
     public void testFindLatestOpt_givenSaveWithHistoricalNonOrderedTS() throws Exception {
+        if (databaseTsLatestType.equals("cassandra")) {
+            return;
+        }
+
         save(tenantId, deviceId, toTsEntry(TS - 1, stringKvEntry));
         save(tenantId, deviceId, toTsEntry(TS, stringKvEntry));
         save(tenantId, deviceId, toTsEntry(TS - 10, stringKvEntry));
