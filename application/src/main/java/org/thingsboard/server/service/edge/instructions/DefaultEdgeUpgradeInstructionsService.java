@@ -15,9 +15,7 @@
  */
 package org.thingsboard.server.service.edge.instructions;
 
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -164,4 +162,5 @@ public class DefaultEdgeUpgradeInstructionsService extends BaseEdgeInstallUpgrad
     protected String getBaseDirName() {
         return UPGRADE_DIR;
     }
+
 }
