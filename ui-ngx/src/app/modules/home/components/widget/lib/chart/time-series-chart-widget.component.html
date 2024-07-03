@@ -74,20 +74,20 @@
             <th>
               <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey, left: true}"></ng-container>
             </th>
-            <td *ngIf="legendConfig.showMin === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle">
-              {{ legendData.data[legendKey.dataIndex].min }}
+            <td *ngIf="legendConfig.showMin === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].min | safe: 'html'">
             </td>
-            <td *ngIf="legendConfig.showMax === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle">
-              {{ legendData.data[legendKey.dataIndex].max }}
+            <td *ngIf="legendConfig.showMax === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].max | safe: 'html'">
             </td>
-            <td *ngIf="legendConfig.showAvg === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle">
-              {{ legendData.data[legendKey.dataIndex].avg }}
+            <td *ngIf="legendConfig.showAvg === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].avg | safe: 'html'">
             </td>
-            <td *ngIf="legendConfig.showTotal === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle">
-              {{ legendData.data[legendKey.dataIndex].total }}
+            <td *ngIf="legendConfig.showTotal === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].total | safe: 'html'">
             </td>
-            <td *ngIf="legendConfig.showLatest === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle">
-              {{ legendData.data[legendKey.dataIndex].latest }}
+            <td *ngIf="legendConfig.showLatest === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].latest | safe: 'html'">
             </td>
           </tr>
         </tbody>

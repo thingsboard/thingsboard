@@ -205,7 +205,7 @@ export class TimeSeriesChartTooltip {
       latestData = {} as FormattedData;
     }
     const value = formatFunction(item.param.value[1], latestData, units, decimals);
-    this.renderer.appendChild(valueElement, this.renderer.createText(value));
+    this.renderer.setProperty(valueElement, 'innerHTML', this.sanitizer.sanitize(SecurityContext.HTML, value));
     this.renderer.setStyle(valueElement, 'flex', '1');
     this.renderer.setStyle(valueElement, 'text-align', 'end');
     this.renderer.setStyle(valueElement, 'font-family', this.settings.tooltipValueFont.family);
