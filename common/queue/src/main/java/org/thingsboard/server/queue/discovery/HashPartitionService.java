@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -36,7 +37,6 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.discovery.event.ServiceListChangedEvent;
 import org.thingsboard.server.queue.util.AfterStartUp;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -319,7 +319,7 @@ public class HashPartitionService implements PartitionService {
 
     private QueueKey getQueueKey(ServiceType serviceType, String queueName, TenantId tenantId) {
         TenantId isolatedOrSystemTenantId = getIsolatedOrSystemTenantId(serviceType, tenantId);
-        if (queueName == null) {
+        if (queueName == null || queueName.isEmpty()) {
             queueName = MAIN_QUEUE_NAME;
         }
         QueueKey queueKey = new QueueKey(serviceType, queueName, isolatedOrSystemTenantId);
@@ -672,6 +672,7 @@ public class HashPartitionService implements PartitionService {
         public QueueConfig(QueueRoutingInfo queueRoutingInfo) {
             this.duplicateMsgToAllPartitions = queueRoutingInfo.isDuplicateMsgToAllPartitions();
         }
+
     }
 
 }
