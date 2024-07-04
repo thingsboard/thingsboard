@@ -265,7 +265,7 @@ public class DefaultMailService implements MailService {
                         String contentType = helper.getFileTypeMap().getContentType(imgId);
                         InputStreamSource iss = () -> new ByteArrayInputStream(bytes);
                         if (tbEmail.isAddFileName()) {
-                            contentType += "; name=\""+imgId+"\";";
+                            contentType += "; name=\"" + imgId + "\"";
                         }
                         helper.addInline(imgId, iss, contentType);
                     }
