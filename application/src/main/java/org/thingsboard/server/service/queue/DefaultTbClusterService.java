@@ -360,13 +360,13 @@ public class DefaultTbClusterService implements TbClusterService {
     public void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback) {
         if (resource.getResourceType() == ResourceType.LWM2M_MODEL) {
             log.trace("[{}] Processing delete resource", resource);
-            TransportProtos.ResourceDeleteMsg resourceUpdateMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
+            TransportProtos.ResourceDeleteMsg resourceDeleteMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
                     .setTenantIdMSB(resource.getTenantId().getId().getMostSignificantBits())
                     .setTenantIdLSB(resource.getTenantId().getId().getLeastSignificantBits())
                     .setResourceType(resource.getResourceType().name())
                     .setResourceKey(resource.getResourceKey())
                     .build();
-            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceDeleteMsg(resourceUpdateMsg).build();
+            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceDeleteMsg(resourceDeleteMsg).build();
             broadcast(transportMsg, DataConstants.LWM2M_TRANSPORT_NAME, callback);
         }
     }
