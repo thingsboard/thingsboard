@@ -113,7 +113,7 @@ export class GatewayLogsComponent implements OnInit, AfterViewInit {
 
   private updateWidgetTitle(): void {
     if (this.ctx.settings.isConnectorLog && this.ctx.settings.connectorLogState) {
-      const widgetTitle = this.ctx['widget'].config.title;
+      const widgetTitle = this.ctx.widgetConfig.title;
       const titlePlaceholder = '${connectorName}';
       if (widgetTitle.includes(titlePlaceholder)) {
         const connector = this.ctx.stateController.getStateParams()[this.ctx.settings.connectorLogState];
