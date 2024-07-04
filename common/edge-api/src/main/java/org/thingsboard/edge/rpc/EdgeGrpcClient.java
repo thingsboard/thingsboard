@@ -75,9 +75,9 @@ public class EdgeGrpcClient implements EdgeRpcClient {
     private String proxyHost;
     @Value("${cloud.rpc.proxy.port:0}")
     private int proxyPort;
-    @Value("${cloud.rpc.proxy.host:}")
+    @Value("${cloud.rpc.proxy.username:}")
     private String proxyUsername;
-    @Value("${cloud.rpc.proxy.port:0}")
+    @Value("${cloud.rpc.proxy.password:}")
     private String proxyPassword;
     @Getter
     private int serverMaxInboundMessageSize;
