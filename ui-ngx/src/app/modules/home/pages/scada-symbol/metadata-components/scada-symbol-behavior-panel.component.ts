@@ -81,6 +81,7 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
         id: [this.behavior.id, [Validators.required]],
         name: [this.behavior.name, [Validators.required]],
         hint: [this.behavior.hint, []],
+        group: [this.behavior.group, []],
         type: [this.behavior.type, [Validators.required]],
         valueType: [this.behavior.valueType, [Validators.required]],
         defaultValue: [this.behavior.defaultValue, [Validators.required]],
@@ -122,6 +123,7 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
     this.behaviorFormGroup.get('name').enable({emitEvent: false});
     this.behaviorFormGroup.get('type').enable({emitEvent: false});
     this.behaviorFormGroup.get('hint').enable({emitEvent: false});
+    this.behaviorFormGroup.get('group').enable({emitEvent: false});
     switch (type) {
       case ScadaSymbolBehaviorType.value:
         this.behaviorFormGroup.get('valueType').enable({emitEvent: false});

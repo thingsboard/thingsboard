@@ -1,23 +1,23 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200">
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200">
 <tb:metadata xmlns=""><![CDATA[{
   "title": "Cross pipe",
-  "description": "Cross pipe with configurable horizontal and/or vertical fluid and leak visualizations.",
+  "description": "Cross pipe with configurable left/right/top/bottom fluid and leak visualizations.",
   "searchTags": [
     "pipe",
     "cross"
   ],
   "widgetSizeX": 1,
   "widgetSizeY": 1,
-  "stateRenderFunction": "var horizontalLiquidPattern = prepareLiquidPattern('horizontal-liquid', 'horizontal-fluid');\nvar verticalLiquidPattern = prepareLiquidPattern('vertical-liquid', 'vertical-fluid');\n\nif (horizontalLiquidPattern) {\n    var fluid = ctx.values.horizontalFluid && !ctx.values.leak;\n    var flow = ctx.values.horizontalFlow;\n    var flowDirection = ctx.values.horizontalFlowDirection;\n    var flowAnimationSpeed = ctx.values.horizontalFlowAnimationSpeed;\n    \n    updateLiquidPatternAnimation(horizontalLiquidPattern, fluid, \n                                 flow, flowDirection, flowAnimationSpeed);\n}\n\nif (verticalLiquidPattern) {\n    var fluid = ctx.values.verticalFluid && !ctx.values.leak;\n    var flow = ctx.values.verticalFlow;\n    var flowDirection = ctx.values.verticalFlowDirection;\n    var flowAnimationSpeed = ctx.values.verticalFlowAnimationSpeed;\n    \n    updateLiquidPatternAnimation(verticalLiquidPattern, fluid, \n                                 flow, flowDirection, flowAnimationSpeed);\n}\n\nfunction prepareLiquidPattern(patternId, fluidElementTag) {\n    var liquidPattern = ctx.svg.defs().findOne('pattern#'+patternId);\n    var fluidElements = ctx.tags[fluidElementTag];\n\n    if (liquidPattern) {\n        liquidPattern.id(ctx.api.generateElementId());\n        for (var i=0;i<fluidElements.length;i++) {\n            fluidElements[i].fill(liquidPattern);\n        }\n    } else {\n        liquidPattern = fluidElements[0].reference('fill');\n    }\n    return liquidPattern;\n}\n\nfunction updateLiquidPatternAnimation(liquidPattern, fluid, flow, flowDirection, flowAnimationSpeed) {\n    var elementFluid = liquidPattern.remember('fluid');\n    var elementFlow = null;\n    var elementFlowDirection = null;\n    \n    if (fluid !== elementFluid) {\n        liquidPattern.remember('fluid', fluid);\n        elementFlow = null;\n        elementFlowDirection = null;\n    } else {\n        elementFlow = liquidPattern.remember('flow');\n        elementFlowDirection = liquidPattern.remember('flowDirection');\n    }\n    \n    if (fluid) {\n        if (flow !== elementFlow) {\n            liquidPattern.remember('flow', flow);\n            if (flow) {\n                liquidPattern.remember('flowDirection', flowDirection);\n                animateFlow(liquidPattern, flowDirection);\n            } else {\n                ctx.api.resetAnimation(liquidPattern);\n            }\n        } else if (flow && elementFlowDirection !== flowDirection) {\n            liquidPattern.remember('flowDirection', flowDirection);\n            animateFlow(liquidPattern, flowDirection);\n        }\n        if (flow && liquidPattern) {\n            liquidPattern.timeline().speed(flowAnimationSpeed);\n        }\n    } else {\n        ctx.api.resetAnimation(liquidPattern);\n    }\n}\n\nfunction animateFlow(liquidPattern, forwardElseReverse) {\n    ctx.api.resetAnimation(liquidPattern);\n    var deltaX = forwardElseReverse ? 172 : -172;\n    liquidPattern.animate(1000).ease('-').relative(deltaX, 0).loop();\n}\n\n",
+  "stateRenderFunction": "var leftLiquidPattern = prepareLiquidPattern('left-liquid', 'left-fluid');\nvar rightLiquidPattern = prepareLiquidPattern('right-liquid', 'right-fluid');\nvar topLiquidPattern = prepareLiquidPattern('top-liquid', 'top-fluid');\nvar bottomLiquidPattern = prepareLiquidPattern('bottom-liquid', 'bottom-fluid');\n\nvar genericLiquidPattern = ctx.svg.defs().findOne('pattern#liquid');\nif (genericLiquidPattern) {\n    genericLiquidPattern.id(ctx.api.generateElementId());\n    leftLiquidPattern.attr({'xlink:href': '#'+genericLiquidPattern.id()});\n    rightLiquidPattern.attr({'xlink:href': '#'+genericLiquidPattern.id()});\n    topLiquidPattern.attr({'xlink:href': '#'+genericLiquidPattern.id()});\n    bottomLiquidPattern.attr({'xlink:href': '#'+genericLiquidPattern.id()});\n}\n\nupdateLiquidPatternAnimation(leftLiquidPattern, 'left');\nupdateLiquidPatternAnimation(rightLiquidPattern, 'right');\nupdateLiquidPatternAnimation(topLiquidPattern, 'top');\nupdateLiquidPatternAnimation(bottomLiquidPattern, 'bottom');\n\n\nfunction prepareLiquidPattern(patternId, fluidElementTag) {\n    var liquidPattern = ctx.svg.defs().findOne('pattern#'+patternId);\n    var fluidElements = ctx.tags[fluidElementTag];\n\n    if (liquidPattern) {\n        liquidPattern.id(ctx.api.generateElementId());\n        for (var i=0;i<fluidElements.length;i++) {\n            fluidElements[i].fill(liquidPattern);\n        }\n    } else {\n        liquidPattern = fluidElements[0].reference('fill');\n    }\n    return liquidPattern;\n}\n\nfunction updateLiquidPatternAnimation(liquidPattern, prefix) {\n    if (liquidPattern) {\n        var fluid = ctx.values[prefix + 'Fluid'] && !ctx.values.leak;\n        var flow = ctx.values[prefix + 'Flow'];\n        var flowDirection = ctx.values[prefix + 'FlowDirection'];\n        var flowAnimationSpeed = ctx.values[prefix + 'FlowAnimationSpeed'];\n\n        var elementFluid = liquidPattern.remember('fluid');\n        var elementFlow = null;\n        var elementFlowDirection = null;\n        \n        if (fluid !== elementFluid) {\n            liquidPattern.remember('fluid', fluid);\n            elementFlow = null;\n            elementFlowDirection = null;\n        } else {\n            elementFlow = liquidPattern.remember('flow');\n            elementFlowDirection = liquidPattern.remember('flowDirection');\n        }\n        \n        if (fluid) {\n            if (flow !== elementFlow) {\n                liquidPattern.remember('flow', flow);\n                if (flow) {\n                    liquidPattern.remember('flowDirection', flowDirection);\n                    animateFlow(liquidPattern, flowDirection);\n                } else {\n                    ctx.api.resetAnimation(liquidPattern);\n                }\n            } else if (flow && elementFlowDirection !== flowDirection) {\n                liquidPattern.remember('flowDirection', flowDirection);\n                animateFlow(liquidPattern, flowDirection);\n            }\n            if (flow && liquidPattern) {\n                liquidPattern.timeline().speed(flowAnimationSpeed);\n            }\n        } else {\n            ctx.api.resetAnimation(liquidPattern);\n        }\n    }\n}\n\nfunction animateFlow(liquidPattern, forwardElseReverse) {\n    ctx.api.resetAnimation(liquidPattern);\n    var deltaX = forwardElseReverse ? 172 : -172;\n    liquidPattern.animate(1000).ease('-').relative(deltaX, 0).loop();\n}\n\n",
   "tags": [
     {
-      "tag": "horizontal-fluid",
-      "stateRenderFunction": "var fluid = ctx.values.horizontalFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}\n",
+      "tag": "bottom-fluid",
+      "stateRenderFunction": "var fluid = ctx.values.bottomFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
-      "tag": "horizontal-fluid-background",
-      "stateRenderFunction": "var fluid = ctx.values.horizontalFluid && !ctx.values.leak;\nif (fluid) {\n    var color = ctx.properties.horizontalFluidColor;\n    element.attr({fill: color});\n    element.show();\n} else {\n    element.hide();\n}",
+      "tag": "bottom-fluid-background",
+      "stateRenderFunction": "var fluid = ctx.values.bottomFluid && !ctx.values.leak;\nif (fluid) {\n    var color = ctx.properties.bottomFluidColor;\n    element.attr({fill: color});\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -26,26 +26,47 @@
       "actions": null
     },
     {
+      "tag": "left-fluid",
+      "stateRenderFunction": "var fluid = ctx.values.leftFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "left-fluid-background",
+      "stateRenderFunction": "var fluid = ctx.values.leftFluid && !ctx.values.leak;\nif (fluid) {\n    var color = ctx.properties.leftFluidColor;\n    element.attr({fill: color});\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
       "tag": "overlay",
-      "stateRenderFunction": "var fluid = (ctx.values.horizontalFluid || ctx.values.verticalFluid) && !ctx.values.leak;\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "var fluid = (ctx.values.leftFluid || ctx.values.rightFluid ||\n             ctx.values.topFluid || ctx.values.bottomFluid) && !ctx.values.leak;\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
-      "tag": "vertical-fluid",
-      "stateRenderFunction": "var fluid = ctx.values.verticalFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}\n",
+      "tag": "right-fluid",
+      "stateRenderFunction": "var fluid = ctx.values.rightFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
-      "tag": "vertical-fluid-background",
-      "stateRenderFunction": "var fluid = ctx.values.verticalFluid && !ctx.values.leak;\nif (fluid) {\n    var color = ctx.properties.verticalFluidColor;\n    element.attr({fill: color});\n    element.show();\n} else {\n    element.hide();\n}",
+      "tag": "right-fluid-background",
+      "stateRenderFunction": "var fluid = ctx.values.rightFluid && !ctx.values.leak;\nif (fluid) {\n    var color = ctx.properties.rightFluidColor;\n    element.attr({fill: color});\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "top-fluid",
+      "stateRenderFunction": "var fluid = ctx.values.topFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
+      "tag": "top-fluid-background",
+      "stateRenderFunction": "var fluid = ctx.values.topFluid && !ctx.values.leak;\nif (fluid) {\n    var color = ctx.properties.topFluidColor;\n    element.attr({fill: color});\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
     }
   ],
   "behavior": [
     {
-      "id": "horizontalFluid",
-      "name": "{i18n:scada.symbol.horizontal-fluid-presence}",
-      "hint": "{i18n:scada.symbol.horizontal-fluid-presence-hint}",
+      "id": "leftFluid",
+      "name": "{i18n:scada.symbol.fluid-presence}",
+      "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": "{i18n:scada.symbol.left-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -57,9 +78,10 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "horizontalFlow",
-      "name": "{i18n:scada.symbol.horizontal-flow-presence}",
-      "hint": "{i18n:scada.symbol.horizontal-flow-presence-hint}",
+      "id": "leftFlow",
+      "name": "{i18n:scada.symbol.flow-presence}",
+      "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": "{i18n:scada.symbol.left-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -71,9 +93,10 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "horizontalFlowDirection",
-      "name": "{i18n:scada.symbol.horizontal-flow-direction}",
-      "hint": "{i18n:scada.symbol.horizontal-flow-direction-hint}",
+      "id": "leftFlowDirection",
+      "name": "{i18n:scada.symbol.flow-direction}",
+      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": "{i18n:scada.symbol.left-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": true,
@@ -85,9 +108,10 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "horizontalFlowAnimationSpeed",
-      "name": "{i18n:scada.symbol.horizontal-flow-animation-speed}",
+      "id": "leftFlowAnimationSpeed",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
       "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": "{i18n:scada.symbol.left-pipe}",
       "type": "value",
       "valueType": "DOUBLE",
       "defaultValue": 1,
@@ -99,9 +123,10 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "verticalFluid",
-      "name": "{i18n:scada.symbol.vertical-fluid-presence}",
-      "hint": "{i18n:scada.symbol.vertical-fluid-presence-hint}",
+      "id": "rightFluid",
+      "name": "{i18n:scada.symbol.fluid-presence}",
+      "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": "{i18n:scada.symbol.right-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -113,9 +138,10 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "verticalFlow",
-      "name": "{i18n:scada.symbol.vertical-flow-presence}",
-      "hint": "{i18n:scada.symbol.vertical-flow-presence-hint}",
+      "id": "rightFlow",
+      "name": "{i18n:scada.symbol.flow-presence}",
+      "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": "{i18n:scada.symbol.right-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -127,9 +153,10 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "verticalFlowDirection",
-      "name": "{i18n:scada.symbol.vertical-flow-direction}",
-      "hint": "{i18n:scada.symbol.vertical-flow-direction-hint}",
+      "id": "rightFlowDirection",
+      "name": "{i18n:scada.symbol.flow-direction}",
+      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": "{i18n:scada.symbol.right-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": true,
@@ -141,9 +168,130 @@
       "valueToDataFunction": ""
     },
     {
-      "id": "verticalFlowAnimationSpeed",
-      "name": "{i18n:scada.symbol.vertical-flow-animation-speed}",
+      "id": "rightFlowAnimationSpeed",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
       "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": "{i18n:scada.symbol.right-pipe}",
+      "type": "value",
+      "valueType": "DOUBLE",
+      "defaultValue": 1,
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "topFluid",
+      "name": "{i18n:scada.symbol.fluid-presence}",
+      "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": "{i18n:scada.symbol.top-pipe}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": false,
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.fluid-present}",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "topFlow",
+      "name": "{i18n:scada.symbol.flow-presence}",
+      "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": "{i18n:scada.symbol.top-pipe}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": false,
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.flow-present}",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "topFlowDirection",
+      "name": "{i18n:scada.symbol.flow-direction}",
+      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": "{i18n:scada.symbol.top-pipe}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": true,
+      "trueLabel": "{i18n:scada.symbol.forward}",
+      "falseLabel": "{i18n:scada.symbol.reverse}",
+      "stateLabel": "{i18n:scada.symbol.forward}",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "topFlowAnimationSpeed",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
+      "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": "{i18n:scada.symbol.top-pipe}",
+      "type": "value",
+      "valueType": "DOUBLE",
+      "defaultValue": 1,
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "bottomFluid",
+      "name": "{i18n:scada.symbol.fluid-presence}",
+      "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": "{i18n:scada.symbol.bottom-pipe}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": false,
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.fluid-present}",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "bottomFlow",
+      "name": "{i18n:scada.symbol.flow-presence}",
+      "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": "{i18n:scada.symbol.bottom-pipe}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": false,
+      "trueLabel": "{i18n:scada.symbol.present}",
+      "falseLabel": "{i18n:scada.symbol.absent}",
+      "stateLabel": "{i18n:scada.symbol.flow-present}",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "bottomFlowDirection",
+      "name": "{i18n:scada.symbol.flow-direction}",
+      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": "{i18n:scada.symbol.bottom-pipe}",
+      "type": "value",
+      "valueType": "BOOLEAN",
+      "defaultValue": true,
+      "trueLabel": "{i18n:scada.symbol.forward}",
+      "falseLabel": "{i18n:scada.symbol.reverse}",
+      "stateLabel": "{i18n:scada.symbol.forward}",
+      "valueToDataType": "CONSTANT",
+      "constantValue": false,
+      "valueToDataFunction": ""
+    },
+    {
+      "id": "bottomFlowAnimationSpeed",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
+      "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": "{i18n:scada.symbol.bottom-pipe}",
       "type": "value",
       "valueType": "DOUBLE",
       "defaultValue": 1,
@@ -171,8 +319,8 @@
   ],
   "properties": [
     {
-      "id": "horizontalFluidColor",
-      "name": "{i18n:scada.symbol.horizontal-fluid-color}",
+      "id": "leftFluidColor",
+      "name": "{i18n:scada.symbol.left-fluid-color}",
       "type": "color",
       "default": "#1EC1F480",
       "required": null,
@@ -187,8 +335,40 @@
       "step": null
     },
     {
-      "id": "verticalFluidColor",
-      "name": "{i18n:scada.symbol.vertical-fluid-color}",
+      "id": "rightFluidColor",
+      "name": "{i18n:scada.symbol.right-fluid-color}",
+      "type": "color",
+      "default": "#1EC1F480",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "topFluidColor",
+      "name": "{i18n:scada.symbol.top-fluid-color}",
+      "type": "color",
+      "default": "#1EC1F480",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "bottomFluidColor",
+      "name": "{i18n:scada.symbol.bottom-fluid-color}",
       "type": "color",
       "default": "#1EC1F480",
       "required": null,
@@ -255,7 +435,7 @@
   <clipPath id="clip0_1245_66442">
    <rect width="200" height="200" fill="#fff"/>
   </clipPath>
-  <pattern id="horizontal-liquid" width="172" height="72" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse">
+  <pattern id="liquid" width="172" height="72" patternUnits="userSpaceOnUse">
    <circle transform="rotate(-90)" cx="-15" cy="21" r="8" fill="url(#paint28_linear_1182_32781-5)"/>
    <circle transform="rotate(-90)" cx="-15" cy="150" r="8" fill="url(#paint29_linear_1182_32781-1)"/>
    <circle transform="rotate(-90)" cx="-16" cy="113" r="8" fill="url(#paint30_linear_1182_32781-7)"/>
@@ -406,37 +586,6 @@
    <stop stop-color="#727171" offset=".89138"/>
    <stop stop-color="#727171" offset="1"/>
   </linearGradient>
-  <pattern id="vertical-liquid" width="172" height="72" patternTransform="translate(14,8)" patternUnits="userSpaceOnUse">
-   <circle transform="rotate(-90)" cx="-15" cy="21" r="8" fill="url(#paint28_linear_1182_32781-5)"/>
-   <circle transform="rotate(-90)" cx="-15" cy="150" r="8" fill="url(#paint29_linear_1182_32781-1)"/>
-   <circle transform="rotate(-90)" cx="-16" cy="113" r="8" fill="url(#paint30_linear_1182_32781-7)"/>
-   <circle transform="rotate(-90)" cx="-58" cy="34" r="8" fill="url(#paint31_linear_1182_32781-4)"/>
-   <circle transform="rotate(-90)" cx="-58" cy="155" r="8" fill="url(#paint32_linear_1182_32781-3)"/>
-   <circle transform="rotate(-90)" cx="-26" cy="33" r="5" fill="url(#paint33_linear_1182_32781-1)"/>
-   <circle transform="rotate(-90)" cx="-26" cy="162" r="5" fill="url(#paint34_linear_1182_32781-4)"/>
-   <circle transform="rotate(-90)" cx="-37" cy="5" r="5" fill="url(#paint35_linear_1182_32781-6)"/>
-   <circle transform="rotate(-90)" cx="-8" cy="94" r="4" fill="url(#paint36_linear_1182_32781-9)"/>
-   <circle transform="rotate(-90)" cx="-60" cy="72" r="4" fill="url(#paint37_linear_1182_32781-4)"/>
-   <circle transform="rotate(-90)" cx="-37" cy="112" r="5" fill="url(#paint38_linear_1182_32781-2)"/>
-   <circle transform="rotate(-90)" cx="-39" cy="59" r="5" fill="url(#paint39_linear_1182_32781-2)"/>
-   <circle transform="rotate(-90)" cx="-62" cy="115" r="5" fill="url(#paint40_linear_1182_32781-6)"/>
-   <circle transform="rotate(-90)" cx="-42" cy="139" r="5" fill="url(#paint41_linear_1182_32781-4)"/>
-   <circle transform="rotate(-90)" cx="-21" cy="76" r="5" fill="url(#paint42_linear_1182_32781-1)"/>
-   <circle transform="rotate(-90)" cx="-50.5" cy="126.5" r="2.5" fill="url(#paint43_linear_1182_32781-2)"/>
-   <circle transform="rotate(-90)" cx="-46.5" cy="169.5" r="2.5" fill="url(#paint44_linear_1182_32781-8)"/>
-   <circle transform="rotate(-90)" cx="-9.5" cy="57.5" r="2.5" fill="url(#paint45_linear_1182_32781-8)"/>
-   <circle transform="rotate(-90)" cx="-35.5" cy="96.5" r="2.5" fill="url(#paint46_linear_1182_32781-9)"/>
-   <circle transform="rotate(-90)" cx="-23.5" cy="91.5" r="2.5" fill="url(#paint47_linear_1182_32781-2)"/>
-   <circle transform="rotate(-90)" cx="-40.5" cy="22.5" r="2.5" fill="url(#paint48_linear_1182_32781-88)"/>
-   <circle transform="rotate(-90)" cx="-23.5" cy="124.5" r="2.5" fill="url(#paint49_linear_1182_32781-8)"/>
-   <circle transform="rotate(-90)" cx="-47.5" cy="86.5" r="2.5" fill="url(#paint50_linear_1182_32781-6)"/>
-   <circle transform="rotate(-90)" cx="-21.5" cy="51.5" r="2.5" fill="url(#paint51_linear_1182_32781-8)"/>
-   <circle transform="rotate(-90)" cx="-51.5" cy="48.5" r="2.5" fill="url(#paint52_linear_1182_32781-3)"/>
-   <circle transform="rotate(-90)" cx="-64" cy="14" r="4" fill="url(#paint53_linear_1182_32781-83)"/>
-   <circle transform="rotate(-90)" cx="-64" cy="135" r="4" fill="url(#paint54_linear_1182_32781-33)"/>
-   <circle transform="rotate(-90)" cx="-58.5" cy="95.5" r="9.5" fill="url(#paint55_linear_1182_32781-8)"/>
-   <path d="m0 0h172v72h-172z" fill="url(#paint84_linear_1182_32781-8)" stroke-width=".57735"/>
-  </pattern>
   <clipPath id="clipPath13372">
    <rect width="200" height="200" fill="#fff"/>
   </clipPath>
@@ -506,7 +655,11 @@
    <stop stop-color="#727171" stop-opacity=".35" offset=".71855"/>
    <stop stop-color="#727171" offset="1"/>
   </linearGradient>
- </defs><rect x="14" y="64" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="horizontal-fluid-background"/><rect transform="rotate(90)" x="14" y="-136" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="vertical-fluid-background"/><rect transform="rotate(90)" x="136" y="-136" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="vertical-fluid-background"/><rect x="136" y="64" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="horizontal-fluid-background"/><rect x="14" y="64" width="50" height="72" fill="url(#horizontal-liquid)" stroke-width="0" style="display: none;" tb:tag="horizontal-fluid"/><rect x="136" y="64" width="50" height="72" fill="url(#horizontal-liquid)" stroke-width="0" style="display: none;" tb:tag="horizontal-fluid"/><rect transform="rotate(90)" x="14" y="-136" width="50" height="72" fill="url(#vertical-liquid)" stroke-width="0" style="display: none;" tb:tag="vertical-fluid"/><rect transform="rotate(90)" x="136" y="-136" width="50" height="72" fill="url(#vertical-liquid)" stroke-width="0" style="display: none;" tb:tag="vertical-fluid"/><g transform="translate(64 64)" style="display: none;" tb:tag="overlay">
+  <pattern id="left-liquid" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="right-liquid" patternTransform="translate(14,-8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="top-liquid" patternTransform="translate(14,8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+  <pattern id="bottom-liquid" patternTransform="translate(14,8)" patternUnits="userSpaceOnUse" xlink:href="#liquid"/>
+ </defs><rect x="14" y="64" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="left-fluid-background"/><rect transform="rotate(90)" x="14" y="-136" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="top-fluid-background"/><rect transform="rotate(90)" x="136" y="-136" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="bottom-fluid-background"/><rect x="136" y="64" width="50" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="right-fluid-background"/><rect x="14" y="64" width="50" height="72" fill="url(#left-liquid)" stroke-width="0" style="display: none;" tb:tag="left-fluid"/><rect x="136" y="64" width="50" height="72" fill="url(#right-liquid)" stroke-width="0" style="display: none;" tb:tag="right-fluid"/><rect transform="rotate(90)" x="14" y="-136" width="50" height="72" fill="url(#top-liquid)" stroke-width="0" style="display: none;" tb:tag="top-fluid"/><rect transform="rotate(90)" x="136" y="-136" width="50" height="72" fill="url(#bottom-liquid)" stroke-width="0" style="display: none;" tb:tag="bottom-fluid"/><g transform="translate(64 64)" style="display: none;" tb:tag="overlay">
   <path d="m0 72 36-36-36-36z" fill="#fff" style=""/>
   <path d="m0 72 36-36-36-36z" fill="url(#paint0_linear_1281_37969)" style="fill: url(&quot;#paint0_linear_1281_37969&quot;);"/>
   <path d="m1.5 3.6213v64.757l32.379-32.379z" stroke="#000" stroke-opacity=".12" stroke-width="3" style=""/>

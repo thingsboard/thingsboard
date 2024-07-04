@@ -106,6 +106,7 @@ export interface ScadaSymbolBehaviorBase {
   id: string;
   name: string;
   hint?: string;
+  group?: string;
   type: ScadaSymbolBehaviorType;
 }
 

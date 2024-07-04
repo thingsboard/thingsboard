@@ -16,39 +16,25 @@
 
 -->
 <ng-container [formGroup]="scadaSymbolObjectSettingsFormGroup">
-  <div *ngIf="metadata?.behavior?.length" class="tb-form-panel" formGroupName="behavior">
+  <div *ngIf="behaviorGroups?.length" class="tb-form-panel" formGroupName="behavior">
     <div class="tb-form-panel-title" translate>scada.behavior.behavior</div>
-    <div *ngFor="let behavior of metadata.behavior" class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ behavior.hint | customTranslate }}">{{ behavior.name | customTranslate }}</div>
-      <tb-get-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.value"
-                                    fxFlex
-                                    panelTitle="{{ behavior.name | customTranslate }}"
-                                    [valueType]="behavior.valueType"
-                                    [trueLabel]="behavior.trueLabel | customTranslate"
-                                    [falseLabel]="behavior.falseLabel | customTranslate"
-                                    [stateLabel]="behavior.stateLabel | customTranslate"
-                                    [aliasController]="aliasController"
-                                    [targetDevice]="targetDevice"
-                                    [widgetType]="widgetType"
-                                    formControlName="{{ behavior.id }}">
-      </tb-get-value-action-settings>
-      <tb-set-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.action"
-                                    fxFlex
-                                    panelTitle="{{ behavior.name | customTranslate }}"
-                                    [valueType]="behavior.valueType"
-                                    [aliasController]="aliasController"
-                                    [targetDevice]="targetDevice"
-                                    [widgetType]="widgetType"
-                                    formControlName="{{ behavior.id }}">
-      </tb-set-value-action-settings>
-      <tb-widget-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.widgetAction"
-                                 fxFlex
-                                 panelTitle="{{ behavior.name | customTranslate }}"
-                                 [callbacks]="callbacks"
-                                 [widgetType]="widgetType"
-                                 formControlName="{{ behavior.id }}">
-      </tb-widget-action-settings>
-    </div>
+    <ng-container *ngFor="let behaviorGroup of behaviorGroups">
+      <div *ngIf="behaviorGroup.title" class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings" expanded>
+          <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-panel-title>
+              <div class="tb-form-panel-title">{{ behaviorGroup.title | customTranslate }}</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <ng-container *ngTemplateOutlet="behaviorsTpl; context:{behaviors: behaviorGroup.behaviors}"></ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+      <ng-container *ngIf="!behaviorGroup.title">
+        <ng-container *ngTemplateOutlet="behaviorsTpl; context:{behaviors: behaviorGroup.behaviors}"></ng-container>
+      </ng-container>
+    </ng-container>
   </div>
   <div [fxShow]="propertyRows?.length || appearanceProperties.children.length" class="tb-form-panel" formGroupName="properties">
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
@@ -99,3 +85,45 @@
     </div>
   </div>
 </ng-container>
+
+<ng-template #behaviorsTpl let-behaviors="behaviors">
+  <ng-container *ngFor="let behavior of behaviors">
+    <ng-container *ngTemplateOutlet="behaviorTpl; context:{behavior: behavior}"></ng-container>
+  </ng-container>
+</ng-template>
+
+<ng-template #behaviorTpl let-behavior="behavior">
+  <ng-container [formGroup]="scadaSymbolObjectSettingsFormGroup">
+    <div class="tb-form-row" formGroupName="behavior">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ behavior.hint | customTranslate }}">{{ behavior.name | customTranslate }}</div>
+      <tb-get-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.value"
+                                    fxFlex
+                                    panelTitle="{{ behavior.name | customTranslate }}"
+                                    [valueType]="behavior.valueType"
+                                    [trueLabel]="behavior.trueLabel | customTranslate"
+                                    [falseLabel]="behavior.falseLabel | customTranslate"
+                                    [stateLabel]="behavior.stateLabel | customTranslate"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="{{ behavior.id }}">
+      </tb-get-value-action-settings>
+      <tb-set-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.action"
+                                    fxFlex
+                                    panelTitle="{{ behavior.name | customTranslate }}"
+                                    [valueType]="behavior.valueType"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="{{ behavior.id }}">
+      </tb-set-value-action-settings>
+      <tb-widget-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.widgetAction"
+                                 fxFlex
+                                 panelTitle="{{ behavior.name | customTranslate }}"
+                                 [callbacks]="callbacks"
+                                 [widgetType]="widgetType"
+                                 formControlName="{{ behavior.id }}">
+      </tb-widget-action-settings>
+    </div>
+  </ng-container>
+</ng-template>

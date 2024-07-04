@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectorRef,
-  Component,
-  forwardRef,
-  Input,
-  OnChanges,
-  OnInit,
-  SimpleChanges,
-  ViewEncapsulation
-} from '@angular/core';
+import { ChangeDetectorRef, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
 import {
   ControlValueAccessor,
   NG_VALIDATORS,
@@ -49,7 +40,9 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { TargetDevice, widgetType } from '@shared/models/widget.models';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import {
+  ScadaSymbolBehaviorGroup,
   ScadaSymbolPropertyRow,
+  toBehaviorGroups,
   toPropertyRows
 } from '@home/components/widget/lib/settings/common/scada/scada-symbol-object-settings.models';
 import { merge, Observable, of, Subscription } from 'rxjs';
@@ -114,6 +107,7 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
   public scadaSymbolObjectSettingsFormGroup: UntypedFormGroup;
 
   metadata: ScadaSymbolMetadata;
+  behaviorGroups: ScadaSymbolBehaviorGroup[];
   propertyRows: ScadaSymbolPropertyRow[];
 
   constructor(protected store: Store<AppState>,
@@ -201,6 +195,7 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
     metadata$.subscribe(
       (metadata) => {
         this.metadata = metadata;
+        this.behaviorGroups = toBehaviorGroups(this.metadata.behavior);
         this.propertyRows = toPropertyRows(this.metadata.properties);
         const behaviorFormGroup =  this.scadaSymbolObjectSettingsFormGroup.get('behavior') as UntypedFormGroup;
         for (const control of Object.keys(behaviorFormGroup.controls)) {

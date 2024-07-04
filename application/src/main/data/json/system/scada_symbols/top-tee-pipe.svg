@@ -1,4 +1,5 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200"><tb:metadata xmlns=""><![CDATA[{
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="200" height="200" fill="none" version="1.1" viewBox="0 0 200 200">
+<tb:metadata xmlns=""><![CDATA[{
   "title": "Top tee pipe",
   "description": "Top tee pipe with configurable horizontal and/or vertical fluid and leak visualizations.",
   "searchTags": [
@@ -43,8 +44,9 @@
   "behavior": [
     {
       "id": "horizontalFluid",
-      "name": "{i18n:scada.symbol.horizontal-fluid-presence}",
-      "hint": "{i18n:scada.symbol.horizontal-fluid-presence-hint}",
+      "name": "{i18n:scada.symbol.fluid-presence}",
+      "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": "{i18n:scada.symbol.horizontal-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -57,8 +59,9 @@
     },
     {
       "id": "horizontalFlow",
-      "name": "{i18n:scada.symbol.horizontal-flow-presence}",
-      "hint": "{i18n:scada.symbol.horizontal-flow-presence-hint}",
+      "name": "{i18n:scada.symbol.flow-presence}",
+      "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": "{i18n:scada.symbol.horizontal-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -71,8 +74,9 @@
     },
     {
       "id": "horizontalFlowDirection",
-      "name": "{i18n:scada.symbol.horizontal-flow-direction}",
-      "hint": "{i18n:scada.symbol.horizontal-flow-direction-hint}",
+      "name": "{i18n:scada.symbol.flow-direction}",
+      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": "{i18n:scada.symbol.horizontal-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": true,
@@ -85,8 +89,9 @@
     },
     {
       "id": "horizontalFlowAnimationSpeed",
-      "name": "{i18n:scada.symbol.horizontal-flow-animation-speed}",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
       "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": "{i18n:scada.symbol.horizontal-pipe}",
       "type": "value",
       "valueType": "DOUBLE",
       "defaultValue": 1,
@@ -99,8 +104,9 @@
     },
     {
       "id": "verticalFluid",
-      "name": "{i18n:scada.symbol.vertical-fluid-presence}",
-      "hint": "{i18n:scada.symbol.vertical-fluid-presence-hint}",
+      "name": "{i18n:scada.symbol.fluid-presence}",
+      "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": "{i18n:scada.symbol.vertical-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -113,8 +119,9 @@
     },
     {
       "id": "verticalFlow",
-      "name": "{i18n:scada.symbol.vertical-flow-presence}",
-      "hint": "{i18n:scada.symbol.vertical-flow-presence-hint}",
+      "name": "{i18n:scada.symbol.flow-presence}",
+      "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": "{i18n:scada.symbol.vertical-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": false,
@@ -127,8 +134,9 @@
     },
     {
       "id": "verticalFlowDirection",
-      "name": "{i18n:scada.symbol.vertical-flow-direction}",
-      "hint": "{i18n:scada.symbol.vertical-flow-direction-hint}",
+      "name": "{i18n:scada.symbol.flow-direction}",
+      "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": "{i18n:scada.symbol.vertical-pipe}",
       "type": "value",
       "valueType": "BOOLEAN",
       "defaultValue": true,
@@ -141,8 +149,9 @@
     },
     {
       "id": "verticalFlowAnimationSpeed",
-      "name": "{i18n:scada.symbol.vertical-flow-animation-speed}",
+      "name": "{i18n:scada.symbol.flow-animation-speed}",
       "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": "{i18n:scada.symbol.vertical-pipe}",
       "type": "value",
       "valueType": "DOUBLE",
       "defaultValue": 1,
@@ -202,8 +211,7 @@
       "step": null
     }
   ]
-}]]></tb:metadata>
-<g transform="translate(-4)" clip-path="url(#clip0_1245_66653)">
+}]]></tb:metadata><g transform="translate(-4)" clip-path="url(#clip0_1245_66653)">
   <path d="m18 64h172v72h-172z" fill="#fff"/>
   <path d="m18 64h172v72h-172z" fill="url(#paint0_linear_1245_66653)" style="fill:url(#paint0_linear_1245_66653)"/>
   <path d="m19.5 65.5h169v69h-169z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
