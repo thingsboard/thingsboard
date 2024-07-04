@@ -96,7 +96,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   @ViewChild('nameInput') nameInput: ElementRef;
   @ViewChild(MatSort, {static: false}) sort: MatSort;
-  @ViewChildren(MatTab) tabs: QueryList<MatTab>;
 
   pageLink: PageLink;
 
@@ -119,8 +118,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   mode: ConnectorConfigurationModes = this.connectorConfigurationModes.BASIC;
 
   initialConnector: GatewayConnector;
-
-  private tabsCountSubject = new BehaviorSubject<number>(0);
 
   private inactiveConnectors: Array<string>;
 
@@ -273,8 +270,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         }
       });
     }
-    this.observeModeChange();
-    this.observeTabsChanges();
   }
 
   ngOnDestroy(): void {
@@ -711,26 +706,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       );
     }
     return of(true);
-  }
-
-  private observeTabsChanges(): void {
-    this.tabs.changes
-      .pipe(
-        tap(() => this.tabsCountSubject.next(this.tabs.length)),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
-  }
-
-  private observeModeChange(): void {
-    this.connectorForm.get('mode').valueChanges
-      .pipe(
-        distinctUntilChanged(),
-        filter(Boolean),
-        tap(mode => this.updateConnector({...this.initialConnector, basicConfig: this.initialConnector?.configurationJson || {}, mode })),
-        takeUntil(this.destroy$),
-      )
-      .subscribe();
   }
 
   private setFormValue(connector: GatewayConnector): void {
