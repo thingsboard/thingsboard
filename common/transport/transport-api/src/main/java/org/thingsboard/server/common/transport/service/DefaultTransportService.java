@@ -931,7 +931,7 @@ public class DefaultTransportService extends TransportActivityManager implements
                     rateLimitService.remove(new DeviceId(entityUuid));
                     onDeviceDeleted(new DeviceId(entityUuid));
                 }
-            } else if (toSessionMsg.hasResourceUpdateMsg() && serviceInfoProvider.getServiceInfo().getTransportsList().contains(DataConstants.LWM2M_TRANSPORT_NAME)) {
+            } else if (toSessionMsg.hasResourceUpdateMsg()) {
                 TransportProtos.ResourceUpdateMsg msg = toSessionMsg.getResourceUpdateMsg();
                 TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
                 ResourceType resourceType = ResourceType.valueOf(msg.getResourceType());
@@ -941,7 +941,7 @@ public class DefaultTransportService extends TransportActivityManager implements
                     log.trace("ResourceUpdate - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(msg));
                 });
-            } else if (toSessionMsg.hasResourceDeleteMsg() && serviceInfoProvider.getServiceInfo().getTransportsList().contains(DataConstants.LWM2M_TRANSPORT_NAME)) {
+            } else if (toSessionMsg.hasResourceDeleteMsg()) {
                 TransportProtos.ResourceDeleteMsg msg = toSessionMsg.getResourceDeleteMsg();
                 TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
                 ResourceType resourceType = ResourceType.valueOf(msg.getResourceType());
