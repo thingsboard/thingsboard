@@ -114,9 +114,9 @@ export class GatewayLogsComponent implements OnInit, AfterViewInit {
   private updateWidgetTitle(): void {
     const titlePlaceholder = '${connectorName}';
     if (this.ctx.settings.isConnectorLog && this.ctx.settings.connectorLogState) {
-      const connector = this.ctx.stateController.getStateParams()[this.ctx.settings.connectorLogState];
       const widgetTitle = this.ctx['widget'].config.title;
       if (widgetTitle.includes(titlePlaceholder)) {
+        const connector = this.ctx.stateController.getStateParams()[this.ctx.settings.connectorLogState];
         this.ctx.widgetTitle = widgetTitle.replace(titlePlaceholder, connector.key);
       } else {
         this.ctx.widgetTitle = widgetTitle;
