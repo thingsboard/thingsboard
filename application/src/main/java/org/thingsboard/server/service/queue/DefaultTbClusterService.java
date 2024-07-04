@@ -359,7 +359,7 @@ public class DefaultTbClusterService implements TbClusterService {
     @Override
     public void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback) {
         if (resource.getResourceType() == ResourceType.LWM2M_MODEL) {
-            log.trace("[{}] Processing delete resource", resource);
+            log.trace("[{}][{}][{}] Processing delete resource", resource.getTenantId(), resource.getResourceType(), resource.getResourceKey());
             TransportProtos.ResourceDeleteMsg resourceDeleteMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
                     .setTenantIdMSB(resource.getTenantId().getId().getMostSignificantBits())
                     .setTenantIdLSB(resource.getTenantId().getId().getLeastSignificantBits())
@@ -390,28 +390,25 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void broadcast(ToTransportMsg transportMsg, TbQueueCallback callback) {
-        TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransportNfProducer = producerProvider.getTransportNotificationsMsgProducer();
         Set<String> tbTransportServices = partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT);
+        broadcast(transportMsg, tbTransportServices, callback);
+    }
+
+    private void broadcast(ToTransportMsg transportMsg, String transportType, TbQueueCallback callback) {
+        Set<String> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT).stream()
+                .filter(info -> info.getTransportsList().contains(transportType))
+                .map(TransportProtos.ServiceInfo::getServiceId).collect(Collectors.toSet());
+        broadcast(transportMsg, tbTransportServices, callback);
+    }
+
+    private void broadcast(ToTransportMsg transportMsg, Set<String> tbTransportServices, TbQueueCallback callback) {
+        TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransportNfProducer = producerProvider.getTransportNotificationsMsgProducer();
         TbQueueCallback proxyCallback = callback != null ? new MultipleTbQueueCallbackWrapper(tbTransportServices.size(), callback) : null;
         for (String transportServiceId : tbTransportServices) {
             TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);
             toTransportNfProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), proxyCallback);
             toTransportNfs.incrementAndGet();
         }
-    }
-
-    private void broadcast(ToTransportMsg transportMsg, String transportType, TbQueueCallback callback) {
-        TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransportNfProducer = producerProvider.getTransportNotificationsMsgProducer();
-        Set<TransportProtos.ServiceInfo> tbTransportInfos = partitionService.getAllServices(ServiceType.TB_TRANSPORT);
-        TbQueueCallback proxyCallback = callback != null ? new MultipleTbQueueCallbackWrapper(tbTransportInfos.size(), callback) : null;
-        tbTransportInfos.stream()
-                .filter(info -> info.getTransportsList().contains(transportType))
-                .map(TransportProtos.ServiceInfo::getServiceId)
-                .forEach(transportServiceId -> {
-                    TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);
-                    toTransportNfProducer.send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), transportMsg), proxyCallback);
-                    toTransportNfs.incrementAndGet();
-                });
     }
 
     @Override
