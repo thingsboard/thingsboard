@@ -931,7 +931,7 @@ public class DefaultTransportService extends TransportActivityManager implements
                     rateLimitService.remove(new DeviceId(entityUuid));
                     onDeviceDeleted(new DeviceId(entityUuid));
                 }
-            } else if (toSessionMsg.hasResourceUpdateMsg()) {
+            } else if (toSessionMsg.hasResourceUpdateMsg() && serviceInfoProvider.getServiceInfo().getTransportsList().contains(DataConstants.LWM2M_TRANSPORT_NAME)) {
                 TransportProtos.ResourceUpdateMsg msg = toSessionMsg.getResourceUpdateMsg();
                 TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
                 ResourceType resourceType = ResourceType.valueOf(msg.getResourceType());
@@ -941,14 +941,14 @@ public class DefaultTransportService extends TransportActivityManager implements
                     log.trace("ResourceUpdate - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceUpdate(msg));
                 });
-            } else if (toSessionMsg.hasResourceDeleteMsg()) {
+            } else if (toSessionMsg.hasResourceDeleteMsg() && serviceInfoProvider.getServiceInfo().getTransportsList().contains(DataConstants.LWM2M_TRANSPORT_NAME)) {
                 TransportProtos.ResourceDeleteMsg msg = toSessionMsg.getResourceDeleteMsg();
                 TenantId tenantId = TenantId.fromUUID(new UUID(msg.getTenantIdMSB(), msg.getTenantIdLSB()));
                 ResourceType resourceType = ResourceType.valueOf(msg.getResourceType());
                 String resourceId = msg.getResourceKey();
                 transportResourceCache.evict(tenantId, resourceType, resourceId);
                 sessions.forEach((id, mdRez) -> {
-                    log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
+                    log.trace("ResourceDelete - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(msg));
                 });
             } else if (toSessionMsg.getQueueUpdateMsgsCount() > 0) {
