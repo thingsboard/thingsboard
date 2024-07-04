@@ -35,7 +35,11 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
 
     @Override
     public TbCacheValueWrapper<V> get(K key) {
-        return SimpleTbCacheValueWrapper.wrap(doGet(key).getSecond());
+        TbPair<Long, V> versionValuePair = doGet(key);
+        if (versionValuePair != null) {
+            return SimpleTbCacheValueWrapper.wrap(versionValuePair.getSecond());
+        }
+        return null;
     }
 
     @Override
@@ -52,8 +56,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
         lock.lock();
         try {
             TbPair<Long, V> versionValuePair = doGet(key);
-            Long currentVersion = versionValuePair.getFirst();
-            if (currentVersion == null || version > currentVersion) {
+            if (versionValuePair == null || version > versionValuePair.getFirst()) {
                 cacheManager.getCache(cacheName).put(key, TbPair.of(version, value));
             }
         } finally {
@@ -63,7 +66,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
 
     private TbPair<Long, V> doGet(K key) {
         Cache.ValueWrapper source = cacheManager.getCache(cacheName).get(key);
-        return source == null ? TbPair.emptyPair() : (TbPair<Long, V>) source.get();
+        return source == null ? null : (TbPair<Long, V>) source.get();
     }
 
     @Override

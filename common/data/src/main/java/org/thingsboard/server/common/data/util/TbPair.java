@@ -21,17 +21,10 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class TbPair<S, T> {
-    public static final TbPair EMPTY = new TbPair<>(null, null);
-
     private S first;
     private T second;
 
     public static <S, T> TbPair<S, T> of(S first, T second) {
         return new TbPair<>(first, second);
-    }
-
-    @SuppressWarnings("unchecked")
-    public static <S, T> TbPair<S, T> emptyPair() {
-        return (TbPair<S, T>) EMPTY;
     }
 }
