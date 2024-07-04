@@ -36,7 +36,8 @@ import {
   SecurityType,
   SecurityTypeTranslationsMap,
   ModeType,
-  noLeadTrailSpacesRegex
+  noLeadTrailSpacesRegex,
+  ConnectorSecurity
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { takeUntil } from 'rxjs/operators';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -75,18 +76,15 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
   extendCertificatesModel = false;
 
   BrokerSecurityType = SecurityType;
-
   securityTypes = Object.values(SecurityType);
-
   modeTypes = Object.values(ModeType);
-
   SecurityTypeTranslationsMap = SecurityTypeTranslationsMap;
-
   securityFormGroup: UntypedFormGroup;
 
-  private destroy$ = new Subject<void>();
+  onChange!: (value: string) => void;
+  onTouched!: () => void;
 
-  private propagateChange = (v: any) => {};
+  private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {}
 
@@ -104,7 +102,10 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
     }
     this.securityFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe((value) => this.updateView(value));
+    ).subscribe((value) => {
+      this.onChange(value);
+      this.onTouched();
+    });
     this.securityFormGroup.get('type').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((type) => this.updateValidators(type));
@@ -115,29 +116,31 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
     this.destroy$.complete();
   }
 
-  writeValue(deviceInfo: any) {
-    if (!deviceInfo.type) {
-      deviceInfo.type = SecurityType.ANONYMOUS;
+  writeValue(securityInfo: ConnectorSecurity): void {
+    if (!securityInfo) {
+      const defaultSecurity = {type: SecurityType.ANONYMOUS};
+      this.securityFormGroup.reset(defaultSecurity, {emitEvent: false});
+    } else {
+      if (!securityInfo.type) {
+        securityInfo.type = SecurityType.ANONYMOUS;
+      }
+      this.securityFormGroup.reset(securityInfo, {emitEvent: false});
     }
-    this.securityFormGroup.reset(deviceInfo);
-    this.updateView(deviceInfo);
   }
 
   validate(): ValidationErrors | null {
-    return this.securityFormGroup.valid ? null : {
+    return this.securityFormGroup.get('type').value !== SecurityType.BASIC || this.securityFormGroup.valid ? null : {
       securityForm: { valid: false }
     };
   }
 
-  updateView(value: any) {
-    this.propagateChange(value);
+  registerOnChange(fn: (value: string) => void): void {
+    this.onChange = fn;
   }
 
-  registerOnChange(fn: any): void {
-    this.propagateChange = fn;
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
   }
-
-  registerOnTouched(fn: any): void {}
 
   private updateValidators(type: SecurityType): void {
     if (type) {

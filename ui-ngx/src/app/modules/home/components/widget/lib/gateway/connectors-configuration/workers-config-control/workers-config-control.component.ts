@@ -18,22 +18,21 @@ import {
   ChangeDetectionStrategy,
   Component,
   forwardRef,
-  inject,
-  Input,
   OnDestroy,
-  OnInit
 } from '@angular/core';
 import {
-  ControlContainer,
   ControlValueAccessor,
   FormBuilder,
-  FormGroup,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup,
+  UntypedFormGroup, ValidationErrors, Validator,
   Validators
 } from '@angular/forms';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
+import { WorkersConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-workers-config-control',
@@ -49,46 +48,54 @@ import { CommonModule } from '@angular/common';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => WorkersConfigControlComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => WorkersConfigControlComponent),
+      multi: true
     }
   ]
 })
-export class WorkersConfigControlComponent implements ControlValueAccessor, OnInit, OnDestroy {
-  @Input() controlKey = 'workers';
-
+export class WorkersConfigControlComponent implements OnDestroy, ControlValueAccessor, Validator {
   workersConfigFormGroup: UntypedFormGroup;
 
-  get parentFormGroup(): FormGroup {
-    return this.parentContainer.control as FormGroup;
-  }
+  onChange!: (value: string) => void;
+  onTouched!: () => void;
 
-  private parentContainer = inject(ControlContainer);
+  private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
     this.workersConfigFormGroup = this.fb.group({
       maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],
       maxMessageNumberPerWorker: [10, [Validators.required, Validators.min(1)]],
     });
-  }
 
-  ngOnInit(): void {
-    this.addSelfControl();
+    this.workersConfigFormGroup.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      this.onChange(value);
+      this.onTouched();
+    });
   }
 
   ngOnDestroy(): void {
-    this.removeSelfControl();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
-  registerOnChange(fn: any): void {}
-
-  registerOnTouched(fn: any): void {}
-
-  writeValue(obj: any): void {}
-
-  private addSelfControl(): void {
-    this.parentFormGroup.addControl(this.controlKey,  this.workersConfigFormGroup);
+  registerOnChange(fn: (value: string) => void): void {
+    this.onChange = fn;
   }
 
-  private removeSelfControl(): void {
-    this.parentFormGroup.removeControl(this.controlKey);
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  writeValue(workersConfig: WorkersConfig): void {
+    this.workersConfigFormGroup.patchValue(workersConfig, {emitEvent: false});
+  }
+
+  validate(): ValidationErrors | null {
+    return this.workersConfigFormGroup.valid ? null : {
+      workersConfigFormGroup: {valid: false}
+    };
   }
 }

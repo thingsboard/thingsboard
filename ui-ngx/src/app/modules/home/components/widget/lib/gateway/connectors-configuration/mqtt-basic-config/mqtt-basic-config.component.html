@@ -1,0 +1,24 @@
+<mat-tab-group [formGroup]="basicFormGroup">
+  <mat-tab label="{{ 'gateway.general' | translate }}">
+    <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.broker.connection' | translate }}*">
+    <tb-broker-config-control formControlName="broker"></tb-broker-config-control>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
+    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
+      <tb-mapping-table formControlName="dataMapping" [required]="true" [mappingType]="mappingTypes.DATA"></tb-mapping-table>
+    </div>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.requests-mapping' | translate }}">
+    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
+      <tb-mapping-table formControlName="requestsMapping" [mappingType]="mappingTypes.REQUESTS"></tb-mapping-table>
+    </div>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.workers-settings' | translate }}">
+    <div class="tb-form-panel no-border no-padding">
+      <tb-workers-config-control formControlName="workers"></tb-workers-config-control>
+    </div>
+  </mat-tab>
+</mat-tab-group>
+

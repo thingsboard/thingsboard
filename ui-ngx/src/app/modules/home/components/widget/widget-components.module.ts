@@ -112,6 +112,15 @@ import {
   BrokerConfigControlComponent,
   WorkersConfigControlComponent,
 } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
+import {
+  GeneralConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/general-config/general-config.component';
+import {
+  MqttBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config/mqtt-basic-config.component';
+import {
+  OpcUaBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-ua-basic-config/opc-ua-basic-config.component';
 
 @NgModule({
   declarations:
@@ -139,7 +148,6 @@ import {
       FlotWidgetComponent,
       GatewayConnectorComponent,
       AddConnectorDialogComponent,
-      MappingTableComponent,
       MappingDialogComponent,
       DeviceInfoTableComponent,
       MappingDataKeysPanelComponent,
@@ -193,6 +201,10 @@ import {
     BrokerConfigControlComponent,
     WorkersConfigControlComponent,
     ServerConfigComponent,
+    GeneralConfigComponent,
+    MqttBasicConfigComponent,
+    MappingTableComponent,
+    OpcUaBasicConfigComponent,
   ],
     exports: [
         EntitiesTableWidgetComponent,
@@ -217,7 +229,6 @@ import {
         FlotWidgetComponent,
         GatewayConnectorComponent,
         AddConnectorDialogComponent,
-        MappingTableComponent,
         MappingDialogComponent,
         DeviceInfoTableComponent,
         MappingDataKeysPanelComponent,

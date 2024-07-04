@@ -140,7 +140,7 @@ export interface OpcUaMapping {
 
 export type MappingValue = DataMapping | RequestsMapping | OpcUaMapping;
 
-interface ServerConfig {
+export interface ServerConfig {
   name: string;
   url: string;
   timeoutInMillis: number;
@@ -149,12 +149,10 @@ interface ServerConfig {
   subCheckPeriodInMillis: number;
   showMap: boolean;
   security: string;
-  identity: {
-    type: SecurityType;
-  };
+  identity: ConnectorSecurity;
 }
 
-interface BrokerConfig {
+export interface BrokerConfig {
   name: string;
   host: string;
   port: number;
@@ -162,9 +160,16 @@ interface BrokerConfig {
   clientId: string;
   maxNumberOfWorkers: number;
   maxMessageNumberPerWorker: number;
-  security: {
-    type: SecurityType;
-  };
+  security: ConnectorSecurity;
+}
+
+export interface ConnectorSecurity {
+  type: SecurityType;
+  username?: string;
+  password?: string;
+  pathToCACert?: string;
+  pathToPrivateKey?: string;
+  pathToClientCert?: string;
 }
 
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
@@ -175,10 +180,12 @@ export interface ConnectorBaseConfig {
   requestsMapping?: Record<RequestType, RequestMappingData> | RequestMappingData[];
   server?: ServerConfig;
   broker?: BrokerConfig;
-  workers?: {
-    maxNumberOfWorkers: number;
-    maxMessageNumberPerWorker: number;
-  };
+  workers?: WorkersConfig;
+}
+
+export interface WorkersConfig {
+  maxNumberOfWorkers: number;
+  maxMessageNumberPerWorker: number;
 }
 
 interface DeviceInfo {

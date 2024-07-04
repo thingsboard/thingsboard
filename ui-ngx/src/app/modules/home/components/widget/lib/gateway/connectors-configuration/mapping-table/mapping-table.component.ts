@@ -20,7 +20,6 @@ import {
   Component,
   ElementRef,
   forwardRef,
-  inject,
   Input,
   OnDestroy,
   OnInit,
@@ -33,12 +32,14 @@ import { DialogService } from '@core/services/dialog.service';
 import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
 import {
-  ControlContainer,
   ControlValueAccessor,
+  FormArray,
   FormBuilder,
-  FormGroup,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormArray,
+  ValidationErrors,
+  Validator,
 } from '@angular/forms';
 import {
   ConnectorMapping,
@@ -57,7 +58,8 @@ import { CollectionViewer, DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { validateArrayIsNotEmpty } from '@shared/validators/form-array.validators';
+import { SharedModule } from '@shared/shared.module';
+import { CommonModule } from '@angular/common';
 
 @Component({
   selector: 'tb-mapping-table',
@@ -69,36 +71,19 @@ import { validateArrayIsNotEmpty } from '@shared/validators/form-array.validator
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => MappingTableComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => MappingTableComponent),
+      multi: true
     }
-  ]
+  ],
+  standalone: true,
+  imports: [CommonModule, SharedModule]
 })
-export class MappingTableComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
-  @Input() controlKey = 'dataMapping';
-
+export class MappingTableComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
   @coerceBoolean()
   @Input() required = false;
-
-  parentContainer = inject(ControlContainer);
-  mappingTypeTranslationsMap = MappingTypeTranslationsMap;
-  mappingTypeEnum = MappingType;
-  displayedColumns = [];
-  mappingColumns = [];
-  textSearchMode = false;
-  dataSource: MappingDatasource;
-  hidePageSize = false;
-
-  activeValue = false;
-  dirtyValue = false;
-
-  mappingTypeValue: MappingType;
-
-  get mappingType(): MappingType {
-    return this.mappingTypeValue;
-  }
-
-  get parentFormGroup(): FormGroup {
-    return this.parentContainer.control as FormGroup;
-  }
 
   @Input()
   set mappingType(value: MappingType) {
@@ -109,8 +94,25 @@ export class MappingTableComponent implements ControlValueAccessor, AfterViewIni
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
+  mappingTypeTranslationsMap = MappingTypeTranslationsMap;
+  mappingTypeEnum = MappingType;
+  displayedColumns = [];
+  mappingColumns = [];
+  textSearchMode = false;
+  dataSource: MappingDatasource;
+  hidePageSize = false;
+  activeValue = false;
+  dirtyValue = false;
+  mappingTypeValue: MappingType;
   mappingFormGroup: UntypedFormArray;
   textSearch = this.fb.control('', {nonNullable: true});
+
+  get mappingType(): MappingType {
+    return this.mappingTypeValue;
+  }
+
+  onChange: (value: string) => void = () => {};
+  onTouched: () => void  = () => {};
 
   private destroy$ = new Subject<void>();
 
@@ -130,14 +132,14 @@ export class MappingTableComponent implements ControlValueAccessor, AfterViewIni
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.updateTableData(value);
+      this.onChange(value);
+      this.onTouched();
     });
-    this.addSelfControl();
   }
 
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
-    this.removeSelfControl();
   }
 
   ngAfterViewInit(): void {
@@ -151,11 +153,24 @@ export class MappingTableComponent implements ControlValueAccessor, AfterViewIni
     });
   }
 
-  registerOnChange(fn: any): void {}
+  registerOnChange(fn: (value: string) => void): void {
+    this.onChange = fn;
+  }
 
-  registerOnTouched(fn: any): void {}
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
 
-  writeValue(obj: any): void {}
+  writeValue(connectorMappings: ConnectorMapping[]): void {
+    (this.mappingFormGroup as FormArray).clear();
+    this.pushDataAsFormArrays(connectorMappings)
+  }
+
+  validate(): ValidationErrors | null {
+    return !this.required || this.mappingFormGroup.controls.length ? null : {
+      mappingFormGroup: {valid: false}
+    };
+  }
 
   enterFilterMode(): void {
     this.textSearchMode = true;
@@ -229,13 +244,19 @@ export class MappingTableComponent implements ControlValueAccessor, AfterViewIni
     });
   }
 
+  private pushDataAsFormArrays(data: ConnectorMapping[]): void {
+    if (data?.length) {
+      data.forEach((mapping: ConnectorMapping) => this.mappingFormGroup.push(this.fb.control(mapping)));
+    }
+  }
+
   private getMappingValue(value: ConnectorMapping): MappingValue {
     switch (this.mappingType) {
       case MappingType.DATA:
         return {
           topicFilter: (value as ConverterConnectorMapping).topicFilter,
           QoS: (value as ConverterConnectorMapping).subscriptionQos,
-          converter: this.translate.instant(ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter.type))
+          converter: this.translate.instant(ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter?.type) || '')
         };
       case MappingType.REQUESTS:
         let details;
@@ -287,17 +308,6 @@ export class MappingTableComponent implements ControlValueAccessor, AfterViewIni
           { def: 'deviceProfileExpression', title: 'gateway.device-profile' }
         );
     }
-  }
-
-  private addSelfControl(): void {
-    this.parentFormGroup.addControl(this.controlKey,  this.mappingFormGroup);
-    if (this.required) {
-      this.mappingFormGroup.addValidators(validateArrayIsNotEmpty());
-    }
-  }
-
-  private removeSelfControl(): void {
-    this.parentFormGroup.removeControl(this.controlKey);
   }
 }
 

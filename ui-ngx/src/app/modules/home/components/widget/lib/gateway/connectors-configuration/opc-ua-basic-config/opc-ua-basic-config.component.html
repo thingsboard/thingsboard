@@ -1,0 +1,13 @@
+<mat-tab-group [formGroup]="basicFormGroup">
+  <mat-tab label="{{ 'gateway.general' | translate }}">
+    <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.server' | translate }}*">
+    <tb-server-config formControlName="server"></tb-server-config>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
+    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
+      <tb-mapping-table formControlName="mapping" [required]="true" [mappingType]="mappingTypes.OPCUA"></tb-mapping-table>
+    </div>
+  </mat-tab>
+</mat-tab-group>

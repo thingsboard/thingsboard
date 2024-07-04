@@ -1,0 +1,80 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel no-border no-padding padding-top" [formGroup]="parentFormGroup">
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width tb-required" translate>gateway.name</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput autocomplete="off" name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="(parentFormGroup.get('name').hasError('duplicateName') ?
+                                    'gateway.connector-duplicate-name' : 'gateway.name-required') | translate"
+                  *ngIf="(parentFormGroup.get('name').hasError('required') && parentFormGroup.get('name').touched) ||
+                                    parentFormGroup.get('name').hasError('duplicateName')"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div *ngIf="parentFormGroup.get('type').value === connectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput name="value" formControlName="class" placeholder="{{ 'gateway.set' | translate }}"/>
+      </mat-form-field>
+    </div>
+  </div>
+  <div *ngIf="parentFormGroup.get('type').value === connectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel stroked">
+    <div class="tb-form-panel-title" translate>gateway.logs-configuration</div>
+    <div class="tb-form-row" fxLayoutAlign="space-between center">
+      <mat-slide-toggle class="mat-slide" formControlName="enableRemoteLogging">
+        <mat-label>
+          {{ 'gateway.enable-remote-logging' | translate }}
+        </mat-label>
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="logLevel">
+            <mat-option *ngFor="let logLevel of gatewayLogLevel" [value]="logLevel">{{ logLevel }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+  </div>
+  <div *ngIf="parentFormGroup.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
+      <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
+        {{ 'gateway.send-change-data' | translate }}
+      </mat-label>
+    </mat-slide-toggle>
+  </div>
+</div>

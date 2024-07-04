@@ -18,44 +18,50 @@ import {
   ChangeDetectionStrategy,
   Component,
   forwardRef,
-  OnDestroy
+  Input,
+  OnDestroy,
+  TemplateRef,
 } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
+  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup,
   ValidationErrors,
   Validator,
-  Validators
 } from '@angular/forms';
 import {
-  noLeadTrailSpacesRegex,
-  SecurityType,
-  ServerConfig,
-  ServerSecurityTypes
+  ConnectorBaseConfig,
+  ConnectorType,
+  MappingType,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
-import { Subject } from 'rxjs';
+import {
+  BrokerConfigControlComponent,
+  MappingTableComponent,
+  SecurityConfigComponent,
+  ServerConfigComponent,
+  WorkersConfigControlComponent,
+  GeneralConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
-  selector: 'tb-server-config',
-  templateUrl: './server-config.component.html',
-  styleUrls: ['./server-config.component.scss'],
+  selector: 'tb-opc-ua-basic-config',
+  templateUrl: './opc-ua-basic-config.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => OpcUaBasicConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => OpcUaBasicConfigComponent),
       multi: true
     }
   ],
@@ -64,36 +70,48 @@ import { takeUntil } from 'rxjs/operators';
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
-  ]
+    WorkersConfigControlComponent,
+    BrokerConfigControlComponent,
+    MappingTableComponent,
+    GeneralConfigComponent,
+    ServerConfigComponent,
+  ],
+  styles: [`
+    :host {
+      height: 100%;
+    }
+    :host ::ng-deep {
+        .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
+          height: 100%;
+        }
+      }
+  `],
 })
-export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
-  serverSecurityTypes = ServerSecurityTypes;
-  serverConfigFormGroup: UntypedFormGroup;
+
+export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+  @Input() generalTabContent: TemplateRef<GeneralConfigComponent>;
+
+  mappingTypes = MappingType;
+  basicFormGroup: FormGroup;
 
   onChange!: (value: string) => void;
   onTouched!: () => void;
 
+  protected readonly connectorType = ConnectorType;
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
-    this.serverConfigFormGroup = this.fb.group({
-      name: ['', []],
-      url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
-      scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],
-      enableSubscriptions: [true, []],
-      subCheckPeriodInMillis: [10, [Validators.required, Validators.min(10)]],
-      showMap: [false, []],
-      security: [SecurityType.BASIC128, []],
-      identity: [{}, [Validators.required]]
+    this.basicFormGroup = this.fb.group({
+      mapping: [],
+      server: [],
     });
 
-    this.serverConfigFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      this.onChange(value);
-      this.onTouched();
-    });
+    this.basicFormGroup.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.onChange(value);
+        this.onTouched();
+      });
   }
 
   ngOnDestroy(): void {
@@ -109,13 +127,13 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
     this.onTouched = fn;
   }
 
-  validate(): ValidationErrors | null {
-    return this.serverConfigFormGroup.valid ? null : {
-      serverConfigFormGroup: { valid: false }
-    };
+  writeValue(basicConfig: ConnectorBaseConfig): void {
+    this.basicFormGroup.patchValue(basicConfig, {emitEvent: false});
   }
 
-  writeValue(serverConfig: ServerConfig): void {
-    this.serverConfigFormGroup.patchValue(serverConfig, {emitEvent: false});
+  validate(): ValidationErrors | null {
+    return this.basicFormGroup.valid ? null : {
+      basicFormGroup: {valid: false}
+    };
   }
 }

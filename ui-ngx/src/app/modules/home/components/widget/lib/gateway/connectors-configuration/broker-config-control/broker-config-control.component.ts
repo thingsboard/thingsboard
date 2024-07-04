@@ -19,20 +19,20 @@ import {
   Component,
   forwardRef,
   inject,
-  Input,
   OnDestroy,
-  OnInit
 } from '@angular/core';
 import {
-  ControlContainer,
   ControlValueAccessor,
   FormBuilder,
-  FormGroup,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormGroup,
+  ValidationErrors,
+  Validator,
   Validators
 } from '@angular/forms';
 import {
+  BrokerConfig,
   MqttVersions,
   noLeadTrailSpacesRegex,
   PortLimits,
@@ -42,6 +42,7 @@ import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { generateSecret } from '@core/utils';
 import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-broker-config-control',
@@ -58,22 +59,24 @@ import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/con
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => BrokerConfigControlComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => BrokerConfigControlComponent),
+      multi: true
     }
   ]
 })
-export class BrokerConfigControlComponent implements ControlValueAccessor, OnInit, OnDestroy {
-  @Input() controlKey = 'broker';
-
+export class BrokerConfigControlComponent implements ControlValueAccessor, Validator, OnDestroy {
   brokerConfigFormGroup: UntypedFormGroup;
   mqttVersions = MqttVersions;
   portLimits = PortLimits;
 
-  get parentFormGroup(): FormGroup {
-    return this.parentContainer.control as FormGroup;
-  }
+  onChange!: (value: string) => void;
+  onTouched!: () => void;
 
-  private parentContainer = inject(ControlContainer);
   private translate = inject(TranslateService);
+  private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
     this.brokerConfigFormGroup = this.fb.group({
@@ -82,9 +85,12 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, OnIni
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       version: [5, []],
       clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-      maxNumberOfWorkers: [100, [Validators.required, Validators.min(1)]],
-      maxMessageNumberPerWorker: [10, [Validators.required, Validators.min(1)]],
-      security: [{}, [Validators.required]]
+      security: []
+    });
+
+    this.brokerConfigFormGroup.valueChanges.subscribe(value => {
+      this.onChange(value);
+      this.onTouched();
     });
   }
 
@@ -101,29 +107,30 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, OnIni
     return '';
   }
 
-  ngOnInit(): void {
-    this.addSelfControl();
-  }
-
   ngOnDestroy(): void {
-    this.removeSelfControl();
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   generate(formControlName: string): void {
     this.brokerConfigFormGroup.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
   }
 
-  registerOnChange(fn: any): void {}
-
-  registerOnTouched(fn: any): void {}
-
-  writeValue(obj: any): void {}
-
-  private addSelfControl(): void {
-    this.parentFormGroup.addControl(this.controlKey,  this.brokerConfigFormGroup);
+  registerOnChange(fn: (value: string) => void): void {
+    this.onChange = fn;
   }
 
-  private removeSelfControl(): void {
-    this.parentFormGroup.removeControl(this.controlKey);
+  registerOnTouched(fn: () => void): void {
+    this.onTouched = fn;
+  }
+
+  writeValue(brokerConfig: BrokerConfig): void {
+    this.brokerConfigFormGroup.patchValue(brokerConfig, {emitEvent: false});
+  }
+
+  validate(): ValidationErrors | null {
+    return this.brokerConfigFormGroup.valid ? null : {
+      brokerConfigFormGroup: {valid: false}
+    };
   }
 }
