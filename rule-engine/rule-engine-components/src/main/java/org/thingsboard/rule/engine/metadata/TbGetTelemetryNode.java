@@ -66,19 +66,19 @@ public class TbGetTelemetryNode implements TbNode {
     private List<String> tsKeyNames;
     private int limit;
     private String fetchMode;
-    private String orderByFetchAll;
+    private String orderBy;
     private Aggregation aggregation;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
+        if (tsKeyNames.isEmpty()) {
+            throw new TbNodeException("Telemetry is not selected!", true);
+        }
         limit = config.getFetchMode().equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
-        orderByFetchAll = config.getOrderBy();
-        if (StringUtils.isEmpty(orderByFetchAll)) {
-            orderByFetchAll = ASC_ORDER;
-        }
+        orderBy = getOrderBy();
         aggregation = parseAggregationConfig(config.getAggregation());
     }
 
@@ -91,21 +91,13 @@ public class TbGetTelemetryNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        if (tsKeyNames.isEmpty()) {
-            ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
-        } else {
-            try {
-                Interval interval = getInterval(msg);
-                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
-                DonAsynchron.withCallback(list, data -> {
-                    var metaData = updateMetadata(data, msg, keys);
-                    ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
-                }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
-            } catch (Exception e) {
-                ctx.tellFailure(msg, e);
-            }
-        }
+        Interval interval = getInterval(msg);
+        List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
+        ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
+        DonAsynchron.withCallback(list, data -> {
+            var metaData = updateMetadata(data, msg, keys);
+            ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
+        }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
     }
 
     private List<ReadTsKvQuery> buildQueries(Interval interval, List<String> keys) {
@@ -115,19 +107,30 @@ public class TbGetTelemetryNode implements TbNode {
                 interval.getEndTs() - interval.getStartTs();
 
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, getOrderBy()))
+                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, orderBy))
                 .collect(Collectors.toList());
     }
 
-    private String getOrderBy() {
+    private String getOrderBy() throws TbNodeException {
         switch (fetchMode) {
             case TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL:
-                return orderByFetchAll;
+                return getOrderByFetchAll();
             case TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST:
                 return ASC_ORDER;
             default:
                 return DESC_ORDER;
         }
+    }
+
+    private String getOrderByFetchAll() throws TbNodeException {
+        String orderBy = config.getOrderBy();
+        if (ASC_ORDER.equals(orderBy) || DESC_ORDER.equals(orderBy)) {
+            return orderBy;
+        }
+        if (StringUtils.isBlank(orderBy)) {
+            return ASC_ORDER;
+        }
+        throw new TbNodeException("Invalid fetch order selected.", true);
     }
 
     private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
@@ -210,12 +213,11 @@ public class TbGetTelemetryNode implements TbNode {
         return pattern.replaceAll("[$\\[{}\\]]", "");
     }
 
-    private int validateLimit(int limit) {
-        if (limit != 0) {
-            return limit;
-        } else {
-            return TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
+    private int validateLimit(int limit) throws TbNodeException {
+        if (limit < 2 || limit > TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE) {
+            throw new TbNodeException("Limit should be in a range from 2 to 1000.", true);
         }
+        return limit;
     }
 
     @Data
