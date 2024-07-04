@@ -948,7 +948,7 @@ public class DefaultTransportService extends TransportActivityManager implements
                 String resourceId = msg.getResourceKey();
                 transportResourceCache.evict(tenantId, resourceType, resourceId);
                 sessions.forEach((id, mdRez) -> {
-                    log.warn("ResourceDelete - [{}] [{}]", id, mdRez);
+                    log.trace("ResourceDelete - [{}] [{}]", id, mdRez);
                     transportCallbackExecutor.submit(() -> mdRez.getListener().onResourceDelete(msg));
                 });
             } else if (toSessionMsg.getQueueUpdateMsgsCount() > 0) {
