@@ -18,7 +18,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
 
-export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
+export const noLeadTrailSpacesRegex = /^(?! )[\S\s]*(?<! )$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -288,15 +288,16 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
 ]);
 
 export interface RPCCommand {
-  command: string,
-  params: any,
-  time: number
+  command: string;
+  params: any;
+  time: number;
 }
 
 
 export enum ModbusCommandTypes {
   Bits = 'bits',
   Bit = 'bit',
+  // eslint-disable-next-line id-blacklist
   String = 'string',
   Bytes = 'bytes',
   Int8 = '8int',
@@ -321,7 +322,7 @@ export const ModbusCodesTranslate = new Map<number, string>([
   [6, 'gateway.rpc.write-single-holding-register'],
   [15, 'gateway.rpc.write-multiple-coils'],
   [16, 'gateway.rpc.write-multiple-holding-registers']
-])
+]);
 
 export enum BACnetRequestTypes {
   WriteProperty = 'writeProperty',
@@ -330,8 +331,8 @@ export enum BACnetRequestTypes {
 
 export const BACnetRequestTypesTranslates = new Map<BACnetRequestTypes, string>([
   [BACnetRequestTypes.WriteProperty, 'gateway.rpc.write-property'],
-  [BACnetRequestTypes.ReadProperty, "gateway.rpc.read-property"]
-])
+  [BACnetRequestTypes.ReadProperty, 'gateway.rpc.read-property']
+]);
 
 export enum BACnetObjectTypes {
   BinaryInput = 'binaryInput',
@@ -349,7 +350,7 @@ export const BACnetObjectTypesTranslates = new Map<BACnetObjectTypes, string>([
   [BACnetObjectTypes.BinaryInput, 'gateway.rpc.binary-input'],
   [BACnetObjectTypes.BinaryValue, 'gateway.rpc.binary-value'],
   [BACnetObjectTypes.AnalogValue, 'gateway.rpc.analog-value']
-])
+]);
 
 export enum BLEMethods {
   WRITE = 'write',
@@ -361,7 +362,7 @@ export const BLEMethodsTranslates = new Map<BLEMethods, string>([
   [BLEMethods.WRITE, 'gateway.rpc.write'],
   [BLEMethods.READ, 'gateway.rpc.read'],
   [BLEMethods.SCAN, 'gateway.rpc.scan'],
-])
+]);
 
 export enum CANByteOrders {
   LITTLE = 'LITTLE',
@@ -374,18 +375,18 @@ export enum SocketMethodProcessings {
 
 export const SocketMethodProcessingsTranslates = new Map<SocketMethodProcessings, string>([
   [SocketMethodProcessings.WRITE, 'gateway.rpc.write']
-])
+]);
 
 export enum SNMPMethods {
   SET = 'set',
-  MULTISET = "multiset",
-  GET = "get",
-  BULKWALK = "bulkwalk",
-  TABLE = "table",
-  MULTIGET = "multiget",
-  GETNEXT = "getnext",
-  BULKGET = "bulkget",
-  WALKS = "walk"
+  MULTISET = 'multiset',
+  GET = 'get',
+  BULKWALK = 'bulkwalk',
+  TABLE = 'table',
+  MULTIGET = 'multiget',
+  GETNEXT = 'getnext',
+  BULKGET = 'bulkget',
+  WALKS = 'walk'
 }
 
 export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
@@ -398,7 +399,7 @@ export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
   [SNMPMethods.GETNEXT, 'gateway.rpc.get-next'],
   [SNMPMethods.BULKGET, 'gateway.rpc.bulk-get'],
   [SNMPMethods.WALKS, 'gateway.rpc.walk']
-])
+]);
 
 export enum HTTPMethods {
   CONNECT = 'CONNECT',
@@ -427,8 +428,8 @@ export interface RPCTemplateConfig {
 }
 
 export interface SaveRPCTemplateData {
-  config: RPCTemplateConfig,
-  templates: Array<RPCTemplate>
+  config: RPCTemplateConfig;
+  templates: Array<RPCTemplate>;
 }
 
 export interface LogLink {
@@ -445,33 +446,33 @@ export interface GatewayLogData {
 }
 
 export interface AddConnectorConfigData {
-  dataSourceData: Array<any>
+  dataSourceData: Array<any>;
 }
 
 export interface CreatedConnectorConfigData {
-  type: ConnectorType,
-  name: string,
-  logLevel: GatewayLogLevel,
-  useDefaults: boolean,
-  sendDataOnlyOnChange: boolean,
-  configurationJson?: {[key: string]: any}
+  type: ConnectorType;
+  name: string;
+  logLevel: GatewayLogLevel;
+  useDefaults: boolean;
+  sendDataOnlyOnChange: boolean;
+  configurationJson?: {[key: string]: any};
 }
 
 export interface MappingDataKey {
-  key: string,
-  value: any,
-  type: MappingValueType
+  key: string;
+  value: any;
+  type: MappingValueType;
 }
 
 export interface RpcMethodsMapping {
-  method: string,
-  arguments: Array<MappingDataKey>
+  method: string;
+  arguments: Array<MappingDataKey>;
 }
 
 export interface MappingInfo {
-  mappingType: MappingType,
-  value: {[key: string]: any},
-  buttonTitle: string
+  mappingType: MappingType;
+  value: {[key: string]: any};
+  buttonTitle: string;
 }
 
 export enum ConnectorConfigurationModes {
@@ -727,14 +728,14 @@ export const DataConversionTranslationsMap = new Map<ConvertorType, string>(
   ]
 );
 
-export enum SecurityType {
+export enum SecurityPolicy {
   BASIC128 = 'Basic128Rsa15',
   BASIC256 = 'Basic256',
   BASIC256SHA = 'Basic256Sha256'
 }
 
-export const ServerSecurityTypes = [
-  { value: 'Basic128Rsa15', name: 'Basic128RSA15' },
-  { value: 'Basic256', name: 'Basic256' },
-  { value: 'Basic256Sha256', name: 'Basic256SHA256' }
+export const SecurityPolicyTypes = [
+  { value: SecurityPolicy.BASIC128, name: 'Basic128RSA15' },
+  { value: SecurityPolicy.BASIC256, name: 'Basic256' },
+  { value: SecurityPolicy.BASIC256SHA, name: 'Basic256SHA256' }
 ];

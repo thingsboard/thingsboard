@@ -14,13 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  inject,
-  OnDestroy,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -72,13 +66,13 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   mqttVersions = MqttVersions;
   portLimits = PortLimits;
 
-  onChange!: (value: string) => void;
-  onTouched!: () => void;
+  private onChange: (value: string) => void;
+  private onTouched: () => void;
 
-  private translate = inject(TranslateService);
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder,
+              private translate: TranslateService) {
     this.brokerConfigFormGroup = this.fb.group({
       name: ['', []],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],

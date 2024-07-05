@@ -57,10 +57,11 @@ import { takeUntil } from 'rxjs/operators';
   ]
 })
 export class WorkersConfigControlComponent implements OnDestroy, ControlValueAccessor, Validator {
+
   workersConfigFormGroup: UntypedFormGroup;
 
-  onChange!: (value: string) => void;
-  onTouched!: () => void;
+  private onChange: (value: string) => void;
+  private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
 

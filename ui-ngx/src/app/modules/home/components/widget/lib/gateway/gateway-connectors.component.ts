@@ -21,20 +21,12 @@ import {
   ElementRef,
   Input,
   NgZone,
-  ViewChild,
+  OnDestroy,
+  ViewChild
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import {
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  FormGroupDirective,
-  NgForm,
-  UntypedFormControl,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { FormBuilder, FormControl, FormGroup, UntypedFormControl, ValidatorFn, Validators } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
@@ -72,7 +64,7 @@ import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
-  isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
+  isErrorState(control: FormControl | null): boolean {
     return (control && control.invalid);
   }
 }
@@ -83,7 +75,7 @@ export class ForceErrorStateMatcher implements ErrorStateMatcher {
   providers: [{ provide: ErrorStateMatcher, useClass: ForceErrorStateMatcher }],
   styleUrls: ['./gateway-connectors.component.scss']
 })
-export class GatewayConnectorComponent extends PageComponent implements AfterViewInit {
+export class GatewayConnectorComponent extends PageComponent implements AfterViewInit, OnDestroy {
 
   @Input()
   ctx: WidgetContext;
@@ -97,6 +89,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   pageLink: PageLink;
 
   connectorType = ConnectorType;
+
+  allowBasicConfig = new Set<ConnectorType>([
+    ConnectorType.MQTT,
+    ConnectorType.OPCUA
+  ]);
+
+  gatewayLogLevel = Object.values(GatewayLogLevel);
 
   dataSource: MatTableDataSource<AttributeData>;
 
@@ -137,7 +136,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       onDataUpdated: () => this.ctx.ngZone.run(() => {
         this.onDataUpdated();
       }),
-      onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
+      onDataUpdateError: (_, e) => this.ctx.ngZone.run(() => {
         this.onDataUpdateError(e);
       })
     }
@@ -196,7 +195,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
                 defaultConfig[0].value);
             this.cd.detectChanges();
           }
-        })
+        });
       }
     });
 
@@ -214,11 +213,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const basicConfig = this.connectorForm.get('basicConfig');
       const type = this.connectorForm.get('type').value;
       const mode = this.connectorForm.get('mode').value;
-      if (
-        !isEqual(config, basicConfig?.value) &&
-        (type === ConnectorType.MQTT || type === ConnectorType.OPCUA) &&
-        mode === ConnectorConfigurationModes.ADVANCED
-      ) {
+      if (!isEqual(config, basicConfig?.value) && this.allowBasicConfig.has(type) && mode === ConnectorConfigurationModes.ADVANCED) {
         this.connectorForm.get('basicConfig').patchValue(config, {emitEvent: false});
       }
     });
@@ -350,7 +345,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           ...value.configurationJson.workers,
         }
       }
-    }
+    };
   }
 
   private updateData(reload: boolean = false): void {
@@ -607,11 +602,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const wasEnabled = this.activeConnectors.includes(key);
     if (wasEnabled) {
       const index = this.activeConnectors.indexOf(key);
-      if (index !== -1) this.activeConnectors.splice(index, 1);
+      if (index !== -1) {
+        this.activeConnectors.splice(index, 1);
+      }
       this.inactiveConnectors.push(key);
     } else {
       const index = this.inactiveConnectors.indexOf(key);
-      if (index !== -1) this.inactiveConnectors.splice(index, 1);
+      if (index !== -1) {
+        this.inactiveConnectors.splice(index, 1);
+      }
       this.activeConnectors.push(key);
     }
   }
@@ -689,12 +688,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const configJson = this.connectorForm.get('configurationJson');
       const type = this.connectorForm.get('type').value;
       const mode = this.connectorForm.get('mode').value;
-      if (
-        !isEqual(config, configJson?.value) &&
-        (type === ConnectorType.MQTT || type === ConnectorType.OPCUA) &&
-        mode === ConnectorConfigurationModes.BASIC
-      ) {
-        const newConfig = { ...configJson.value, ...config };
+      if (!isEqual(config, configJson?.value) && this.allowBasicConfig.has(type) && mode === ConnectorConfigurationModes.BASIC) {
+        const newConfig = {...configJson.value, ...config};
         this.connectorForm.get('configurationJson').patchValue(newConfig, {emitEvent: false});
       }
     });

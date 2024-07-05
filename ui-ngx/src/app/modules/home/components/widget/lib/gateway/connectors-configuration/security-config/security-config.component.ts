@@ -68,21 +68,22 @@ import { CommonModule } from '@angular/common';
   ]
 })
 export class SecurityConfigComponent implements ControlValueAccessor, OnInit, OnDestroy {
+
   @Input()
-  title: string = 'gateway.security';
+  title = 'gateway.security';
 
   @Input()
   @coerceBoolean()
   extendCertificatesModel = false;
 
   BrokerSecurityType = SecurityType;
-  securityTypes = Object.values(SecurityType);
+  securityTypes = Object.values(SecurityType) as SecurityType[];
   modeTypes = Object.values(ModeType);
   SecurityTypeTranslationsMap = SecurityTypeTranslationsMap;
   securityFormGroup: UntypedFormGroup;
 
-  onChange!: (value: string) => void;
-  onTouched!: () => void;
+  private onChange: (value: string) => void;
+  private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
 

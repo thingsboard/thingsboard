@@ -25,7 +25,6 @@ import {
   OnInit,
   ViewChild,
 } from '@angular/core';
-import { PageLink } from '@shared/models/page/page-link';
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
@@ -33,7 +32,6 @@ import { BehaviorSubject, Observable, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
 import {
   ControlValueAccessor,
-  FormArray,
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -54,7 +52,7 @@ import {
   RequestType,
   RequestTypesTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { CollectionViewer, DataSource } from '@angular/cdk/collections';
+import { DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
@@ -82,14 +80,20 @@ import { CommonModule } from '@angular/common';
   imports: [CommonModule, SharedModule]
 })
 export class MappingTableComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
+
+  @Input()
   @coerceBoolean()
-  @Input() required = false;
+  required = false;
 
   @Input()
   set mappingType(value: MappingType) {
     if (this.mappingTypeValue !== value) {
       this.mappingTypeValue = value;
     }
+  }
+
+  get mappingType(): MappingType {
+    return this.mappingTypeValue;
   }
 
   @ViewChild('searchInput') searchInputField: ElementRef;
@@ -107,12 +111,8 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   mappingFormGroup: UntypedFormArray;
   textSearch = this.fb.control('', {nonNullable: true});
 
-  get mappingType(): MappingType {
-    return this.mappingTypeValue;
-  }
-
-  onChange: (value: string) => void = () => {};
-  onTouched: () => void  = () => {};
+  private onChange: (value: string) => void = () => {};
+  private onTouched: () => void  = () => {};
 
   private destroy$ = new Subject<void>();
 
@@ -149,7 +149,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       takeUntil(this.destroy$)
     ).subscribe((text) => {
       const searchText = text.trim();
-      this.updateTableData(this.mappingFormGroup.value, searchText.trim())
+      this.updateTableData(this.mappingFormGroup.value, searchText.trim());
     });
   }
 
@@ -162,8 +162,8 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   }
 
   writeValue(connectorMappings: ConnectorMapping[]): void {
-    (this.mappingFormGroup as FormArray).clear();
-    this.pushDataAsFormArrays(connectorMappings)
+    this.mappingFormGroup.clear();
+    this.pushDataAsFormArrays(connectorMappings);
   }
 
   validate(): ValidationErrors | null {
@@ -213,12 +213,11 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
     });
   }
 
-  updateTableData(value: ConnectorMapping[], textSearch?: string): void {
-    let tableValue =
-      value.map((value: ConnectorMapping) => this.getMappingValue(value));
+  private updateTableData(value: ConnectorMapping[], textSearch?: string): void {
+    let tableValue = value.map(mappingValue => this.getMappingValue(mappingValue));
     if (textSearch) {
-      tableValue = tableValue.filter(value =>
-        Object.values(value).some(val =>
+      tableValue = tableValue.filter(mappingValue =>
+        Object.values(mappingValue).some(val =>
           val.toString().toLowerCase().includes(textSearch.toLowerCase())
         )
       );
@@ -259,7 +258,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           converter: this.translate.instant(ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter?.type) || '')
         };
       case MappingType.REQUESTS:
-        let details;
+        let details: string;
         if ((value as RequestMappingData).requestType === RequestType.ATTRIBUTE_UPDATE) {
           details = (value as RequestMappingData).requestValue.attributeFilter;
         } else if ((value as RequestMappingData).requestType === RequestType.SERVER_SIDE_RPC) {
@@ -315,22 +314,17 @@ export class MappingDatasource implements DataSource<{[key: string]: any}> {
 
   private mappingSubject = new BehaviorSubject<Array<{[key: string]: any}>>([]);
 
-  private allMappings: Observable<Array<{[key: string]: any}>>;
-
   constructor() {}
 
-  connect(collectionViewer: CollectionViewer): Observable<Array<{[key: string]: any}>> {
+  connect(): Observable<Array<{[key: string]: any}>> {
     return this.mappingSubject.asObservable();
   }
 
-  disconnect(collectionViewer: CollectionViewer): void {
+  disconnect(): void {
     this.mappingSubject.complete();
   }
 
-  loadMappings(mappings: Array<{[key: string]: any}>, pageLink?: PageLink, reload: boolean = false): void {
-    if (reload) {
-      this.allMappings = null;
-    }
+  loadMappings(mappings: Array<{[key: string]: any}>): void {
     this.mappingSubject.next(mappings);
   }
 

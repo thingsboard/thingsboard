@@ -111,7 +111,6 @@ import {
   TypeValuePanelComponent,
   BrokerConfigControlComponent,
   WorkersConfigControlComponent,
-  GeneralConfigComponent,
   MqttBasicConfigComponent,
   OpcUaBasicConfigComponent,
 } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
@@ -194,7 +193,6 @@ import {
     BrokerConfigControlComponent,
     WorkersConfigControlComponent,
     ServerConfigComponent,
-    GeneralConfigComponent,
     MqttBasicConfigComponent,
     MappingTableComponent,
     OpcUaBasicConfigComponent,

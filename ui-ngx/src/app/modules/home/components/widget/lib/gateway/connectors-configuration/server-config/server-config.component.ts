@@ -14,12 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  OnDestroy
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -32,9 +27,9 @@ import {
 } from '@angular/forms';
 import {
   noLeadTrailSpacesRegex,
-  SecurityType,
-  ServerConfig,
-  ServerSecurityTypes
+  SecurityPolicy,
+  SecurityPolicyTypes,
+  ServerConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -67,7 +62,8 @@ import { takeUntil } from 'rxjs/operators';
   ]
 })
 export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
-  serverSecurityTypes = ServerSecurityTypes;
+
+  securityPolicyTypes = SecurityPolicyTypes;
   serverConfigFormGroup: UntypedFormGroup;
 
   onChange!: (value: string) => void;
@@ -84,7 +80,7 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
       enableSubscriptions: [true, []],
       subCheckPeriodInMillis: [10, [Validators.required, Validators.min(10)]],
       showMap: [false, []],
-      security: [SecurityType.BASIC128, []],
+      security: [SecurityPolicy.BASIC128, []],
       identity: [{}, [Validators.required]]
     });
 

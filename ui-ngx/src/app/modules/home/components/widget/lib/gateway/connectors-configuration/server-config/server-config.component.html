@@ -58,7 +58,7 @@
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="security">
-          <mat-option *ngFor="let version of serverSecurityTypes" [value]="version.value">{{ version.name }}</mat-option>
+          <mat-option *ngFor="let version of securityPolicyTypes" [value]="version.value">{{ version.name }}</mat-option>
         </mat-select>
       </mat-form-field>
     </div>
@@ -119,7 +119,7 @@
       </mat-label>
     </mat-slide-toggle>
   </div>
-  <tb-security-config [formControl]="serverConfigFormGroup.get('identity')"
+  <tb-security-config formControlName="identity"
                       [extendCertificatesModel]="true">
   </tb-security-config>
 </div>

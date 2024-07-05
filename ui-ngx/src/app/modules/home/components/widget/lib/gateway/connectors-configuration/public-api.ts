@@ -24,4 +24,3 @@ export * from './broker-config-control/broker-config-control.component';
 export * from './workers-config-control/workers-config-control.component';
 export * from './opc-ua-basic-config/opc-ua-basic-config.component';
 export * from './mqtt-basic-config/mqtt-basic-config.component';
-export * from './general-config/general-config.component';

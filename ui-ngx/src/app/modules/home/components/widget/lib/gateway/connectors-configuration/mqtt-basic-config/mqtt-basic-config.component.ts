@@ -14,14 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  Input,
-  OnDestroy,
-  TemplateRef,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy, TemplateRef } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -33,7 +26,6 @@ import {
 } from '@angular/forms';
 import {
   ConnectorBaseConfig,
-  ConnectorType,
   MappingType,
   RequestMappingData,
   RequestType,
@@ -44,8 +36,7 @@ import {
   BrokerConfigControlComponent,
   MappingTableComponent,
   SecurityConfigComponent,
-  WorkersConfigControlComponent,
-  GeneralConfigComponent
+  WorkersConfigControlComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -75,7 +66,6 @@ import { isObject } from 'lodash';
     WorkersConfigControlComponent,
     BrokerConfigControlComponent,
     MappingTableComponent,
-    GeneralConfigComponent,
   ],
   styles: [`
     :host {
@@ -90,15 +80,16 @@ import { isObject } from 'lodash';
 })
 
 export class MqttBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
-  @Input() generalTabContent: TemplateRef<GeneralConfigComponent>;
+
+  @Input()
+  generalTabContent: TemplateRef<any>;
 
   mappingTypes = MappingType;
   basicFormGroup: FormGroup;
 
-  onChange!: (value: string) => void;
-  onTouched!: () => void;
+  private onChange: (value: string) => void;
+  private onTouched: () => void;
 
-  protected readonly connectorType = ConnectorType;
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
@@ -157,7 +148,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
 
     if (isObject(value)) {
       Object.keys(value).forEach((configKey: string) => {
-        for (let mapping of value[configKey]) {
+        for (const mapping of value[configKey]) {
           mappingConfigs.push({
             requestType: configKey,
             requestValue: mapping

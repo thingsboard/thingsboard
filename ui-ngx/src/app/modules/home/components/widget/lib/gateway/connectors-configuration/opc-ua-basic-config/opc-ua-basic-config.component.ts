@@ -14,14 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  ChangeDetectionStrategy,
-  Component,
-  forwardRef,
-  Input,
-  OnDestroy,
-  TemplateRef,
-} from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy, TemplateRef } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -43,8 +36,7 @@ import {
   MappingTableComponent,
   SecurityConfigComponent,
   ServerConfigComponent,
-  WorkersConfigControlComponent,
-  GeneralConfigComponent
+  WorkersConfigControlComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -73,7 +65,6 @@ import { Subject } from 'rxjs';
     WorkersConfigControlComponent,
     BrokerConfigControlComponent,
     MappingTableComponent,
-    GeneralConfigComponent,
     ServerConfigComponent,
   ],
   styles: [`
@@ -89,7 +80,7 @@ import { Subject } from 'rxjs';
 })
 
 export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
-  @Input() generalTabContent: TemplateRef<GeneralConfigComponent>;
+  @Input() generalTabContent: TemplateRef<any>;
 
   mappingTypes = MappingType;
   basicFormGroup: FormGroup;
