@@ -30,3 +30,35 @@ $$
 $$;
 
 -- UPDATE RESOURCE SUB TYPE END
+
+-- UPDATE WIDGETS BUNDLE START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'widgets_bundle' AND column_name = 'scada'
+        ) THEN
+            ALTER TABLE widgets_bundle ADD COLUMN scada boolean NOT NULL DEFAULT false;
+        END IF;
+    END;
+$$;
+
+-- UPDATE WIDGETS BUNDLE END
+
+-- UPDATE WIDGET TYPE START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'widget_type' AND column_name = 'scada'
+        ) THEN
+            ALTER TABLE widget_type ADD COLUMN scada boolean NOT NULL DEFAULT false;
+        END IF;
+    END;
+$$;
+
+-- UPDATE WIDGET TYPE END

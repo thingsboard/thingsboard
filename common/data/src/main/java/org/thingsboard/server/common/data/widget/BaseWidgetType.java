@@ -44,6 +44,9 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
     @Schema(description = "Whether widget type is deprecated.", example = "true")
     private boolean deprecated;
 
+    @Schema(description = "Whether widget type is SCADA symbol.", example = "true")
+    private boolean scada;
+
     public BaseWidgetType() {
         super();
     }
@@ -58,6 +61,7 @@ public class BaseWidgetType extends BaseData<WidgetTypeId> implements HasName, H
         this.fqn = widgetType.getFqn();
         this.name = widgetType.getName();
         this.deprecated = widgetType.isDeprecated();
+        this.scada = widgetType.isScada();
     }
 
     @Schema(description = "JSON object with the Widget Type Id. " +
