@@ -27,6 +27,7 @@ export interface UnreadNotificationWidgetSettings {
   enableFilter: boolean;
   enableMarkAsRead: boolean;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const unreadNotificationDefaultSettings: UnreadNotificationWidgetSettings = {
@@ -53,5 +54,6 @@ export const unreadNotificationDefaultSettings: UnreadNotificationWidgetSettings
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 };

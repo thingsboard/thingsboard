@@ -55,7 +55,8 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
       enableFilter: [settings?.enableFilter, []],
       enableMarkAsRead: [settings?.enableMarkAsRead, []],
 
-      background: [settings?.background, []]
+      background: [settings?.background, []],
+      padding: [settings.padding, []]
     });
   }
 
@@ -67,18 +68,14 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
     const showCounter: boolean = this.unreadNotificationWidgetSettingsForm.get('showCounter').value;
 
     if (showCounter) {
-      this.unreadNotificationWidgetSettingsForm.get('counterValueFont').enable();
-      this.unreadNotificationWidgetSettingsForm.get('counterValueColor').enable();
-      this.unreadNotificationWidgetSettingsForm.get('counterColor').enable();
+      this.unreadNotificationWidgetSettingsForm.get('counterValueFont').enable({emitEvent});
+      this.unreadNotificationWidgetSettingsForm.get('counterValueColor').enable({emitEvent});
+      this.unreadNotificationWidgetSettingsForm.get('counterColor').enable({emitEvent});
     } else {
-      this.unreadNotificationWidgetSettingsForm.get('counterValueFont').disable();
-      this.unreadNotificationWidgetSettingsForm.get('counterValueColor').disable();
-      this.unreadNotificationWidgetSettingsForm.get('counterColor').disable();
+      this.unreadNotificationWidgetSettingsForm.get('counterValueFont').disable({emitEvent});
+      this.unreadNotificationWidgetSettingsForm.get('counterValueColor').disable({emitEvent});
+      this.unreadNotificationWidgetSettingsForm.get('counterColor').disable({emitEvent});
     }
-
-    this.unreadNotificationWidgetSettingsForm.get('counterValueFont').updateValueAndValidity({emitEvent});
-    this.unreadNotificationWidgetSettingsForm.get('counterValueColor').updateValueAndValidity({emitEvent});
-    this.unreadNotificationWidgetSettingsForm.get('counterColor').updateValueAndValidity({emitEvent});
   }
 
 }

@@ -41,7 +41,7 @@ import {
 import { Notification, NotificationRequest, NotificationType } from '@shared/models/notification.models';
 import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
-import { distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, share, skip, take, tap } from 'rxjs/operators';
 import { Router } from '@angular/router';
 import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
@@ -50,6 +50,9 @@ import {
   NOTIFICATION_TYPE_FILTER_PANEL_DATA,
   NotificationTypeFilterPanelComponent
 } from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
+import { selectUserDetails } from '@core/auth/auth.selectors';
+import { select, Store } from '@ngrx/store';
+import { AppState } from '@core/core.state';
 
 @Component({
   selector: 'tb-unread-notification-widget',
@@ -76,17 +79,19 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   private counterValue: BehaviorSubject<number>  = new BehaviorSubject(0);
 
   count$ = this.counterValue.asObservable().pipe(
     distinctUntilChanged(),
     map((value) => value >= 100 ? '99+' : value),
-    tap(() => setTimeout(() => this.cd.markForCheck())),
+    tap(() => Promise.resolve().then(() => this.cd.markForCheck())),
     share({
       connector: () => new ReplaySubject(1)
     })
   );
+
 
   private notificationTypes: Array<NotificationType> = [];
 
@@ -96,9 +101,11 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
 
   private contentResize$: ResizeObserver;
 
+  private defaultDashboardFullscreen = false;
+
   private viewAllAction: WidgetAction = {
     name: 'widgets.notification.button-view-all',
-    show: true,
+    show: !this.defaultDashboardFullscreen,
     icon: 'open_in_new',
     onAction: ($event) => {
       this.viewAll($event);
@@ -110,7 +117,7 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
     show: true,
     icon: 'filter_list',
     onAction: ($event) => {
-      this.editColumnsToDisplay($event);
+      this.editNotificationTypeFilter($event);
     }
   };
 
@@ -123,7 +130,8 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
     }
   };
 
-  constructor(private imagePipe: ImagePipe,
+  constructor(private store: Store<AppState>,
+              private imagePipe: ImagePipe,
               private notificationWsService: NotificationWebsocketService,
               private sanitizer: DomSanitizer,
               private router: Router,
@@ -145,12 +153,17 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
     this.ctx.widgetActions = [this.viewAllAction, this.filterAction, this.markAsReadAction];
 
     this.viewAllAction.show = isDefined(this.settings.enableViewAll) ? this.settings.enableViewAll : true;
+    this.store.pipe(select(selectUserDetails), take(1)).subscribe(
+      user => this.viewAllAction.show = !user.additionalInfo?.defaultDashboardFullscreen
+    );
+    this.filterAction.show = isDefined(this.settings.enableFilter) ? this.settings.enableFilter : true;
+    this.markAsReadAction.show = isDefined(this.settings.enableMarkAsRead) ? this.settings.enableMarkAsRead : true;
 
     this.initSubscription();
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
-
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
 
@@ -168,6 +181,7 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
       if (Array.isArray(value)) {
         this.loadNotification = true;
         this.notifications = value;
+        this.cd.markForCheck();
       }
     });
     this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.pipe(
@@ -212,7 +226,7 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
     return item.id.id;
   }
 
-  private editColumnsToDisplay($event: Event) {
+  private editNotificationTypeFilter($event: Event) {
     if ($event) {
       $event.stopPropagation();
     }

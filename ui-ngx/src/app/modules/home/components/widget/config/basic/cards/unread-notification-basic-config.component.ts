@@ -71,6 +71,7 @@ export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigCom
       counterColor: [settings.counterColor, []],
 
       background: [settings.background, []],
+      padding: [settings.padding, []],
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
@@ -78,20 +79,44 @@ export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigCom
     });
   }
   protected validatorTriggers(): string[] {
-    return ['showCounter'];
+    return ['showCounter', 'showTitle', 'showIcon'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showCounter: boolean = this.unreadNotificationWidgetConfigForm.get('showCounter').value;
+    const showTitle: boolean = this.unreadNotificationWidgetConfigForm.get('showTitle').value;
+    const showIcon: boolean = this.unreadNotificationWidgetConfigForm.get('showIcon').value;
+
+    if (showTitle) {
+      this.unreadNotificationWidgetConfigForm.get('title').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleFont').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleColor').enable({emitEvent});
+    } else {
+      this.unreadNotificationWidgetConfigForm.get('title').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleFont').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('titleColor').disable({emitEvent});
+    }
+
+    if (showIcon) {
+      this.unreadNotificationWidgetConfigForm.get('iconSize').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('iconSizeUnit').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('icon').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('iconColor').enable({emitEvent});
+    } else {
+      this.unreadNotificationWidgetConfigForm.get('iconSize').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('iconSizeUnit').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('icon').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('iconColor').disable({emitEvent});
+    }
 
     if (showCounter) {
-      this.unreadNotificationWidgetConfigForm.get('counterValueFont').enable();
-      this.unreadNotificationWidgetConfigForm.get('counterValueColor').enable();
-      this.unreadNotificationWidgetConfigForm.get('counterColor').enable();
+      this.unreadNotificationWidgetConfigForm.get('counterValueFont').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('counterValueColor').enable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('counterColor').enable({emitEvent});
     } else {
-      this.unreadNotificationWidgetConfigForm.get('counterValueFont').disable();
-      this.unreadNotificationWidgetConfigForm.get('counterValueColor').disable();
-      this.unreadNotificationWidgetConfigForm.get('counterColor').disable();
+      this.unreadNotificationWidgetConfigForm.get('counterValueFont').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('counterValueColor').disable({emitEvent});
+      this.unreadNotificationWidgetConfigForm.get('counterColor').disable({emitEvent});
     }
   }
 
@@ -116,6 +141,7 @@ export class UnreadNotificationBasicConfigComponent extends BasicWidgetConfigCom
     this.widgetConfig.config.settings.counterColor = config.counterColor;
 
     this.widgetConfig.config.settings.background = config.background;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);

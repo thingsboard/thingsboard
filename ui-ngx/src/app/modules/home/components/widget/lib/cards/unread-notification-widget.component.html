@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-unread-notification-panel" [style]="backgroundStyle$ | async">
+<div class="tb-unread-notification-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-unread-notification-overlay" [style]="overlayStyle"></div>
   <ng-template #counter>
     <div *ngIf="showCounter" class="notification-counter" [style.background-color]="counterBackground">
@@ -37,22 +37,11 @@
       </div>
     </ng-container>
     <ng-template #emptyNotification>
-      <svg class="tb-no-notification-bell" width="149" height="156" viewBox="0 0 149 156" fill="none" xmlns="http://www.w3.org/2000/svg" style="margin: 20px 24%">
-        <path class="tb-no-notification-bell-fill" fill-rule="evenodd" clip-rule="evenodd" d="M2.51475 83.5197C-2.49495 62.8814 3.18781 41.1064 17.644 25.5483L21.948 20.9161C45.73 -4.67877 85.76 -6.14243 111.348 17.6473L128.138 33.2579C156.49 59.6177 154.721 105.034 124.405 129.109L108.954 141.379C72.7942 170.094 19.05 151.639 8.15805 106.768L2.51475 83.5197ZM118 90L43.5 117.5L42 114C43.5 111 46.6 104.1 47 100.5C47.1929 98.7641 45.8232 95.6888 44.0104 91.6186C41.124 85.1379 37.1142 76.1349 36.5 66C35.7 52.8 44.8333 43.8334 49.5 41C48.5 38.3334 47.9 32.3 53.5 29.5C59.1 26.7 63.1667 33 64.5 36.5C65.8714 36.7613 67.4156 36.8817 69.0836 37.0119C75.9294 37.546 84.8612 38.2429 92.5 49.5C96.0351 54.7096 98.5627 62.5506 100.707 69.2021C102.446 74.5966 103.933 79.2087 105.5 81C108.3 84.2 114 86.3334 116.5 87L118 90ZM72.4999 111.5L91.4999 104C92.6665 106.833 93.1999 113.3 85.9999 116.5C78.7999 119.7 73.9999 114.5 72.4999 111.5Z" fill="#fff" fill-opacity="0.06"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="123.833" cy="42.876" r="3.79487" fill="#fff" fill-opacity="0.24"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="77.3461" cy="10.3034" r="6.64103" fill="#fff" fill-opacity="0.24"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="26.4316" cy="46.6709" r="5.69231" fill="#fff" fill-opacity="0.24"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="74.1837" cy="30.5427" r="1.5812" fill="#fff" fill-opacity="0.24"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="124.782" cy="114.03" r="2.21368" fill="#fff" fill-opacity="0.24"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="65.329" cy="117.825" r="2.21368" fill="#fff" fill-opacity="0.24"/>
-        <circle class="tb-no-notification-bell-fill" opacity="0.4" cx="18.2094" cy="95.3718" r="3.79487" fill="#fff" fill-opacity="0.24"/>
-        <mask id="path-9-inside-1_6799_8139" fill="white">
-          <path d="M92.2083 102.896C92.7237 104.299 92.9577 105.791 92.8968 107.284C92.8359 108.778 92.4814 110.245 91.8535 111.602C91.2256 112.959 90.3366 114.179 89.2373 115.192C88.138 116.205 86.8498 116.992 85.4464 117.508C84.043 118.023 82.5519 118.257 81.058 118.196C79.5642 118.135 78.097 117.781 76.7402 117.153C75.3834 116.525 74.1636 115.636 73.1504 114.536C72.1371 113.437 71.3504 112.149 70.8349 110.746L81.5216 106.821L92.2083 102.896Z"/>
-        </mask>
-        <path class="tb-no-notification-bell-stroke" d="M92.2083 102.896C92.7237 104.299 92.9577 105.791 92.8968 107.284C92.8359 108.778 92.4814 110.245 91.8535 111.602C91.2256 112.959 90.3366 114.179 89.2373 115.192C88.138 116.205 86.8498 116.992 85.4464 117.508C84.043 118.023 82.5519 118.257 81.058 118.196C79.5642 118.135 78.097 117.781 76.7402 117.153C75.3834 116.525 74.1636 115.636 73.1504 114.536C72.1371 113.437 71.3504 112.149 70.8349 110.746L81.5216 106.821L92.2083 102.896Z" stroke="#fff" stroke-width="3.79487" mask="url(#path-9-inside-1_6799_8139)"/>
-        <ellipse class="tb-no-notification-bell-fill" opacity="0.16" cx="71.9699" cy="128.261" rx="44.2735" ry="3.16239" fill="#fff"/>
-        <path class="tb-no-notification-bell-stroke" d="M48.7194 42.2145L49.2902 41.7946L49.0463 41.1286L48.6002 39.9105C47.8712 37.9201 47.9674 35.7227 48.8689 33.8013C49.7705 31.8798 51.4039 30.3917 53.4105 29.6659C55.4171 28.9401 57.6307 29.0365 59.5642 29.9326C61.4976 30.8286 62.9925 32.4505 63.7214 34.4408L64.1675 35.6589L64.4114 36.3249L65.1202 36.2819C78.6066 35.4632 90.9975 43.5735 95.6213 56.1988L103.405 77.4513C104.417 80.2163 106.492 82.4682 109.169 83.7088L116.516 87.1138L117.592 90.0529L43.3017 116.925L42.2252 113.986L45.6514 106.684C46.8997 104.024 47.0321 100.974 46.0195 98.2087L38.2362 76.9563C33.6124 64.3309 37.8587 50.2026 48.7194 42.2145Z" stroke="#fff" stroke-width="1.89744"/>
-      </svg>
+      <div class="tb-no-notification-svg-color" style="margin: 20px 24%">
+        <svg height="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 149 156" width="100%">
+          <use [attr.xlink:href]="'assets/notification-bell.svg#CHECK_ICON'"></use>
+        </svg>
+      </div>
       <span class="tb-no-notification-text" translate>notification.no-notifications-yet</span>
     </ng-template>
     <ng-template #loadingNotification>
