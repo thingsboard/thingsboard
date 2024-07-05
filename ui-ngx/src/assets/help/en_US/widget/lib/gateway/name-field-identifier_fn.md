@@ -62,6 +62,6 @@ byte string (`**b**`), and GUID (`**g**`). Below is an explanation of each ident
 
   _Expression:_
 
-  Device ${ns=1;g=550e8400-e29b-41d4-a716-446655440000}
+  **`Device ${ns=1;g=550e8400-e29b-41d4-a716-446655440000}`**
 
   In this example, created device on platform will have “**Device TH-101**” name.

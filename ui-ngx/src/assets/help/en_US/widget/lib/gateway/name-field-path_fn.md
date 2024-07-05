@@ -37,5 +37,5 @@ _Expression:_
 `**Device ${Name}**`
 
 In this example, **the gateway will search for the child node "Name" in the device node (parent node) 
-"Root\\.Objects\\.TempSensor"** and the created device on the platform will be named "**Device TH-101**".
+"Root\\.Objects\\.TempSensor"** and created device on the platform will be named "**Device TH-101**".
 
