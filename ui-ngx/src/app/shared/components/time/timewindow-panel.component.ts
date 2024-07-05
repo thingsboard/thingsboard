@@ -156,7 +156,10 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
           value: isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null,
           disabled: hideInterval || hideLastInterval
         }],
-        interval: [isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null],
+        interval: [{
+          value:isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null,
+          disabled: hideAggInterval
+        }],
         quickInterval: [{
           value: isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null,
           disabled: hideInterval || hideQuickInterval
@@ -171,8 +174,10 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
           value: isDefined(history?.timewindowMs) ? this.timewindow.history.timewindowMs : null,
           disabled: hideInterval
         }],
-        interval: [ isDefined(history?.interval) ? this.timewindow.history.interval : null
-        ],
+        interval: [{
+          value:isDefined(history?.interval) ? this.timewindow.history.interval : null,
+          disabled: hideAggInterval
+        }],
         fixedTimewindow: [{
           value: isDefined(history?.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null,
           disabled: hideInterval
@@ -406,8 +411,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   onHideAggIntervalChanged() {
     if (this.timewindow.hideAggInterval) {
       this.timewindowForm.get('aggregation.limit').disable({emitEvent: false});
+      this.timewindowForm.get('realtime.interval').disable({emitEvent: false});
+      this.timewindowForm.get('history.interval').disable({emitEvent: false});
     } else {
       this.timewindowForm.get('aggregation.limit').enable({emitEvent: false});
+      this.timewindowForm.get('realtime.interval').enable({emitEvent: false});
+      this.timewindowForm.get('history.interval').enable({emitEvent: false});
     }
     this.timewindowForm.markAsDirty();
   }

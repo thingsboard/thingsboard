@@ -160,8 +160,6 @@
         <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"
-            [isEdit]="isEdit"
-            [(hideFlag)]="timewindow.hideAggInterval"
             [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
             useCalendarIntervals
             subscriptSizing="dynamic"
@@ -171,8 +169,6 @@
         <ng-container formGroupName="history" *ngIf="timewindow.selectedTab === timewindowTypes.HISTORY">
           <tb-timeinterval
             formControlName="interval"
-            [isEdit]="isEdit"
-            [(hideFlag)]="timewindow.hideAggInterval"
             [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
             useCalendarIntervals
             subscriptSizing="dynamic"
