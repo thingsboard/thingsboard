@@ -13,23 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.dao.timeseries;
 
-import com.google.common.util.concurrent.SettableFuture;
+import lombok.AllArgsConstructor;
+import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import lombok.ToString;
+import org.thingsboard.server.common.data.AttributeScope;
+import org.thingsboard.server.common.data.id.EntityId;
 
-@ToString(exclude = "future")
-public final class TbSqlQueueElement<E, R> {
-    @Getter
-    private final SettableFuture<R> future;
-    @Getter
-    private final E entity;
+import java.io.Serial;
+import java.io.Serializable;
 
-    public TbSqlQueueElement(SettableFuture<R> future, E entity) {
-        this.future = future;
-        this.entity = entity;
+@EqualsAndHashCode
+@Getter
+@AllArgsConstructor
+public class TsLatestCacheKey implements Serializable {
+    private static final long serialVersionUID = 2024369077925351881L;
+
+    private final EntityId entityId;
+    private final String key;
+
+    @Override
+    public String toString() {
+        return "{" + entityId + "}" + key;
     }
 }
-
-

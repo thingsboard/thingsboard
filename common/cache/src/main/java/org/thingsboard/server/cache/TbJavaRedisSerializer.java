@@ -13,23 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.cache;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
-import lombok.ToString;
+import org.springframework.data.redis.serializer.RedisSerializer;
+import org.springframework.data.redis.serializer.SerializationException;
 
-@ToString(exclude = "future")
-public final class TbSqlQueueElement<E, R> {
-    @Getter
-    private final SettableFuture<R> future;
-    @Getter
-    private final E entity;
+public class TbJavaRedisSerializer<K, V> implements TbRedisSerializer<K, V> {
 
-    public TbSqlQueueElement(SettableFuture<R> future, E entity) {
-        this.future = future;
-        this.entity = entity;
+    final RedisSerializer<Object> serializer = RedisSerializer.java();
+
+    @Override
+    public byte[] serialize(V value) throws SerializationException {
+        return serializer.serialize(value);
     }
+
+    @Override
+    public V deserialize(K key, byte[] bytes) throws SerializationException {
+        return (V) serializer.deserialize(bytes);
+    }
+
 }
-
-

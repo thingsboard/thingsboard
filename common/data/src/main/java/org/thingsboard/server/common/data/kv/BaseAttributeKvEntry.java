@@ -29,9 +29,18 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     @Valid
     private final KvEntry kv;
 
+    private final Long version;
+
     public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs) {
         this.kv = kv;
         this.lastUpdateTs = lastUpdateTs;
+        this.version = null;
+    }
+
+    public BaseAttributeKvEntry(KvEntry kv, long lastUpdateTs, Long version) {
+        this.kv = kv;
+        this.lastUpdateTs = lastUpdateTs;
+        this.version = version;
     }
 
     public BaseAttributeKvEntry(long lastUpdateTs, KvEntry kv) {
@@ -86,6 +95,11 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
     @Override
     public Object getValue() {
         return kv.getValue();
+    }
+
+    @Override
+    public Long getVersion() {
+        return version;
     }
 
     @Override

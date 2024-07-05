@@ -13,23 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.dao;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
-import lombok.ToString;
+import org.junit.extensions.cpsuite.ClasspathSuite;
+import org.junit.extensions.cpsuite.ClasspathSuite.ClassnameFilters;
+import org.junit.runner.RunWith;
 
-@ToString(exclude = "future")
-public final class TbSqlQueueElement<E, R> {
-    @Getter
-    private final SettableFuture<R> future;
-    @Getter
-    private final E entity;
+@RunWith(ClasspathSuite.class)
+@ClassnameFilters(
+        //All the same tests using redis instead of caffeine.
+        {
+                "org.thingsboard.server.dao.service.*ServiceSqlTest",
+        }
+)
+public class RedisClusterSqlTestSuite extends AbstractRedisClusterContainer {
 
-    public TbSqlQueueElement(SettableFuture<R> future, E entity) {
-        this.future = future;
-        this.entity = entity;
-    }
 }
-
-

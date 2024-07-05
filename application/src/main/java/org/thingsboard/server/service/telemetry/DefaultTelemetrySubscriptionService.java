@@ -260,14 +260,14 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, String scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
+        ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope, attributes, notifyDevice));
     }
 
     @Override
     public void saveAndNotifyInternal(TenantId tenantId, EntityId entityId, AttributeScope scope, List<AttributeKvEntry> attributes, boolean notifyDevice, FutureCallback<Void> callback) {
-        ListenableFuture<List<String>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
+        ListenableFuture<List<Long>> saveFuture = attrService.save(tenantId, entityId, scope, attributes);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onAttributesUpdate(tenantId, entityId, scope.name(), attributes, notifyDevice));
     }
@@ -280,7 +280,7 @@ public class DefaultTelemetrySubscriptionService extends AbstractSubscriptionSer
 
     @Override
     public void saveLatestAndNotifyInternal(TenantId tenantId, EntityId entityId, List<TsKvEntry> ts, FutureCallback<Void> callback) {
-        ListenableFuture<List<Void>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
+        ListenableFuture<List<Long>> saveFuture = tsService.saveLatest(tenantId, entityId, ts);
         addVoidCallback(saveFuture, callback);
         addWsCallback(saveFuture, success -> onTimeSeriesUpdate(tenantId, entityId, ts));
     }

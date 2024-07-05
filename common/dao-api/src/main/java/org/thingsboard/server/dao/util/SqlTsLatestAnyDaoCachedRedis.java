@@ -13,23 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql;
+package org.thingsboard.server.dao.util;
 
-import com.google.common.util.concurrent.SettableFuture;
-import lombok.Getter;
-import lombok.ToString;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-@ToString(exclude = "future")
-public final class TbSqlQueueElement<E, R> {
-    @Getter
-    private final SettableFuture<R> future;
-    @Getter
-    private final E entity;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    public TbSqlQueueElement(SettableFuture<R> future, E entity) {
-        this.future = future;
-        this.entity = entity;
-    }
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("('${database.ts_latest.type}'=='sql' || '${database.ts_latest.type}'=='timescale') && '${cache.ts_latest.enabled:false}'=='true' && '${cache.type:caffeine}'=='redis' ")
+public @interface SqlTsLatestAnyDaoCachedRedis {
 }
-
-
