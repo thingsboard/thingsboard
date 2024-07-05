@@ -144,12 +144,9 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     @Override
     @Transactional
-    public boolean removeById(TenantId tenantId, UUID id) {
-//        jdbcTemplate.queryForObject("DELETE FROM " + getEntityType().getTableName() + " WHERE id = ? RETURNING version", Integer.class, id);
-        // TODO: increment version...
+    public void removeById(TenantId tenantId, UUID id) {
         getRepository().deleteById(id);
         log.debug("Remove request: {}", id);
-        return !getRepository().existsById(id);
     }
 
     @Transactional
