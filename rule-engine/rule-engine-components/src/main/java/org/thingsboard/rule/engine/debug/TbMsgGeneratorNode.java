@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -42,6 +43,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,7 +57,7 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         type = ComponentType.ACTION,
         name = "generator",
         configClazz = TbMsgGeneratorNodeConfiguration.class,
-        version = 1,
+        version = 2,
         hasQueueName = true,
         nodeDescription = "Periodically generates messages",
         nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.",
@@ -65,6 +68,9 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 )
 
 public class TbMsgGeneratorNode implements TbNode {
+
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,
+            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE);
 
     private TbMsgGeneratorNodeConfiguration config;
     private ScriptEngine scriptEngine;
@@ -83,12 +89,10 @@ public class TbMsgGeneratorNode implements TbNode {
         this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
         this.currentMsgCount = 0;
         this.queueName = ctx.getQueueName();
-        if (!StringUtils.isEmpty(config.getOriginatorId())) {
-            originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
-            ctx.checkTenantEntity(originatorId);
-        } else {
-            originatorId = ctx.getSelfId();
+        if (!supportedEntityTypes.contains(config.getOriginatorType())) {
+            throw new TbNodeException("Originator type '" + config.getOriginatorType() + "' is not supported.", true);
         }
+        originatorId = getOriginatorId(ctx);
         log.debug("[{}] Initializing generator with config {}", originatorId, configuration);
         updateGeneratorState(ctx);
     }
@@ -173,6 +177,19 @@ public class TbMsgGeneratorNode implements TbNode {
         return msg != null ? msg.getCustomerId() : null;
     }
 
+    private EntityId getOriginatorId(TbContext ctx) throws TbNodeException {
+        if (EntityType.RULE_NODE.equals(config.getOriginatorType())) {
+            return ctx.getSelfId();
+        } else if (EntityType.TENANT.equals(config.getOriginatorType())) {
+            return ctx.getTenantId();
+        } else if (!StringUtils.isEmpty(config.getOriginatorId())) {
+            var entityId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
+            ctx.checkTenantEntity(entityId);
+            return entityId;
+        }
+        return ctx.getSelfId();
+    }
+
     @Override
     public void destroy() {
         log.debug("[{}] Stopping generator", originatorId);
@@ -194,6 +211,18 @@ public class TbMsgGeneratorNode implements TbNode {
                 if (oldConfiguration.has(QUEUE_NAME)) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+            case 1:
+                String originatorType = "originatorType";
+                if (oldConfiguration.has(originatorType)) {
+                    var origType = oldConfiguration.get(originatorType);
+                    if (origType.isNull()) {
+                        ((ObjectNode) oldConfiguration).put(originatorType, EntityType.RULE_NODE.name());
+                        hasChanges = true;
+                    } else if (EntityType.TENANT.name().equals(origType.asText())) {
+                        ((ObjectNode) oldConfiguration).putNull("originatorId");
+                        hasChanges = true;
+                    }
                 }
                 break;
             default:
