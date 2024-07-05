@@ -17,7 +17,6 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
-import { Validators } from '@angular/forms';
 
 export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
 
@@ -113,11 +112,141 @@ export interface GatewayConnector {
   name: string;
   type: ConnectorType;
   configuration?: string;
-  configurationJson: string | {[key: string]: any};
-  basicConfig?: string | {[key: string]: any};
+  configurationJson: ConnectorBaseConfig;
+  basicConfig?: ConnectorBaseConfig;
   logLevel: string;
   key?: string;
   class?: string;
+  mode?: ConnectorConfigurationModes;
+}
+
+export interface DataMapping {
+  topicFilter: string;
+  QoS: string;
+  converter: Converter;
+}
+
+export interface RequestsMapping {
+  requestType: RequestType;
+  type: string;
+  details: string;
+}
+
+export interface OpcUaMapping {
+  deviceNodePattern?: string;
+  deviceNamePattern?: string;
+  deviceProfileExpression?: string;
+}
+
+export type MappingValue = DataMapping | RequestsMapping | OpcUaMapping;
+
+export interface ServerConfig {
+  name: string;
+  url: string;
+  timeoutInMillis: number;
+  scanPeriodInMillis: number;
+  enableSubscriptions: boolean;
+  subCheckPeriodInMillis: number;
+  showMap: boolean;
+  security: string;
+  identity: ConnectorSecurity;
+}
+
+export interface BrokerConfig {
+  name: string;
+  host: string;
+  port: number;
+  version: number;
+  clientId: string;
+  maxNumberOfWorkers: number;
+  maxMessageNumberPerWorker: number;
+  security: ConnectorSecurity;
+}
+
+export interface ConnectorSecurity {
+  type: SecurityType;
+  username?: string;
+  password?: string;
+  pathToCACert?: string;
+  pathToPrivateKey?: string;
+  pathToClientCert?: string;
+}
+
+export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
+
+export interface ConnectorBaseConfig {
+  mapping?: DeviceConnectorMapping[];
+  dataMapping?: ConverterConnectorMapping[];
+  requestsMapping?: Record<RequestType, RequestMappingData> | RequestMappingData[];
+  server?: ServerConfig;
+  broker?: BrokerConfig;
+  workers?: WorkersConfig;
+}
+
+export interface WorkersConfig {
+  maxNumberOfWorkers: number;
+  maxMessageNumberPerWorker: number;
+}
+
+interface DeviceInfo {
+  deviceNameExpression: string;
+  deviceNameExpressionSource: string;
+  deviceProfileExpression: string;
+  deviceProfileExpressionSource: string;
+}
+
+interface Attribute {
+  key: string;
+  type: string;
+  value: string;
+}
+
+interface Timeseries {
+  key: string;
+  type: string;
+  value: string;
+}
+
+interface RpcArgument {
+  type: string;
+  value: number;
+}
+
+interface RpcMethod {
+  method: string;
+  arguments: RpcArgument[];
+}
+
+interface AttributesUpdate {
+  key: string;
+  type: string;
+  value: string;
+}
+
+interface Converter {
+  type: ConvertorType;
+  deviceNameJsonExpression: string;
+  deviceTypeJsonExpression: string;
+  sendDataOnlyOnChange: boolean;
+  timeout: number;
+  attributes: Attribute[];
+  timeseries: Timeseries[];
+}
+
+export interface ConverterConnectorMapping {
+  topicFilter: string;
+  subscriptionQos?: string;
+  converter: Converter;
+}
+
+export interface DeviceConnectorMapping {
+  deviceNodePattern: string;
+  deviceNodeSource: string;
+  deviceInfo: DeviceInfo;
+  attributes: Attribute[];
+  timeseries: Timeseries[];
+  rpc_methods: RpcMethod[];
+  attributes_updates: AttributesUpdate[];
 }
 
 export enum ConnectorType {
@@ -333,6 +462,12 @@ export interface MappingDataKey {
   value: any,
   type: MappingValueType
 }
+
+export interface RpcMethodsMapping {
+  method: string,
+  arguments: Array<MappingDataKey>
+}
+
 export interface MappingInfo {
   mappingType: MappingType,
   value: {[key: string]: any},
@@ -344,17 +479,23 @@ export enum ConnectorConfigurationModes {
   ADVANCED = 'advanced'
 }
 
-export enum BrokerSecurityType {
+export enum SecurityType {
   ANONYMOUS = 'anonymous',
   BASIC = 'basic',
   CERTIFICATES = 'certificates'
 }
 
-export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, string>(
+export enum ModeType {
+  NONE = 'None',
+  SIGN = 'Sign',
+  SIGNANDENCRYPT = 'SignAndEncrypt'
+}
+
+export const SecurityTypeTranslationsMap = new Map<SecurityType, string>(
   [
-    [BrokerSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
-    [BrokerSecurityType.BASIC, 'gateway.broker.security-types.basic'],
-    [BrokerSecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
+    [SecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [SecurityType.BASIC, 'gateway.broker.security-types.basic'],
+    [SecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
   ]
 );
 
@@ -378,19 +519,22 @@ export const MqttVersions = [
 
 export enum MappingType {
   DATA = 'data',
-  REQUESTS = 'requests'
+  REQUESTS = 'requests',
+  OPCUA = 'OPCua'
 }
 
 export const MappingTypeTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping'],
-    [MappingType.REQUESTS, 'gateway.requests-mapping']
+    [MappingType.REQUESTS, 'gateway.requests-mapping'],
+    [MappingType.OPCUA, 'gateway.data-mapping']
   ]
 );
 
 export const MappingHintTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping-hint'],
+    [MappingType.OPCUA, 'gateway.opcua-data-mapping-hint'],
     [MappingType.REQUESTS, 'gateway.requests-mapping-hint']
   ]
 );
@@ -425,18 +569,41 @@ export enum SourceTypes {
   CONST = 'constant'
 }
 
+export enum OPCUaSourceTypes {
+  PATH = 'path',
+  IDENTIFIER = 'identifier',
+  CONST = 'constant'
+}
+
 export enum DeviceInfoType {
   FULL = 'full',
   PARTIAL = 'partial'
 }
 
-export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
+export const SourceTypeTranslationsMap = new Map<SourceTypes | OPCUaSourceTypes, string>(
   [
     [SourceTypes.MSG, 'gateway.source-type.msg'],
     [SourceTypes.TOPIC, 'gateway.source-type.topic'],
     [SourceTypes.CONST, 'gateway.source-type.const'],
+    [OPCUaSourceTypes.PATH, 'gateway.source-type.path'],
+    [OPCUaSourceTypes.IDENTIFIER, 'gateway.source-type.identifier'],
+    [OPCUaSourceTypes.CONST, 'gateway.source-type.const']
   ]
 );
+
+export interface RequestMappingData {
+  requestType: RequestType;
+  requestValue: RequestDataItem;
+}
+
+export interface RequestDataItem {
+  type: string;
+  details: string;
+  requestType: RequestType;
+  methodFilter?: string;
+  attributeFilter?: string;
+  topicFilter?: string;
+}
 
 export enum RequestType {
   CONNECT_REQUEST = 'connectRequests',
@@ -459,14 +626,18 @@ export const RequestTypesTranslationsMap = new Map<RequestType, string>(
 export enum MappingKeysType {
   ATTRIBUTES = 'attributes',
   TIMESERIES = 'timeseries',
-  CUSTOM = 'extensionConfig'
+  CUSTOM = 'extensionConfig',
+  RPC_METHODS = 'rpc_methods',
+  ATTRIBUTES_UPDATES = 'attributes_updates'
 }
 
 export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.attributes'],
     [MappingKeysType.TIMESERIES, 'gateway.timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.keys']
+    [MappingKeysType.CUSTOM, 'gateway.keys'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
+    [MappingKeysType.RPC_METHODS, 'gateway.rpc-methods']
   ]
 );
 
@@ -474,7 +645,9 @@ export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.add-attribute'],
     [MappingKeysType.TIMESERIES, 'gateway.add-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.add-key']
+    [MappingKeysType.CUSTOM, 'gateway.add-key'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    [MappingKeysType.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );
 
@@ -482,7 +655,9 @@ export const MappingKeysDeleteKeyTranslationsMap = new Map<MappingKeysType, stri
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.delete-attribute'],
     [MappingKeysType.TIMESERIES, 'gateway.delete-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.delete-key']
+    [MappingKeysType.CUSTOM, 'gateway.delete-key'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
+    [MappingKeysType.RPC_METHODS, 'gateway.delete-rpc-method']
   ]
 );
 
@@ -490,7 +665,9 @@ export const MappingKeysNoKeysTextTranslationsMap = new Map<MappingKeysType, str
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.no-attributes'],
     [MappingKeysType.TIMESERIES, 'gateway.no-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.no-keys']
+    [MappingKeysType.CUSTOM, 'gateway.no-keys'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
+    [MappingKeysType.RPC_METHODS, 'gateway.no-rpc-methods']
   ]
 );
 
@@ -498,7 +675,6 @@ export enum ServerSideRPCType {
   ONE_WAY = 'oneWay',
   TWO_WAY = 'twoWay'
 }
-
 
 export const getDefaultConfig = (resourcesService: ResourcesService, type: string): Observable<any> =>
   resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
@@ -550,3 +726,15 @@ export const DataConversionTranslationsMap = new Map<ConvertorType, string>(
     [ConvertorType.CUSTOM, 'gateway.custom-hint']
   ]
 );
+
+export enum SecurityType {
+  BASIC128 = 'Basic128Rsa15',
+  BASIC256 = 'Basic256',
+  BASIC256SHA = 'Basic256Sha256'
+}
+
+export const ServerSecurityTypes = [
+  { value: 'Basic128Rsa15', name: 'Basic128RSA15' },
+  { value: 'Basic256', name: 'Basic256' },
+  { value: 'Basic256Sha256', name: 'Basic256SHA256' }
+];
