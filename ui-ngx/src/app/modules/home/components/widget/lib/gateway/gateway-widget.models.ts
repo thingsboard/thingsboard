@@ -195,13 +195,13 @@ interface DeviceInfo {
   deviceProfileExpressionSource: string;
 }
 
-interface Attribute {
+export interface Attribute {
   key: string;
   type: string;
   value: string;
 }
 
-interface Timeseries {
+export interface Timeseries {
   key: string;
   type: string;
   value: string;
@@ -212,12 +212,12 @@ interface RpcArgument {
   value: number;
 }
 
-interface RpcMethod {
+export interface RpcMethod {
   method: string;
   arguments: RpcArgument[];
 }
 
-interface AttributesUpdate {
+export interface AttributesUpdate {
   key: string;
   type: string;
   value: string;

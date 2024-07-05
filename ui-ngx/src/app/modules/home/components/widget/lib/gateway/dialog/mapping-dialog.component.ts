@@ -22,6 +22,8 @@ import { FormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
+  Attribute,
+  AttributesUpdate,
   ConvertorType,
   ConvertorTypeTranslationsMap,
   DataConversionTranslationsMap,
@@ -34,16 +36,19 @@ import {
   MappingKeysPanelTitleTranslationsMap,
   MappingKeysType,
   MappingType,
-  MappingTypeTranslationsMap, MappingValue,
+  MappingTypeTranslationsMap,
+  MappingValue,
   noLeadTrailSpacesRegex,
   OPCUaSourceTypes,
   QualityTypes,
   QualityTypeTranslationsMap,
   RequestType,
   RequestTypesTranslationsMap,
+  RpcMethod,
   ServerSideRPCType,
   SourceTypes,
-  SourceTypeTranslationsMap
+  SourceTypeTranslationsMap,
+  Timeseries
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { startWith, takeUntil } from 'rxjs/operators';
@@ -66,17 +71,17 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   qualityTypes = QualityTypes;
   QualityTranslationsMap = QualityTypeTranslationsMap;
 
-  convertorTypes = Object.values(ConvertorType);
+  convertorTypes: ConvertorType[] = Object.values(ConvertorType);
   ConvertorTypeEnum = ConvertorType;
   ConvertorTypeTranslationsMap = ConvertorTypeTranslationsMap;
 
-  sourceTypes = Object.values(SourceTypes);
+  sourceTypes: SourceTypes[] = Object.values(SourceTypes);
   OPCUaSourceTypes = Object.values(OPCUaSourceTypes) as Array<OPCUaSourceTypes>;
   OPCUaSourceTypesEnum = OPCUaSourceTypes;
   sourceTypesEnum = SourceTypes;
   SourceTypeTranslationsMap = SourceTypeTranslationsMap;
 
-  requestTypes = Object.values(RequestType);
+  requestTypes: RequestType[] = Object.values(RequestType);
   RequestTypeEnum = RequestType;
   RequestTypesTranslationsMap = RequestTypesTranslationsMap;
 
@@ -92,11 +97,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   DataConversionTranslationsMap = DataConversionTranslationsMap;
 
-  hiddenAttributesCount = 0;
-
   keysPopupClosed = true;
-
-  submitted = false;
 
   private destroy$ = new Subject<void>();
 
@@ -116,30 +117,30 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
 
   get converterAttributes(): Array<string> {
     if (this.converterType) {
-      return this.mappingForm.get('converter').get(this.converterType).value.attributes.map(value => value.key);
+      return this.mappingForm.get('converter').get(this.converterType).value.attributes.map((value: Attribute) => value.key);
     }
   }
 
   get converterTelemetry(): Array<string> {
     if (this.converterType) {
-      return this.mappingForm.get('converter').get(this.converterType).value.timeseries.map(value => value.key);
+      return this.mappingForm.get('converter').get(this.converterType).value.timeseries.map((value: Timeseries) => value.key);
     }
   }
 
   get opcAttributes(): Array<string> {
-    return this.mappingForm.get('attributes').value?.map(value => value.key) || [];
+    return this.mappingForm.get('attributes').value?.map((value: Attribute) => value.key) || [];
   }
 
   get opcTelemetry(): Array<string> {
-    return this.mappingForm.get('timeseries').value?.map(value => value.key) || [];
+    return this.mappingForm.get('timeseries').value?.map((value: Timeseries) => value.key) || [];
   }
 
   get opcRpcMethods(): Array<string> {
-    return this.mappingForm.get('rpc_methods').value?.map(value => value.method) || [];
+    return this.mappingForm.get('rpc_methods').value?.map((value: RpcMethod) => value.method) || [];
   }
 
   get opcAttributesUpdates(): Array<string> {
-    return this.mappingForm.get('attributes_updates')?.value?.map(value => value.key) || [];
+    return this.mappingForm.get('attributes_updates')?.value?.map((value: AttributesUpdate) => value.key) || [];
   }
 
   get converterType(): ConvertorType {
@@ -197,7 +198,6 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   }
 
   add(): void {
-    this.submitted = true;
     if (this.mappingForm.valid) {
       this.dialogRef.close(this.prepareMappingData());
     }
@@ -215,9 +215,9 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
         : this.mappingForm;
 
       const keysControl = group.get(keysType);
-      const ctx: {[key: string]: any} = {
+      const ctx: { [key: string]: any } = {
         keys: keysControl.value,
-        keysType: keysType,
+        keysType,
         rawData: this.mappingForm.get('converter.type')?.value === ConvertorType.BYTES,
         panelTitle: MappingKeysPanelTitleTranslationsMap.get(keysType),
         addKeyTitle: MappingKeysAddKeyTranslationsMap.get(keysType),
@@ -247,11 +247,11 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  private prepareMappingData(): {[key: string]: unknown} {
+  private prepareMappingData(): { [key: string]: unknown } {
     const formValue = this.mappingForm.value;
     switch (this.data.mappingType) {
       case MappingType.DATA:
-        const { converter, topicFilter, subscriptionQos } = formValue;
+        const {converter, topicFilter, subscriptionQos} = formValue;
         return {
           topicFilter,
           subscriptionQos,
@@ -270,17 +270,17 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  private prepareFormValueData(): {[key: string]: unknown} {
+  private prepareFormValueData(): { [key: string]: unknown } {
     if (this.data.value && Object.keys(this.data.value).length) {
       switch (this.data.mappingType) {
         case MappingType.DATA:
-          const { converter, topicFilter, subscriptionQos } = this.data.value;
+          const {converter, topicFilter, subscriptionQos} = this.data.value;
           return {
             topicFilter,
             subscriptionQos,
             converter: {
               type: converter.type,
-              [converter.type]: { ...converter }
+              [converter.type]: {...converter}
             }
           };
         case MappingType.REQUESTS:
@@ -327,7 +327,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       converterGroup.get('bytes').disable({emitEvent: false});
       converterGroup.get('custom').disable({emitEvent: false});
       converterGroup.get(value).enable({emitEvent: false});
-    })
+    });
   }
 
   private createRequestMappingForm(): void {
@@ -343,7 +343,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       }),
       attributeRequests: this.fb.group({
         topicFilter: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-        deviceInfo:  this.fb.group({
+        deviceInfo: this.fb.group({
           deviceNameExpressionSource: [SourceTypes.MSG, []],
           deviceNameExpression: ['', [Validators.required]],
         }),

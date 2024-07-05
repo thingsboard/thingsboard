@@ -14,12 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  Component,
-  forwardRef,
-  OnDestroy,
-  OnInit,
-} from '@angular/core';
+import { Component, forwardRef, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
@@ -31,7 +26,6 @@ import {
   Validator,
   Validators
 } from '@angular/forms';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
   MappingDataKey,
@@ -60,12 +54,10 @@ import { Subject } from 'rxjs';
   ]
 })
 export class TypeValuePanelComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
-  valueTypeKeys = Object.values(MappingValueType);
-  valueTypeEnum = MappingValueType;
+
+  valueTypeKeys: MappingValueType[] = Object.values(MappingValueType);
   valueTypes = mappingValueTypesMap;
-  dataKeyType: DataKeyType;
   valueListFormArray: UntypedFormArray;
-  errorText = '';
 
   private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
@@ -138,7 +130,7 @@ export class TypeValuePanelComponent implements ControlValueAccessor, Validator,
     };
   }
 
-  updateView(value: any): void {
+  private updateView(value: any): void {
     this.propagateChange(value);
   }
 }
