@@ -62,7 +62,7 @@ import {
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { takeUntil } from 'rxjs/operators';
+import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
 
@@ -148,6 +148,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   private destroy$ = new Subject<void>();
   private subscription: IWidgetSubscription;
+  private attributeUpdateSubject = new Subject<AttributeData>();
 
   constructor(protected store: Store<AppState>,
               private fb: FormBuilder,
@@ -180,6 +181,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       basicConfig: this.fb.group({})
     });
     this.connectorForm.disable();
+
+    this.observeAttributeChange();
   }
 
   get portErrorTooltip(): string {
@@ -238,12 +241,23 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     this.dataSource.sort = this.sort;
     this.dataSource.sortingDataAccessor = (data: AttributeData, sortHeaderId: string) => {
-      if (sortHeaderId === 'syncStatus') {
-        return this.isConnectorSynced(data) ? 1 : 0;
-      } else if (sortHeaderId === 'enabled') {
-        return this.activeConnectors.includes(data.key) ? 1 : 0;
+      switch (sortHeaderId) {
+        case 'syncStatus':
+          return this.isConnectorSynced(data) ? 1 : 0;
+
+        case 'enabled':
+          return this.activeConnectors.includes(data.key) ? 1 : 0;
+
+        case 'errors':
+          const errors = this.getErrorsCount(data);
+          if (typeof errors === 'string') {
+            return this.sort.direction.toUpperCase() === Direction.DESC ? -1 : Infinity;
+          }
+          return errors;
+
+        default:
+          return data[sortHeaderId] || data.value[sortHeaderId];
       }
-      return data[sortHeaderId] || data.value[sortHeaderId];
     };
 
     if (this.device) {
@@ -524,31 +538,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
 
-  enableConnector(attribute: AttributeData): void {
-    const wasEnabled = this.activeConnectors.includes(attribute.key);
-    const scopeOld = wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
-    const scopeNew = !wasEnabled ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
+  onEnableConnector(attribute: AttributeData): void {
     attribute.value.ts = new Date().getTime();
-    const tasks = [this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
-      key: 'active_connectors',
-      value: this.activeConnectors
-    }]), this.attributeService.saveEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, [{
-      key: 'inactive_connectors',
-      value: this.inactiveConnectors
-    }]), this.attributeService.deleteEntityAttributes(this.device, scopeOld, [attribute]),
-      this.attributeService.saveEntityAttributes(this.device, scopeNew, [attribute])];
-    if (wasEnabled) {
-      const index = this.activeConnectors.indexOf(attribute.key);
-      this.activeConnectors.splice(index, 1);
-      this.inactiveConnectors.push(attribute.key);
-    } else {
-      const index = this.inactiveConnectors.indexOf(attribute.key);
-      this.inactiveConnectors.splice(index, 1);
-      this.activeConnectors.push(attribute.key);
-    }
-    forkJoin(tasks).subscribe(_ => {
-      this.updateData(true);
-    });
+
+    this.updateActiveConnectorKeys(attribute.key);
+
+    this.attributeUpdateSubject.next(attribute);
   }
 
   getErrorsCount(attribute: AttributeData): string {
@@ -597,6 +592,55 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   generate(formControlName: string): void {
     this.connectorForm.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
+  }
+
+  private observeAttributeChange(): void {
+    this.attributeUpdateSubject.pipe(
+      debounceTime(300),
+      tap((attribute: AttributeData) => this.executeAttributeUpdates(attribute)),
+      takeUntil(this.destroy$),
+    ).subscribe();
+  }
+
+  private updateActiveConnectorKeys(key: string): void {
+    const wasEnabled = this.activeConnectors.includes(key);
+    if (wasEnabled) {
+      const index = this.activeConnectors.indexOf(key);
+      if (index !== -1) this.activeConnectors.splice(index, 1);
+      this.inactiveConnectors.push(key);
+    } else {
+      const index = this.inactiveConnectors.indexOf(key);
+      if (index !== -1) this.inactiveConnectors.splice(index, 1);
+      this.activeConnectors.push(key);
+    }
+  }
+
+  private executeAttributeUpdates(attribute: AttributeData): void {
+    forkJoin(this.getAttributeExecutionTasks(attribute))
+      .pipe(
+        take(1),
+        tap(() => this.updateData(true)),
+        takeUntil(this.destroy$),
+      )
+      .subscribe();
+  }
+
+  private getAttributeExecutionTasks(attribute: AttributeData): Observable<any>[] {
+    const isActive = this.activeConnectors.includes(attribute.key);
+    const scopeOld =  isActive ? AttributeScope.SERVER_SCOPE : AttributeScope.SHARED_SCOPE;
+    const scopeNew = isActive ? AttributeScope.SHARED_SCOPE : AttributeScope.SERVER_SCOPE;
+
+    return [
+      this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, [{
+        key: 'active_connectors',
+        value: this.activeConnectors
+      }]),
+      this.attributeService.saveEntityAttributes(this.device, AttributeScope.SERVER_SCOPE, [{
+        key: 'inactive_connectors',
+        value: this.inactiveConnectors
+      }]),
+      this.attributeService.deleteEntityAttributes(this.device, scopeOld, [attribute]),
+      this.attributeService.saveEntityAttributes(this.device, scopeNew, [attribute])];
   }
 
   private onDataUpdateError(e: any): void {

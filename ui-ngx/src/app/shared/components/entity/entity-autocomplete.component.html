@@ -40,9 +40,16 @@
       <span [innerHTML]="entity.name | highlight:searchText:true:'ig'"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredEntities | async)?.length" [value]="null">
-      <span>
-          {{ translate.get(noEntitiesMatchingText, {entity: searchText}) | async }}
-      </span>
+      <div (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span>{{ notFoundEntities | translate }}</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
+              {{ translate.get(noEntitiesMatchingText, {entity: searchText}) | async }}
+          </span>
+        </ng-template>
+      </div>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="selectEntityFormGroup.get('entity').hasError('required')">

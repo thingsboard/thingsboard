@@ -368,38 +368,7 @@
             {{ 'gateway.rpc.add-header' | translate }}
           </button>
         </fieldset>
-        <fieldset class="fields border" fxLayout="column" fxLayoutGap="10px" formArrayName="security">
-          <span class="fields-label">{{ 'gateway.rpc.security' | translate }}</span>
-          <div class="border" fxLayout="column" fxLayoutGap="10px" *ngIf="getFormArrayControls('security').length">
-            <div fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center">
-              <span fxFlex class="title">{{ 'gateway.rpc.security-name' | translate }}</span>
-              <span fxFlex class="title">{{ 'gateway.rpc.value' | translate }}</span>
-              <span fxFlex="30px"></span>
-            </div>
-            <mat-divider></mat-divider>
-            <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
-                 *ngFor="let control of getFormArrayControls('security'); let i = index">
-              <ng-container [formGroupName]="i">
-                <mat-form-field appearance="outline" fxFlex>
-                  <input matInput formControlName="securityName"/>
-                </mat-form-field>
-                <mat-form-field appearance="outline" fxFlex>
-                  <input matInput formControlName="value" placeholder="anonymous"/>
-                </mat-form-field>
-                <mat-icon style="cursor:pointer;"
-                          fxFlex="30px"
-                          (click)="removeHTTPSecurity(i)"
-                          matTooltip="{{ 'gateway.rpc.remove' | translate }}">delete
-                </mat-icon>
-              </ng-container>
-            </div>
-          </div>
-          <button mat-raised-button
-                  fxFlexAlign="start"
-                  (click)="addHTTPSecurity()">
-            {{ 'gateway.rpc.add-security' | translate }}
-          </button>
-        </fieldset>
+        <tb-rest-connector-security [formControl]="commandForm.get('security')"></tb-rest-connector-security>
       </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.REQUEST">
         <mat-form-field>
@@ -477,9 +446,6 @@
             {{ 'gateway.rpc.add-header' | translate }}
           </button>
         </fieldset>
-      </ng-template>
-      <ng-template [ngSwitchCase]="ConnectorType.OPCUA_ASYNCIO">
-        <ng-container *ngTemplateOutlet="OPCUAForm"></ng-container>
       </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.OPCUA" #OPCUAForm>
         <mat-form-field >

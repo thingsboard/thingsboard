@@ -57,9 +57,16 @@
       <span [innerHTML]="dashboard.title | highlight:searchText"></span>
     </mat-option>
     <mat-option *ngIf="!(filteredDashboards | async)?.length" [value]="null">
-      <span>
+      <div (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span>{{ 'dashboard.no-dashboards-text' | translate }}</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
           {{ translate.get('dashboard.no-dashboards-matching', {entity: searchText}) | async }}
-      </span>
+          </span>
+        </ng-template>
+      </div>
     </mat-option>
   </mat-autocomplete>
   <mat-error *ngIf="!inlineField">
