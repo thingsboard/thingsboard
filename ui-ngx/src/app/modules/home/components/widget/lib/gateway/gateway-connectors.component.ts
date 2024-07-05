@@ -552,7 +552,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
             value.basicConfig = value.configurationJson;
             this.updateConnector(value);
             this.generate('basicConfig.broker.clientId');
-            this.saveConnector();
+            setTimeout(() => this.saveConnector());
           }
         });
       }
