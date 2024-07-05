@@ -48,6 +48,7 @@ import org.springdoc.core.models.GroupedOpenApi;
 import org.springdoc.core.properties.SpringDocConfigProperties;
 import org.springdoc.core.properties.SwaggerUiConfigProperties;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Lazy;
@@ -62,7 +63,6 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.exception.ThingsboardCredentialsExpiredResponse;
 import org.thingsboard.server.exception.ThingsboardErrorResponse;
-import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
 import org.thingsboard.server.service.security.auth.rest.LoginResponse;
 
@@ -79,7 +79,7 @@ import static org.springframework.http.MediaType.APPLICATION_JSON_VALUE;
 
 @Slf4j
 @Configuration
-@TbCoreComponent
+@ConditionalOnExpression("('${service.type:null}'=='monolith' || '${service.type:null}'=='tb-core') && '${springdoc.api-docs.enabled:true}'=='true'")
 @Profile("!test")
 public class SwaggerConfiguration {
 
