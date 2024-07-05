@@ -19,6 +19,7 @@ public interface HasVersion {
 
     Long getVersion();
 
-    void setVersion(Integer version);
+    default void setVersion(Long version) {
+    }
 
 }

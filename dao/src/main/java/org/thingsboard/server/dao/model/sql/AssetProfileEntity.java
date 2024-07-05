@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
@@ -34,7 +34,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.ASSET_PROFILE_TABLE_NAME)
-public final class AssetProfileEntity extends BaseVersionedSqlEntity<AssetProfile> {
+public final class AssetProfileEntity extends BaseVersionedEntity<AssetProfile> {
 
     @Column(name = ModelConstants.ASSET_PROFILE_TENANT_ID_PROPERTY)
     private UUID tenantId;

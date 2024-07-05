@@ -26,7 +26,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -44,7 +44,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.EDGE_TYPE_PROPERTY
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedSqlEntity<T> {
+public abstract class AbstractEdgeEntity<T extends Edge> extends BaseVersionedEntity<T> {
 
     @Column(name = EDGE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;

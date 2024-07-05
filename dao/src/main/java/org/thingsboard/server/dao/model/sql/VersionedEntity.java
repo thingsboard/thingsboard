@@ -27,4 +27,5 @@ public abstract class VersionedEntity {
 
     @Column(name = VERSION_COLUMN)
     protected Long version;
+
 }

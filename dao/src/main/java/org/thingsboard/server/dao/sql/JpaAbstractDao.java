@@ -87,7 +87,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     protected E doSave(E entity, boolean isNew) {
         if (isNew) {
             if (entity instanceof HasVersion versionedEntity) {
-                versionedEntity.setVersion(1);
+                versionedEntity.setVersion(1L);
             }
             entityManager.persist(entity);
         } else {

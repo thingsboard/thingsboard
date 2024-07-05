@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
@@ -33,7 +33,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.WIDGETS_BUNDLE_TABLE_NAME)
-public final class WidgetsBundleEntity extends BaseVersionedSqlEntity<WidgetsBundle> {
+public final class WidgetsBundleEntity extends BaseVersionedEntity<WidgetsBundle> {
 
     @Column(name = ModelConstants.WIDGETS_BUNDLE_TENANT_ID_PROPERTY)
     private UUID tenantId;

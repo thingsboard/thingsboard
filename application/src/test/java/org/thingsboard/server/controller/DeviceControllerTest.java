@@ -1587,18 +1587,24 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveDeviceWithOutdatedVersion() throws Exception {
-        Device device = createDevice("Device v1");
+        Device device = createDevice("Device v1.0");
         assertThat(device.getVersion()).isOne();
 
-        device.setName("Device v2");
+        device.setName("Device v2.0");
         device = doPost("/api/device", device, Device.class);
         assertThat(device.getVersion()).isEqualTo(2);
 
-        device.setVersion(1);
+        device.setName("Device v1.1");
+        device.setVersion(1L);
         String response = doPost("/api/device", device).andExpect(status().isConflict())
                 .andReturn().getResponse().getContentAsString();
         assertThat(JacksonUtil.toJsonNode(response).get("message").asText())
                 .containsIgnoringCase("already changed by someone else");
+
+        device.setVersion(null); // overriding entity
+        device = doPost("/api/device", device, Device.class);
+        assertThat(device.getName()).isEqualTo("Device v1.1");
+        assertThat(device.getVersion()).isEqualTo(3);
     }
 
     private Device createDevice(String name) {

@@ -97,7 +97,7 @@ public class DeviceProfile extends BaseData<DeviceProfileId> implements HasName,
     private RuleChainId defaultEdgeRuleChainId;
 
     private DeviceProfileId externalId;
-    private Integer version;
+    private Long version;
 
     public DeviceProfile() {
         super();

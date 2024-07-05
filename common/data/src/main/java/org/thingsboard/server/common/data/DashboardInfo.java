@@ -46,7 +46,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
     private Integer mobileOrder;
 
     @Getter @Setter
-    private Integer version;
+    private Long version;
 
     public DashboardInfo() {
         super();

@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.security.Authority;
-import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -42,7 +42,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.USER_PG_HIBERNATE_TABLE_NAME)
-public class UserEntity extends BaseVersionedSqlEntity<User> {
+public class UserEntity extends BaseVersionedEntity<User> {
 
     @Column(name = ModelConstants.USER_TENANT_ID_PROPERTY)
     private UUID tenantId;

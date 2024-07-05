@@ -35,7 +35,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
     private String credentialsValue;
 
     @Getter @Setter
-    private Integer version;
+    private Long version;
 
     public DeviceCredentials() {
         super();

@@ -59,7 +59,7 @@ public class RuleChain extends BaseDataWithAdditionalInfo<RuleChainId> implement
     private transient JsonNode configuration;
 
     private RuleChainId externalId;
-    private Integer version;
+    private Long version;
 
     @JsonIgnore
     private byte[] configurationBytes;

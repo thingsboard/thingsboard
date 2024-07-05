@@ -209,7 +209,7 @@ message DeviceProto {
   optional int64 softwareIdLSB = 18;
   optional int64 externalIdMSB = 19;
   optional int64 externalIdLSB = 20;
-  optional int32 version = 21;
+  optional int64 version = 21;
 }
 
 message DeviceProfileProto {
@@ -240,7 +240,7 @@ message DeviceProfileProto {
   optional int64 defaultEdgeRuleChainIdLSB = 25;
   optional int64 externalIdMSB = 26;
   optional int64 externalIdLSB = 27;
-  optional int32 version = 28;
+  optional int64 version = 28;
 }
 
 message TenantProto {
@@ -670,7 +670,7 @@ message DeviceCredentialsProto {
   CredentialsType credentialsType = 6;
   string credentialsId = 7;
   optional string credentialsValue = 8;
-  optional int32 version = 9;
+  optional int64 version = 9;
 }
 
 message CredentialsDataProto {

@@ -22,7 +22,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
-import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
@@ -30,7 +30,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends BaseVersionedSqlEntity<T> {
+public abstract class AbstractWidgetTypeEntity<T extends BaseWidgetType> extends BaseVersionedEntity<T> {
 
     @Column(name = ModelConstants.WIDGET_TYPE_TENANT_ID_PROPERTY)
     private UUID tenantId;

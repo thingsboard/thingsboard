@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseVersionedSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -48,7 +48,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.DEVICE_PROFILE_TABLE_NAME)
-public final class DeviceProfileEntity extends BaseVersionedSqlEntity<DeviceProfile> {
+public final class DeviceProfileEntity extends BaseVersionedEntity<DeviceProfile> {
 
     @Column(name = ModelConstants.DEVICE_PROFILE_TENANT_ID_PROPERTY)
     private UUID tenantId;

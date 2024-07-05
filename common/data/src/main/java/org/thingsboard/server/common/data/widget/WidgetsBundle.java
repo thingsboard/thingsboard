@@ -79,7 +79,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     private WidgetsBundleId externalId;
     @Getter
     @Setter
-    private Integer version;
+    private Long version;
 
     public WidgetsBundle() {
         super();

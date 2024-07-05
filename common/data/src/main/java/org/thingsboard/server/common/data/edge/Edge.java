@@ -60,7 +60,7 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
     private String secret;
 
     @Getter
-    private Integer version;
+    private Long version;
 
     public Edge() {
         super();

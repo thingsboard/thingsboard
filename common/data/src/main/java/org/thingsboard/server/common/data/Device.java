@@ -68,7 +68,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     @Getter @Setter
     private DeviceId externalId;
     @Getter @Setter
-    private Integer version;
+    private Long version;
 
     public Device() {
         super();

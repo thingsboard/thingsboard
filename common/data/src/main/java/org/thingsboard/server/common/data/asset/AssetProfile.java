@@ -75,7 +75,7 @@ public class AssetProfile extends BaseData<AssetProfileId> implements HasName, H
     private RuleChainId defaultEdgeRuleChainId;
 
     private AssetProfileId externalId;
-    private Integer version;
+    private Long version;
 
     public AssetProfile() {
         super();
