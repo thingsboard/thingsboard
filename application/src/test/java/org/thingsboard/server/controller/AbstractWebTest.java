@@ -525,7 +525,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         JsonNode activateRequest = getActivateRequest(password);
         ResultActions resultActions = doPost("/api/noauth/activate", activateRequest);
         resultActions.andExpect(status().isOk());
-        return savedUser;
+        return doGet("/api/user/" + savedUser.getId(), User.class);
     }
 
     private JsonNode getActivateRequest(String password) throws Exception {

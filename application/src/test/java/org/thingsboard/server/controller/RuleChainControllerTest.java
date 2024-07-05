@@ -120,7 +120,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
                 ActionType.ADDED);
 
         savedRuleChain.setName("New RuleChain");
-        doPost("/api/ruleChain", savedRuleChain, RuleChain.class);
+        savedRuleChain = doPost("/api/ruleChain", savedRuleChain, RuleChain.class);
         RuleChain foundRuleChain = doGet("/api/ruleChain/" + savedRuleChain.getId().getId().toString(), RuleChain.class);
         Assert.assertEquals(savedRuleChain.getName(), foundRuleChain.getName());
 
