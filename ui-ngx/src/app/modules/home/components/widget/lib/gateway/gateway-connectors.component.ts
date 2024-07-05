@@ -21,9 +21,7 @@ import {
   ElementRef,
   Input,
   NgZone,
-  QueryList,
   ViewChild,
-  ViewChildren
 } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -40,7 +38,7 @@ import {
 import { EntityId } from '@shared/models/id/entity-id';
 import { AttributeService } from '@core/http/attribute.service';
 import { TranslateService } from '@ngx-translate/core';
-import { BehaviorSubject, forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
+import { forkJoin, Observable, of, Subject, Subscription } from 'rxjs';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { PageComponent } from '@shared/components/page.component';
 import { PageLink } from '@shared/models/page/page-link';
@@ -69,10 +67,9 @@ import {
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { debounceTime, distinctUntilChanged, filter, take, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
-import { MatTab } from '@angular/material/tabs';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -270,6 +267,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         }
       });
     }
+
+    this.observeModeChange();
   }
 
   ngOnDestroy(): void {
@@ -590,6 +589,12 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     };
   }
 
+  private observeModeChange(): void {
+    this.connectorForm.get('mode').valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(() => this.connectorForm.get('mode').markAsPristine());
+  }
+
   private observeAttributeChange(): void {
     this.attributeUpdateSubject.pipe(
       debounceTime(300),
@@ -732,9 +737,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     switch (connector.type) {
       case ConnectorType.MQTT:
       case ConnectorType.OPCUA:
-        this.connectorForm.patchValue({...connector, mode: connector.mode || ConnectorConfigurationModes.BASIC});
-        this.createBasicConfigWatcher();
-        this.connectorForm.markAsPristine();
+        this.connectorForm.get('type').patchValue(connector.type, {emitValue: false, onlySelf: true});
+
+        setTimeout(() => {
+          this.connectorForm.patchValue({...connector, mode: connector.mode || ConnectorConfigurationModes.BASIC});
+          this.createBasicConfigWatcher();
+          this.connectorForm.markAsPristine();
+        });
         break;
       default:
         this.connectorForm.patchValue({...connector, mode: null});

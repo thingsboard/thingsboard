@@ -128,7 +128,12 @@ export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validato
   }
 
   writeValue(basicConfig: ConnectorBaseConfig): void {
-    this.basicFormGroup.patchValue(basicConfig, {emitEvent: false});
+    const editedBase = {
+      server: basicConfig.server || {},
+      mapping: basicConfig.mapping || [],
+    };
+
+    this.basicFormGroup.setValue(editedBase, {emitEvent: false});
   }
 
   validate(): ValidationErrors | null {
