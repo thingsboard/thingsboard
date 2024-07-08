@@ -72,4 +72,14 @@
   .mat-mdc-form-field-icon-suffix {
     display: flex;
   }
+
+  .device-config {
+    gap: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .device-node-pattern-field {
+    flex-basis: 3%;
+  }
 }
