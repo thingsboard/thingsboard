@@ -204,6 +204,7 @@ export interface BaseWidgetType extends BaseData<WidgetTypeId>, HasTenantId {
   fqn: string;
   name: string;
   deprecated: boolean;
+  scada: boolean;
 }
 
 export const fullWidgetTypeFqn = (type: BaseWidgetType): string =>
@@ -361,7 +362,7 @@ export interface DataKey extends KeyInfo {
   _hash?: number;
 }
 
-export type CellClickColumnInfo = Pick<DataKey, 'name' | 'label'>
+export type CellClickColumnInfo = Pick<DataKey, 'name' | 'label'>;
 
 export enum DataKeyConfigMode {
   general = 'general',

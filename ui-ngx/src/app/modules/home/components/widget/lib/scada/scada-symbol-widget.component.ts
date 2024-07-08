@@ -69,6 +69,7 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
   loading$ = this.loadingSubject.asObservable().pipe(share());
 
   scadaSymbolObject: ScadaSymbolObject;
+  noScadaSymbol = false;
 
   constructor(public widgetComponent: WidgetComponent,
               protected imagePipe: ImagePipe,
@@ -89,9 +90,9 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
       this.scadaSymbolContent$ = of(this.settings.scadaSymbolContent);
     } else if (this.settings.scadaSymbolUrl) {
       this.scadaSymbolContent$ = this.imageService.getImageString(this.settings.scadaSymbolUrl)
-      .pipe(catchError(() => of('<svg></svg>')));
+      .pipe(catchError(() => of('empty')));
     } else {
-      this.scadaSymbolContent$ = of('<svg></svg>');
+      this.scadaSymbolContent$ = of('empty');
     }
   }
 
@@ -133,6 +134,9 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
       this.ctx.isPreview || (isDefinedAndNotNull(this.settings.simulated) ? this.settings.simulated : false);
     if (content.startsWith('<parsererror')) {
       rootElement.innerHTML = content;
+    } else if (content === 'empty') {
+      this.noScadaSymbol = true;
+      this.cd.markForCheck();
     } else {
       this.scadaSymbolObject = new ScadaSymbolObject(rootElement, this.ctx, content,
         this.settings.scadaSymbolObjectSettings, this, simulated);

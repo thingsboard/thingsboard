@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
@@ -121,28 +122,30 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
-        log.trace("Executing findSystemWidgetTypesByPageLink, fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]", fullSearch, deprecatedFilter, widgetTypes, pageLink);
+    public PageData<WidgetTypeInfo> findSystemWidgetTypesByPageLink(WidgetTypeFilter widgetTypeFilter, PageLink pageLink) {
+        log.trace("Executing findSystemWidgetTypesByPageLink, pageLink [{}]", pageLink);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findSystemWidgetTypes(tenantId, fullSearch, deprecatedFilter, widgetTypes, pageLink);
+        return widgetTypeDao.findSystemWidgetTypes(widgetTypeFilter, pageLink);
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
-        log.trace("Executing findAllTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]",
-                tenantId, fullSearch, deprecatedFilter, widgetTypes, pageLink);
+    public PageData<WidgetTypeInfo> findAllTenantWidgetTypesByTenantIdAndPageLink(WidgetTypeFilter widgetTypeFilter, PageLink pageLink) {
+        TenantId tenantId = widgetTypeFilter.getTenantId();
+        log.trace("Executing findAllTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]",
+                tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findAllTenantWidgetTypesByTenantId(tenantId.getId(), fullSearch, deprecatedFilter, widgetTypes, pageLink);
+        return widgetTypeDao.findAllTenantWidgetTypesByTenantId(widgetTypeFilter, pageLink);
     }
 
     @Override
-    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, DeprecatedFilter deprecatedFilter, List<String> widgetTypes, PageLink pageLink) {
-        log.trace("Executing findTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], deprecatedFilter [{}], widgetTypes [{}], pageLink [{}]",
-                tenantId, fullSearch, deprecatedFilter, widgetTypes, pageLink);
+    public PageData<WidgetTypeInfo> findTenantWidgetTypesByTenantIdAndPageLink(WidgetTypeFilter widgetTypeFilter, PageLink pageLink) {
+        TenantId tenantId = widgetTypeFilter.getTenantId();
+        log.trace("Executing findTenantWidgetTypesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]",
+                tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
-        return widgetTypeDao.findTenantWidgetTypesByTenantId(tenantId.getId(), fullSearch, deprecatedFilter, widgetTypes, pageLink);
+        return widgetTypeDao.findTenantWidgetTypesByTenantId(widgetTypeFilter, pageLink);
     }
 
     @Override
@@ -260,7 +263,13 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
 
                 @Override
                 protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return widgetTypeDao.findTenantWidgetTypesByTenantId(id.getId(), false, DeprecatedFilter.ALL, null, pageLink);
+                    return widgetTypeDao.findTenantWidgetTypesByTenantId(
+                            WidgetTypeFilter.builder()
+                                .tenantId(id)
+                                .fullSearch(false)
+                                .deprecatedFilter(DeprecatedFilter.ALL)
+                                .widgetTypes(null).build(),
+                            pageLink);
                 }
 
                 @Override

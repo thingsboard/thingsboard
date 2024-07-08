@@ -96,6 +96,7 @@ export class WidgetComponentService {
             widgetName: this.utils.editWidgetInfo.widgetName,
             fullFqn: 'system.customWidget',
             deprecated: false,
+            scada: false,
             type: this.utils.editWidgetInfo.type,
             sizeX: this.utils.editWidgetInfo.sizeX,
             sizeY: this.utils.editWidgetInfo.sizeY,

@@ -364,6 +364,7 @@ public class InstallScripts {
         scadaSymbolWidget.setImage(symbolUrl);
         scadaSymbolWidget.setDescription(metadata.getDescription());
         scadaSymbolWidget.setTags(metadata.getSearchTags());
+        scadaSymbolWidget.setScada(true);
         ObjectNode defaultConfig = null;
         if (descriptor.has("defaultConfig")) {
             defaultConfig = JacksonUtil.fromString(descriptor.get("defaultConfig").asText(), ObjectNode.class);

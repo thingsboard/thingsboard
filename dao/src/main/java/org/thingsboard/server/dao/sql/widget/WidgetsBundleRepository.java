@@ -107,7 +107,7 @@ public interface WidgetsBundleRepository extends JpaRepository<WidgetsBundleEnti
                             "OR :textSearch ILIKE '% ' || currentTag " +
                             "OR :textSearch ILIKE '% ' || currentTag || ' %')" +
                     ")))) " +
-                    "ORDER BY CASE WHEN :scadaFirst then wb.scada END ASC, wb.widgets_bundle_order ASC NULLS LAST",
+                    "ORDER BY CASE WHEN :scadaFirst then wb.scada END DESC, wb.widgets_bundle_order ASC NULLS LAST",
             countQuery = "SELECT count(*) FROM widgets_bundle wb WHERE wb.tenant_id IN (:tenantIds) " +
                     "AND (:textSearch IS NULL OR wb.title ILIKE CONCAT('%', :textSearch, '%') " +
                     "OR wb.description ILIKE CONCAT('%', :textSearch, '%') " +

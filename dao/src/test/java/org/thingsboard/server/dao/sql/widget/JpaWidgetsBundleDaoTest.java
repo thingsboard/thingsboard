@@ -43,6 +43,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
 
@@ -312,6 +314,52 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     @Test
+    public void testFindAllWidgetsBundlesByTenantIdFullSearchScadaFirst() {
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
+        for (int i = 0; i < 10; i++) {
+            createWidgetBundles(5, tenantId1, "WB1_" + i + "_");
+            createWidgetBundles(2, tenantId1, "WB1_SCADA_" + i + "_", true);
+            createWidgetBundles(3, tenantId2, "WB2_" + i + "_");
+            createWidgetBundles(3, tenantId2, "WB2_SCADA_" + i + "_", true);
+            createSystemWidgetBundles(2, "WB_SYS_" + i + "_");
+            createSystemWidgetBundles(1, "WB_SYS_SCADA_" + i + "_", true);
+        }
+        widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID).stream().sorted(Comparator.comparing(WidgetsBundle::getTitle)).collect(Collectors.toList());;
+        assertEquals(160, widgetsBundles.size());
+
+        PageLink pageLink = new PageLink(50, 0, "WB", new SortOrder("title"));
+        PageData<WidgetsBundle> widgetsBundles1 =
+                widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
+                        WidgetsBundleFilter.builder().tenantId(TenantId.fromUUID(tenantId1)).fullSearch(true).scadaFirst(true).build(),  pageLink);
+
+        for (int i =0; i < 30; i++) {
+            var widgetsBundle = widgetsBundles1.getData().get(i);
+            assertTrue(widgetsBundle.isScada());
+        }
+
+        for (int i = 30; i < 50; i++) {
+            var widgetsBundle = widgetsBundles1.getData().get(i);
+            assertFalse(widgetsBundle.isScada());
+        }
+
+        pageLink = new PageLink(50, 0, "WB", new SortOrder("title"));
+        PageData<WidgetsBundle> widgetsBundles2 =
+                widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
+                        WidgetsBundleFilter.builder().tenantId(TenantId.fromUUID(tenantId2)).fullSearch(true).scadaFirst(true).build(), pageLink);
+
+        for (int i =0; i < 40; i++) {
+            var widgetsBundle = widgetsBundles2.getData().get(i);
+            assertTrue(widgetsBundle.isScada());
+        }
+
+        for (int i = 40; i < 50; i++) {
+            var widgetsBundle = widgetsBundles2.getData().get(i);
+            assertFalse(widgetsBundle.isScada());
+        }
+    }
+
+    @Test
     public void testTagsSearchInFindAllWidgetsBundlesByTenantId() {
         for (var entry : SHOULD_FIND_SEARCH_TO_TAGS_MAP.entrySet()) {
             String searchText = entry.getKey();
@@ -397,14 +445,22 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     private void createWidgetBundles(int count, UUID tenantId, String prefix) {
+        createWidgetBundles(count, tenantId, prefix, false);
+    }
+
+    private void createWidgetBundles(int count, UUID tenantId, String prefix, boolean scada) {
         for (int i = 0; i < count; i++) {
-            createWidgetsBundle(TenantId.fromUUID(tenantId), prefix + i, prefix + i, null);
+            createWidgetsBundle(TenantId.fromUUID(tenantId), prefix + i, prefix + i, null, scada);
         }
     }
 
     private void createSystemWidgetBundles(int count, String prefix) {
+        createSystemWidgetBundles(count, prefix, false);
+    }
+
+    private void createSystemWidgetBundles(int count, String prefix, boolean scada) {
         for (int i = 0; i < count; i++) {
-            createWidgetsBundle(TenantId.SYS_TENANT_ID, prefix + i, prefix + i, null);
+            createWidgetsBundle(TenantId.SYS_TENANT_ID, prefix + i, prefix + i, null, scada);
         }
     }
 
@@ -413,12 +469,17 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     private WidgetsBundle createWidgetsBundle(TenantId tenantId, String alias, String title, Integer order) {
+        return createWidgetsBundle(tenantId, alias, title, order, false);
+    }
+
+    private WidgetsBundle createWidgetsBundle(TenantId tenantId, String alias, String title, Integer order, boolean scada) {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
         widgetsBundle.setTenantId(tenantId);
         widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
         widgetsBundle.setOrder(order);
+        widgetsBundle.setScada(scada);
         return widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
     }
 

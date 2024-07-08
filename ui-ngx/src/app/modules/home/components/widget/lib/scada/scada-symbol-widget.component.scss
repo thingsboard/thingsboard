@@ -46,5 +46,18 @@
       align-items: center;
       justify-content: center;
     }
+    .tb-no-scada-symbol {
+      position: absolute;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      text-align: center;
+      color: rgba(0, 0, 0, 0.87);
+      font-size: 16px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
+    }
   }
 }

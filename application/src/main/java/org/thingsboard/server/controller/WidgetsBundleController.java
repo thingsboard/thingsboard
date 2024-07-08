@@ -212,7 +212,6 @@ public class WidgetsBundleController extends BaseController {
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             return checkNotNull(widgetsBundleService.findSystemWidgetsBundlesByPageLink(widgetsBundleFilter, pageLink));
         } else {
-            TenantId tenantId = getCurrentUser().getTenantId();
             if (tenantOnly != null && tenantOnly) {
                 return checkNotNull(widgetsBundleService.findTenantWidgetsBundlesByTenantIdAndPageLink(widgetsBundleFilter, pageLink));
             } else {

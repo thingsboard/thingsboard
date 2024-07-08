@@ -2,6 +2,7 @@
   "widgetsBundle": {
     "alias": "scada_water_system_symbols",
     "title": "SCADA water system symbols",
+    "scada": true,
     "image": null,
     "description": "Bundle with SCADA symbols for water system",
     "order": 9300,

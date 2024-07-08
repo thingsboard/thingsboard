@@ -23,6 +23,7 @@
   <div class="tb-scada-symbol-content">
     <div #scadaSymbolShape class="tb-scada-symbol-shape">
     </div>
+    <div *ngIf="noScadaSymbol" class="tb-no-scada-symbol" translate>scada.no-symbol-selected</div>
   </div>
   <mat-progress-bar class="tb-action-widget-progress" style="height: 4px;" color="accent" mode="indeterminate" *ngIf="loading$ | async"></mat-progress-bar>
 </div>

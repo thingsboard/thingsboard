@@ -442,6 +442,7 @@
                                       *ngIf="isAddingWidget"
                                       [aliasController]="dashboardCtx.aliasController"
                                       [filterWidgetTypes]="filterWidgetTypes"
+                                      [scadaFirst]="layouts.main.layoutCtx.gridSettings.layoutType === LayoutType.scada"
                                       (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>
         </tb-details-panel>

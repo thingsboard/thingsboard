@@ -2,6 +2,7 @@
   "fqn": "scada_symbol",
   "name": "SCADA symbol",
   "deprecated": false,
+  "scada": true,
   "image": null,
   "description": "",
   "descriptor": {

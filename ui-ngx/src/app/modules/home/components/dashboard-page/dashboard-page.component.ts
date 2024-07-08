@@ -166,6 +166,8 @@ import {
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
 
+  LayoutType = LayoutType;
+
   private forcePristine = false;
 
   get isDirty(): boolean {
