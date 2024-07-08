@@ -238,9 +238,6 @@
       &-230 {
         min-width: 230px;
       }
-      &-250 {
-        min-width: 250px;
-      }
     }
     [class^="fixed-title-width"] {
       @media #{$mat-xs} {
