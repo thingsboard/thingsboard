@@ -41,9 +41,9 @@ import static org.thingsboard.server.common.data.DataConstants.SCOPE;
         configClazz = TbMsgDeleteAttributesNodeConfiguration.class,
         nodeDescription = "Delete attributes for Message Originator.",
         nodeDetails = "Attempt to remove attributes by selected keys. If msg originator doesn't have an attribute with " +
-                " a key selected in the configuration, it will be ignored. If delete operation is completed successfully, " +
-                " rule node will send the \"Attributes Deleted\" event to the root chain of the message originator and " +
-                " send the incoming message via <b>Success</b> chain, otherwise, <b>Failure</b> chain is used.",
+                " a key selected in the configuration, it will be ignored.<br>" +
+                "<b>Note:</b> if checkbox 'Send attributes deleted notification' is enabled, the <b>Attributes Deleted</b> event will be sent to the root chain of the message originator<br><br>" +
+                "Output connections: <code>Success</code> - if delete operation is completed successfully, otherwise <code>Failure</code>.",
         uiResources = {"static/rulenode/rulenode-core-config.js"},
         configDirective = "tbActionNodeDeleteAttributesConfig",
         icon = "remove_circle"
