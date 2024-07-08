@@ -7001,6 +7001,22 @@
             "bar-background": "Bar background",
             "progress-bar-card-style": "Progress bar card style"
         },
+        "notification": {
+            "max-notification-display": "Maximum notifications to display",
+            "counter": "Counter",
+            "icon": "Icon",
+            "counter-value": "Value",
+            "counter-color": "Color",
+            "notification-button": "Notification buttons",
+            "button-view-all": "View all",
+            "button-filter": "Filter",
+            "type-filter": "Type filter",
+            "button-mark-read": "Mark as read",
+            "notification-types": "Notification types",
+            "notification-type": "Notification type",
+            "search-type": "Search type",
+            "any-type": "Any type"
+        },
         "alarm-count": {
             "alarm-count-card-style": "Alarm count card style"
         },

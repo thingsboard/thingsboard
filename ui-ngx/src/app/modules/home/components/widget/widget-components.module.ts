@@ -90,7 +90,9 @@ import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway
 import { MappingTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { DeviceInfoTableComponent } from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table.component';
-import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
+import {
+  MappingDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel.component';
 import { BrokerSecurityComponent } from '@home/components/widget/lib/gateway/connectors-configuration/broker-security.component';
 import { EllipsisChipListDirective } from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
@@ -105,6 +107,12 @@ import { LabelValueCardWidgetComponent } from '@home/components/widget/lib/cards
 import {
   RestConnectorSecurityComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/rest-connector-secuirity/rest-connector-security.component';
+import {
+  UnreadNotificationWidgetComponent
+} from '@home/components/widget/lib/cards/unread-notification-widget.component';
+import {
+  NotificationTypeFilterPanelComponent
+} from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
 
 @NgModule({
   declarations:
@@ -173,7 +181,9 @@ import {
       PolarAreaWidgetComponent,
       RadarChartWidgetComponent,
       LabelCardWidgetComponent,
-      LabelValueCardWidgetComponent
+      LabelValueCardWidgetComponent,
+      UnreadNotificationWidgetComponent,
+      NotificationTypeFilterPanelComponent
     ],
     imports: [
         CommonModule,
@@ -246,7 +256,9 @@ import {
         PolarAreaWidgetComponent,
         RadarChartWidgetComponent,
         LabelCardWidgetComponent,
-        LabelValueCardWidgetComponent
+        LabelValueCardWidgetComponent,
+        UnreadNotificationWidgetComponent,
+        NotificationTypeFilterPanelComponent
     ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule }
