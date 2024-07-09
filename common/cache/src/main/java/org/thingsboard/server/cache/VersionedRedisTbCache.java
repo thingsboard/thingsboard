@@ -29,7 +29,6 @@ import org.thingsboard.server.common.data.HasVersion;
 import java.io.Serializable;
 import java.util.Arrays;
 import java.util.Collection;
-import java.util.List;
 
 @Slf4j
 public abstract class VersionedRedisTbCache<K extends Serializable, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
@@ -47,7 +46,7 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
                 local newValueWithVersion = struct.pack(">I8", newVersion) .. newValue
                 redis.call('SET', key, newValueWithVersion, 'EX', expiration)
             end
-            
+                        
             local function bytes_to_number(bytes)
                 local n = 0
                 for i = 1, 8 do
@@ -102,33 +101,44 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
 
     @Override
     public void put(K key, V value, Long version) {
-        log.trace("put [{}][{}][{}]", key, value, version);
         doPut(key, value, version, cacheTtl);
     }
 
+    @Override
+    public void put(K key, V value, RedisConnection connection) {
+        Long version = value != null ? value.getVersion() : 0;
+        byte[] rawKey = getRawKey(key);
+        doPut(rawKey, value, version, cacheTtl, connection);
+    }
+
     private void doPut(K key, V value, Long version, Expiration expiration) {
+        log.trace("put [{}][{}][{}]", key, value, version);
         if (version == null) {
             return;
         }
         final byte[] rawKey = getRawKey(key);
+        try (var connection = getConnection(rawKey)) {
+            doPut(rawKey, value, version, expiration, connection);
+        }
+    }
+
+    private void doPut(byte[] rawKey, V value, Long version, Expiration expiration, RedisConnection connection) {
         byte[] rawValue = getRawValue(value);
         byte[] rawVersion = StringRedisSerializer.UTF_8.serialize(String.valueOf(version));
         byte[] rawExpiration = StringRedisSerializer.UTF_8.serialize(String.valueOf(expiration.getExpirationTimeInSeconds()));
-        try (var connection = getConnection(rawKey)) {
+        try {
+            connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
+        } catch (InvalidDataAccessApiUsageException e) {
+            log.debug("loading LUA [{}]", connection.getNativeConnection());
+            String sha = connection.scriptingCommands().scriptLoad(SET_VERSIONED_VALUE_LUA_SCRIPT);
+            if (!Arrays.equals(SET_VERSIONED_VALUE_SHA, StringRedisSerializer.UTF_8.serialize(sha))) {
+                log.error("SHA for SET_VERSIONED_VALUE_LUA_SCRIPT wrong! Expected [{}], but actual [{}]", new String(SET_VERSIONED_VALUE_SHA), sha);
+            }
             try {
                 connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
-            } catch (InvalidDataAccessApiUsageException e) {
-                log.debug("loading LUA [{}]", connection.getNativeConnection());
-                String sha = connection.scriptingCommands().scriptLoad(SET_VERSIONED_VALUE_LUA_SCRIPT);
-                if (!Arrays.equals(SET_VERSIONED_VALUE_SHA, StringRedisSerializer.UTF_8.serialize(sha))) {
-                    log.error("SHA for SET_VERSIONED_VALUE_LUA_SCRIPT wrong! Expected [{}], but actual [{}]", new String(SET_VERSIONED_VALUE_SHA), sha);
-                }
-                try {
-                    connection.scriptingCommands().evalSha(SET_VERSIONED_VALUE_SHA, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
-                } catch (InvalidDataAccessApiUsageException ignored) {
-                    log.debug("Slowly executing eval instead of fast evalsha");
-                    connection.scriptingCommands().eval(SET_VERSIONED_VALUE_LUA_SCRIPT, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
-                }
+            } catch (InvalidDataAccessApiUsageException ignored) {
+                log.debug("Slowly executing eval instead of fast evalsha");
+                connection.scriptingCommands().eval(SET_VERSIONED_VALUE_LUA_SCRIPT, ReturnType.VALUE, 1, rawKey, rawValue, rawVersion, rawExpiration);
             }
         }
     }
@@ -143,7 +153,6 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
 
     @Override
     public void putIfAbsent(K key, V value) {
-        log.trace("putIfAbsent [{}][{}]", key, value);
         throw new NotImplementedException("putIfAbsent is not supported by versioned cache");
     }
 
@@ -155,16 +164,6 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     @Override
     public void evictOrPut(K key, V value) {
         throw new NotImplementedException("evictOrPut is not supported by versioned cache");
-    }
-
-    @Override
-    public TbCacheTransaction<K, V> newTransactionForKey(K key) {
-        throw new NotImplementedException("newTransactionForKey is not supported by versioned cache");
-    }
-
-    @Override
-    public TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys) {
-        throw new NotImplementedException("newTransactionForKeys is not supported by versioned cache");
     }
 
 }

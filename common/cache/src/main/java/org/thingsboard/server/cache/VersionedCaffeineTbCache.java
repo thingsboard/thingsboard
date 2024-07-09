@@ -15,23 +15,18 @@
  */
 package org.thingsboard.server.cache;
 
-import lombok.RequiredArgsConstructor;
 import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.util.TbPair;
 
 import java.io.Serializable;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
-@RequiredArgsConstructor
-public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends Serializable & HasVersion> implements VersionedTbCache<K, V> {
+public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends Serializable & HasVersion> extends CaffeineTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
 
-    private final CacheManager cacheManager;
-    private final String cacheName;
-
-    private final Lock lock = new ReentrantLock();
+    public VersionedCaffeineTbCache(CacheManager cacheManager, String cacheName) {
+        super(cacheManager, cacheName);
+    }
 
     @Override
     public TbCacheValueWrapper<V> get(K key) {
@@ -57,7 +52,8 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
         try {
             TbPair<Long, V> versionValuePair = doGet(key);
             if (versionValuePair == null || version > versionValuePair.getFirst()) {
-                cacheManager.getCache(cacheName).put(key, TbPair.of(version, value));
+                failAllTransactionsByKey(key);
+                cache.put(key, TbPair.of(version, value));
             }
         } finally {
             lock.unlock();
@@ -65,7 +61,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
     }
 
     private TbPair<Long, V> doGet(K key) {
-        Cache.ValueWrapper source = cacheManager.getCache(cacheName).get(key);
+        Cache.ValueWrapper source = cache.get(key);
         return source == null ? null : (TbPair<Long, V>) source.get();
     }
 
@@ -73,7 +69,8 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
     public void evict(K key) {
         lock.lock();
         try {
-            cacheManager.getCache(cacheName).evict(key);
+            failAllTransactionsByKey(key);
+            cache.evict(key);
         } finally {
             lock.unlock();
         }
@@ -84,11 +81,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
         if (version == null) {
             return;
         }
-        lock.lock();
-        try {
-            put(key, null, version);
-        } finally {
-            lock.unlock();
-        }
+        put(key, null, version);
     }
+
 }
