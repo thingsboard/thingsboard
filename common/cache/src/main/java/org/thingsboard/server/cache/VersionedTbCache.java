@@ -19,7 +19,7 @@ import org.thingsboard.server.common.data.HasVersion;
 
 import java.io.Serializable;
 
-public interface VersionedTbCache<K extends Serializable, V extends Serializable & HasVersion> {
+public interface VersionedTbCache<K extends Serializable, V extends Serializable & HasVersion> extends TbTransactionalCache<K, V> {
 
     TbCacheValueWrapper<V> get(K key);
 
@@ -30,4 +30,5 @@ public interface VersionedTbCache<K extends Serializable, V extends Serializable
     void evict(K key);
 
     void evict(K key, Long version);
+
 }

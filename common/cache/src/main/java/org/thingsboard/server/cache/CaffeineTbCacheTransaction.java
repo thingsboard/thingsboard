@@ -41,7 +41,7 @@ public class CaffeineTbCacheTransaction<K extends Serializable, V extends Serial
     private final Map<Object, Object> pendingPuts = new LinkedHashMap<>();
 
     @Override
-    public void putIfAbsent(K key, V value) {
+    public void put(K key, V value) {
         pendingPuts.put(key, value);
     }
 
