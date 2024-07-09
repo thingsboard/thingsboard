@@ -180,14 +180,16 @@ public class TbMsgGeneratorNode implements TbNode {
     private EntityId getOriginatorId(TbContext ctx) throws TbNodeException {
         if (EntityType.RULE_NODE.equals(config.getOriginatorType())) {
             return ctx.getSelfId();
-        } else if (EntityType.TENANT.equals(config.getOriginatorType())) {
-            return ctx.getTenantId();
-        } else if (!StringUtils.isEmpty(config.getOriginatorId())) {
-            var entityId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
-            ctx.checkTenantEntity(entityId);
-            return entityId;
         }
-        return ctx.getSelfId();
+        if (EntityType.TENANT.equals(config.getOriginatorType())) {
+            return ctx.getTenantId();
+        }
+        if (StringUtils.isBlank(config.getOriginatorId())) {
+            throw new TbNodeException("Originator entity must be selected.", true);
+        }
+        var entityId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
+        ctx.checkTenantEntity(entityId);
+        return entityId;
     }
 
     @Override
@@ -216,11 +218,9 @@ public class TbMsgGeneratorNode implements TbNode {
                 String originatorType = "originatorType";
                 if (oldConfiguration.has(originatorType)) {
                     var origType = oldConfiguration.get(originatorType);
-                    if (origType.isNull()) {
+                    var origId = oldConfiguration.get("originatorId");
+                    if (origType.isNull() || origType.asText().isEmpty() || origId.isNull() || origId.asText().isEmpty()) {
                         ((ObjectNode) oldConfiguration).put(originatorType, EntityType.RULE_NODE.name());
-                        hasChanges = true;
-                    } else if (EntityType.TENANT.name().equals(origType.asText())) {
-                        ((ObjectNode) oldConfiguration).putNull("originatorId");
                         hasChanges = true;
                     }
                 }

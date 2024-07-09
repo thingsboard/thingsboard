@@ -22,7 +22,8 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
-import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.EnumSource;
+import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
@@ -36,7 +37,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -45,30 +45,38 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.function.Consumer;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willAnswer;
+import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.spy;
 import static org.mockito.Mockito.times;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private static final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1c649392-1f53-4377-b12f-1ba172611746"));
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,
+            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE);
+
+    private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1c649392-1f53-4377-b12f-1ba172611746"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("4470dfc2-f621-42b2-b82c-b5776d424140"));
 
     private final ThingsBoardThreadFactory factory = ThingsBoardThreadFactory.forName("msg-generator-node-test");
 
@@ -107,45 +115,71 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         assertThat(config.getTbelScript()).isEqualTo(TbMsgGeneratorNodeConfiguration.DEFAULT_SCRIPT);
     }
 
-    @Test
-    public void givenUnsupportedEntityType_whenInit_thenThrowsException() {
-        // GIVEN
-        config.setOriginatorType(EntityType.NOTIFICATION);
-
-        // WHEN-THEN
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Originator type 'NOTIFICATION' is not supported.");
-    }
-
     @ParameterizedTest
-    @MethodSource
-    public void givenOriginatorEntityType_whenInit_thenVerifyOriginatorId(EntityType entityType,
-                                                                          String originatorId,
-                                                                          EntityId expectedOriginatorId,
-                                                                          Consumer<TbContext> mockCtx) throws TbNodeException {
+    @EnumSource(EntityType.class)
+    public void givenEntityType_whenInit_thenVerifyException(EntityType entityType) {
         // GIVEN
         config.setOriginatorType(entityType);
-        config.setOriginatorId(originatorId);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
 
-        mockCtx.accept(ctxMock);
+        // WHEN-THEN
+        if (entityType == EntityType.RULE_NODE || entityType == EntityType.TENANT) {
+            assertThatNoException().isThrownBy(() -> node.init(ctxMock, configuration));
+        } else {
+            String errorMsg = supportedEntityTypes.contains(entityType) ? "Originator entity must be selected."
+                    : "Originator type '" + entityType + "' is not supported.";
+            assertThatThrownBy(() -> node.init(ctxMock, configuration))
+                    .isInstanceOf(TbNodeException.class)
+                    .hasMessage(errorMsg);
+        }
+    }
+
+    @Test
+    public void givenOriginatorEntityTypeIsRuleNode_whenInit_thenVerifyOriginatorId() throws TbNodeException {
+        // GIVEN
+        config.setOriginatorType(EntityType.RULE_NODE);
+
+        given(ctxMock.getSelfId()).willReturn(RULE_NODE_ID);
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         // THEN
-        then(ctxMock).should().isLocalEntity(expectedOriginatorId);
+        then(ctxMock).should().isLocalEntity(RULE_NODE_ID);
     }
 
-    private static Stream<Arguments> givenOriginatorEntityType_whenInit_thenVerifyOriginatorId() {
-        return Stream.of(
-                Arguments.of(EntityType.RULE_NODE, null, RULE_NODE_ID,
-                        (Consumer<TbContext>) ctxMock -> given(ctxMock.getSelfId()).willReturn(RULE_NODE_ID)),
-                Arguments.of(EntityType.TENANT, null, TenantId.fromUUID(UUID.fromString("c7f7b865-3e4c-40d3-b333-a7ec2fd871ee")),
-                        (Consumer<TbContext>) ctxMock -> given(ctxMock.getTenantId()).willReturn(TenantId.fromUUID(UUID.fromString("c7f7b865-3e4c-40d3-b333-a7ec2fd871ee")))),
-                Arguments.of(EntityType.ASSET, "cbb9a3d3-02f1-482b-90ab-2417dcd35f20", new AssetId(UUID.fromString("cbb9a3d3-02f1-482b-90ab-2417dcd35f20")),
-                        (Consumer<TbContext>) ctxMock -> given(ctxMock.getQueueName()).willReturn("Main"))
-        );
+    @Test
+    public void givenOriginatorEntityTypeIsTenant_whenInit_thenVerifyOriginatorId() throws TbNodeException {
+        // GIVEN
+        config.setOriginatorType(EntityType.TENANT);
+
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+
+        // WHEN
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // THEN
+        then(ctxMock).should().isLocalEntity(TENANT_ID);
+    }
+
+    @ParameterizedTest
+    @ValueSource(strings = {"ASSET", "DEVICE", "ENTITY_VIEW", "CUSTOMER", "USER", "DASHBOARD", "EDGE"})
+    public void givenOriginatorEntityType_whenInit_thenVerifyOriginatorId(String entityTypeStr) throws TbNodeException {
+        // GIVEN
+        EntityType entityType = EntityType.valueOf(entityTypeStr);
+        config.setOriginatorType(entityType);
+        UUID entityId = UUID.randomUUID();
+        config.setOriginatorId(entityId.toString());
+
+        // WHEN
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+
+        // THEN
+        ArgumentCaptor<EntityId> actualEntityIdCaptor = ArgumentCaptor.forClass(EntityId.class);
+        then(ctxMock).should().isLocalEntity(actualEntityIdCaptor.capture());
+        EntityId actualEntityId = actualEntityIdCaptor.getValue();
+        assertThat(actualEntityId.getEntityType()).isEqualTo(entityType);
+        assertThat(actualEntityId.getId()).isEqualTo(entityId);
     }
 
     @Test
@@ -191,6 +225,9 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
 
         // THEN
 
+        //verify creation of prev message
+        then(ctxMock).should(times(1)).newMsg(null, TbMsg.EMPTY_STRING, RULE_NODE_ID, null, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+
         // verify invocation of tellSelf() method
         ArgumentCaptor<TbMsg> actualTickMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should(times(6)).tellSelf(actualTickMsg.capture(), any(Long.class));
@@ -199,11 +236,11 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         // verify invocation of enqueueForTellNext() method
         ArgumentCaptor<TbMsg> actualGeneratedMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should(times(5)).enqueueForTellNext(actualGeneratedMsg.capture(), eq(TbNodeConnectionType.SUCCESS));
-        assertThat(actualGeneratedMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx", "ts", "id").isEqualTo(generatedMsg);
+        assertThat(actualGeneratedMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(prevMsg);
     }
 
     @Test
-    public void givenOriginatorIsNotLocalEntity_whenInit_thenDestroy() throws TbNodeException {
+    public void givenOriginatorIsNotLocalEntity_whenOnPartitionChangeMsg_thenDestroy() {
         // GIVEN
         config.setOriginatorType(EntityType.DEVICE);
         config.setOriginatorId("2e8b77f1-ee33-4207-a3d7-556fb16e0151");
@@ -212,7 +249,8 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         given(ctxMock.isLocalEntity(any())).willReturn(false);
 
         // WHEN
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        var partitionChangeMsgMock = mock(PartitionChangeMsg.class);
+        node.onPartitionChangeMsg(ctxMock, partitionChangeMsgMock);
 
         // THEN
         then(node).should().destroy();
@@ -241,11 +279,17 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":null,\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
                         true,
                         "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"RULE_NODE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
-                // config for version 2 with upgrade from version 1 (originatorType is TENANT)
+                // config for version 2 with upgrade from version 1 (originatorId is not selected)
                 Arguments.of(1,
-                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"ae540d15-7ef6-41d4-9176-bf788324a5c3\",\"originatorType\":\"TENANT\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
                         true,
-                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"TENANT\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}")
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":null,\"originatorType\":\"RULE_NODE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}"),
+                // config for version 2 with upgrade from version 1 (originatorType and originatorId are selected)
+                Arguments.of(1,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}",
+                        false,
+                        "{\"msgCount\":0,\"periodInSeconds\":1,\"originatorId\":\"92b8e1ce-1b58-4f23-b127-7a0a031b0677\",\"originatorType\":\"DEVICE\",\"scriptLang\":\"TBEL\",\"jsScript\":\"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\",\"tbelScript\": \"var msg = { temp: 42, humidity: 77 };\\nvar metadata = { data: 40 };\\nvar msgType = \\\"POST_TELEMETRY_REQUEST\\\";\\n\\nreturn { msg: msg, metadata: metadata, msgType: msgType };\"}")
+
         );
     }
 
