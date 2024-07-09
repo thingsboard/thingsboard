@@ -295,7 +295,11 @@ public class ProtoUtils {
                 builder.setType(TransportProtos.KeyValueType.JSON_V);
                 break;
         }
-        builder.setVersion(attributeKvEntry.getVersion());
+
+        if (attributeKvEntry.getVersion() != null) {
+            builder.setVersion(attributeKvEntry.getVersion());
+        }
+
         return builder.build();
     }
 
@@ -523,7 +527,7 @@ public class ProtoUtils {
             case JSON_V -> new JsonDataEntry(key, hasValue ? proto.getJsonV() : null);
             default -> null;
         };
-        return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.getVersion());
+        return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
     }
 
     public static TransportProtos.DeviceProto toProto(Device device) {
