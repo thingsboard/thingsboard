@@ -216,13 +216,14 @@ public class TbMsgGeneratorNode implements TbNode {
                 }
             case 1:
                 String originatorType = "originatorType";
-                if (oldConfiguration.has(originatorType)) {
-                    var origType = oldConfiguration.get(originatorType);
-                    var origId = oldConfiguration.get("originatorId");
-                    if (origType.isNull() || origType.asText().isEmpty() || origId.isNull() || origId.asText().isEmpty()) {
-                        ((ObjectNode) oldConfiguration).put(originatorType, EntityType.RULE_NODE.name());
-                        hasChanges = true;
-                    }
+                String originatorId = "originatorId";
+                boolean hasType = oldConfiguration.hasNonNull(originatorType);
+                boolean hasOriginatorId = oldConfiguration.hasNonNull(originatorId) &&
+                        StringUtils.isNotBlank(oldConfiguration.get(originatorId).asText());
+                boolean hasOriginatorFields = hasType && hasOriginatorId;
+                if (!hasOriginatorFields) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(originatorType, EntityType.RULE_NODE.name());
                 }
                 break;
             default:

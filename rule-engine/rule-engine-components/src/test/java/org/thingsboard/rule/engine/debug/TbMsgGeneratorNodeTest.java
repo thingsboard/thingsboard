@@ -38,6 +38,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -130,7 +131,9 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
                     : "Originator type '" + entityType + "' is not supported.";
             assertThatThrownBy(() -> node.init(ctxMock, configuration))
                     .isInstanceOf(TbNodeException.class)
-                    .hasMessage(errorMsg);
+                    .hasMessage(errorMsg)
+                    .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                    .isEqualTo(true);
         }
     }
 
@@ -168,18 +171,15 @@ public class TbMsgGeneratorNodeTest extends AbstractRuleNodeUpgradeTest {
         // GIVEN
         EntityType entityType = EntityType.valueOf(entityTypeStr);
         config.setOriginatorType(entityType);
-        UUID entityId = UUID.randomUUID();
-        config.setOriginatorId(entityId.toString());
+        String entityIdStr = "5751f55e-089e-4be0-b10a-dd942053dcf0";
+        config.setOriginatorId(entityIdStr);
+        EntityId entityId = EntityIdFactory.getByTypeAndUuid(entityType, entityIdStr);
 
         // WHEN
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         // THEN
-        ArgumentCaptor<EntityId> actualEntityIdCaptor = ArgumentCaptor.forClass(EntityId.class);
-        then(ctxMock).should().isLocalEntity(actualEntityIdCaptor.capture());
-        EntityId actualEntityId = actualEntityIdCaptor.getValue();
-        assertThat(actualEntityId.getEntityType()).isEqualTo(entityType);
-        assertThat(actualEntityId.getId()).isEqualTo(entityId);
+        then(ctxMock).should().isLocalEntity(entityId);
     }
 
     @Test
