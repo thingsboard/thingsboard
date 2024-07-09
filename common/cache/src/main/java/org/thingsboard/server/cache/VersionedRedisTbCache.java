@@ -28,7 +28,6 @@ import org.thingsboard.server.common.data.HasVersion;
 
 import java.io.Serializable;
 import java.util.Arrays;
-import java.util.Collection;
 
 @Slf4j
 public abstract class VersionedRedisTbCache<K extends Serializable, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
@@ -154,11 +153,6 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     @Override
     public void putIfAbsent(K key, V value) {
         throw new NotImplementedException("putIfAbsent is not supported by versioned cache");
-    }
-
-    @Override
-    public void evict(Collection<K> keys) {
-        throw new NotImplementedException("evict by many keys is not supported by versioned cache");
     }
 
     @Override
