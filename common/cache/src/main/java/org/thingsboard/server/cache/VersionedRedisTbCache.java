@@ -68,7 +68,7 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
                 setNewValue()
             end
             """);
-    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("05a09f34f523429c96c6eaabbe6f2595f5cba2c3");
+    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("80e56cbbbb4bd9cb150d6537f1e7d8df4fddb252");
 
     public VersionedRedisTbCache(String cacheName, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration, TbRedisSerializer<K, V> valueSerializer) {
         super(cacheName, cacheSpecsMap, connectionFactory, configuration, valueSerializer);
