@@ -47,7 +47,7 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
                 local newValueWithVersion = struct.pack(">I8", newVersion) .. newValue
                 redis.call('SET', key, newValueWithVersion, 'EX', expiration)
             end
-            
+                        
             local function bytes_to_number(bytes)
                 local n = 0
                 for i = 1, 8 do
@@ -96,13 +96,15 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
 
     @Override
     public void put(K key, V value) {
-        Long version = value != null ? value.getVersion() : 0;
-        put(key, value, version);
-    }
-
-    @Override
-    public void put(K key, V value, Long version) {
-        log.trace("put [{}][{}][{}]", key, value, version);
+        log.trace("put [{}][{}]", key, value);
+        Long version;
+        if (value == null) {
+            version = 0L;
+        } else if (value.getVersion() != null) {
+            version = value.getVersion();
+        } else {
+            return;
+        }
         doPut(key, value, version, cacheTtl);
     }
 

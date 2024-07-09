@@ -86,8 +86,15 @@ public class KvProtoUtil {
                 .setKv(KvProtoUtil.toKeyValueTypeProto(kvEntry)).build();
     }
 
+    public static TransportProtos.TsKvProto toTsKvProto(long ts, KvEntry kvEntry, long version) {
+        return TransportProtos.TsKvProto.newBuilder()
+                .setTs(ts)
+                .setVersion(version)
+                .setKv(KvProtoUtil.toKeyValueTypeProto(kvEntry)).build();
+    }
+
     public static TsKvEntry fromTsKvProto(TransportProtos.TsKvProto proto) {
-        return new BasicTsKvEntry(proto.getTs(), fromTsKvProto(proto.getKv()));
+        return new BasicTsKvEntry(proto.getTs(), fromTsKvProto(proto.getKv()), proto.getVersion());
     }
 
     public static TransportProtos.KeyValueProto toKeyValueTypeProto(KvEntry kvEntry) {
