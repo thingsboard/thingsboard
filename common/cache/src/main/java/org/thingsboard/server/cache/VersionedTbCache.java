@@ -18,14 +18,30 @@ package org.thingsboard.server.cache;
 import org.thingsboard.server.common.data.HasVersion;
 
 import java.io.Serializable;
+import java.util.Collection;
+import java.util.Optional;
+import java.util.function.Supplier;
 
-public interface VersionedTbCache<K extends Serializable, V extends Serializable & HasVersion> {
+public interface VersionedTbCache<K extends Serializable, V extends Serializable & HasVersion> extends TbTransactionalCache<K, V> {
 
     TbCacheValueWrapper<V> get(K key);
+
+    default V get(K key, Supplier<V> supplier) {
+        return Optional.ofNullable(get(key))
+                .map(TbCacheValueWrapper::get)
+                .orElseGet(() -> {
+                    V value = supplier.get();
+                    put(key, value);
+                    return value;
+                });
+    }
 
     void put(K key, V value);
 
     void evict(K key);
 
+    void evict(Collection<K> keys);
+
     void evict(K key, Long version);
+
 }

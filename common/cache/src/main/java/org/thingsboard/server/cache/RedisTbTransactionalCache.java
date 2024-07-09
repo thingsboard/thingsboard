@@ -103,8 +103,12 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     @Override
     public void put(K key, V value) {
         try (var connection = connectionFactory.getConnection()) {
-            put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
+            put(key, value, connection);
         }
+    }
+
+    public void put(K key, V value, RedisConnection connection) {
+        put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
     }
 
     @Override
