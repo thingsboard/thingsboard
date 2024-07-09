@@ -53,7 +53,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
             TbPair<Long, V> versionValuePair = doGet(key);
             if (versionValuePair == null || version > versionValuePair.getFirst()) {
                 failAllTransactionsByKey(key);
-                cache.put(key, TbPair.of(version, value));
+                cache.put(key, wrapValue(value, version));
             }
         } finally {
             lock.unlock();
@@ -82,6 +82,15 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
             return;
         }
         put(key, null, version);
+    }
+
+    @Override
+    void doPutIfAbsent(K key, V value) {
+        cache.putIfAbsent(key, wrapValue(value, value != null ? value.getVersion() : 0));
+    }
+
+    private TbPair<Long, V> wrapValue(V value, Long version) {
+        return TbPair.of(version, value);
     }
 
 }

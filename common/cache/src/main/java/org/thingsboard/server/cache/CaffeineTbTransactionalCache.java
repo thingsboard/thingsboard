@@ -116,7 +116,7 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
         return newTransaction(keys);
     }
 
-    void doPutIfAbsent(Object key, Object value) {
+    void doPutIfAbsent(K key, V value) {
         cache.putIfAbsent(key, value);
     }
 
@@ -139,7 +139,7 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
         }
     }
 
-    public boolean commit(UUID trId, Map<Object, Object> pendingPuts) {
+    public boolean commit(UUID trId, Map<K, V> pendingPuts) {
         lock.lock();
         try {
             var tr = transactions.get(trId);

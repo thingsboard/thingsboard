@@ -38,7 +38,7 @@ public class CaffeineTbCacheTransaction<K extends Serializable, V extends Serial
     @Setter
     private boolean failed;
 
-    private final Map<Object, Object> pendingPuts = new LinkedHashMap<>();
+    private final Map<K, V> pendingPuts = new LinkedHashMap<>();
 
     @Override
     public void put(K key, V value) {
