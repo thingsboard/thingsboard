@@ -60,7 +60,14 @@ import {
   measureAxisNameSize
 } from '@home/components/widget/lib/chart/echarts-widget.models';
 import { DateFormatProcessor, ValueSourceType } from '@shared/models/widget-settings.models';
-import { formattedDataFormDatasourceData, formatValue, isDefinedAndNotNull, isEqual, mergeDeep } from '@core/utils';
+import {
+  formattedDataFormDatasourceData,
+  formatValue,
+  isDefined,
+  isDefinedAndNotNull,
+  isEqual,
+  mergeDeep
+} from '@core/utils';
 import { DataKey, Datasource, DatasourceType, FormattedData, widgetType } from '@shared/models/widget.models';
 import * as echarts from 'echarts/core';
 import { CallbackDataParams, PiecewiseVisualMapOption } from 'echarts/types/dist/shared';
@@ -290,7 +297,7 @@ export class TbTimeSeriesChart {
     }
   }
 
-  public toggleKey(dataKey: DataKey): void {
+  public toggleKey(dataKey: DataKey, dataIndex?: number): void {
     const enable = dataKey.hidden;
     const dataItem = this.dataItems.find(d => d.dataKey === dataKey);
     if (dataItem) {
@@ -310,6 +317,9 @@ export class TbTimeSeriesChart {
       this.timeSeriesChart.setOption(this.timeSeriesChartOptions, this.stackMode ? {notMerge: true} : {replaceMerge: mergeList});
       this.updateAxes();
       dataKey.hidden = !enable;
+      if (isDefined(dataIndex)) {
+        this.ctx.defaultSubscription.updateDataVisibility(dataIndex);
+      }
       if (enable) {
         this.timeSeriesChart.dispatchAction({
           type: 'highlight',
