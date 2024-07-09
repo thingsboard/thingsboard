@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.sql.notification;
 
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
@@ -27,6 +28,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
@@ -37,6 +39,7 @@ import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
@@ -58,6 +61,14 @@ public class JpaNotificationDao extends JpaPartitionedAbstractDao<NotificationEn
     }
 
     @Override
+    public PageData<Notification> findUnreadByDeliveryMethodAndRecipientIdAndNotificationTypesAndPageLink(TenantId tenantId, NotificationDeliveryMethod deliveryMethod, UserId recipientId, Set<NotificationType> types, PageLink pageLink) {
+        if (CollectionUtils.isEmpty(types)) {
+            return findUnreadByDeliveryMethodAndRecipientIdAndPageLink(tenantId, deliveryMethod, recipientId, pageLink);
+        }
+        return DaoUtil.toPageData(notificationRepository.findByDeliveryMethodAndRecipientIdAndTypeInAndStatusNot(deliveryMethod,
+                recipientId.getId(), types, NotificationStatus.READ, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
     public PageData<Notification> findByDeliveryMethodAndRecipientIdAndPageLink(TenantId tenantId, NotificationDeliveryMethod deliveryMethod, UserId recipientId, PageLink pageLink) {
         return DaoUtil.toPageData(notificationRepository.findByDeliveryMethodAndRecipientId(deliveryMethod, recipientId.getId(),
                 pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
