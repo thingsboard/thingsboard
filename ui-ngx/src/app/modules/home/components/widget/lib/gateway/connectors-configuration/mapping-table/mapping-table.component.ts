@@ -33,6 +33,7 @@ import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/o
 import {
   ControlValueAccessor,
   FormBuilder,
+  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormArray,
@@ -206,11 +207,24 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           if (isDefinedAndNotNull(index)) {
             this.mappingFormGroup.at(index).patchValue(res);
           } else {
-            this.mappingFormGroup.push(this.fb.group(res));
+            this.mappingFormGroup.push(this.getMappedDialogDataFormGroup(res));
           }
           this.mappingFormGroup.markAsDirty();
         }
     });
+  }
+
+  private getMappedDialogDataFormGroup(mappingValue: MappingValue): FormGroup {
+    Object.keys(mappingValue).forEach(key => {
+      if (Array.isArray(mappingValue[key])) {
+        mappingValue = {
+          ...mappingValue,
+          [key]: this.fb.control(mappingValue[key]),
+        };
+      }
+    });
+
+    return this.fb.group(mappingValue);
   }
 
   private updateTableData(value: ConnectorMapping[], textSearch?: string): void {
