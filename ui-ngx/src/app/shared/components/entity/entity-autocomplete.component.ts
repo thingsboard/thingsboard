@@ -64,6 +64,7 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
   entityText: string;
 
   noEntitiesMatchingText: string;
+  notFoundEntities = 'entity.no-entities-text';
 
   entityRequiredText: string;
 
@@ -201,63 +202,75 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
           this.entityText = 'asset.asset';
           this.noEntitiesMatchingText = 'asset.no-assets-matching';
           this.entityRequiredText = 'asset.asset-required';
+          this.notFoundEntities = 'asset.no-assets-text';
           break;
         case EntityType.DEVICE:
           this.entityText = 'device.device';
           this.noEntitiesMatchingText = 'device.no-devices-matching';
           this.entityRequiredText = 'device.device-required';
+          this.notFoundEntities = 'device.no-devices-text';
           break;
         case EntityType.EDGE:
           this.entityText = 'edge.edge';
           this.noEntitiesMatchingText = 'edge.no-edges-matching';
           this.entityRequiredText = 'edge.edge-required';
+          this.notFoundEntities = 'edge.no-edges-text';
           break;
         case EntityType.ENTITY_VIEW:
           this.entityText = 'entity-view.entity-view';
           this.noEntitiesMatchingText = 'entity-view.no-entity-views-matching';
           this.entityRequiredText = 'entity-view.entity-view-required';
+          this.notFoundEntities = 'entity-view.no-entity-views-text';
           break;
         case EntityType.RULE_CHAIN:
           this.entityText = 'rulechain.rulechain';
           this.noEntitiesMatchingText = 'rulechain.no-rulechains-matching';
           this.entityRequiredText = 'rulechain.rulechain-required';
+          this.notFoundEntities = 'rulechain.no-rulechains-text';
           break;
         case EntityType.TENANT:
         case AliasEntityType.CURRENT_TENANT:
           this.entityText = 'tenant.tenant';
           this.noEntitiesMatchingText = 'tenant.no-tenants-matching';
           this.entityRequiredText = 'tenant.tenant-required';
+          this.notFoundEntities = 'tenant.no-tenants-text';
           break;
         case EntityType.CUSTOMER:
           this.entityText = 'customer.customer';
           this.noEntitiesMatchingText = 'customer.no-customers-matching';
           this.entityRequiredText = 'customer.customer-required';
+          this.notFoundEntities = 'customer.no-customers-text';
           break;
         case EntityType.USER:
         case AliasEntityType.CURRENT_USER:
           this.entityText = 'user.user';
           this.noEntitiesMatchingText = 'user.no-users-matching';
           this.entityRequiredText = 'user.user-required';
+          this.notFoundEntities = 'user.no-users-text';
           break;
         case EntityType.DASHBOARD:
           this.entityText = 'dashboard.dashboard';
           this.noEntitiesMatchingText = 'dashboard.no-dashboards-matching';
           this.entityRequiredText = 'dashboard.dashboard-required';
+          this.notFoundEntities = 'dashboard.no-dashboards-text';
           break;
         case EntityType.ALARM:
           this.entityText = 'alarm.alarm';
           this.noEntitiesMatchingText = 'alarm.no-alarms-matching';
           this.entityRequiredText = 'alarm.alarm-required';
+          this.notFoundEntities = 'alarm.no-alarms-prompt';
           break;
         case EntityType.QUEUE_STATS:
           this.entityText = 'queue-statistics.queue-statistics';
           this.noEntitiesMatchingText = 'queue-statistics.no-queue-statistics-matching';
           this.entityRequiredText = 'queue-statistics.queue-statistics-required';
+          this.notFoundEntities = 'queue-statistics.no-queue-statistics-text';
           break;
         case AliasEntityType.CURRENT_CUSTOMER:
           this.entityText = 'customer.default-customer';
           this.noEntitiesMatchingText = 'customer.no-customers-matching';
           this.entityRequiredText = 'customer.default-customer-required';
+          this.notFoundEntities = 'customer.no-customers-text';
           break;
         case AliasEntityType.CURRENT_USER_OWNER:
           const authUser =  getCurrentAuthUser(this.store);
@@ -373,6 +386,10 @@ export class EntityAutocompleteComponent implements ControlValueAccessor, OnInit
         }
       }
     ));
+  }
+
+  textIsNotEmpty(text: string): boolean {
+    return (text && text.length > 0);
   }
 
   clear() {
