@@ -54,14 +54,14 @@ public class TbUtils {
 
     private static final byte[] HEX_ARRAY = "0123456789ABCDEF".getBytes(StandardCharsets.US_ASCII);
 
-    private static final int zeroRadix = 0;
-    private static final int octalRadix = 8;
-    private static final int decRadix = 10;
-    private static final int hexRadix = 16;
-    private static final int hexLenMin = -1;
-    private static final int hexLenIntMax = 8;
-    private static final int hexLenLongMax = 16;
-    private static final int bytesLenLongMax = 8;
+    private static final int ZERO_RADIX = 0;
+    private static final int OCTAL_RADIX = 8;
+    private static final int DEC_RADIX = 10;
+    private static final int HEX_RADIX = 16;
+    private static final int HEX_LEN_MIN = -1;
+    private static final int HEX_LEN_INT_MAX = 8;
+    private static final int HEX_LEN_LONG_MAX = 16;
+    private static final int BYTES_LEN_LONG_MAX = 8;
 
     private static final LinkedHashMap<String, String> mdnEncodingReplacements = new LinkedHashMap<>();
 
@@ -245,9 +245,9 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("decodeURI", new MethodStub(TbUtils.class.getMethod("decodeURI",
                 String.class)));
-        parserConfig.addImport("newError", new MethodStub(TbUtils.class.getMethod("newError",
+        parserConfig.addImport("raiseError", new MethodStub(TbUtils.class.getMethod("raiseError",
                 String.class, Object.class)));
-        parserConfig.addImport("newError", new MethodStub(TbUtils.class.getMethod("newError",
+        parserConfig.addImport("raiseError", new MethodStub(TbUtils.class.getMethod("raiseError",
                 String.class)));
         parserConfig.addImport("isBinary", new MethodStub(TbUtils.class.getMethod("isBinary",
                 String.class)));
@@ -330,60 +330,50 @@ public class TbUtils {
     }
 
     public static Integer parseInt(String value) {
-        return parseInt(value, zeroRadix);
+        return parseInt(value, ZERO_RADIX);
     }
 
-    public static Integer parseInt(String value, int radix) {
+    public static Integer parseInt(String value, int radix) throws NumberFormatException {
         if (StringUtils.isNotBlank(value)) {
+            String valueP = prepareNumberString(value);
+            int radixValue = isValidStringAndRadix(valueP, radix, value);
             try {
-                String valueP = prepareNumberString(value);
-                int radixValue = isValidStringAndRadix(valueP, radix, value);
-                try {
-                    if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
-                        return Integer.parseInt(valueP, radixValue);
-                    }
-                    return switch (radixValue) {
-                        case MIN_RADIX -> parseBinaryStringAsSignedInteger(valueP);
-                        case octalRadix, decRadix, hexRadix -> Integer.parseInt(valueP, radixValue);
-                        default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
-                    };
-                } catch (NumberFormatException e) {
-                    Integer iMax = Integer.MAX_VALUE;
-                    Integer iMin = Integer.MIN_VALUE;
-                    compareIntLongValueMinMax(valueP, radixValue, iMax.longValue(), iMin.longValue(), "Integer");
-                    throw new NumberFormatException(e.getMessage());
+                if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
+                    return Integer.parseInt(valueP, radixValue);
                 }
+                return switch (radixValue) {
+                    case MIN_RADIX -> parseBinaryStringAsSignedInteger(valueP);
+                    case OCTAL_RADIX, DEC_RADIX, HEX_RADIX -> Integer.parseInt(valueP, radixValue);
+                    default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
+                };
             } catch (NumberFormatException e) {
-                throw new NumberFormatException(e.getMessage());
+                Integer iMax = Integer.MAX_VALUE;
+                Integer iMin = Integer.MIN_VALUE;
+                compareIntLongValueMinMax(valueP, radixValue, iMax.longValue(), iMin.longValue(), "Integer");
             }
         }
         return null;
     }
 
     public static Long parseLong(String value) {
-        return parseLong(value, zeroRadix);
+        return parseLong(value, ZERO_RADIX);
     }
 
-    public static Long parseLong(String value, int radix) {
+    public static Long parseLong(String value, int radix) throws NumberFormatException {
         if (StringUtils.isNotBlank(value)) {
+            String valueP = prepareNumberString(value);
+            int radixValue = isValidStringAndRadix(valueP, radix, value);
             try {
-                String valueP = prepareNumberString(value);
-                int radixValue = isValidStringAndRadix(valueP, radix, value);
-                try {
-                    if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
-                        return Long.parseLong(valueP, radixValue);
-                    }
-                    return switch (radixValue) {
-                        case MIN_RADIX -> parseBinaryStringAsSignedLong(valueP);
-                        case octalRadix, decRadix, hexRadix -> Long.parseLong(valueP, radixValue);
-                        default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
-                    };
-                 } catch (NumberFormatException e) {
-                    compareIntLongValueMinMax(valueP, radixValue, Long.MAX_VALUE, Long.MIN_VALUE, "Long");
-                    throw new NumberFormatException(e.getMessage());
+                if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
+                    return Long.parseLong(valueP, radixValue);
                 }
-            } catch (NumberFormatException e) {
-                throw new NumberFormatException(e.getMessage());
+                return switch (radixValue) {
+                    case MIN_RADIX -> parseBinaryStringAsSignedLong(valueP);
+                    case OCTAL_RADIX, DEC_RADIX, HEX_RADIX -> Long.parseLong(valueP, radixValue);
+                    default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
+                };
+             } catch (NumberFormatException e) {
+                compareIntLongValueMinMax(valueP, radixValue, Long.MAX_VALUE, Long.MIN_VALUE, "Long");
             }
         }
         return null;
@@ -431,7 +421,7 @@ public class TbUtils {
     }
 
     private static int getRadix10_16(String value) {
-        int radix = isDecimal(value) > 0 ? decRadix : isHexadecimal(value);
+        int radix = isDecimal(value) > 0 ? DEC_RADIX : isHexadecimal(value);
         if (radix > 0) {
             return radix;
         } else {
@@ -448,10 +438,10 @@ public class TbUtils {
             String valueP = prepareNumberString(value);
             int radixValue = isValidStringAndRadix(valueP, radix, value);
             try {
-                if (radixValue == decRadix) {
+                if (radixValue == DEC_RADIX) {
                     return Float.parseFloat(value);
                 } else {
-                    int bits = Integer.parseUnsignedInt(valueP, hexRadix);
+                    int bits = Integer.parseUnsignedInt(valueP, HEX_RADIX);
                     return Float.intBitsToFloat(bits);
                 }
             } catch (NumberFormatException e) {
@@ -471,10 +461,10 @@ public class TbUtils {
             try {
                 String valueP = prepareNumberString(value);
                 int radixValue = isValidStringAndRadix(valueP, radix, value);
-                if (radixValue == decRadix) {
+                if (radixValue == DEC_RADIX) {
                     return Double.parseDouble(prepareNumberString(value));
                 } else {
-                    long bits = Long.parseUnsignedLong(valueP, hexRadix);
+                    long bits = Long.parseUnsignedLong(valueP, HEX_RADIX);
                     return Double.longBitsToDouble(bits);
                 }
             } catch (NumberFormatException e) {
@@ -499,7 +489,7 @@ public class TbUtils {
     public static Integer parseHexToInt(String value, boolean bigEndian) {
         String hexValue = prepareNumberString(value);
         String hex = bigEndian ? hexValue : reverseHexStringByOrder(hexValue);
-        return parseInt(hex, hexRadix);
+        return parseInt(hex, HEX_RADIX);
     }
 
     public static long parseLittleEndianHexToLong(String hex) {
@@ -517,7 +507,7 @@ public class TbUtils {
     public static Long parseHexToLong(String value, boolean bigEndian) {
         String hexValue = prepareNumberString(value);
         String hex = bigEndian ? value : reverseHexStringByOrder(hexValue);
-        return parseLong(hex, hexRadix);
+        return parseLong(hex, HEX_RADIX);
     }
 
     public static float parseLittleEndianHexToFloat(String hex) {
@@ -535,7 +525,7 @@ public class TbUtils {
     public static Float parseHexToFloat(String value, boolean bigEndian) {
         String hexValue = prepareNumberString(value);
         String hex = bigEndian ? value : reverseHexStringByOrder(hexValue);
-        return parseFloat(hex, hexRadix);
+        return parseFloat(hex, HEX_RADIX);
     }
 
     public static double parseLittleEndianHexToDouble(String hex) {
@@ -553,7 +543,7 @@ public class TbUtils {
     public static double parseHexToDouble(String value, boolean bigEndian) {
         String hexValue = prepareNumberString(value);
         String hex = bigEndian ? value : reverseHexStringByOrder(hexValue);
-        return parseDouble(hex, hexRadix);
+        return parseDouble(hex, HEX_RADIX);
     }
 
     public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String value) {
@@ -567,7 +557,7 @@ public class TbUtils {
             // Extract two characters from the hex string
             String byteString = hex.substring(i, i + 2);
             // Parse the hex string to a byte
-            byte byteValue = (byte) Integer.parseInt(byteString, hexRadix);
+            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
             // Add the byte to the ArrayList
             data.add(byteValue);
         }
@@ -585,38 +575,38 @@ public class TbUtils {
     }
 
     public static String intToHex(Integer i) {
-        return prepareNumberHexString(i.longValue(), true, false, hexLenMin, hexLenIntMax);
+        return prepareNumberHexString(i.longValue(), true, false, HEX_LEN_MIN, HEX_LEN_INT_MAX);
     }
 
     public static String intToHex(Integer i, boolean bigEndian) {
-        return prepareNumberHexString(i.longValue(), bigEndian, false, hexLenMin, hexLenIntMax);
+        return prepareNumberHexString(i.longValue(), bigEndian, false, HEX_LEN_MIN, HEX_LEN_INT_MAX);
     }
 
     public static String intToHex(Integer i, boolean bigEndian, boolean pref) {
-        return prepareNumberHexString(i.longValue(), bigEndian, pref, hexLenMin, hexLenIntMax);
+        return prepareNumberHexString(i.longValue(), bigEndian, pref, HEX_LEN_MIN, HEX_LEN_INT_MAX);
     }
 
     public static String intToHex(Integer i, boolean bigEndian, boolean pref, int len) {
-        return prepareNumberHexString(i.longValue(), bigEndian, pref, len, hexLenIntMax);
+        return prepareNumberHexString(i.longValue(), bigEndian, pref, len, HEX_LEN_INT_MAX);
     }
 
     public static String longToHex(Long l) {
-        return prepareNumberHexString(l, true, false, hexLenMin, hexLenLongMax);
+        return prepareNumberHexString(l, true, false, HEX_LEN_MIN, HEX_LEN_LONG_MAX);
     }
     public static String longToHex(Long l, boolean bigEndian) {
-        return prepareNumberHexString(l, bigEndian, false, hexLenMin, hexLenLongMax);
+        return prepareNumberHexString(l, bigEndian, false, HEX_LEN_MIN, HEX_LEN_LONG_MAX);
     }
 
     public static String longToHex(Long l, boolean bigEndian, boolean pref) {
-        return prepareNumberHexString(l, bigEndian, pref, hexLenMin, hexLenLongMax);
+        return prepareNumberHexString(l, bigEndian, pref, HEX_LEN_MIN, HEX_LEN_LONG_MAX);
     }
 
     public static String longToHex(Long l, boolean bigEndian, boolean pref, int len) {
-        return prepareNumberHexString(l, bigEndian, pref, len, hexLenLongMax);
+        return prepareNumberHexString(l, bigEndian, pref, len, HEX_LEN_LONG_MAX);
     }
 
     public static String intLongToString(Long number) {
-        return intLongToString(number, decRadix);
+        return intLongToString(number, DEC_RADIX);
     }
 
     public static String intLongToString(Long number, int radix) {
@@ -633,9 +623,9 @@ public class TbUtils {
         }
         return switch (radix) {
             case MIN_RADIX ->  Long.toBinaryString(number);
-            case octalRadix -> Long.toOctalString(number);
-            case decRadix -> Long.toString(number);
-            case hexRadix -> prepareNumberHexString(number, bigEndian, pref, -1, -1);
+            case OCTAL_RADIX -> Long.toOctalString(number);
+            case DEC_RADIX -> Long.toString(number);
+            case HEX_RADIX -> prepareNumberHexString(number, bigEndian, pref, -1, -1);
             default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
         };
     }
@@ -654,7 +644,7 @@ public class TbUtils {
         hexLenMax = hexLenMax < 0 ? hex.length() : hexLenMax;
         String hexWithoutZeroFF = removeLeadingZero_FF(hex, number, hexLenMax);
         hexWithoutZeroFF = bigEndian ? hexWithoutZeroFF : reverseHexStringByOrder(hexWithoutZeroFF);
-        len = len == hexLenMin ? hexWithoutZeroFF.length() : len;
+        len = len == HEX_LEN_MIN ? hexWithoutZeroFF.length() : len;
         String result = hexWithoutZeroFF.substring(hexWithoutZeroFF.length() - len);
         return pref ? "0x" + result : result;
     }
@@ -770,8 +760,8 @@ public class TbUtils {
         if (offset > data.length) {
             throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
         }
-        if (length > bytesLenLongMax) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + bytesLenLongMax + " bytes is allowed!");
+        if (length > BYTES_LEN_LONG_MAX) {
+            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_LONG_MAX + " bytes is allowed!");
         }
         if (offset + length > data.length) {
             throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
@@ -817,7 +807,7 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, boolean bigEndian) {
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, bytesLenLongMax, bigEndian);
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, BYTES_LEN_LONG_MAX, bigEndian);
         return ByteBuffer.wrap(bytesToNumber).getDouble();
     }
 
@@ -897,12 +887,12 @@ public class TbUtils {
         return URLDecoder.decode(uri, StandardCharsets.UTF_8);
     }
 
-    public static void newError(String message) {
-        newError(message, null);
+    public static void raiseError(String message) {
+        raiseError(message, null);
     }
 
-    public static void newError(String message, Object value) {
-        String msg = value == null ? message : message + " Value = " + value;
+    public static void raiseError(String message, Object value) {
+        String msg = value == null ? message : message + " for value " + value;
         throw new RuntimeException(msg);
     }
 
@@ -965,17 +955,17 @@ public class TbUtils {
         } else {
             radixValue = switch (radix) {
                 case MIN_RADIX -> isBinary(valueP);
-                case octalRadix -> isOctal(valueP);
-                case decRadix -> isDecimal(valueP);
-                case hexRadix -> isHexadecimal(valueP);
+                case OCTAL_RADIX -> isOctal(valueP);
+                case DEC_RADIX -> isDecimal(valueP);
+                case HEX_RADIX -> isHexadecimal(valueP);
                 default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
 
             };
         }
 
         if (radixValue > 0) {
-            if (value.startsWith("0x")) radixValue = hexRadix;
-            if (radixValue == hexRadix) {
+            if (value.startsWith("0x")) radixValue = HEX_RADIX;
+            if (radixValue == HEX_RADIX) {
                 valueP = value.startsWith("-") ? value.substring(1) : value;
                 if (valueP.length() % 2 > 0) {
                     throw new NumberFormatException("The hexadecimal value: \"" + value + "\" must be of even length, or if the decimal value must be a number!");
@@ -1002,21 +992,21 @@ public class TbUtils {
         if (str == null || str.isEmpty()) {
             return -1;
         }
-        return str.matches("[0-7]+") ? octalRadix : -1;
+        return str.matches("[0-7]+") ? OCTAL_RADIX : -1;
     }
 
     public static int isDecimal(String str) {
         if (str == null || str.isEmpty()) {
             return -1;
         }
-        return str.matches("-?\\d+(\\.\\d+)?") ? decRadix : -1;
+        return str.matches("-?\\d+(\\.\\d+)?") ? DEC_RADIX : -1;
     }
 
     public static int isHexadecimal(String str) {
         if (str == null || str.isEmpty()) {
             return -1;
         }
-        return str.matches("^-?(0[xX])?[0-9a-fA-F]+$") ? hexRadix : -1;
+        return str.matches("^-?(0[xX])?[0-9a-fA-F]+$") ? HEX_RADIX : -1;
     }
 
     private static byte isValidIntegerToByte(Integer val) {
@@ -1038,7 +1028,7 @@ public class TbUtils {
             throw new IllegalArgumentException("The hexadecimal string must be even-length.");
         }
         // Split the hex string into bytes (2 characters each)
-        StringBuilder reversedHex = new StringBuilder(bytesLenLongMax);
+        StringBuilder reversedHex = new StringBuilder(BYTES_LEN_LONG_MAX);
         for (int i = hex.length() - 2; i >= 0; i -= 2) {
             reversedHex.append(hex, i, i + 2);
         }

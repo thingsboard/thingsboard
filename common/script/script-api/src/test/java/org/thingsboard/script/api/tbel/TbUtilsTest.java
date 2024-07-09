@@ -629,17 +629,17 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void newError_Test() {
+    public void raiseError_Test() {
         String message = "frequency_weighting_type must be 0, 1 or 2.";
         Object value = 4;
         try {
-            TbUtils.newError(message, value);
+            TbUtils.raiseError(message, value);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
             Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. Value = 4"));
         }
         try {
-            TbUtils.newError(message);
+            TbUtils.raiseError(message);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
             Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2."));
