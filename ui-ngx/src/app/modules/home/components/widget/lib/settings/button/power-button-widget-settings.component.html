@@ -19,7 +19,7 @@
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.power-button.behavior</div>
     <div class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}">{{ 'widgets.rpc-state.initial-state' | translate }}</div>
       <tb-get-value-action-settings fxFlex
                                     panelTitle="widgets.rpc-state.initial-state"
                                     [valueType]="valueType.BOOLEAN"
@@ -32,7 +32,7 @@
                                     formControlName="initialState"></tb-get-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-on-hint' | translate}}" translate>widgets.power-button.power-on</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-on-hint' | translate}}">{{ 'widgets.power-button.power-on' | translate }}</div>
       <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.power-button.power-on "
                                     [aliasController]="aliasController"
@@ -41,7 +41,7 @@
                                     formControlName="onUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row space-between">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-off-hint' | translate}}" translate>widgets.power-button.power-off</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-off-hint' | translate}}">{{ 'widgets.power-button.power-off' | translate }}</div>
       <tb-set-value-action-settings fxFlex
                                     panelTitle="widgets.power-button.power-off"
                                     [aliasController]="aliasController"
@@ -50,7 +50,7 @@
                                     formControlName="offUpdateState"></tb-set-value-action-settings>
     </div>
     <div class="tb-form-row">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}">{{ 'widgets.rpc-state.disabled-state' | translate }}</div>
       <tb-get-value-action-settings fxFlex
                                     panelTitle="widgets.rpc-state.disabled-state"
                                     [valueType]="valueType.BOOLEAN"
