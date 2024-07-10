@@ -45,7 +45,7 @@
     <table [fxShow]="!isNumericData" mat-table [dataSource]="dataSource"
            matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
            matSortDisableClear>
-      <ng-container matColumnDef="0">test
+      <ng-container matColumnDef="0">
         <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.created-time' | translate }}
         </mat-header-cell>
         <mat-cell *matCellDef="let row; let rowIndex = index">
