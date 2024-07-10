@@ -333,24 +333,18 @@ public class TbUtils {
         return parseInt(value, ZERO_RADIX);
     }
 
-    public static Integer parseInt(String value, int radix) throws NumberFormatException {
+    public static Integer parseInt(String value, int radix) {
         if (StringUtils.isNotBlank(value)) {
             String valueP = prepareNumberString(value);
             int radixValue = isValidStringAndRadix(valueP, radix, value);
-            try {
-                if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
-                    return Integer.parseInt(valueP, radixValue);
-                }
-                return switch (radixValue) {
-                    case MIN_RADIX -> parseBinaryStringAsSignedInteger(valueP);
-                    case OCTAL_RADIX, DEC_RADIX, HEX_RADIX -> Integer.parseInt(valueP, radixValue);
-                    default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
-                };
-            } catch (NumberFormatException e) {
-                Integer iMax = Integer.MAX_VALUE;
-                Integer iMin = Integer.MIN_VALUE;
-                compareIntLongValueMinMax(valueP, radixValue, iMax.longValue(), iMin.longValue(), "Integer");
+            if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
+                return (Integer) compareIntLongValueMinMax(valueP, radixValue, Integer.MAX_VALUE, Integer.MIN_VALUE);
             }
+            return switch (radixValue) {
+                case MIN_RADIX -> parseBinaryStringAsSignedInteger(valueP);
+                case OCTAL_RADIX, DEC_RADIX, HEX_RADIX -> Integer.parseInt(valueP, radixValue);
+                default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
+            };
         }
         return null;
     }
@@ -359,22 +353,18 @@ public class TbUtils {
         return parseLong(value, ZERO_RADIX);
     }
 
-    public static Long parseLong(String value, int radix) throws NumberFormatException {
+    public static Long parseLong(String value, int radix) {
         if (StringUtils.isNotBlank(value)) {
             String valueP = prepareNumberString(value);
             int radixValue = isValidStringAndRadix(valueP, radix, value);
-            try {
-                if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
-                    return Long.parseLong(valueP, radixValue);
-                }
-                return switch (radixValue) {
-                    case MIN_RADIX -> parseBinaryStringAsSignedLong(valueP);
-                    case OCTAL_RADIX, DEC_RADIX, HEX_RADIX -> Long.parseLong(valueP, radixValue);
-                    default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
-                };
-             } catch (NumberFormatException e) {
-                compareIntLongValueMinMax(valueP, radixValue, Long.MAX_VALUE, Long.MIN_VALUE, "Long");
+            if (radixValue  >= 25 && radixValue  <= MAX_RADIX) {
+                return (Long) compareIntLongValueMinMax(valueP, radixValue, Long.MAX_VALUE, Long.MIN_VALUE);
             }
+            return switch (radixValue) {
+                case MIN_RADIX -> parseBinaryStringAsSignedLong(valueP);
+                case OCTAL_RADIX, DEC_RADIX, HEX_RADIX -> Long.parseLong(valueP, radixValue);
+                default -> throw new IllegalArgumentException("Invalid radix: [" + radix + "]");
+            };
         }
         return null;
     }
@@ -437,15 +427,11 @@ public class TbUtils {
         if (StringUtils.isNotBlank(value)) {
             String valueP = prepareNumberString(value);
             int radixValue = isValidStringAndRadix(valueP, radix, value);
-            try {
-                if (radixValue == DEC_RADIX) {
-                    return Float.parseFloat(value);
-                } else {
-                    int bits = Integer.parseUnsignedInt(valueP, HEX_RADIX);
-                    return Float.intBitsToFloat(bits);
-                }
-            } catch (NumberFormatException e) {
-                throw new NumberFormatException(e.getMessage());
+            if (radixValue == DEC_RADIX) {
+                return Float.parseFloat(value);
+            } else {
+                int bits = Integer.parseUnsignedInt(valueP, HEX_RADIX);
+                return Float.intBitsToFloat(bits);
             }
         }
         return null;
@@ -458,17 +444,13 @@ public class TbUtils {
 
     public static Double parseDouble(String value, int radix) {
         if (value != null) {
-            try {
-                String valueP = prepareNumberString(value);
-                int radixValue = isValidStringAndRadix(valueP, radix, value);
-                if (radixValue == DEC_RADIX) {
-                    return Double.parseDouble(prepareNumberString(value));
-                } else {
-                    long bits = Long.parseUnsignedLong(valueP, HEX_RADIX);
-                    return Double.longBitsToDouble(bits);
-                }
-            } catch (NumberFormatException e) {
-                throw new NumberFormatException(e.getMessage());
+            String valueP = prepareNumberString(value);
+            int radixValue = isValidStringAndRadix(valueP, radix, value);
+            if (radixValue == DEC_RADIX) {
+                return Double.parseDouble(prepareNumberString(value));
+            } else {
+                long bits = Long.parseUnsignedLong(valueP, HEX_RADIX);
+                return Double.longBitsToDouble(bits);
             }
         }
         return null;
@@ -630,12 +612,25 @@ public class TbUtils {
         };
     }
 
-    private static void compareIntLongValueMinMax(String valueP, int radix, Long maxValue, Long minValue, String clazzName) {
-        BigInteger bi = new BigInteger(valueP, radix);
-        if (bi.compareTo(BigInteger.valueOf(maxValue)) > 0) {
-            throw new NumberFormatException("Value \"" + valueP + "\"is greater than the maximum " + clazzName + " value " + maxValue + " !");
-        } else if (bi.compareTo(BigInteger.valueOf(minValue)) < 0) {
-            throw new NumberFormatException("Value \"" + valueP + "\" is  less than the minimum " + clazzName + " value " + minValue + " !");
+    private static Number compareIntLongValueMinMax(String valueP, int radix, Number maxValue, Number minValue) {
+        boolean isInteger = maxValue.getClass().getSimpleName().equals("Integer");
+        try {
+            if (isInteger) {
+                return Integer.parseInt(valueP, radix);
+            } else {
+                return Long.parseLong(valueP, radix);
+            }
+        } catch (NumberFormatException e) {
+            BigInteger bi = new BigInteger(valueP, radix);
+            long maxValueL = isInteger ? maxValue.longValue() : (long) maxValue;
+            if (bi.compareTo(BigInteger.valueOf(maxValueL)) > 0) {
+                throw new NumberFormatException("Value \"" + valueP + "\"is greater than the maximum " + maxValue.getClass().getSimpleName() + " value " + maxValue + " !");
+            }
+            long minValueL = isInteger ? minValue.longValue() : (long) minValue;
+            if (bi.compareTo(BigInteger.valueOf(minValueL)) < 0) {
+                throw new NumberFormatException("Value \"" + valueP + "\" is  less than the minimum " + minValue.getClass().getSimpleName() + " value " + minValue + " !");
+            }
+            throw new NumberFormatException(e.getMessage());
         }
     }
 
