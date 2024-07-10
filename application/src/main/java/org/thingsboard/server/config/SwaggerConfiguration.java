@@ -113,7 +113,8 @@ public class SwaggerConfiguration {
     private String version;
     @Value("${app.version:unknown}")
     private String appVersion;
-
+    @Value("${swagger.group_name:thingsboard}")
+    private String groupName;
 
     @Bean
     public OpenAPI thingsboardApi() {
@@ -212,7 +213,7 @@ public class SwaggerConfiguration {
     @Bean
     public GroupedOpenApi groupedApi(SpringDocParameterNameDiscoverer localSpringDocParameterNameDiscoverer) {
         return GroupedOpenApi.builder()
-                .group("thingsboard")
+                .group(groupName)
                 .pathsToMatch(apiPath)
                 .addRouterOperationCustomizer(routerOperationCustomizer(localSpringDocParameterNameDiscoverer))
                 .addOperationCustomizer(operationCustomizer())
