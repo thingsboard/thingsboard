@@ -113,7 +113,7 @@ public class SwaggerConfiguration {
     private String version;
     @Value("${app.version:unknown}")
     private String appVersion;
-    @Value("${swagger.group_name}")
+    @Value("${swagger.group_name:thingsboard}")
     private String groupName;
 
     @Bean
