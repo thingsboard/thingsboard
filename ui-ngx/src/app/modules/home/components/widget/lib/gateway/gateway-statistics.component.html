@@ -30,8 +30,11 @@
     </mat-form-field>
     <mat-error
       *ngIf="!statisticsKeys.length && !commands.length">
-      {{'gateway.statistics.statistic-commands-empty' | translate }}
+      {{ 'gateway.statistics.statistic-commands-empty' | translate }}
     </mat-error>
+    <button mat-flat-button class="mat-mdc-icon-button tb-mat-185" color="primary" (click)="navigateToStatistics()">
+      {{ 'gateway.statistics.statistics-button' | translate }}
+    </button>
     <mat-form-field class="mat-block" *ngIf="commandObj">
       <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
       <input matInput [value]="commandObj.command" disabled>
@@ -42,14 +45,17 @@
     <table [fxShow]="!isNumericData" mat-table [dataSource]="dataSource"
            matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
            matSortDisableClear>
-      <ng-container matColumnDef="0">
-        <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.created-time' | translate }}</mat-header-cell>
+      <ng-container matColumnDef="0">test
+        <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.created-time' | translate }}
+        </mat-header-cell>
         <mat-cell *matCellDef="let row; let rowIndex = index">
-          {{row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
+          {{ row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
         </mat-cell>
       </ng-container>
       <ng-container matColumnDef="1">
-        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">{{ 'widgets.gateway.message' | translate }}</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef mat-sort-header
+                         style="width: 70%">{{ 'widgets.gateway.message' | translate }}
+        </mat-header-cell>
         <mat-cell *matCellDef="let row">
           {{ row[1] }}
         </mat-cell>
