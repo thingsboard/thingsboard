@@ -22,6 +22,7 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.validation.ConstraintViolation;
 import lombok.Getter;
 import org.apache.commons.lang3.exception.ExceptionUtils;
+import org.hibernate.exception.ConstraintViolationException;
 import org.slf4j.Logger;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -358,29 +359,33 @@ public abstract class BaseController {
 
     private ThingsboardException handleException(Exception exception, boolean logException) {
         if (logException && logControllerErrorStackTrace) {
-            log.error("Error [{}]", exception.getMessage(), exception);
+            try {
+                SecurityUser user = getCurrentUser();
+                log.error("[{}][{}] Error", user.getTenantId(), user.getId(), exception);
+            } catch (Exception e) {
+                log.error("Error", exception);
+            }
         }
 
-        String cause = "";
-        if (exception.getCause() != null) {
-            cause = exception.getCause().getClass().getCanonicalName();
-        }
-
+        Throwable cause = exception.getCause();
         if (exception instanceof ThingsboardException) {
             return (ThingsboardException) exception;
         } else if (exception instanceof IllegalArgumentException || exception instanceof IncorrectParameterException
-                || exception instanceof DataValidationException || cause.contains("IncorrectParameterException")) {
+                || exception instanceof DataValidationException || cause instanceof IncorrectParameterException) {
             return new ThingsboardException(exception.getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         } else if (exception instanceof MessagingException) {
             return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof AsyncRequestTimeoutException) {
             return new ThingsboardException("Request timeout", ThingsboardErrorCode.GENERAL);
         } else if (exception instanceof DataAccessException) {
-            String errorType = exception.getClass().getSimpleName();
             if (!logControllerErrorStackTrace) { // not to log the error twice
-                log.warn("Database error: {} - {}", errorType, ExceptionUtils.getRootCauseMessage(exception));
+                log.warn("Database error: {} - {}", exception.getClass().getSimpleName(), ExceptionUtils.getRootCauseMessage(exception));
             }
-            return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
+            if (cause instanceof ConstraintViolationException) {
+                return new ThingsboardException(ExceptionUtils.getRootCause(exception).getMessage(), ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+            } else {
+                return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
+            }
         }
         return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }
