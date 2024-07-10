@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, HostBinding, Input } from '@angular/core';
+import { Component, Input } from '@angular/core';
 import { TooltipPosition } from '@angular/material/tooltip';
 
 @Component({
@@ -24,7 +24,6 @@ import { TooltipPosition } from '@angular/material/tooltip';
 })
 export class HintTooltipIconComponent {
 
-  @HostBinding('class.tb-hint-tooltip')
   @Input('tb-hint-tooltip-icon') tooltipText: string;
 
   @Input()

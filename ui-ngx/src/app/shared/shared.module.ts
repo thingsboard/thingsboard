@@ -219,7 +219,6 @@ import { ImageGalleryDialogComponent } from '@shared/components/image/image-gall
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
-import { TooltipDirective } from '@shared/directives/public-api';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -473,7 +472,6 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     DndModule,
     NgxFlowModule,
     NgxFlowchartModule,
-    TooltipDirective,
     // ngx-markdown
     MarkdownModule.forRoot({
       sanitize: SecurityContext.NONE,

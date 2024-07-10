@@ -18,7 +18,6 @@ import {
   AfterViewInit,
   Directive,
   ElementRef,
-  inject,
   Input,
   OnDestroy,
   OnInit,
@@ -39,18 +38,20 @@ export class TooltipDirective implements OnInit, AfterViewInit, OnDestroy {
   @Input() tooltipEnabled = true;
   @Input() position: TooltipPosition = 'above';
 
-  private elementRef = inject(ElementRef);
-  private renderer = inject(Renderer2);
-  private tooltip = inject(MatTooltip);
   private destroy$ = new Subject<void>();
+
+  constructor(
+    private elementRef: ElementRef,
+    private renderer: Renderer2,
+    private tooltip: MatTooltip
+  ) {}
 
   ngOnInit(): void {
     this.observeMouseEvents();
+    this.applyTruncationStyles();
   }
 
   ngAfterViewInit(): void {
-    this.applyTruncationStyles();
-
     if (!this.text) {
       this.text = this.elementRef.nativeElement.innerText;
     }
