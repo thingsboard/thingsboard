@@ -109,7 +109,6 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     public void setUp() throws TbNodeException {
         config = new CalculateDeltaNodeConfiguration().defaultConfiguration();
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        node.init(ctxMock, nodeConfiguration);
     }
 
     @Test
@@ -166,8 +165,9 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenInvalidMsgType_whenOnMsg_thenShouldTellNextOther() {
+    public void givenInvalidMsgType_whenOnMsg_thenShouldTellNextOther() throws TbNodeException {
         // GIVEN
+        node.init(ctxMock, nodeConfiguration);
         var msgData = "{\"pulseCounter\": 42}";
         var msg = TbMsg.newMsg(TbMsgType.POST_ATTRIBUTES_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, msgData);
 
@@ -181,8 +181,9 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenInvalidMsgDataType_whenOnMsg_thenShouldTellNextOther() {
+    public void givenInvalidMsgDataType_whenOnMsg_thenShouldTellNextOther() throws TbNodeException {
         // GIVEN
+        node.init(ctxMock, nodeConfiguration);
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_ARRAY);
 
         // WHEN
@@ -196,8 +197,9 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
 
 
     @Test
-    public void givenInputKeyIsNotPresent_whenOnMsg_thenShouldTellNextOther() {
+    public void givenInputKeyIsNotPresent_whenOnMsg_thenShouldTellNextOther() throws TbNodeException {
         // GIVEN
+        node.init(ctxMock, nodeConfiguration);
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DUMMY_DEVICE_ORIGINATOR, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
         // WHEN
@@ -451,8 +453,9 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenInvalidStringValue_whenOnMsg_thenException() {
+    public void givenInvalidStringValue_whenOnMsg_thenException() throws TbNodeException {
         // GIVEN
+        node.init(ctxMock, nodeConfiguration);
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new StringDataEntry("pulseCounter", "high")));
 
         var msgData = "{\"pulseCounter\":\"123\"}";
@@ -475,8 +478,9 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenBooleanValue_whenOnMsg_thenException() {
+    public void givenBooleanValue_whenOnMsg_thenException() throws TbNodeException {
         // GIVEN
+        node.init(ctxMock, nodeConfiguration);
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry("pulseCounter", false)));
 
         var msgData = "{\"pulseCounter\":true}";
@@ -499,8 +503,9 @@ public class CalculateDeltaNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenJsonValue_whenOnMsg_thenException() {
+    public void givenJsonValue_whenOnMsg_thenException() throws TbNodeException {
         // GIVEN
+        node.init(ctxMock, nodeConfiguration);
         mockFindLatestAsync(new BasicTsKvEntry(System.currentTimeMillis(), new JsonDataEntry("pulseCounter", "{\"isActive\":false}")));
 
         var msgData = "{\"pulseCounter\":{\"isActive\":true}}";
