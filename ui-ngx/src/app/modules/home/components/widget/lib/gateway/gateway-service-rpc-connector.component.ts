@@ -406,20 +406,21 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   }
 
   private observeMQTTWithResponse(): void {
-    this.commandForm.get('withResponse').valueChanges.pipe(
-      filter(() => this.connectorType === ConnectorType.MQTT),
-      tap((isActive: boolean) => {
-        const responseTopicControl = this.commandForm.get('responseTopicExpression');
-        const responseTimeoutControl = this.commandForm.get('responseTimeout');
-        if (isActive) {
-          responseTopicControl.enable();
-          responseTimeoutControl.enable();
-        } else {
-          responseTopicControl.disable();
-          responseTimeoutControl.disable();
-        }
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe();
+    if (this.connectorType === ConnectorType.MQTT) {
+      this.commandForm.get('withResponse').valueChanges.pipe(
+        tap((isActive: boolean) => {
+          const responseTopicControl = this.commandForm.get('responseTopicExpression');
+          const responseTimeoutControl = this.commandForm.get('responseTimeout');
+          if (isActive) {
+            responseTopicControl.enable();
+            responseTimeoutControl.enable();
+          } else {
+            responseTopicControl.disable();
+            responseTimeoutControl.disable();
+          }
+        }),
+        takeUntil(this.destroy$),
+      ).subscribe();
+    }
   }
 }
