@@ -181,8 +181,11 @@ public class CalculateDeltaNode implements TbNode {
 
     private ListenableFuture<ValueWithTs> getLatestFromCacheOrFetchFromDb(TbContext ctx, TbMsg msg) {
         EntityId originator = msg.getOriginator();
-        ValueWithTs valueWithTs = cache.get(msg.getOriginator());
-        return valueWithTs != null ? Futures.immediateFuture(valueWithTs) : fetchLatestValueAsync(ctx, originator);
+        if (config.isUseCache()) {
+            ValueWithTs valueWithTs = cache.get(msg.getOriginator());
+            return valueWithTs != null ? Futures.immediateFuture(valueWithTs) : fetchLatestValueAsync(ctx, originator);
+        }
+        return fetchLatestValueAsync(ctx, originator);
     }
 
     private record ValueWithTs(long ts, double value) {
