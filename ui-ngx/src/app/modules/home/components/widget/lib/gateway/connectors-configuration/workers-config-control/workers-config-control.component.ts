@@ -33,6 +33,7 @@ import { CommonModule } from '@angular/common';
 import { WorkersConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TooltipDirective } from '@shared/directives/tooltip/tooltip.directive';
 
 @Component({
   selector: 'tb-workers-config-control',
@@ -42,6 +43,7 @@ import { takeUntil } from 'rxjs/operators';
   imports: [
     CommonModule,
     SharedModule,
+    TooltipDirective,
   ],
   providers: [
     {

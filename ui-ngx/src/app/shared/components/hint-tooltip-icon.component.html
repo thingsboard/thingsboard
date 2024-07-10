@@ -15,12 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-hint-tooltip">
-  <div class="tb-hint-tooltip-content">
-    <ng-content></ng-content>
-  </div>
-  <tb-icon class="tb-hint-tooltip-icon tb-mat-18"
-           *ngIf="tooltipText"
-           matTooltip="{{ tooltipText }}"
-           [matTooltipPosition]="tooltipPosition">{{ hintIcon }}</tb-icon>
-</div>
+<ng-content class="tb-hint-tooltip-content"></ng-content>
+<tb-icon class="tb-hint-tooltip-icon tb-mat-18"
+         *ngIf="tooltipText"
+         matTooltip="{{ tooltipText }}"
+         [matTooltipPosition]="tooltipPosition">{{ hintIcon }}</tb-icon>
