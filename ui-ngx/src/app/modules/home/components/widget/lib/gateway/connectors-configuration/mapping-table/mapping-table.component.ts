@@ -33,7 +33,6 @@ import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/o
 import {
   ControlValueAccessor,
   FormBuilder,
-  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormArray,
@@ -192,7 +191,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, MappingInfo, MappingValue>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, ConnectorMapping>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -207,24 +206,11 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           if (isDefinedAndNotNull(index)) {
             this.mappingFormGroup.at(index).patchValue(res);
           } else {
-            this.mappingFormGroup.push(this.getMappedDialogDataFormGroup(res));
+            this.pushDataAsFormArrays([res]);
           }
           this.mappingFormGroup.markAsDirty();
         }
     });
-  }
-
-  private getMappedDialogDataFormGroup(mappingValue: MappingValue): FormGroup {
-    Object.keys(mappingValue).forEach(key => {
-      if (Array.isArray(mappingValue[key])) {
-        mappingValue = {
-          ...mappingValue,
-          [key]: this.fb.control(mappingValue[key]),
-        };
-      }
-    });
-
-    return this.fb.group(mappingValue);
   }
 
   private updateTableData(value: ConnectorMapping[], textSearch?: string): void {
