@@ -15,6 +15,7 @@
 ///
 
 import {
+  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   forwardRef,
@@ -25,7 +26,9 @@ import {
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup, ValidationErrors, Validator,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
   Validators
 } from '@angular/forms';
 import { SharedModule } from '@shared/shared.module';
@@ -56,7 +59,7 @@ import { takeUntil } from 'rxjs/operators';
     }
   ]
 })
-export class WorkersConfigControlComponent implements OnDestroy, ControlValueAccessor, Validator {
+export class WorkersConfigControlComponent implements AfterViewInit, OnDestroy, ControlValueAccessor, Validator {
 
   workersConfigFormGroup: UntypedFormGroup;
 
@@ -75,6 +78,10 @@ export class WorkersConfigControlComponent implements OnDestroy, ControlValueAcc
       this.onChange(value);
       this.onTouched();
     });
+  }
+
+  ngAfterViewInit(): void {
+    this.emitDefaultValue();
   }
 
   ngOnDestroy(): void {
@@ -99,4 +106,8 @@ export class WorkersConfigControlComponent implements OnDestroy, ControlValueAcc
       workersConfigFormGroup: {valid: false}
     };
   }
+
+  private emitDefaultValue(): void {
+    this.onChange(this.workersConfigFormGroup.value);
+  };
 }

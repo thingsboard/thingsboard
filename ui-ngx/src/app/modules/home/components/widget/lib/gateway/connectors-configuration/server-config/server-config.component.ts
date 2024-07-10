@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -61,7 +61,7 @@ import { takeUntil } from 'rxjs/operators';
     SecurityConfigComponent,
   ]
 })
-export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class ServerConfigComponent implements ControlValueAccessor, Validator, AfterViewInit, OnDestroy {
 
   securityPolicyTypes = SecurityPolicyTypes;
   serverConfigFormGroup: UntypedFormGroup;
@@ -92,6 +92,10 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
     });
   }
 
+  ngAfterViewInit(): void {
+    this.emitDefaultValue();
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -114,4 +118,8 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
   writeValue(serverConfig: ServerConfig): void {
     this.serverConfigFormGroup.patchValue(serverConfig, {emitEvent: false});
   }
+
+  private emitDefaultValue(): void {
+    this.onChange(this.serverConfigFormGroup.value);
+  };
 }

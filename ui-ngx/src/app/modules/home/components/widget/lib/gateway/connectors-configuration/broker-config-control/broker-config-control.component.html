@@ -74,7 +74,7 @@
                 aria-label="Generate"
                 matTooltip="{{ 'gateway.generate-client-id' | translate }}"
                 matTooltipPosition="above"
-                (click)="generate('clientId')"
+                (click)="generate()"
                 *ngIf="!brokerConfigFormGroup.get('clientId').value">
           <mat-icon>autorenew</mat-icon>
         </button>

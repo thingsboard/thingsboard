@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -61,7 +61,7 @@ import { Subject } from 'rxjs';
     }
   ]
 })
-export class BrokerConfigControlComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class BrokerConfigControlComponent implements ControlValueAccessor, Validator, AfterViewInit, OnDestroy {
   brokerConfigFormGroup: UntypedFormGroup;
   mqttVersions = MqttVersions;
   portLimits = PortLimits;
@@ -78,7 +78,7 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       version: [5, []],
-      clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      clientId: ['tb_gw_' + generateSecret(5), [Validators.pattern(noLeadTrailSpacesRegex)]],
       security: []
     });
 
@@ -101,13 +101,17 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
     return '';
   }
 
+  ngAfterViewInit(): void {
+    this.emitDefaultValue();
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
   }
 
-  generate(formControlName: string): void {
-    this.brokerConfigFormGroup.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
+  generate(): void {
+    this.brokerConfigFormGroup.get('clientId').patchValue('tb_gw_' + generateSecret(5));
   }
 
   registerOnChange(fn: (value: string) => void): void {
@@ -127,4 +131,8 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
       brokerConfigFormGroup: {valid: false}
     };
   }
+
+  private emitDefaultValue(): void {
+    this.onChange(this.brokerConfigFormGroup.value);
+  };
 }
