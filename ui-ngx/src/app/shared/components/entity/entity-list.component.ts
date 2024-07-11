@@ -25,7 +25,15 @@ import {
   SimpleChanges,
   ViewChild
 } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validators
+} from '@angular/forms';
 import { Observable } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
@@ -47,6 +55,11 @@ import { SubscriptSizing } from '@angular/material/form-field';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => EntityListComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
       useExisting: forwardRef(() => EntityListComponent),
       multi: true
     }
@@ -179,10 +192,6 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
         (entities) => {
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
-          if(!entities.length && this.required) {
-            this.modelValue = null;
-            this.propagateChange(this.modelValue);
-          }
         }
       );
     } else {
@@ -191,6 +200,12 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.modelValue = null;
     }
     this.dirty = true;
+  }
+
+  validate(): ValidationErrors | null {
+    return this.entityListFormGroup.valid ? null : {
+      entities: {valid: false}
+    };
   }
 
   reset() {
