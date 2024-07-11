@@ -36,8 +36,6 @@ import {
 } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { filter, map, mergeMap, share, tap } from 'rxjs/operators';
-import { Store } from '@ngrx/store';
-import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
 import { BaseData } from '@shared/models/base-data';
@@ -69,7 +67,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   entityListFormGroup: UntypedFormGroup;
 
-  modelValue: Array<string> | null;
+  private modelValue: Array<string> | null;
 
   @Input()
   entityType: EntityType;
@@ -121,17 +119,16 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   private propagateChange = (v: any) => { };
 
-  constructor(private store: Store<AppState>,
-              public translate: TranslateService,
+  constructor(public translate: TranslateService,
               private entityService: EntityService,
               private fb: UntypedFormBuilder) {
     this.entityListFormGroup = this.fb.group({
-      entities: [this.entities, this.required ? [Validators.required] : []],
+      entities: [this.entities],
       entity: [null]
     });
   }
 
-  updateValidators() {
+  private updateValidators() {
     this.entityListFormGroup.get('entities').setValidators(this.required ? [Validators.required] : []);
     this.entityListFormGroup.get('entities').updateValueAndValidity();
   }
@@ -208,7 +205,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     };
   }
 
-  reset() {
+  private reset() {
     this.entities = [];
     this.entityListFormGroup.get('entities').setValue(this.entities);
     this.modelValue = null;
@@ -220,7 +217,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     this.dirty = true;
   }
 
-  add(entity: BaseData<EntityId>): void {
+  private add(entity: BaseData<EntityId>): void {
     if (!this.modelValue || this.modelValue.indexOf(entity.id.id) === -1) {
       if (!this.modelValue) {
         this.modelValue = [];
@@ -233,7 +230,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     this.clear();
   }
 
-  remove(entity: BaseData<EntityId>) {
+  public remove(entity: BaseData<EntityId>) {
     let index = this.entities.indexOf(entity);
     if (index >= 0) {
       this.entities.splice(index, 1);
@@ -248,11 +245,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     }
   }
 
-  displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
+  public displayEntityFn(entity?: BaseData<EntityId>): string | undefined {
     return entity ? entity.name : undefined;
   }
 
-  fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
+  private fetchEntities(searchText?: string): Observable<Array<BaseData<EntityId>>> {
     this.searchText = searchText;
 
     return this.entityService.getEntitiesByNameFilter(this.entityType, searchText,
@@ -260,14 +257,14 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       map((data) => data ? data : []));
   }
 
-  onFocus() {
+  public onFocus() {
     if (this.dirty) {
       this.entityListFormGroup.get('entity').updateValueAndValidity({onlySelf: true, emitEvent: true});
       this.dirty = false;
     }
   }
 
-  clear(value: string = '') {
+  private clear(value: string = '') {
     this.entityInput.nativeElement.value = value;
     this.entityListFormGroup.get('entity').patchValue(value, {emitEvent: true});
     setTimeout(() => {
@@ -276,8 +273,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
     }, 0);
   }
 
-  textIsNotEmpty(text: string): boolean {
+  public textIsNotEmpty(text: string): boolean {
     return (text && text.length > 0);
   }
-
 }
