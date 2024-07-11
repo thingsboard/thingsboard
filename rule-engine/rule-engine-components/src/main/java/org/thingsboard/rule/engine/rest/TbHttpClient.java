@@ -31,6 +31,7 @@ import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
+import org.springframework.web.reactive.function.client.WebClientResponseException;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -43,11 +44,13 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import reactor.netty.http.client.HttpClient;
+import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.transport.ProxyProvider;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
+import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -56,6 +59,8 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
+
+import static io.netty.channel.ChannelOption.SO_KEEPALIVE;
 
 @Data
 @Slf4j
@@ -170,7 +175,7 @@ public class TbHttpClient {
                                BiConsumer<TbMsg, Throwable> onFailure) {
         try {
             if (semaphore != null && !semaphore.tryAcquire(config.getReadTimeoutMs(), TimeUnit.MILLISECONDS)) {
-                ctx.tellFailure(msg, new RuntimeException("Timeout during waiting for reply!"));
+                onFailure.accept(msg, new RuntimeException("Timeout during waiting for reply!"));
                 return;
             }
 
@@ -183,10 +188,10 @@ public class TbHttpClient {
                     .uri(uri)
                     .headers(headers -> prepareHeaders(headers, msg));
 
-            if (HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
-                    HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method) ||
+            if ((HttpMethod.POST.equals(method) || HttpMethod.PUT.equals(method) ||
+                    HttpMethod.PATCH.equals(method) || HttpMethod.DELETE.equals(method)) &&
                     !config.isIgnoreRequestBody()) {
-                request.body(BodyInserters.fromValue(getData(msg, config.isIgnoreRequestBody(), config.isParseToPlainText())));
+                request.body(BodyInserters.fromValue(getData(msg, config.isParseToPlainText())));
             }
 
             request
@@ -236,11 +241,9 @@ public class TbHttpClient {
         return uri;
     }
 
-    private String getData(TbMsg tbMsg, boolean ignoreBody, boolean parseToPlainText) {
-        if (!ignoreBody && parseToPlainText) {
-            return JacksonUtil.toPlainText(tbMsg.getData());
-        }
-        return tbMsg.getData();
+    private Object getData(TbMsg tbMsg, boolean parseToPlainText) {
+        String data = tbMsg.getData();
+        return parseToPlainText ? JacksonUtil.toPlainText(data) : JacksonUtil.toJsonNode(data);
     }
 
     private TbMsg processResponse(TbContext ctx, TbMsg origMsg, ResponseEntity<String> response) {
@@ -283,10 +286,9 @@ public class TbHttpClient {
     private TbMsg processException(TbMsg origMsg, Throwable e) {
         TbMsgMetaData metaData = origMsg.getMetaData();
         metaData.putValue(ERROR, e.getClass() + ": " + e.getMessage());
-        if (e instanceof RestClientResponseException) {
-            RestClientResponseException restClientResponseException = (RestClientResponseException) e;
+        if (e instanceof WebClientResponseException restClientResponseException) {
             metaData.putValue(STATUS, restClientResponseException.getStatusText());
-            metaData.putValue(STATUS_CODE, restClientResponseException.getRawStatusCode() + "");
+            metaData.putValue(STATUS_CODE, restClientResponseException.getStatusCode().value() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
         }
         return TbMsg.transformMsgMetadata(origMsg, metaData);
