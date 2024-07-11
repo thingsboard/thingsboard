@@ -114,12 +114,10 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
 
   writeValue(basicConfig: ConnectorBaseConfig): void {
     const editedBase = {
-      workers: basicConfig.broker
-        ? {
-            maxNumberOfWorkers: basicConfig.broker.maxNumberOfWorkers,
-            maxMessageNumberPerWorker: basicConfig.broker.maxMessageNumberPerWorker,
-          }
-        : {},
+      workers: {
+        maxNumberOfWorkers: basicConfig.broker?.maxNumberOfWorkers,
+        maxMessageNumberPerWorker: basicConfig.broker?.maxMessageNumberPerWorker,
+      },
       dataMapping: basicConfig.dataMapping || [],
       broker: basicConfig.broker || {},
       requestsMapping: Array.isArray(basicConfig.requestsMapping)

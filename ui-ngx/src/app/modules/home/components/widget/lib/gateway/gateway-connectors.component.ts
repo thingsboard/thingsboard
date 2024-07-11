@@ -551,11 +551,16 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
             }
             value.basicConfig = value.configurationJson;
             this.updateConnector(value);
+            this.generate('basicConfig.broker.clientId');
             setTimeout(() => this.saveConnector());
           }
         });
       }
     });
+  }
+
+  generate(formControlName: string): void {
+    this.connectorForm.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
   }
 
   uniqNameRequired(): ValidatorFn {

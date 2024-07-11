@@ -15,7 +15,6 @@
 ///
 
 import {
-  AfterViewInit,
   ChangeDetectionStrategy,
   Component,
   forwardRef,
@@ -68,7 +67,7 @@ import { CommonModule } from '@angular/common';
     SharedModule,
   ]
 })
-export class SecurityConfigComponent implements ControlValueAccessor, OnInit, AfterViewInit, OnDestroy {
+export class SecurityConfigComponent implements ControlValueAccessor, OnInit, OnDestroy {
 
   @Input()
   title = 'gateway.security';
@@ -113,10 +112,6 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, Af
     ).subscribe((type) => this.updateValidators(type));
   }
 
-  ngAfterViewInit(): void {
-    this.emitDefaultValue();
-  }
-
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -147,10 +142,6 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, Af
   registerOnTouched(fn: () => void): void {
     this.onTouched = fn;
   }
-
-  private emitDefaultValue(): void {
-    this.onChange(this.securityFormGroup.value);
-  };
 
   private updateValidators(type: SecurityType): void {
     if (type) {
