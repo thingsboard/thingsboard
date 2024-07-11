@@ -941,9 +941,6 @@ mat-icon {
     &.tb-mat-96 {
       @include tb-mat-icon-button-size(96);
     }
-    &.tb-mat-185 {
-      @include tb-mat-icon-button-size(185);
-    }
   }
 
   .mat-mdc-snack-bar-container {

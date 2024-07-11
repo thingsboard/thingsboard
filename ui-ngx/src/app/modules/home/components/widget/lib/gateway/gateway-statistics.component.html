@@ -32,7 +32,7 @@
       *ngIf="!statisticsKeys.length && !commands.length">
       {{ 'gateway.statistics.statistic-commands-empty' | translate }}
     </mat-error>
-    <button mat-flat-button class="mat-mdc-icon-button tb-mat-185" color="primary" (click)="navigateToStatistics()">
+    <button mat-flat-button class="mat-mdc-button" color="primary" (click)="navigateToStatistics()">
       {{ 'gateway.statistics.statistics-button' | translate }}
     </button>
     <mat-form-field class="mat-block" *ngIf="commandObj">
