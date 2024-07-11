@@ -27,7 +27,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.client.reactive.ReactorClientHttpConnector;
-import org.springframework.web.client.RestClientResponseException;
 import org.springframework.web.reactive.function.BodyInserters;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClient.RequestBodySpec;
@@ -44,13 +43,11 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import reactor.netty.http.client.HttpClient;
-import reactor.netty.resources.ConnectionProvider;
 import reactor.netty.transport.ProxyProvider;
 
 import javax.net.ssl.SSLException;
 import java.net.URI;
 import java.nio.charset.StandardCharsets;
-import java.time.Duration;
 import java.util.Base64;
 import java.util.List;
 import java.util.Map;
@@ -59,8 +56,6 @@ import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 import java.util.function.BiConsumer;
 import java.util.function.Consumer;
-
-import static io.netty.channel.ChannelOption.SO_KEEPALIVE;
 
 @Data
 @Slf4j
