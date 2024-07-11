@@ -59,22 +59,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   ngOnInit() {
     super.ngOnInit();
-    this.entityForm.get('resourceType').valueChanges.pipe(
-      startWith(ResourceType.JS_MODULE),
-      filter(() => this.isAdd),
-      takeUntil(this.destroy$)
-    ).subscribe((type) => {
-      if (type === this.resourceType.LWM2M_MODEL) {
-        this.entityForm.get('title').disable({emitEvent: false});
-        this.entityForm.patchValue({title: ''}, {emitEvent: false});
-      } else {
-        this.entityForm.get('title').enable({emitEvent: false});
-      }
-      this.entityForm.patchValue({
-        data: null,
-        fileName: null
-      }, {emitEvent: false});
-    });
+    this.observeResourceTypeChange();
   }
 
   ngOnDestroy() {
@@ -152,5 +137,26 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
+  }
+
+  private observeResourceTypeChange(): void {
+    this.entityForm.get('resourceType').valueChanges.pipe(
+      startWith(ResourceType.JS_MODULE),
+      filter(() => this.isAdd),
+      takeUntil(this.destroy$)
+    ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
+  }
+
+  private onResourceTypeChange(type: ResourceType): void {
+    if (type === this.resourceType.LWM2M_MODEL) {
+      this.entityForm.get('title').disable({emitEvent: false});
+      this.entityForm.patchValue({title: ''}, {emitEvent: false});
+    } else {
+      this.entityForm.get('title').enable({emitEvent: false});
+    }
+    this.entityForm.patchValue({
+      data: null,
+      fileName: null
+    }, {emitEvent: false});
   }
 }
