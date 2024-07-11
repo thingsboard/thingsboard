@@ -17,7 +17,7 @@
 -->
 <div class="statistics-container" fxLayout="row" fxLayout.lt-md="column">
   <mat-card [formGroup]="statisticForm" *ngIf="!general">
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <mat-label>{{ 'gateway.statistics.statistic' | translate }}</mat-label>
       <mat-select formControlName="statisticKey">
         <mat-option *ngFor="let key of statisticsKeys" [value]="key">
@@ -32,9 +32,11 @@
       *ngIf="!statisticsKeys.length && !commands.length">
       {{ 'gateway.statistics.statistic-commands-empty' | translate }}
     </mat-error>
-    <button mat-flat-button class="mat-mdc-button" color="primary" (click)="navigateToStatistics()">
-      {{ 'gateway.statistics.statistics-button' | translate }}
-    </button>
+    <div>
+      <button mat-flat-button color="primary" (click)="navigateToStatistics()">
+        {{ 'gateway.statistics.statistics-button' | translate }}
+      </button>
+    </div>
     <mat-form-field class="mat-block" *ngIf="commandObj">
       <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
       <input matInput [value]="commandObj.command" disabled>

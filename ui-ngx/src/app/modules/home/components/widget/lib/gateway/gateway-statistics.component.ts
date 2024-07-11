@@ -32,7 +32,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
-import {deepClone} from "@core/utils";
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-statistics',
