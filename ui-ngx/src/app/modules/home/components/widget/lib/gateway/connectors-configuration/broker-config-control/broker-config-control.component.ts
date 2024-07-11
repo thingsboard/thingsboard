@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -72,6 +72,7 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder,
+              private cdr: ChangeDetectorRef,
               private translate: TranslateService) {
     this.brokerConfigFormGroup = this.fb.group({
       name: ['', []],
@@ -119,7 +120,13 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(brokerConfig: BrokerConfig): void {
-    this.brokerConfigFormGroup.patchValue(brokerConfig, {emitEvent: false});
+    const brokerConfigState = {
+      ...brokerConfig,
+      version: brokerConfig.version || 5,
+      clientId: brokerConfig.clientId || 'tb_gw_' + generateSecret(5),
+    };
+    this.brokerConfigFormGroup.reset(brokerConfigState, {emitEvent: false});
+    this.cdr.markForCheck();
   }
 
   validate(): ValidationErrors | null {
