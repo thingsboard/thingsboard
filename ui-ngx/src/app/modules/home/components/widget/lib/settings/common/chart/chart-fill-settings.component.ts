@@ -55,7 +55,7 @@ export class ChartFillSettingsComponent implements OnInit, ControlValueAccessor 
   disabled: boolean;
 
   @Input()
-  rowTitle = 'widgets.chart.fill';
+  titleText = 'widgets.chart.fill';
 
   @Input()
   fillNoneTitle = 'widgets.chart.fill-type-none';
