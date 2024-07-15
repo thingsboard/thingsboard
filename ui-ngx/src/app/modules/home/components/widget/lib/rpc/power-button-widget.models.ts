@@ -982,7 +982,7 @@ class SimplifiedPowerPowerButtonShape extends SimplifiedVolumePowerButtonShape {
   }
 }
 
-  class OutlinedVolumePowerButtonShape extends PowerButtonShape {
+class OutlinedVolumePowerButtonShape extends PowerButtonShape {
   private outerBorder: Circle;
   private outerBorderMask: Circle;
   private outerBorderGradient: Gradient;
