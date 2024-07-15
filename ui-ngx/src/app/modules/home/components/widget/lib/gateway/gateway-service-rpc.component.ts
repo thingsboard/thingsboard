@@ -75,7 +75,7 @@ export class GatewayServiceRPCComponent implements OnInit {
   private subscriptionOptions: WidgetSubscriptionOptions = {
     callbacks: {
       onDataUpdated: () => this.ctx.ngZone.run(() => {
-        this.updateTemplates()
+        this.updateTemplates();
       }),
       onDataUpdateError: (subscription, e) => this.ctx.ngZone.run(() => {
         this.onDataUpdateError(e);
@@ -114,7 +114,7 @@ export class GatewayServiceRPCComponent implements OnInit {
       this.ctx.subscriptionApi.createSubscriptionFromInfo(widgetType.latest, subscriptionInfo,
         this.subscriptionOptions, false, true).subscribe(subscription => {
         this.subscription = subscription;
-      })
+      });
     }
   }
 
@@ -127,7 +127,7 @@ export class GatewayServiceRPCComponent implements OnInit {
     this.ctx.controlApi.sendTwoWayCommand(commandPrefix + command, params, formValues.time).subscribe({
       next: resp => {
         this.resultTime = new Date().getTime();
-        this.commandForm.get('result').setValue(JSON.stringify(resp))
+        this.commandForm.get('result').setValue(JSON.stringify(resp));
       },
       error: error => {
         this.resultTime = new Date().getTime();
@@ -173,15 +173,13 @@ export class GatewayServiceRPCComponent implements OnInit {
           const templateAttribute: RPCTemplate = {
             name: res,
             config: this.commandForm.value.params
-          }
+          };
           const templatesArray = this.templates;
-          const existingIndex = templatesArray.findIndex(template => {
-            return template.name == templateAttribute.name;
-          })
+          const existingIndex = templatesArray.findIndex(template => template.name == templateAttribute.name);
           if (existingIndex > -1) {
-            templatesArray.splice(existingIndex, 1)
+            templatesArray.splice(existingIndex, 1);
           }
-          templatesArray.push(templateAttribute)
+          templatesArray.push(templateAttribute);
           const key = `${this.connectorType}_template`;
           this.attributeService.saveEntityAttributes(
             {
@@ -193,7 +191,7 @@ export class GatewayServiceRPCComponent implements OnInit {
               value: templatesArray
             }]).subscribe(() => {
               this.cd.detectChanges();
-          })
+          });
         }
       }
     );
@@ -206,9 +204,6 @@ export class GatewayServiceRPCComponent implements OnInit {
   private updateTemplates() {
     this.templates = this.subscription.data[0].data[0][1].length ?
       JSON.parse(this.subscription.data[0].data[0][1]) : [];
-    if (this.templates.length && this.commandForm.get('params').value == "{}") {
-      this.commandForm.get('params').patchValue(this.templates[0].config);
-    }
     this.cd.detectChanges();
   }
 

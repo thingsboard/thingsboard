@@ -14,7 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, forwardRef, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import {
+  Component,
+  EventEmitter,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnDestroy,
+  OnInit,
+  Output,
+  SimpleChanges
+} from '@angular/core';
 import {
   ControlValueAccessor,
   FormArray,
@@ -53,8 +63,8 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
-import { takeUntil, tap } from "rxjs/operators";
-import { Subject } from "rxjs";
+import { takeUntil, tap } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-gateway-service-rpc-connector',
@@ -106,7 +116,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   hexOnlyPattern = /^[0-9A-Fa-f ]+$/;
 
   private propagateChange = (v: any) => {
-  }
+  };
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder,
@@ -121,13 +131,13 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
         case ConnectorType.REST:
           value.httpHeaders.forEach(data => {
             httpHeaders[data.headerName] = data.value;
-          })
+          });
           value.httpHeaders = httpHeaders;
           break;
         case ConnectorType.REQUEST:
           value.httpHeaders.forEach(data => {
             httpHeaders[data.headerName] = data.value;
-          })
+          });
           value.httpHeaders = httpHeaders;
           break;
       }
@@ -155,7 +165,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           responseTopicExpression: [{ value: null, disabled: true }, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTimeout: [null, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-        })
+        });
         break;
       case ConnectorType.MODBUS:
         formGroup = this.fb.group({
@@ -165,7 +175,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           value: [null, []],
           address: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]],
           objectsCount: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]]
-        })
+        });
         const valueForm = formGroup.get('value');
         formGroup.get('functionCode').valueChanges.subscribe(value => {
           if (value > 4) {
@@ -175,7 +185,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
             valueForm.setValue(null);
           }
           valueForm.updateValueAndValidity();
-        })
+        });
         break;
       case ConnectorType.BACNET:
         formGroup = this.fb.group({
@@ -185,15 +195,15 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           objectType: [null, []],
           identifier: [null, [Validators.required, Validators.min(1), Validators.pattern(this.numbersOnlyPattern)]],
           propertyId: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
-        })
+        });
         break;
       case ConnectorType.BLE:
         formGroup = this.fb.group({
           methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          characteristicUUID: ["00002A00-0000-1000-8000-00805F9B34FB", [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          characteristicUUID: ['00002A00-0000-1000-8000-00805F9B34FB', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           methodProcessing: [null, [Validators.required]],
           withResponse: [false, []]
-        })
+        });
         break;
       case ConnectorType.CAN:
         formGroup = this.fb.group({
@@ -208,20 +218,20 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           dataAfter: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(this.hexOnlyPattern)]],
           dataInHEX: [null, [Validators.pattern(noLeadTrailSpacesRegex), Validators.pattern(this.hexOnlyPattern)]],
           dataExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]]
-        })
+        });
         break;
       case ConnectorType.FTP:
         formGroup = this.fb.group({
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
-        })
+        });
         break;
       case ConnectorType.OCPP:
         formGroup = this.fb.group({
           methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           withResponse: [false, []]
-        })
+        });
         break;
       case ConnectorType.SOCKET:
         formGroup = this.fb.group({
@@ -229,14 +239,14 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           methodProcessing: [null, [Validators.required]],
           encoding: [SocketEncodings.UTF_8, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           withResponse: [false, []]
-        })
+        });
         break;
       case ConnectorType.XMPP:
         formGroup = this.fb.group({
           methodRPC: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           withResponse: [false, []]
-        })
+        });
         break;
       case ConnectorType.SNMP:
         formGroup = this.fb.group({
@@ -244,7 +254,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           method: [null, [Validators.required]],
           withResponse: [false, []],
           oid: this.fb.array([], [Validators.required])
-        })
+        });
         break;
       case ConnectorType.REST:
         formGroup = this.fb.group({
@@ -257,7 +267,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
           security: [{}, [Validators.required]]
-        })
+        });
         break;
       case ConnectorType.REQUEST:
         formGroup = this.fb.group({
@@ -270,19 +280,19 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           requestValueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseValueExpression: [null, [Validators.pattern(noLeadTrailSpacesRegex)]],
           httpHeaders: this.fb.array([]),
-        })
+        });
         break;
       case ConnectorType.OPCUA:
         formGroup = this.fb.group({
           method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           arguments: this.fb.array([]),
-        })
+        });
         break;
       default:
         formGroup = this.fb.group({
           command: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           params: [{}, [jsonRequired]],
-        })
+        });
     }
     return formGroup;
   }
@@ -299,12 +309,12 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
     oidsFA.removeAt(index);
   }
 
-  addHTTPHeader(value: { headerName: string, value: string } = {headerName: null, value: null}) {
+  addHTTPHeader(value: { headerName: string; value: string } = {headerName: null, value: null}) {
     const headerFA = this.commandForm.get('httpHeaders') as FormArray;
     const formGroup = this.fb.group({
       headerName: [value.headerName, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       value: [value.value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
-    })
+    });
     if (headerFA) {
       headerFA.push(formGroup, {emitEvent: false});
     }
@@ -365,40 +375,40 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   clearFromArrayByName(name: string) {
     const formArray = this.commandForm.get(name) as FormArray;
     while (formArray.length !== 0) {
-      formArray.removeAt(0)
+      formArray.removeAt(0);
     }
   }
 
   writeValue(value: RPCTemplateConfig): void {
-    if (typeof value == "object") {
+    if (typeof value == 'object') {
       value = deepClone(value);
       switch (this.connectorType) {
         case ConnectorType.SNMP:
-          this.clearFromArrayByName("oid");
+          this.clearFromArrayByName('oid');
           value.oid.forEach(value => {
-            this.addSNMPoid(value)
-          })
+            this.addSNMPoid(value);
+          });
           delete value.oid;
           break;
         case ConnectorType.REQUEST:
-          this.clearFromArrayByName("httpHeaders");
+          this.clearFromArrayByName('httpHeaders');
           value.httpHeaders && Object.entries(value.httpHeaders).forEach(httpHeader => {
-            this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string})
-          })
+            this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string});
+          });
           delete value.httpHeaders;
           break;
         case ConnectorType.REST:
-          this.clearFromArrayByName("httpHeaders");
+          this.clearFromArrayByName('httpHeaders');
           value.httpHeaders && Object.entries(value.httpHeaders).forEach(httpHeader => {
-            this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string})
-          })
+            this.addHTTPHeader({headerName: httpHeader[0], value: httpHeader[1] as string});
+          });
           delete value.httpHeaders;
           break;
         case ConnectorType.OPCUA:
-          this.clearFromArrayByName("arguments");
+          this.clearFromArrayByName('arguments');
           value.arguments.forEach(value => {
-            this.addOCPUAArguments(value)
-          })
+            this.addOCPUAArguments(value);
+          });
           delete value.arguments;
           break;
       }

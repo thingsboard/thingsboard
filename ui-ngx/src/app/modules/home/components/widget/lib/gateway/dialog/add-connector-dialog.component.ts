@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import {Component, Inject, OnChanges, OnDestroy, OnInit, ViewChild} from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -34,6 +34,9 @@ import {
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 import { takeUntil, tap } from "rxjs/operators";
+import {
+  GatewayServiceRPCConnectorComponent
+} from "@home/components/widget/lib/gateway/gateway-service-rpc-connector.component";
 
 @Component({
   selector: 'tb-add-connector-dialog',
@@ -137,6 +140,6 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
         }
       }),
       takeUntil(this.destroy$),
-    ).subscribe()
+    ).subscribe();
   }
 }
