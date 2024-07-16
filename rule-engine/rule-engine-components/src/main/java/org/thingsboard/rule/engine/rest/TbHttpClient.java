@@ -118,8 +118,8 @@ public class TbHttpClient {
                             o.username(proxyUser).password(u -> proxyPassword);
                         }
                     });
-                    SslContext sslContext = SslContextBuilder.forClient().build();
-                    httpClient.secure(t -> t.sslContext(sslContext));
+                    SslContext sslContext = config.getCredentials().initSslContext();
+                    httpClient = httpClient.secure(t -> t.sslContext(sslContext));
                 }
             } else if (!config.isUseSimpleClientHttpFactory()) {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
