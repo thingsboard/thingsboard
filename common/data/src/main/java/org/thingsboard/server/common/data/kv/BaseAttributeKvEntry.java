@@ -16,11 +16,14 @@
 package org.thingsboard.server.common.data.kv;
 
 import jakarta.validation.Valid;
+import lombok.Data;
+
 import java.util.Optional;
 
 /**
  * @author Andrew Shvayka
  */
+@Data
 public class BaseAttributeKvEntry implements AttributeKvEntry {
 
     private static final long serialVersionUID = -6460767583563159407L;
@@ -45,11 +48,6 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
 
     public BaseAttributeKvEntry(long lastUpdateTs, KvEntry kv) {
         this(kv, lastUpdateTs);
-    }
-
-    @Override
-    public long getLastUpdateTs() {
-        return lastUpdateTs;
     }
 
     @Override
@@ -97,35 +95,4 @@ public class BaseAttributeKvEntry implements AttributeKvEntry {
         return kv.getValue();
     }
 
-    @Override
-    public Long getVersion() {
-        return version;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-
-        BaseAttributeKvEntry that = (BaseAttributeKvEntry) o;
-
-        if (lastUpdateTs != that.lastUpdateTs) return false;
-        return kv.equals(that.kv);
-
-    }
-
-    @Override
-    public int hashCode() {
-        int result = (int) (lastUpdateTs ^ (lastUpdateTs >>> 32));
-        result = 31 * result + kv.hashCode();
-        return result;
-    }
-
-    @Override
-    public String toString() {
-        return "BaseAttributeKvEntry{" +
-                "lastUpdateTs=" + lastUpdateTs +
-                ", kv=" + kv +
-                '}';
-    }
 }

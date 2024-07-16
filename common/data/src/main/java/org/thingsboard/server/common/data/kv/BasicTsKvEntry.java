@@ -16,9 +16,12 @@
 package org.thingsboard.server.common.data.kv;
 
 import jakarta.validation.Valid;
+import lombok.Data;
+
 import java.util.Objects;
 import java.util.Optional;
 
+@Data
 public class BasicTsKvEntry implements TsKvEntry {
     private static final int MAX_CHARS_PER_DATA_POINT = 512;
     protected final long ts;
@@ -80,33 +83,6 @@ public class BasicTsKvEntry implements TsKvEntry {
     }
 
     @Override
-    public long getTs() {
-        return ts;
-    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof BasicTsKvEntry)) return false;
-        BasicTsKvEntry that = (BasicTsKvEntry) o;
-        return getTs() == that.getTs() &&
-                Objects.equals(kv, that.kv);
-    }
-
-    @Override
-    public int hashCode() {
-        return Objects.hash(getTs(), kv);
-    }
-
-    @Override
-    public String toString() {
-        return "BasicTsKvEntry{" +
-                "ts=" + ts +
-                ", kv=" + kv +
-                '}';
-    }
-
-    @Override
     public String getValueAsString() {
         return kv.getValueAsString();
     }
@@ -127,8 +103,4 @@ public class BasicTsKvEntry implements TsKvEntry {
         return Math.max(1, (length + MAX_CHARS_PER_DATA_POINT - 1) / MAX_CHARS_PER_DATA_POINT);
     }
 
-    @Override
-    public Long getVersion() {
-        return version;
-    }
 }

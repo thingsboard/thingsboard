@@ -40,11 +40,10 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
     @Override
     public void put(K key, V value) {
         Long version = value != null ? value.getVersion() : 0;
-        put(key, value, version);
+        doPut(key, value, version);
     }
 
-    @Override
-    public void put(K key, V value, Long version) {
+    private void doPut(K key, V value, Long version) {
         if (version == null) {
             return;
         }
@@ -81,7 +80,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
         if (version == null) {
             return;
         }
-        put(key, null, version);
+        doPut(key, null, version);
     }
 
     @Override

@@ -39,7 +39,7 @@ public class TsLatestRedisCache extends VersionedRedisTbCache<TsLatestCacheKey, 
         super(CacheConstants.TS_LATEST_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbRedisSerializer<>() {
             @Override
             public byte[] serialize(TsKvEntry tsKvEntry) throws SerializationException {
-                return KvProtoUtil.toTsKvProto(tsKvEntry.getTs(), tsKvEntry).toByteArray();
+                return KvProtoUtil.toTsKvProto(tsKvEntry.getTs(), tsKvEntry, tsKvEntry.getVersion()).toByteArray();
             }
 
             @Override

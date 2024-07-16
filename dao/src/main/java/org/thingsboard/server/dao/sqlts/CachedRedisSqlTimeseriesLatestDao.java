@@ -29,6 +29,7 @@ import org.thingsboard.server.cache.VersionedTbCache;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvLatestRemovingResult;
@@ -66,9 +67,9 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
     @Override
     public ListenableFuture<Long> saveLatest(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry) {
         ListenableFuture<Long> future = sqlDao.saveLatest(tenantId, entityId, tsKvEntry);
-        future = Futures.transform(future, x -> {
-                    cache.put(new TsLatestCacheKey(entityId, tsKvEntry.getKey()), tsKvEntry, x);
-                    return x;
+        future = Futures.transform(future, version -> {
+                    cache.put(new TsLatestCacheKey(entityId, tsKvEntry.getKey()), new BasicTsKvEntry(tsKvEntry.getTs(), ((BasicTsKvEntry) tsKvEntry).getKv(), version));
+                    return version;
                 },
                 cacheExecutorService);
         if (log.isTraceEnabled()) {
@@ -94,8 +95,9 @@ public class CachedRedisSqlTimeseriesLatestDao extends BaseAbstractSqlTimeseries
                     if (x.isRemoved()) {
                         TsLatestCacheKey key = new TsLatestCacheKey(entityId, query.getKey());
                         Long version = x.getVersion();
-                        if (x.getData() != null) {
-                            cache.put(key, x.getData(), version);
+                        TsKvEntry newTsKvEntry = x.getData();
+                        if (newTsKvEntry != null) {
+                            cache.put(key, new BasicTsKvEntry(newTsKvEntry.getTs(), ((BasicTsKvEntry) newTsKvEntry).getKv(), version));
                         } else {
                             cache.evict(key, version);
                         }

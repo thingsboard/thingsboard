@@ -34,6 +34,7 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
+import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.stats.DefaultCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -159,7 +160,7 @@ public class CachedAttributesService implements AttributesService {
                         log.trace("[{}][{}] Lookup attributes from db: {}", entityId, scope, notFoundAttributeKeys);
                         List<AttributeKvEntry> result = attributesDao.find(tenantId, entityId, scope, notFoundAttributeKeys);
                         for (AttributeKvEntry foundInDbAttribute : result) {
-                            put(entityId, scope, foundInDbAttribute, foundInDbAttribute.getVersion());
+                            put(entityId, scope, foundInDbAttribute);
                             notFoundAttributeKeys.remove(foundInDbAttribute.getKey());
                         }
                         for (String key : notFoundAttributeKeys) {
@@ -218,8 +219,7 @@ public class CachedAttributesService implements AttributesService {
     public ListenableFuture<Long> save(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
         validate(entityId, scope);
         AttributeUtils.validate(attribute, valueNoXssValidation);
-        ListenableFuture<Long> future = attributesDao.save(tenantId, entityId, scope, attribute);
-        return Futures.transform(future, version -> put(entityId, scope, attribute, version), cacheExecutor);
+        return doSave(tenantId, entityId, scope, attribute);
     }
 
     @Override
@@ -234,19 +234,25 @@ public class CachedAttributesService implements AttributesService {
 
         List<ListenableFuture<Long>> futures = new ArrayList<>(attributes.size());
         for (var attribute : attributes) {
-            ListenableFuture<Long> future = attributesDao.save(tenantId, entityId, scope, attribute);
-            futures.add(Futures.transform(future, version -> put(entityId, scope, attribute, version), cacheExecutor));
+            futures.add(doSave(tenantId, entityId, scope, attribute));
         }
 
         return Futures.allAsList(futures);
     }
 
-    private Long put(EntityId entityId, AttributeScope scope, AttributeKvEntry attribute, Long version) {
+    private ListenableFuture<Long> doSave(TenantId tenantId, EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
+        ListenableFuture<Long> future = attributesDao.save(tenantId, entityId, scope, attribute);
+         return Futures.transform(future, version -> {
+            put(entityId, scope, new BaseAttributeKvEntry(((BaseAttributeKvEntry)attribute).getKv(), attribute.getLastUpdateTs(), version));
+            return version;
+        }, cacheExecutor);
+    }
+
+    private void put(EntityId entityId, AttributeScope scope, AttributeKvEntry attribute) {
         String key = attribute.getKey();
         log.trace("[{}][{}][{}] Before cache put: {}", entityId, scope, key, attribute);
-        cache.put(new AttributeCacheKey(scope, entityId, key), attribute, version);
+        cache.put(new AttributeCacheKey(scope, entityId, key), attribute);
         log.trace("[{}][{}][{}] after cache put.", entityId, scope, key);
-        return version;
     }
 
     @Override

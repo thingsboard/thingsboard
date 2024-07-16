@@ -137,7 +137,12 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
                 toTsEntry(TS, booleanKvEntry));
         Collections.sort(expected, Comparator.comparing(KvEntry::getKey));
 
-        assertEquals(expected, tsList);
+        for (int i = 0; i < expected.size(); i++) {
+            var expectedEntry = expected.get(i);
+            var actualEntry = tsList.get(i);
+            equalsIgnoreVersion(expectedEntry, actualEntry);
+
+        }
     }
 
     private EntityView saveAndCreateEntityView(DeviceId deviceId, List<String> timeseries) {
@@ -160,7 +165,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         List<TsKvEntry> entries = tsService.findLatest(tenantId, deviceId, Collections.singleton(STRING_KEY)).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entries.get(0));
+        equalsIgnoreVersion(toTsEntry(TS, stringKvEntry), entries.get(0));
     }
 
     @Test
@@ -176,7 +181,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertThat(entryOpt).isNotNull().isPresent();
-        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entryOpt.orElse(null));
+        equalsIgnoreVersion(toTsEntry(TS, stringKvEntry), entryOpt.get());
     }
 
     @Test
@@ -186,7 +191,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertThat(entryOpt).isNotNull().isPresent();
-        Assert.assertEquals(toTsEntry(TS, new StringDataEntry(STRING_KEY, "new")), entryOpt.orElse(null));
+        equalsIgnoreVersion(toTsEntry(TS, new StringDataEntry(STRING_KEY, "new")), entryOpt.get());
     }
 
     public void testFindLatestOpt_givenSaveWithSameTSOverwriteTypeAndValue() throws Exception {
@@ -209,7 +214,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         Optional<TsKvEntry> entryOpt = tsService.findLatest(tenantId, deviceId, STRING_KEY).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         assertThat(entryOpt).isNotNull().isPresent();
-        Assert.assertEquals(toTsEntry(TS, stringKvEntry), entryOpt.get());
+        equalsIgnoreVersion(toTsEntry(TS, stringKvEntry), entryOpt.get());
     }
 
     @Test
@@ -239,7 +244,7 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
 
         List<TsKvEntry> entries = tsService.findLatest(tenantId, deviceId, Collections.singleton(STRING_KEY)).get(MAX_TIMEOUT, TimeUnit.SECONDS);
         Assert.assertEquals(1, entries.size());
-        Assert.assertEquals(toTsEntry(TS - 1, stringKvEntry), entries.get(0));
+        equalsIgnoreVersion(toTsEntry(TS - 1, stringKvEntry), entries.get(0));
     }
 
     @Test
@@ -794,5 +799,10 @@ public abstract class BaseTimeseriesServiceTest extends AbstractServiceTest {
         return new BasicTsKvEntry(ts, entry);
     }
 
+    private static void equalsIgnoreVersion(TsKvEntry expected, TsKvEntry actual) {
+        assertEquals(expected.getKey(), actual.getKey());
+        assertEquals(expected.getValue(), actual.getValue());
+        assertEquals(expected.getTs(), actual.getTs());
+    }
 
 }

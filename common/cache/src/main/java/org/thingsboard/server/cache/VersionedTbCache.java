@@ -44,8 +44,6 @@ public interface VersionedTbCache<K extends Serializable, V extends Serializable
 
     void put(K key, V value);
 
-    void put(K key, V value, Long version);
-
     void evict(K key);
 
     void evict(Collection<K> keys);
