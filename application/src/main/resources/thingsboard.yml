@@ -1392,6 +1392,8 @@ swagger:
     url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
   # The version of the API doc to display. Default to the package version.
   version: "${SWAGGER_VERSION:}"
+  # The group name (definition) on the API doc UI page.
+  group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
 
 # Queue configuration parameters
 queue:

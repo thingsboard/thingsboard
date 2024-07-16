@@ -26,14 +26,15 @@
             <mat-expansion-panel class="tb-settings" [expanded]="last">
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>
-                  <div class="title-container">{{ keyControl.get('key').value }}</div>
-                    {{ '-' }}
-                  <div class="title-container">{{ valueTitle(keyControl.get('value').value) }}</div>
+                  <div class="title-container" *ngIf="keysType !== MappingKeysType.RPC_METHODS">
+                    {{ keyControl.get('key').value }}{{ '-' }}
+                  </div>
+                  <div class="title-container">{{ valueTitle(keyControl) }}</div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
                 <div class="tb-form-panel no-border no-padding"
-                     *ngIf="keysType !== MappingKeysType.CUSTOM; else customPanel">
+                     *ngIf="keysType !== MappingKeysType.CUSTOM && keysType !== MappingKeysType.RPC_METHODS">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>gateway.platform-side</div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
@@ -53,12 +54,6 @@
                                     class="tb-error">
                             warning
                           </mat-icon>
-                          <div matSuffix
-                               class="see-example"
-                               [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
-                               tb-help-popup-placement="left"
-                               [tb-help-popup-style]="{maxWidth: '970px'}">
-                          </div>
                         </mat-form-field>
                       </div>
                     </div>
@@ -71,18 +66,25 @@
                         <mat-select name="valueType" formControlName="type">
                           <mat-select-trigger *ngIf="!rawData">
                             <div class="tb-flex align-center">
-                              <mat-icon class="tb-mat-18" [svgIcon]="valueTypes.get(keyControl.get('type').value)?.icon">
+                              <mat-icon *ngIf="valueTypes.get(keyControl.get('type').value)?.icon" class="tb-mat-18"
+                                        [svgIcon]="valueTypes.get(keyControl.get('type').value)?.icon">
                               </mat-icon>
-                              <span>
-                                {{ (rawData ? 'gateway.raw' : valueTypes.get(keyControl.get('type').value)?.name) | translate}}
+                              <span *ngIf="!rawData; else rawText">
+                                {{ (valueTypes.get(keyControl.get('type').value)?.name || valueTypes.get(keyControl.get('type').value)) | translate }}
                               </span>
+                              <ng-template #rawText>
+                                <span>{{ 'gateway.raw' | translate }}</span>
+                              </ng-template>
                             </div>
                           </mat-select-trigger>
                           <ng-container *ngIf="!rawData; else rawOption">
                             <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
-                              <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueType).icon }}">
+                              <mat-icon *ngIf="valueTypes.get(valueType).icon" class="tb-mat-20"
+                                        svgIcon="{{ valueTypes.get(valueType).icon }}">
                               </mat-icon>
-                              <span>{{ valueTypes.get(valueType).name | translate }}</span>
+                              <span>
+                                {{ valueTypes.get(valueType).name || valueTypes.get(valueType) | translate }}
+                              </span>
                             </mat-option>
                           </ng-container>
                           <ng-template #rawOption>
@@ -112,7 +114,8 @@
                         </mat-icon>
                         <div matSuffix
                              class="see-example"
-                             [tb-help-popup]="'widget/lib/gateway/expressions_fn'"
+                             *ngIf="this.keysType | getGatewayHelpLink : keyControl.get('type').value : valueTypeKeys"
+                             [tb-help-popup]="this.keysType | getGatewayHelpLink : keyControl.get('type').value : valueTypeKeys"
                              tb-help-popup-placement="left"
                              [tb-help-popup-style]="{maxWidth: '970px'}">
                         </div>
@@ -120,7 +123,7 @@
                     </div>
                   </div>
                 </div>
-                <ng-template #customPanel>
+                <div class="tb-form-panel no-border no-padding" *ngIf="keysType === MappingKeysType.CUSTOM">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                     <div class="fixed-title-width tb-required" translate>gateway.key</div>
                     <div class="tb-flex no-gap">
@@ -152,7 +155,41 @@
                       </mat-icon>
                     </mat-form-field>
                   </div>
-                </ng-template>
+                </div>
+                <div class="tb-form-panel no-border no-padding" *ngIf="keysType === MappingKeysType.RPC_METHODS">
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method-name' | translate }}" translate>
+                      gateway.method-name
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="method" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.method-required') | translate"
+                                  *ngIf="keyControl.get('method').hasError('required') && keyControl.get('method').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-panel stroked tb-flex">
+                    <mat-expansion-panel class="tb-settings">
+                      <mat-expansion-panel-header fxLayout="row wrap">
+                        <mat-panel-title>
+                          <div class="title-container" tb-hint-tooltip-icon="{{ 'gateway.hints.arguments' | translate }}">
+                            {{ 'gateway.arguments' | translate }}{{' (' + keyControl.get('arguments').value?.length + ')'}}
+                          </div>
+                        </mat-panel-title>
+                      </mat-expansion-panel-header>
+                      <ng-template matExpansionPanelContent>
+                        <tb-type-value-panel formControlName="arguments"></tb-type-value-panel>
+                      </ng-template>
+                    </mat-expansion-panel>
+                  </div>
+                </div>
               </ng-template>
             </mat-expansion-panel>
           </ng-container>

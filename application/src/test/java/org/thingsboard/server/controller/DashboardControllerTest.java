@@ -27,13 +27,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -48,6 +51,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -545,6 +549,33 @@ public class DashboardControllerTest extends AbstractControllerTest {
     public void testDeleteDashboardExceptionWithRelationsTransactional() throws Exception {
         DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+    }
+
+    @Test
+    public void whenDeletingDashboard_ifReferencedByDeviceProfile_thenReturnError() throws Exception {
+        Dashboard dashboard = createDashboard("test");
+        DeviceProfile deviceProfile = createDeviceProfile("test");
+        deviceProfile.setDefaultDashboardId(dashboard.getId());
+        doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        String response = doDelete("/api/dashboard/" + dashboard.getUuidId()).andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+        String errorMessage = JacksonUtil.toJsonNode(response).get("message").asText();
+        assertThat(errorMessage).containsIgnoringCase("referenced by a device profile");
+    }
+
+    @Test
+    public void whenDeletingDashboard_ifReferencedByAssetProfile_thenReturnError() throws Exception {
+        Dashboard dashboard = createDashboard("test");
+        AssetProfile assetProfile = createAssetProfile("test");
+        assetProfile.setDefaultDashboardId(dashboard.getId());
+        doPost("/api/assetProfile", assetProfile, AssetProfile.class);
+
+        String response = doDelete("/api/dashboard/" + dashboard.getUuidId()).andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+        String errorMessage = JacksonUtil.toJsonNode(response).get("message").asText();
+        assertThat(errorMessage).containsIgnoringCase("referenced by an asset profile");
+
     }
 
     private Dashboard createDashboard(String title) {

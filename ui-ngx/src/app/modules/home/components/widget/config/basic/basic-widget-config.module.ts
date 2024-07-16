@@ -139,6 +139,9 @@ import {
 import {
   LabelValueCardBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/label-value-card-basic-config.component';
+import {
+  UnreadNotificationBasicConfigComponent
+} from '@home/components/widget/config/basic/cards/unread-notification-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -185,7 +188,8 @@ import {
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
-    LabelValueCardBasicConfigComponent
+    LabelValueCardBasicConfigComponent,
+    UnreadNotificationBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -234,7 +238,8 @@ import {
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
-    LabelValueCardBasicConfigComponent
+    LabelValueCardBasicConfigComponent,
+    UnreadNotificationBasicConfigComponent
   ]
 })
 export class BasicWidgetConfigModule {
@@ -277,5 +282,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-digital-simple-gauge-basic-config': DigitalSimpleGaugeBasicConfigComponent,
   'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
   'tb-label-card-basic-config': LabelCardBasicConfigComponent,
-  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent
+  'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent,
+  'tb-unread-notification-basic-config': UnreadNotificationBasicConfigComponent
 };

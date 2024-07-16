@@ -204,6 +204,9 @@ public class EdgeEventSourcingListener {
                     return false;
             }
         }
+        if (entity instanceof OAuth2Info oAuth2Info) {
+            return oAuth2Info.isEdgeEnabled();
+        }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;
     }

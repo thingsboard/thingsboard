@@ -141,8 +141,8 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   writeValue(value: ColorGradientSettings): void {
     if (isDefinedAndNotNull(value)) {
       this.gradientFormGroup.get('advancedMode').patchValue(value.advancedMode, {emitEvent: false});
-      this.gradientFormGroup.get('minValue').patchValue(isFinite(value.minValue) ? value.minValue : this.minValue, {emitEvent: false});
-      this.gradientFormGroup.get('maxValue').patchValue(isFinite(value.maxValue) ? value.maxValue : this.maxValue, {emitEvent: false});
+      this.gradientFormGroup.get('minValue').patchValue(isFinite(this.minValue) ? this.minValue : value.minValue, {emitEvent: false});
+      this.gradientFormGroup.get('maxValue').patchValue(isFinite(this.maxValue) ? this.maxValue : value.maxValue, {emitEvent: false});
       if (value?.gradient?.length) {
         this.gradientFormGroup.get('gradient').get('start').patchValue(value.gradient[0], {emitEvent: false});
         this.gradientFormGroup.get('gradient').get('end').patchValue(value.gradient[value.gradient.length - 1], {emitEvent: false});
