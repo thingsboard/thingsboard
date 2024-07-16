@@ -79,7 +79,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         try {
             entity = doSave(entity, isNew);
         } catch (OptimisticLockException e) {
-            throw new EntityVersionMismatchException("The entity was already changed by someone else", e);
+            throw new EntityVersionMismatchException((getEntityType() != null ? getEntityType().getNormalName() : "Entity") + " was already changed by someone else", e);
         }
         return DaoUtil.getData(entity);
     }
@@ -145,7 +145,9 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Override
     @Transactional
     public void removeById(TenantId tenantId, UUID id) {
-        getRepository().deleteById(id);
+        JpaRepository<E, UUID> repository = getRepository();
+        repository.deleteById(id);
+        repository.flush();
         log.debug("Remove request: {}", id);
     }
 
@@ -153,6 +155,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     public void removeAllByIds(Collection<UUID> ids) {
         JpaRepository<E, UUID> repository = getRepository();
         ids.forEach(repository::deleteById);
+        repository.flush();
     }
 
     @Override

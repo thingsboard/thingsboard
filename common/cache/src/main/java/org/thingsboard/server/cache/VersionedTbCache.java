@@ -27,11 +27,17 @@ public interface VersionedTbCache<K extends Serializable, V extends Serializable
     TbCacheValueWrapper<V> get(K key);
 
     default V get(K key, Supplier<V> supplier) {
+        return get(key, supplier, true);
+    }
+
+    default V get(K key, Supplier<V> supplier, boolean putToCache) {
         return Optional.ofNullable(get(key))
                 .map(TbCacheValueWrapper::get)
                 .orElseGet(() -> {
                     V value = supplier.get();
-                    put(key, value);
+                    if (putToCache) {
+                        put(key, value);
+                    }
                     return value;
                 });
     }

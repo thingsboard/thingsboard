@@ -77,9 +77,14 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
 
     @Override
     public TbCacheValueWrapper<V> get(K key) {
+        return get(key, false);
+    }
+
+    @Override
+    public TbCacheValueWrapper<V> get(K key, boolean transactionMode) {
         try (var connection = connectionFactory.getConnection()) {
             byte[] rawKey = getRawKey(key);
-            byte[] rawValue = doGet(connection, rawKey);
+            byte[] rawValue = doGet(connection, rawKey, transactionMode);
             if (rawValue == null || rawValue.length == 0) {
                 return null;
             } else if (Arrays.equals(rawValue, BINARY_NULL_VALUE)) {
@@ -96,18 +101,18 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         }
     }
 
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey) {
+    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
         return connection.stringCommands().get(rawKey);
     }
 
     @Override
     public void put(K key, V value) {
         try (var connection = connectionFactory.getConnection()) {
-            put(key, value, connection);
+            put(key, value, connection, false);
         }
     }
 
-    public void put(K key, V value, RedisConnection connection) {
+    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
         put(connection, key, value, RedisStringCommands.SetOption.UPSERT);
     }
 

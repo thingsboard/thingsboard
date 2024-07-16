@@ -88,7 +88,10 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     @Override
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey) {
+    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
+        if (transactionMode) {
+            return super.doGet(connection, rawKey, true);
+        }
         return connection.stringCommands().getRange(rawKey, VERSION_SIZE, VALUE_END_OFFSET);
     }
 
@@ -104,7 +107,11 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     @Override
-    public void put(K key, V value, RedisConnection connection) {
+    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
+        if (transactionMode) {
+            super.put(key, value, connection, true); // because scripting commands are not supported in transaction mode
+            return;
+        }
         Long version = value != null ? value.getVersion() : 0;
         byte[] rawKey = getRawKey(key);
         doPut(rawKey, value, version, cacheTtl, connection);
