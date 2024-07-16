@@ -39,6 +39,8 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Function;
+import java.util.function.Supplier;
 
 @Slf4j
 public abstract class RedisTbTransactionalCache<K extends Serializable, V extends Serializable> implements TbTransactionalCache<K, V> {
@@ -175,6 +177,14 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
     public TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys) {
         RedisConnection connection = watch(keys.stream().map(this::getRawKey).toArray(byte[][]::new));
         return new RedisTbCacheTransaction<>(this, connection);
+    }
+
+    @Override
+    public <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
+        if (!cacheEnabled) {
+            return dbCall.get();
+        }
+        return TbTransactionalCache.super.getAndPutInTransaction(key, dbCall, cacheValueToResult, dbValueToCacheValue, cacheNullValue);
     }
 
     private RedisConnection getConnection(byte[] rawKey) {
