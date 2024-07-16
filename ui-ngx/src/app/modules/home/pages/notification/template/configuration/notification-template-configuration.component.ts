@@ -95,9 +95,10 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     branding: false
   };
 
-  private propagateChange = (v: any) => { };
+  private propagateChange = null;
   private readonly destroy$ = new Subject<void>();
   private expendedBlocks: NotificationDeliveryMethod[];
+  private propagateChangePending = false;
 
   constructor(private fb: FormBuilder,
               private translate: TranslateService) {
@@ -105,7 +106,7 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
     this.templateConfigurationForm.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
-      this.propagateChange(value);
+      this.updateModel(value);
     });
   }
 
@@ -129,6 +130,12 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
 
   registerOnChange(fn: any): void {
     this.propagateChange = fn;
+    if (this.propagateChangePending) {
+      this.propagateChangePending = false;
+      Promise.resolve().then(() => {
+        this.templateConfigurationForm.updateValueAndValidity();
+      });
+    }
   }
 
   registerOnTouched(fn: any): void {
@@ -162,6 +169,14 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
 
   expandedForm(name: NotificationDeliveryMethod): boolean {
     return this.expendedBlocks.includes(name);
+  }
+
+  private updateModel(value: Partial<DeliveryMethodsTemplates>) {
+    if (this.propagateChange) {
+      this.propagateChange(value);
+    } else {
+      this.propagateChangePending = true;
+    }
   }
 
   private updateExpandedForm() {

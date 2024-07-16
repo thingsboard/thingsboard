@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -89,7 +90,7 @@ public class QueueStatsController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/queueStats", params = {"queueStatsIds"})
     public List<QueueStats> getQueueStatsByIds(
-            @Parameter(description = "A list of queue stats ids, separated by comma ','", required = true)
+            @Parameter(description = "A list of queue stats ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("queueStatsIds") String[] strQueueStatsIds) throws ThingsboardException {
         checkArrayParameter("queueStatsIds", strQueueStatsIds);
         List<QueueStatsId> queueStatsIds = new ArrayList<>();

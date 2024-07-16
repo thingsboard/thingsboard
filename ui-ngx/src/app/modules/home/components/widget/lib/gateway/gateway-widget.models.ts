@@ -17,9 +17,8 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
-import { Validators } from '@angular/forms';
 
-export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
+export const noLeadTrailSpacesRegex = /^(?! )[\S\s]*(?<! )$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -113,11 +112,141 @@ export interface GatewayConnector {
   name: string;
   type: ConnectorType;
   configuration?: string;
-  configurationJson: string | {[key: string]: any};
-  basicConfig?: string | {[key: string]: any};
+  configurationJson: ConnectorBaseConfig;
+  basicConfig?: ConnectorBaseConfig;
   logLevel: string;
   key?: string;
   class?: string;
+  mode?: ConnectorConfigurationModes;
+}
+
+export interface DataMapping {
+  topicFilter: string;
+  QoS: string;
+  converter: Converter;
+}
+
+export interface RequestsMapping {
+  requestType: RequestType;
+  type: string;
+  details: string;
+}
+
+export interface OpcUaMapping {
+  deviceNodePattern?: string;
+  deviceNamePattern?: string;
+  deviceProfileExpression?: string;
+}
+
+export type MappingValue = DataMapping | RequestsMapping | OpcUaMapping;
+
+export interface ServerConfig {
+  name: string;
+  url: string;
+  timeoutInMillis: number;
+  scanPeriodInMillis: number;
+  enableSubscriptions: boolean;
+  subCheckPeriodInMillis: number;
+  showMap: boolean;
+  security: string;
+  identity: ConnectorSecurity;
+}
+
+export interface BrokerConfig {
+  name: string;
+  host: string;
+  port: number;
+  version: number;
+  clientId: string;
+  maxNumberOfWorkers: number;
+  maxMessageNumberPerWorker: number;
+  security: ConnectorSecurity;
+}
+
+export interface ConnectorSecurity {
+  type: SecurityType;
+  username?: string;
+  password?: string;
+  pathToCACert?: string;
+  pathToPrivateKey?: string;
+  pathToClientCert?: string;
+}
+
+export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
+
+export interface ConnectorBaseConfig {
+  mapping?: DeviceConnectorMapping[];
+  dataMapping?: ConverterConnectorMapping[];
+  requestsMapping?: Record<RequestType, RequestMappingData> | RequestMappingData[];
+  server?: ServerConfig;
+  broker?: BrokerConfig;
+  workers?: WorkersConfig;
+}
+
+export interface WorkersConfig {
+  maxNumberOfWorkers: number;
+  maxMessageNumberPerWorker: number;
+}
+
+interface DeviceInfo {
+  deviceNameExpression: string;
+  deviceNameExpressionSource: string;
+  deviceProfileExpression: string;
+  deviceProfileExpressionSource: string;
+}
+
+export interface Attribute {
+  key: string;
+  type: string;
+  value: string;
+}
+
+export interface Timeseries {
+  key: string;
+  type: string;
+  value: string;
+}
+
+interface RpcArgument {
+  type: string;
+  value: number;
+}
+
+export interface RpcMethod {
+  method: string;
+  arguments: RpcArgument[];
+}
+
+export interface AttributesUpdate {
+  key: string;
+  type: string;
+  value: string;
+}
+
+interface Converter {
+  type: ConvertorType;
+  deviceNameJsonExpression: string;
+  deviceTypeJsonExpression: string;
+  sendDataOnlyOnChange: boolean;
+  timeout: number;
+  attributes: Attribute[];
+  timeseries: Timeseries[];
+}
+
+export interface ConverterConnectorMapping {
+  topicFilter: string;
+  subscriptionQos?: string;
+  converter: Converter;
+}
+
+export interface DeviceConnectorMapping {
+  deviceNodePattern: string;
+  deviceNodeSource: string;
+  deviceInfo: DeviceInfo;
+  attributes: Attribute[];
+  timeseries: Timeseries[];
+  rpc_methods: RpcMethod[];
+  attributes_updates: AttributesUpdate[];
 }
 
 export enum ConnectorType {
@@ -125,7 +254,6 @@ export enum ConnectorType {
   MODBUS = 'modbus',
   GRPC = 'grpc',
   OPCUA = 'opcua',
-  OPCUA_ASYNCIO = 'opcua_asyncio',
   BLE = 'ble',
   REQUEST = 'request',
   CAN = 'can',
@@ -145,7 +273,6 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
   [ConnectorType.MODBUS, 'MODBUS'],
   [ConnectorType.GRPC, 'GRPC'],
   [ConnectorType.OPCUA, 'OPCUA'],
-  [ConnectorType.OPCUA_ASYNCIO, 'OPCUA ASYNCIO'],
   [ConnectorType.BLE, 'BLE'],
   [ConnectorType.REQUEST, 'REQUEST'],
   [ConnectorType.CAN, 'CAN'],
@@ -161,15 +288,16 @@ export const GatewayConnectorDefaultTypesTranslatesMap = new Map<ConnectorType, 
 ]);
 
 export interface RPCCommand {
-  command: string,
-  params: any,
-  time: number
+  command: string;
+  params: any;
+  time: number;
 }
 
 
 export enum ModbusCommandTypes {
   Bits = 'bits',
   Bit = 'bit',
+  // eslint-disable-next-line id-blacklist
   String = 'string',
   Bytes = 'bytes',
   Int8 = '8int',
@@ -194,7 +322,7 @@ export const ModbusCodesTranslate = new Map<number, string>([
   [6, 'gateway.rpc.write-single-holding-register'],
   [15, 'gateway.rpc.write-multiple-coils'],
   [16, 'gateway.rpc.write-multiple-holding-registers']
-])
+]);
 
 export enum BACnetRequestTypes {
   WriteProperty = 'writeProperty',
@@ -203,8 +331,8 @@ export enum BACnetRequestTypes {
 
 export const BACnetRequestTypesTranslates = new Map<BACnetRequestTypes, string>([
   [BACnetRequestTypes.WriteProperty, 'gateway.rpc.write-property'],
-  [BACnetRequestTypes.ReadProperty, "gateway.rpc.read-property"]
-])
+  [BACnetRequestTypes.ReadProperty, 'gateway.rpc.read-property']
+]);
 
 export enum BACnetObjectTypes {
   BinaryInput = 'binaryInput',
@@ -222,7 +350,7 @@ export const BACnetObjectTypesTranslates = new Map<BACnetObjectTypes, string>([
   [BACnetObjectTypes.BinaryInput, 'gateway.rpc.binary-input'],
   [BACnetObjectTypes.BinaryValue, 'gateway.rpc.binary-value'],
   [BACnetObjectTypes.AnalogValue, 'gateway.rpc.analog-value']
-])
+]);
 
 export enum BLEMethods {
   WRITE = 'write',
@@ -234,7 +362,7 @@ export const BLEMethodsTranslates = new Map<BLEMethods, string>([
   [BLEMethods.WRITE, 'gateway.rpc.write'],
   [BLEMethods.READ, 'gateway.rpc.read'],
   [BLEMethods.SCAN, 'gateway.rpc.scan'],
-])
+]);
 
 export enum CANByteOrders {
   LITTLE = 'LITTLE',
@@ -247,18 +375,18 @@ export enum SocketMethodProcessings {
 
 export const SocketMethodProcessingsTranslates = new Map<SocketMethodProcessings, string>([
   [SocketMethodProcessings.WRITE, 'gateway.rpc.write']
-])
+]);
 
 export enum SNMPMethods {
   SET = 'set',
-  MULTISET = "multiset",
-  GET = "get",
-  BULKWALK = "bulkwalk",
-  TABLE = "table",
-  MULTIGET = "multiget",
-  GETNEXT = "getnext",
-  BULKGET = "bulkget",
-  WALKS = "walk"
+  MULTISET = 'multiset',
+  GET = 'get',
+  BULKWALK = 'bulkwalk',
+  TABLE = 'table',
+  MULTIGET = 'multiget',
+  GETNEXT = 'getnext',
+  BULKGET = 'bulkget',
+  WALKS = 'walk'
 }
 
 export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
@@ -269,9 +397,9 @@ export const SNMPMethodsTranslations = new Map<SNMPMethods, string>([
   [SNMPMethods.TABLE, 'gateway.rpc.table'],
   [SNMPMethods.MULTIGET, 'gateway.rpc.multi-get'],
   [SNMPMethods.GETNEXT, 'gateway.rpc.get-next'],
-  [SNMPMethods.BULKGET, 'gateway.rpc.bul-kget'],
+  [SNMPMethods.BULKGET, 'gateway.rpc.bulk-get'],
   [SNMPMethods.WALKS, 'gateway.rpc.walk']
-])
+]);
 
 export enum HTTPMethods {
   CONNECT = 'CONNECT',
@@ -300,8 +428,8 @@ export interface RPCTemplateConfig {
 }
 
 export interface SaveRPCTemplateData {
-  config: RPCTemplateConfig,
-  templates: Array<RPCTemplate>
+  config: RPCTemplateConfig;
+  templates: Array<RPCTemplate>;
 }
 
 export interface LogLink {
@@ -318,27 +446,33 @@ export interface GatewayLogData {
 }
 
 export interface AddConnectorConfigData {
-  dataSourceData: Array<any>
+  dataSourceData: Array<any>;
 }
 
 export interface CreatedConnectorConfigData {
-  type: ConnectorType,
-  name: string,
-  logLevel: GatewayLogLevel,
-  useDefaults: boolean,
-  sendDataOnlyOnChange: boolean,
-  configurationJson?: {[key: string]: any}
+  type: ConnectorType;
+  name: string;
+  logLevel: GatewayLogLevel;
+  useDefaults: boolean;
+  sendDataOnlyOnChange: boolean;
+  configurationJson?: {[key: string]: any};
 }
 
 export interface MappingDataKey {
-  key: string,
-  value: any,
-  type: MappingValueType
+  key: string;
+  value: any;
+  type: MappingValueType;
 }
+
+export interface RpcMethodsMapping {
+  method: string;
+  arguments: Array<MappingDataKey>;
+}
+
 export interface MappingInfo {
-  mappingType: MappingType,
-  value: {[key: string]: any},
-  buttonTitle: string
+  mappingType: MappingType;
+  value: {[key: string]: any};
+  buttonTitle: string;
 }
 
 export enum ConnectorConfigurationModes {
@@ -346,17 +480,35 @@ export enum ConnectorConfigurationModes {
   ADVANCED = 'advanced'
 }
 
-export enum BrokerSecurityType {
+export enum SecurityType {
   ANONYMOUS = 'anonymous',
   BASIC = 'basic',
   CERTIFICATES = 'certificates'
 }
 
-export const BrokerSecurityTypeTranslationsMap = new Map<BrokerSecurityType, string>(
+export enum ModeType {
+  NONE = 'None',
+  SIGN = 'Sign',
+  SIGNANDENCRYPT = 'SignAndEncrypt'
+}
+
+export const SecurityTypeTranslationsMap = new Map<SecurityType, string>(
   [
-    [BrokerSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
-    [BrokerSecurityType.BASIC, 'gateway.broker.security-types.basic'],
-    [BrokerSecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
+    [SecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [SecurityType.BASIC, 'gateway.broker.security-types.basic'],
+    [SecurityType.CERTIFICATES, 'gateway.broker.security-types.certificates']
+  ]
+);
+
+export enum RestSecurityType {
+  ANONYMOUS = 'anonymous',
+  BASIC = 'basic',
+}
+
+export const RestSecurityTypeTranslationsMap = new Map<RestSecurityType, string>(
+  [
+    [RestSecurityType.ANONYMOUS, 'gateway.broker.security-types.anonymous'],
+    [RestSecurityType.BASIC, 'gateway.broker.security-types.basic'],
   ]
 );
 
@@ -368,19 +520,22 @@ export const MqttVersions = [
 
 export enum MappingType {
   DATA = 'data',
-  REQUESTS = 'requests'
+  REQUESTS = 'requests',
+  OPCUA = 'OPCua'
 }
 
 export const MappingTypeTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping'],
-    [MappingType.REQUESTS, 'gateway.requests-mapping']
+    [MappingType.REQUESTS, 'gateway.requests-mapping'],
+    [MappingType.OPCUA, 'gateway.data-mapping']
   ]
 );
 
 export const MappingHintTranslationsMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, 'gateway.data-mapping-hint'],
+    [MappingType.OPCUA, 'gateway.opcua-data-mapping-hint'],
     [MappingType.REQUESTS, 'gateway.requests-mapping-hint']
   ]
 );
@@ -415,18 +570,41 @@ export enum SourceTypes {
   CONST = 'constant'
 }
 
+export enum OPCUaSourceTypes {
+  PATH = 'path',
+  IDENTIFIER = 'identifier',
+  CONST = 'constant'
+}
+
 export enum DeviceInfoType {
   FULL = 'full',
   PARTIAL = 'partial'
 }
 
-export const SourceTypeTranslationsMap = new Map<SourceTypes, string>(
+export const SourceTypeTranslationsMap = new Map<SourceTypes | OPCUaSourceTypes, string>(
   [
     [SourceTypes.MSG, 'gateway.source-type.msg'],
     [SourceTypes.TOPIC, 'gateway.source-type.topic'],
     [SourceTypes.CONST, 'gateway.source-type.const'],
+    [OPCUaSourceTypes.PATH, 'gateway.source-type.path'],
+    [OPCUaSourceTypes.IDENTIFIER, 'gateway.source-type.identifier'],
+    [OPCUaSourceTypes.CONST, 'gateway.source-type.const']
   ]
 );
+
+export interface RequestMappingData {
+  requestType: RequestType;
+  requestValue: RequestDataItem;
+}
+
+export interface RequestDataItem {
+  type: string;
+  details: string;
+  requestType: RequestType;
+  methodFilter?: string;
+  attributeFilter?: string;
+  topicFilter?: string;
+}
 
 export enum RequestType {
   CONNECT_REQUEST = 'connectRequests',
@@ -449,14 +627,18 @@ export const RequestTypesTranslationsMap = new Map<RequestType, string>(
 export enum MappingKeysType {
   ATTRIBUTES = 'attributes',
   TIMESERIES = 'timeseries',
-  CUSTOM = 'extensionConfig'
+  CUSTOM = 'extensionConfig',
+  RPC_METHODS = 'rpc_methods',
+  ATTRIBUTES_UPDATES = 'attributes_updates'
 }
 
 export const MappingKeysPanelTitleTranslationsMap = new Map<MappingKeysType, string>(
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.attributes'],
     [MappingKeysType.TIMESERIES, 'gateway.timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.keys']
+    [MappingKeysType.CUSTOM, 'gateway.keys'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
+    [MappingKeysType.RPC_METHODS, 'gateway.rpc-methods']
   ]
 );
 
@@ -464,7 +646,9 @@ export const MappingKeysAddKeyTranslationsMap = new Map<MappingKeysType, string>
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.add-attribute'],
     [MappingKeysType.TIMESERIES, 'gateway.add-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.add-key']
+    [MappingKeysType.CUSTOM, 'gateway.add-key'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    [MappingKeysType.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );
 
@@ -472,7 +656,9 @@ export const MappingKeysDeleteKeyTranslationsMap = new Map<MappingKeysType, stri
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.delete-attribute'],
     [MappingKeysType.TIMESERIES, 'gateway.delete-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.delete-key']
+    [MappingKeysType.CUSTOM, 'gateway.delete-key'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
+    [MappingKeysType.RPC_METHODS, 'gateway.delete-rpc-method']
   ]
 );
 
@@ -480,7 +666,9 @@ export const MappingKeysNoKeysTextTranslationsMap = new Map<MappingKeysType, str
   [
     [MappingKeysType.ATTRIBUTES, 'gateway.no-attributes'],
     [MappingKeysType.TIMESERIES, 'gateway.no-timeseries'],
-    [MappingKeysType.CUSTOM, 'gateway.no-keys']
+    [MappingKeysType.CUSTOM, 'gateway.no-keys'],
+    [MappingKeysType.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
+    [MappingKeysType.RPC_METHODS, 'gateway.no-rpc-methods']
   ]
 );
 
@@ -488,7 +676,6 @@ export enum ServerSideRPCType {
   ONE_WAY = 'oneWay',
   TWO_WAY = 'twoWay'
 }
-
 
 export const getDefaultConfig = (resourcesService: ResourcesService, type: string): Observable<any> =>
   resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
@@ -540,3 +727,15 @@ export const DataConversionTranslationsMap = new Map<ConvertorType, string>(
     [ConvertorType.CUSTOM, 'gateway.custom-hint']
   ]
 );
+
+export enum SecurityPolicy {
+  BASIC128 = 'Basic128Rsa15',
+  BASIC256 = 'Basic256',
+  BASIC256SHA = 'Basic256Sha256'
+}
+
+export const SecurityPolicyTypes = [
+  { value: SecurityPolicy.BASIC128, name: 'Basic128RSA15' },
+  { value: SecurityPolicy.BASIC256, name: 'Basic256' },
+  { value: SecurityPolicy.BASIC256SHA, name: 'Basic256SHA256' }
+];

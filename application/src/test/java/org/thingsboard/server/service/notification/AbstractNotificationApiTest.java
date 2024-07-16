@@ -143,6 +143,14 @@ public abstract class AbstractNotificationApiTest extends AbstractControllerTest
         return submitNotificationRequest(targetId, text, 0, deliveryMethods);
     }
 
+    protected NotificationRequest submitNotificationRequest(NotificationType type, NotificationTargetId targetId, String text, NotificationDeliveryMethod... deliveryMethods) {
+        if (deliveryMethods.length == 0) {
+            deliveryMethods = new NotificationDeliveryMethod[]{NotificationDeliveryMethod.WEB};
+        }
+        NotificationTemplate notificationTemplate = createNotificationTemplate(type, DEFAULT_NOTIFICATION_SUBJECT, text, deliveryMethods);
+        return submitNotificationRequest(List.of(targetId), notificationTemplate.getId(), 0);
+    }
+
     protected NotificationRequest submitNotificationRequest(NotificationTargetId targetId, String text, int delayInSec, NotificationDeliveryMethod... deliveryMethods) {
         return submitNotificationRequest(List.of(targetId), text, delayInSec, deliveryMethods);
     }

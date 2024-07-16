@@ -36,19 +36,21 @@
 
   <div class="gradient-settings" [ngSwitch]="gradientFormGroup.get('advancedMode').value">
     <ng-template [ngSwitchCase]="false">
-      <div class="gradient" formGroupName="gradient">
+      <div class="gradient">
         <div class="gradient-container gradient-container-start">
           <div translate>widgets.color.gradient-start</div>
           <div class="start-gradient-container">
-            <div class="tb-form-row no-border no-padding" fxHide.xs [fxHide]="!minValue?.toString()?.length">
-              <div class="gradient-text" translate>widgets.color.start-value</div>
+            <div class="tb-form-row no-border no-padding">
+              <div class="gradient-text" fxHide.xs translate>widgets.color.start-value</div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput type="number" min="0" disabled [(ngModel)]="minValue" [ngModelOptions]="{standalone: true}" placeholder="{{ 'widget-config.set' | translate }}">
+                <input matInput type="number" formControlName="minValue" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
             </div>
-            <tb-color-input asBoxInput
-                            formControlName="start">
-            </tb-color-input>
+            <ng-container formGroupName="gradient">
+              <tb-color-input asBoxInput
+                              formControlName="start">
+              </tb-color-input>
+            </ng-container>
           </div>
         </div>
       </div>
@@ -94,19 +96,21 @@
         <mat-icon>add</mat-icon>
       </button>
 
-      <div class="gradient" formGroupName="gradient">
+      <div class="gradient">
         <div class="gradient-container gradient-container-end">
           <div translate>widgets.color.gradient-end</div>
           <div class="end-gradient-container">
-            <div class="tb-form-row no-border no-padding" fxHide.xs [fxHide]="!maxValue?.toString()?.length">
-              <div class="gradient-text" translate>widgets.color.end-value</div>
+            <div class="tb-form-row no-border no-padding">
+              <div class="gradient-text" fxHide.xs translate>widgets.color.end-value</div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-                <input matInput type="number" min="0" disabled [(ngModel)]="maxValue" [ngModelOptions]="{standalone: true}" placeholder="{{ 'widget-config.set' | translate }}">
+                <input matInput type="number" formControlName="maxValue" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
             </div>
-            <tb-color-input asBoxInput
-                            formControlName="end">
-            </tb-color-input>
+            <ng-container formGroupName="gradient">
+              <tb-color-input asBoxInput
+                              formControlName="end">
+              </tb-color-input>
+            </ng-container>
           </div>
         </div>
       </div>

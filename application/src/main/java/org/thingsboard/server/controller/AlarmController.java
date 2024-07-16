@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Content;
 import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
@@ -350,11 +351,11 @@ public class AlarmController extends BaseController {
             @PathVariable(ENTITY_TYPE) String strEntityType,
             @Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable(ENTITY_ID) String strEntityId,
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"})))
             @RequestParam(required = false) String[] statusList,
-            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"CRITICAL", "MAJOR", "MINOR", "WARNING", "INDETERMINATE"}))
+            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"CRITICAL", "MAJOR", "MINOR", "WARNING", "INDETERMINATE"})))
             @RequestParam(required = false) String[] severityList,
-            @Parameter(description = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION)
+            @Parameter(description = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam(required = false) String[] typeList,
             @Parameter(description = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
             @RequestParam(required = false) String assigneeId,
@@ -412,11 +413,11 @@ public class AlarmController extends BaseController {
     @RequestMapping(value = "/v2/alarms", method = RequestMethod.GET)
     @ResponseBody
     public PageData<AlarmInfo> getAllAlarmsV2(
-            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"}))
+            @Parameter(description = ALARM_QUERY_SEARCH_STATUS_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"ANY", "ACTIVE", "CLEARED", "ACK", "UNACK"})))
             @RequestParam(required = false) String[] statusList,
-            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, schema = @Schema(allowableValues = {"CRITICAL", "MAJOR", "MINOR", "WARNING", "INDETERMINATE"}))
+            @Parameter(description = ALARM_QUERY_SEVERITY_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"CRITICAL", "MAJOR", "MINOR", "WARNING", "INDETERMINATE"})))
             @RequestParam(required = false) String[] severityList,
-            @Parameter(description = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION)
+            @Parameter(description = ALARM_QUERY_TYPE_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam(required = false) String[] typeList,
             @Parameter(description = ALARM_QUERY_ASSIGNEE_DESCRIPTION)
             @RequestParam(required = false) String assigneeId,

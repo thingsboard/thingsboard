@@ -111,7 +111,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
     ).subscribe(() => this.updateModel());
     this.colorRangeListFormGroup.get('advancedMode').valueChanges.pipe(
       takeUntil(this.destroy$)
-    ).subscribe(() => Promise.resolve().then(() => this.popover?.updatePosition()));
+    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {
@@ -139,7 +139,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       } else {
         rangeList = deepClone(value);
       }
-      this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode, {emitEvent: false});
+      this.colorRangeListFormGroup.get('advancedMode').patchValue(rangeList.advancedMode || false, {emitEvent: false});
       if (isDefinedAndNotNull(rangeList?.range)) {
         rangeList.range.forEach((r) => this.rangeListFormArray.push(this.colorRangeControl(r), {emitEvent: false}));
       }
@@ -175,7 +175,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
 
   public removeAdvancedRange(index: number) {
     (this.colorRangeListFormGroup.get('rangeAdvanced') as UntypedFormArray).removeAt(index);
-    Promise.resolve().then(() => this.popover?.updatePosition());
+    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   get advancedRangeFormArray(): UntypedFormArray {
@@ -189,7 +189,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
   removeRange(index: number) {
     this.rangeListFormArray.removeAt(index);
     this.colorRangeListFormGroup.markAsDirty();
-    Promise.resolve().then(() => this.popover?.updatePosition());
+    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   rangeDrop(event: CdkDragDrop<string[]>, range: string) {
@@ -212,7 +212,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
     const advancedRangeColorsArray = this.colorRangeListFormGroup.get('rangeAdvanced') as UntypedFormArray;
     const advancedRangeColorControl = this.fb.control(advancedRange, [advancedRangeValidator]);
     advancedRangeColorsArray.push(advancedRangeColorControl);
-    Promise.resolve().then(() => this.popover?.updatePosition());
+    setTimeout(() => {this.popover?.updatePosition();}, 0);
   }
 
   addRange() {
@@ -224,7 +224,7 @@ export class ColorRangeListComponent implements OnInit, ControlValueAccessor, On
       };
       this.rangeListFormArray.push(this.colorRangeControl(newRange));
       this.colorRangeListFormGroup.markAsDirty();
-      Promise.resolve().then(() => this.popover?.updatePosition());
+      setTimeout(() => {this.popover?.updatePosition();}, 0);
     }
   }
 

@@ -23,7 +23,7 @@
 
   .gradient-preview {
     width: 100%;
-    padding: 40px 12px 0;
+    padding: 40px 15px 0;
     .gradient-background {
       position: relative;
       height: 56px;
@@ -120,11 +120,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 33px;
+        width: 38px;
         height: 24px;
         border-radius: 4px;
         background-color: rgba(0, 0, 0, 0.06);
         &-text {
+          text-overflow: ellipsis;
+          overflow: hidden;
           font-size: 14px;
           font-weight: 500;
         }

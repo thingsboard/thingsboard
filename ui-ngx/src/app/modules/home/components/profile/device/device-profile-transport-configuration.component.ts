@@ -15,7 +15,17 @@
 ///
 
 import { Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  UntypedFormBuilder,
+  UntypedFormControl,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
@@ -26,13 +36,20 @@ import { deepClone } from '@core/utils';
   selector: 'tb-device-profile-transport-configuration',
   templateUrl: './device-profile-transport-configuration.component.html',
   styleUrls: [],
-  providers: [{
-    provide: NG_VALUE_ACCESSOR,
-    useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
-    multi: true
-  }]
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => DeviceProfileTransportConfigurationComponent),
+      multi: true,
+    }
+  ]
 })
-export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit {
+export class DeviceProfileTransportConfigurationComponent implements ControlValueAccessor, OnInit, Validator {
 
   deviceTransportType = DeviceTransportType;
 
@@ -98,11 +115,16 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   }
 
   private updateModel() {
-    let configuration: DeviceProfileTransportConfiguration = null;
-    if (this.deviceProfileTransportConfigurationFormGroup.valid) {
-      configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
-      configuration.type = this.transportType;
-    }
+    const configuration = this.deviceProfileTransportConfigurationFormGroup.getRawValue().configuration;
+    configuration.type = this.transportType;
     this.propagateChange(configuration);
+  }
+
+  public validate(c: UntypedFormControl): ValidationErrors | null {
+    return (this.deviceProfileTransportConfigurationFormGroup.valid) ? null : {
+      configuration: {
+        valid: false,
+      },
+    };
   }
 }
