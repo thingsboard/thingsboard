@@ -88,31 +88,30 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     @Override
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey) {
+    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
+        if (transactionMode) {
+            return super.doGet(connection, rawKey, true);
+        }
         return connection.stringCommands().getRange(rawKey, VERSION_SIZE, VALUE_END_OFFSET);
     }
 
     @Override
     public void put(K key, V value) {
-        Long version;
-        if (value == null) {
-            version = 0L;
-        } else if (value.getVersion() != null) {
-            version = value.getVersion();
-        } else {
+        Long version = getVersion(value);
+        if (version == null) {
             return;
         }
         doPut(key, value, version, cacheTtl);
     }
 
     @Override
-    public void put(K key, V value, RedisConnection connection) {
-        Long version;
-        if (value == null) {
-            version = 0L;
-        } else if (value.getVersion() != null) {
-            version = value.getVersion();
-        } else {
+    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
+        if (transactionMode) {
+            super.put(key, value, connection, true); // because scripting commands are not supported in transaction mode
+            return;
+        }
+        Long version = getVersion(value);
+        if (version == null) {
             return;
         }
         byte[] rawKey = getRawKey(key);
@@ -121,9 +120,6 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
 
     private void doPut(K key, V value, Long version, Expiration expiration) {
         log.trace("put [{}][{}][{}]", key, value, version);
-        if (version == null) {
-            return;
-        }
         final byte[] rawKey = getRawKey(key);
         try (var connection = getConnection(rawKey)) {
             doPut(rawKey, value, version, expiration, connection);
@@ -167,6 +163,16 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     @Override
     public void evictOrPut(K key, V value) {
         throw new NotImplementedException("evictOrPut is not supported by versioned cache");
+    }
+
+    private Long getVersion(V value) {
+        if (value == null) {
+            return 0L;
+        } else if (value.getVersion() != null) {
+            return value.getVersion();
+        } else {
+            return null;
+        }
     }
 
 }
