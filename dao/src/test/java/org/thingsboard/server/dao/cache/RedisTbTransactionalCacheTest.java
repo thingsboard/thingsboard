@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.cache;
 
 import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -60,23 +59,17 @@ public class RedisTbTransactionalCacheTest {
     @MockBean
     private RedisSslCredentials redisSslCredentials;
 
-
-    @BeforeEach
-    public void setup() {
+    @Test
+    public void testNoOpWhenCacheDisabled() {
         when(connectionFactory.getConnection()).thenReturn(redisConnection);
-    }
 
-    @Test
-    public void testEvictNoOpWhenCacheDisabled() {
+        relationRedisCache.put(createRelationCacheKey(), null);
+        relationRedisCache.putIfAbsent(createRelationCacheKey(), null);
+        relationRedisCache.evict(createRelationCacheKey());
         relationRedisCache.evict(List.of(createRelationCacheKey()));
-
-        verify(connectionFactory, never()).getConnection();
-        verifyNoInteractions(redisConnection);
-    }
-
-    @Test
-    public void testEvictOrPutNoOpWhenCacheDisabled() {
-        relationRedisCache.evictOrPut(createRelationCacheKey(), null);
+        relationRedisCache.getAndPutInTransaction(createRelationCacheKey(), null, false);
+        relationRedisCache.getAndPutInTransaction(createRelationCacheKey(), null, null, null, false);
+        relationRedisCache.getOrFetchFromDB(createRelationCacheKey(), null, false, false);
 
         verify(connectionFactory, never()).getConnection();
         verifyNoInteractions(redisConnection);
