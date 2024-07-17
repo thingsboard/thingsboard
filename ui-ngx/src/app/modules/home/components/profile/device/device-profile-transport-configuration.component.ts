@@ -121,7 +121,8 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
   }
 
   public validate(c: UntypedFormControl): ValidationErrors | null {
-    return (this.deviceProfileTransportConfigurationFormGroup.valid) ? null : {
+    return (this.transportType === DeviceTransportType.DEFAULT ||
+      this.deviceProfileTransportConfigurationFormGroup.valid) ? null : {
       configuration: {
         valid: false,
       },
