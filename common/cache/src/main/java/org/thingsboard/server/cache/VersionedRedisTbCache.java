@@ -168,14 +168,4 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
         throw new NotImplementedException("evictOrPut is not supported by versioned cache");
     }
 
-    private Long getVersion(V value) {
-        if (value == null) {
-            return 0L;
-        } else if (value.getVersion() != null) {
-            return value.getVersion();
-        } else {
-            return null;
-        }
-    }
-
 }
