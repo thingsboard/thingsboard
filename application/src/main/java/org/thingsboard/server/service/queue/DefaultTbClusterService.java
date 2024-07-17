@@ -22,6 +22,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.DataConstants;
@@ -35,6 +36,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -45,6 +47,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
@@ -205,7 +208,7 @@ public class DefaultTbClusterService implements TbClusterService {
                 return;
             }
         } else {
-            HasRuleEngineProfile ruleEngineProfile = getRuleEngineProfileForEntityOrElseNull(tenantId, entityId);
+            HasRuleEngineProfile ruleEngineProfile = getRuleEngineProfileForEntityOrElseNull(tenantId, entityId, tbMsg);
             tbMsg = transformMsg(tbMsg, ruleEngineProfile);
         }
 
@@ -213,13 +216,39 @@ public class DefaultTbClusterService implements TbClusterService {
         toRuleEngineMsgs.incrementAndGet();
     }
 
-    private HasRuleEngineProfile getRuleEngineProfileForEntityOrElseNull(TenantId tenantId, EntityId entityId) {
+    HasRuleEngineProfile getRuleEngineProfileForEntityOrElseNull(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
         if (entityId.getEntityType().equals(EntityType.DEVICE)) {
-            return deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
+            if (TbMsgType.ENTITY_DELETED.equals(tbMsg.getInternalType())) {
+                try {
+                    Device deletedDevice = JacksonUtil.fromString(tbMsg.getData(), Device.class);
+                    if (deletedDevice == null) {
+                        return null;
+                    }
+                    return deviceProfileCache.get(tenantId, deletedDevice.getDeviceProfileId());
+                } catch (Exception e) {
+                    log.warn("[{}][{}] Failed to deserialize device: {}", tenantId, entityId, tbMsg, e);
+                    return null;
+                }
+            } else {
+                return deviceProfileCache.get(tenantId, new DeviceId(entityId.getId()));
+            }
         } else if (entityId.getEntityType().equals(EntityType.DEVICE_PROFILE)) {
             return deviceProfileCache.get(tenantId, new DeviceProfileId(entityId.getId()));
         } else if (entityId.getEntityType().equals(EntityType.ASSET)) {
-            return assetProfileCache.get(tenantId, new AssetId(entityId.getId()));
+            if (TbMsgType.ENTITY_DELETED.equals(tbMsg.getInternalType())) {
+                try {
+                    Asset deletedAsset = JacksonUtil.fromString(tbMsg.getData(), Asset.class);
+                    if (deletedAsset == null) {
+                        return null;
+                    }
+                    return assetProfileCache.get(tenantId, deletedAsset.getAssetProfileId());
+                } catch (Exception e) {
+                    log.warn("[{}][{}] Failed to deserialize asset: {}", tenantId, entityId, tbMsg, e);
+                    return null;
+                }
+            } else {
+                return assetProfileCache.get(tenantId, new AssetId(entityId.getId()));
+            }
         } else if (entityId.getEntityType().equals(EntityType.ASSET_PROFILE)) {
             return assetProfileCache.get(tenantId, new AssetProfileId(entityId.getId()));
         }
