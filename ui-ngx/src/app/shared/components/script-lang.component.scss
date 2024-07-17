@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 .mat-button-toggle-group.tb-script-lang-toggle-group {
+  width: 320px;
   &.mat-button-toggle-group-appearance-standard {
     border: none;
     border-radius: 18px;
@@ -55,5 +56,15 @@
   }
   .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
     opacity: .01;
+  }
+}
+.mat-button-toggle-group.tb-script-lang-toggle-group-short {
+  width: 120px;
+  .mat-button-toggle {
+    height: 24px;
+  }
+  .mat-button-toggle-appearance-standard .mat-button-toggle-label-content {
+    line-height: 20px;
+    font-size: 12px;
   }
 }

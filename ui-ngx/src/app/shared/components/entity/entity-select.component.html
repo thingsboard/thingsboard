@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="entitySelectFormGroup">
+<div [formGroup]="entitySelectFormGroup" class="tb-entity-select">
   <tb-entity-type-select
     *ngIf="displayEntityTypeSelect"
     [showLabel]="true"
@@ -27,7 +27,8 @@
   <tb-entity-autocomplete
     *ngIf="modelValue.entityType && modelValue.entityType !== AliasEntityType.CURRENT_TENANT
                                  && modelValue.entityType !== AliasEntityType.CURRENT_USER
-                                 && modelValue.entityType !== AliasEntityType.CURRENT_USER_OWNER"
+                                 && modelValue.entityType !== AliasEntityType.CURRENT_USER_OWNER
+                                 && modelValue.entityType !== AliasEntityType.CURRENT_RULE_NODE"
     [required]="required"
     [entityType]="modelValue.entityType"
     formControlName="entityId">
