@@ -214,7 +214,7 @@ public class DefaultTbClusterService implements TbClusterService {
         toRuleEngineMsgs.incrementAndGet();
     }
 
-    private HasRuleEngineProfile getRuleEngineProfileForEntityOrElseNull(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
+    HasRuleEngineProfile getRuleEngineProfileForEntityOrElseNull(TenantId tenantId, EntityId entityId, TbMsg tbMsg) {
         if (entityId.getEntityType().equals(EntityType.DEVICE)) {
             if (TbMsgType.ENTITY_DELETED.equals(tbMsg.getInternalType())) {
                 try {
