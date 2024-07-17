@@ -119,6 +119,9 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     private void doPut(K key, V value, Long version, Expiration expiration) {
+        if (!cacheEnabled) {
+            return;
+        }
         log.trace("put [{}][{}][{}]", key, value, version);
         final byte[] rawKey = getRawKey(key);
         try (var connection = getConnection(rawKey)) {
