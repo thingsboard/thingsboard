@@ -46,7 +46,7 @@ export class TbScriptLangComponent extends PageComponent implements ControlValue
 
   @Input()
   @coerceBoolean()
-  shortLang = true;
+  shortLang = false;
 
   private propagateChange = null;
 
