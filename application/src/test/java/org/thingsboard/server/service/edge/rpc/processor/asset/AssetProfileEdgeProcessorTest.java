@@ -21,13 +21,23 @@ import org.springframework.boot.test.context.SpringBootTest;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 
+import java.util.UUID;
+import java.util.function.Supplier;
+
 @SpringBootTest(classes = {AssetEdgeProcessorV1.class})
 class AssetProfileEdgeProcessorTest extends AbstractAssetProcessorTest{
 
     @ParameterizedTest
-    @MethodSource("provideParameters")
-    public void testAssetProfileDefaultFields_notSendToEdgeOlder3_6_0IfNotAssigned(EdgeVersion edgeVersion, long expectedDashboardIdMSB, long expectedDashboardIdLSB,
-                                                                                   long expectedRuleChainIdMSB, long expectedRuleChainIdLSB) {
+    @MethodSource("provideEdgeProcessorParameters")
+    public void testAssetProfileDefaultFields_notSendToEdgeOlder3_6_0IfNotAssigned(EdgeVersion edgeVersion,
+                                                                                   Supplier<UUID> expectedDashboardUUIDSupplier,
+                                                                                   Supplier<UUID> expectedRuleChainIdUUIDSupplier) {
+        UUID expectedDashboardUUID = expectedDashboardUUIDSupplier.get();
+        UUID expectedRuleChainIdUUID = expectedRuleChainIdUUIDSupplier.get();
+        long expectedDashboardIdMSB = expectedDashboardUUID.getMostSignificantBits();
+        long expectedDashboardIdLSB = expectedDashboardUUID.getLeastSignificantBits();
+        long expectedRuleChainIdMSB = expectedRuleChainIdUUID.getMostSignificantBits();
+        long expectedRuleChainIdLSB = expectedRuleChainIdUUID.getLeastSignificantBits();
 
         updateAssetProfileDefaultFields(expectedDashboardIdMSB, expectedDashboardIdLSB, expectedRuleChainIdMSB, expectedRuleChainIdLSB);
 
