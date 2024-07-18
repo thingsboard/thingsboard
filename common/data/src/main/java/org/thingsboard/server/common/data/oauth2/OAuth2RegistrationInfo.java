@@ -15,51 +15,35 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
 
 import java.util.List;
 
-@EqualsAndHashCode
 @Data
-@ToString(exclude = {"clientSecret"})
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Schema
-public class OAuth2RegistrationInfo {
-    @Schema(description = "Config for mapping OAuth2 log in response to platform entities", requiredMode = Schema.RequiredMode.REQUIRED)
-    private OAuth2MapperConfig mapperConfig;
-    @Schema(description = "OAuth2 client ID. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String clientId;
-    @Schema(description = "OAuth2 client secret. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String clientSecret;
-    @Schema(description = "Authorization URI of the OAuth2 provider. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String authorizationUri;
-    @Schema(description = "Access token URI of the OAuth2 provider. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String accessTokenUri;
-    @Schema(description = "OAuth scopes that will be requested from OAuth2 platform. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private List<String> scope;
-    @Schema(description = "User info URI of the OAuth2 provider")
-    private String userInfoUri;
-    @Schema(description = "Name of the username attribute in OAuth2 provider response. Cannot be empty")
-    private String userNameAttributeName;
-    @Schema(description = "JSON Web Key URI of the OAuth2 provider")
-    private String jwkSetUri;
-    @Schema(description = "Client authentication method to use: 'BASIC' or 'POST'. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String clientAuthenticationMethod;
-    @Schema(description = "OAuth2 provider label. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    private String loginButtonLabel;
-    @Schema(description = "Log in button icon for OAuth2 provider")
-    private String loginButtonIcon;
+@EqualsAndHashCode(callSuper = true)
+public class OAuth2RegistrationInfo extends BaseData<OAuth2RegistrationId> {
+    @Schema(description = "Oauth2 client registration title (e.g. Google)")
+    private String title;
     @Schema(description = "List of platforms for which usage of the OAuth2 client is allowed (empty for all allowed)")
     private List<PlatformType> platforms;
-    @Schema(description = "Additional info of OAuth2 client (e.g. providerName)", requiredMode = Schema.RequiredMode.REQUIRED)
-    private JsonNode additionalInfo;
+
+    public OAuth2RegistrationInfo() {
+        super();
+    }
+
+    public OAuth2RegistrationInfo(OAuth2RegistrationId id) {
+        super(id);
+    }
+
+    public OAuth2RegistrationInfo(OAuth2RegistrationId id, String title, List<PlatformType> platforms) {
+        super(id);
+        this.title = title;
+        this.platforms = platforms;
+    }
+
 }

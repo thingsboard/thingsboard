@@ -119,7 +119,6 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -2071,13 +2070,13 @@ public class RestClient implements Closeable {
                 }, params).getBody();
     }
 
-    public OAuth2Info getCurrentOAuth2Info() {
-        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2Info.class).getBody();
-    }
-
-    public OAuth2Info saveOAuth2Info(OAuth2Info oauth2Info) {
-        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Info, OAuth2Info.class).getBody();
-    }
+//    public OAuth2Info getCurrentOAuth2Info() {
+//        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2Info.class).getBody();
+//    }
+//
+//    public OAuth2Info saveOAuth2Info(OAuth2Info oauth2Info) {
+//        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Info, OAuth2Info.class).getBody();
+//    }
 
     public String getLoginProcessingUrl() {
         return restTemplate.getForEntity(baseURL + "/api/oauth2/loginProcessingUrl", String.class).getBody();

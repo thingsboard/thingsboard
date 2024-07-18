@@ -25,8 +25,8 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.OAuth2ParamsId;
 import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
@@ -49,8 +49,10 @@ import java.util.stream.Collectors;
 @Table(name = ModelConstants.OAUTH2_REGISTRATION_TABLE_NAME)
 public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> {
 
-    @Column(name = ModelConstants.OAUTH2_PARAMS_ID_PROPERTY)
-    private UUID oauth2ParamsId;
+    @Column(name = ModelConstants.TENANT_ID_COLUMN)
+    private UUID tenantId;
+    @Column(name = ModelConstants.OAUTH2_CLIENT_TITLE_PROPERTY)
+    private String title;
     @Column(name = ModelConstants.OAUTH2_CLIENT_ID_PROPERTY)
     private String clientId;
     @Column(name = ModelConstants.OAUTH2_CLIENT_SECRET_PROPERTY)
@@ -121,9 +123,10 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
             this.setUuid(registration.getId().getId());
         }
         this.setCreatedTime(registration.getCreatedTime());
-        if (registration.getOauth2ParamsId() != null) {
-            this.oauth2ParamsId = registration.getOauth2ParamsId().getId();
+        if (registration.getTenantId() != null) {
+            this.tenantId = registration.getTenantId().getId();
         }
+        this.title = registration.getTitle();
         this.clientId = registration.getClientId();
         this.clientSecret = registration.getClientSecret();
         this.authorizationUri = registration.getAuthorizationUri();
@@ -168,7 +171,8 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
         OAuth2Registration registration = new OAuth2Registration();
         registration.setId(new OAuth2RegistrationId(id));
         registration.setCreatedTime(createdTime);
-        registration.setOauth2ParamsId(new OAuth2ParamsId(oauth2ParamsId));
+        registration.setTenantId(new TenantId(tenantId));
+        registration.setTitle(title);
         registration.setAdditionalInfo(additionalInfo);
         registration.setMapperConfig(
                 OAuth2MapperConfig.builder()

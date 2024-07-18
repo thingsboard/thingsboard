@@ -69,7 +69,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
-import org.thingsboard.server.common.data.oauth2.OAuth2Mobile;
+import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -100,7 +100,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
-import org.thingsboard.server.dao.oauth2.OAuth2MobileDao;
+import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -149,7 +149,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private final DeviceConnectivityConfiguration connectivityConfiguration;
     private final QueueService queueService;
     private final JwtSettingsService jwtSettingsService;
-    private final OAuth2MobileDao oAuth2MobileDao;
+    private final MobileAppDao oAuth2MobileDao;
     private final NotificationSettingsService notificationSettingsService;
     private final NotificationTargetService notificationTargetService;
 
@@ -308,7 +308,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             jwtSettingsService.saveJwtSettings(jwtSettings);
         }
 
-        List<OAuth2Mobile> mobiles = oAuth2MobileDao.find(TenantId.SYS_TENANT_ID);
+        List<MobileApp> mobiles = oAuth2MobileDao.findByTenantId(TenantId.SYS_TENANT_ID);
         if (CollectionUtils.isNotEmpty(mobiles)) {
             mobiles.stream()
                     .filter(config -> !validateKeyLength(config.getAppSecret()))

@@ -28,10 +28,11 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.security.model.JwtPair;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -56,7 +57,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
 
     private final JwtTokenFactory tokenFactory;
     private final OAuth2ClientMapperProvider oauth2ClientMapperProvider;
-    private final OAuth2Service oAuth2Service;
+    private final OAuth2ClientService oAuth2ClientService;
     private final OAuth2AuthorizedClientService oAuth2AuthorizedClientService;
     private final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository;
     private final SystemSecurityService systemSecurityService;
@@ -64,13 +65,13 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
     @Autowired
     public Oauth2AuthenticationSuccessHandler(final JwtTokenFactory tokenFactory,
                                               final OAuth2ClientMapperProvider oauth2ClientMapperProvider,
-                                              final OAuth2Service oAuth2Service,
+                                              final OAuth2ClientService oAuth2ClientService,
                                               final OAuth2AuthorizedClientService oAuth2AuthorizedClientService,
                                               final HttpCookieOAuth2AuthorizationRequestRepository httpCookieOAuth2AuthorizationRequestRepository,
                                               final SystemSecurityService systemSecurityService) {
         this.tokenFactory = tokenFactory;
         this.oauth2ClientMapperProvider = oauth2ClientMapperProvider;
-        this.oAuth2Service = oAuth2Service;
+        this.oAuth2ClientService = oAuth2ClientService;
         this.oAuth2AuthorizedClientService = oAuth2AuthorizedClientService;
         this.httpCookieOAuth2AuthorizationRequestRepository = httpCookieOAuth2AuthorizationRequestRepository;
         this.systemSecurityService = systemSecurityService;
@@ -96,7 +97,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2Registration registration = oAuth2Service.findRegistration(UUID.fromString(token.getAuthorizedClientRegistrationId()));
+            OAuth2Registration registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2RegistrationId(UUID.fromString(token.getAuthorizedClientRegistrationId())));
             OAuth2AuthorizedClient oAuth2AuthorizedClient = oAuth2AuthorizedClientService.loadAuthorizedClient(
                     token.getAuthorizedClientRegistrationId(),
                     token.getPrincipal().getName());

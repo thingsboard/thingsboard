@@ -57,7 +57,8 @@ public enum ActionType {
     ADDED_COMMENT(false, TbMsgType.COMMENT_CREATED),
     UPDATED_COMMENT(false, TbMsgType.COMMENT_UPDATED),
     DELETED_COMMENT(false, null),
-    SMS_SENT(false, null);
+    SMS_SENT(false, null),
+    UPDATED_OAUTH2_CLIENTS(false, null);
 
     @Getter
     private final boolean isRead;

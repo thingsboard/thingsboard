@@ -18,36 +18,59 @@ package org.thingsboard.server.dao.sql.oauth2;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
-import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
+import org.thingsboard.server.dao.model.sql.OAuth2RegistrationInfoEntity;
 
 import java.util.List;
 import java.util.UUID;
 
 public interface OAuth2RegistrationRepository extends JpaRepository<OAuth2RegistrationEntity, UUID> {
 
-    @Query("SELECT reg " +
-            "FROM OAuth2RegistrationEntity reg " +
-            "LEFT JOIN OAuth2ParamsEntity params on reg.oauth2ParamsId = params.id " +
-            "LEFT JOIN OAuth2DomainEntity domain on reg.oauth2ParamsId = domain.oauth2ParamsId " +
-            "WHERE params.enabled = true " +
-            "AND domain.domainName = :domainName " +
-            "AND domain.domainScheme IN (:domainSchemes) " +
-            "AND (:pkgName IS NULL OR EXISTS (SELECT mobile FROM OAuth2MobileEntity mobile WHERE mobile.oauth2ParamsId = reg.oauth2ParamsId AND mobile.pkgName = :pkgName)) " +
-            "AND (:platformFilter IS NULL OR reg.platforms IS NULL OR reg.platforms = '' OR reg.platforms LIKE :platformFilter)")
-    List<OAuth2RegistrationEntity> findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(@Param("domainSchemes") List<SchemeType> domainSchemes,
-                                                                                                 @Param("domainName") String domainName,
-                                                                                                 @Param("pkgName") String pkgName,
-                                                                                                 @Param("platformFilter") String platformFilter);
+    List<OAuth2RegistrationEntity> findByTenantId(@Param("tenantId") UUID tenantId);
 
-    List<OAuth2RegistrationEntity> findByOauth2ParamsId(UUID oauth2ParamsId);
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.OAuth2RegistrationInfoEntity(r.id, r.createdTime, r.platforms, r.title) " +
+            "FROM OAuth2RegistrationEntity r " +
+            "WHERE r.tenantId = :tenantId")
+    List<OAuth2RegistrationInfoEntity> findInfosByTenantId(@Param("tenantId") UUID tenantId);
 
-    @Query("SELECT mobile.appSecret " +
-            "FROM OAuth2MobileEntity mobile " +
-            "LEFT JOIN OAuth2RegistrationEntity reg on mobile.oauth2ParamsId = reg.oauth2ParamsId " +
-            "WHERE reg.id = :registrationId " +
-            "AND mobile.pkgName = :pkgName")
+    @Query(value = "SELECT r " +
+            "FROM oauth2_registration r " +
+            "LEFT JOIN domain_oauth2_registration dr on dr.oauth2_registration_id = r.id " +
+            "LEFT JOIN domain d on dr.domain_id = d.id " +
+            "WHERE d.oauth2_enabled = true " +
+            "AND d.domain_name = :domainName " +
+            "AND (:platformFilter IS NULL OR r.platforms IS NULL OR r.platforms = '' OR r.platforms LIKE :platformFilter)", nativeQuery = true)
+    List<OAuth2RegistrationEntity> findEnabledByDomainNameAndPlatformType(@Param("domainName") String domainName,
+                                                                          @Param("platformFilter") String platformFilter);
+
+    @Query(value = "SELECT r " +
+            "FROM oauth2_registration r " +
+            "LEFT JOIN mobile_app_oauth2_registration mr on mr.oauth2_registration_id = r.id " +
+            "LEFT JOIN mobile_app m on mr.mobile_app_id = m.id " +
+            "WHERE m.oauth2_enabled = true " +
+            "AND m.pck_name = :pkgName " +
+            "AND (:platformFilter IS NULL OR r.platforms IS NULL OR r.platforms = '' OR r.platforms LIKE :platformFilter)", nativeQuery = true)
+    List<OAuth2RegistrationEntity> findEnabledByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
+                                                                       @Param("platformFilter") String platformFilter);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.OAuth2RegistrationInfoEntity(r.id, r.createdTime, r.platforms, r.title) " +
+            "FROM OAuth2RegistrationEntity r " +
+            "LEFT JOIN DomainOauth2RegistrationEntity dr on dr.oauth2RegistrationId = r.id " +
+            "WHERE dr.domainId = :domainId ")
+    List<OAuth2RegistrationInfoEntity> findInfosByDomainId(UUID domainId);
+
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.OAuth2RegistrationInfoEntity(r.id, r.createdTime, r.platforms, r.title) " +
+            "FROM OAuth2RegistrationEntity r " +
+            "LEFT JOIN MobileAppOauth2RegistrationEntity mr on mr.oauth2RegistrationId = r.id " +
+            "WHERE mr.mobileAppId = :mobileAppId ")
+    List<OAuth2RegistrationInfoEntity> findInfosByMobileAppId(UUID mobileAppId);
+
+    @Query("SELECT m.appSecret " +
+            "FROM MobileAppEntity m " +
+            "LEFT JOIN MobileAppOauth2RegistrationEntity mp on m.id = mp.mobileAppId " +
+            "LEFT JOIN OAuth2RegistrationEntity p on mp.oauth2RegistrationId = p.id " +
+            "WHERE p.id = :registrationId " +
+            "AND m.pkgName = :pkgName")
     String findAppSecret(@Param("registrationId") UUID id,
                          @Param("pkgName") String pkgName);
-
 }

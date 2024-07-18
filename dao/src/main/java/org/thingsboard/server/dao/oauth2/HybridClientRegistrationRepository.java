@@ -21,6 +21,8 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 
 import java.util.UUID;
@@ -30,11 +32,11 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
     private static final String defaultRedirectUriTemplate = "{baseUrl}/login/oauth2/code/{registrationId}";
 
     @Autowired
-    private OAuth2Service oAuth2Service;
+    private OAuth2ClientService oAuth2ClientService;
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        OAuth2Registration registration = oAuth2Service.findRegistration(UUID.fromString(registrationId));
+        OAuth2Registration registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2RegistrationId(UUID.fromString(registrationId)));
         return registration == null ?
                 null : toSpringClientRegistration(registration);
     }

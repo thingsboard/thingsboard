@@ -19,8 +19,8 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
-import org.thingsboard.server.common.data.oauth2.SchemeType;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2RegistrationEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2RegistrationDao;
@@ -48,14 +48,35 @@ public class JpaOAuth2RegistrationDao extends JpaAbstractDao<OAuth2RegistrationE
     }
 
     @Override
-    public List<OAuth2Registration> findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(List<SchemeType> domainSchemes, String domainName, String pkgName, PlatformType platformType) {
-        return DaoUtil.convertDataList(repository.findEnabledByDomainSchemesDomainNameAndPkgNameAndPlatformType(domainSchemes, domainName, pkgName,
+    public List<OAuth2RegistrationInfo> findInfosByTenantId(UUID tenantId) {
+        return DaoUtil.convertDataList(repository.findInfosByTenantId(tenantId));
+    }
+
+    @Override
+    public List<OAuth2Registration> findByTenantId(UUID tenantId) {
+        return DaoUtil.convertDataList(repository.findByTenantId(tenantId));
+    }
+
+    @Override
+    public List<OAuth2Registration> findEnabledByDomainNameAndPlatformType(String domainName, PlatformType platformType) {
+        return DaoUtil.convertDataList(repository.findEnabledByDomainNameAndPlatformType(domainName,
                 platformType != null ? "%" + platformType.name() + "%" : null));
     }
 
     @Override
-    public List<OAuth2Registration> findByOAuth2ParamsId(UUID oauth2ParamsId) {
-        return DaoUtil.convertDataList(repository.findByOauth2ParamsId(oauth2ParamsId));
+    public List<OAuth2Registration> findEnabledByPckNameAndPlatformType(String pkgName, PlatformType platformType) {
+        return DaoUtil.convertDataList(repository.findEnabledByPkgNameAndPlatformType(pkgName,
+                platformType != null ? "%" + platformType.name() + "%" : null));
+    }
+
+    @Override
+    public List<OAuth2RegistrationInfo> findInfosByDomainId(UUID oauth2ParamsId) {
+        return DaoUtil.convertDataList(repository.findInfosByDomainId(oauth2ParamsId));
+    }
+
+    @Override
+    public List<OAuth2RegistrationInfo> findInfosByMobileAppId(UUID mobileAppId) {
+        return DaoUtil.convertDataList(repository.findInfosByMobileAppId(mobileAppId));
     }
 
     @Override

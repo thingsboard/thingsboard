@@ -424,24 +424,37 @@ public class ModelConstants {
     public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
 
     /**
+     * Domain constants.
+     */
+    public static final String DOMAIN_TABLE_NAME = "domain";
+    public static final String DOMAIN_DOMAIN_NAME_PROPERTY = "domain_name";
+    public static final String DOMAIN_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+    public static final String DOMAIN_PROPAGATE_TO_EDGE_PROPERTY = "propagate_to_edge";
+
+    public static final String DOMAIN_OAUTH2_REGISTRATION_TABLE_NAME = "domain_oauth2_registration";
+    public static final String DOMAIN_OAUTH2_PROVIDER_PROVIDER_ID_PROPERTY = "oauth2_registration_id";
+    public static final String DOMAIN_OAUTH2_PROVIDER_DOMAIN_ID_PROPERTY = "domain_id";
+
+    /**
+     * Mobile application constants.
+     */
+    public static final String MOBILE_APP_TABLE_NAME = "mobile_app";
+    public static final String MOBILE_APP_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String MOBILE_APP_APP_SECRET_PROPERTY = "app_secret";
+    public static final String MOBILE_APP_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+
+    public static final String MOBILE_APP_OAUTH2_REGISTRATION_TABLE_NAME = "mobile_app_oauth2_registration";
+    public static final String MOBILE_APP_OAUTH2_REGISTRATION_REGISTRATION_ID_PROPERTY = "oauth2_registration_id";
+    public static final String MOBILE_APP_OAUTH2_REGISTRATION_MOBILE_APP_ID_PROPERTY = "mobile_app_id";
+
+
+    /**
      * OAuth2 client registration constants.
      */
-    public static final String OAUTH2_PARAMS_TABLE_NAME = "oauth2_params";
-    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
-    public static final String OAUTH2_PARAMS_EDGE_ENABLED_PROPERTY = "edge_enabled";
-    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
-
     public static final String OAUTH2_REGISTRATION_TABLE_NAME = "oauth2_registration";
-    public static final String OAUTH2_DOMAIN_TABLE_NAME = "oauth2_domain";
-    public static final String OAUTH2_MOBILE_TABLE_NAME = "oauth2_mobile";
-    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
-    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
-    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
-
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_TABLE_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
-    public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
-    public static final String OAUTH2_DOMAIN_SCHEME_PROPERTY = "domain_scheme";
+    public static final String OAUTH2_CLIENT_TITLE_PROPERTY = "title";
     public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";

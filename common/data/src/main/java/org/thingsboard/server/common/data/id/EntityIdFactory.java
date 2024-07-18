@@ -105,6 +105,12 @@ public class EntityIdFactory {
                 return new NotificationId(uuid);
             case QUEUE_STATS:
                 return new QueueStatsId(uuid);
+            case OAUTH2_CLIENT:
+                return new OAuth2RegistrationId(uuid);
+            case MOBILE_APP:
+                return new MobileAppId(uuid);
+            case DOMAIN:
+                return new DomainId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }

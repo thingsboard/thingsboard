@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -74,11 +75,14 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RpcId;
@@ -91,6 +95,8 @@ import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
+import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -117,13 +123,15 @@ import org.thingsboard.server.dao.device.ClaimDevicesService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
+import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.oauth2.OAuth2ConfigTemplateService;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -233,7 +241,13 @@ public abstract class BaseController {
     protected DashboardService dashboardService;
 
     @Autowired
-    protected OAuth2Service oAuth2Service;
+    protected OAuth2ClientService oAuth2ClientService;
+
+    @Autowired
+    protected DomainService domainService;
+
+    @Autowired
+    protected MobileAppService mobileAppService;
 
     @Autowired
     protected OAuth2ConfigTemplateService oAuth2ConfigTemplateService;
@@ -600,6 +614,15 @@ public abstract class BaseController {
                 case QUEUE:
                     checkQueueId(new QueueId(entityId.getId()), operation);
                     return;
+                case OAUTH2_CLIENT:
+                    checkOauth2ClientId(new OAuth2RegistrationId(entityId.getId()), operation);
+                    return;
+                case DOMAIN:
+                    checkDomainId(new DomainId(entityId.getId()), operation);
+                    return;
+                case MOBILE_APP:
+                    checkMobileAppId(new MobileAppId(entityId.getId()), operation);
+                    return;
                 default:
                     checkEntityId(entityId, entitiesService::findEntityByTenantIdAndId, operation);
             }
@@ -774,6 +797,18 @@ public abstract class BaseController {
             }
         }
         return queue;
+    }
+
+    OAuth2Registration checkOauth2ClientId(OAuth2RegistrationId oAuth2RegistrationId, Operation operation) throws ThingsboardException {
+        return checkEntityId(oAuth2RegistrationId, oAuth2ClientService::findOAuth2ClientById, operation);
+    }
+
+    Domain checkDomainId(DomainId domainId, Operation operation) throws ThingsboardException {
+        return checkEntityId(domainId, domainService::findDomainById, operation);
+    }
+
+    MobileApp checkMobileAppId(MobileAppId mobileAppId, Operation operation) throws ThingsboardException {
+        return checkEntityId(mobileAppId, mobileAppService::findMobileAppById, operation);
     }
 
     protected <I extends EntityId> I emptyId(EntityType entityType) {
