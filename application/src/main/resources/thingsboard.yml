@@ -1503,6 +1503,8 @@ queue:
       housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Housekeeper reprocessing topic; retention.ms is set to 90 days; partitions is set to 1 since only one reprocessing service is running at a time
       housekeeper-reprocessing: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_TOPIC_PROPERTIES:retention.ms:7776000000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Clickhouse Events topic;
+      clickhouse-events: "${TB_QUEUE_KAFKA_CLICKHOUSE_EVENTS_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1538,6 +1540,8 @@ queue:
       ota-updates: "${TB_QUEUE_AWS_SQS_OTA_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
       # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       version-control: "${TB_QUEUE_AWS_SQS_VC_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # AWS SQS queue properties. VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      clickhouse-events: "${TB_QUEUE_AWS_SQS_CLICKHOUSE_EVENTS_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
   pubsub:
     # Project ID from Google Cloud
     project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
@@ -1562,6 +1566,8 @@ queue:
       js-executor: "${TB_QUEUE_PUBSUB_JE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
       # Pub/Sub properties for Transport Api subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       version-control: "${TB_QUEUE_PUBSUB_VC_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Rule Engine subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
+      clickhouse-events: "${TB_QUEUE_PUBSUB_CLICKHOUSE_EVENTS_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
   service_bus:
     # Azure namespace
     namespace_name: "${TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME:YOUR_NAMESPACE_NAME}"
@@ -1584,6 +1590,8 @@ queue:
       js-executor: "${TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
       # Azure Service Bus properties for Version Control queues
       version-control: "${TB_QUEUE_SERVICE_BUS_VC_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Clickhouse Events queues
+      clickhouse-events: "${TB_QUEUE_SERVICE_BUS_CLICKHOUSE_EVENTS_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
   rabbitmq:
     # By default empty
     exchange_name: "${TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME:}"
@@ -1616,6 +1624,8 @@ queue:
       js-executor: "${TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
       # RabbitMQ properties for Version Control queues
       version-control: "${TB_QUEUE_RABBIT_MQ_VC_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Clickhouse events queues
+      clickhouse-events: "${TB_QUEUE_RABBIT_MQ_CLICKHOUSE_EVENTS_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:
@@ -1655,6 +1665,8 @@ queue:
       pack-size: "${TB_QUEUE_CORE_OTA_PACK_SIZE:100}"
     # Stats topic name for queue Kafka, RabbitMQ, etc.
     usage-stats-topic: "${TB_QUEUE_US_TOPIC:tb_usage_stats}"
+    # If you want to use clickhouse to store events, you need to configure the topic of clickhouse for consuming events
+    event-clickhouse-topic: "${TB_QUEUE_CLICKHOUSE_TOPIC:tb_event_clickhouse}"
     stats:
       # Enable/disable statistics for Core microservices
       enabled: "${TB_QUEUE_CORE_STATS_ENABLED:true}"
@@ -1738,8 +1750,19 @@ queue:
 # Event configuration parameters
 event:
   debug:
+    # Choose which method to use to store events: sql, clickhouse
+    type: "${EVENT_DEBUG_TYPE:sql}"
     # Maximum number of symbols per debug event. The event content will be truncated if needed
     max-symbols: "${TB_MAX_DEBUG_EVENT_SYMBOLS:4096}"
+
+# If you want to use clickhouse to store events, you need to configure the clickhouse connection information
+clickhouse:
+  url: "${CLICKHOUSE_URL:jdbc:clickhouse:http://thingsboard:thingsboard@localhost:8123/thingsboard?socket_time=30&createDatabaseIfNotExist=true}"
+  cluster:
+    # If your clickhouse is built in a cluster mode, please configure it to true
+    enabled: "${CLICKHOUSE_CLUSTER_ENABLED:false}"
+    # If your clickhouse is built in cluster mode, please configure the cluster name
+    name: "${CLICKHOUSE_CLUSTER_NAME:default}"
 
 # General service parameters
 service:

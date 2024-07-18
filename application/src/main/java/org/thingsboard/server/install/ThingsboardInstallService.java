@@ -23,13 +23,7 @@ import org.springframework.context.ApplicationContext;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
-import org.thingsboard.server.service.install.DatabaseEntitiesUpgradeService;
-import org.thingsboard.server.service.install.EntityDatabaseSchemaService;
-import org.thingsboard.server.service.install.InstallScripts;
-import org.thingsboard.server.service.install.NoSqlKeyspaceService;
-import org.thingsboard.server.service.install.SystemDataLoaderService;
-import org.thingsboard.server.service.install.TsDatabaseSchemaService;
-import org.thingsboard.server.service.install.TsLatestDatabaseSchemaService;
+import org.thingsboard.server.service.install.*;
 import org.thingsboard.server.service.install.migrate.TsLatestMigrateService;
 import org.thingsboard.server.service.install.update.CacheCleanupService;
 import org.thingsboard.server.service.install.update.DataUpdateService;
@@ -61,6 +55,9 @@ public class ThingsboardInstallService {
 
     @Autowired
     private TsDatabaseSchemaService tsDatabaseSchemaService;
+
+    @Autowired(required = false)
+    private ClickhouseEventDatabaseSchemaService clickhouseEventDatabaseSchemaService;
 
     @Autowired(required = false)
     private TsLatestDatabaseSchemaService tsLatestDatabaseSchemaService;
@@ -179,6 +176,11 @@ public class ThingsboardInstallService {
 
                 if (tsLatestDatabaseSchemaService != null) {
                     tsLatestDatabaseSchemaService.createDatabaseSchema();
+                }
+
+                if(clickhouseEventDatabaseSchemaService != null) {
+                    log.info("Installing DataBase schema for clickhouse events...");
+                    clickhouseEventDatabaseSchemaService.createDatabaseSchema();
                 }
 
                 log.info("Loading system data...");
