@@ -20,7 +20,8 @@
                  (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideInterval">
+        <section class="tb-form-panel stroked"
+                 *ngIf="isEdit || !(timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
           <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
           <div class="tb-flex align-center space-between">
             <ng-container formGroupName="realtime">
@@ -58,7 +59,7 @@
             </ng-container>
           </ng-container>
           </section>
-        <ng-container *ngIf="!isEdit && timewindow.hideInterval">
+        <ng-container *ngIf="!isEdit && (timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
           <ng-container *ngTemplateOutlet="timezoneSelection">
           </ng-container>
         </ng-container>
@@ -188,11 +189,7 @@
   </ng-template>
   <ng-template #timezoneSelection>
     <ng-container *ngIf="timezone && (isEdit || !timewindow.hideTimezone)">
-      <tb-timezone-select localBrowserTimezonePlaceholderOnEmpty="true"
-                          formControlName="timezone"
-                          subscriptSizing="dynamic"
-                          appearance="outline">
-      </tb-timezone-select>
+      <tb-timezone asButton strokedButton displayTimezoneValue="false" formControlName="timezone"></tb-timezone>
     </ng-container>
   </ng-template>
 </form>

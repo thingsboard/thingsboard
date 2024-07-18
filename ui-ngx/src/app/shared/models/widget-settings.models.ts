@@ -262,6 +262,19 @@ export const defaultTimewindowStyle: TimewindowStyle = {
   displayTypePrefix: true
 };
 
+export interface TimezoneStyle {
+  showIcon: boolean;
+  icon?: string;
+  iconSize?: string;
+  iconPosition?: 'left' | 'right';
+  font?: Font;
+  color?: string;
+}
+
+export const defaultTimezoneStyle: TimezoneStyle = {
+  showIcon: false
+};
+
 export const constantColor = (color: string): ColorSettings => ({
   type: ColorType.constant,
   color,

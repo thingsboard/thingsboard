@@ -1,0 +1,25 @@
+<form [formGroup]="timezoneForm" class="mat-content">
+  <section class="tb-form-panel">
+    <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
+    <tb-timezone-select localBrowserTimezonePlaceholderOnEmpty="true"
+                        formControlName="timezone"
+                        subscriptSizing="dynamic"
+                        appearance="outline">
+    </tb-timezone-select>
+  </section>
+</form>
+<div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+  <button type="button"
+          mat-button
+          [disabled]="(isLoading$ | async)"
+          (click)="cancel()">
+    {{ 'action.cancel' | translate }}
+  </button>
+  <button type="button"
+          mat-raised-button
+          color="primary"
+          (click)="update()"
+          [disabled]="(isLoading$ | async) || timezoneForm.invalid || !timezoneForm.dirty">
+    {{ 'action.apply' | translate }}
+  </button>
+</div>

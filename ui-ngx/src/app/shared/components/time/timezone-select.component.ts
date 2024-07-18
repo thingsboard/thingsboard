@@ -46,17 +46,17 @@ export class TimezoneSelectComponent implements ControlValueAccessor, OnInit, Af
   defaultTimezoneId: string = null;
 
   @Input()
-  subscriptSizing: SubscriptSizing = 'fixed';
-
-  @Input()
-  appearance: MatFormFieldAppearance = 'fill';
-
-  @Input()
   set defaultTimezone(timezone: string) {
     if (this.defaultTimezoneId !== timezone) {
       this.defaultTimezoneId = timezone;
     }
   }
+
+  @Input()
+  subscriptSizing: SubscriptSizing = 'fixed';
+
+  @Input()
+  appearance: MatFormFieldAppearance = 'fill';
 
   private requiredValue: boolean;
   get required(): boolean {
