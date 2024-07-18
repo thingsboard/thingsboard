@@ -27,33 +27,30 @@ import {
 import {
   ConnectorBaseConfig,
   ConnectorType,
-  MappingType,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import {
-  BrokerConfigControlComponent,
-  MappingTableComponent,
-  SecurityConfigComponent,
-  OpcServerConfigComponent,
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import {
+  ModbusMasterTableComponent,
+  ModbusSlaveConfigComponent,
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus';
+import { EllipsisChipListDirective } from '@shared/directives/public-api';
 
 @Component({
-  selector: 'tb-opc-ua-basic-config',
-  templateUrl: './opc-ua-basic-config.component.html',
+  selector: 'tb-modbus-basic-config',
+  templateUrl: './modbus-basic-config.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => OpcUaBasicConfigComponent),
+      useExisting: forwardRef(() => ModbusBasicConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => OpcUaBasicConfigComponent),
+      useExisting: forwardRef(() => ModbusBasicConfigComponent),
       multi: true
     }
   ],
@@ -61,31 +58,38 @@ import { Subject } from 'rxjs';
   imports: [
     CommonModule,
     SharedModule,
-    SecurityConfigComponent,
-    WorkersConfigControlComponent,
-    BrokerConfigControlComponent,
-    MappingTableComponent,
-    OpcServerConfigComponent,
+    ModbusSlaveConfigComponent,
+    ModbusMasterTableComponent,
+    EllipsisChipListDirective,
   ],
-  styleUrls: ['./opc-ua-basic-config.component.scss']
+  styles: [`
+    :host {
+      height: 100%;
+    }
+    :host ::ng-deep {
+      .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
+        height: 100%;
+      }
+    }
+  `]
 })
 
-export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class ModbusBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+
   @Input() generalTabContent: TemplateRef<any>;
 
-  mappingTypes = MappingType;
   basicFormGroup: FormGroup;
 
-  onChange!: (value: string) => void;
-  onTouched!: () => void;
+  onChange: (value: string) => void;
+  onTouched: () => void;
 
   protected readonly connectorType = ConnectorType;
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
     this.basicFormGroup = this.fb.group({
-      mapping: [],
-      server: [],
+      master: [],
+      slave: [],
     });
 
     this.basicFormGroup.valueChanges
@@ -111,8 +115,8 @@ export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validato
 
   writeValue(basicConfig: ConnectorBaseConfig): void {
     const editedBase = {
-      server: basicConfig.server || {},
-      mapping: basicConfig.mapping || [],
+      slave: basicConfig.slave || {},
+      master: basicConfig.master || {},
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});

@@ -26,65 +26,67 @@ import {
   Validators
 } from '@angular/forms';
 import {
-  BrokerConfig,
-  MqttVersions,
   noLeadTrailSpacesRegex,
-  PortLimits,
+  SecurityPolicy,
+  SecurityPolicyTypes,
+  ServerConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
-import { generateSecret } from '@core/utils';
 import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { Subject } from 'rxjs';
-import { GatewayPortTooltipPipe } from '@home/pipes/public-api';
+import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-broker-config-control',
-  templateUrl: './broker-config-control.component.html',
+  selector: 'tb-opc-server-config',
+  templateUrl: './opc-server-config.component.html',
+  styleUrls: ['./opc-server-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
+  providers: [
+    {
+      provide: NG_VALUE_ACCESSOR,
+      useExisting: forwardRef(() => OpcServerConfigComponent),
+      multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => OpcServerConfigComponent),
+      multi: true
+    }
+  ],
   standalone: true,
   imports: [
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
-    GatewayPortTooltipPipe,
-  ],
-  providers: [
-    {
-      provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => BrokerConfigControlComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => BrokerConfigControlComponent),
-      multi: true
-    }
   ]
 })
-export class BrokerConfigControlComponent implements ControlValueAccessor, Validator, OnDestroy {
-  brokerConfigFormGroup: UntypedFormGroup;
-  mqttVersions = MqttVersions;
-  portLimits = PortLimits;
+export class OpcServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
 
-  private onChange: (value: string) => void;
-  private onTouched: () => void;
+  securityPolicyTypes = SecurityPolicyTypes;
+  serverConfigFormGroup: UntypedFormGroup;
+
+  onChange!: (value: string) => void;
+  onTouched!: () => void;
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder,
-              private translate: TranslateService) {
-    this.brokerConfigFormGroup = this.fb.group({
+  constructor(private fb: FormBuilder) {
+    this.serverConfigFormGroup = this.fb.group({
       name: ['', []],
-      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
-      version: [5, []],
-      clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-      security: []
+      url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
+      scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],
+      enableSubscriptions: [true, []],
+      subCheckPeriodInMillis: [10, [Validators.required, Validators.min(10)]],
+      showMap: [false, []],
+      security: [SecurityPolicy.BASIC128, []],
+      identity: [{}, [Validators.required]]
     });
 
-    this.brokerConfigFormGroup.valueChanges.subscribe(value => {
+    this.serverConfigFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value) => {
       this.onChange(value);
       this.onTouched();
     });
@@ -95,10 +97,6 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
     this.destroy$.complete();
   }
 
-  generate(formControlName: string): void {
-    this.brokerConfigFormGroup.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
-  }
-
   registerOnChange(fn: (value: string) => void): void {
     this.onChange = fn;
   }
@@ -107,13 +105,13 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
     this.onTouched = fn;
   }
 
-  writeValue(brokerConfig: BrokerConfig): void {
-    this.brokerConfigFormGroup.patchValue(brokerConfig, {emitEvent: false});
+  validate(): ValidationErrors | null {
+    return this.serverConfigFormGroup.valid ? null : {
+      serverConfigFormGroup: { valid: false }
+    };
   }
 
-  validate(): ValidationErrors | null {
-    return this.brokerConfigFormGroup.valid ? null : {
-      brokerConfigFormGroup: {valid: false}
-    };
+  writeValue(serverConfig: ServerConfig): void {
+    this.serverConfigFormGroup.patchValue(serverConfig, {emitEvent: false});
   }
 }

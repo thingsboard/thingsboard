@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef, Input, OnChanges, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -26,10 +26,8 @@ import {
   Validators
 } from '@angular/forms';
 import {
+  ModbusSecurity,
   noLeadTrailSpacesRegex,
-  SecurityPolicy,
-  SecurityPolicyTypes,
-  ServerConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -38,19 +36,18 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({
-  selector: 'tb-server-config',
-  templateUrl: './server-config.component.html',
-  styleUrls: ['./server-config.component.scss'],
+  selector: 'tb-modbus-security-config',
+  templateUrl: './modbus-security-config.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => ModbusSecurityConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => ModbusSecurityConfigComponent),
       multi: true
     }
   ],
@@ -61,35 +58,38 @@ import { takeUntil } from 'rxjs/operators';
     SecurityConfigComponent,
   ]
 })
-export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class ModbusSecurityConfigComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
 
-  securityPolicyTypes = SecurityPolicyTypes;
-  serverConfigFormGroup: UntypedFormGroup;
+  @Input() isMaster = false;
 
-  onChange!: (value: string) => void;
-  onTouched!: () => void;
+  securityConfigFormGroup: UntypedFormGroup;
+
+  private onChange: (value: ModbusSecurity) => void;
+  private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
-    this.serverConfigFormGroup = this.fb.group({
-      name: ['', []],
-      url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
-      scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],
-      enableSubscriptions: [true, []],
-      subCheckPeriodInMillis: [10, [Validators.required, Validators.min(10)]],
-      showMap: [false, []],
-      security: [SecurityPolicy.BASIC128, []],
-      identity: [{}, [Validators.required]]
+    this.securityConfigFormGroup = this.fb.group({
+      certfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      keyfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      server_hostname: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
     });
 
-    this.serverConfigFormGroup.valueChanges.pipe(
-      takeUntil(this.destroy$)
-    ).subscribe((value) => {
-      this.onChange(value);
-      this.onTouched();
-    });
+    this.observeValueChanges();
+  }
+
+  ngOnChanges(): void {
+    if (this.isMaster) {
+      this.securityConfigFormGroup = this.fb.group({
+        certfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+        keyfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+        password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+        reqclicert: [false, []],
+      });
+      this.observeValueChanges();
+    }
   }
 
   ngOnDestroy(): void {
@@ -97,7 +97,7 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: ModbusSecurity) => void): void {
     this.onChange = fn;
   }
 
@@ -106,12 +106,21 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
   }
 
   validate(): ValidationErrors | null {
-    return this.serverConfigFormGroup.valid ? null : {
+    return this.securityConfigFormGroup.valid ? null : {
       serverConfigFormGroup: { valid: false }
     };
   }
 
-  writeValue(serverConfig: ServerConfig): void {
-    this.serverConfigFormGroup.patchValue(serverConfig, {emitEvent: false});
+  writeValue(securityConfig: ModbusSecurity): void {
+    this.securityConfigFormGroup.patchValue(securityConfig, {emitEvent: false});
+  }
+
+  private observeValueChanges(): void {
+    this.securityConfigFormGroup.valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: ModbusSecurity) => {
+      this.onChange(value);
+      this.onTouched();
+    });
   }
 }
