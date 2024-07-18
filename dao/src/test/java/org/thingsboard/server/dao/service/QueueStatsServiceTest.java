@@ -24,6 +24,8 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.queue.QueueStatsService;
@@ -80,9 +82,9 @@ public class QueueStatsServiceTest extends AbstractServiceTest {
         QueueStats retrievedQueueStatsById2 = queueStatsService.findQueueStatsById(tenantId, savedQueueStats2.getId());
         Assert.assertEquals(retrievedQueueStatsById2.getQueueName(), secondQueueName);
 
-        List<QueueStats> queueStatsList = queueStatsService.findByTenantId(tenantId);
-        Assert.assertEquals(2, queueStatsList.size());
-        assertThat(queueStatsList).containsOnly(retrievedQueueStatsById, retrievedQueueStatsById2);
+        PageData<QueueStats> queueStatsList = queueStatsService.findByTenantId(tenantId, new PageLink(10));
+        Assert.assertEquals(2, queueStatsList.getData().size());
+        assertThat(queueStatsList.getData()).containsOnly(retrievedQueueStatsById, retrievedQueueStatsById2);
 
         queueStatsService.deleteByTenantId(tenantId);
         QueueStats retrievedQueueStatsAfterDelete = queueStatsService.findQueueStatsById(tenantId, savedQueueStats.getId());

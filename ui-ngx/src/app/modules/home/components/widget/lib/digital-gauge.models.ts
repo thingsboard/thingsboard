@@ -22,6 +22,7 @@ import {
   ColorSettings,
   ColorType,
   constantColor,
+  defaultGradient,
   ValueSourceConfig,
   ValueSourceType
 } from '@shared/models/widget-settings.models';
@@ -161,9 +162,19 @@ export const backwardCompatibilityTicks = (ticksValue: AttributeSourceProperty[]
   return ticks;
 };
 
-export const convertLevelColorsSettingsToColorProcessor = (settings: DigitalGaugeSettings) => {
-  if (!settings.barColor) {
-    settings.barColor = constantColor(settings.gaugeColor);
+export const convertLevelColorsSettingsToColorProcessor = (settings: DigitalGaugeSettings, defaultColor?: string) => {
+  if (settings.barColor) {
+    if (!settings.barColor.color) {
+      settings.barColor.color = defaultColor;
+    }
+    if (isDefinedAndNotNull(settings.barColor.gradient)) {
+      settings.barColor.gradient.minValue = settings.minValue;
+      settings.barColor.gradient.maxValue = settings.maxValue;
+    } else {
+      settings.barColor.gradient = defaultGradient(settings.minValue, settings.maxValue);
+    }
+  } else {
+    settings.barColor = constantColor(defaultColor);
     if (settings.fixedLevelColors?.length) {
       settings.barColor.rangeList = {
         advancedMode: settings.useFixedLevelColor,
@@ -175,7 +186,9 @@ export const convertLevelColorsSettingsToColorProcessor = (settings: DigitalGaug
       settings.barColor.gradient = {
         advancedMode: false,
         gradient: settings.levelColors as string[],
-        gradientAdvanced: null
+        gradientAdvanced: null,
+        minValue: settings.minValue,
+        maxValue: settings.maxValue
       };
     }
     if (settings.useFixedLevelColor) {

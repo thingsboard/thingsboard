@@ -28,12 +28,14 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 
+import java.util.List;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
         name = "rest api call",
         configClazz = TbRestApiCallNodeConfiguration.class,
-        version = 1,
+        version = 2,
         nodeDescription = "Invoke REST API calls to external REST server",
         nodeDetails = "Will invoke REST API call <code>GET | POST | PUT | DELETE</code> to external REST server. " +
                 "Message payload added into Request body. Configured attributes can be added into Headers from Message Metadata." +
@@ -58,9 +60,6 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
         super.init(ctx);
         TbRestApiCallNodeConfiguration config = TbNodeUtils.convert(configuration, TbRestApiCallNodeConfiguration.class);
         httpClient = new TbHttpClient(config, ctx.getSharedEventLoop());
-        if (config.isUseRedisQueueForMsgPersistence()) {
-            log.warn("[{}][{}] Usage of Redis Template is deprecated starting 2.5 and will have no affect", ctx.getTenantId(), ctx.getSelfId());
-        }
     }
 
     @Override
@@ -87,6 +86,11 @@ public class TbRestApiCallNode extends TbAbstractExternalNode {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).put(PARSE_TO_PLAIN_TEXT, oldConfiguration.get(TRIM_DOUBLE_QUOTES).booleanValue());
                     ((ObjectNode) oldConfiguration).remove(TRIM_DOUBLE_QUOTES);
+                }
+            case 1:
+                if (oldConfiguration.has("useRedisQueueForMsgPersistence")) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).remove(List.of("useRedisQueueForMsgPersistence", "trimQueue", "maxQueueSize"));
                 }
                 break;
             default:

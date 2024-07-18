@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-liquid-level-panel" [style]="backgroundStyle$ | async" [class.tb-liquid-level-pointer]="hasCardClickAction" (click)="cardClick($event)">
+<div class="tb-liquid-level-panel" [style.padding]="padding" [style]="backgroundStyle$ | async"
+     [class.tb-liquid-level-pointer]="hasCardClickAction" (click)="cardClick($event)">
   <div class="tb-liquid-level-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #liquidLevelContent class="tb-liquid-level-content"></div>

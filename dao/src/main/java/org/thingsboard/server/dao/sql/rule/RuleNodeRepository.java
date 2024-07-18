@@ -17,6 +17,7 @@ package org.thingsboard.server.dao.sql.rule;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -51,9 +52,9 @@ public interface RuleNodeRepository extends JpaRepository<RuleNodeEntity, UUID> 
                                                                   Pageable pageable);
 
     @Query("SELECT r.id FROM RuleNodeEntity r WHERE r.type = :ruleType AND r.configurationVersion < :version")
-    Page<UUID> findAllRuleNodeIdsByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
-                                                          @Param("version") int version,
-                                                          Pageable pageable);
+    Slice<UUID> findAllRuleNodeIdsByTypeAndVersionLessThan(@Param("ruleType") String ruleType,
+                                                           @Param("version") int version,
+                                                           Pageable pageable);
 
     List<RuleNodeEntity> findRuleNodesByRuleChainIdAndExternalIdIn(UUID ruleChainId, List<UUID> externalIds);
 

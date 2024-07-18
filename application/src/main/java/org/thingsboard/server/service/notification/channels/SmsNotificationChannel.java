@@ -38,7 +38,7 @@ public class SmsNotificationChannel implements NotificationChannel<User, SmsDeli
             throw new RuntimeException("User does not have phone number");
         }
 
-        smsService.sendSms(recipient.getTenantId(), recipient.getCustomerId(), new String[]{phone}, processedTemplate.getBody());
+        smsService.sendSms(ctx.getTenantId(), null, new String[]{phone}, processedTemplate.getBody());
     }
 
     @Override

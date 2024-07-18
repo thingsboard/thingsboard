@@ -1391,6 +1391,8 @@ swagger:
     url: "${SWAGGER_LICENSE_URL:https://github.com/thingsboard/thingsboard/blob/master/LICENSE}"
   # The version of the API doc to display. Default to the package version.
   version: "${SWAGGER_VERSION:}"
+  # The group name (definition) on the API doc UI page.
+  group_name: "${SWAGGER_GROUP_NAME:thingsboard}"
 
 # Queue configuration parameters
 queue:
@@ -1800,3 +1802,12 @@ management:
     elasticsearch:
       # Enable the org.springframework.boot.actuate.elasticsearch.ElasticsearchRestClientHealthIndicator.doHealthCheck
       enabled: "false"
+
+# Mobile application settings for Thingsboard mobile application
+mobileApp:
+  # Server domain name for Thingsboard Live mobile application
+  domain: "${TB_MOBILE_APP_DOMAIN:demo.thingsboard.io}"
+  # Link to Google Play store for Thingsboard Live mobile application
+  googlePlayLink: "${TB_MOBILE_APP_GOOGLE_PLAY_LINK:https://play.google.com/store/apps/details?id=org.thingsboard.demo.app}"
+  # Link to App Store for Thingsboard Live mobile application
+  appStoreLink: "${TB_MOBILE_APP_APP_STORE_LINK:https://apps.apple.com/us/app/thingsboard-live/id1594355695}"

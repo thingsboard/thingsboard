@@ -50,6 +50,8 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
 
   aliasFilterTypes: Array<AliasFilterType>;
 
+  listEntityTypes: Array<EntityType | AliasEntityType>;
+
   aliasFilterType = AliasFilterType;
   aliasFilterTypeTranslations = aliasFilterTypeTranslationMap;
   entityType = EntityType;
@@ -70,6 +72,11 @@ export class EntityFilterComponent implements ControlValueAccessor, OnInit, OnDe
   ngOnInit(): void {
 
     this.aliasFilterTypes = this.entityService.getAliasFilterTypesByEntityTypes(this.allowedEntityTypes);
+
+    this.listEntityTypes = this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, false);
+    if (!this.allowedEntityTypes?.length || this.allowedEntityTypes.includes(EntityType.QUEUE_STATS)) {
+      this.listEntityTypes.push(EntityType.QUEUE_STATS);
+    }
 
     this.entityFilterFormGroup = this.fb.group({
       type: [null, [Validators.required]]

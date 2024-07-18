@@ -90,8 +90,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   ngOnInit() {
-    this.entityTypes = this.filterAllowedEntityTypes ?
-      this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes) : this.allowedEntityTypes;
+    this.entityTypes = this.filterAllowedEntityTypes
+      ? this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes)
+      : this.allowedEntityTypes;
     this.entityTypeFormGroup.get('entityType').valueChanges.subscribe(
       (value) => {
         let modelValue;

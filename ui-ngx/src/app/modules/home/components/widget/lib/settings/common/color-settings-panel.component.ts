@@ -20,7 +20,8 @@ import {
   ColorSettings,
   ColorType,
   colorTypeTranslations,
-  defaultGradient
+  defaultGradient,
+  defaultRange
 } from '@shared/models/widget-settings.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
@@ -30,7 +31,7 @@ import { deepClone } from '@core/utils';
 import { WidgetService } from '@core/http/widget.service';
 import { ColorSettingsComponent } from '@home/components/widget/lib/settings/common/color-settings.component';
 import { IAliasController } from '@core/api/widget-api.models';
-import { coerceBoolean, coerceNumber } from '@shared/decorators/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { Datasource } from '@shared/models/widget.models';
 
@@ -73,11 +74,9 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
   gradientAdvancedMode = false;
 
   @Input()
-  @coerceNumber()
   minValue: number;
 
   @Input()
-  @coerceNumber()
   maxValue: number;
 
   colorType = ColorType;
@@ -102,7 +101,7 @@ export class ColorSettingsPanelComponent extends PageComponent implements OnInit
         type: [this.colorSettings?.type || ColorType.constant, []],
         color: [this.colorSettings?.color, []],
         gradient: [this.colorSettings?.gradient || defaultGradient(this.minValue, this.maxValue), []],
-        rangeList: [this.colorSettings?.rangeList, []],
+        rangeList: [this.colorSettings?.rangeList || defaultRange(), []],
         colorFunction: [this.colorSettings?.colorFunction, []]
       }
     );

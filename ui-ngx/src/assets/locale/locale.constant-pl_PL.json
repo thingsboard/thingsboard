@@ -1976,7 +1976,7 @@
             "short-id": "Krótki identyfikator serwera",
             "short-id-tooltip": "Krótki identyfikator serwera. ",
             "short-id-required": "Krótki identyfikator serwera jest wymagany.",
-            "short-id-range": "Krótki identyfikator serwera powinien mieścić się w zakresie od 1 do 65534.",
+            "short-id-range": "Krótki identyfikator serwera powinien mieścić się w zakresie od {{ min }} do {{ max }}.",
             "short-id-pattern": "Krótki identyfikator serwera musi być dodatnią liczbą całkowitą.",
             "lifetime": "Okres rejestracji klienta",
             "lifetime-required": "Okres rejestracji klienta jest wymagany.",
@@ -6808,7 +6808,6 @@
             "event-key-contains": "Klucz zdarzenia zawiera...",
             "show-connector": "Show for the connector",
             "connector-state-param-key": "Connector state parameter key",
-            "status": "Status",
             "message": "Message",
             "created-time": "Created time"
         },

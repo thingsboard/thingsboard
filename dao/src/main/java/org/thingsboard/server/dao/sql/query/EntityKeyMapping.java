@@ -89,10 +89,12 @@ public class EntityKeyMapping {
     public static final String OWNER_TYPE_SELECT_QUERY = "case when e.customer_id = '" + NULL_UUID + "' " +
             "then 'TENANT' " +
             "else 'CUSTOMER' end";
+    public static final String QUEUE_STATS_NAME_QUERY = "concat(e.queue_name, '_', e.service_id)";
     public static final Map<String, String> ownerPropertiesFunctions = Map.of(
             OWNER_NAME, OWNER_NAME_SELECT_QUERY,
             OWNER_TYPE, OWNER_TYPE_SELECT_QUERY
     );
+    public static final Map<String, String> queueStatsPropertiesFunctions = Map.of(NAME, QUEUE_STATS_NAME_QUERY);
 
     public static final List<String> typedEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME, TYPE, ADDITIONAL_INFO);
     public static final List<String> widgetEntityFields = Arrays.asList(CREATED_TIME, ENTITY_TYPE, NAME);
@@ -166,6 +168,7 @@ public class EntityKeyMapping {
         propertiesFunctions.put(EntityType.ENTITY_VIEW, ownerPropertiesFunctions);
         propertiesFunctions.put(EntityType.USER, ownerPropertiesFunctions);
         propertiesFunctions.put(EntityType.DASHBOARD, ownerPropertiesFunctions);
+        propertiesFunctions.put(EntityType.QUEUE_STATS, queueStatsPropertiesFunctions);
 
         Map<String, String> userEntityAliases = new HashMap<>();
         userEntityAliases.put(TITLE, EMAIL);
