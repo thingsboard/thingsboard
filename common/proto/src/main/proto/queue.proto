@@ -323,6 +323,7 @@ message RepositorySettingsProto {
   optional string defaultBranch = 8;
   bool readOnly = 9;
   bool showMergeCommits = 10;
+  bool localOnly = 11;
 }
 
 /**

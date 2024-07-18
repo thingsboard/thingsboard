@@ -72,7 +72,7 @@
     </tb-widget>
   </div>
 </div>
-<ng-template #widgetTitlePanel>
+<ng-template #widgetTitlePanel let-titleSuffixTemplate="titleSuffixTemplate">
   <div *ngIf="widget.showWidgetTitlePanel"
        class="tb-widget-title">
               <div *ngIf="widget.showTitle"
@@ -84,6 +84,7 @@
                 <div class="mat-subtitle-1 title" [style]="widget.titleStyle">
                   {{widget.title$ | async}}
                 </div>
+                <ng-container *ngTemplateOutlet="titleSuffixTemplate"></ng-container>
               </div>
     <tb-timewindow *ngIf="widget.hasTimewindow"
                    aggregation="{{widget.hasAggregation}}"

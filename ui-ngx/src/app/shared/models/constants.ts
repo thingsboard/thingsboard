@@ -133,6 +133,7 @@ export const HelpLinks = {
     ruleNodeSaveToCustomTable: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/action-nodes/#save-to-custom-table`,
     ruleNodeRuleChain: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#rule-chain-node`,
     ruleNodeOutputNode: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/flow-nodes/#output-node`,
+    ruleNodeAwsLambda: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-lambda-node`,
     ruleNodeAwsSns: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-sns-node`,
     ruleNodeAwsSqs: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#aws-sqs-node`,
     ruleNodeKafka: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/external-nodes/#kafka-node`,

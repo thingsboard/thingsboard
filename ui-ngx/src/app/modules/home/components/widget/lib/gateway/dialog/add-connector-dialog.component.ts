@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,6 +33,7 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
+import { takeUntil, tap } from "rxjs/operators";
 
 @Component({
   selector: 'tb-add-connector-dialog',
@@ -40,7 +41,7 @@ import { ResourcesService } from '@core/services/resources.service';
   styleUrls: ['./add-connector-dialog.component.scss'],
   providers: [],
 })
-export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnDestroy {
+export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
 
   connectorForm: UntypedFormGroup;
 
@@ -66,7 +67,13 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],
       sendDataOnlyOnChange: [false, []],
+      class: ['', []],
+      key: ['auto', []],
     });
+  }
+
+  ngOnInit(): void {
+    this.observeTypeChange();
   }
 
   ngOnDestroy(): void {
@@ -117,5 +124,19 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       }
       return null;
     };
+  }
+
+  private observeTypeChange(): void {
+    this.connectorForm.get('type').valueChanges.pipe(
+      tap((type: ConnectorType) => {
+        const useDefaultControl = this.connectorForm.get('useDefaults');
+        if (type === ConnectorType.GRPC || type === ConnectorType.CUSTOM) {
+          useDefaultControl.setValue(false);
+        } else if (!useDefaultControl.value) {
+          useDefaultControl.setValue(true);
+        }
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe()
   }
 }

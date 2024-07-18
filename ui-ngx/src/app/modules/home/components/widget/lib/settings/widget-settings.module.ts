@@ -363,6 +363,9 @@ import {
   LabelValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/label-value-card-widget-settings.component';
 import {
+  UnreadNotificationWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/unread-notification-widget-settings.component';
+import {
 ScadaSymbolWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/scada/scada-symbol-widget-settings.component';
 
@@ -494,6 +497,7 @@ ScadaSymbolWidgetSettingsComponent
     RadarChartWidgetSettingsComponent,
     LabelCardWidgetSettingsComponent,
     LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent
   ],
   imports: [
@@ -629,6 +633,7 @@ ScadaSymbolWidgetSettingsComponent
     RadarChartWidgetSettingsComponent,
     LabelCardWidgetSettingsComponent,
     LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
     ScadaSymbolWidgetSettingsComponent
   ]
 })
@@ -731,5 +736,6 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent,
   'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
   'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent,
+  'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent,
   'tb-scada-symbol-widget-settings': ScadaSymbolWidgetSettingsComponent
 };
