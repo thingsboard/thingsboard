@@ -32,11 +32,10 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import {
-  ModbusMasterTableComponent,
-  ModbusSlaveConfigComponent,
-} from '@home/components/widget/lib/gateway/connectors-configuration/modbus';
+
 import { EllipsisChipListDirective } from '@shared/directives/public-api';
+import { ModbusSlaveConfigComponent } from '../modbus-slave-config/modbus-slave-config.component';
+import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master-table.component';
 
 @Component({
   selector: 'tb-modbus-basic-config',

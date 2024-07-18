@@ -38,11 +38,9 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import {
-  ModbusValuesComponent,
-  ModbusSecurityConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/modbus';
 import { GatewayPortTooltipPipe } from '@home/pipes/public-api';
+import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
+import { ModbusValuesComponent, } from '../modbus-values/modbus-values.component';
 
 @Component({
   selector: 'tb-modbus-server-config',

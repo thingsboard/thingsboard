@@ -36,10 +36,8 @@ import {
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
-import {
-  ModbusValuesComponent,
-  ModbusSecurityConfigComponent,
-} from '@home/components/widget/lib/gateway/connectors-configuration/modbus';
+import { ModbusValuesComponent } from '../modbus-values/modbus-values.component';
+import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
