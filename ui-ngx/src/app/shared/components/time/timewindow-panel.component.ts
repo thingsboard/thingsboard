@@ -85,16 +85,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   result: Timewindow;
 
-  realtimeTimewindowOptions: ToggleHeaderOption[] = [
-    {
-      name: this.translate.instant('timewindow.last'),
-      value: this.realtimeTypes.LAST_INTERVAL
-    },
-    {
-      name: this.translate.instant('timewindow.relative'),
-      value: this.realtimeTypes.INTERVAL
-    }
-  ];
+  realtimeTimewindowOptions: ToggleHeaderOption[] = [];
 
   historyTimewindowOptions: ToggleHeaderOption[] = [
     {
@@ -121,17 +112,32 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     super(store);
     this.historyOnly = data.historyOnly;
     this.forAllTimeEnabled = data.forAllTimeEnabled;
+    this.quickIntervalOnly = data.quickIntervalOnly;
+    this.timewindow = data.timewindow;
+    this.aggregation = data.aggregation;
+    this.timezone = data.timezone;
+    this.isEdit = data.isEdit;
+
     if (this.forAllTimeEnabled) {
       this.historyTimewindowOptions.unshift({
         name: this.translate.instant('timewindow.for-all-time'),
         value: this.historyTypes.FOR_ALL_TIME
       });
     }
-    this.quickIntervalOnly = data.quickIntervalOnly;
-    this.timewindow = data.timewindow;
-    this.aggregation = data.aggregation;
-    this.timezone = data.timezone;
-    this.isEdit = data.isEdit;
+
+    if (this.isEdit || (!this.timewindow.hideLastInterval && !this.quickIntervalOnly)) {
+      this.realtimeTimewindowOptions.push({
+        name: this.translate.instant('timewindow.last'),
+        value: this.realtimeTypes.LAST_INTERVAL
+      });
+    }
+
+    if (this.isEdit || (!this.timewindow.hideQuickInterval && this.quickIntervalOnly)) {
+      this.realtimeTimewindowOptions.push({
+        name: this.translate.instant('timewindow.relative'),
+        value: this.realtimeTypes.INTERVAL
+      });
+    }
   }
 
   ngOnInit(): void {

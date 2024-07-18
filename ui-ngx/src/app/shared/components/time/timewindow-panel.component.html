@@ -20,7 +20,7 @@
                  (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked" [fxShow]="isEdit || !timewindow.hideInterval">
+        <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideInterval">
           <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
           <div class="tb-flex align-center space-between">
             <ng-container formGroupName="realtime">
@@ -58,13 +58,17 @@
             </ng-container>
           </ng-container>
           </section>
+        <ng-container *ngIf="!isEdit && timewindow.hideInterval">
+          <ng-container *ngTemplateOutlet="timezoneSelection">
+          </ng-container>
+        </ng-container>
         <ng-container *ngTemplateOutlet="aggregationConfig">
         </ng-container>
       </div>
     </mat-tab>
     <mat-tab label="{{ 'timewindow.history' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked" [fxShow]="isEdit || !timewindow.hideInterval">
+        <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideInterval">
           <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
           <div class="tb-flex align-center space-between">
             <ng-container formGroupName="history">
@@ -110,6 +114,10 @@
             </ng-container>
           </ng-container>
         </section>
+        <ng-container *ngIf="!isEdit && timewindow.hideInterval">
+          <ng-container *ngTemplateOutlet="timezoneSelection">
+          </ng-container>
+        </ng-container>
         <ng-container *ngTemplateOutlet="aggregationConfig">
         </ng-container>
       </div>
@@ -154,7 +162,7 @@
         </section>
       </ng-container>
 
-      <section class="tb-form-panel stroked" [fxShow]="(isEdit || !timewindow.hideAggInterval)
+      <section class="tb-form-panel stroked" *ngIf="(isEdit || !timewindow.hideAggInterval)
        && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
         <div class="tb-form-panel-title">{{ 'aggregation.group-interval' | translate }}</div>
         <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
