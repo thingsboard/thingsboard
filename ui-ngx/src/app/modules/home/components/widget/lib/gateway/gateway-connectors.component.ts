@@ -50,6 +50,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import {
   AddConnectorConfigData,
+  ConnectorBaseConfig,
   ConnectorConfigurationModes,
   ConnectorType,
   GatewayConnector,
@@ -720,7 +721,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       connector.key = 'auto';
     }
     if (!connector.configurationJson) {
-      connector.configurationJson = {};
+      connector.configurationJson = {} as ConnectorBaseConfig;
     }
     connector.basicConfig = connector.configurationJson;
 

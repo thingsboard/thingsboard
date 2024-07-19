@@ -25,8 +25,8 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ConnectorBaseConfig,
   MappingType,
+  MQTTBasicConfig,
   RequestMappingData,
   RequestType,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -112,7 +112,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: ConnectorBaseConfig): void {
+  writeValue(basicConfig: MQTTBasicConfig): void {
     const editedBase = {
       workers: {
         maxNumberOfWorkers: basicConfig.broker?.maxNumberOfWorkers,

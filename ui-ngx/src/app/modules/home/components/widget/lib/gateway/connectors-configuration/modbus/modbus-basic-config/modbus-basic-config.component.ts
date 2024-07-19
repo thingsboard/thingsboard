@@ -24,10 +24,7 @@ import {
   ValidationErrors,
   Validator,
 } from '@angular/forms';
-import {
-  ConnectorBaseConfig,
-  ConnectorType,
-} from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { ConnectorType, ModbusBasicConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { takeUntil } from 'rxjs/operators';
@@ -112,7 +109,7 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: ConnectorBaseConfig): void {
+  writeValue(basicConfig: ModbusBasicConfig): void {
     const editedBase = {
       slave: basicConfig.slave || {},
       master: basicConfig.master || {},

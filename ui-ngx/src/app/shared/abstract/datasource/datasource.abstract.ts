@@ -18,11 +18,11 @@ import { DataSource } from '@angular/cdk/collections';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { map } from 'rxjs/operators';
 
-export abstract class TbDatasource<DataType> implements DataSource<DataType> {
+export abstract class TbDatasource<T> implements DataSource<T> {
 
-  protected dataSubject = new BehaviorSubject<Array<DataType>>([]);
+  protected dataSubject = new BehaviorSubject<Array<T>>([]);
 
-  connect(): Observable<Array<DataType>> {
+  connect(): Observable<Array<T>> {
     return this.dataSubject.asObservable();
   }
 
@@ -30,19 +30,19 @@ export abstract class TbDatasource<DataType> implements DataSource<DataType> {
     this.dataSubject.complete();
   }
 
-  loadData(data: Array<DataType>): void {
+  loadData(data: Array<T>): void {
     this.dataSubject.next(data);
   }
 
   isEmpty(): Observable<boolean> {
     return this.dataSubject.pipe(
-      map((data: DataType[]) => !data.length)
+      map((data: T[]) => !data.length)
     );
   }
 
   total(): Observable<number> {
     return this.dataSubject.pipe(
-      map((data: DataType[]) => data.length)
+      map((data: T[]) => data.length)
     );
   }
 }

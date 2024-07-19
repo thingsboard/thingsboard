@@ -21,7 +21,6 @@ import {
   Input,
   OnDestroy,
   Renderer2,
-  AfterViewInit,
 } from '@angular/core';
 import { isEqual } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
@@ -34,7 +33,7 @@ import { takeUntil } from 'rxjs/operators';
   selector: '[tb-ellipsis-chip-list]',
   standalone: true,
 })
-export class EllipsisChipListDirective implements OnDestroy, AfterViewInit {
+export class EllipsisChipListDirective implements OnDestroy {
 
   chipsValue: string[];
 
@@ -70,9 +69,7 @@ export class EllipsisChipListDirective implements OnDestroy, AfterViewInit {
         }
       });
     });
-  }
 
-  ngAfterViewInit(): void {
     this.intersectionObserver.observe(this.el.nativeElement);
   }
 

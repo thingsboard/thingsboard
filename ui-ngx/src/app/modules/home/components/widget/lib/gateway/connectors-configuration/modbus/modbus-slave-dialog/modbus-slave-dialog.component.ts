@@ -118,7 +118,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       type: [ModbusProtocolType.TCP, [Validators.required]],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
-      serialPort: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       method: [ModbusMethodType.SOCKET, []],
       baudrate: [null, []],
       stopbits: [null, []],

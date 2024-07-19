@@ -25,9 +25,9 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ConnectorBaseConfig,
   ConnectorType,
   MappingType,
+  OPCBasicConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -109,7 +109,7 @@ export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validato
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: ConnectorBaseConfig): void {
+  writeValue(basicConfig: OPCBasicConfig): void {
     const editedBase = {
       server: basicConfig.server || {},
       mapping: basicConfig.mapping || [],

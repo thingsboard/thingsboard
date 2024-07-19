@@ -174,15 +174,23 @@ export interface ConnectorSecurity {
 
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
 
-export interface ConnectorBaseConfig {
-  mapping?: DeviceConnectorMapping[];
-  dataMapping?: ConverterConnectorMapping[];
-  requestsMapping?: Record<RequestType, RequestMappingData> | RequestMappingData[];
-  server?: ServerConfig;
-  broker?: BrokerConfig;
-  workers?: WorkersConfig;
-  master?: ModbusMasterConfig;
-  slave?: ModbusSlave;
+export type ConnectorBaseConfig = MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+
+export interface MQTTBasicConfig {
+  dataMapping: ConverterConnectorMapping[];
+  requestsMapping: Record<RequestType, RequestMappingData> | RequestMappingData[];
+  broker: BrokerConfig;
+  workers: WorkersConfig;
+}
+
+export interface OPCBasicConfig {
+  mapping: DeviceConnectorMapping[];
+  server: ServerConfig;
+}
+
+export interface ModbusBasicConfig {
+  master: ModbusMasterConfig;
+  slave: ModbusSlave;
 }
 
 export interface WorkersConfig {
