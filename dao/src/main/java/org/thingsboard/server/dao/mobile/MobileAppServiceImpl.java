@@ -30,13 +30,12 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
 import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
-import org.thingsboard.server.dao.oauth2.OAuth2Utils;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
@@ -58,13 +57,10 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     private OAuth2ClientDao oauth2ClientDao;
     @Autowired
     private MobileAppDao mobileAppDao;
-    @Autowired
-    private DataValidator<MobileApp> mobileAppValidator;
 
     @Override
     public MobileApp saveMobileApp(TenantId tenantId, MobileApp mobileApp) {
         log.trace("Executing saveMobileApp [{}]", mobileApp);
-        mobileAppValidator.validate(mobileApp, MobileApp::getTenantId);
         try {
             MobileApp savedMobileApp = mobileAppDao.save(tenantId, mobileApp);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedMobileApp).build());
@@ -84,7 +80,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         log.trace("Executing deleteMobileAppById [{}]", mobileAppId.getId());
         mobileAppDao.removeById(tenantId, mobileAppId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppId).build());
-   }
+    }
 
     @Override
     public MobileApp findMobileAppById(TenantId tenantId, MobileAppId mobileAppId) {
@@ -99,7 +95,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         List<MobileAppInfo> mobileAppInfos = new ArrayList<>();
         mobileApps.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(mobileApp -> {
             mobileAppInfos.add(new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
-                    .map(OAuth2Utils::toClientInfo)
+                    .map(OAuth2ClientInfo::new)
                     .collect(Collectors.toList())));
         });
         return mobileAppInfos;
@@ -113,7 +109,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
             return null;
         }
         return new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
-                .map(OAuth2Utils::toClientInfo)
+                .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList()));
     }
 

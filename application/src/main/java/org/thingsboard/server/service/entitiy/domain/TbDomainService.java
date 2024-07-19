@@ -25,6 +25,8 @@ public interface TbDomainService {
 
     Domain save(Domain domain, List<OAuth2ClientId> oAuth2Clients, User user) throws Exception;
 
+    void updateOauth2Clients(Domain domain, List<OAuth2ClientId> oAuth2ClientIds, User user);
+
     void delete(Domain domain, User user);
 
 }

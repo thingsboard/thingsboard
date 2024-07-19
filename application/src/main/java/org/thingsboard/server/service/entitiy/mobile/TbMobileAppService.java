@@ -25,6 +25,8 @@ public interface TbMobileAppService {
 
     MobileApp save(MobileApp mobileApp, List<OAuth2ClientId> oauth2Clients, User user) throws Exception;
 
+    void updateOauth2Clients(MobileApp mobileApp, List<OAuth2ClientId> oAuth2ClientIds, User user);
+
     void delete(MobileApp mobileApp, User user);
 
 }

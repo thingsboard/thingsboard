@@ -51,7 +51,7 @@ public class DomainServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveDomain() {
-        Domain domain = validDomain(TenantId.SYS_TENANT_ID, "test.domain.com", true, true);
+        Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "test.domain.com", true, true);
         Domain savedDomain = domainService.saveDomain(SYSTEM_TENANT_ID, domain);
 
         Domain retrievedDomain = domainService.findDomainById(savedDomain.getTenantId(), savedDomain.getId());
@@ -87,7 +87,7 @@ public class DomainServiceTest extends AbstractServiceTest {
     public void testGetTenantDomains() {
         List<Domain> domains = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            Domain oAuth2Client = validDomain(TenantId.SYS_TENANT_ID, StringUtils.randomAlphabetic(5), true, false);
+            Domain oAuth2Client = constructDomain(TenantId.SYS_TENANT_ID, StringUtils.randomAlphabetic(5), true, false);
             Domain savedOauth2Client = domainService.saveDomain(SYSTEM_TENANT_ID, oAuth2Client);
             domains.add(savedOauth2Client);
         }
@@ -102,7 +102,7 @@ public class DomainServiceTest extends AbstractServiceTest {
         OAuth2Client savedOauth2Client = oAuth2ClientService.saveOAuth2Client(SYSTEM_TENANT_ID, oAuth2Client);
         List<OAuth2ClientInfo> infos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID);
 
-        Domain domain = validDomain(TenantId.SYS_TENANT_ID, "test.domain.com", true, true);
+        Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "test.domain.com", true, true);
         Domain savedDomain = domainService.saveDomain(SYSTEM_TENANT_ID, domain);
 
         domainService.updateOauth2Clients(TenantId.SYS_TENANT_ID, savedDomain.getId(), List.of(savedOauth2Client.getId()));
@@ -116,7 +116,7 @@ public class DomainServiceTest extends AbstractServiceTest {
         assertThat(oauth2LoginInfo).containsOnly(new OAuth2ClientLoginInfo(savedOauth2Client.getName(), savedOauth2Client.getLoginButtonIcon(), String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, savedOauth2Client.getUuidId().toString())));
     }
 
-    private Domain validDomain(TenantId tenantId, String domainName, boolean oauth2Enabled, boolean propagateToEdge) {
+    private Domain constructDomain(TenantId tenantId, String domainName, boolean oauth2Enabled, boolean propagateToEdge) {
         Domain domain = new Domain();
         domain.setTenantId(tenantId);
         domain.setName(domainName);
@@ -124,8 +124,5 @@ public class DomainServiceTest extends AbstractServiceTest {
         domain.setPropagateToEdge(propagateToEdge);
         return domain;
     }
-
-
-
 
 }

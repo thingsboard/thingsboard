@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,11 +26,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
@@ -40,8 +41,8 @@ import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.mobile.TbMobileAppService;
 import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -61,57 +62,37 @@ public class MobileAppController extends BaseController {
     @ApiOperation(value = "Save Or update Mobile app (saveMobileApp)",
             notes = "Create or update the Mobile app. When creating mobile app, platform generates Mobile App Id as " + UUID_WIKI_LINK +
                     "The newly created Mobile App Id will be present in the response. " +
-                    "Specify existing Mobile App Id to update the domain. " +
+                    "Specify existing Mobile App Id to update the mobile app. " +
                     "Referencing non-existing Mobile App Id will cause 'Not Found' error." +
                     "\n\nMobile app package name is unique for entire platform setup.\n\n")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/mobileApp")
     public MobileApp saveMobileApp(
-            @Parameter(description = "A JSON value representing the Domain.", required = true)
-            @RequestBody MobileApp mobileApp,
+            @Parameter(description = "A JSON value representing the Mobile Application.", required = true)
+            @RequestBody @Valid MobileApp mobileApp,
             @Parameter(description = "A list of entity group ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam(name = "oauth2ClientIds", required = false) UUID[] oauth2ClientIds) throws Exception {
+            @RequestParam(name = "oauth2ClientIds", required = false) UUID[] ids) throws Exception {
         mobileApp.setTenantId(getCurrentUser().getTenantId());
-
-        List<OAuth2ClientId> oAuth2Clients = new ArrayList<>();
-        for (UUID id : oauth2ClientIds) {
-            OAuth2ClientId oauth2ClientId = new OAuth2ClientId(id);
-            checkOauth2ClientId(oauth2ClientId, Operation.READ);
-            oAuth2Clients.add(oauth2ClientId);
-        }
-        return tbMobileAppService.save(mobileApp, oAuth2Clients, getCurrentUser());
+        checkEntity(mobileApp.getId(), mobileApp, Resource.MOBILE_APP);
+        return tbMobileAppService.save(mobileApp, getOAuth2ClientIds(ids), getCurrentUser());
     }
 
     @ApiOperation(value = "Update oauth2 clients (updateOauth2Clients)",
             notes = "Update oauth2 clients to the specified mobile app. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @PostMapping(value = "/mobileApp/{id}/oauth2Clients")
+    @PutMapping(value = "/mobileApp/{id}/oauth2Clients")
     public void updateOauth2Clients(@PathVariable UUID id,
-                                         @RequestBody UUID[] oauth2ClientIds) throws ThingsboardException {
+                                         @RequestBody UUID[] clientIds) throws ThingsboardException {
         MobileAppId mobileAppId = new MobileAppId(id);
-        MobileApp mobileApp = null;
-        try {
-            mobileApp = checkMobileAppId(mobileAppId, Operation.WRITE);
-            List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
-            for (UUID outh2CLientId : oauth2ClientIds) {
-                OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(outh2CLientId);
-                checkEntityId(oAuth2ClientId, Operation.READ);
-                oAuth2ClientIds.add(oAuth2ClientId);
-            }
-            mobileAppService.updateOauth2Clients(getTenantId(), mobileAppId, oAuth2ClientIds);
-        } catch (Exception e) {
-            if (mobileApp != null) {
-                logEntityActionService.logEntityAction(getTenantId(), mobileAppId, mobileApp,
-                        ActionType.UPDATED, getCurrentUser(), e);
-            }
-            throw e;
-        }
+        MobileApp mobileApp = checkMobileAppId(mobileAppId, Operation.WRITE);
+        List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
+        tbMobileAppService.updateOauth2Clients(mobileApp, oAuth2ClientIds, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get mobile app infos (getMobileAppInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get mobile app infos (getTenantMobileAppInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mobileApp/infos")
-    public List<MobileAppInfo> getMobileAppInfos() throws ThingsboardException {
+    public List<MobileAppInfo> getTenantMobileAppInfos() throws ThingsboardException {
         TenantId tenantId = getCurrentUser().getTenantId();
         return mobileAppService.findMobileAppInfosByTenantId(tenantId);
     }

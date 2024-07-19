@@ -30,13 +30,12 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
-import org.thingsboard.server.dao.oauth2.OAuth2Utils;
-import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.ArrayList;
@@ -58,13 +57,10 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     private OAuth2ClientDao oauth2ClientDao;
     @Autowired
     private DomainDao domainDao;
-    @Autowired
-    private DataValidator<Domain> domainValidator;
 
     @Override
     public Domain saveDomain(TenantId tenantId, Domain domain) {
         log.trace("Executing saveDomain [{}]", domain);
-        domainValidator.validate(domain, Domain::getTenantId);
         try {
             Domain savedDomain = domainDao.save(tenantId, domain);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedDomain).build());
@@ -109,7 +105,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
 
     @Override
     public void deleteDomainById(TenantId tenantId, DomainId domainId) {
-        log.trace("Executing deleteDomain [{}]", domainId.getId());
+        log.trace("Executing deleteDomainById [{}]", domainId.getId());
         domainDao.removeById(tenantId, domainId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(domainId).build());
     }
@@ -127,7 +123,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
         List<DomainInfo> domainInfos = new ArrayList<>();
         domains.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(domain -> {
             domainInfos.add(new DomainInfo(domain, oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
-                    .map(OAuth2Utils::toClientInfo)
+                    .map(OAuth2ClientInfo::new)
                     .collect(Collectors.toList())));
         });
         return domainInfos;
@@ -141,7 +137,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
             return null;
         }
         return new DomainInfo(domain, oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
-                .map(OAuth2Utils::toClientInfo)
+                .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList()));
     }
 

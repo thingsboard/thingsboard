@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.mobile;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -75,6 +76,11 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         repository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP;
     }
 
 }

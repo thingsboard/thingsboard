@@ -26,6 +26,7 @@ import jakarta.validation.ConstraintValidatorContext;
 @Slf4j
 public class StringLengthValidator implements ConstraintValidator<Length, Object> {
     private int max;
+    private int min;
 
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
@@ -35,14 +36,15 @@ public class StringLengthValidator implements ConstraintValidator<Length, Object
         } else {
             return true;
         }
-        if (StringUtils.isEmpty(stringValue)) {
+        if (stringValue == null) {
             return true;
         }
-        return stringValue.length() <= max;
+        return stringValue.length() >= min && stringValue.length() <= max;
     }
 
     @Override
     public void initialize(Length constraintAnnotation) {
         this.max = constraintAnnotation.max();
+        this.min = constraintAnnotation.min();
     }
 }

@@ -18,6 +18,7 @@ package org.thingsboard.server.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,11 +26,11 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -41,9 +42,6 @@ import org.thingsboard.server.service.entitiy.domain.TbDomainService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
@@ -70,53 +68,30 @@ public class DomainController extends BaseController {
     @PostMapping(value = "/domain")
     public Domain saveDomain(
             @Parameter(description = "A JSON value representing the Domain.", required = true)
-            @RequestBody Domain domain,
+            @RequestBody @Valid Domain domain,
             @Parameter(description = "A list of oauth2 client registration ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam(name = "oauth2ClientRegistrationIds", required = false) String[] ids) throws Exception {
-        List<String> oauth2ClientIds = ids != null ? Arrays.asList(ids) : Collections.emptyList();
+            @RequestParam(name = "oauth2ClientIds", required = false) UUID[] ids) throws Exception {
         domain.setTenantId(getCurrentUser().getTenantId());
         checkEntity(domain.getId(), domain, Resource.DOMAIN);
-        List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
-        for (String id : oauth2ClientIds) {
-            OAuth2ClientId oauth2ClientId = new OAuth2ClientId(toUUID(id));
-            checkOauth2ClientId(oauth2ClientId, Operation.READ);
-            oAuth2ClientIds.add(oauth2ClientId);
-        }
-        return tbDomainService.save(domain, oAuth2ClientIds, getCurrentUser());
+        return tbDomainService.save(domain, getOAuth2ClientIds(ids), getCurrentUser());
     }
 
     @ApiOperation(value = "Update oauth2 clients (updateOauth2Clients)",
             notes = "Update oauth2 clients for the specified domain. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @PostMapping(value = "/domain/{id}/oauth2Clients")
+    @PutMapping(value = "/domain/{id}/oauth2Clients")
     public void updateOauth2Clients(@PathVariable UUID id,
-                                         @RequestBody UUID[] oauth2ClientIds) throws ThingsboardException {
+                                    @RequestBody UUID[] clientIds) throws ThingsboardException {
         DomainId domainId = new DomainId(id);
-        Domain domain = null;
-        try {
-            domain = checkDomainId(domainId, Operation.WRITE);
-            List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
-            for (UUID outh2CLientId : oauth2ClientIds) {
-                OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(outh2CLientId);
-                checkEntityId(oAuth2ClientId, Operation.READ);
-                oAuth2ClientIds.add(oAuth2ClientId);
-            }
-            domainService.updateOauth2Clients(getTenantId(), domainId, oAuth2ClientIds);
-            logEntityActionService.logEntityAction(domain.getTenantId(), domain.getId(), domain,
-                    ActionType.UPDATED, getCurrentUser(), oAuth2ClientIds.toString());
-        } catch (Exception e) {
-            if (domain != null) {
-                    logEntityActionService.logEntityAction(getTenantId(), domainId, domain,
-                            ActionType.UPDATED, getCurrentUser(), e);
-            }
-            throw e;
-        }
+        Domain domain = checkDomainId(domainId, Operation.WRITE);
+        List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
+        tbDomainService.updateOauth2Clients(domain, oAuth2ClientIds, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get Domain infos (getDomainInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get Domain infos (getTenantDomainInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/domain/infos")
-    public List<DomainInfo> getDomainInfos() throws ThingsboardException {
+    public List<DomainInfo> getTenantDomainInfos() throws ThingsboardException {
         return domainService.findDomainInfosByTenantId(getTenantId());
     }
 

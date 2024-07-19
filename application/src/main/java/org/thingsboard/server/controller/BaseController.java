@@ -167,6 +167,9 @@ import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
@@ -895,6 +898,17 @@ public abstract class BaseController {
         } else {
             return null;
         }
+    }
+
+    protected List<OAuth2ClientId> getOAuth2ClientIds(UUID[] ids) throws ThingsboardException {
+        List<UUID> oauth2ClientIds = ids != null ? Arrays.asList(ids) : Collections.emptyList();
+        List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
+        for (UUID id : oauth2ClientIds) {
+            OAuth2ClientId oauth2ClientId = new OAuth2ClientId(id);
+            checkOauth2ClientId(oauth2ClientId, Operation.READ);
+            oAuth2ClientIds.add(oauth2ClientId);
+        }
+        return oAuth2ClientIds;
     }
 
 }

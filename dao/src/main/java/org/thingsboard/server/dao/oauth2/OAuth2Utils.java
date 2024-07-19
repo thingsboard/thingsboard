@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 
@@ -27,15 +26,6 @@ public class OAuth2Utils {
         client.setName(registration.getLoginButtonLabel());
         client.setUrl(String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, registration.getUuidId().toString()));
         client.setIcon(registration.getLoginButtonIcon());
-        return client;
-    }
-
-    public static OAuth2ClientInfo toClientInfo(OAuth2Client oAuth2Client) {
-        OAuth2ClientInfo client = new OAuth2ClientInfo();
-        client.setId(oAuth2Client.getId());
-        client.setCreatedTime(oAuth2Client.getCreatedTime());
-        client.setTitle(oAuth2Client.getTitle());
-        client.setPlatforms(oAuth2Client.getPlatforms());
         return client;
     }
 

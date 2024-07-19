@@ -16,8 +16,10 @@
 package org.thingsboard.server.common.data.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.oauth2.HasOauth2Clients;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 
@@ -25,6 +27,8 @@ import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
+@NoArgsConstructor
+@AllArgsConstructor
 @Schema
 public class DomainInfo extends Domain implements HasOauth2Clients {
 

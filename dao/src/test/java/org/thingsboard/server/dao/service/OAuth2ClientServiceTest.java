@@ -22,15 +22,16 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
-import org.thingsboard.server.dao.oauth2.OAuth2Utils;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 @DaoSqlTest
 public class OAuth2ClientServiceTest extends AbstractServiceTest {
@@ -59,6 +60,35 @@ public class OAuth2ClientServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveOauth2ClientWithoutMapper() {
+        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "Test google client", List.of(PlatformType.ANDROID));
+        oAuth2Client.setMapperConfig(null);
+
+        assertThatThrownBy(() -> {
+            oAuth2ClientService.saveOAuth2Client(TenantId.SYS_TENANT_ID, oAuth2Client);
+        }).hasMessageContaining("mapperConfig must not be null");
+    }
+
+    @Test
+    public void testSaveOauth2ClientWithoutCustomConfig() {
+        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "Test google client", List.of(PlatformType.ANDROID));
+        oAuth2Client.getMapperConfig().setCustom(null);
+
+        assertThatThrownBy(() -> {
+            oAuth2ClientService.saveOAuth2Client(TenantId.SYS_TENANT_ID, oAuth2Client);
+        }).hasMessageContaining("Custom config should be specified!");
+    }
+
+    @Test
+    public void testSaveOauth2ClientWithoutCustomUrl() {
+        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "Test google client", List.of(PlatformType.ANDROID));
+        oAuth2Client.getMapperConfig().setCustom(OAuth2CustomMapperConfig.builder().build());
+        assertThatThrownBy(() -> {
+            oAuth2ClientService.saveOAuth2Client(TenantId.SYS_TENANT_ID, oAuth2Client);
+        }).hasMessageContaining("Custom mapper URL should be specified!");
+    }
+
+    @Test
     public void testGetTenantOAuth2Clients() {
         List<OAuth2Client> oAuth2Clients = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
@@ -70,7 +100,7 @@ public class OAuth2ClientServiceTest extends AbstractServiceTest {
         assertThat(retrieved).containsOnlyOnceElementsOf(oAuth2Clients);
 
         List<OAuth2ClientInfo> retrievedInfos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID);
-        List<OAuth2ClientInfo> oAuth2ClientInfos = oAuth2Clients.stream().map(OAuth2Utils::toClientInfo).collect(Collectors.toList());
+        List<OAuth2ClientInfo> oAuth2ClientInfos = oAuth2Clients.stream().map(OAuth2ClientInfo::new).collect(Collectors.toList());
         assertThat(retrievedInfos).containsOnlyOnceElementsOf(oAuth2ClientInfos);
     }
 

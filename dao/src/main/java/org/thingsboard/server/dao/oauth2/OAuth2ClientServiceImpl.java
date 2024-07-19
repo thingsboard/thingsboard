@@ -129,7 +129,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
         log.trace("Executing findOAuth2ClientInfosByTenantId tenantId=[{}]", tenantId);
         return oauth2ClientDao.findByTenantId(tenantId.getId())
                 .stream()
-                .map(OAuth2Utils::toClientInfo)
+                .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList());
     }
 

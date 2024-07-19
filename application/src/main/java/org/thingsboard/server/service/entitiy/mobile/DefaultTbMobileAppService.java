@@ -43,13 +43,27 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
         TenantId tenantId = mobileApp.getTenantId();
         try {
             MobileApp savedMobileApp = checkNotNull(mobileAppService.saveMobileApp(tenantId, mobileApp));
-            logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), mobileApp, actionType, user);
             if (!CollectionUtils.isEmpty(oauth2Clients)) {
                 mobileAppService.updateOauth2Clients(tenantId, savedMobileApp.getId(), oauth2Clients);
             }
+            logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), mobileApp, actionType, user);
             return savedMobileApp;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.MOBILE_APP), mobileApp, actionType, user, e);
+            throw e;
+        }
+    }
+
+    @Override
+    public void updateOauth2Clients(MobileApp mobileApp, List<OAuth2ClientId> oAuth2ClientIds, User user) {
+        ActionType actionType = ActionType.UPDATED;
+        TenantId tenantId = mobileApp.getTenantId();
+        MobileAppId mobileAppId = mobileApp.getId();
+        try {
+            mobileAppService.updateOauth2Clients(tenantId, mobileAppId, oAuth2ClientIds);
+            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, oAuth2ClientIds.toString());
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, e, oAuth2ClientIds.toString());
             throw e;
         }
     }
@@ -62,10 +76,9 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
         MobileAppId mobileAppId = mobileApp.getId();
         try {
             mobileAppService.deleteMobileAppById(tenantId, mobileAppId);
-            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, mobileApp.getPkgName());
+            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.MOBILE_APP), actionType, user, e,
-                    mobileAppId.toString());
+            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, e);
             throw e;
         }
     }

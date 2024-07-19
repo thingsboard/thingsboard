@@ -53,10 +53,9 @@ public class DefaultTbOauth2ClientService extends AbstractTbEntityService implem
         OAuth2ClientId oAuth2ClientId = oAuth2Client.getId();
         try {
             oAuth2ClientService.deleteOAuth2ClientById(tenantId, oAuth2ClientId);
-            logEntityActionService.logEntityAction(tenantId, oAuth2ClientId, oAuth2Client, actionType, user, oAuth2Client.getName());
+            logEntityActionService.logEntityAction(tenantId, oAuth2ClientId, oAuth2Client, actionType, user);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.OAUTH2_CLIENT), actionType, user, e,
-                    oAuth2ClientId.toString());
+            logEntityActionService.logEntityAction(tenantId, oAuth2ClientId, oAuth2Client, actionType, user, e);
             throw e;
         }
     }

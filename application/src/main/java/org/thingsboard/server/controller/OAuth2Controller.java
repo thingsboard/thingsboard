@@ -18,26 +18,25 @@ package org.thingsboard.server.controller;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
-import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
@@ -69,16 +68,16 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Get OAuth2 clients (getOAuth2Clients)", notes = "Get the list of OAuth2 clients " +
             "to log in with, available for such domain scheme (HTTP or HTTPS) (if x-forwarded-proto request header is present - " +
             "the scheme is known from it) and domain name and port (port may be known from x-forwarded-port header)")
-    @PostMapping(value = "/noauth/oauth2Clients")
+    @PostMapping(value = "/noauth/oauth2/client")
     public List<OAuth2ClientLoginInfo> getOAuth2Clients(HttpServletRequest request,
                                                         @Parameter(description = "Mobile application package name, to find OAuth2 clients " +
-                                                           "where there is configured mobile application with such package name")
-                                                   @RequestParam(required = false) String pkgName,
+                                                                "where there is configured mobile application with such package name")
+                                                        @RequestParam(required = false) String pkgName,
                                                         @Parameter(description = "Platform type to search OAuth2 clients for which " +
-                                                           "the usage with this platform type is allowed in the settings. " +
-                                                           "If platform type is not one of allowable values - it will just be ignored",
-                                                           schema = @Schema(allowableValues = {"WEB", "ANDROID", "IOS"}))
-                                                   @RequestParam(required = false) String platform) throws ThingsboardException {
+                                                                "the usage with this platform type is allowed in the settings. " +
+                                                                "If platform type is not one of allowable values - it will just be ignored",
+                                                                schema = @Schema(allowableValues = {"WEB", "ANDROID", "IOS"}))
+                                                        @RequestParam(required = false) String platform) throws ThingsboardException {
         if (log.isDebugEnabled()) {
             log.debug("Executing getOAuth2Clients: [{}][{}][{}]", request.getScheme(), request.getServerName(), request.getServerPort());
             Enumeration<String> headerNames = request.getHeaderNames();
@@ -104,7 +103,7 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Save OAuth2 Client Registration (saveOAuth2Client)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/oauth2/client")
-    public OAuth2Client saveOAuth2Client(@RequestBody OAuth2Client oAuth2Client) throws Exception {
+    public OAuth2Client saveOAuth2Client(@RequestBody @Valid OAuth2Client oAuth2Client) throws Exception {
         TenantId tenantId = getTenantId();
         oAuth2Client.setTenantId(tenantId);
         checkEntity(oAuth2Client.getId(), oAuth2Client, Resource.OAUTH2_CLIENT);
@@ -129,8 +128,7 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Delete oauth2 client (deleteAsset)",
             notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/client/{id}", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
+    @DeleteMapping(value = "/oauth2/client/{id}")
     public void deleteOauth2Client(@PathVariable UUID id) throws Exception {
         OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(id);
         OAuth2Client oAuth2Client = checkOauth2ClientId(oAuth2ClientId, Operation.DELETE);
@@ -142,7 +140,7 @@ public class OAuth2Controller extends BaseController {
             "further log in processing. This URL may be configured as 'security.oauth2.loginProcessingUrl' property in yml configuration file, or " +
             "as 'SECURITY_OAUTH2_LOGIN_PROCESSING_URL' env variable. By default it is '/login/oauth2/code/'" + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @RequestMapping(value = "/oauth2/loginProcessingUrl", method = RequestMethod.GET)
+    @GetMapping(value = "/oauth2/loginProcessingUrl")
     public String getLoginProcessingUrl() {
         return "\"" + oAuth2Configuration.getLoginProcessingUrl() + "\"";
     }

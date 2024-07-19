@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.domain;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
@@ -35,6 +36,7 @@ public class Domain extends BaseData<DomainId> implements HasTenantId, HasName {
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
     @Schema(description = "Domain name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotBlank
     private String name;
     @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean oauth2Enabled;

@@ -43,13 +43,27 @@ public class DefaultTbDomainService extends AbstractTbEntityService implements T
         TenantId tenantId = domain.getTenantId();
         try {
             Domain savedDomain = checkNotNull(domainService.saveDomain(tenantId, domain));
-            logEntityActionService.logEntityAction(tenantId, savedDomain.getId(), domain, actionType, user);
             if (!CollectionUtils.isEmpty(oAuth2Clients)) {
                 domainService.updateOauth2Clients(domain.getTenantId(), savedDomain.getId(), oAuth2Clients);
             }
+            logEntityActionService.logEntityAction(tenantId, savedDomain.getId(), domain, actionType, user, oAuth2Clients);
             return savedDomain;
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DOMAIN), domain, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DOMAIN), domain, actionType, user, e, oAuth2Clients);
+            throw e;
+        }
+    }
+
+    @Override
+    public void updateOauth2Clients(Domain domain, List<OAuth2ClientId> oAuth2ClientIds, User user) {
+        ActionType actionType = ActionType.UPDATED;
+        TenantId tenantId = domain.getTenantId();
+        DomainId domainId = domain.getId();
+        try {
+            domainService.updateOauth2Clients(tenantId, domainId, oAuth2ClientIds);
+            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, oAuth2ClientIds.toString());
+        } catch (Exception e) {
+            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, e, oAuth2ClientIds.toString());
             throw e;
         }
     }
@@ -62,10 +76,9 @@ public class DefaultTbDomainService extends AbstractTbEntityService implements T
         DomainId domainId = domain.getId();
         try {
             domainService.deleteDomainById(tenantId, domainId);
-            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, domain.getName());
+            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DOMAIN), actionType, user, e,
-                    domainId.toString());
+            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, e);
             throw e;
         }
     }

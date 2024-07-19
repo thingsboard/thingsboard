@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.domain;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainOauth2Client;
 import org.thingsboard.server.common.data.id.DomainId;
@@ -82,5 +83,9 @@ public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implement
         domainRepository.deleteByTenantId(tenantId.getId());
     }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.DOMAIN;
+    }
 }
 
