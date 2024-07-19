@@ -20,7 +20,8 @@
     <mat-toolbar class="mat-mdc-table-toolbar">
       <h2>{{ 'gateway.connectors' | translate }}</h2>
       <span fxFlex></span>
-      <button mat-icon-button
+      <button *ngIf="dataSource?.data?.length"
+              mat-icon-button
               [disabled]="isLoading$ | async"
               (click)="addConnector($event)"
               matTooltip="{{ 'action.add' | translate }}"
