@@ -19,15 +19,15 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.mobile.MobileAppOauth2Registration;
+import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.model.sql.MobileAppEntity;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2RegistrationCompositeKey;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2RegistrationEntity;
+import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
+import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -40,7 +40,7 @@ import java.util.UUID;
 public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> implements MobileAppDao {
 
     private final MobileAppRepository repository;
-    private final MobileAppOauth2RegistrationRepository mobileOauth2ProviderRepository;
+    private final MobileAppOauth2ClientRepository mobileOauth2ProviderRepository;
 
     @Override
     protected Class<MobileAppEntity> getEntityClass() {
@@ -58,19 +58,23 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
     }
 
     @Override
-    public List<MobileAppOauth2Registration> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId) {
+    public List<MobileAppOauth2Client> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId) {
         return  DaoUtil.convertDataList(mobileOauth2ProviderRepository.findAllByMobileAppId(mobileAppId.getId()));
     }
 
     @Override
-    public void saveOauth2Clients(MobileAppOauth2Registration mobileAppOauth2Registration) {
-        mobileOauth2ProviderRepository.save(new MobileAppOauth2RegistrationEntity(mobileAppOauth2Registration));
+    public void saveOauth2Clients(MobileAppOauth2Client mobileAppOauth2Client) {
+        mobileOauth2ProviderRepository.save(new MobileAppOauth2ClientEntity(mobileAppOauth2Client));
     }
 
     @Override
-    public void removeOauth2Clients(MobileAppId mobileAppId, OAuth2RegistrationId oAuth2RegistrationId) {
-        mobileOauth2ProviderRepository.deleteById(new MobileAppOauth2RegistrationCompositeKey(mobileAppId.getId(), oAuth2RegistrationId.getId()));
+    public void removeOauth2Clients(MobileAppId mobileAppId, OAuth2ClientId oAuth2ClientId) {
+        mobileOauth2ProviderRepository.deleteById(new MobileAppOauth2ClientCompositeKey(mobileAppId.getId(), oAuth2ClientId.getId()));
+    }
 
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        repository.deleteByTenantId(tenantId.getId());
     }
 
 }

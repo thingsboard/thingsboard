@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
@@ -46,9 +46,9 @@ public class OAuth2EdgeEventFetcher implements EdgeEventFetcher {
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
         List<EdgeEvent> result = new ArrayList<>();
-        List<OAuth2Registration> oauth2Registrations = oAuth2ClientService.findOauth2ClientsByTenantId(TenantId.SYS_TENANT_ID);
+        List<OAuth2Client> oauth2Clients = oAuth2ClientService.findOAuth2ClientsByTenantId(TenantId.SYS_TENANT_ID);
         result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.OAUTH2_CLIENT,
-                EdgeEventActionType.ADDED, null, JacksonUtil.valueToTree(oauth2Registrations)));
+                EdgeEventActionType.ADDED, null, JacksonUtil.valueToTree(oauth2Clients)));
         // returns PageData object to be in sync with other fetchers
         return new PageData<>(result, 1, result.size(), false);
     }

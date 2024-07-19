@@ -40,7 +40,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.query.ApiUsageStateFilter;
 import org.thingsboard.server.common.data.query.EntityCountQuery;
@@ -492,9 +492,9 @@ public class HomePageApiTest extends AbstractControllerTest {
         return domain;
     }
 
-    private OAuth2Registration validRegistration() {
-        OAuth2Registration oAuth2Registration = new OAuth2Registration();
-        oAuth2Registration.setClientId(UUID.randomUUID().toString());
+    private OAuth2Client validRegistration() {
+        OAuth2Client oAuth2Client = new OAuth2Client();
+        oAuth2Client.setClientId(UUID.randomUUID().toString());
 //                .clientSecret(UUID.randomUUID().toString())
 //                .authorizationUri(UUID.randomUUID().toString())
 //                .accessTokenUri(UUID.randomUUID().toString())
@@ -516,6 +516,6 @@ public class HomePageApiTest extends AbstractControllerTest {
 //                                .build()
 //                )
 //                .build();
-                return oAuth2Registration;
+                return oAuth2Client;
     }
 }

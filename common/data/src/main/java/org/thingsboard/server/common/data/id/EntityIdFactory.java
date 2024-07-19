@@ -106,7 +106,7 @@ public class EntityIdFactory {
             case QUEUE_STATS:
                 return new QueueStatsId(uuid);
             case OAUTH2_CLIENT:
-                return new OAuth2RegistrationId(uuid);
+                return new OAuth2ClientId(uuid);
             case MOBILE_APP:
                 return new MobileAppId(uuid);
             case DOMAIN:

@@ -13,18 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.domain;
+package org.thingsboard.server.dao.model.sql;
 
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.domain.Domain;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import jakarta.persistence.Transient;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+import java.io.Serializable;
+import java.util.UUID;
 
-public interface TbDomainService {
+@NoArgsConstructor
+@AllArgsConstructor
+@Data
+public class MobileAppOauth2ClientCompositeKey implements Serializable {
 
-    Domain save(Domain domain, List<OAuth2ClientId> oAuth2Clients, User user) throws Exception;
+    @Transient
+    private static final long serialVersionUID = -245388185894468455L;
 
-    void delete(Domain domain, User user);
+    private UUID mobileAppId;
+    private UUID oauth2ClientId;
 
 }

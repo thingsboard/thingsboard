@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -39,9 +39,9 @@ public class OAuth2EdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg convertOAuth2ProviderEventToDownlink(EdgeEvent edgeEvent) {
         DownlinkMsg downlinkMsg = null;
-        OAuth2Registration oAuth2Registration = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Registration.class);
-        if (oAuth2Registration != null) {
-            OAuth2UpdateMsg oAuth2ProviderUpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Registration);
+        OAuth2Client oAuth2Client = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Client.class);
+        if (oAuth2Client != null) {
+            OAuth2UpdateMsg oAuth2ProviderUpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Client);
             downlinkMsg = DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                     .addOAuth2UpdateMsg(oAuth2ProviderUpdateMsg)
@@ -51,7 +51,7 @@ public class OAuth2EdgeProcessor extends BaseEdgeProcessor {
     }
 
     public ListenableFuture<Void> processOAuth2Notification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        OAuth2Registration oAuth2Info = JacksonUtil.fromString(edgeNotificationMsg.getBody(), OAuth2Registration.class);
+        OAuth2Client oAuth2Info = JacksonUtil.fromString(edgeNotificationMsg.getBody(), OAuth2Client.class);
         if (oAuth2Info == null) {
             return Futures.immediateFuture(null);
         }

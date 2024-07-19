@@ -558,9 +558,10 @@ CREATE TABLE IF NOT EXISTS key_dictionary
     CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
-CREATE TABLE IF NOT EXISTS oauth2_registration (
-    id uuid NOT NULL CONSTRAINT oauth2_registration_pkey PRIMARY KEY,
+CREATE TABLE IF NOT EXISTS oauth2_client (
+    id uuid NOT NULL CONSTRAINT oauth2_client_pkey PRIMARY KEY,
     tenant_id uuid  NOT NULL,
+    title  varchar(100)  NOT NULL,
     created_time bigint NOT NULL,
     additional_info varchar,
     client_id varchar(255),
@@ -612,18 +613,18 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     CONSTRAINT mobile_app_unq_key UNIQUE (pkg_name)
 );
 
-CREATE TABLE IF NOT EXISTS domain_oauth2_registration (
+CREATE TABLE IF NOT EXISTS domain_oauth2_client (
     domain_id uuid NOT NULL,
-    oauth2_registration_id uuid NOT NULL,
+    oauth2_client_id uuid NOT NULL,
     CONSTRAINT fk_domain FOREIGN KEY (domain_id) REFERENCES domain(id) ON DELETE CASCADE,
-    CONSTRAINT fk_oauth2_registration FOREIGN KEY (oauth2_registration_id) REFERENCES oauth2_registration(id) ON DELETE CASCADE
+    CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_oauth2_registration (
+CREATE TABLE IF NOT EXISTS mobile_app_oauth2_client (
     mobile_app_id uuid NOT NULL,
-    oauth2_registration_id uuid NOT NULL,
+    oauth2_client_id uuid NOT NULL,
     CONSTRAINT fk_domain FOREIGN KEY (mobile_app_id) REFERENCES mobile_app(id) ON DELETE CASCADE,
-    CONSTRAINT fk_oauth2_registration FOREIGN KEY (oauth2_registration_id) REFERENCES oauth2_registration(id) ON DELETE CASCADE
+    CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
 CREATE TABLE IF NOT EXISTS oauth2_client_registration_template (

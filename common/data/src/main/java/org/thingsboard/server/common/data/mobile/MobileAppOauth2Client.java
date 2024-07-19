@@ -13,25 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data.mobile;
 
-import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
-import java.io.Serializable;
-import java.util.UUID;
-
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class DomainOauth2RegistrationCompositeKey implements Serializable {
+public class MobileAppOauth2Client {
 
-    @Transient
-    private static final long serialVersionUID = -245388185894468455L;
-
-    private UUID domainId;
-    private UUID oauth2RegistrationId;
+    private MobileAppId mobileAppId;
+    private OAuth2ClientId oAuth2ClientId;
 
 }

@@ -18,12 +18,11 @@ package org.thingsboard.server.dao.domain;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.id.DomainId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
-import java.util.UUID;
 
 public interface DomainService extends EntityDaoService {
 
@@ -39,6 +38,7 @@ public interface DomainService extends EntityDaoService {
 
     boolean isOauth2Enabled(TenantId tenantId);
 
-    void updateOauth2Clients(TenantId tenantId, DomainId domainId, List<OAuth2RegistrationId> oAuth2ClientIds);
+    void updateOauth2Clients(TenantId tenantId, DomainId domainId, List<OAuth2ClientId> oAuth2ClientIds);
 
+    void deleteDomainsByTenantId(TenantId tenantId);
 }

@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -227,7 +227,7 @@ public class EdgeEventSourcingListener {
     private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return EdgeEventType.ALARM_COMMENT;
-        } else if (entity instanceof OAuth2Registration) {
+        } else if (entity instanceof OAuth2Client) {
             return EdgeEventType.OAUTH2_CLIENT;
         }
         return null;
@@ -236,7 +236,7 @@ public class EdgeEventSourcingListener {
     private String getBodyMsgForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return JacksonUtil.toString(entity);
-        } else if (entity instanceof OAuth2Registration) {
+        } else if (entity instanceof OAuth2Client) {
             return JacksonUtil.toString(entity);
         }
         return null;

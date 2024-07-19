@@ -20,7 +20,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -34,11 +33,11 @@ import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
@@ -71,11 +70,11 @@ public class OAuth2Controller extends BaseController {
             "to log in with, available for such domain scheme (HTTP or HTTPS) (if x-forwarded-proto request header is present - " +
             "the scheme is known from it) and domain name and port (port may be known from x-forwarded-port header)")
     @PostMapping(value = "/noauth/oauth2Clients")
-    public List<OAuth2ClientInfo> getOAuth2Clients(HttpServletRequest request,
-                                                   @Parameter(description = "Mobile application package name, to find OAuth2 clients " +
+    public List<OAuth2ClientLoginInfo> getOAuth2Clients(HttpServletRequest request,
+                                                        @Parameter(description = "Mobile application package name, to find OAuth2 clients " +
                                                            "where there is configured mobile application with such package name")
                                                    @RequestParam(required = false) String pkgName,
-                                                   @Parameter(description = "Platform type to search OAuth2 clients for which " +
+                                                        @Parameter(description = "Platform type to search OAuth2 clients for which " +
                                                            "the usage with this platform type is allowed in the settings. " +
                                                            "If platform type is not one of allowable values - it will just be ignored",
                                                            schema = @Schema(allowableValues = {"WEB", "ANDROID", "IOS"}))
@@ -96,35 +95,35 @@ public class OAuth2Controller extends BaseController {
             }
         }
         if (StringUtils.isNotEmpty(pkgName)) {
-            return oAuth2ClientService.getMobileOAuth2Clients(pkgName, platformType);
+            return oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(pkgName, platformType);
         } else {
-            return oAuth2ClientService.getWebOAuth2Clients(MiscUtils.getDomainNameAndPort(request), platformType);
+            return oAuth2ClientService.findOAuth2ClientLoginInfosByDomainName(MiscUtils.getDomainNameAndPort(request));
         }
     }
 
     @ApiOperation(value = "Save OAuth2 Client Registration (saveOAuth2Client)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/oauth2/client")
-    public OAuth2Registration saveOAuth2Client(@RequestBody OAuth2Registration oAuth2Registration) throws Exception {
+    public OAuth2Client saveOAuth2Client(@RequestBody OAuth2Client oAuth2Client) throws Exception {
         TenantId tenantId = getTenantId();
-        oAuth2Registration.setTenantId(tenantId);
-        checkEntity(oAuth2Registration.getId(), oAuth2Registration, Resource.OAUTH2_CLIENT);
-        return tbOauth2ClientService.save(oAuth2Registration, getCurrentUser());
+        oAuth2Client.setTenantId(tenantId);
+        checkEntity(oAuth2Client.getId(), oAuth2Client, Resource.OAUTH2_CLIENT);
+        return tbOauth2ClientService.save(oAuth2Client, getCurrentUser());
     }
 
     @ApiOperation(value = "Get OAuth2 Client Registration infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos")
-    public List<OAuth2RegistrationInfo> findTenantOAuth2ClientInfos() throws ThingsboardException {
-        return oAuth2ClientService.findOauth2ClientInfosByTenantId(getTenantId());
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfos() throws ThingsboardException {
+        return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId());
     }
 
     @ApiOperation(value = "Get OAuth2 Client Registration by id (getOAuth2ClientById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/oauth2/client/{id}")
-    public OAuth2Registration getOAuth2ClientById(@PathVariable UUID id) throws ThingsboardException {
-        OAuth2RegistrationId oAuth2RegistrationId = new OAuth2RegistrationId(id);
-        return checkEntityId(oAuth2RegistrationId, oAuth2ClientService::findOAuth2ClientById, Operation.READ);
+    public OAuth2Client getOAuth2ClientById(@PathVariable UUID id) throws ThingsboardException {
+        OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(id);
+        return checkEntityId(oAuth2ClientId, oAuth2ClientService::findOAuth2ClientById, Operation.READ);
     }
 
     @ApiOperation(value = "Delete oauth2 client (deleteAsset)",
@@ -133,9 +132,9 @@ public class OAuth2Controller extends BaseController {
     @RequestMapping(value = "/oauth2/client/{id}", method = RequestMethod.DELETE)
     @ResponseStatus(value = HttpStatus.OK)
     public void deleteOauth2Client(@PathVariable UUID id) throws Exception {
-        OAuth2RegistrationId oAuth2RegistrationId = new OAuth2RegistrationId(id);
-        OAuth2Registration oAuth2Registration = checkOauth2ClientId(oAuth2RegistrationId, Operation.DELETE);
-        tbOauth2ClientService.delete(oAuth2Registration, getCurrentUser());
+        OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(id);
+        OAuth2Client oAuth2Client = checkOauth2ClientId(oAuth2ClientId, Operation.DELETE);
+        tbOauth2ClientService.delete(oAuth2Client, getCurrentUser());
     }
 
     @ApiOperation(value = "Get OAuth2 log in processing URL (getLoginProcessingUrl)", notes = "Returns the URL enclosed in " +

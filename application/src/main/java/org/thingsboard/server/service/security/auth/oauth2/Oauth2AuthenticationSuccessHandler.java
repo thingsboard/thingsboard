@@ -28,9 +28,9 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -97,7 +97,7 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2Registration registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2RegistrationId(UUID.fromString(token.getAuthorizedClientRegistrationId())));
+            OAuth2Client registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2ClientId(UUID.fromString(token.getAuthorizedClientRegistrationId())));
             OAuth2AuthorizedClient oAuth2AuthorizedClient = oAuth2AuthorizedClientService.loadAuthorizedClient(
                     token.getAuthorizedClientRegistrationId(),
                     token.getPrincipal().getName());

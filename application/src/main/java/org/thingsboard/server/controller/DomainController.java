@@ -34,7 +34,7 @@ import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DomainId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.domain.TbDomainService;
@@ -47,7 +47,6 @@ import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.audit.ActionType.UPDATED_OAUTH2_CLIENTS;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
@@ -77,9 +76,9 @@ public class DomainController extends BaseController {
         List<String> oauth2ClientIds = ids != null ? Arrays.asList(ids) : Collections.emptyList();
         domain.setTenantId(getCurrentUser().getTenantId());
         checkEntity(domain.getId(), domain, Resource.DOMAIN);
-        List<OAuth2RegistrationId> oAuth2ClientIds = new ArrayList<>();
+        List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
         for (String id : oauth2ClientIds) {
-            OAuth2RegistrationId oauth2ClientId = new OAuth2RegistrationId(toUUID(id));
+            OAuth2ClientId oauth2ClientId = new OAuth2ClientId(toUUID(id));
             checkOauth2ClientId(oauth2ClientId, Operation.READ);
             oAuth2ClientIds.add(oauth2ClientId);
         }
@@ -96,19 +95,19 @@ public class DomainController extends BaseController {
         Domain domain = null;
         try {
             domain = checkDomainId(domainId, Operation.WRITE);
-            List<OAuth2RegistrationId> oAuth2ClientIds = new ArrayList<>();
+            List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
             for (UUID outh2CLientId : oauth2ClientIds) {
-                OAuth2RegistrationId oAuth2RegistrationId = new OAuth2RegistrationId(outh2CLientId);
-                checkEntityId(oAuth2RegistrationId, Operation.READ);
-                oAuth2ClientIds.add(oAuth2RegistrationId);
+                OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(outh2CLientId);
+                checkEntityId(oAuth2ClientId, Operation.READ);
+                oAuth2ClientIds.add(oAuth2ClientId);
             }
             domainService.updateOauth2Clients(getTenantId(), domainId, oAuth2ClientIds);
             logEntityActionService.logEntityAction(domain.getTenantId(), domain.getId(), domain,
-                    UPDATED_OAUTH2_CLIENTS, getCurrentUser(), oAuth2ClientIds.toString());
+                    ActionType.UPDATED, getCurrentUser(), oAuth2ClientIds.toString());
         } catch (Exception e) {
             if (domain != null) {
                     logEntityActionService.logEntityAction(getTenantId(), domainId, domain,
-                            ActionType.UPDATED_OAUTH2_CLIENTS, getCurrentUser(), e);
+                            ActionType.UPDATED, getCurrentUser(), e);
             }
             throw e;
         }

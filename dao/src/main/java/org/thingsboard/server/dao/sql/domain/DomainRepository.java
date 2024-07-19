@@ -31,7 +31,7 @@ public interface DomainRepository extends JpaRepository<DomainEntity, UUID> {
 
     @Transactional
     @Modifying
-    @Query("DELETE FROM MobileAppEntity r WHERE r.tenantId = :tenantId")
+    @Query("DELETE FROM DomainEntity r WHERE r.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
     int countByTenantIdAndOauth2Enabled(@Param("tenantId") UUID tenantId, @Param("oauth2Enabled") boolean oauth2Enabled);

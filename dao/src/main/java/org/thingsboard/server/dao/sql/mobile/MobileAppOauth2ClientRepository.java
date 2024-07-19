@@ -13,20 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.dao.sql.mobile;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
+import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientEntity;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MobileAppOauth2Registration {
+import java.util.List;
+import java.util.UUID;
 
-    private MobileAppId mobileAppId;
-    private OAuth2RegistrationId oAuth2RegistrationId;
+public interface MobileAppOauth2ClientRepository extends JpaRepository<MobileAppOauth2ClientEntity, MobileAppOauth2ClientCompositeKey> {
+
+    List<MobileAppOauth2ClientEntity> findAllByMobileAppId(@Param("mobileAppId") UUID mobileAppId);
 
 }

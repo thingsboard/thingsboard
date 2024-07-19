@@ -82,7 +82,7 @@ import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.RpcId;
@@ -96,7 +96,7 @@ import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
@@ -615,7 +615,7 @@ public abstract class BaseController {
                     checkQueueId(new QueueId(entityId.getId()), operation);
                     return;
                 case OAUTH2_CLIENT:
-                    checkOauth2ClientId(new OAuth2RegistrationId(entityId.getId()), operation);
+                    checkOauth2ClientId(new OAuth2ClientId(entityId.getId()), operation);
                     return;
                 case DOMAIN:
                     checkDomainId(new DomainId(entityId.getId()), operation);
@@ -799,8 +799,8 @@ public abstract class BaseController {
         return queue;
     }
 
-    OAuth2Registration checkOauth2ClientId(OAuth2RegistrationId oAuth2RegistrationId, Operation operation) throws ThingsboardException {
-        return checkEntityId(oAuth2RegistrationId, oAuth2ClientService::findOAuth2ClientById, operation);
+    OAuth2Client checkOauth2ClientId(OAuth2ClientId oAuth2ClientId, Operation operation) throws ThingsboardException {
+        return checkEntityId(oAuth2ClientId, oAuth2ClientService::findOAuth2ClientById, operation);
     }
 
     Domain checkDomainId(DomainId domainId, Operation operation) throws ThingsboardException {

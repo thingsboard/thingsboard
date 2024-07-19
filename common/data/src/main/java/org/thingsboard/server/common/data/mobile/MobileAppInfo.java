@@ -22,8 +22,8 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import lombok.ToString;
-import org.thingsboard.server.common.data.oauth2.HasOauth2Registrations;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
+import org.thingsboard.server.common.data.oauth2.HasOauth2Clients;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 
 import java.util.List;
 
@@ -34,14 +34,14 @@ import java.util.List;
 @AllArgsConstructor
 @Builder
 @Schema
-public class MobileAppInfo extends MobileApp implements HasOauth2Registrations {
+public class MobileAppInfo extends MobileApp implements HasOauth2Clients {
 
     @Schema(description = "List of available oauth2 client registrations")
-    private List<OAuth2RegistrationInfo> oauth2RegistrationInfos;
+    private List<OAuth2ClientInfo> oauth2ClientInfos;
 
-    public MobileAppInfo(MobileApp mobileApp, List<OAuth2RegistrationInfo> oauth2RegistrationInfos) {
+    public MobileAppInfo(MobileApp mobileApp, List<OAuth2ClientInfo> oauth2ClientInfos) {
         super(mobileApp);
-        this.oauth2RegistrationInfos = oauth2RegistrationInfos;
+        this.oauth2ClientInfos = oauth2ClientInfos;
     }
 
 }

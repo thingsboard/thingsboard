@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.oauth2;
+package org.thingsboard.server.dao.sql.domain;
 
+import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.repository.query.Param;
+import org.thingsboard.server.dao.model.sql.DomainOauth2ClientCompositeKey;
+import org.thingsboard.server.dao.model.sql.DomainOauth2ClientEntity;
 
-import org.thingsboard.server.common.data.EntityInfo;
-
-import java.io.Serializable;
 import java.util.List;
+import java.util.UUID;
 
-public interface HasOauth2Registrations extends Serializable {
+public interface DomainOauth2ClientRepository extends JpaRepository<DomainOauth2ClientEntity, DomainOauth2ClientCompositeKey> {
 
-    List<OAuth2RegistrationInfo> getOauth2RegistrationInfos();
+    List<DomainOauth2ClientEntity> findAllByDomainId(@Param("domainId") UUID domainId);
 
 }

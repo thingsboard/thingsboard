@@ -15,28 +15,27 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 import java.util.UUID;
 
-public interface OAuth2RegistrationDao extends Dao<OAuth2Registration> {
+public interface OAuth2ClientDao extends Dao<OAuth2Client> {
 
-    List<OAuth2RegistrationInfo> findInfosByTenantId(UUID tenantId);
+    List<OAuth2Client> findByTenantId(UUID tenantId);
 
-    List<OAuth2Registration> findByTenantId(UUID tenantId);
+    List<OAuth2Client> findEnabledByDomainName(String domainName);
 
-    List<OAuth2Registration> findEnabledByDomainNameAndPlatformType(String domainName, PlatformType platformType);
+    List<OAuth2Client> findEnabledByPckNameAndPlatformType(String pkgName, PlatformType platformType);
 
-    List<OAuth2Registration> findEnabledByPckNameAndPlatformType(String pkgName, PlatformType platformType);
+    List<OAuth2Client> findByDomainId(UUID domainId);
 
-    List<OAuth2RegistrationInfo> findInfosByDomainId(UUID domainId);
-
-    List<OAuth2RegistrationInfo> findInfosByMobileAppId(UUID domainId);
+    List<OAuth2Client> findByMobileAppId(UUID domainId);
 
     String findAppSecret(UUID id, String pkgName);
 
+    void deleteByTenantId(TenantId tenantId);
 }

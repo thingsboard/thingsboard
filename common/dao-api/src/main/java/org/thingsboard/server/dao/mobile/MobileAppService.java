@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.mobile;
 
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
@@ -36,6 +36,7 @@ public interface MobileAppService extends EntityDaoService {
 
     MobileAppInfo findMobileAppInfoById(TenantId tenantId, MobileAppId mobileAppId);
 
-    void updateOauth2Clients(TenantId tenantId, MobileAppId mobileAppId, List<OAuth2RegistrationId> oAuth2ClientIds);
+    void updateOauth2Clients(TenantId tenantId, MobileAppId mobileAppId, List<OAuth2ClientId> oAuth2ClientIds);
 
+    void deleteMobileAppsByTenantId(TenantId tenantId);
 }

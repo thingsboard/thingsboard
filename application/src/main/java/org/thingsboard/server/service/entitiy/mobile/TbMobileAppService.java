@@ -16,14 +16,14 @@
 package org.thingsboard.server.service.entitiy.mobile;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 
 import java.util.List;
 
 public interface TbMobileAppService {
 
-    MobileApp save(MobileApp mobileApp, List<OAuth2RegistrationId> oauth2Clients, User user) throws Exception;
+    MobileApp save(MobileApp mobileApp, List<OAuth2ClientId> oauth2Clients, User user) throws Exception;
 
     void delete(MobileApp mobileApp, User user);
 

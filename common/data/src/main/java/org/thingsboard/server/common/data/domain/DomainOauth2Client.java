@@ -19,14 +19,14 @@ import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.DomainId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class DomainOauth2Registration {
+public class DomainOauth2Client {
 
     private DomainId domainId;
-    private OAuth2RegistrationId oAuth2RegistrationId;
+    private OAuth2ClientId oAuth2ClientId;
 
 }

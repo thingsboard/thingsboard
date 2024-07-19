@@ -30,11 +30,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.audit.ActionType;
-import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
@@ -47,7 +45,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.common.data.audit.ActionType.UPDATED_OAUTH2_CLIENTS;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
@@ -73,41 +70,39 @@ public class MobileAppController extends BaseController {
             @Parameter(description = "A JSON value representing the Domain.", required = true)
             @RequestBody MobileApp mobileApp,
             @Parameter(description = "A list of entity group ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
-            @RequestParam(name = "oauth2RegistrationIds", required = false) UUID[] oauth2RegistrationIds) throws Exception {
+            @RequestParam(name = "oauth2ClientIds", required = false) UUID[] oauth2ClientIds) throws Exception {
         mobileApp.setTenantId(getCurrentUser().getTenantId());
 
-        List<OAuth2RegistrationId> oAuth2Registrations = new ArrayList<>();
-        for (UUID id : oauth2RegistrationIds) {
-            OAuth2RegistrationId oauth2ClientId = new OAuth2RegistrationId(id);
+        List<OAuth2ClientId> oAuth2Clients = new ArrayList<>();
+        for (UUID id : oauth2ClientIds) {
+            OAuth2ClientId oauth2ClientId = new OAuth2ClientId(id);
             checkOauth2ClientId(oauth2ClientId, Operation.READ);
-            oAuth2Registrations.add(oauth2ClientId);
+            oAuth2Clients.add(oauth2ClientId);
         }
-        return tbMobileAppService.save(mobileApp, oAuth2Registrations, getCurrentUser());
+        return tbMobileAppService.save(mobileApp, oAuth2Clients, getCurrentUser());
     }
 
     @ApiOperation(value = "Update oauth2 clients (updateOauth2Clients)",
             notes = "Update oauth2 clients to the specified mobile app. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @PostMapping(value = "/mobileApp/{id}/updateOauth2Clients")
+    @PostMapping(value = "/mobileApp/{id}/oauth2Clients")
     public void updateOauth2Clients(@PathVariable UUID id,
                                          @RequestBody UUID[] oauth2ClientIds) throws ThingsboardException {
         MobileAppId mobileAppId = new MobileAppId(id);
         MobileApp mobileApp = null;
         try {
             mobileApp = checkMobileAppId(mobileAppId, Operation.WRITE);
-            List<OAuth2RegistrationId> oAuth2ClientIds = new ArrayList<>();
+            List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
             for (UUID outh2CLientId : oauth2ClientIds) {
-                OAuth2RegistrationId oAuth2RegistrationId = new OAuth2RegistrationId(outh2CLientId);
-                checkEntityId(oAuth2RegistrationId, Operation.READ);
-                oAuth2ClientIds.add(oAuth2RegistrationId);
+                OAuth2ClientId oAuth2ClientId = new OAuth2ClientId(outh2CLientId);
+                checkEntityId(oAuth2ClientId, Operation.READ);
+                oAuth2ClientIds.add(oAuth2ClientId);
             }
             mobileAppService.updateOauth2Clients(getTenantId(), mobileAppId, oAuth2ClientIds);
-            logEntityActionService.logEntityAction(getTenantId(), mobileAppId, mobileApp,
-                    UPDATED_OAUTH2_CLIENTS, getCurrentUser(), oAuth2ClientIds.toString());
         } catch (Exception e) {
             if (mobileApp != null) {
                 logEntityActionService.logEntityAction(getTenantId(), mobileAppId, mobileApp,
-                        ActionType.UPDATED_OAUTH2_CLIENTS, getCurrentUser(), e);
+                        ActionType.UPDATED, getCurrentUser(), e);
             }
             throw e;
         }

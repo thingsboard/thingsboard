@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data.oauth2;
 
-import jakarta.persistence.Transient;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 
-import java.io.Serializable;
-import java.util.UUID;
-
+@EqualsAndHashCode
+@Data
 @NoArgsConstructor
 @AllArgsConstructor
-@Data
-public class MobileAppOauth2RegistrationCompositeKey implements Serializable {
+@Schema
+public class OAuth2ClientLoginInfo {
 
-    @Transient
-    private static final long serialVersionUID = -245388185894468455L;
-
-    private UUID mobileAppId;
-    private UUID oauth2RegistrationId;
+    @Schema(description = "OAuth2 client name", example = "GitHub")
+    private String name;
+    @Schema(description = "Name of the icon, displayed on OAuth2 log in button", example = "github-logo")
+    private String icon;
+    @Schema(description = "URI for OAuth2 log in. On HTTP GET request to this URI, it redirects to the OAuth2 provider page",
+            example = "/oauth2/authorization/8352f191-2b4d-11ec-9ed1-cbf57c026ecc")
+    private String url;
 
 }

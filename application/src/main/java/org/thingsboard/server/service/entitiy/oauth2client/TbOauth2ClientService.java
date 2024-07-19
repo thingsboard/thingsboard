@@ -16,16 +16,12 @@
 package org.thingsboard.server.service.entitiy.oauth2client;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.domain.Domain;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
-
-import java.util.List;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 
 public interface TbOauth2ClientService {
 
-    OAuth2Registration save(OAuth2Registration oAuth2Registration, User user) throws Exception;
+    OAuth2Client save(OAuth2Client oAuth2Client, User user) throws Exception;
 
-    void delete(OAuth2Registration oAuth2Registration, User user);
+    void delete(OAuth2Client oAuth2Client, User user);
 
 }

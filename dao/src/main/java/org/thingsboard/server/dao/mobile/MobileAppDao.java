@@ -16,10 +16,10 @@
 package org.thingsboard.server.dao.mobile;
 
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.mobile.MobileAppOauth2Registration;
+import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -28,9 +28,11 @@ public interface MobileAppDao extends Dao<MobileApp> {
 
     List<MobileApp> findByTenantId(TenantId tenantId);
 
-    List<MobileAppOauth2Registration> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId);
+    List<MobileAppOauth2Client> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId);
 
-    void saveOauth2Clients(MobileAppOauth2Registration mobileAppOauth2Registration);
+    void saveOauth2Clients(MobileAppOauth2Client mobileAppOauth2Client);
 
-    void removeOauth2Clients(MobileAppId mobileAppId, OAuth2RegistrationId oAuth2RegistrationId);
+    void removeOauth2Clients(MobileAppId mobileAppId, OAuth2ClientId oAuth2ClientId);
+
+    void deleteByTenantId(TenantId tenantId);
 }

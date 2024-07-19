@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.service.validator;
 
 import lombok.AllArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -24,51 +23,18 @@ import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DataValidator;
 
 @Component
 @AllArgsConstructor
-public class Oauth2RegistrationDataValidator extends DataValidator<OAuth2Registration> {
+public class Oauth2ClientDataValidator extends DataValidator<OAuth2Client> {
 
     @Override
-    protected void validateDataImpl(TenantId tenantId, OAuth2Registration oAuth2Registration) {
-        if (StringUtils.isEmpty(oAuth2Registration.getClientId())) {
-            throw new DataValidationException("Client ID should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getClientId())) {
-            throw new DataValidationException("Client ID should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getClientSecret())) {
-            throw new DataValidationException("Client secret should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getAuthorizationUri())) {
-            throw new DataValidationException("Authorization uri should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getAccessTokenUri())) {
-            throw new DataValidationException("Token uri should be specified!");
-        }
-        if (CollectionUtils.isEmpty(oAuth2Registration.getScope())) {
-            throw new DataValidationException("Scope should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getUserNameAttributeName())) {
-            throw new DataValidationException("User name attribute name should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getClientAuthenticationMethod())) {
-            throw new DataValidationException("Client authentication method should be specified!");
-        }
-        if (StringUtils.isEmpty(oAuth2Registration.getLoginButtonLabel())) {
-            throw new DataValidationException("Login button label should be specified!");
-        }
-        OAuth2MapperConfig mapperConfig = oAuth2Registration.getMapperConfig();
-        if (mapperConfig == null) {
-            throw new DataValidationException("Mapper config should be specified!");
-        }
-        if (mapperConfig.getType() == null) {
-            throw new DataValidationException("Mapper config type should be specified!");
-        }
+    protected void validateDataImpl(TenantId tenantId, OAuth2Client oAuth2Client) {
+        OAuth2MapperConfig mapperConfig = oAuth2Client.getMapperConfig();
         if (mapperConfig.getType() == MapperType.BASIC) {
             OAuth2BasicMapperConfig basicConfig = mapperConfig.getBasic();
             if (basicConfig == null) {

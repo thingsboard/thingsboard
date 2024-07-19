@@ -22,16 +22,17 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
+import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
 import java.util.Optional;
@@ -42,7 +43,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Slf4j
-@Service
+@Service("OAuth2ClientService")
 public class OAuth2ClientServiceImpl extends AbstractEntityService implements OAuth2ClientService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
@@ -50,56 +51,50 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     public static final String INCORRECT_DOMAIN_NAME = "Incorrect domainName ";
 
     @Autowired
-    private OAuth2RegistrationDao oauth2RegistrationDao;
+    private OAuth2ClientDao oauth2ClientDao;
     @Autowired
-    private DataValidator<OAuth2Registration> oAuth2RegistrationDataValidator;
+    private DataValidator<OAuth2Client> oAuth2ClientDataValidator;
 
     @Override
-    public List<OAuth2ClientInfo> getWebOAuth2Clients(String domainName, PlatformType platformType) {
+    public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByDomainName(String domainName) {
         log.trace("Executing getOAuth2Clients [{}] ", domainName);
         validateString(domainName, dn -> INCORRECT_DOMAIN_NAME + dn);
-        return oauth2RegistrationDao.findEnabledByDomainNameAndPlatformType(domainName, platformType)
+        return oauth2ClientDao.findEnabledByDomainName(domainName)
                 .stream()
-                .map(OAuth2Utils::toClientInfo)
+                .map(OAuth2Utils::toClientLoginInfo)
                 .collect(Collectors.toList());
     }
 
     @Override
-    public List<OAuth2ClientInfo> getMobileOAuth2Clients(String pkgName, PlatformType platformType) {
+    public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(String pkgName, PlatformType platformType) {
         log.trace("Executing getOAuth2Clients pkgName=[{}] platformType=[{}]",pkgName, platformType);
-        return oauth2RegistrationDao.findEnabledByPckNameAndPlatformType(pkgName, platformType)
+        return oauth2ClientDao.findEnabledByPckNameAndPlatformType(pkgName, platformType)
                 .stream()
-                .map(OAuth2Utils::toClientInfo)
+                .map(OAuth2Utils::toClientLoginInfo)
                 .collect(Collectors.toList());
     }
 
     @Override
     @Transactional
-    public OAuth2Registration saveOAuth2Client(TenantId tenantId, OAuth2Registration oAuth2Registration) {
-        log.trace("Executing saveOAuth2Client [{}]", oAuth2Registration);
-        oAuth2RegistrationDataValidator.validate(oAuth2Registration, OAuth2Registration::getTenantId);
-        OAuth2Registration savedOauth2Registration = oauth2RegistrationDao.save(tenantId, oAuth2Registration);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entity(oAuth2Registration).build());
-        return savedOauth2Registration;
+    public OAuth2Client saveOAuth2Client(TenantId tenantId, OAuth2Client oAuth2Client) {
+        log.trace("Executing saveOAuth2Client [{}]", oAuth2Client);
+        oAuth2ClientDataValidator.validate(oAuth2Client, OAuth2Client::getTenantId);
+        OAuth2Client savedOauth2Client = oauth2ClientDao.save(tenantId, oAuth2Client);
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entity(oAuth2Client).build());
+        return savedOauth2Client;
     }
 
     @Override
-    public OAuth2Registration findOAuth2ClientById(TenantId tenantId, OAuth2RegistrationId oAuth2RegistrationId) {
-        log.trace("Executing findOAuth2ClientById [{}]", oAuth2RegistrationId);
-        validateId(oAuth2RegistrationId, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
-        return oauth2RegistrationDao.findById(tenantId, oAuth2RegistrationId.getId());
+    public OAuth2Client findOAuth2ClientById(TenantId tenantId, OAuth2ClientId oAuth2ClientId) {
+        log.trace("Executing findOAuth2ClientById [{}]", oAuth2ClientId);
+        validateId(oAuth2ClientId, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
+        return oauth2ClientDao.findById(tenantId, oAuth2ClientId.getId());
     }
 
     @Override
-    public List<OAuth2RegistrationInfo> findOauth2ClientInfosByTenantId(TenantId tenantId) {
-        log.trace("Executing findOauth2ClientInfosByTenantId");
-        return oauth2RegistrationDao.findInfosByTenantId(tenantId.getId());
-    }
-
-    @Override
-    public List<OAuth2Registration> findOauth2ClientsByTenantId(TenantId tenantId) {
-        log.trace("Executing findOauth2ClientsByTenantId [{}]", tenantId);
-        return oauth2RegistrationDao.findByTenantId(tenantId.getId());
+    public List<OAuth2Client> findOAuth2ClientsByTenantId(TenantId tenantId) {
+        log.trace("Executing findOAuth2ClientsByTenantId [{}]", tenantId);
+        return oauth2ClientDao.findByTenantId(tenantId.getId());
     }
 
     @Override
@@ -107,34 +102,55 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
         log.trace("Executing findAppSecret [{}][{}]", id, pkgName);
         validateId(id, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
         validateString(pkgName, "Incorrect package name");
-        return oauth2RegistrationDao.findAppSecret(id, pkgName);
+        return oauth2ClientDao.findAppSecret(id, pkgName);
     }
 
     @Override
     @Transactional
-    public void deleteById(TenantId tenantId, OAuth2RegistrationId oAuth2RegistrationId) {
-        log.trace("[{}][{}] Executing deleteById [{}]", tenantId, oAuth2RegistrationId);
-        oauth2RegistrationDao.removeById(tenantId, oAuth2RegistrationId.getId());
+    public void deleteOAuth2ClientById(TenantId tenantId, OAuth2ClientId oAuth2ClientId) {
+        log.trace("[{}][{}] Executing deleteOAuth2ClientById [{}]", tenantId, oAuth2ClientId);
+        oauth2ClientDao.removeById(tenantId, oAuth2ClientId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder()
                 .tenantId(tenantId)
-                .entityId(oAuth2RegistrationId)
+                .entityId(oAuth2ClientId)
                 .build());
 
     }
 
     @Override
+    public void deleteOauth2ClientsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteOauth2ClientsByTenantId, tenantId [{}]", tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        oauth2ClientDao.deleteByTenantId(tenantId);
+    }
+
+    @Override
+    public List<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId) {
+        log.trace("Executing findOAuth2ClientInfosByTenantId tenantId=[{}]", tenantId);
+        return oauth2ClientDao.findByTenantId(tenantId.getId())
+                .stream()
+                .map(OAuth2Utils::toClientInfo)
+                .collect(Collectors.toList());
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteOauth2ClientsByTenantId(tenantId);
+    }
+
+    @Override
     public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
-        return Optional.ofNullable(findOAuth2ClientById(tenantId, new OAuth2RegistrationId(entityId.getId())));
+        return Optional.ofNullable(findOAuth2ClientById(tenantId, new OAuth2ClientId(entityId.getId())));
     }
 
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        OAuth2Registration oAuth2Registration = oauth2RegistrationDao.findById(tenantId, id.getId());
-        if (oAuth2Registration == null) {
+        OAuth2Client oAuth2Client = oauth2ClientDao.findById(tenantId, id.getId());
+        if (oAuth2Client == null) {
             return;
         }
-        deleteById(tenantId, oAuth2Registration.getId());
+        deleteOAuth2ClientById(tenantId, oAuth2Client.getId());
     }
 
     @Override

@@ -117,7 +117,7 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
@@ -2045,7 +2045,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public List<OAuth2ClientInfo> getOAuth2Clients(String pkgName, PlatformType platformType) {
+    public List<OAuth2ClientLoginInfo> getOAuth2Clients(String pkgName, PlatformType platformType) {
         Map<String, String> params = new HashMap<>();
         StringBuilder urlBuilder = new StringBuilder(baseURL);
         urlBuilder.append("/api/noauth/oauth2Clients");
@@ -2066,7 +2066,7 @@ public class RestClient implements Closeable {
                 urlBuilder.toString(),
                 HttpMethod.POST,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
+                new ParameterizedTypeReference<List<OAuth2ClientLoginInfo>>() {
                 }, params).getBody();
     }
 

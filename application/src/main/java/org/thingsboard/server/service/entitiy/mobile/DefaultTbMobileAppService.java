@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.dao.mobile.MobileAppService;
@@ -38,7 +38,7 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
     private final MobileAppService mobileAppService;
 
     @Override
-    public MobileApp save(MobileApp mobileApp, List<OAuth2RegistrationId> oauth2Clients, User user) throws Exception {
+    public MobileApp save(MobileApp mobileApp, List<OAuth2ClientId> oauth2Clients, User user) throws Exception {
         ActionType actionType = mobileApp.getId() == null ? ActionType.ADDED : ActionType.UPDATED;
         TenantId tenantId = mobileApp.getTenantId();
         try {
@@ -46,8 +46,6 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
             logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), mobileApp, actionType, user);
             if (!CollectionUtils.isEmpty(oauth2Clients)) {
                 mobileAppService.updateOauth2Clients(tenantId, savedMobileApp.getId(), oauth2Clients);
-                logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), savedMobileApp,
-                        ActionType.UPDATED_OAUTH2_CLIENTS, user, oauth2Clients.toString());
             }
             return savedMobileApp;
         } catch (Exception e) {

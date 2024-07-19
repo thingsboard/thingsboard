@@ -25,17 +25,17 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
-import org.thingsboard.server.common.data.mobile.MobileAppOauth2Registration;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
+import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.DataValidationException;
-import org.thingsboard.server.dao.oauth2.OAuth2RegistrationDao;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
+import org.thingsboard.server.dao.oauth2.OAuth2Utils;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.Validator;
 
@@ -55,7 +55,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     public static final String INCORRECT_MOBILE_APP_ID = "Incorrect mobileApppId ";
 
     @Autowired
-    private OAuth2RegistrationDao oauth2RegistrationDao;
+    private OAuth2ClientDao oauth2ClientDao;
     @Autowired
     private MobileAppDao mobileAppDao;
     @Autowired
@@ -98,7 +98,9 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         List<MobileApp> mobileApps = mobileAppDao.findByTenantId(tenantId);
         List<MobileAppInfo> mobileAppInfos = new ArrayList<>();
         mobileApps.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(mobileApp -> {
-            mobileAppInfos.add(new MobileAppInfo(mobileApp, oauth2RegistrationDao.findInfosByMobileAppId(mobileApp.getUuidId())));
+            mobileAppInfos.add(new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
+                    .map(OAuth2Utils::toClientInfo)
+                    .collect(Collectors.toList())));
         });
         return mobileAppInfos;
     }
@@ -110,11 +112,13 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         if (mobileApp == null) {
             return null;
         }
-        return new MobileAppInfo(mobileApp, oauth2RegistrationDao.findInfosByMobileAppId(mobileApp.getUuidId()));
+        return new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
+                .map(OAuth2Utils::toClientInfo)
+                .collect(Collectors.toList()));
     }
 
     @Override
-    public void updateOauth2Clients(TenantId tenantId, MobileAppId mobileAppId, List<OAuth2RegistrationId> oAuth2ClientIds) {
+    public void updateOauth2Clients(TenantId tenantId, MobileAppId mobileAppId, List<OAuth2ClientId> oAuth2ClientIds) {
         log.trace("Executing updateOauth2Clients, mobileAppId [{}], oAuth2ClientIds [{}]", mobileAppId, oAuth2ClientIds);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validateId(mobileAppId, id -> INCORRECT_MOBILE_APP_ID + id);
@@ -122,20 +126,20 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         if (!oAuth2ClientIds.isEmpty()) {
             validateIds(oAuth2ClientIds, ids -> "Incorrect oAuth2ClientIds " + ids);
         }
-        List<MobileAppOauth2Registration> oauth2Clients = new ArrayList<>();
-        for (OAuth2RegistrationId oAuth2RegistrationId: oAuth2ClientIds) {
-            oauth2Clients.add(new MobileAppOauth2Registration(mobileAppId, oAuth2RegistrationId));
+        List<MobileAppOauth2Client> oauth2Clients = new ArrayList<>();
+        for (OAuth2ClientId oAuth2ClientId : oAuth2ClientIds) {
+            oauth2Clients.add(new MobileAppOauth2Client(mobileAppId, oAuth2ClientId));
         }
-        List<MobileAppOauth2Registration> existingClients = mobileAppDao.findOauth2ClientsByMobileAppId(tenantId, mobileAppId);
-        List<OAuth2RegistrationId> toRemove = existingClients.stream()
-                .map(MobileAppOauth2Registration::getOAuth2RegistrationId)
+        List<MobileAppOauth2Client> existingClients = mobileAppDao.findOauth2ClientsByMobileAppId(tenantId, mobileAppId);
+        List<OAuth2ClientId> toRemove = existingClients.stream()
+                .map(MobileAppOauth2Client::getOAuth2ClientId)
                 .filter(clientId -> oAuth2ClientIds.stream().noneMatch(oauth2ClientId ->
                         oauth2ClientId.equals(clientId))).toList();
-        for (OAuth2RegistrationId clientId : toRemove) {
+        for (OAuth2ClientId clientId : toRemove) {
             mobileAppDao.removeOauth2Clients(mobileAppId, clientId);
         }
-        for (MobileAppOauth2Registration mobileAppOauth2Registration : oauth2Clients) {
-            mobileAppDao.saveOauth2Clients(mobileAppOauth2Registration);
+        for (MobileAppOauth2Client mobileAppOauth2Client : oauth2Clients) {
+            mobileAppDao.saveOauth2Clients(mobileAppOauth2Client);
         }
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                 .entityId(mobileAppId).created(false).build());
@@ -159,5 +163,17 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
             return;
         }
         deleteMobileAppById(tenantId, mobileApp.getId());
+    }
+
+    @Override
+    public void deleteMobileAppsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteDomainsByTenantId, tenantId [{}]", tenantId);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        mobileAppDao.deleteByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteMobileAppsByTenantId(tenantId);
     }
 }

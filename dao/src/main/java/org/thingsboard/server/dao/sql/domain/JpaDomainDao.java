@@ -19,20 +19,18 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.domain.Domain;
-import org.thingsboard.server.common.data.domain.DomainOauth2Registration;
+import org.thingsboard.server.common.data.domain.DomainOauth2Client;
 import org.thingsboard.server.common.data.id.DomainId;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.domain.DomainDao;
 import org.thingsboard.server.dao.model.sql.DomainEntity;
-import org.thingsboard.server.dao.model.sql.DomainOauth2RegistrationCompositeKey;
-import org.thingsboard.server.dao.model.sql.DomainOauth2RegistrationEntity;
-import org.thingsboard.server.dao.model.sql.WidgetsBundleWidgetEntity;
+import org.thingsboard.server.dao.model.sql.DomainOauth2ClientCompositeKey;
+import org.thingsboard.server.dao.model.sql.DomainOauth2ClientEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -42,7 +40,7 @@ import java.util.UUID;
 public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implements DomainDao {
 
     private final DomainRepository domainRepository;
-    private final DomainOauth2RegistrationRepository domainOauth2RegistrationRepository;
+    private final DomainOauth2ClientRepository domainOauth2ClientRepository;
 
     @Override
     protected Class<DomainEntity> getEntityClass() {
@@ -65,18 +63,23 @@ public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implement
     }
 
     @Override
-    public List<DomainOauth2Registration> findOauth2ClientsByDomainId(TenantId tenantId, DomainId domainId) {
-        return  DaoUtil.convertDataList(domainOauth2RegistrationRepository.findAllByDomainId(domainId.getId()));
+    public List<DomainOauth2Client> findOauth2ClientsByDomainId(TenantId tenantId, DomainId domainId) {
+        return  DaoUtil.convertDataList(domainOauth2ClientRepository.findAllByDomainId(domainId.getId()));
     }
 
     @Override
-    public void saveOauth2Clients(DomainOauth2Registration domainOauth2Registration) {
-        domainOauth2RegistrationRepository.save(new DomainOauth2RegistrationEntity(domainOauth2Registration));
+    public void saveOauth2Clients(DomainOauth2Client domainOauth2Client) {
+        domainOauth2ClientRepository.save(new DomainOauth2ClientEntity(domainOauth2Client));
     }
 
     @Override
-    public void removeOauth2Clients(DomainId domainId, OAuth2RegistrationId oAuth2RegistrationId) {
-        domainOauth2RegistrationRepository.deleteById(new DomainOauth2RegistrationCompositeKey(domainId.getId(), oAuth2RegistrationId.getId()));
+    public void removeOauth2Clients(DomainId domainId, OAuth2ClientId oAuth2ClientId) {
+        domainOauth2ClientRepository.deleteById(new DomainOauth2ClientCompositeKey(domainId.getId(), oAuth2ClientId.getId()));
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        domainRepository.deleteByTenantId(tenantId.getId());
     }
 
 }

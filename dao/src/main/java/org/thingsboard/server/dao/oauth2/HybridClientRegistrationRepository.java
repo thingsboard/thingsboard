@@ -21,9 +21,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 
 import java.util.UUID;
 
@@ -36,12 +36,12 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        OAuth2Registration registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2RegistrationId(UUID.fromString(registrationId)));
+        OAuth2Client registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2ClientId(UUID.fromString(registrationId)));
         return registration == null ?
                 null : toSpringClientRegistration(registration);
     }
 
-    private ClientRegistration toSpringClientRegistration(OAuth2Registration registration){
+    private ClientRegistration toSpringClientRegistration(OAuth2Client registration){
         String registrationId = registration.getUuidId().toString();
         return ClientRegistration.withRegistrationId(registrationId)
                 .clientName(registration.getName())

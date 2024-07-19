@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.entitiy.domain;
+package org.thingsboard.server.common.data.oauth2;
 
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.domain.Domain;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
+import java.io.Serializable;
 import java.util.List;
 
-public interface TbDomainService {
+public interface HasOauth2Clients extends Serializable {
 
-    Domain save(Domain domain, List<OAuth2ClientId> oAuth2Clients, User user) throws Exception;
-
-    void delete(Domain domain, User user);
+    List<OAuth2ClientInfo> getOauth2ClientInfos();
 
 }

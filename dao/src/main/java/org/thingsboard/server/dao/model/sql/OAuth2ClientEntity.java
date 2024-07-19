@@ -25,13 +25,13 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.OAuth2RegistrationId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2BasicMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.oauth2.TenantNameStrategyType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -46,8 +46,8 @@ import java.util.stream.Collectors;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@Table(name = ModelConstants.OAUTH2_REGISTRATION_TABLE_NAME)
-public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> {
+@Table(name = ModelConstants.OAUTH2_CLIENT_TABLE_NAME)
+public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
 
     @Column(name = ModelConstants.TENANT_ID_COLUMN)
     private UUID tenantId;
@@ -114,11 +114,11 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
     @Column(name = ModelConstants.OAUTH2_ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
 
-    public OAuth2RegistrationEntity() {
+    public OAuth2ClientEntity() {
         super();
     }
 
-    public OAuth2RegistrationEntity(OAuth2Registration registration) {
+    public OAuth2ClientEntity(OAuth2Client registration) {
         if (registration.getId() != null) {
             this.setUuid(registration.getId().getId());
         }
@@ -167,9 +167,9 @@ public class OAuth2RegistrationEntity extends BaseSqlEntity<OAuth2Registration> 
     }
 
     @Override
-    public OAuth2Registration toData() {
-        OAuth2Registration registration = new OAuth2Registration();
-        registration.setId(new OAuth2RegistrationId(id));
+    public OAuth2Client toData() {
+        OAuth2Client registration = new OAuth2Client();
+        registration.setId(new OAuth2ClientId(id));
         registration.setCreatedTime(createdTime);
         registration.setTenantId(new TenantId(tenantId));
         registration.setTitle(title);

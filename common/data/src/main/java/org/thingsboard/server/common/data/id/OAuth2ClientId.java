@@ -21,15 +21,15 @@ import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-public class OAuth2RegistrationId extends UUIDBased implements EntityId {
+public class OAuth2ClientId extends UUIDBased implements EntityId {
 
     @JsonCreator
-    public OAuth2RegistrationId(@JsonProperty("id") UUID id) {
+    public OAuth2ClientId(@JsonProperty("id") UUID id) {
         super(id);
     }
 
-    public static OAuth2RegistrationId fromString(String oauth2RegistrationId) {
-        return new OAuth2RegistrationId(UUID.fromString(oauth2RegistrationId));
+    public static OAuth2ClientId fromString(String oauth2ClientId) {
+        return new OAuth2ClientId(UUID.fromString(oauth2ClientId));
     }
 
     @Override
