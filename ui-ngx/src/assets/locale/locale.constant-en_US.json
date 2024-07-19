@@ -3620,7 +3620,28 @@
             "left-fluid-color": "Left fluid color",
             "right-fluid-color": "Right fluid color",
             "top-fluid-color": "Top fluid color",
-            "bottom-fluid-color": "Bottom fluid color"
+            "bottom-fluid-color": "Bottom fluid color",
+            "value": "Value",
+            "flow-meter-value-hint": "Double value showing on flow meter display",
+            "warning-state": "Warning state",
+            "warning": "Warning",
+            "warning-state-hint": "Indicates whether component is in warning state.",
+            "critical-state": "Critical state",
+            "critical": "Critical",
+            "critical-state-hint": "Indicates whether component is in critical state.",
+            "critical-state-animation": "Critical state animation",
+            "critical-state-animation-hint": "Whether to enable blinking animation when component is in critical state.",
+            "animation": "Animation",
+            "broken": "Broken",
+            "broken-hint": "Indicates whether component is broken.",
+            "on-display-click": "On display click",
+            "on-display-click-hint": "Action invoked when user clicks on the display.",
+            "pipe": "Pipe",
+            "default-border-color": "Default border color",
+            "active-border-color": "Active border color",
+            "warning-border-color": "Warning border color",
+            "critical-border-color": "Critical border color",
+            "background-color": "Background color"
         }
     },
     "item": {
@@ -5571,6 +5592,7 @@
     },
     "widget-action": {
         "header-button": "Widget header button",
+        "do-nothing": "Do nothing",
         "open-dashboard-state": "Navigate to new dashboard state",
         "update-dashboard-state": "Update current dashboard state",
         "open-dashboard": "Navigate to other dashboard",

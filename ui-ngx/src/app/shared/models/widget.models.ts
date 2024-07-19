@@ -539,6 +539,7 @@ export interface LegendData {
 }
 
 export enum WidgetActionType {
+  doNothing = 'doNothing',
   openDashboardState = 'openDashboardState',
   updateDashboardState = 'updateDashboardState',
   openDashboard = 'openDashboard',
@@ -563,6 +564,7 @@ export const widgetActionTypes = Object.keys(WidgetActionType) as WidgetActionTy
 
 export const widgetActionTypeTranslationMap = new Map<WidgetActionType, string>(
   [
+    [ WidgetActionType.doNothing, 'widget-action.do-nothing' ],
     [ WidgetActionType.openDashboardState, 'widget-action.open-dashboard-state' ],
     [ WidgetActionType.updateDashboardState, 'widget-action.update-dashboard-state' ],
     [ WidgetActionType.openDashboard, 'widget-action.open-dashboard' ],

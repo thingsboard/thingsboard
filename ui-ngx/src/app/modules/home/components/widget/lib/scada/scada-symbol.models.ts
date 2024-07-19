@@ -359,10 +359,10 @@ const defaultSetValueSettings = (set: ScadaSymbolBehaviorAction): SetValueSettin
 });
 
 const defaultWidgetActionSettings = (widgetAction: ScadaSymbolBehavior): WidgetAction => ({
-  type: WidgetActionType.updateDashboardState,
+  type: WidgetActionType.doNothing,
   targetDashboardStateId: null,
   openRightLayout: false,
-  setEntityId: true,
+  setEntityId: false,
   stateEntityParamName: null
 });
 
@@ -457,7 +457,7 @@ export class ScadaSymbolObject {
       for (const tag of this.metadata.tags) {
         const elements = this.context.tags[tag.tag];
         elements.forEach(element => {
-          element.timeline().finish();
+          element.timeline().stop();
           element.timeline(null);
         });
       }
