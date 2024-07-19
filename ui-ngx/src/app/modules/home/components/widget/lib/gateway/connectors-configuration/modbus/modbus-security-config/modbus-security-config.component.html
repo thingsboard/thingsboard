@@ -15,7 +15,8 @@
     limitations under the License.
 
 -->
-<div class="tb-form-panel no-border no-padding padding-top" [formGroup]="securityConfigFormGroup">
+<div class="tb-form-panel no-border no-padding" [formGroup]="securityConfigFormGroup">
+  <div class="tb-form-hint tb-primary-fill">{{ 'gateway.hints.path-in-os' | translate }}</div>
   <div class="tb-form-row space-between tb-flex fill-width">
     <div class="fixed-title-width" translate>gateway.client-cert-path</div>
     <div class="tb-flex no-gap">

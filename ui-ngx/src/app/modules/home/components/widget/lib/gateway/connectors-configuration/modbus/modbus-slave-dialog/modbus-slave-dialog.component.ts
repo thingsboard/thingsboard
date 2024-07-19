@@ -125,7 +125,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       bytesize: [null, []],
       parity: [null, []],
       strict: [false, []],
-      unitId: [null, []],
+      unitId: [null, [Validators.required]],
       deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       sendDataOnlyOnChange: [false, []],
@@ -140,7 +140,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       connectAttemptCount: [null, []],
       waitAfterFailedAttemptsMs: [null, []],
       values: [{}, []],
-      security: [],
+      security: [{}],
     });
 
     this.slaveConfigFormGroup.patchValue({

@@ -16,6 +16,7 @@
 
 -->
 <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="slaveConfigFormGroup">
+  <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
   <div class="tb-flex row space-between align-center no-gap fill-width">
     <div class="fixed-title-width" translate>gateway.server-slave-config</div>
     <tb-toggle-select formControlName="type" appearance="fill">
@@ -105,6 +106,15 @@
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <input matInput type="number" min="0" name="value" formControlName="unitId" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="('gateway.unit-id-required') | translate"
+                  *ngIf="slaveConfigFormGroup.get('unitId').hasError('required') &&
+                                           slaveConfigFormGroup.get('unitId').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
       </mat-form-field>
     </div>
   </div>

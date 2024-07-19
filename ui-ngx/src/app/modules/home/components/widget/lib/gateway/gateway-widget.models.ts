@@ -957,6 +957,7 @@ export interface ModbusSecurity {
   keyfile?: string;
   password?: string;
   server_hostname?: string;
+  reqclicert?: boolean;
 }
 
 export interface ModbusSlave {
@@ -964,6 +965,7 @@ export interface ModbusSlave {
   type: ModbusProtocolType;
   method: ModbusMethodType;
   unitId: number;
+  serialPort?: string;
   baudrate?: number;
   deviceName: string;
   deviceType: string;

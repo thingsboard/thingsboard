@@ -18,7 +18,6 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormGroup, UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
-  MappingKeysType,
   ModbusDataType,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
@@ -30,6 +29,7 @@ import {
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
+import { generateSecret } from '@core/utils';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -83,11 +83,12 @@ export class ModbusDataKeysPanelComponent implements OnInit {
   addKey(): void {
     const dataKeyFormGroup = this.fb.group({
       tag: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      value: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      value: [{value: '', disabled: !this.isMaster}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       type: [ModbusDataType.STRING, [Validators.required]],
       address: [0, [Validators.required]],
       objectsCount: [1, [Validators.required]],
-      functionCode: [this.getDefaultFunctionCodes()[0]]
+      functionCode: [this.getDefaultFunctionCodes()[0]],
+      id: [{value: generateSecret(5), disabled: true}],
     });
     this.observeKeyDataType(dataKeyFormGroup);
 
@@ -117,14 +118,15 @@ export class ModbusDataKeysPanelComponent implements OnInit {
         const { tag, value, type, address, objectsCount, functionCode } = keyData;
         const dataKeyFormGroup = this.fb.group({
           tag: [tag, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          value: [value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+          value: [{value, disabled: !this.isMaster}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           type: [type, [Validators.required]],
           address: [address, [Validators.required]],
           objectsCount: [objectsCount, [Validators.required]],
           functionCode: [functionCode, []],
+          id: [{value: generateSecret(5), disabled: true}],
         });
         this.observeKeyDataType(dataKeyFormGroup);
-        this.functionCodesMap.set(tag+address, this.getFunctionCodes(type));
+        this.functionCodesMap.set(dataKeyFormGroup.get('id').value, this.getFunctionCodes(type));
 
         keysControlGroups.push(dataKeyFormGroup);
       });
@@ -138,8 +140,7 @@ export class ModbusDataKeysPanelComponent implements OnInit {
       if (!this.editableDataTypes.includes(dataType)) {
         objectsCountControl.patchValue(ModbusObjectCountByDataType[dataType]);
       }
-      const keyId = keyFormGroup.get('tag').value + keyFormGroup.get('address').value;
-      this.functionCodesMap.set(keyId, this.getFunctionCodes(dataType));
+      this.functionCodesMap.set(keyFormGroup.get('id').value, this.getFunctionCodes(dataType));
     });
   }
 
@@ -147,7 +148,7 @@ export class ModbusDataKeysPanelComponent implements OnInit {
     if (this.keysType === ModbusValueKey.ATTRIBUTES_UPDATES) {
       return this.defaultWriteFunctionCodes;
     }
-    const functionCodes = this.defaultReadFunctionCodes;
+    const functionCodes = [...this.defaultReadFunctionCodes];
     if (dataType === ModbusDataType.BITS) {
       const bitsFunctionCodes = [1, 2];
       bitsFunctionCodes.forEach(code => functionCodes.push(code));
@@ -160,6 +161,12 @@ export class ModbusDataKeysPanelComponent implements OnInit {
   }
 
   private getDefaultFunctionCodes(): number[] {
-    return this.keysType === ModbusValueKey.ATTRIBUTES_UPDATES ? this.defaultWriteFunctionCodes : this.defaultReadFunctionCodes;
+    if (this.keysType === ModbusValueKey.ATTRIBUTES_UPDATES) {
+      return this.defaultWriteFunctionCodes;
+    }
+    if (this.keysType === ModbusValueKey.RPC_REQUESTS) {
+      return [...this.defaultReadFunctionCodes, ...this.defaultWriteFunctionCodes];
+    }
+    return this.defaultReadFunctionCodes;
   }
 }

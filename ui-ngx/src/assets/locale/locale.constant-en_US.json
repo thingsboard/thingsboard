@@ -3313,6 +3313,7 @@
         "update-config": "Add/update configuration JSON",
         "username": "Username",
         "username-required": "Username is required.",
+        "unit-id-required": "Unit ID is required.",
         "read-coils": "Read Coils",
         "read-discrete-inputs": "Read Discrete Inputs",
         "read-multiple-holding-registers": "Read Multiple Holding Register",
@@ -3322,6 +3323,7 @@
         "write-register": "Write Register",
         "write-registers": "Write Registers",
         "hints": {
+            "modbus-server": "Starting with version 3.0, Gateway can run as a Modbus slave.",
             "remote-configuration": "Enables remote configuration and management of the gateway",
             "remote-shell": "Enables remote control of the operating system with the gateway from the Remote Shell widget",
             "host": "Hostname or IP address of platform server",
@@ -3360,6 +3362,7 @@
             "grpc-max-pings-without-data": "Maximum number of keepalive ping messages that the server can send without receiving any data before it considers the connection dead.",
             "grpc-min-ping-interval-without-data": "Minimum amount of time the server should wait between sending keepalive ping messages when there is no data being sent or received.",
             "permit-without-calls": "Allow server to keep the GRPC connection alive even when there are no active RPC calls.",
+            "path-in-os": "Path in gateway os.",
             "memory": "Your data will be stored in the in-memory queue, it is a fastest but no persistence guarantee.",
             "framer-type": "Type of framer.",
             "file": "Your data will be stored in separated files and will be saved even after the gateway restart.",

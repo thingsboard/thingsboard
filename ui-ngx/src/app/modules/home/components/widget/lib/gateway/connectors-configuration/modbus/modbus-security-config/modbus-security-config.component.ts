@@ -112,7 +112,20 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
   }
 
   writeValue(securityConfig: ModbusSecurity): void {
-    this.securityConfigFormGroup.patchValue(securityConfig, {emitEvent: false});
+    const { certfile, password, keyfile, server_hostname } = securityConfig;
+    let securityState = {
+      certfile: certfile ?? '',
+      password: password ?? '',
+      keyfile: keyfile ?? '',
+      server_hostname: server_hostname?? '',
+      reqclicert: !!securityConfig.reqclicert,
+    };
+    if (this.isMaster) {
+      securityState = { ...securityState, reqclicert: !!securityConfig.reqclicert };
+    } else {
+      securityState = { ...securityState, server_hostname: server_hostname ?? '' };
+    }
+    this.securityConfigFormGroup.reset(securityState, {emitEvent: false});
   }
 
   private observeValueChanges(): void {
