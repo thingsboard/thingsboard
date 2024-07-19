@@ -18,6 +18,7 @@ import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import { AbstractControl, FormGroup, UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
+  MappingKeysType,
   ModbusDataType,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
@@ -71,7 +72,7 @@ export class ModbusDataKeysPanelComponent implements OnInit {
 
   ngOnInit(): void {
     this.keysListFormArray = this.prepareKeysFormArray(this.values);
-    this.withFunctionCode = !this.isMaster || (this.keysType !== ModbusValueKey.ATTRIBUTES && this.keysType !== ModbusValueKey.TELEMENTRY);
+    this.withFunctionCode = !this.isMaster || (this.keysType !== ModbusValueKey.ATTRIBUTES && this.keysType !== ModbusValueKey.TIMESERIES);
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
   }
 

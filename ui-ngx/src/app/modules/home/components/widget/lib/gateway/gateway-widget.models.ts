@@ -844,7 +844,7 @@ export const ModbusFieldsTranslationsMap = new Map<ModbusValueField, string>(
 
 export enum ModbusValueKey {
   ATTRIBUTES = 'attributes',
-  TELEMENTRY = 'timeseries',
+  TIMESERIES = 'timeseries',
   ATTRIBUTES_UPDATES = 'attributeUpdates',
   RPC_REQUESTS = 'rpc',
 }
@@ -852,7 +852,7 @@ export enum ModbusValueKey {
 export const ModbusKeysPanelTitleTranslationsMap = new Map<ModbusValueKey, string>(
   [
     [ModbusValueKey.ATTRIBUTES, 'gateway.attributes'],
-    [ModbusValueKey.TELEMENTRY, 'gateway.telementry'],
+    [ModbusValueKey.TIMESERIES, 'gateway.timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.rpc-requests']
   ]
@@ -861,7 +861,7 @@ export const ModbusKeysPanelTitleTranslationsMap = new Map<ModbusValueKey, strin
 export const ModbusKeysAddKeyTranslationsMap = new Map<ModbusValueKey, string>(
   [
     [ModbusValueKey.ATTRIBUTES, 'gateway.add-attribute'],
-    [ModbusValueKey.TELEMENTRY, 'gateway.add-telementry'],
+    [ModbusValueKey.TIMESERIES, 'gateway.add-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.add-rpc-request']
   ]
@@ -870,7 +870,7 @@ export const ModbusKeysAddKeyTranslationsMap = new Map<ModbusValueKey, string>(
 export const ModbusKeysDeleteKeyTranslationsMap = new Map<ModbusValueKey, string>(
   [
     [ModbusValueKey.ATTRIBUTES, 'gateway.delete-attribute'],
-    [ModbusValueKey.TELEMENTRY, 'gateway.delete-telementry'],
+    [ModbusValueKey.TIMESERIES, 'gateway.delete-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.delete-rpc-requests']
   ]
@@ -879,7 +879,7 @@ export const ModbusKeysDeleteKeyTranslationsMap = new Map<ModbusValueKey, string
 export const ModbusKeysNoKeysTextTranslationsMap = new Map<ModbusValueKey, string>(
   [
     [ModbusValueKey.ATTRIBUTES, 'gateway.no-attributes'],
-    [ModbusValueKey.TELEMENTRY, 'gateway.no-telementry'],
+    [ModbusValueKey.TIMESERIES, 'gateway.no-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.no-rpc-requests']
   ]

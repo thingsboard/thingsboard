@@ -27,91 +27,97 @@
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>
                   <div class="title-container">
-                    {{ keyControl.get('tag').value }}
+                    {{ keyControl.get('tag').value }}{{ '-' }}{{ keyControl.get('value').value }}
                   </div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width tb-required" translate>
-                    gateway.key
-                  </div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput name="value" formControlName="tag" placeholder="{{ 'gateway.set' | translate }}"/>
-                      <mat-icon matSuffix
-                                matTooltipPosition="above"
-                                matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="('gateway.key-required') | translate"
-                                *ngIf="keyControl.get('tag').hasError('required') &&
+                <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel-title" translate>gateway.platform-side</div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" translate>
+                      gateway.key
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="tag" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.key-required') | translate"
+                                  *ngIf="keyControl.get('tag').hasError('required') &&
                                            keyControl.get('tag').touched"
-                                class="tb-error">
-                        warning
-                      </mat-icon>
-                    </mat-form-field>
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
                   </div>
                 </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width" translate>
-                    gateway.type
+                <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel-title" translate>gateway.connector-side</div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>
+                      gateway.type
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="type">
+                          <mat-option *ngFor="let type of modbusDataTypes" [value]="type">{{ type }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
                   </div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <mat-select formControlName="type">
-                        <mat-option *ngFor="let type of modbusDataTypes" [value]="type">{{ type }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
+                  <div *ngIf="withFunctionCode" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.function-code</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="functionCode">
+                          <mat-option *ngFor="let code of functionCodesMap.get(keyControl.get('tag').value + keyControl.get('address').value) || defaultFunctionCodes" [value]="code">{{ ModbusFunctionCodeTranslationsMap.get(code) | translate }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
                   </div>
-                </div>
-                <div *ngIf="withFunctionCode" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width" translate>gateway.function-code</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <mat-select formControlName="functionCode">
-                        <mat-option *ngFor="let code of functionCodesMap.get(keyControl.get('tag').value + keyControl.get('address').value) || defaultFunctionCodes" [value]="code">{{ ModbusFunctionCodeTranslationsMap.get(code) | translate }}</mat-option>
-                      </mat-select>
-                    </mat-form-field>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.objects-count</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input
+                          matInput
+                          type="number"
+                          min="1"
+                          name="value"
+                          formControlName="objectsCount"
+                          placeholder="{{ 'gateway.set' | translate }}"
+                          [readonly]="!editableDataTypes.includes(keyControl.get('type').value)"
+                        />
+                      </mat-form-field>
+                    </div>
                   </div>
-                </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width" translate>gateway.objects-count</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input
-                        matInput
-                        type="number"
-                        min="1"
-                        name="value"
-                        formControlName="objectsCount"
-                        placeholder="{{ 'gateway.set' | translate }}"
-                        [readonly]="!editableDataTypes.includes(keyControl.get('type').value)"
-                      />
-                    </mat-form-field>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.address</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput type="number" min="0" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
+                      </mat-form-field>
+                    </div>
                   </div>
-                </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width" translate>gateway.address</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput type="number" min="0" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
-                    </mat-form-field>
-                  </div>
-                </div>
-                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                  <div class="fixed-title-width tb-required" translate>gateway.value</div>
-                  <div class="tb-flex no-gap">
-                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                      <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
-                      <mat-icon matSuffix
-                                matTooltipPosition="above"
-                                matTooltipClass="tb-error-tooltip"
-                                [matTooltip]="('gateway.value-required') | translate"
-                                *ngIf="keyControl.get('value').hasError('required') &&
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" translate>gateway.value</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.value-required') | translate"
+                                  *ngIf="keyControl.get('value').hasError('required') &&
                                            keyControl.get('value').touched"
-                                class="tb-error">
-                        warning
-                      </mat-icon>
-                    </mat-form-field>
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
                   </div>
                 </div>
               </ng-template>

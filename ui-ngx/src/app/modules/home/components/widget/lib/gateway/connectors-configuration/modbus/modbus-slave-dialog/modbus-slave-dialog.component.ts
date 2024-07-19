@@ -114,7 +114,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
 
     this.showSecurityControl = this.fb.control(false);
     this.slaveConfigFormGroup = this.fb.group({
-      name: ['', [Validators.required]],
+      name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       type: [ModbusProtocolType.TCP, [Validators.required]],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
@@ -126,8 +126,8 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       parity: [null, []],
       strict: [false, []],
       unitId: [null, []],
-      deviceName: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-      deviceType: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       sendDataOnlyOnChange: [false, []],
       timeout: [],
       byteOrder: [ModbusOrderType.BIG, []],
