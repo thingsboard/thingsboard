@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  ChangeDetectorRef,
-  Component,
-  Input,
-  OnDestroy,
-  OnInit,
-  QueryList, ViewChild,
-  ViewChildren
-} from '@angular/core';
+import { AfterViewInit, ChangeDetectorRef, Component, Input, OnDestroy, OnInit, QueryList, ViewChild, ViewChildren } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,7 +24,8 @@ import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   AbstractUserDashboardInfo,
-  LastVisitedDashboardInfo, StarredDashboardInfo,
+  LastVisitedDashboardInfo,
+  StarredDashboardInfo,
   UserDashboardAction,
   UserDashboardsInfo
 } from '@shared/models/user-settings.models';
@@ -46,6 +38,8 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { DashboardInfo } from '@shared/models/dashboard.models';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
+import { UserService } from '@core/http/user.service';
+import { User } from '@shared/models/user.model';
 
 @Component({
   selector: 'tb-recent-dashboards-widget',
@@ -77,14 +71,23 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   hasDashboardsAccess = true;
 
   dirty = false;
+  public customerId: string;
+  private isFullscreenMode = false;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
+              private userService: UserService,
               private userSettingService: UserSettingsService) {
     super(store);
   }
 
   ngOnInit() {
+    this.userService.getUser(this.authUser.userId).subscribe((userInfo: User) => {
+      this.isFullscreenMode = userInfo.additionalInfo.defaultDashboardFullscreen;
+    });
+    if (this.authUser.authority === Authority.CUSTOMER_USER) {
+      this.customerId = this.authUser.customerId;
+    }
     this.hasDashboardsAccess = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER].includes(this.authUser.authority);
     if (this.hasDashboardsAccess) {
       this.reload();
@@ -108,6 +111,11 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
         this.cd.markForCheck();
       }
     );
+  }
+
+  public createDashboardUrl(id: string): string {
+    const baseUrl = this.isFullscreenMode ? '/dashboard/' : '/dashboards/';
+    return baseUrl + id;
   }
 
   toggleValueChange(value: 'last' | 'starred') {
