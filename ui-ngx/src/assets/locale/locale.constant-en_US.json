@@ -4217,7 +4217,6 @@
         "invalid-target-rulechain": "Unable to resolve target rule chain!",
         "test-script-function": "Test script function",
         "script-lang-java-script": "JavaScript",
-        "script-lang-java-script-short": "JS",
         "script-lang-tbel": "TBEL",
         "message": "Message",
         "message-type": "Message type",

@@ -44,10 +44,6 @@ export class TbScriptLangComponent extends PageComponent implements ControlValue
   @Input()
   disabled: boolean;
 
-  @Input()
-  @coerceBoolean()
-  shortLang = false;
-
   private propagateChange = null;
 
   constructor(protected store: Store<AppState>,
