@@ -192,7 +192,14 @@ public class JpaBaseEventDao implements EventDao {
     public void removeEvents(UUID tenantId, UUID entityId, Long startTime, Long endTime) {
         log.debug("[{}][{}] Remove events [{}-{}] ", tenantId, entityId, startTime, endTime);
         for (EventType eventType : EventType.values()) {
-            getEventRepository(eventType).removeEvents(tenantId, entityId, startTime, endTime);
+            Map<Long, Long> partitions = partitioningRepository.getPartitions(eventType.getTable(),
+                    partitionConfiguration.getPartitionSizeInMs(eventType));
+            partitions.forEach((startTs, endTs) -> {
+                if (startTs <= endTime && endTs > startTime) {
+                    getEventRepository(eventType).removeEvents(tenantId, entityId,
+                            Math.max(startTs, startTime), Math.min(endTs - 1, endTime));
+                }
+            });
         }
     }
 

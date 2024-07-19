@@ -31,6 +31,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
+import java.util.stream.Collectors;
 
 @Repository
 @Slf4j
@@ -144,6 +145,13 @@ public class SqlPartitioningRepository {
             }
         }
         return partitions;
+    }
+
+    // key - start ts (inclusive), value - end ts (exclusive)
+    public Map<Long, Long> getPartitions(String table, long partitionDurationMs) {
+        return fetchPartitions(table).stream()
+                .collect(Collectors.toMap(startTs -> startTs, startTs ->
+                        getPartitionEndTime(startTs, partitionDurationMs)));
     }
 
     public long calculatePartitionStartTime(long ts, long partitionDuration) {

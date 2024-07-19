@@ -16,10 +16,12 @@
 package org.thingsboard.server.dao.service.event;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
+import org.apache.commons.lang3.tuple.Pair;
 import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.testcontainers.shaded.org.apache.commons.lang3.RandomUtils;
 import org.thingsboard.server.common.data.EventInfo;
 import org.thingsboard.server.common.data.event.Event;
 import org.thingsboard.server.common.data.event.EventType;
@@ -28,17 +30,22 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EventId;
+import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.event.EventService;
 import org.thingsboard.server.dao.service.AbstractServiceTest;
 
 import java.text.ParseException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.apache.commons.lang3.time.DateFormatUtils.ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT;
+import static org.assertj.core.api.Assertions.assertThat;
 
 public abstract class BaseEventServiceTest extends AbstractServiceTest {
 
@@ -99,7 +106,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedEvent3.getUuidId(), events.getData().get(0).getUuidId());
         Assert.assertFalse(events.hasNext());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+        cleanupEvents();
     }
 
     @Test
@@ -129,7 +136,7 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertEquals(savedEvent.getUuidId(), events.getData().get(0).getUuidId());
         Assert.assertFalse(events.hasNext());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+        cleanupEvents();
     }
 
     @Test
@@ -145,7 +152,33 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         Assert.assertNotNull(event);
         Assert.assertEquals(event2.getUuidId(), event.getUuidId());
 
-        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+        cleanupEvents();
+    }
+
+    @Test
+    public void testRemoveEvents() throws Exception {
+        TenantId tenantId = new TenantId(Uuids.timeBased());
+        DeviceId deviceId = new DeviceId(Uuids.timeBased());
+        long currentTs = System.currentTimeMillis();
+        long startTs = currentTs - TimeUnit.DAYS.toMillis(30);
+
+        List<Event> events = new ArrayList<>();
+        for (int i = 0; i < 100; i++) {
+            long ts = RandomUtils.nextLong(startTs, currentTs);
+            Event event = saveEventWithProvidedTime(ts, deviceId, tenantId);
+            events.add(event);
+        }
+
+        Pair<Long, Long> removalPeriod = Pair.of(RandomUtils.nextLong(startTs, currentTs), RandomUtils.nextLong(startTs, currentTs));
+        long from = Math.min(removalPeriod.getLeft(), removalPeriod.getRight());
+        long to = Math.max(removalPeriod.getLeft(), removalPeriod.getRight());
+        eventService.removeEvents(tenantId, deviceId, null, from, to);
+
+        List<EventInfo> leftEvents = eventService.findEvents(tenantId, deviceId, EventType.DEBUG_RULE_NODE, new TimePageLink(new PageLink(100), 0L, System.currentTimeMillis())).getData();
+        List<EventId> expectedEvents = events.stream().filter(event -> event.getCreatedTime() < from || event.getCreatedTime() > to).map(IdBased::getId).toList();
+        assertThat(leftEvents).extracting(IdBased::getId).containsOnly(expectedEvents.toArray(EventId[]::new));
+
+        cleanupEvents();
     }
 
     private Event saveEventWithProvidedTime(long time, EntityId entityId, TenantId tenantId) throws Exception {
@@ -159,4 +192,9 @@ public abstract class BaseEventServiceTest extends AbstractServiceTest {
         eventService.saveAsync(event).get();
         return event;
     }
+
+    private void cleanupEvents() {
+        eventService.cleanupEvents(timeBeforeStartTime - 1, timeAfterEndTime + 1, true);
+    }
+
 }
