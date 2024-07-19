@@ -3621,6 +3621,7 @@
             "right-fluid-color": "Right fluid color",
             "top-fluid-color": "Top fluid color",
             "bottom-fluid-color": "Bottom fluid color",
+            "display": "Display",
             "value": "Value",
             "flow-meter-value-hint": "Double value showing on flow meter display",
             "warning-state": "Warning state",
