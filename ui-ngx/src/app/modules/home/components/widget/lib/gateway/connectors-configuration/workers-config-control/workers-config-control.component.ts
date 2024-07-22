@@ -25,7 +25,9 @@ import {
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup, ValidationErrors, Validator,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
   Validators
 } from '@angular/forms';
 import { SharedModule } from '@shared/shared.module';
