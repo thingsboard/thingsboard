@@ -36,7 +36,7 @@ import { CommonModule } from '@angular/common';
 import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { TooltipDirective } from '@shared/directives/public-api';
+import { TruncateTooltipDirective } from '@shared/directives/truncate-tooltip.directive';
 
 @Component({
   selector: 'tb-server-config',
@@ -60,7 +60,7 @@ import { TooltipDirective } from '@shared/directives/public-api';
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
-    TooltipDirective,
+    TruncateTooltipDirective,
   ]
 })
 export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {

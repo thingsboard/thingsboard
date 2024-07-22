@@ -58,7 +58,7 @@ import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TooltipDirective } from '@shared/directives/public-api';
+import { TruncateTooltipDirective } from '@shared/directives/truncate-tooltip.directive';
 
 @Component({
   selector: 'tb-mapping-table',
@@ -78,7 +78,7 @@ import { TooltipDirective } from '@shared/directives/public-api';
     }
   ],
   standalone: true,
-  imports: [CommonModule, SharedModule, TooltipDirective]
+  imports: [CommonModule, SharedModule, TruncateTooltipDirective]
 })
 export class MappingTableComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
 

@@ -33,7 +33,7 @@ import { MatTooltip, TooltipPosition } from '@angular/material/tooltip';
   providers: [MatTooltip],
 
 })
-export class TooltipDirective implements OnInit, AfterViewInit, OnDestroy {
+export class TruncateTooltipDirective implements OnInit, AfterViewInit, OnDestroy {
   @Input('tbTruncateTooltip') text: string;
   @Input() tooltipEnabled = true;
   @Input() position: TooltipPosition = 'above';
