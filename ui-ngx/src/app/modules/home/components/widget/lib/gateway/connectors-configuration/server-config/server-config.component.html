@@ -16,95 +16,93 @@
 
 -->
 <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="serverConfigFormGroup">
-  <div class="server-settings">
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" tbTruncateTooltip translate>gateway.server-url</div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput name="value" formControlName="url" placeholder="{{ 'gateway.set' | translate }}"/>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="('gateway.server-url-required') | translate"
-                    *ngIf="serverConfigFormGroup.get('url').hasError('required') &&
-                           serverConfigFormGroup.get('url').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
-      </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tbTruncateTooltip translate>gateway.server-url</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput name="value" formControlName="url" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="('gateway.server-url-required') | translate"
+                  *ngIf="serverConfigFormGroup.get('url').hasError('required') &&
+                         serverConfigFormGroup.get('url').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
     </div>
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.opcua-timeout' | translate }}">
-        <div tbTruncateTooltip>{{ 'gateway.timeout' | translate }}</div>
-      </div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" min="0" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'gateway.timeout-error' | translate: {min: 1000}"
-                    *ngIf="(serverConfigFormGroup.get('timeoutInMillis').hasError('required') ||
-                           serverConfigFormGroup.get('timeoutInMillis').hasError('min')) &&
-                           serverConfigFormGroup.get('timeoutInMillis').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
-      </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.opcua-timeout' | translate }}">
+      <div tbTruncateTooltip>{{ 'gateway.timeout' | translate }}</div>
     </div>
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" tbTruncateTooltip translate>gateway.security</div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="security">
-            <mat-option *ngFor="let version of securityPolicyTypes" [value]="version.value">{{ version.name }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.timeout-error' | translate: {min: 1000}"
+                  *ngIf="(serverConfigFormGroup.get('timeoutInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('timeoutInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('timeoutInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
     </div>
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.scan-period' | translate }}">
-        <div tbTruncateTooltip>{{ 'gateway.scan-period' | translate }}</div>
-      </div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" min="0" name="value"
-                 formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'gateway.scan-period-error' | translate: {min: 1000}"
-                    *ngIf="(serverConfigFormGroup.get('scanPeriodInMillis').hasError('required') ||
-                           serverConfigFormGroup.get('scanPeriodInMillis').hasError('min')) &&
-                           serverConfigFormGroup.get('scanPeriodInMillis').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
-      </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tbTruncateTooltip translate>gateway.security</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="security">
+          <mat-option *ngFor="let version of securityPolicyTypes" [value]="version.value">{{ version.name }}</mat-option>
+        </mat-select>
+      </mat-form-field>
     </div>
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.sub-check-period' | translate }}">
-        <div tbTruncateTooltip>{{ 'gateway.sub-check-period' | translate }}</div>
-      </div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" min="0" name="value"
-                 formControlName="subCheckPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="'gateway.sub-check-period-error' | translate: {min: 10}"
-                    *ngIf="(serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('required') ||
-                           serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('min')) &&
-                           serverConfigFormGroup.get('subCheckPeriodInMillis').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
-      </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.scan-period' | translate }}">
+      <div tbTruncateTooltip>{{ 'gateway.scan-period' | translate }}</div>
+    </div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value"
+               formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.scan-period-error' | translate: {min: 1000}"
+                  *ngIf="(serverConfigFormGroup.get('scanPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('scanPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('scanPeriodInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.sub-check-period' | translate }}">
+      <div tbTruncateTooltip>{{ 'gateway.sub-check-period' | translate }}</div>
+    </div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value"
+               formControlName="subCheckPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.sub-check-period-error' | translate: {min: 10}"
+                  *ngIf="(serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('subCheckPeriodInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
     </div>
   </div>
   <div class="tb-form-row" fxLayoutAlign="space-between center">
