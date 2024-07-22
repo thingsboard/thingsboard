@@ -449,6 +449,8 @@ export class WidgetContext {
       labelPattern.destroy();
     }
     this.labelPatterns.clear();
+    this.width = undefined;
+    this.height = undefined;
     this.destroyed = true;
   }
 
