@@ -733,6 +733,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       case ConnectorType.MQTT:
       case ConnectorType.OPCUA:
         this.connectorForm.get('type').patchValue(connector.type, {emitValue: false, onlySelf: true});
+        this.connectorForm.get('basicConfig').setValue({}, {emitEvent: false});
 
         setTimeout(() => {
           this.connectorForm.patchValue({...connector, mode: connector.mode || ConnectorConfigurationModes.BASIC});

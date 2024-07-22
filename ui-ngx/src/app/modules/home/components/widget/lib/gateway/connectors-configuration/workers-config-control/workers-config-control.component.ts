@@ -95,7 +95,11 @@ export class WorkersConfigControlComponent implements OnDestroy, ControlValueAcc
   }
 
   writeValue(workersConfig: WorkersConfig): void {
-    this.workersConfigFormGroup.patchValue(workersConfig, {emitEvent: false});
+    const { maxNumberOfWorkers, maxMessageNumberPerWorker } = workersConfig;
+    this.workersConfigFormGroup.reset({
+      maxNumberOfWorkers: maxNumberOfWorkers || 100,
+      maxMessageNumberPerWorker: maxMessageNumberPerWorker || 10,
+    }, {emitEvent: false});
   }
 
   validate(): ValidationErrors | null {

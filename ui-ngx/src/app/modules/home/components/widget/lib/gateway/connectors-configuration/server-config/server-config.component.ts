@@ -114,6 +114,16 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
   }
 
   writeValue(serverConfig: ServerConfig): void {
-    this.serverConfigFormGroup.patchValue(serverConfig, {emitEvent: false});
+    const { timeoutInMillis, scanPeriodInMillis, enableSubscriptions, subCheckPeriodInMillis, showMap, security } = serverConfig;
+    const serverConfigState = {
+      ...serverConfig,
+      timeoutInMillis: timeoutInMillis || 1000,
+      scanPeriodInMillis: scanPeriodInMillis || 1000,
+      enableSubscriptions: enableSubscriptions || true,
+      subCheckPeriodInMillis: subCheckPeriodInMillis || 10,
+      showMap: showMap || false,
+      security: security || SecurityPolicy.BASIC128,
+    };
+    this.serverConfigFormGroup.reset(serverConfigState, {emitEvent: false});
   }
 }
