@@ -47,7 +47,7 @@ public class TbUtilsTest {
 
     private ExecutionContext ctx;
 
-    private final float floatVal = 29.29824f;
+    private final Float floatVal = 29.29824f;
 
     private final float floatValRev = -5.948442E7f;
 
@@ -256,7 +256,7 @@ public class TbUtilsTest {
 
     @Test
     public void parseFloat() {
-        String floatValStr = "29.29824";
+        String floatValStr = floatVal.toString();
         Assertions.assertEquals(java.util.Optional.of(floatVal).get(), TbUtils.parseFloat(floatValStr));
         String floatValHex = "41EA62CC";
         Assertions.assertEquals(0, Float.compare(floatVal, TbUtils.parseHexToFloat(floatValHex)));
@@ -274,7 +274,7 @@ public class TbUtilsTest {
     }
 
     @Test
-    public void arseBytesToFloat() {
+    public void parseBytesToFloat() {
         byte[] floatValByte = {65, -22, 98, -52};
         Assertions.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatValByte, 0)));
         Assertions.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatValByte, 0, false)));
@@ -282,6 +282,33 @@ public class TbUtilsTest {
         List<Byte> floatVaList = Bytes.asList(floatValByte);
         Assertions.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatVaList, 0)));
         Assertions.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatVaList, 0, false)));
+
+        // 4 294 967 295L == {0xFF, 0xFF, 0xFF, 0xFF}
+        floatValByte = new byte[] {-1, -1, -1, -1};
+        float floatExpectedBe = 4294.9673f;
+        float floatExpectedLe = 4.2949673E9f;
+        float actualBe = TbUtils.parseBytesToFloat(floatValByte, 0, 4, true);
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValByte, 0, false)));
+
+        floatVaList = Bytes.asList(floatValByte);
+        actualBe = TbUtils.parseBytesToFloat(floatVaList, 0);
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatVaList, 0, false)));
+
+        // 2 143 289 344L == {0x7F, 0xC0, 0x00, 0x00}
+        floatValByte = new byte[] {0x7F, (byte) 0xC0, (byte) 0xFF, 0x00};
+        floatExpectedBe = 2143.3547f;
+        floatExpectedLe = -3.984375f;
+        actualBe = TbUtils.parseBytesToFloat(floatValByte, 0, 4, true);
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValByte, 0, 2,false)));
+
+        floatVaList = Bytes.asList(floatValByte);
+        floatExpectedLe = 8372479.0f;
+        actualBe = TbUtils.parseBytesToFloat(floatVaList, 0);
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatVaList, 0, 3,  false)));
     }
 
     @Test
@@ -605,15 +632,51 @@ public class TbUtilsTest {
 
     @Test
     public void floatToHex_Test() {
-        Float value = 20.89f;
-        String expectedHex = "0x41A71EB8";
-        String valueHexRev = "0xB81EA741";
+        Float value = 123456789.00f;
+        String expectedHex = "0x4CEB79A3";
+        String valueHexRev = "0xA379EB4C";
         String actual = TbUtils.floatToHex(value);
         Assertions.assertEquals(expectedHex, actual);
         Float valueActual = TbUtils.parseHexToFloat(actual);
         Assertions.assertEquals(value, valueActual);
         valueActual = TbUtils.parseHexToFloat(valueHexRev, false);
         Assertions.assertEquals(value, valueActual);
+        value = 123456789.67f;
+        expectedHex = "0x4CEB79A3";
+        valueHexRev = "0xA379EB4C";
+        actual = TbUtils.floatToHex(value);
+        Assertions.assertEquals(expectedHex, actual);
+        valueActual = TbUtils.parseHexToFloat(actual);
+        Assertions.assertEquals(value, valueActual);
+        valueActual = TbUtils.parseHexToFloat(valueHexRev, false);
+        Assertions.assertEquals(value, valueActual);
+        value = 10.0f;
+        expectedHex = "0x41200000";
+        valueHexRev = "0x00002041";
+        actual = TbUtils.floatToHex(value);
+        Assertions.assertEquals(expectedHex, actual);
+        valueActual = TbUtils.parseHexToFloat(actual);
+        Assertions.assertEquals(value, valueActual);
+        valueActual = TbUtils.parseHexToFloat(valueHexRev, false);
+        Assertions.assertEquals(value, valueActual);
+    }
+        // If the length is not equal to 8 characters, we process it as an integer (eg "0x0A" for 10.0f).
+    @Test
+    public void parseHexIntLongToFloat_Test() {
+        Float valueExpected = 10.0f;
+        Float valueActual = TbUtils.parseHexIntLongToFloat("0x0A", true);
+        Assertions.assertEquals(valueExpected, valueActual);
+        valueActual = TbUtils.parseHexIntLongToFloat("0x0A", false);
+        Assertions.assertEquals(valueExpected, valueActual);
+        valueActual = TbUtils.parseHexIntLongToFloat("0x00000A", true);
+        Assertions.assertEquals(valueExpected, valueActual);
+        valueActual = TbUtils.parseHexIntLongToFloat("0x0A0000", false);
+        Assertions.assertEquals(valueExpected, valueActual);
+        valueExpected = 2570.0f;
+        valueActual = TbUtils.parseHexIntLongToFloat("0x000A0A", true);
+        Assertions.assertEquals(valueExpected, valueActual);
+        valueActual = TbUtils.parseHexIntLongToFloat("0x0A0A00", false);
+        Assertions.assertEquals(valueExpected, valueActual);
     }
 
     @Test
