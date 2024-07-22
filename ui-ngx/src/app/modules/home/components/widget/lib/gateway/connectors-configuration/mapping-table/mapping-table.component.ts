@@ -192,7 +192,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, MappingInfo, MappingValue>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, ConnectorMapping>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -207,7 +207,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           if (isDefinedAndNotNull(index)) {
             this.mappingFormGroup.at(index).patchValue(res);
           } else {
-            this.mappingFormGroup.push(this.fb.group(res));
+            this.pushDataAsFormArrays([res]);
           }
           this.mappingFormGroup.markAsDirty();
         }

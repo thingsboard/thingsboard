@@ -24,9 +24,13 @@ import { Router } from '@angular/router';
 import {
   Attribute,
   AttributesUpdate,
+  ConnectorMapping,
+  ConnectorMappingFormValue,
+  ConverterMappingFormValue,
   ConvertorType,
   ConvertorTypeTranslationsMap,
   DataConversionTranslationsMap,
+  DeviceConnectorMapping,
   DeviceInfoType,
   HelpLinkByMappingTypeMap,
   MappingHintTranslationsMap,
@@ -38,11 +42,11 @@ import {
   MappingKeysType,
   MappingType,
   MappingTypeTranslationsMap,
-  MappingValue,
   noLeadTrailSpacesRegex,
   OPCUaSourceTypes,
   QualityTypes,
   QualityTypeTranslationsMap,
+  RequestMappingFormValue,
   RequestType,
   RequestTypesTranslationsMap,
   RpcMethod,
@@ -63,7 +67,7 @@ import { MappingDataKeysPanelComponent } from '@home/components/widget/lib/gatew
   templateUrl: './mapping-dialog.component.html',
   styleUrls: ['./mapping-dialog.component.scss']
 })
-export class MappingDialogComponent extends DialogComponent<MappingDialogComponent, MappingValue> implements OnDestroy {
+export class MappingDialogComponent extends DialogComponent<MappingDialogComponent, ConnectorMapping> implements OnDestroy {
 
   mappingForm: UntypedFormGroup;
 
@@ -107,7 +111,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   constructor(protected store: Store<AppState>,
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: MappingInfo,
-              public dialogRef: MatDialogRef<MappingDialogComponent, MappingValue>,
+              public dialogRef: MatDialogRef<MappingDialogComponent, ConnectorMapping>,
               private fb: FormBuilder,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
@@ -246,7 +250,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  private prepareMappingData(): { [key: string]: unknown } {
+  private prepareMappingData(): ConnectorMapping {
     const formValue = this.mappingForm.value;
     switch (this.data.mappingType) {
       case MappingType.DATA:
@@ -269,7 +273,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
     }
   }
 
-  private prepareFormValueData(): { [key: string]: unknown } {
+  private getFormValueData(): ConnectorMappingFormValue {
     if (this.data.value && Object.keys(this.data.value).length) {
       switch (this.data.mappingType) {
         case MappingType.DATA:
@@ -281,16 +285,16 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
               type: converter.type,
               [converter.type]: {...converter}
             }
-          };
+          } as ConverterMappingFormValue;
         case MappingType.REQUESTS:
           return {
             requestType: this.data.value.requestType,
             requestValue: {
               [this.data.value.requestType]: this.data.value.requestValue
             }
-          };
+          } as RequestMappingFormValue;
         default:
-          return this.data.value;
+          return this.data.value as DeviceConnectorMapping;
       }
     }
   }
@@ -316,7 +320,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
         extensionConfig: [{}, []]
       }),
     }));
-    this.mappingForm.patchValue(this.prepareFormValueData());
+    this.mappingForm.patchValue(this.getFormValueData());
     this.mappingForm.get('converter.type').valueChanges.pipe(
       startWith(this.mappingForm.get('converter.type').value),
       takeUntil(this.destroy$)
@@ -396,7 +400,7 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
         requestValueGroup.get('responseTimeout').enable({emitEvent: false});
       }
     });
-    this.mappingForm.patchValue(this.prepareFormValueData());
+    this.mappingForm.patchValue(this.getFormValueData());
   }
 
   private createOPCUAMappingForm(): void {
@@ -409,6 +413,6 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       rpc_methods: [[], []],
       attributes_updates: [[], []]
     });
-    this.mappingForm.patchValue(this.prepareFormValueData());
+    this.mappingForm.patchValue(this.getFormValueData());
   }
 }

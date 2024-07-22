@@ -174,6 +174,8 @@ export interface ConnectorSecurity {
 
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
 
+export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
+
 export interface ConnectorBaseConfig {
   mapping?: DeviceConnectorMapping[];
   dataMapping?: ConverterConnectorMapping[];
@@ -223,7 +225,7 @@ export interface AttributesUpdate {
   value: string;
 }
 
-interface Converter {
+export interface Converter {
   type: ConvertorType;
   deviceNameJsonExpression: string;
   deviceTypeJsonExpression: string;
@@ -239,14 +241,20 @@ export interface ConverterConnectorMapping {
   converter: Converter;
 }
 
+export type ConverterMappingFormValue = Omit<ConverterConnectorMapping, 'converter'> & {
+  converter: {
+    type: ConvertorType;
+  } & Record<ConvertorType, Converter>;
+};
+
 export interface DeviceConnectorMapping {
   deviceNodePattern: string;
   deviceNodeSource: string;
   deviceInfo: DeviceInfo;
-  attributes: Attribute[];
-  timeseries: Timeseries[];
-  rpc_methods: RpcMethod[];
-  attributes_updates: AttributesUpdate[];
+  attributes?: Attribute[];
+  timeseries?: Timeseries[];
+  rpc_methods?: RpcMethod[];
+  attributes_updates?: AttributesUpdate[];
 }
 
 export enum ConnectorType {
@@ -604,6 +612,10 @@ export interface RequestMappingData {
   requestType: RequestType;
   requestValue: RequestDataItem;
 }
+
+export type RequestMappingFormValue = Omit<RequestMappingData, 'requestValue'> & {
+  requestValue: Record<RequestType, RequestDataItem>;
+};
 
 export interface RequestDataItem {
   type: string;
