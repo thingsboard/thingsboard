@@ -78,7 +78,7 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       version: [5, []],
-      clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      clientId: ['tb_gw_' + generateSecret(5), [Validators.pattern(noLeadTrailSpacesRegex)]],
       security: []
     });
 

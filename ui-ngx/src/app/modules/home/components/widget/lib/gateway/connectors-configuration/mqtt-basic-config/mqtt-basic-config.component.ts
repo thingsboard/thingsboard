@@ -113,16 +113,18 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
   }
 
   writeValue(basicConfig: ConnectorBaseConfig): void {
+    const { broker, dataMapping = [], requestsMapping } = basicConfig;
+
     const editedBase = {
-      workers: {
-        maxNumberOfWorkers: basicConfig.broker?.maxNumberOfWorkers,
-        maxMessageNumberPerWorker: basicConfig.broker?.maxMessageNumberPerWorker,
-      },
-      dataMapping: basicConfig.dataMapping || [],
-      broker: basicConfig.broker || {},
-      requestsMapping: Array.isArray(basicConfig.requestsMapping)
-        ? basicConfig.requestsMapping
-        : this.getRequestDataArray(basicConfig.requestsMapping),
+      workers: broker && (broker.maxNumberOfWorkers || broker.maxMessageNumberPerWorker) ? {
+        maxNumberOfWorkers: broker.maxNumberOfWorkers,
+        maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
+      } : {},
+      dataMapping: dataMapping || [],
+      broker: broker || {},
+      requestsMapping: Array.isArray(requestsMapping)
+        ? requestsMapping
+        : this.getRequestDataArray(requestsMapping),
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
