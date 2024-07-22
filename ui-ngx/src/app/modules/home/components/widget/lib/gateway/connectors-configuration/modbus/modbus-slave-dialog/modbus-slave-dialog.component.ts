@@ -35,7 +35,8 @@ import {
   ModbusProtocolType,
   ModbusSerialMethodType,
   noLeadTrailSpacesRegex,
-  PortLimits, SlaveConfig,
+  PortLimits,
+  SlaveConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
