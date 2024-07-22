@@ -89,6 +89,7 @@
                           matInput
                           type="number"
                           min="1"
+                          max="50000"
                           name="value"
                           formControlName="objectsCount"
                           placeholder="{{ 'gateway.set' | translate }}"
@@ -101,7 +102,7 @@
                     <div class="fixed-title-width" translate>gateway.address</div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput type="number" min="0" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <input matInput type="number" min="0" max="50000" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
                       </mat-form-field>
                     </div>
                   </div>

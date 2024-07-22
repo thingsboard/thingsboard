@@ -138,7 +138,7 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
     this.securityConfigFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: ModbusSecurity) => {
-      this.onChange(value);
+      this.onChange(this.disabled ? {} : value);
       this.onTouched();
     });
   }

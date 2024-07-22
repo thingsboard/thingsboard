@@ -33,6 +33,7 @@ import {
   ModbusProtocolLabelsMap,
   ModbusProtocolType,
   ModbusRegisterValues,
+  ModbusSerialMethodType,
   ModbusSlave,
   noLeadTrailSpacesRegex,
   PortLimits,
@@ -90,6 +91,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
 
   readonly modbusProtocolTypes = Object.values(ModbusProtocolType);
   readonly modbusMethodTypes = Object.values(ModbusMethodType);
+  readonly modbusSerialMethodTypes = Object.values(ModbusSerialMethodType);
   readonly modbusOrderType = Object.values(ModbusOrderType);
   readonly ModbusProtocolType = ModbusProtocolType;
   readonly serialSpecificControlKeys = ['serialPort', 'baudrate'];
@@ -107,7 +109,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      method: [ModbusMethodType.SOCKET, []],
+      method: [ModbusMethodType.RTU, []],
       unitId: [null, [Validators.required]],
       baudrate: [null, []],
       deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -133,7 +135,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
         value.port = value.serialPort;
         delete value.serialPort;
       }
-      this.onChange(value);
+      this.onChange(this.slaveConfigFormGroup.get('sendDataToThingsBoard').value ? value : {} as SlaveConfig);
       this.onTouched();
     });
 
@@ -226,7 +228,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     let slaveState: ModbusSlave = {
       host: host ?? '',
       type: type ?? ModbusProtocolType.TCP,
-      method: method ?? ModbusMethodType.SOCKET,
+      method: method ?? ModbusMethodType.RTU,
       unitId: unitId ?? null,
       deviceName: deviceName ?? '',
       deviceType: deviceType ?? '',

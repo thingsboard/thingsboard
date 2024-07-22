@@ -25,11 +25,15 @@ import {
 } from '@angular/forms';
 import {
   MappingInfo,
+  ModbusByteSizes,
   ModbusMethodLabelsMap,
   ModbusMethodType,
   ModbusOrderType,
+  ModbusParity,
+  ModbusParityLabelsMap,
   ModbusProtocolLabelsMap,
   ModbusProtocolType,
+  ModbusSerialMethodType,
   noLeadTrailSpacesRegex,
   PortLimits, SlaveConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -92,8 +96,12 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
 
   readonly modbusProtocolTypes = Object.values(ModbusProtocolType);
   readonly modbusMethodTypes = Object.values(ModbusMethodType);
+  readonly modbusSerialMethodTypes = Object.values(ModbusSerialMethodType);
+  readonly modbusParities = Object.values(ModbusParity);
+  readonly modbusByteSizes = ModbusByteSizes;
   readonly modbusOrderType = Object.values(ModbusOrderType);
   readonly ModbusProtocolType = ModbusProtocolType;
+  readonly ModbusParityLabelsMap = ModbusParityLabelsMap;
   readonly ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
   readonly ModbusMethodLabelsMap = ModbusMethodLabelsMap;
   readonly modbusHelpLink =
@@ -119,11 +127,11 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      method: [ModbusMethodType.SOCKET, []],
+      method: [ModbusMethodType.RTU, []],
       baudrate: [null, []],
       stopbits: [null, []],
-      bytesize: [null, []],
-      parity: [null, []],
+      bytesize: [ModbusByteSizes[0], []],
+      parity: [ModbusParity.None, []],
       strict: [false, []],
       unitId: [null, [Validators.required]],
       deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -180,6 +188,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
         slaveResult.port = slaveResult.serialPort;
       }
       delete slaveResult.serialPort;
+      slaveResult.security = this.showSecurityControl.value ? slaveResult.security : {};
       this.dialogRef.close(slaveResult);
     }
   }

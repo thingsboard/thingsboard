@@ -769,10 +769,32 @@ export enum ModbusMethodType {
   RTU = 'rtu',
 }
 
-export const ModbusMethodLabelsMap = new Map<ModbusMethodType, string>(
+export enum ModbusSerialMethodType {
+  RTU = 'rtu',
+  ASCII = 'ascii',
+}
+
+export const ModbusMethodLabelsMap = new Map<ModbusMethodType | ModbusSerialMethodType, string>(
   [
     [ModbusMethodType.SOCKET, 'Socket'],
     [ModbusMethodType.RTU, 'RTU'],
+    [ModbusSerialMethodType.ASCII, 'ASCII'],
+  ]
+);
+
+export const ModbusByteSizes = [5, 6, 7 ,8];
+
+export enum ModbusParity {
+  Even = 'E',
+  Odd = 'O',
+  None = 'N'
+}
+
+export const ModbusParityLabelsMap = new Map<ModbusParity, string>(
+  [
+    [ModbusParity.Even, 'Even'],
+    [ModbusParity.Odd, 'Odd'],
+    [ModbusParity.None, 'None'],
   ]
 );
 
@@ -872,7 +894,7 @@ export const ModbusKeysDeleteKeyTranslationsMap = new Map<ModbusValueKey, string
     [ModbusValueKey.ATTRIBUTES, 'gateway.delete-attribute'],
     [ModbusValueKey.TIMESERIES, 'gateway.delete-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
-    [ModbusValueKey.RPC_REQUESTS, 'gateway.delete-rpc-requests']
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.delete-rpc-request']
   ]
 );
 

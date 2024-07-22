@@ -102,7 +102,8 @@
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="method">
-            <mat-option *ngFor="let method of modbusMethodTypes" [value]="method">{{ ModbusMethodLabelsMap.get(method) }}</mat-option>
+            <mat-option *ngFor="let method of slaveConfigFormGroup.get('type').value === ModbusProtocolType.Serial ? modbusSerialMethodTypes : modbusMethodTypes"
+                        [value]="method">{{ ModbusMethodLabelsMap.get(method) }}</mat-option>
           </mat-select>
         </mat-form-field>
       </div>
