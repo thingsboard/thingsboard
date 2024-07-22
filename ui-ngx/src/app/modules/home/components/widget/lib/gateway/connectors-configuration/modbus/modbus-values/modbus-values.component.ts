@@ -43,6 +43,8 @@ import {
   ModbusRegisterType,
   ModbusRegisterValues,
   ModbusValueKey,
+  ModbusValues,
+  ModbusValuesState,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -87,6 +89,7 @@ import { ModbusDataKeysPanelComponent } from '../modbus-data-keys-panel/modbus-d
 export class ModbusValuesComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
 
   @Input() singleMode = false;
+  @Input() disabled = false;
 
   modbusRegisterTypes: ModbusRegisterType[] = Object.values(ModbusRegisterType);
   modbusValueKeys = Object.values(ModbusValueKey);
@@ -135,8 +138,19 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
     this.onTouched = fn;
   }
 
-  writeValue(values: ModbusRegisterValues): void {
-    this.valuesFormGroup.patchValue(values, {emitEvent: false});
+  writeValue(values: ModbusValuesState): void {
+    if (this.singleMode) {
+      this.valuesFormGroup.setValue(this.getSingleRegisterState(values as ModbusValues), {emitEvent: false});
+    } else {
+      const registers = values as ModbusRegisterValues;
+      this.valuesFormGroup.setValue({
+        holding_registers: this.getSingleRegisterState(registers.holding_registers),
+        coils_initializer: this.getSingleRegisterState(registers.coils_initializer),
+        input_registers: this.getSingleRegisterState(registers.input_registers),
+        discrete_inputs: this.getSingleRegisterState(registers.discrete_inputs),
+      }, {emitEvent: false});
+    }
+    this.cdr.markForCheck();
   }
 
   validate(): ValidationErrors | null {
@@ -200,5 +214,14 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
         this.onChange(value);
         this.onTouched();
       });
+  }
+
+  private getSingleRegisterState(values: ModbusValues): ModbusValues {
+    return {
+      attributes: values?.attributes ?? [],
+      timeseries: values?.timeseries ?? [],
+      attributeUpdates: values?.attributeUpdates ?? [],
+      rpc: values?.rpc ?? [],
+    };
   }
 }

@@ -145,6 +145,12 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
 
     this.slaveConfigFormGroup.patchValue({
       ...this.data.value,
+      port: this.data.value.type === ModbusProtocolType.Serial
+        ? null
+        : this.data.value.port,
+      serialPort: this.data.value.type === ModbusProtocolType.Serial
+        ? this.data.value.port
+        : '',
       values: {
         attributes: this.data.value.attributes ?? [],
         timeseries: this.data.value.timeseries ?? [],
@@ -172,8 +178,8 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       delete slaveResult.values;
       if (slaveResult.type === ModbusProtocolType.Serial) {
         slaveResult.port = slaveResult.serialPort;
-        delete slaveResult.serialPort;
       }
+      delete slaveResult.serialPort;
       this.dialogRef.close(slaveResult);
     }
   }

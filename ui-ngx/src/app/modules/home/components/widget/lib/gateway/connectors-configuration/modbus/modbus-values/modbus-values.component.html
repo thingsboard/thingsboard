@@ -47,6 +47,7 @@
       <button type="button"
               mat-icon-button
               color="primary"
+              [disabled]="disabled"
               #attributesButton
               (click)="manageKeys($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
@@ -67,6 +68,7 @@
       <button type="button"
               mat-icon-button
               color="primary"
+              [disabled]="disabled"
               #telemetryButton
               (click)="manageKeys($event, telemetryButton, ModbusValueKey.TIMESERIES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
@@ -86,6 +88,7 @@
       </mat-chip-listbox>
       <button type="button"
               mat-icon-button
+              [disabled]="disabled"
               color="primary"
               #attributesUpdatesButton
               (click)="manageKeys($event, attributesUpdatesButton, ModbusValueKey.ATTRIBUTES_UPDATES, register)">
@@ -107,6 +110,7 @@
       <button type="button"
               mat-icon-button
               color="primary"
+              [disabled]="disabled"
               #rpcRequestsButton
               (click)="manageKeys($event, rpcRequestsButton, ModbusValueKey.RPC_REQUESTS, register)">
         <tb-icon matButtonIcon>edit</tb-icon>

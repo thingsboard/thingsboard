@@ -17,6 +17,13 @@
 -->
 <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="slaveConfigFormGroup">
   <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
+  <div class="tb-form-row" fxLayoutAlign="space-between center">
+    <mat-slide-toggle class="mat-slide" formControlName="sendDataToThingsBoard">
+      <mat-label>
+        {{ 'gateway.enable' | translate }}
+      </mat-label>
+    </mat-slide-toggle>
+  </div>
   <div class="tb-flex row space-between align-center no-gap fill-width">
     <div class="fixed-title-width" translate>gateway.server-slave-config</div>
     <tb-toggle-select formControlName="type" appearance="fill">
@@ -168,13 +175,6 @@
       </mat-form-field>
     </div>
   </div>
-  <div class="tb-form-row" fxLayoutAlign="space-between center">
-    <mat-slide-toggle class="mat-slide" formControlName="sendDataToThingsBoard">
-      <mat-label>
-        {{ 'gateway.send-data-TB' | translate }}
-      </mat-label>
-    </mat-slide-toggle>
-  </div>
   <mat-expansion-panel>
     <mat-expansion-panel-header>
       <mat-panel-title>
@@ -203,7 +203,7 @@
             </mat-slide-toggle>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <tb-modbus-security-config formControlName="security" [isMaster]="true"></tb-modbus-security-config>
+        <tb-modbus-security-config formControlName="security" [disabled]="!slaveConfigFormGroup.get('sendDataToThingsBoard').value || !showSecurityControl.value" [isMaster]="true"></tb-modbus-security-config>
       </mat-expansion-panel>
       <ng-container [formGroup]="slaveConfigFormGroup.get('identity')">
         <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
@@ -251,6 +251,6 @@
   </mat-expansion-panel>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>gateway.values</div>
-    <tb-modbus-values formControlName="values"></tb-modbus-values>
+    <tb-modbus-values formControlName="values" [disabled]="!slaveConfigFormGroup.get('sendDataToThingsBoard').value"></tb-modbus-values>
   </div>
 </div>
