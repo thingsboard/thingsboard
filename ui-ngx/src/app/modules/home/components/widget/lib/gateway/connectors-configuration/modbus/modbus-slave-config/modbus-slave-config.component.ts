@@ -41,13 +41,13 @@ import {
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { startWith, takeUntil } from 'rxjs/operators';
 import { GatewayPortTooltipPipe } from '@home/pipes/public-api';
 import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
 import { ModbusValuesComponent, } from '../modbus-values/modbus-values.component';
 
 @Component({
-  selector: 'tb-modbus-server-config',
+  selector: 'tb-modbus-slave-config',
   templateUrl: './modbus-slave-config.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
@@ -138,6 +138,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     });
 
     this.observeTypeChange();
+    this.observeFormEnable();
   }
 
   ngOnDestroy(): void {
@@ -162,22 +163,46 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   writeValue(slaveConfig: ModbusSlave): void {
     this.showSecurityControl.patchValue(!!slaveConfig.security);
     this.updateSlaveConfig(slaveConfig);
-    this.updateControlsEnabling(slaveConfig.type);
+    this.updateFormEnableState(slaveConfig.sendDataToThingsBoard);
   }
 
   private observeTypeChange(): void {
     this.slaveConfigFormGroup.get('type').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(type => {
-      this.updateControlsEnabling(type);
+      this.updateFormEnableState(this.slaveConfigFormGroup.get('sendDataToThingsBoard').value);
     });
   }
 
-  private updateControlsEnabling(type: ModbusProtocolType): void {
+  private observeFormEnable(): void {
+    this.slaveConfigFormGroup.get('sendDataToThingsBoard').valueChanges
+      .pipe(startWith(this.slaveConfigFormGroup.get('sendDataToThingsBoard').value), takeUntil(this.destroy$))
+      .subscribe(value => {
+      this.updateFormEnableState(value);
+    });
+  }
+
+  private updateFormEnableState(enabled: boolean): void {
+    if (enabled) {
+      this.slaveConfigFormGroup.enable({emitEvent: false});
+      this.showSecurityControl.enable({emitEvent: false});
+    } else {
+      this.slaveConfigFormGroup.disable({emitEvent: false});
+      this.showSecurityControl.disable({emitEvent: false});
+      this.slaveConfigFormGroup.get('sendDataToThingsBoard').enable({emitEvent: false});
+    }
+    this.updateEnablingByProtocol(this.slaveConfigFormGroup.get('type').value);
+  }
+
+  private updateEnablingByProtocol(type: ModbusProtocolType): void {
     if (type === ModbusProtocolType.Serial) {
-      this.serialSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
+      if (this.slaveConfigFormGroup.get('sendDataToThingsBoard').value) {
+        this.serialSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
+      }
       this.tcpUdpSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.disable({emitEvent: false}));
     } else {
       this.serialSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.disable({emitEvent: false}));
-      this.tcpUdpSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
+      if (this.slaveConfigFormGroup.get('sendDataToThingsBoard').value) {
+        this.tcpUdpSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
+      }
     }
   };
 

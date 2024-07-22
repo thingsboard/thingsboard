@@ -993,12 +993,21 @@ export interface ModbusSlave {
   sendDataToThingsBoard: boolean;
   byteOrder: ModbusOrderType;
   identity: ModbusIdentity;
-  values: ModbusRegisterValues;
+  values: ModbusValuesState;
   port: string | number;
   security: ModbusSecurity;
 }
 
+export type ModbusValuesState = ModbusRegisterValues | ModbusValues;
+
 export interface ModbusRegisterValues {
+  holding_registers: ModbusValues;
+  coils_initializer: ModbusValues;
+  input_registers: ModbusValues;
+  discrete_inputs: ModbusValues;
+}
+
+export interface ModbusValues {
   attributes: ModbusValue[];
   timeseries: ModbusValue[];
   attributeUpdates: ModbusValue[];

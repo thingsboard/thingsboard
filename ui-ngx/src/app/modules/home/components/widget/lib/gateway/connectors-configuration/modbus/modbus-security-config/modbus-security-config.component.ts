@@ -61,6 +61,7 @@ import { takeUntil } from 'rxjs/operators';
 export class ModbusSecurityConfigComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
 
   @Input() isMaster = false;
+  @Input() disabled = false;
 
   securityConfigFormGroup: UntypedFormGroup;
 
@@ -90,6 +91,11 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
       });
       this.observeValueChanges();
     }
+    if (this.disabled) {
+      this.securityConfigFormGroup.disable({emitEvent:false});
+    } else {
+      this.securityConfigFormGroup.enable({emitEvent:false});
+    }
   }
 
   ngOnDestroy(): void {
@@ -106,8 +112,8 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
   }
 
   validate(): ValidationErrors | null {
-    return this.securityConfigFormGroup.valid ? null : {
-      serverConfigFormGroup: { valid: false }
+    return this.securityConfigFormGroup.valid || this.disabled ? null : {
+      securityConfigFormGroup: { valid: false }
     };
   }
 
