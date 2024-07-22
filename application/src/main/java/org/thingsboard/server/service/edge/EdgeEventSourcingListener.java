@@ -181,7 +181,8 @@ public class EdgeEventSourcingListener {
                             return false;
                         }
                         if (oldEntity != null) {
-                            User oldUser = (User) oldEntity;
+                            user = JacksonUtil.clone(user);
+                            User oldUser = JacksonUtil.clone((User) oldEntity);
                             cleanUpUserAdditionalInfo(oldUser);
                             cleanUpUserAdditionalInfo(user);
                             return !user.equals(oldUser);
@@ -225,6 +226,7 @@ public class EdgeEventSourcingListener {
                 user.setAdditionalInfo(additionalInfo);
             }
         }
+        user.setVersion(null);
     }
 
     private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
