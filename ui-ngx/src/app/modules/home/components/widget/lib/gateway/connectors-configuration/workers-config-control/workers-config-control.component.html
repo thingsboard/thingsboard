@@ -18,8 +18,8 @@
 <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="workersConfigFormGroup">
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
     <div class="fixed-title-width tb-required" [style.width.%]="50"
-         tb-hint-tooltip-icon="{{ 'gateway.max-number-of-workers-hint' | translate }}" translate>
-      gateway.max-number-of-workers
+         tb-hint-tooltip-icon="{{ 'gateway.max-number-of-workers-hint' | translate }}">
+      <div tbTruncateTooltip>{{ 'gateway.max-number-of-workers' | translate }}</div>
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -40,8 +40,8 @@
   </div>
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
     <div class="fixed-title-width tb-required" [style.width.%]="50"
-         tb-hint-tooltip-icon="{{ 'gateway.max-messages-queue-for-worker-hint' | translate }}" translate>
-      gateway.max-messages-queue-for-worker
+         tb-hint-tooltip-icon="{{ 'gateway.max-messages-queue-for-worker-hint' | translate }}">
+      <div tbTruncateTooltip>{{ 'gateway.max-messages-queue-for-worker' | translate }}</div>
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">

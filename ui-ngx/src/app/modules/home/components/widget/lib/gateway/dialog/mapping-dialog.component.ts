@@ -28,6 +28,7 @@ import {
   ConvertorTypeTranslationsMap,
   DataConversionTranslationsMap,
   DeviceInfoType,
+  HelpLinkByMappingTypeMap,
   MappingHintTranslationsMap,
   MappingInfo,
   MappingKeysAddKeyTranslationsMap,
@@ -96,6 +97,8 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
   MappingTypeTranslationsMap = MappingTypeTranslationsMap;
 
   DataConversionTranslationsMap = DataConversionTranslationsMap;
+
+  HelpLinkByMappingTypeMap = HelpLinkByMappingTypeMap;
 
   keysPopupClosed = true;
 
@@ -185,10 +188,6 @@ export class MappingDialogComponent extends DialogComponent<MappingDialogCompone
       case MappingType.OPCUA:
         this.createOPCUAMappingForm();
     }
-  }
-
-  helpLinkId(): string {
-    return 'https://thingsboard.io/docs/iot-gateway/config/mqtt/#section-mapping';
   }
 
   cancel(): void {

@@ -540,6 +540,14 @@ export const MappingHintTranslationsMap = new Map<MappingType, string>(
   ]
 );
 
+export const HelpLinkByMappingTypeMap = new Map<MappingType, string>(
+  [
+    [MappingType.DATA, 'https://thingsboard.io/docs/iot-gateway/config/mqtt/#section-mapping'],
+    [MappingType.OPCUA, 'https://thingsboard.io/docs/iot-gateway/config/opc-ua/#section-mapping'],
+    [MappingType.REQUESTS, 'https://thingsboard.io/docs/iot-gateway/config/mqtt/#section-mapping']
+  ]
+);
+
 export const QualityTypes = [0, 1 ,2];
 
 export const QualityTypeTranslationsMap = new Map<number, string>(

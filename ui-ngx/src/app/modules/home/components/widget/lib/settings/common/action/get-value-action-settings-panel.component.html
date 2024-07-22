@@ -31,7 +31,7 @@
     <ng-container [ngSwitch]="getValueSettingsFormGroup.get('action').value">
       <ng-template [ngSwitchCase]="getValueAction.DO_NOTHING">
         <div class="tb-form-row space-between">
-          <div tb-hint-tooltip-icon="{{'widgets.value-action.init-value-hint' | translate}}" translate>widgets.value-action.value</div>
+          <div tb-hint-tooltip-icon="{{'widgets.value-action.init-value-hint' | translate}}">{{ 'widgets.value-action.value' | translate }}</div>
           <tb-value-input [valueType]="valueType"
                           [trueLabel]="trueLabel"
                           [falseLabel]="falseLabel"
