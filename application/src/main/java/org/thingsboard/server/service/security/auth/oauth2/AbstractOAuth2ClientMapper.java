@@ -98,6 +98,11 @@ public abstract class AbstractOAuth2ClientMapper {
 
     private final Lock userCreationLock = new ReentrantLock();
 
+
+    @Value("${features.oauth2.raw_password}")
+    @Getter
+    private String featuresOauth2RawPassword;
+
     protected SecurityUser getOrCreateSecurityUserFromOAuth2User(OAuth2User oauth2User, OAuth2Registration registration) {
 
         OAuth2MapperConfig config = registration.getMapperConfig();
@@ -154,7 +159,7 @@ public abstract class AbstractOAuth2ClientMapper {
                     user = tbUserService.save(tenantId, customerId, user, false, null, null);
                     if (config.isActivateUser()) {
                         UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-                        userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(""));
+                        userService.activateUserCredentials(user.getTenantId(), userCredentials.getActivateToken(), passwordEncoder.encode(featuresOauth2RawPassword));
                     }
                 }
             } catch (Exception e) {

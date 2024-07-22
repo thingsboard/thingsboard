@@ -48,6 +48,7 @@
         <module>transport</module>
         <module>js-executor</module>
         <module>monitoring</module>
+        <module>tb-node-gateway</module>
     </modules>
 
     <profiles>
