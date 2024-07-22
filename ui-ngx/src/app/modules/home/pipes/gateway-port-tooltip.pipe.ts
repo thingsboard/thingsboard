@@ -15,7 +15,7 @@
 ///
 
 import { Pipe, PipeTransform } from '@angular/core';
-import { PortLimits, } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { PortLimits } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { AbstractControl } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 

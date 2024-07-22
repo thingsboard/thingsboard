@@ -47,7 +47,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip/gateway-port-tooltip.pipe';
+import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
 import { takeUntil } from 'rxjs/operators';
 
 @Component({

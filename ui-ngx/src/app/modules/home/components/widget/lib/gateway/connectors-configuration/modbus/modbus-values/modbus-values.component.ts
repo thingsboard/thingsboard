@@ -50,7 +50,7 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { EllipsisChipListDirective } from '@shared/directives/public-api';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ModbusDataKeysPanelComponent } from '../modbus-data-keys-panel/modbus-data-keys-panel.component';

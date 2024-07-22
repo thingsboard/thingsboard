@@ -31,15 +31,23 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import {
-  BrokerConfigControlComponent,
-  MappingTableComponent,
-  SecurityConfigComponent,
-  OpcServerConfigComponent,
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import {
+  SecurityConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+import {
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import {
+  OpcServerConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-server-config/opc-server-config.component';
 
 @Component({
   selector: 'tb-opc-ua-basic-config',

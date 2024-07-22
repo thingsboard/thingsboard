@@ -43,7 +43,7 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { startWith, takeUntil } from 'rxjs/operators';
-import { GatewayPortTooltipPipe } from '@home/pipes/public-api';
+import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
 import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
 import { ModbusValuesComponent, } from '../modbus-values/modbus-values.component';
 

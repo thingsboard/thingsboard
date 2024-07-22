@@ -57,7 +57,7 @@ import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TbDatasource } from '@shared/abstract/public-api';
+import { TbTableDatasource } from '@home/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-mapping-table',
@@ -310,7 +310,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   }
 }
 
-export class MappingDatasource extends TbDatasource<MappingValue> {
+export class MappingDatasource extends TbTableDatasource<MappingValue> {
   constructor() {
     super();
   }

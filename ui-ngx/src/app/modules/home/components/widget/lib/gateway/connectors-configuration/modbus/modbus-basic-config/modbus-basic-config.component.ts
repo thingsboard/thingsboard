@@ -30,7 +30,7 @@ import { CommonModule } from '@angular/common';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 
-import { EllipsisChipListDirective } from '@shared/directives/public-api';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import { ModbusSlaveConfigComponent } from '../modbus-slave-config/modbus-slave-config.component';
 import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master-table.component';
 

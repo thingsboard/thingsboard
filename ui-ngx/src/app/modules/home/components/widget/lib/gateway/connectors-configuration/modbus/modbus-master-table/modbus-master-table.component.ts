@@ -45,8 +45,8 @@ import {
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TbDatasource } from '@shared/abstract/datasource/datasource.abstract';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
+import { TbTableDatasource } from '@home/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-modbus-master-table',
@@ -224,7 +224,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
   }
 }
 
-export class SlavesDatasource extends TbDatasource<SlaveConfig> {
+export class SlavesDatasource extends TbTableDatasource<SlaveConfig> {
   constructor() {
     super();
   }

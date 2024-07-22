@@ -28,7 +28,7 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
+import { GatewayHelpLinkPipe } from '@home/pipes/gateway-help-link.pipe';
 import { generateSecret } from '@core/utils';
 
 @Component({
