@@ -24,10 +24,19 @@ ALTER TABLE domain ADD COLUMN IF NOT EXISTS oauth2_enabled boolean,
     ADD COLUMN IF NOT EXISTS edge_enabled boolean,
     ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080',
     DROP COLUMN IF EXISTS domain_scheme;
+
+-- delete duplicated domains
+DELETE FROM domain d1 USING domain d2 WHERE d1.created_time < d2.created_time AND d1.domain_name = d2.domain_name;
+
 ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS oauth2_enabled boolean,
     ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080';
-ALTER TABLE oauth2_client ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080';
-ALTER TABLE oauth2_client ADD COLUMN IF NOT EXISTS title varchar(100);
+
+-- delete duplicated apps
+DELETE FROM mobile_app m1 USING mobile_app m2 WHERE m1.created_time < m2.created_time AND m1.pkg_name = m2.pkg_name;
+
+ALTER TABLE oauth2_client ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080',
+    ADD COLUMN IF NOT EXISTS title varchar(100);
+UPDATE oauth2_client SET title = additional_info::jsonb->>'providerName' WHERE additional_info IS NOT NULL;
 
 CREATE TABLE IF NOT EXISTS domain_oauth2_client (
     domain_id uuid NOT NULL,
@@ -43,13 +52,11 @@ CREATE TABLE IF NOT EXISTS mobile_app_oauth2_client (
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
+-- migrate oauth2_params table
 DO
 $$
     BEGIN
         IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'oauth2_params') THEN
-            -- delete duplicated domains
-            DELETE FROM domain d1 USING domain d2 WHERE d1.created_time < d2.created_time AND d1.domain_name = d2.domain_name;
-
             UPDATE domain SET oauth2_enabled = p.enabled,
                               edge_enabled = p.edge_enabled
                           FROM oauth2_params p WHERE p.id = domain.oauth2_params_id;
@@ -68,7 +75,6 @@ $$
             ALTER TABLE mobile_app RENAME CONSTRAINT oauth2_mobile_pkey TO mobile_app_pkey;
             ALTER TABLE domain RENAME CONSTRAINT oauth2_domain_pkey TO domain_pkey;
             ALTER TABLE oauth2_client RENAME CONSTRAINT oauth2_registration_pkey TO oauth2_client_pkey;
-            UPDATE oauth2_client SET title = additional_info::jsonb->>'providerName' WHERE additional_info IS NOT NULL;
 
             ALTER TABLE domain DROP COLUMN oauth2_params_id;
             ALTER TABLE mobile_app DROP COLUMN oauth2_params_id;

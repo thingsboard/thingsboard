@@ -63,7 +63,7 @@ public class DomainController extends BaseController {
                     "The newly created Domain Id will be present in the response. " +
                     "Specify existing Domain Id to update the domain. " +
                     "Referencing non-existing Domain Id will cause 'Not Found' error." +
-                    "\n\nDomain name is unique for entire platform setup.\n\n")
+                    "\n\nDomain name is unique for entire platform setup.\n\n" + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/domain")
     public Domain saveDomain(
@@ -104,13 +104,13 @@ public class DomainController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Domain by ID (deleteDomain)",
-            notes = "Deletes Domain by ID. Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes Domain by ID. Referencing non-existing asset Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @DeleteMapping(value = "/domain/{id}")
     public void deleteDomain(@PathVariable UUID id) throws Exception {
         DomainId domainId = new DomainId(id);
-        checkDomainId(domainId, Operation.DELETE);
-        domainService.deleteDomainById(getTenantId(), domainId);
+        Domain domain = checkDomainId(domainId, Operation.DELETE);
+        tbDomainService.delete(domain, getCurrentUser());
     }
 
 }

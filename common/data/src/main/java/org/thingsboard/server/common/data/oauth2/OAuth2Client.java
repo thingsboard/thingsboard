@@ -23,7 +23,6 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasName;
@@ -36,7 +35,6 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString(exclude = {"clientSecret"})
-@NoArgsConstructor
 public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> implements HasName, HasTenantId {
 
     @Schema(description = "JSON object with Tenant Id")
@@ -82,23 +80,31 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
     @Schema(description = "Additional info of OAuth2 client (e.g. providerName)", requiredMode = Schema.RequiredMode.REQUIRED)
     private JsonNode additionalInfo;
 
-    public OAuth2Client(OAuth2Client registration) {
-        super(registration);
-        this.tenantId = registration.tenantId;
-        this.title = registration.title;
-        this.mapperConfig = registration.mapperConfig;
-        this.clientId = registration.clientId;
-        this.clientSecret = registration.clientSecret;
-        this.authorizationUri = registration.authorizationUri;
-        this.accessTokenUri = registration.accessTokenUri;
-        this.scope = registration.scope;
-        this.userInfoUri = registration.userInfoUri;
-        this.userNameAttributeName = registration.userNameAttributeName;
-        this.jwkSetUri = registration.jwkSetUri;
-        this.clientAuthenticationMethod = registration.clientAuthenticationMethod;
-        this.loginButtonLabel = registration.loginButtonLabel;
-        this.loginButtonIcon = registration.loginButtonIcon;
-        this.platforms = registration.platforms;
+    public OAuth2Client() {
+        super();
+    }
+
+    public OAuth2Client(OAuth2ClientId id) {
+        super(id);
+    }
+
+    public OAuth2Client(OAuth2Client oAuth2Client) {
+        super(oAuth2Client);
+        this.tenantId = oAuth2Client.tenantId;
+        this.title = oAuth2Client.title;
+        this.mapperConfig = oAuth2Client.mapperConfig;
+        this.clientId = oAuth2Client.clientId;
+        this.clientSecret = oAuth2Client.clientSecret;
+        this.authorizationUri = oAuth2Client.authorizationUri;
+        this.accessTokenUri = oAuth2Client.accessTokenUri;
+        this.scope = oAuth2Client.scope;
+        this.userInfoUri = oAuth2Client.userInfoUri;
+        this.userNameAttributeName = oAuth2Client.userNameAttributeName;
+        this.jwkSetUri = oAuth2Client.jwkSetUri;
+        this.clientAuthenticationMethod = oAuth2Client.clientAuthenticationMethod;
+        this.loginButtonLabel = oAuth2Client.loginButtonLabel;
+        this.loginButtonIcon = oAuth2Client.loginButtonIcon;
+        this.platforms = oAuth2Client.platforms;
     }
 
     @Override

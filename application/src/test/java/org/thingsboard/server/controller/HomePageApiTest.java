@@ -60,7 +60,6 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -361,8 +360,11 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isNotificationEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
-        Domain domain = createDomain(TenantId.SYS_TENANT_ID, "mydomain", true);
-        doPost("/api/domain", domain).andExpect(status().isOk());
+        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "test google client");
+        OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
+
+        Domain domain = createDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);
+        doPost("/api/domain?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), domain, Domain.class);
 
         featuresInfo = doGet("/api/admin/featuresInfo", FeaturesInfo.class);
         Assert.assertNotNull(featuresInfo);
@@ -484,38 +486,13 @@ public class HomePageApiTest extends AbstractControllerTest {
         return doPostWithResponse("/api/entitiesQuery/count", query, Long.class);
     }
 
-    private Domain createDomain(TenantId tenantId, String domainName, boolean oauth2Enabled) {
+    private Domain createDomain(TenantId tenantId, String domainName, boolean oauth2Enabled, boolean edgeEnabled) {
         Domain domain = new Domain();
         domain.setTenantId(tenantId);
         domain.setName(domainName);
         domain.setOauth2Enabled(oauth2Enabled);
+        domain.setPropagateToEdge(edgeEnabled);
         return domain;
     }
 
-    private OAuth2Client validRegistration() {
-        OAuth2Client oAuth2Client = new OAuth2Client();
-        oAuth2Client.setClientId(UUID.randomUUID().toString());
-//                .clientSecret(UUID.randomUUID().toString())
-//                .authorizationUri(UUID.randomUUID().toString())
-//                .accessTokenUri(UUID.randomUUID().toString())
-//                .scope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
-//                .platforms(Collections.emptyList())
-//                .userInfoUri(UUID.randomUUID().toString())
-//                .userNameAttributeName(UUID.randomUUID().toString())
-//                .jwkSetUri(UUID.randomUUID().toString())
-//                .clientAuthenticationMethod(UUID.randomUUID().toString())
-//                .loginButtonLabel(UUID.randomUUID().toString())
-//                .mapperConfig(
-//                        OAuth2MapperConfig.builder()
-//                                .type(MapperType.CUSTOM)
-//                                .custom(
-//                                        OAuth2CustomMapperConfig.builder()
-//                                                .url(UUID.randomUUID().toString())
-//                                                .build()
-//                                )
-//                                .build()
-//                )
-//                .build();
-                return oAuth2Client;
-    }
 }

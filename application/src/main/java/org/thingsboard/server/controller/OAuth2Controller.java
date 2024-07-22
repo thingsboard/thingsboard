@@ -51,7 +51,6 @@ import java.util.List;
 import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 
 @RestController
 @TbCoreComponent
@@ -100,7 +99,7 @@ public class OAuth2Controller extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Save OAuth2 Client Registration (saveOAuth2Client)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Save OAuth2 Client (saveOAuth2Client)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/oauth2/client")
     public OAuth2Client saveOAuth2Client(@RequestBody @Valid OAuth2Client oAuth2Client) throws Exception {
@@ -126,7 +125,7 @@ public class OAuth2Controller extends BaseController {
     }
 
     @ApiOperation(value = "Delete oauth2 client (deleteAsset)",
-            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @DeleteMapping(value = "/oauth2/client/{id}")
     public void deleteOauth2Client(@PathVariable UUID id) throws Exception {

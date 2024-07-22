@@ -163,7 +163,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
 
     @Override
     public void deleteMobileAppsByTenantId(TenantId tenantId) {
-        log.trace("Executing deleteDomainsByTenantId, tenantId [{}]", tenantId);
+        log.trace("Executing deleteMobileAppsByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         mobileAppDao.deleteByTenantId(tenantId);
     }

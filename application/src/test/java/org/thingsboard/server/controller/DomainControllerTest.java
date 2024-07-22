@@ -140,39 +140,4 @@ public class DomainControllerTest extends AbstractControllerTest {
         return domain;
     }
 
-    protected OAuth2Client validClientInfo(TenantId tenantId, String title) {
-        return validClientInfo(tenantId, title, null);
-    }
-
-    protected OAuth2Client validClientInfo(TenantId tenantId, String title, List<PlatformType> platforms) {
-        OAuth2Client oAuth2Client = new OAuth2Client();
-        oAuth2Client.setTenantId(tenantId);
-        oAuth2Client.setTitle(title);
-        oAuth2Client.setClientId(UUID.randomUUID().toString());
-        oAuth2Client.setClientSecret(UUID.randomUUID().toString());
-        oAuth2Client.setAuthorizationUri(UUID.randomUUID().toString());
-        oAuth2Client.setAccessTokenUri(UUID.randomUUID().toString());
-        oAuth2Client.setScope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-        oAuth2Client.setPlatforms(platforms == null ? Collections.emptyList() : platforms);
-        oAuth2Client.setUserInfoUri(UUID.randomUUID().toString());
-        oAuth2Client.setUserNameAttributeName(UUID.randomUUID().toString());
-        oAuth2Client.setJwkSetUri(UUID.randomUUID().toString());
-        oAuth2Client.setClientAuthenticationMethod(UUID.randomUUID().toString());
-        oAuth2Client.setLoginButtonLabel(UUID.randomUUID().toString());
-        oAuth2Client.setLoginButtonIcon(UUID.randomUUID().toString());
-        oAuth2Client.setAdditionalInfo(JacksonUtil.newObjectNode().put(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
-        oAuth2Client.setMapperConfig(
-                OAuth2MapperConfig.builder()
-                        .allowUserCreation(true)
-                        .activateUser(true)
-                        .type(MapperType.CUSTOM)
-                        .custom(
-                                OAuth2CustomMapperConfig.builder()
-                                        .url(UUID.randomUUID().toString())
-                                        .build()
-                        )
-                        .build());
-        return oAuth2Client;
-    }
-
 }

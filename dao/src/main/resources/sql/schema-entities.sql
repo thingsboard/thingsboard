@@ -560,9 +560,9 @@ CREATE TABLE IF NOT EXISTS key_dictionary
 
 CREATE TABLE IF NOT EXISTS oauth2_client (
     id uuid NOT NULL CONSTRAINT oauth2_client_pkey PRIMARY KEY,
-    tenant_id uuid  NOT NULL,
-    title  varchar(100)  NOT NULL,
     created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    title  varchar(100) NOT NULL,
     additional_info varchar,
     client_id varchar(255),
     client_secret varchar(2048),
@@ -595,22 +595,20 @@ CREATE TABLE IF NOT EXISTS oauth2_client (
 
 CREATE TABLE IF NOT EXISTS domain (
     id uuid NOT NULL CONSTRAINT domain_pkey PRIMARY KEY,
-    tenant_id uuid NOT NULL,
     created_time bigint NOT NULL,
-    domain_name varchar(255),
+    tenant_id uuid NOT NULL,
+    domain_name varchar(255) UNIQUE,
     oauth2_enabled boolean,
-    edge_enabled boolean,
-    CONSTRAINT domain_unq_key UNIQUE (domain_name)
+    edge_enabled boolean
 );
 
 CREATE TABLE IF NOT EXISTS mobile_app (
     id uuid NOT NULL CONSTRAINT mobile_app_pkey PRIMARY KEY,
-    tenant_id uuid,
     created_time bigint NOT NULL,
-    pkg_name varchar(255),
+    tenant_id uuid,
+    pkg_name varchar(255) UNIQUE,
     app_secret varchar(2048),
-    oauth2_enabled boolean,
-    CONSTRAINT mobile_app_unq_key UNIQUE (pkg_name)
+    oauth2_enabled boolean
 );
 
 CREATE TABLE IF NOT EXISTS domain_oauth2_client (

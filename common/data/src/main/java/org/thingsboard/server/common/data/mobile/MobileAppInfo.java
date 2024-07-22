@@ -16,25 +16,17 @@
 package org.thingsboard.server.common.data.mobile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import lombok.ToString;
-import org.thingsboard.server.common.data.oauth2.HasOauth2Clients;
+import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 
 import java.util.List;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
-@ToString
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
 @Schema
-public class MobileAppInfo extends MobileApp implements HasOauth2Clients {
+public class MobileAppInfo extends MobileApp {
 
     @Schema(description = "List of available oauth2 client registrations")
     private List<OAuth2ClientInfo> oauth2ClientInfos;
@@ -42,6 +34,14 @@ public class MobileAppInfo extends MobileApp implements HasOauth2Clients {
     public MobileAppInfo(MobileApp mobileApp, List<OAuth2ClientInfo> oauth2ClientInfos) {
         super(mobileApp);
         this.oauth2ClientInfos = oauth2ClientInfos;
+    }
+
+    public MobileAppInfo() {
+        super();
+    }
+
+    public MobileAppInfo(MobileAppId mobileAppId) {
+        super(mobileAppId);
     }
 
 }

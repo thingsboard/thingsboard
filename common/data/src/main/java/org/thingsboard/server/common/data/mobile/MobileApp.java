@@ -17,10 +17,10 @@ package org.thingsboard.server.common.data.mobile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
@@ -32,13 +32,12 @@ import org.thingsboard.server.common.data.validation.Length;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-@NoArgsConstructor
 public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, HasName {
 
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
     @Schema(description = "Application package name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty
+    @NotBlank
     private String pkgName;
     @Schema(description = "Application secret. The length must be at least 16 characters", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty
@@ -46,6 +45,14 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     private String appSecret;
     @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean oauth2Enabled;
+
+    public MobileApp() {
+        super();
+    }
+
+    public MobileApp(MobileAppId id) {
+        super(id);
+    }
 
     public MobileApp(MobileApp mobile) {
         super(mobile);

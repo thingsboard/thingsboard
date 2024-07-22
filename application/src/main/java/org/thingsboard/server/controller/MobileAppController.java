@@ -64,7 +64,7 @@ public class MobileAppController extends BaseController {
                     "The newly created Mobile App Id will be present in the response. " +
                     "Specify existing Mobile App Id to update the mobile app. " +
                     "Referencing non-existing Mobile App Id will cause 'Not Found' error." +
-                    "\n\nMobile app package name is unique for entire platform setup.\n\n")
+                    "\n\nMobile app package name is unique for entire platform setup.\n\n" + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/mobileApp")
     public MobileApp saveMobileApp(
@@ -106,13 +106,13 @@ public class MobileAppController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Mobile App by ID (deleteMobileApp)",
-            notes = "Deletes Mobile App by ID. Referencing non-existing asset Id will cause an error." + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
+            notes = "Deletes Mobile App by ID. Referencing non-existing asset Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @DeleteMapping(value = "/mobileApp/{id}")
     public void deleteMobileApp(@PathVariable UUID id) throws Exception {
         MobileAppId mobileAppId = new MobileAppId(id);
-        checkMobileAppId(mobileAppId, Operation.DELETE);
-        mobileAppService.deleteMobileAppById(getTenantId(), mobileAppId);
+        MobileApp mobileApp = checkMobileAppId(mobileAppId, Operation.DELETE);
+        tbMobileAppService.delete(mobileApp, getCurrentUser());
     }
 
 }

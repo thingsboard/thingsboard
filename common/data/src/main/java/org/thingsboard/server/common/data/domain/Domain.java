@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
@@ -30,7 +29,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-@NoArgsConstructor
 public class Domain extends BaseData<DomainId> implements HasTenantId, HasName {
 
     @Schema(description = "JSON object with Tenant Id")
@@ -42,6 +40,14 @@ public class Domain extends BaseData<DomainId> implements HasTenantId, HasName {
     private boolean oauth2Enabled;
     @Schema(description = "Whether OAuth2 settings are enabled on Edge or not")
     private boolean propagateToEdge;
+
+    public Domain() {
+        super();
+    }
+
+    public Domain(DomainId id) {
+        super(id);
+    }
 
     public Domain(Domain domain) {
         super(domain);

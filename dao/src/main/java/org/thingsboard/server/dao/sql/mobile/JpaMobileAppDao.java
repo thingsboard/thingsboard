@@ -40,7 +40,7 @@ import java.util.UUID;
 @SqlDao
 public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> implements MobileAppDao {
 
-    private final MobileAppRepository repository;
+    private final MobileAppRepository mobileAppRepository;
     private final MobileAppOauth2ClientRepository mobileOauth2ProviderRepository;
 
     @Override
@@ -50,12 +50,12 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
 
     @Override
     protected JpaRepository<MobileAppEntity, UUID> getRepository() {
-        return repository;
+        return mobileAppRepository;
     }
 
     @Override
     public List<MobileApp> findByTenantId(TenantId tenantId) {
-        return DaoUtil.convertDataList(repository.findByTenantId(tenantId.getId()));
+        return DaoUtil.convertDataList(mobileAppRepository.findByTenantId(tenantId.getId()));
     }
 
     @Override
@@ -75,7 +75,7 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
-        repository.deleteByTenantId(tenantId.getId());
+        mobileAppRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override

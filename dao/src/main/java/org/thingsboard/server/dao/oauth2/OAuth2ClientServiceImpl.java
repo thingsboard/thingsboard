@@ -57,7 +57,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
 
     @Override
     public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByDomainName(String domainName) {
-        log.trace("Executing getOAuth2Clients [{}] ", domainName);
+        log.trace("Executing findOAuth2ClientLoginInfosByDomainName [{}] ", domainName);
         validateString(domainName, dn -> INCORRECT_DOMAIN_NAME + dn);
         return oauth2ClientDao.findEnabledByDomainName(domainName)
                 .stream()
@@ -67,7 +67,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
 
     @Override
     public List<OAuth2ClientLoginInfo> findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(String pkgName, PlatformType platformType) {
-        log.trace("Executing getOAuth2Clients pkgName=[{}] platformType=[{}]",pkgName, platformType);
+        log.trace("Executing findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType pkgName=[{}] platformType=[{}]",pkgName, platformType);
         return oauth2ClientDao.findEnabledByPckNameAndPlatformType(pkgName, platformType)
                 .stream()
                 .map(OAuth2Utils::toClientLoginInfo)
@@ -108,7 +108,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     @Override
     @Transactional
     public void deleteOAuth2ClientById(TenantId tenantId, OAuth2ClientId oAuth2ClientId) {
-        log.trace("[{}][{}] Executing deleteOAuth2ClientById [{}]", tenantId, oAuth2ClientId);
+        log.trace("Executing deleteOAuth2ClientById [{}]", oAuth2ClientId);
         oauth2ClientDao.removeById(tenantId, oAuth2ClientId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder()
                 .tenantId(tenantId)

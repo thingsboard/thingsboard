@@ -77,7 +77,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
 
     @Override
     public void updateOauth2Clients(TenantId tenantId, DomainId domainId, List<OAuth2ClientId> oAuth2ClientIds) {
-        log.trace("Executing addOauth2Clients, domainId [{}], oAuth2ClientIds [{}]", domainId, oAuth2ClientIds);
+        log.trace("Executing updateOauth2Clients, domainId [{}], oAuth2ClientIds [{}]", domainId, oAuth2ClientIds);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validateId(domainId, id -> INCORRECT_DOMAIN_ID + id);
         Validator.checkNotNull(oAuth2ClientIds, "Incorrect oAuth2ClientIds " + oAuth2ClientIds);
@@ -118,7 +118,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
 
     @Override
     public List<DomainInfo> findDomainInfosByTenantId(TenantId tenantId) {
-        log.trace("Executing findDomainInfo [{}]", tenantId);
+        log.trace("Executing findDomainInfosByTenantId [{}]", tenantId);
         List<Domain> domains = domainDao.findByTenantId(tenantId);
         List<DomainInfo> domainInfos = new ArrayList<>();
         domains.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(domain -> {
