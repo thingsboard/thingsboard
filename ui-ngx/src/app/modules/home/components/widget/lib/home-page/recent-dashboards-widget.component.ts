@@ -30,7 +30,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   AbstractUserDashboardInfo,
@@ -48,8 +48,6 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatSort } from '@angular/material/sort';
 import { DashboardInfo } from '@shared/models/dashboard.models';
 import { DashboardAutocompleteComponent } from '@shared/components/dashboard-autocomplete.component';
-import { UserService } from '@core/http/user.service';
-import { User } from '@shared/models/user.model';
 
 @Component({
   selector: 'tb-recent-dashboards-widget',
@@ -82,19 +80,15 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
 
   dirty = false;
   public customerId: string;
-  private isFullscreenMode = false;
+  private isFullscreenMode = getCurrentAuthState(this.store).forceFullscreen;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
-              private userService: UserService,
               private userSettingService: UserSettingsService) {
     super(store);
   }
 
   ngOnInit() {
-    this.userService.getUser(this.authUser.userId).subscribe((userInfo: User) => {
-      this.isFullscreenMode = userInfo.additionalInfo.defaultDashboardFullscreen;
-    });
     if (this.authUser.authority === Authority.CUSTOMER_USER) {
       this.customerId = this.authUser.customerId;
     }
