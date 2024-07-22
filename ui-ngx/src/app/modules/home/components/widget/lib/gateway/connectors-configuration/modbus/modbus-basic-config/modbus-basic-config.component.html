@@ -19,12 +19,10 @@
   <mat-tab label="{{ 'gateway.general' | translate }}">
     <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
   </mat-tab>
-  <mat-tab label="{{ 'gateway.server' | translate }}*">
-    <tb-opc-server-config formControlName="server"></tb-opc-server-config>
+  <mat-tab label="{{ 'gateway.master-connections' | translate }}">
+    <tb-modbus-master-table formControlName="master"></tb-modbus-master-table>
   </mat-tab>
-  <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
-    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
-      <tb-mapping-table formControlName="mapping" [required]="true" [mappingType]="mappingTypes.OPCUA"></tb-mapping-table>
-    </div>
+  <mat-tab label="{{ 'gateway.server-config' | translate }}">
+    <tb-modbus-server-config formControlName="slave"></tb-modbus-server-config>
   </mat-tab>
 </mat-tab-group>

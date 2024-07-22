@@ -2,6 +2,7 @@
   "master": {
     "slaves": [
       {
+        "name": "Slave 1",
         "host": "127.0.0.1",
         "port": 5021,
         "type": "tcp",
@@ -185,64 +186,60 @@
     "wordOrder": "LITTLE",
     "unitId": 0,
     "values": {
-      "holding_registers": [
-        {
-          "attributes": [
-            {
-              "address": 1,
-              "type": "string",
-              "tag": "sm",
-              "objectsCount": 1,
-              "value": "ON"
-            }
-          ],
-          "timeseries": [
-            {
-              "address": 2,
-              "type": "int",
-              "tag": "smm",
-              "objectsCount": 1,
-              "value": "12334"
-            }
-          ],
-          "attributeUpdates": [
-            {
-              "tag": "shared_attribute_write",
-              "type": "32int",
-              "functionCode": 6,
-              "objectsCount": 2,
-              "address": 29,
-              "value": 1243
-            }
-          ],
-          "rpc": [
-            {
-              "tag": "setValue",
-              "type": "bits",
-              "functionCode": 5,
-              "objectsCount": 1,
-              "address": 31,
-              "value": 22
-            }
-          ]
+        "holding_registers": {
+            "attributes": [
+                {
+                    "address": 1,
+                    "type": "string",
+                    "tag": "sm",
+                    "objectsCount": 1,
+                    "value": "ON"
+                }
+            ],
+            "timeseries": [
+                {
+                    "address": 2,
+                    "type": "int",
+                    "tag": "smm",
+                    "objectsCount": 1,
+                    "value": "12334"
+                }
+            ],
+            "attributeUpdates": [
+                {
+                    "tag": "shared_attribute_write",
+                    "type": "32int",
+                    "functionCode": 6,
+                    "objectsCount": 2,
+                    "address": 29,
+                    "value": 1243
+                }
+            ],
+            "rpc": [
+                {
+                    "tag": "setValue",
+                    "type": "bits",
+                    "functionCode": 5,
+                    "objectsCount": 1,
+                    "address": 31,
+                    "value": 22
+                }
+            ]
+        },
+        "coils_initializer": {
+            "attributes": [
+                {
+                    "address": 5,
+                    "type": "string",
+                    "tag": "sm",
+                    "objectsCount": 1,
+                    "value": "12"
+                }
+            ],
+            "timeseries": [],
+            "attributeUpdates": [],
+            "rpc": []
         }
-      ],
-      "coils_initializer": [
-        {
-          "attributes": [
-            {
-              "address": 5,
-              "type": "string",
-              "tag": "sm",
-              "objectsCount": 1,
-              "value": "12"
-            }
-          ],
-          "timeseries": [],
-          "attributeUpdates": [],
-          "rpc": []
-        }
-      ]
     }
   }
 }

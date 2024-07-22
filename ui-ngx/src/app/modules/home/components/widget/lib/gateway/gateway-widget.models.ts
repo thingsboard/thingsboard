@@ -176,13 +176,23 @@ export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | Con
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
 
-export interface ConnectorBaseConfig {
-  mapping?: DeviceConnectorMapping[];
-  dataMapping?: ConverterConnectorMapping[];
-  requestsMapping?: Record<RequestType, RequestMappingData> | RequestMappingData[];
-  server?: ServerConfig;
-  broker?: BrokerConfig;
-  workers?: WorkersConfig;
+export type ConnectorBaseConfig = MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+
+export interface MQTTBasicConfig {
+  dataMapping: ConverterConnectorMapping[];
+  requestsMapping: Record<RequestType, RequestMappingData> | RequestMappingData[];
+  broker: BrokerConfig;
+  workers: WorkersConfig;
+}
+
+export interface OPCBasicConfig {
+  mapping: DeviceConnectorMapping[];
+  server: ServerConfig;
+}
+
+export interface ModbusBasicConfig {
+  master: ModbusMasterConfig;
+  slave: ModbusSlave;
 }
 
 export interface WorkersConfig {
@@ -759,3 +769,246 @@ export const SecurityPolicyTypes = [
   { value: SecurityPolicy.BASIC256, name: 'Basic256' },
   { value: SecurityPolicy.BASIC256SHA, name: 'Basic256SHA256' }
 ];
+
+export enum ModbusProtocolType {
+  TCP = 'tcp',
+  UDP = 'udp',
+  Serial = 'serial',
+}
+
+export const ModbusProtocolLabelsMap = new Map<ModbusProtocolType, string>(
+  [
+    [ModbusProtocolType.TCP, 'TCP'],
+    [ModbusProtocolType.UDP, 'UDP'],
+    [ModbusProtocolType.Serial, 'Serial'],
+  ]
+);
+
+export enum ModbusMethodType {
+  SOCKET = 'socket',
+  RTU = 'rtu',
+}
+
+export const ModbusMethodLabelsMap = new Map<ModbusMethodType, string>(
+  [
+    [ModbusMethodType.SOCKET, 'Socket'],
+    [ModbusMethodType.RTU, 'RTU'],
+  ]
+);
+
+export enum ModbusOrderType {
+  BIG = 'BIG',
+  LITTLE = 'LITTLE',
+}
+
+export enum ModbusRegisterType {
+  HoldingRegister = 'holding_registers',
+  CoilsInitializer = 'coils_initializer',
+  InputRegister = 'input_registers',
+  DiscreteInputs = 'discrete_inputs'
+}
+
+export const ModbusRegisterTranslationsMap = new Map<ModbusRegisterType, string>(
+  [
+    [ModbusRegisterType.HoldingRegister, 'gateway.holding_registers'],
+    [ModbusRegisterType.CoilsInitializer, 'gateway.coils_initializer'],
+    [ModbusRegisterType.InputRegister, 'gateway.input_registers'],
+    [ModbusRegisterType.DiscreteInputs, 'gateway.discrete_inputs']
+  ]
+);
+
+export enum ModbusDataType {
+  STRING = 'string',
+  BYTES = 'bytes',
+  BITS = 'bits',
+  INT16 = '16int',
+  UINT16 = '16uint',
+  FLOAT16 = '16float',
+  INT32 = '32int',
+  UINT32 = '32uint',
+  FLOAT32 = '32float',
+  INT64 = '64int',
+  UINT64 = '64uint',
+  FLOAT64 = '64float'
+}
+
+export enum ModbusObjectCountByDataType {
+  '16int' = 1,
+  '16uint' = 1,
+  '16float' = 1,
+  '32int' = 2,
+  '32uint' = 2,
+  '32float' = 2,
+  '64int' = 4,
+  '64uint' = 4,
+  '64float' = 4,
+}
+
+export enum ModbusValueField {
+  Tag = 'tag',
+  Type = 'type',
+  ObjectsCount = 'objectsCount',
+  Address = 'address',
+  Value = 'value',
+}
+
+export const ModbusFieldsTranslationsMap = new Map<ModbusValueField, string>(
+  [
+    [ModbusValueField.Tag, 'gateway.tag'],
+    [ModbusValueField.Type, 'gateway.type'],
+    [ModbusValueField.ObjectsCount, 'gateway.objects_count'],
+    [ModbusValueField.Address, 'gateway.address'],
+    [ModbusValueField.Value, 'gateway.value']
+  ]
+);
+
+export enum ModbusValueKey {
+  ATTRIBUTES = 'attributes',
+  TIMESERIES = 'timeseries',
+  ATTRIBUTES_UPDATES = 'attributeUpdates',
+  RPC_REQUESTS = 'rpc',
+}
+
+export const ModbusKeysPanelTitleTranslationsMap = new Map<ModbusValueKey, string>(
+  [
+    [ModbusValueKey.ATTRIBUTES, 'gateway.attributes'],
+    [ModbusValueKey.TIMESERIES, 'gateway.timeseries'],
+    [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.rpc-requests']
+  ]
+);
+
+export const ModbusKeysAddKeyTranslationsMap = new Map<ModbusValueKey, string>(
+  [
+    [ModbusValueKey.ATTRIBUTES, 'gateway.add-attribute'],
+    [ModbusValueKey.TIMESERIES, 'gateway.add-timeseries'],
+    [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.add-rpc-request']
+  ]
+);
+
+export const ModbusKeysDeleteKeyTranslationsMap = new Map<ModbusValueKey, string>(
+  [
+    [ModbusValueKey.ATTRIBUTES, 'gateway.delete-attribute'],
+    [ModbusValueKey.TIMESERIES, 'gateway.delete-timeseries'],
+    [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.delete-rpc-requests']
+  ]
+);
+
+export const ModbusKeysNoKeysTextTranslationsMap = new Map<ModbusValueKey, string>(
+  [
+    [ModbusValueKey.ATTRIBUTES, 'gateway.no-attributes'],
+    [ModbusValueKey.TIMESERIES, 'gateway.no-timeseries'],
+    [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.no-rpc-requests']
+  ]
+);
+
+export const ModbusClientTypeLabelsMap = new Map<ModbusProtocolType, string>(
+  [
+    [ModbusProtocolType.TCP, 'TCP/UDP'],
+    [ModbusProtocolType.UDP, 'TCP/UDP'],
+    [ModbusProtocolType.Serial, 'Serial'],
+  ]
+);
+
+export const ModbusFunctionCodeTranslationsMap = new Map<number, string>(
+  [
+    [1, 'gateway.read-coils'],
+    [2, 'gateway.read-discrete-inputs'],
+    [3, 'gateway.read-multiple-holding-registers'],
+    [4, 'gateway.read-input-registers'],
+    [5, 'gateway.write-coil'],
+    [6, 'gateway.write-register'],
+    [15, 'gateway.write-coils'],
+    [16, 'gateway.write-registers'],
+  ]
+);
+
+export interface ModbusMasterConfig {
+  slaves: SlaveConfig[];
+}
+
+export interface SlaveConfig {
+  name: string;
+  host?: string;
+  port: string | number;
+  serialPort?: string;
+  type: ModbusProtocolType;
+  method: ModbusMethodType;
+  timeout: number;
+  byteOrder: ModbusOrderType;
+  wordOrder: ModbusOrderType;
+  retries: boolean;
+  retryOnEmpty: boolean;
+  retryOnInvalid: boolean;
+  pollPeriod: number;
+  unitId: number;
+  deviceName: string;
+  deviceType?: string;
+  sendDataOnlyOnChange: boolean;
+  connectAttemptTimeMs: number;
+  connectAttemptCount: number;
+  waitAfterFailedAttemptsMs: number;
+  attributes: ModbusValue[];
+  timeseries: ModbusValue[];
+  attributeUpdates: ModbusValue[];
+  rpc: ModbusValue[];
+  security?: ModbusSecurity;
+  baudrate?: number;
+  stopbits?: number;
+  bytesize?: number;
+  parity?: string;
+  strict?: boolean;
+}
+
+export interface ModbusValue {
+  tag: string;
+  type: ModbusDataType;
+  functionCode?: number;
+  objectsCount: number;
+  address: number;
+  value?: string;
+}
+
+export interface ModbusSecurity {
+  certfile?: string;
+  keyfile?: string;
+  password?: string;
+  server_hostname?: string;
+  reqclicert?: boolean;
+}
+
+export interface ModbusSlave {
+  host?: string;
+  type: ModbusProtocolType;
+  method: ModbusMethodType;
+  unitId: number;
+  serialPort?: string;
+  baudrate?: number;
+  deviceName: string;
+  deviceType: string;
+  pollPeriod: number;
+  sendDataToThingsBoard: boolean;
+  byteOrder: ModbusOrderType;
+  identity: ModbusIdentity;
+  values: ModbusRegisterValues;
+  port: string | number;
+  security: ModbusSecurity;
+}
+
+export interface ModbusRegisterValues {
+  attributes: ModbusValue[];
+  timeseries: ModbusValue[];
+  attributeUpdates: ModbusValue[];
+  rpc: ModbusValue[];
+}
+
+export interface ModbusIdentity {
+  vendorName?: string;
+  productCode?: string;
+  vendorUrl?: string;
+  productName?: string;
+  modelName?: string;
+}

@@ -24,37 +24,29 @@ import {
   ValidationErrors,
   Validator,
 } from '@angular/forms';
-import {
-  MappingType,
-  MQTTBasicConfig,
-  RequestMappingData,
-  RequestType,
-} from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { ConnectorType, ModbusBasicConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import {
-  BrokerConfigControlComponent,
-  MappingTableComponent,
-  SecurityConfigComponent,
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { isObject } from 'lodash';
+
+import { EllipsisChipListDirective } from '@shared/directives/public-api';
+import { ModbusSlaveConfigComponent } from '../modbus-slave-config/modbus-slave-config.component';
+import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master-table.component';
 
 @Component({
-  selector: 'tb-mqtt-basic-config',
-  templateUrl: './mqtt-basic-config.component.html',
+  selector: 'tb-modbus-basic-config',
+  templateUrl: './modbus-basic-config.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => MqttBasicConfigComponent),
+      useExisting: forwardRef(() => ModbusBasicConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => MqttBasicConfigComponent),
+      useExisting: forwardRef(() => ModbusBasicConfigComponent),
       multi: true
     }
   ],
@@ -62,33 +54,38 @@ import { isObject } from 'lodash';
   imports: [
     CommonModule,
     SharedModule,
-    SecurityConfigComponent,
-    WorkersConfigControlComponent,
-    BrokerConfigControlComponent,
-    MappingTableComponent,
+    ModbusSlaveConfigComponent,
+    ModbusMasterTableComponent,
+    EllipsisChipListDirective,
   ],
-  styleUrls: ['./mqtt-basic-config.component.scss']
+  styles: [`
+    :host {
+      height: 100%;
+    }
+    :host ::ng-deep {
+      .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
+        height: 100%;
+      }
+    }
+  `]
 })
 
-export class MqttBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class ModbusBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
 
-  @Input()
-  generalTabContent: TemplateRef<any>;
+  @Input() generalTabContent: TemplateRef<any>;
 
-  mappingTypes = MappingType;
   basicFormGroup: FormGroup;
 
-  private onChange: (value: string) => void;
-  private onTouched: () => void;
+  onChange: (value: string) => void;
+  onTouched: () => void;
 
+  protected readonly connectorType = ConnectorType;
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
     this.basicFormGroup = this.fb.group({
-      dataMapping: [],
-      requestsMapping: [],
-      broker: [],
-      workers: [],
+      master: [],
+      slave: [],
     });
 
     this.basicFormGroup.valueChanges
@@ -112,18 +109,10 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: MQTTBasicConfig): void {
-    const { broker, dataMapping = [], requestsMapping } = basicConfig;
+  writeValue(basicConfig: ModbusBasicConfig): void {
     const editedBase = {
-      workers: broker && (broker.maxNumberOfWorkers || broker.maxMessageNumberPerWorker) ? {
-        maxNumberOfWorkers: broker.maxNumberOfWorkers,
-        maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
-      } : {},
-      dataMapping: dataMapping || [],
-      broker: broker || {},
-      requestsMapping: Array.isArray(requestsMapping)
-        ? requestsMapping
-        : this.getRequestDataArray(requestsMapping),
+      slave: basicConfig.slave || {},
+      master: basicConfig.master || {},
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
@@ -133,22 +122,5 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     return this.basicFormGroup.valid ? null : {
       basicFormGroup: {valid: false}
     };
-  }
-
-  private getRequestDataArray(value: Record<RequestType, RequestMappingData>): RequestMappingData[] {
-    const mappingConfigs = [];
-
-    if (isObject(value)) {
-      Object.keys(value).forEach((configKey: string) => {
-        for (const mapping of value[configKey]) {
-          mappingConfigs.push({
-            requestType: configKey,
-            requestValue: mapping
-          });
-        }
-      });
-    }
-
-    return mappingConfigs;
   }
 }

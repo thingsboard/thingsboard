@@ -39,19 +39,19 @@ import { takeUntil } from 'rxjs/operators';
 import { TooltipDirective } from '@shared/directives/public-api';
 
 @Component({
-  selector: 'tb-server-config',
-  templateUrl: './server-config.component.html',
-  styleUrls: ['./server-config.component.scss'],
+  selector: 'tb-opc-server-config',
+  templateUrl: './opc-server-config.component.html',
+  styleUrls: ['./opc-server-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => OpcServerConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => OpcServerConfigComponent),
       multi: true
     }
   ],
@@ -63,7 +63,7 @@ import { TooltipDirective } from '@shared/directives/public-api';
     TooltipDirective,
   ]
 })
-export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class OpcServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   securityPolicyTypes = SecurityPolicyTypes;
   serverConfigFormGroup: UntypedFormGroup;

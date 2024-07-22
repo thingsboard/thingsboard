@@ -183,6 +183,10 @@
                                   formControlName="basicConfig"
                                   [generalTabContent]="generalTabContent">
           </tb-opc-ua-basic-config>
+          <tb-modbus-basic-config *ngSwitchCase="connectorType.MODBUS"
+                                  formControlName="basicConfig"
+                                  [generalTabContent]="generalTabContent">
+          </tb-modbus-basic-config>
         </ng-container>
       </ng-container>
       <ng-template #defaultConfig>

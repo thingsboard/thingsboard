@@ -1,0 +1,165 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-modbus-keys-panel">
+  <div class="tb-form-panel no-border no-padding">
+    <div class="tb-form-panel-title">{{ panelTitle  | translate }}{{' (' + keysListFormArray.controls.length + ')'}}</div>
+    <div class="tb-form-panel no-border no-padding key-panel" *ngIf="keysListFormArray.controls.length; else noKeys">
+      <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
+           *ngFor="let keyControl of keysListFormArray.controls; trackBy: trackByKey; let $index = index; let last = last;">
+        <div class="tb-form-panel stroked tb-flex">
+          <ng-container [formGroup]="keyControl">
+            <mat-expansion-panel class="tb-settings" [expanded]="last">
+              <mat-expansion-panel-header fxLayout="row wrap">
+                <mat-panel-title>
+                  <div class="title-container">
+                    <span *ngIf="isMaster else tagName">
+                      {{ keyControl.get('tag').value }}{{ '-' }}{{ keyControl.get('value').value }}
+                    </span>
+                    <ng-template #tagName>{{ keyControl.get('tag').value }}</ng-template>
+                  </div>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel-title" translate>gateway.platform-side</div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" translate>
+                      gateway.key
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="tag" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.key-required') | translate"
+                                  *ngIf="keyControl.get('tag').hasError('required') &&
+                                           keyControl.get('tag').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </div>
+                <div class="tb-form-panel stroked">
+                  <div class="tb-form-panel-title" translate>gateway.connector-side</div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>
+                      gateway.type
+                    </div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="type">
+                          <mat-option *ngFor="let type of modbusDataTypes" [value]="type">{{ type }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div *ngIf="withFunctionCode" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.function-code</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <mat-select formControlName="functionCode">
+                          <mat-option *ngFor="let code of functionCodesMap.get(keyControl.get('id').value) || defaultFunctionCodes" [value]="code">{{ ModbusFunctionCodeTranslationsMap.get(code) | translate }}</mat-option>
+                        </mat-select>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.objects-count</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input
+                          matInput
+                          type="number"
+                          min="1"
+                          name="value"
+                          formControlName="objectsCount"
+                          placeholder="{{ 'gateway.set' | translate }}"
+                          [readonly]="!editableDataTypes.includes(keyControl.get('type').value)"
+                        />
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width" translate>gateway.address</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput type="number" min="0" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                  <div *ngIf="isMaster" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="fixed-title-width tb-required" translate>gateway.value</div>
+                    <div class="tb-flex no-gap">
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.value-required') | translate"
+                                  *ngIf="keyControl.get('value').hasError('required') &&
+                                           keyControl.get('value').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
+                    </div>
+                  </div>
+                </div>
+              </ng-template>
+            </mat-expansion-panel>
+          </ng-container>
+        </div>
+        <button type="button"
+                mat-icon-button
+                (click)="deleteKey($event, $index)"
+                [matTooltip]="deleteKeyTitle | translate"
+                matTooltipPosition="above">
+          <mat-icon>delete</mat-icon>
+        </button>
+      </div>
+    </div>
+    <div>
+      <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+        {{ addKeyTitle | translate }}
+      </button>
+    </div>
+  </div>
+  <ng-template #noKeys>
+    <div class="tb-flex no-flex center align-center key-panel">
+      <span class="tb-prompt" translate>{{ noKeysText }}</span>
+    </div>
+  </ng-template>
+  <div class="tb-flex flex-end">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyKeysData()"
+            [disabled]="keysListFormArray.invalid || !keysListFormArray.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

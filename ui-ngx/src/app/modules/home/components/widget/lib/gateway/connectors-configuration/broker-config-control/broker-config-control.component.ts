@@ -37,6 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { generateSecret } from '@core/utils';
 import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { Subject } from 'rxjs';
+import { GatewayPortTooltipPipe } from '@home/pipes/public-api';
 
 @Component({
   selector: 'tb-broker-config-control',
@@ -47,6 +48,7 @@ import { Subject } from 'rxjs';
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
+    GatewayPortTooltipPipe,
   ],
   providers: [
     {
@@ -87,19 +89,6 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
       this.onChange(value);
       this.onTouched();
     });
-  }
-
-  get portErrorTooltip(): string {
-    if (this.brokerConfigFormGroup.get('port').hasError('required')) {
-      return this.translate.instant('gateway.port-required');
-    } else if (
-      this.brokerConfigFormGroup.get('port').hasError('min') ||
-      this.brokerConfigFormGroup.get('port').hasError('max')
-    ) {
-      return this.translate.instant('gateway.port-limits-error',
-        {min: PortLimits.MIN, max: PortLimits.MAX});
-    }
-    return '';
   }
 
   ngOnDestroy(): void {

@@ -90,9 +90,6 @@ import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
-import {
-  EllipsisChipListDirective
-} from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
@@ -120,10 +117,12 @@ import {
   MappingTableComponent,
   MqttBasicConfigComponent,
   OpcUaBasicConfigComponent,
-  ServerConfigComponent,
+  OpcServerConfigComponent,
   TypeValuePanelComponent,
   WorkersConfigControlComponent,
+  ModbusBasicConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
+import { EllipsisChipListDirective } from '@shared/directives/public-api';
 
 @NgModule({
   declarations: [
@@ -163,7 +162,6 @@ import {
     GatewayConfigurationComponent,
     GatewayRemoteConfigurationDialogComponent,
     GatewayServiceRPCConnectorTemplateDialogComponent,
-    EllipsisChipListDirective,
     ValueCardWidgetComponent,
     AggregatedValueCardWidgetComponent,
     CountWidgetComponent,
@@ -193,22 +191,24 @@ import {
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
     NotificationTypeFilterPanelComponent],
-  imports: [
-    CommonModule,
-    SharedModule,
-    RpcWidgetsModule,
-    HomePageWidgetsModule,
-    SharedHomeComponentsModule,
-    RestConnectorSecurityComponent,
-    GatewayHelpLinkPipe,
-    BrokerConfigControlComponent,
-    WorkersConfigControlComponent,
-    ServerConfigComponent,
-    MqttBasicConfigComponent,
-    MappingTableComponent,
-    OpcUaBasicConfigComponent,
-    KeyValueIsNotEmptyPipe
-  ],
+    imports: [
+        CommonModule,
+        SharedModule,
+        RpcWidgetsModule,
+        HomePageWidgetsModule,
+        SharedHomeComponentsModule,
+        RestConnectorSecurityComponent,
+        GatewayHelpLinkPipe,
+        BrokerConfigControlComponent,
+        WorkersConfigControlComponent,
+        OpcServerConfigComponent,
+        MqttBasicConfigComponent,
+        MappingTableComponent,
+        OpcUaBasicConfigComponent,
+        KeyValueIsNotEmptyPipe,
+        ModbusBasicConfigComponent,
+        EllipsisChipListDirective,
+    ],
   exports: [
     EntitiesTableWidgetComponent,
     AlarmsTableWidgetComponent,

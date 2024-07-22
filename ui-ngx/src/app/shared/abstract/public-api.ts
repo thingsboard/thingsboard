@@ -14,5 +14,4 @@
 /// limitations under the License.
 ///
 
-export * from './tooltip/tooltip.directive';
-export * from './ellipsis-chip-list/ellipsis-chip-list.directive';
+export * from './datasource/datasource.abstract';
