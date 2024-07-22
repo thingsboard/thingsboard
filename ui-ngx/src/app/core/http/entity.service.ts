@@ -756,9 +756,6 @@ export class EntityService {
       }
     }
     if (allowedEntityTypes && allowedEntityTypes.length) {
-      if (allowedEntityTypes.includes(AliasEntityType.CURRENT_RULE_NODE)) {
-        entityTypes.push(AliasEntityType.CURRENT_RULE_NODE);
-      }
       for (let index = entityTypes.length - 1; index >= 0; index--) {
         if (allowedEntityTypes.indexOf(entityTypes[index]) === -1) {
           entityTypes.splice(index, 1);
