@@ -262,6 +262,7 @@ message TenantProto {
   optional string phone = 14;
   optional string email = 15;
   optional string additionalInfo = 16;
+  optional int64 version = 17;
 }
 
 message TenantProfileProto {
