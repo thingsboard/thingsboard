@@ -14,7 +14,15 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, Input, OnChanges, OnDestroy } from '@angular/core';
+import {
+  ChangeDetectionStrategy,
+  ChangeDetectorRef,
+  Component,
+  forwardRef,
+  Input,
+  OnChanges,
+  OnDestroy
+} from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -75,7 +83,7 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {
+  constructor(private fb: FormBuilder, private cdr: ChangeDetectorRef) {
     this.securityConfigFormGroup = this.fb.group({
       certfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       keyfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -118,6 +126,7 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
     } else {
       this.securityConfigFormGroup.enable({emitEvent: false});
     }
+    this.cdr.markForCheck();
   }
 
   validate(): ValidationErrors | null {

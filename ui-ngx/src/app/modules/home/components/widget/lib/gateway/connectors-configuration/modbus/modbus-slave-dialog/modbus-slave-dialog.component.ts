@@ -172,6 +172,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
     this.showSecurityControl.patchValue(!!this.data.value.security);
     this.updateControlsEnabling(this.data.value.type);
     this.observeTypeChange();
+    this.observeShowSecurity();
   }
 
   ngOnDestroy(): void {
@@ -211,4 +212,14 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       this.tcpUdpSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
     }
   };
+
+  private observeShowSecurity(): void {
+    this.showSecurityControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      if (value) {
+        this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
+      } else {
+        this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
+      }
+    });
+  }
 }
