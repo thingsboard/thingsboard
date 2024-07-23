@@ -14,14 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AbstractControl,
-  UntypedFormBuilder,
-  UntypedFormGroup,
-  ValidationErrors,
-  ValidatorFn,
-  Validators
-} from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
