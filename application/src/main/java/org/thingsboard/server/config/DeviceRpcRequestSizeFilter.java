@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.thingsboard.server.common.msg.tools.TbMaxRequestSizeExceededException;
+import org.thingsboard.server.common.msg.tools.TbMaxPayloadSizeExceededException;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 
 import java.io.IOException;
@@ -41,13 +41,14 @@ public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
     private final Set<String> urls = new HashSet<>(Arrays.asList("/api/v1/*/rpc/*", "/api/v1/*/rpc"));
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final ThingsboardErrorResponseHandler errorResponseHandler;
-    @Value("${transport.http.rpc_max_request_size:65536}")
-    private int maxRequestSize;
+    
+    @Value("${transport.http.rpc_max_payload_size:65536}")
+    private int rpcMaxPayloadSize;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (request.getContentLength() > maxRequestSize) {
-            errorResponseHandler.handle(new TbMaxRequestSizeExceededException(), response);
+        if (request.getContentLength() > rpcMaxPayloadSize) {
+            errorResponseHandler.handle(new TbMaxPayloadSizeExceededException(), response);
             return;
         }
         chain.doFilter(request, response);

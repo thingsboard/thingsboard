@@ -824,7 +824,6 @@ public class DefaultTransportService extends TransportActivityManager implements
         process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
-
     private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<?> callback) {
         return checkLimits(sessionInfo, msg, callback, 0);
     }

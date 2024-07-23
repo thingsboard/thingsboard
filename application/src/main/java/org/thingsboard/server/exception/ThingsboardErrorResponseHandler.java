@@ -46,7 +46,7 @@ import org.springframework.web.util.WebUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
-import org.thingsboard.server.common.msg.tools.TbMaxRequestSizeExceededException;
+import org.thingsboard.server.common.msg.tools.TbMaxPayloadSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
@@ -147,8 +147,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     handleAccessDeniedException(response);
                 } else if (exception instanceof AuthenticationException) {
                     handleAuthenticationException((AuthenticationException) exception, response);
-                }  else if (exception instanceof TbMaxRequestSizeExceededException) {
-                    handleMaxRequestSizeExceededException(response, (TbMaxRequestSizeExceededException) exception);
+                }  else if (exception instanceof TbMaxPayloadSizeExceededException) {
+                    handleMaxPayloadSizeExceededException(response, (TbMaxPayloadSizeExceededException) exception);
                 } else {
                     response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
                     JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
@@ -187,7 +187,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
     }
 
-    private void handleMaxRequestSizeExceededException(HttpServletResponse response, TbMaxRequestSizeExceededException exception) throws IOException {
+    private void handleMaxPayloadSizeExceededException(HttpServletResponse response, TbMaxPayloadSizeExceededException exception) throws IOException {
         response.setStatus(HttpStatus.BAD_REQUEST.value());
         JacksonUtil.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(exception.getMessage(),
