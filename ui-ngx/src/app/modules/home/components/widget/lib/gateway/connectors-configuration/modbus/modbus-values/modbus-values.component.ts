@@ -54,6 +54,7 @@ import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ModbusDataKeysPanelComponent } from '../modbus-data-keys-panel/modbus-data-keys-panel.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-modbus-values',
@@ -88,9 +89,10 @@ import { ModbusDataKeysPanelComponent } from '../modbus-data-keys-panel/modbus-d
 
 export class ModbusValuesComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
 
+  @coerceBoolean()
   @Input() singleMode = false;
-  @Input() disabled = false;
 
+  disabled = false;
   modbusRegisterTypes: ModbusRegisterType[] = Object.values(ModbusRegisterType);
   modbusValueKeys = Object.values(ModbusValueKey);
   ModbusValuesTranslationsMap = ModbusRegisterTranslationsMap;
@@ -157,6 +159,11 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
     return this.valuesFormGroup.valid ? null : {
       valuesFormGroup: {valid: false}
     };
+  }
+
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+    this.cdr.markForCheck();
   }
 
   getValueGroup(valueKey: ModbusValueKey, register?: ModbusRegisterType) {

@@ -135,12 +135,13 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
         value.port = value.serialPort;
         delete value.serialPort;
       }
-      this.onChange(this.slaveConfigFormGroup.get('sendDataToThingsBoard').value ? value : {} as SlaveConfig);
+      this.onChange(value);
       this.onTouched();
     });
 
     this.observeTypeChange();
     this.observeFormEnable();
+    this.observeShowSecurity();
   }
 
   ngOnDestroy(): void {
@@ -192,6 +193,16 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       this.slaveConfigFormGroup.get('sendDataToThingsBoard').enable({emitEvent: false});
     }
     this.updateEnablingByProtocol(this.slaveConfigFormGroup.get('type').value);
+  }
+
+  private observeShowSecurity(): void {
+    this.showSecurityControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
+      if (value && this.slaveConfigFormGroup.get('sendDataToThingsBoard').value) {
+        this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
+      } else {
+        this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
+      }
+    });
   }
 
   private updateEnablingByProtocol(type: ModbusProtocolType): void {

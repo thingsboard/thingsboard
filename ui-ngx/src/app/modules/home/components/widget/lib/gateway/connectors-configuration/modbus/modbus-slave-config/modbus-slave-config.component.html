@@ -204,7 +204,7 @@
             </mat-slide-toggle>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <tb-modbus-security-config formControlName="security" [disabled]="!slaveConfigFormGroup.get('sendDataToThingsBoard').value || !showSecurityControl.value" [isMaster]="true"></tb-modbus-security-config>
+        <tb-modbus-security-config formControlName="security" [isMaster]="true"></tb-modbus-security-config>
       </mat-expansion-panel>
       <ng-container [formGroup]="slaveConfigFormGroup.get('identity')">
         <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
@@ -252,6 +252,6 @@
   </mat-expansion-panel>
   <div class="tb-form-panel stroked">
     <div class="tb-form-panel-title" translate>gateway.values</div>
-    <tb-modbus-values formControlName="values" [disabled]="!slaveConfigFormGroup.get('sendDataToThingsBoard').value"></tb-modbus-values>
+    <tb-modbus-values formControlName="values"></tb-modbus-values>
   </div>
 </div>

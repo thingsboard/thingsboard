@@ -36,6 +36,7 @@ import { takeUntil } from 'rxjs/operators';
 import {
   SecurityConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-modbus-security-config',
@@ -62,8 +63,10 @@ import {
 })
 export class ModbusSecurityConfigComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
 
+  @coerceBoolean()
   @Input() isMaster = false;
-  @Input() disabled = false;
+
+  disabled = false;
 
   securityConfigFormGroup: UntypedFormGroup;
 
@@ -113,8 +116,17 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
     this.onTouched = fn;
   }
 
+  setDisabledState(isDisabled: boolean): void {
+    this.disabled = isDisabled;
+    if (this.disabled) {
+      this.securityConfigFormGroup.disable({emitEvent: false});
+    } else {
+      this.securityConfigFormGroup.enable({emitEvent: false});
+    }
+  }
+
   validate(): ValidationErrors | null {
-    return this.securityConfigFormGroup.valid || this.disabled ? null : {
+    return this.securityConfigFormGroup.valid ? null : {
       securityConfigFormGroup: { valid: false }
     };
   }

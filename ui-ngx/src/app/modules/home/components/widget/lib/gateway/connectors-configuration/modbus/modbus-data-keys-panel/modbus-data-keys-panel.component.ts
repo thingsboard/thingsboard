@@ -30,6 +30,7 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { GatewayHelpLinkPipe } from '@home/pipes/gateway-help-link.pipe';
 import { generateSecret } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -44,6 +45,7 @@ import { generateSecret } from '@core/utils';
 })
 export class ModbusDataKeysPanelComponent implements OnInit {
 
+  @coerceBoolean()
   @Input() isMaster = false;
   @Input() panelTitle: string;
   @Input() addKeyTitle: string;
