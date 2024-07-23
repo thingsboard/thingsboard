@@ -170,7 +170,7 @@ public class TbUtils {
                 byte[].class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                 List.class, int.class, boolean.class)));
-       parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                 byte[].class, int.class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                 List.class, int.class, int.class, boolean.class)));
@@ -187,9 +187,13 @@ public class TbUtils {
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 byte[].class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 List.class, int.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 List.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                List.class, int.class, int.class, boolean.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
                 double.class, int.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
@@ -798,11 +802,11 @@ public class TbUtils {
         if (offset + length > data.length) {
             throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
         }
-        var bb = ByteBuffer.allocate(8);
+        var bb = ByteBuffer.allocate(BYTES_LEN_LONG_MAX);
         if (!bigEndian) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
         }
-        bb.position(bigEndian ? 8 - length : 0);
+        bb.position(bigEndian ? BYTES_LEN_LONG_MAX - length : 0);
         bb.put(data, offset, length);
         bb.position(0);
         return bb.getLong();
@@ -831,21 +835,21 @@ public class TbUtils {
     public static float parseBytesToFloat(byte[] data, int offset, int length, boolean bigEndian) {
         byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
         if (length > BYTES_LEN_INT_MAX) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum 4 bytes is allowed!");
+            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_INT_MAX + " bytes is allowed!");
         }
         if (bytesToNumber.length < BYTES_LEN_INT_MAX) {
-            byte[] extendedBytes = new byte[4];
+            byte[] extendedBytes = new byte[BYTES_LEN_INT_MAX];
             Arrays.fill(extendedBytes, (byte) 0);
             System.arraycopy(bytesToNumber, 0, extendedBytes, 0, bytesToNumber.length);
             bytesToNumber = extendedBytes;
         }
         float floatValue = ByteBuffer.wrap(bytesToNumber).getFloat();
-        if (!Float.isNaN(floatValue)){
+        if (!Float.isNaN(floatValue)) {
             return floatValue;
         } else {
             long longValue = parseBytesToLong(bytesToNumber, offset, length, bigEndian);
             BigDecimal bigDecimalValue = new BigDecimal(longValue);
-            return  bigDecimalValue.floatValue();
+            return bigDecimalValue.floatValue();
         }
     }
 
@@ -861,9 +865,33 @@ public class TbUtils {
         return parseBytesToDouble(Bytes.toArray(data), offset, bigEndian);
     }
 
+    public static double parseBytesToDouble(List data, int offset, int length, boolean bigEndian) {
+        return parseBytesToDouble(Bytes.toArray(data), offset, length, bigEndian);
+    }
+
     public static double parseBytesToDouble(byte[] data, int offset, boolean bigEndian) {
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, BYTES_LEN_LONG_MAX, bigEndian);
-        return ByteBuffer.wrap(bytesToNumber).getDouble();
+        return parseBytesToDouble(data, offset, BYTES_LEN_LONG_MAX, bigEndian);
+    }
+
+    public static double parseBytesToDouble(byte[] data, int offset, int length, boolean bigEndian) {
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
+        if (length > BYTES_LEN_LONG_MAX) {
+            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_LONG_MAX + " bytes is allowed!");
+        }
+        if (bytesToNumber.length < BYTES_LEN_LONG_MAX) {
+            byte[] extendedBytes = new byte[BYTES_LEN_LONG_MAX];
+            Arrays.fill(extendedBytes, (byte) 0);
+            System.arraycopy(bytesToNumber, 0, extendedBytes, 0, bytesToNumber.length);
+            bytesToNumber = extendedBytes;
+        }
+        double doubleValue = ByteBuffer.wrap(bytesToNumber).getDouble();
+        if (!Double.isNaN(doubleValue)) {
+            return doubleValue;
+        } else {
+            BigInteger bigInt = new BigInteger(1, bytesToNumber);
+            BigDecimal bigDecimalValue = new BigDecimal(bigInt);
+            return bigDecimalValue.doubleValue();
+        }
     }
 
     private static byte[] prepareBytesToNumber(byte[] data, int offset, int length, boolean bigEndian) {

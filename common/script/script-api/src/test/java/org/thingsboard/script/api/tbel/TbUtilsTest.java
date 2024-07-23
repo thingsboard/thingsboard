@@ -30,6 +30,7 @@ import org.mvel2.execution.ExecutionArrayList;
 import org.mvel2.execution.ExecutionHashMap;
 
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.nio.ByteBuffer;
 import java.util.ArrayList;
@@ -279,36 +280,36 @@ public class TbUtilsTest {
         Assertions.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatValByte, 0)));
         Assertions.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatValByte, 0, false)));
 
-        List<Byte> floatVaList = Bytes.asList(floatValByte);
-        Assertions.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatVaList, 0)));
-        Assertions.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatVaList, 0, false)));
+        List<Byte> floatValList = Bytes.asList(floatValByte);
+        Assertions.assertEquals(0, Float.compare(floatVal, TbUtils.parseBytesToFloat(floatValList, 0)));
+        Assertions.assertEquals(0, Float.compare(floatValRev, TbUtils.parseBytesToFloat(floatValList, 0, false)));
 
         // 4 294 967 295L == {0xFF, 0xFF, 0xFF, 0xFF}
-        floatValByte = new byte[] {-1, -1, -1, -1};
+        floatValByte = new byte[]{-1, -1, -1, -1};
         float floatExpectedBe = 4294.9673f;
         float floatExpectedLe = 4.2949673E9f;
         float actualBe = TbUtils.parseBytesToFloat(floatValByte, 0, 4, true);
-        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe / 1000000));
         Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValByte, 0, false)));
 
-        floatVaList = Bytes.asList(floatValByte);
-        actualBe = TbUtils.parseBytesToFloat(floatVaList, 0);
-        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
-        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatVaList, 0, false)));
+        floatValList = Bytes.asList(floatValByte);
+        actualBe = TbUtils.parseBytesToFloat(floatValList, 0);
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe / 1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValList, 0, false)));
 
         // 2 143 289 344L == {0x7F, 0xC0, 0x00, 0x00}
-        floatValByte = new byte[] {0x7F, (byte) 0xC0, (byte) 0xFF, 0x00};
+        floatValByte = new byte[]{0x7F, (byte) 0xC0, (byte) 0xFF, 0x00};
         floatExpectedBe = 2143.3547f;
         floatExpectedLe = -3.984375f;
         actualBe = TbUtils.parseBytesToFloat(floatValByte, 0, 4, true);
-        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
-        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValByte, 0, 2,false)));
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe / 1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValByte, 0, 2, false)));
 
-        floatVaList = Bytes.asList(floatValByte);
+        floatValList = Bytes.asList(floatValByte);
         floatExpectedLe = 8372479.0f;
-        actualBe = TbUtils.parseBytesToFloat(floatVaList, 0);
-        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe/1000000));
-        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatVaList, 0, 3,  false)));
+        actualBe = TbUtils.parseBytesToFloat(floatValList, 0);
+        Assertions.assertEquals(0, Float.compare(floatExpectedBe, actualBe / 1000000));
+        Assertions.assertEquals(0, Float.compare(floatExpectedLe, TbUtils.parseBytesToFloat(floatValList, 0, 3, false)));
     }
 
     @Test
@@ -385,9 +386,38 @@ public class TbUtilsTest {
         Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleValByte, 0)));
         Assertions.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleValByte, 0, false)));
 
-        List<Byte> doubleVaList = Bytes.asList(doubleValByte);
-        Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleVaList, 0)));
-        Assertions.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleVaList, 0, false)));
+        List<Byte> doubleValList = Bytes.asList(doubleValByte);
+        Assertions.assertEquals(0, Double.compare(doubleVal, TbUtils.parseBytesToDouble(doubleValList, 0)));
+        Assertions.assertEquals(0, Double.compare(doubleValRev, TbUtils.parseBytesToDouble(doubleValList, 0, false)));
+
+        // 4 294 967 295L == {0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF}
+        doubleValByte = new byte[]{-1, -1, -1, -1, -1, -1, -1, -1};
+        double doubleExpectedBe = 18446.744073709553d;
+        double doubleExpectedLe = 1.8446744073709552E19d;
+        double actualBe = TbUtils.parseBytesToDouble(doubleValByte, 0, 8, true);
+        Assertions.assertEquals(0, Double.compare(doubleExpectedBe, actualBe / 1000000000000000L));
+        Assertions.assertEquals(0, Double.compare(doubleExpectedLe, TbUtils.parseBytesToDouble(doubleValByte, 0, false)));
+
+        doubleValList = Bytes.asList(doubleValByte);
+        Assertions.assertEquals(0, Double.compare(doubleExpectedBe, TbUtils.parseBytesToDouble(doubleValList, 0) / 1000000000000000L));
+        Assertions.assertEquals(0, Double.compare(doubleExpectedLe, TbUtils.parseBytesToDouble(doubleValList, 0, false)));
+
+        doubleValByte = new byte[]{0x7F, (byte) 0xC0, (byte) 0xFF, 0x00, 0x7F, (byte) 0xC0, (byte) 0xFF, 0x00};
+        doubleExpectedBe = 2387013.651780523d;
+        doubleExpectedLe = 7.234601680440024E-304d;
+        actualBe = TbUtils.parseBytesToDouble(doubleValByte, 0, 8, true);
+        BigDecimal bigDecimal = new BigDecimal(actualBe);
+        // We move the decimal point to the left by 301 positions
+        actualBe = bigDecimal.movePointLeft(301).doubleValue();
+        Assertions.assertEquals(0, Double.compare(doubleExpectedBe, actualBe));
+        Assertions.assertEquals(0, Double.compare(doubleExpectedLe, TbUtils.parseBytesToDouble(doubleValByte, 0, 8, false)));
+        doubleValList = Bytes.asList(doubleValByte);
+        doubleExpectedLe = 5.828674572203954E303d;
+        actualBe = TbUtils.parseBytesToDouble(doubleValList, 0);
+        bigDecimal = new BigDecimal(actualBe);
+        actualBe = bigDecimal.movePointLeft(301).doubleValue();
+        Assertions.assertEquals(0, Double.compare(doubleExpectedBe, actualBe));
+        Assertions.assertEquals(0, Double.compare(doubleExpectedLe, TbUtils.parseBytesToDouble(doubleValList, 0, 5, false)));
     }
 
     @Test
@@ -660,7 +690,8 @@ public class TbUtilsTest {
         valueActual = TbUtils.parseHexToFloat(valueHexRev, false);
         Assertions.assertEquals(value, valueActual);
     }
-        // If the length is not equal to 8 characters, we process it as an integer (eg "0x0A" for 10.0f).
+
+    // If the length is not equal to 8 characters, we process it as an integer (eg "0x0A" for 10.0f).
     @Test
     public void parseHexIntLongToFloat_Test() {
         Float valueExpected = 10.0f;
