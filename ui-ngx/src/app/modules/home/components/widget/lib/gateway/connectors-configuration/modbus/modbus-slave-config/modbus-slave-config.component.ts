@@ -27,6 +27,7 @@ import {
   Validators,
 } from '@angular/forms';
 import {
+  ModbusBaudrates,
   ModbusMethodLabelsMap,
   ModbusMethodType,
   ModbusOrderType,
@@ -71,15 +72,7 @@ import { ModbusValuesComponent, } from '../modbus-values/modbus-values.component
     ModbusSecurityConfigComponent,
     GatewayPortTooltipPipe,
   ],
-  styles: [`
-    :host {
-      .nested-expansion-header {
-        .mat-content {
-          height: 100%;
-        }
-      }
-    }
-  `],
+  styleUrls: ['modbus-slave-config.component.scss'],
 })
 export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
 
@@ -94,6 +87,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   readonly modbusSerialMethodTypes = Object.values(ModbusSerialMethodType);
   readonly modbusOrderType = Object.values(ModbusOrderType);
   readonly ModbusProtocolType = ModbusProtocolType;
+  readonly modbusBaudrates = ModbusBaudrates;
   readonly serialSpecificControlKeys = ['serialPort', 'baudrate'];
   readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host'];
 
@@ -110,11 +104,11 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       method: [ModbusMethodType.RTU, []],
-      unitId: [null, [Validators.required]],
-      baudrate: [null, []],
+      unitId: [0, [Validators.required]],
+      baudrate: [this.ModbusProtocolType[0], []],
       deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      pollPeriod: [null, []],
+      pollPeriod: [5000, []],
       sendDataToThingsBoard: [false, []],
       byteOrder:[ModbusOrderType.BIG, []],
       security: [],
@@ -240,10 +234,10 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       host: host ?? '',
       type: type ?? ModbusProtocolType.TCP,
       method: method ?? ModbusMethodType.RTU,
-      unitId: unitId ?? null,
+      unitId: unitId ?? 0,
       deviceName: deviceName ?? '',
       deviceType: deviceType ?? '',
-      pollPeriod: pollPeriod ?? null,
+      pollPeriod: pollPeriod ?? 5000,
       sendDataToThingsBoard: !!sendDataToThingsBoard,
       byteOrder: byteOrder ?? ModbusOrderType.BIG,
       security: security ?? {},
@@ -256,11 +250,12 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       },
       values: values ?? {} as ModbusRegisterValues,
       port: port ?? null,
+      baudrate: baudrate ?? this.modbusBaudrates[0],
     };
     if (slaveConfig.type === ModbusProtocolType.Serial) {
-      slaveState = { ...slaveState, baudrate, serialPort: port, host: '', port: null } as ModbusSlave;
+      slaveState = { ...slaveState, serialPort: port, host: '', port: null } as ModbusSlave;
     } else {
-      slaveState = { ...slaveState, serialPort: '', baudrate: null } as ModbusSlave;
+      slaveState = { ...slaveState, serialPort: '' } as ModbusSlave;
     }
     this.slaveConfigFormGroup.setValue(slaveState, {emitEvent: false});
   }

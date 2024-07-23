@@ -804,17 +804,17 @@ export enum ModbusOrderType {
 }
 
 export enum ModbusRegisterType {
-  HoldingRegister = 'holding_registers',
+  HoldingRegisters = 'holding_registers',
   CoilsInitializer = 'coils_initializer',
-  InputRegister = 'input_registers',
+  InputRegisters = 'input_registers',
   DiscreteInputs = 'discrete_inputs'
 }
 
 export const ModbusRegisterTranslationsMap = new Map<ModbusRegisterType, string>(
   [
-    [ModbusRegisterType.HoldingRegister, 'gateway.holding_registers'],
+    [ModbusRegisterType.HoldingRegisters, 'gateway.holding_registers'],
     [ModbusRegisterType.CoilsInitializer, 'gateway.coils_initializer'],
-    [ModbusRegisterType.InputRegister, 'gateway.input_registers'],
+    [ModbusRegisterType.InputRegisters, 'gateway.input_registers'],
     [ModbusRegisterType.DiscreteInputs, 'gateway.discrete_inputs']
   ]
 );
@@ -1023,3 +1023,5 @@ export interface ModbusIdentity {
   productName?: string;
   modelName?: string;
 }
+
+export const ModbusBaudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];

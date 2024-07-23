@@ -25,6 +25,7 @@ import {
 } from '@angular/forms';
 import {
   MappingInfo,
+  ModbusBaudrates,
   ModbusByteSizes,
   ModbusMethodLabelsMap,
   ModbusMethodType,
@@ -100,6 +101,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
   readonly modbusSerialMethodTypes = Object.values(ModbusSerialMethodType);
   readonly modbusParities = Object.values(ModbusParity);
   readonly modbusByteSizes = ModbusByteSizes;
+  readonly modbusBaudrates = ModbusBaudrates;
   readonly modbusOrderType = Object.values(ModbusOrderType);
   readonly ModbusProtocolType = ModbusProtocolType;
   readonly ModbusParityLabelsMap = ModbusParityLabelsMap;
@@ -129,25 +131,25 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       method: [ModbusMethodType.RTU, []],
-      baudrate: [null, []],
+      baudrate: [this.modbusBaudrates[0], []],
       stopbits: [null, []],
       bytesize: [ModbusByteSizes[0], []],
       parity: [ModbusParity.None, []],
       strict: [false, []],
-      unitId: [null, [Validators.required]],
+      unitId: [0, [Validators.required]],
       deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       sendDataOnlyOnChange: [false, []],
-      timeout: [],
+      timeout: [35],
       byteOrder: [ModbusOrderType.BIG, []],
       wordOrder: [ModbusOrderType.BIG, []],
-      retries: [false, []],
-      retryOnEmpty: [false, []],
-      retryOnInvalid: [false, []],
-      pollPeriod: [null, []],
-      connectAttemptTimeMs: [null, []],
-      connectAttemptCount: [null, []],
-      waitAfterFailedAttemptsMs: [null, []],
+      retries: [true, []],
+      retryOnEmpty: [true, []],
+      retryOnInvalid: [true, []],
+      pollPeriod: [5000, []],
+      connectAttemptTimeMs: [5000, []],
+      connectAttemptCount: [5, []],
+      waitAfterFailedAttemptsMs: [300000, []],
       values: [{}, []],
       security: [{}],
     });

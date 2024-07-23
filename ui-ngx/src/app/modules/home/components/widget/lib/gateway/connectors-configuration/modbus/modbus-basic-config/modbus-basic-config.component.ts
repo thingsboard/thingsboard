@@ -62,6 +62,13 @@ import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master
     :host {
       height: 100%;
     }
+
+    :host ::ng-deep {
+      .mat-mdc-tab-body-content {
+        overflow: hidden !important;
+      }
+    }
+
     :host ::ng-deep {
       .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
         height: 100%;

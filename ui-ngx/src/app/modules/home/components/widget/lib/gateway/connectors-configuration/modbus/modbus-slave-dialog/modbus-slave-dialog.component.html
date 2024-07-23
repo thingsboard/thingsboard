@@ -136,7 +136,9 @@
             <div class="fixed-title-width" translate>gateway.baudrate</div>
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                <input matInput type="number" min="0" name="value" formControlName="baudrate" placeholder="{{ 'gateway.set' | translate }}"/>
+                <mat-select formControlName="baudrate">
+                  <mat-option *ngFor="let rate of modbusBaudrates" [value]="rate">{{ rate }}</mat-option>
+                </mat-select>
               </mat-form-field>
             </div>
           </div>
@@ -162,7 +164,7 @@
             <div class="fixed-title-width" translate>gateway.parity</div>
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                <mat-select formControlName="bytesize">
+                <mat-select formControlName="parity">
                   <mat-option *ngFor="let parity of modbusParities" [value]="parity">{{ ModbusParityLabelsMap.get(parity) }}</mat-option>
                 </mat-select>
               </mat-form-field>

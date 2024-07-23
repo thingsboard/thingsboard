@@ -84,6 +84,10 @@ import { coerceBoolean } from '@shared/decorators/coercion';
         min-height: 320px;
       }
     }
+
+    ::ng-deep .mdc-evolution-chip-set__chips {
+      align-items: center;
+    }
   `]
 })
 
