@@ -26,6 +26,7 @@
     "right_flow_meter",
     "bottom_flow_meter",
     "left_flow_meter",
+    "horizontal_inline_flow_meter",
     "horizontal_tank_with_screen",
     "horizontal_faucet",
     "water_blower_right_connector",
