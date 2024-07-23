@@ -15,12 +15,15 @@
  */
 package org.thingsboard.server.system;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 
@@ -29,6 +32,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,6 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
+        "transport.max_message_size=100"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
@@ -72,6 +77,26 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         Thread.sleep(2000);
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
+    }
+
+    @Test
+    public void testReplyToCommandWithLargeResponse() throws Exception {
+        String errorResponse = doPostAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
+                JacksonUtil.toString(createRpcResponsePayload(101)),
+                String.class,
+                status().is5xxServerError());
+        assertThat(errorResponse).isEqualTo("Max message size exceeded for device [" + device.getId() + "]");
+
+        doPostAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
+                JacksonUtil.toString(createRpcResponsePayload(10)),
+                String.class,
+                status().isOk());
+    }
+
+    private ObjectNode createRpcResponsePayload(int bodyLength) {
+        ObjectNode rpcResponseBody = JacksonUtil.newObjectNode();
+        rpcResponseBody.put("result", StringUtils.randomAlphabetic(bodyLength));
+        return rpcResponseBody;
     }
 
     protected ResultActions doGetAsync(String urlTemplate, Object... urlVariables) throws Exception {
