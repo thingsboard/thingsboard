@@ -16,7 +16,14 @@
 
 import { Datasource, WidgetSettings, WidgetSettingsComponent } from '@shared/models/widget.models';
 import { Component } from '@angular/core';
-import { AbstractControl, UntypedFormArray, UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import {
+  AbstractControl,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup, ValidationErrors,
+  ValidatorFn,
+  Validators
+} from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { GaugeType } from '@home/components/widget/lib/canvas-digital-gauge';
@@ -167,7 +174,7 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
       donutStartAngle: [settings.donutStartAngle, []],
       showMinMax: [settings.showMinMax, []],
       minValue: [settings.minValue, []],
-      maxValue: [settings.maxValue, []],
+      maxValue: [settings.maxValue, [this.maxValueValidation()]],
       minMaxFont: [settings.minMaxFont, []],
       minMaxColor: [settings.minMaxFont.color, []],
 
@@ -206,6 +213,18 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
     });
   }
 
+  private maxValueValidation(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = control.value;
+      if (value) {
+        if (value < control.parent?.get('minValue').value) {
+          return {maxValue: true};
+        }
+      }
+      return null;
+    };
+  }
+
   protected prepareOutputSettings(settings) {
 
     const barColor: ColorSettings = this.digitalGaugeWidgetSettingsForm.get('barColor').value;
@@ -230,10 +249,15 @@ export class DigitalGaugeWidgetSettingsComponent extends WidgetSettingsComponent
   }
 
   protected validatorTriggers(): string[] {
-    return ['gaugeType', 'showTitle', 'showUnitTitle', 'showValue', 'showMinMax', 'showTimestamp', 'showTicks', 'animation'];
+    return ['gaugeType', 'showTitle', 'showUnitTitle', 'showValue', 'showMinMax', 'showTimestamp', 'showTicks', 'animation', 'minValue'];
   }
 
-  protected updateValidators(emitEvent: boolean) {
+  protected updateValidators(emitEvent: boolean, trigger: string) {
+    if (trigger === 'minValue') {
+      this.digitalGaugeWidgetSettingsForm.get('maxValue').updateValueAndValidity({emitEvent: true});
+      this.digitalGaugeWidgetSettingsForm.get('maxValue').markAsTouched({onlySelf: true});
+      return;
+    }
     const gaugeType: GaugeType = this.digitalGaugeWidgetSettingsForm.get('gaugeType').value;
     const showTitle: boolean = this.digitalGaugeWidgetSettingsForm.get('showTitle').value;
     const showUnitTitle: boolean = this.digitalGaugeWidgetSettingsForm.get('showUnitTitle').value;

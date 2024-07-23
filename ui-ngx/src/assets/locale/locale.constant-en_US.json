@@ -6279,7 +6279,8 @@
             "min-and-max-value": "Min and max value",
             "min-and-max-label": "Min and max label",
             "font": "Font",
-            "tick-width-and-color": "Tick width and color"
+            "tick-width-and-color": "Tick width and color",
+            "min-max-validation-text": "Max value must be bigger than min value"
         },
         "gpio": {
             "pin": "Pin",
