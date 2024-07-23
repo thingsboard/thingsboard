@@ -28,6 +28,7 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.RestTemplateUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
@@ -108,7 +109,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
                 message.setPotentialAction(List.of(actionCard));
             }
         }
-
+        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
         restTemplate.postForEntity(targetConfig.getWebhookUrl(), message, String.class);
     }
 

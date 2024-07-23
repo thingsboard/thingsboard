@@ -16,12 +16,14 @@
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.RestTemplateUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
@@ -29,8 +31,6 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 @Service(value = "customOAuth2ClientMapper")
 @Slf4j
@@ -57,6 +57,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         }
 
         RestTemplate restTemplate = restTemplateBuilder.build();
+        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
         String request;
         try {
             request = JacksonUtil.getObjectMapperWithJavaTimeModule().writeValueAsString(token.getPrincipal());
