@@ -15,16 +15,9 @@
  */
 package org.thingsboard.server.common.msg.tools;
 
-import lombok.Getter;
-import org.thingsboard.server.common.data.id.DeviceId;
+public class TbMaxRequestSizeExceededException extends RuntimeException {
 
-public class MaxMessageSizeExceededException extends RuntimeException {
-
-    @Getter
-    private final DeviceId deviceId;
-
-    public MaxMessageSizeExceededException(DeviceId deviceId) {
-        super(String.format("Max message size exceeded for device [%s]", deviceId));
-        this.deviceId = deviceId;
+    public TbMaxRequestSizeExceededException() {
+        super("Request size exceeds the configured maximum");
     }
 }

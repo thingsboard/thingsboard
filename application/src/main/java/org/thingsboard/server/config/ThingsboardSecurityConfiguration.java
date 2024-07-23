@@ -124,6 +124,9 @@ public class ThingsboardSecurityConfiguration {
     @Autowired
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
+    @Autowired
+    private DeviceRpcRequestSizeFilter rpcRequestSizeFilter;
+
     @Bean
     protected FilterRegistrationBean<ShallowEtagHeaderFilter> buildEtagFilter() throws Exception {
         ShallowEtagHeaderFilter etagFilter = new ShallowEtagHeaderFilter();
@@ -225,6 +228,7 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(rpcRequestSizeFilter, UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login

@@ -62,7 +62,6 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.msg.tools.MaxMessageSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.stats.MessagesStats;
 import org.thingsboard.server.common.stats.StatsFactory;
@@ -157,8 +156,6 @@ public class DefaultTransportService extends TransportActivityManager implements
     private int notificationsPollDuration;
     @Value("${transport.stats.enabled:false}")
     private boolean statsEnabled;
-    @Value("${transport.max_message_size:500000}")
-    private int maxMessageSize;
 
     @Autowired
     @Lazy
@@ -626,7 +623,7 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToDeviceRpcResponseMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, msg, callback) && checkMsgSize(sessionInfo, callback, msg.getPayload(), msg.getError()) ) {
+        if (checkLimits(sessionInfo, msg, callback)) {
             recordActivityInternal(sessionInfo);
             sendToDeviceActor(sessionInfo, TransportToDeviceActorMsg.newBuilder().setSessionInfo(sessionInfo).setToDeviceRPCCallResponse(msg).build(),
                     new ApiStatsProxyCallback<>(getTenantId(sessionInfo), getCustomerId(sessionInfo), 1, callback));
@@ -688,7 +685,7 @@ public class DefaultTransportService extends TransportActivityManager implements
 
     @Override
     public void process(TransportProtos.SessionInfoProto sessionInfo, TransportProtos.ToServerRpcRequestMsg msg, TransportServiceCallback<Void> callback) {
-        if (checkLimits(sessionInfo, msg, callback) && checkMsgSize(sessionInfo, callback, msg.getMethodName(), msg.getParams())) {
+        if (checkLimits(sessionInfo, msg, callback)) {
             recordActivityInternal(sessionInfo);
             UUID sessionId = toSessionId(sessionInfo);
             TenantId tenantId = getTenantId(sessionInfo);
@@ -827,20 +824,6 @@ public class DefaultTransportService extends TransportActivityManager implements
         process(sessionInfo, postTelemetryMsg, TransportServiceCallback.EMPTY);
     }
 
-    private boolean checkMsgSize(TransportProtos.SessionInfoProto sessionInfo, TransportServiceCallback<?> callback, CharSequence... payload) {
-        int size = 0;
-        for (CharSequence item : payload) {
-            size += item.length();
-            if (size > maxMessageSize) {
-                if (callback != null) {
-                    DeviceId deviceId = new DeviceId(new UUID(sessionInfo.getDeviceIdMSB(), sessionInfo.getDeviceIdLSB()));
-                    callback.onError(new MaxMessageSizeExceededException(deviceId));
-                }
-                return false;
-            }
-        }
-        return true;
-    }
 
     private boolean checkLimits(TransportProtos.SessionInfoProto sessionInfo, Object msg, TransportServiceCallback<?> callback) {
         return checkLimits(sessionInfo, msg, callback, 0);

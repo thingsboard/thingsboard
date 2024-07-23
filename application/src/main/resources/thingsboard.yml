@@ -951,7 +951,6 @@ transport:
     max_wrong_credentials_per_ip: "${TB_TRANSPORT_MAX_WRONG_CREDENTIALS_PER_IP:10}"
     # Timeout (in milliseconds) to expire block IP addresses
     ip_block_timeout: "${TB_TRANSPORT_IP_BLOCK_TIMEOUT:60000}"
-  max_message_size: "${TB_TRANSPORT_MAX_MESSAGE_SIZE:500000}" # max transport message size
   # Local HTTP transport parameters
   http:
     # Enable/Disable local HTTP transport protocol
@@ -960,6 +959,8 @@ transport:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
     # HTTP maximum request processing timeout in milliseconds
     max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
+    # RPC maximum request size
+    rpc_max_request_size: "${HTTP_RPC_MAX_MESSAGE_SIZE:65536}" # max request size in bytes
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.

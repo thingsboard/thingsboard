@@ -23,10 +23,10 @@ import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "transport.max_message_size=100"
+        "transport.http.rpc_max_request_size=10000"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
@@ -81,21 +81,49 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
     @Test
     public void testReplyToCommandWithLargeResponse() throws Exception {
-        String errorResponse = doPostAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
-                JacksonUtil.toString(createRpcResponsePayload(101)),
+        String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
+                JacksonUtil.toString(createRpcResponsePayload(10001)),
                 String.class,
-                status().is5xxServerError());
-        assertThat(errorResponse).isEqualTo("Max message size exceeded for device [" + device.getId() + "]");
+                status().is4xxClientError());
+        assertThat(errorResponse).contains("Request size exceeds the configured maximum");
 
-        doPostAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
-                JacksonUtil.toString(createRpcResponsePayload(10)),
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
+                JacksonUtil.toString(createRpcResponsePayload(10000)),
                 String.class,
                 status().isOk());
     }
 
-    private ObjectNode createRpcResponsePayload(int bodyLength) {
+    @Test
+    public void testPostRpcRequestWithLargeResponse() throws Exception {
+        String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
+                JacksonUtil.toString(createRpcRequestPayload(10001)),
+                String.class,
+                status().is4xxClientError());
+        assertThat(errorResponse).contains("Request size exceeds the configured maximum");
+
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
+                JacksonUtil.toString(createRpcRequestPayload(10000)),
+                String.class,
+                status().isOk());
+    }
+
+    private ObjectNode createRpcResponsePayload(int size) {
         ObjectNode rpcResponseBody = JacksonUtil.newObjectNode();
-        rpcResponseBody.put("result", StringUtils.randomAlphabetic(bodyLength));
+        char[] chars = new char[size-13];
+        Arrays.fill(chars, 'a');
+        rpcResponseBody.put("result", new String(chars));
+        return rpcResponseBody;
+    }
+
+    private ObjectNode createRpcRequestPayload(int size) {
+        ObjectNode rpcResponseBody = JacksonUtil.newObjectNode();
+        char[] chars = new char[size-38];
+        Arrays.fill(chars, 'a');
+        rpcResponseBody.put("method", "get");
+        ObjectNode params = JacksonUtil.newObjectNode();
+        params.put("value", new String(chars));
+        rpcResponseBody.set("params", params);
+
         return rpcResponseBody;
     }
 

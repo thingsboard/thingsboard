@@ -45,8 +45,6 @@ import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
-import org.thingsboard.server.common.msg.tools.MaxMessageSizeExceededException;
-import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -561,12 +559,7 @@ public class DeviceApiController implements TbTransportService {
 
         @Override
         public void onError(Throwable e) {
-            if (e instanceof MaxMessageSizeExceededException || e instanceof TbRateLimitsException) {
-                log.debug("Failed to process request in HttpOkCallback: {}", e.getMessage());
-            } else {
-                log.debug("Failed to process request in HttpOkCallback", e);
-            }
-            responseWriter.setResult(new ResponseEntity<>(e.getMessage(), HttpStatus.INTERNAL_SERVER_ERROR));
+            responseWriter.setResult(new ResponseEntity<>(HttpStatus.INTERNAL_SERVER_ERROR));
         }
     }
 
