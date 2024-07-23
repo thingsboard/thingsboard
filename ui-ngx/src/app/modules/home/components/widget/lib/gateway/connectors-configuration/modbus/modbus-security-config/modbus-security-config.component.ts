@@ -96,11 +96,6 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
       });
       this.observeValueChanges();
     }
-    if (this.disabled) {
-      this.securityConfigFormGroup.disable({emitEvent:false});
-    } else {
-      this.securityConfigFormGroup.enable({emitEvent:false});
-    }
   }
 
   ngOnDestroy(): void {
@@ -152,7 +147,7 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
     this.securityConfigFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: ModbusSecurity) => {
-      this.onChange(this.disabled ? {} : value);
+      this.onChange(value);
       this.onTouched();
     });
   }
