@@ -29,7 +29,7 @@ import {
   ResourceTypeMIMETypes,
   ResourceTypeTranslationMap
 } from '@shared/models/resource.models';
-import { filter, startWith, takeUntil } from 'rxjs/operators';
+import { startWith, takeUntil } from 'rxjs/operators';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
@@ -59,7 +59,9 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   ngOnInit() {
     super.ngOnInit();
-    this.observeResourceTypeChange();
+    if (this.isAdd) {
+      this.observeResourceTypeChange();
+    }
   }
 
   ngOnDestroy() {
@@ -142,7 +144,6 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   private observeResourceTypeChange(): void {
     this.entityForm.get('resourceType').valueChanges.pipe(
       startWith(ResourceType.JS_MODULE),
-      filter(() => this.isAdd),
       takeUntil(this.destroy$)
     ).subscribe((type: ResourceType) => this.onResourceTypeChange(type));
   }
