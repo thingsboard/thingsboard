@@ -44,7 +44,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "transport.http.rpc_max_request_size=10000"
+        "transport.http.rpc_max_payload_size=10000"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
@@ -85,7 +85,7 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 JacksonUtil.toString(createRpcResponsePayload(10001)),
                 String.class,
                 status().is4xxClientError());
-        assertThat(errorResponse).contains("Request size exceeds the configured maximum");
+        assertThat(errorResponse).contains("Payload size exceeds the configured maximum");
 
         doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
                 JacksonUtil.toString(createRpcResponsePayload(10000)),
@@ -99,7 +99,7 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 JacksonUtil.toString(createRpcRequestPayload(10001)),
                 String.class,
                 status().is4xxClientError());
-        assertThat(errorResponse).contains("Request size exceeds the configured maximum");
+        assertThat(errorResponse).contains("Payload size exceeds the configured maximum");
 
         doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
                 JacksonUtil.toString(createRpcRequestPayload(10000)),
