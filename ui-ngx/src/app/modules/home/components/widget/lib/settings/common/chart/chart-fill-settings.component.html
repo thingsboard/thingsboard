@@ -18,7 +18,7 @@
 <ng-container [formGroup]="fillSettingsFormGroup">
   <div class="tb-form-row column">
     <div class="tb-form-row no-border no-padding space-between">
-      <div>{{ title | translate }}</div>
+      <div>{{ titleText | translate }}</div>
       <tb-toggle-select formControlName="type">
         <tb-toggle-option *ngFor="let type of chartFillTypes" [value]="type">{{ chartFillTypeTranslationMap.get(type) | translate }}</tb-toggle-option>
       </tb-toggle-select>

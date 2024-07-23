@@ -203,23 +203,29 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
   }
 
   markAsRead(id: string) {
-    const cmd = NotificationSubscriber.createMarkAsReadCommand(this.notificationWsService, [id]);
-    cmd.subscribe();
+    if (!this.ctx.isEdit && !this.ctx.isPreview) {
+      const cmd = NotificationSubscriber.createMarkAsReadCommand(this.notificationWsService, [id]);
+      cmd.subscribe();
+    }
   }
 
   markAsAllRead($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
+    if (!this.ctx.isEdit && !this.ctx.isPreview) {
+      if ($event) {
+        $event.stopPropagation();
+      }
+      const cmd = NotificationSubscriber.createMarkAllAsReadCommand(this.notificationWsService);
+      cmd.subscribe();
     }
-    const cmd = NotificationSubscriber.createMarkAllAsReadCommand(this.notificationWsService);
-    cmd.subscribe();
   }
 
   viewAll($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
+    if (!this.ctx.isEdit && !this.ctx.isPreview) {
+      if ($event) {
+        $event.stopPropagation();
+      }
+      this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
     }
-    this.router.navigateByUrl(this.router.parseUrl('/notification/inbox')).then(() => {});
   }
 
   trackById(index: number, item: NotificationRequest): string {
