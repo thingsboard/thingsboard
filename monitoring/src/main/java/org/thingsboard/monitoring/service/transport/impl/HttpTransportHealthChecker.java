@@ -28,6 +28,8 @@ import org.thingsboard.monitoring.service.transport.TransportHealthChecker;
 
 import java.time.Duration;
 
+import static org.thingsboard.common.util.RestTemplateUtil.excludeJackson2XmlHttpMessageConverter;
+
 @Component
 @Scope(ConfigurableBeanFactory.SCOPE_PROTOTYPE)
 @Slf4j
@@ -46,6 +48,7 @@ public class HttpTransportHealthChecker extends TransportHealthChecker<HttpTrans
                     .setConnectTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
                     .setReadTimeout(Duration.ofMillis(config.getRequestTimeoutMs()))
                     .build();
+            excludeJackson2XmlHttpMessageConverter(restTemplate);
             log.debug("Initialized HTTP client");
         }
     }
