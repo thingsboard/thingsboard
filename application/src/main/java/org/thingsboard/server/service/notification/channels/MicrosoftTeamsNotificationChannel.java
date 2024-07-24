@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
 import lombok.Data;
-import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
@@ -44,16 +43,21 @@ import java.util.List;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 public class MicrosoftTeamsNotificationChannel implements NotificationChannel<MicrosoftTeamsNotificationTargetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate> {
 
     private final SystemSecurityService systemSecurityService;
 
     @Setter
-    private RestTemplate restTemplate = new RestTemplateBuilder()
-            .setConnectTimeout(Duration.of(15, ChronoUnit.SECONDS))
-            .setReadTimeout(Duration.of(15, ChronoUnit.SECONDS))
-            .build();
+    private RestTemplate restTemplate;
+
+    public MicrosoftTeamsNotificationChannel(SystemSecurityService systemSecurityService) {
+        this.systemSecurityService = systemSecurityService;
+        this.restTemplate = new RestTemplateBuilder()
+                .setConnectTimeout(Duration.of(15, ChronoUnit.SECONDS))
+                .setReadTimeout(Duration.of(15, ChronoUnit.SECONDS))
+                .build();
+        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(this.restTemplate);
+    }
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
@@ -109,7 +113,6 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
                 message.setPotentialAction(List.of(actionCard));
             }
         }
-        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
         restTemplate.postForEntity(targetConfig.getWebhookUrl(), message, String.class);
     }
 
