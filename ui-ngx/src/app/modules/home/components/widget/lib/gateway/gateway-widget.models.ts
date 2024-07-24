@@ -823,6 +823,9 @@ export enum ModbusDataType {
   STRING = 'string',
   BYTES = 'bytes',
   BITS = 'bits',
+  INT8 = '8int',
+  UINT8 = '8uint',
+  FLOAT8 = '8float',
   INT16 = '16int',
   UINT16 = '16uint',
   FLOAT16 = '16float',
@@ -835,6 +838,9 @@ export enum ModbusDataType {
 }
 
 export enum ModbusObjectCountByDataType {
+  '8int' = 1,
+  '8uint' = 1,
+  '8float' = 1,
   '16int' = 1,
   '16uint' = 1,
   '16float' = 1,
@@ -904,14 +910,6 @@ export const ModbusKeysNoKeysTextTranslationsMap = new Map<ModbusValueKey, strin
     [ModbusValueKey.TIMESERIES, 'gateway.no-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.no-rpc-requests']
-  ]
-);
-
-export const ModbusClientTypeLabelsMap = new Map<ModbusProtocolType, string>(
-  [
-    [ModbusProtocolType.TCP, 'TCP/UDP'],
-    [ModbusProtocolType.UDP, 'TCP/UDP'],
-    [ModbusProtocolType.Serial, 'Serial'],
   ]
 );
 

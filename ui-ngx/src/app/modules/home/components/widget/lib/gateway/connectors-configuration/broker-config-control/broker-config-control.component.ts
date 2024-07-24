@@ -37,9 +37,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { generateSecret } from '@core/utils';
 import { Subject } from 'rxjs';
 import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
-import {
-  SecurityConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import { SecurityConfigComponent } from '../security-config/security-config.component';
 
 @Component({
   selector: 'tb-broker-config-control',

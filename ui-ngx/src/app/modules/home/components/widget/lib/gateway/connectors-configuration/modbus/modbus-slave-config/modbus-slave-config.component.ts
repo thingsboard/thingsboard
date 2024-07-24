@@ -47,6 +47,7 @@ import { startWith, takeUntil } from 'rxjs/operators';
 import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
 import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
 import { ModbusValuesComponent, } from '../modbus-values/modbus-values.component';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-modbus-slave-config',
@@ -158,7 +159,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   }
 
   writeValue(slaveConfig: ModbusSlave): void {
-    this.showSecurityControl.patchValue(!!slaveConfig.security);
+    this.showSecurityControl.patchValue(!!slaveConfig.security && !isEqual(slaveConfig.security, {}));
     this.updateSlaveConfig(slaveConfig);
     this.updateFormEnableState(slaveConfig.sendDataToThingsBoard);
   }
@@ -187,16 +188,19 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       this.slaveConfigFormGroup.get('sendDataToThingsBoard').enable({emitEvent: false});
     }
     this.updateEnablingByProtocol(this.slaveConfigFormGroup.get('type').value);
+    this.updateSecurityEnable(this.showSecurityControl.value);
   }
 
   private observeShowSecurity(): void {
-    this.showSecurityControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
-      if (value && this.slaveConfigFormGroup.get('sendDataToThingsBoard').value) {
-        this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
-      } else {
-        this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
-      }
-    });
+    this.showSecurityControl.valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => this.updateSecurityEnable(value));
+  }
+
+  private updateSecurityEnable(isEnabled: boolean): void {
+    if (isEnabled && this.slaveConfigFormGroup.get('sendDataToThingsBoard').value) {
+      this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
+    } else {
+      this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
+    }
   }
 
   private updateEnablingByProtocol(type: ModbusProtocolType): void {

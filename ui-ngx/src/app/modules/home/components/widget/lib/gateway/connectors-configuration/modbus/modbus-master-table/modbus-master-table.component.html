@@ -72,7 +72,7 @@
             {{ 'gateway.client-communication-type' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let mapping" class="table-value-column request-column">
-            {{ ModbusClientTypeLabelsMap.get(mapping['type']) }}
+            {{ ModbusProtocolLabelsMap.get(mapping['type']) }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>

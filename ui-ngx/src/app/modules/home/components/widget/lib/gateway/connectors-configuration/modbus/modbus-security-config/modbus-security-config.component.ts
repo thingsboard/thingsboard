@@ -41,9 +41,6 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import {
-  SecurityConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
@@ -66,7 +63,6 @@ import { coerceBoolean } from '@shared/decorators/coercion';
   imports: [
     CommonModule,
     SharedModule,
-    SecurityConfigComponent,
   ]
 })
 export class ModbusSecurityConfigComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
@@ -74,9 +70,9 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
   @coerceBoolean()
   @Input() isMaster = false;
 
-  disabled = false;
-
   securityConfigFormGroup: UntypedFormGroup;
+
+  private disabled = false;
 
   private onChange: (value: ModbusSecurity) => void;
   private onTouched: () => void;
@@ -89,21 +85,14 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
       keyfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       server_hostname: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      reqclicert: [{value: false, disabled: true}, []],
     });
 
     this.observeValueChanges();
   }
 
   ngOnChanges(): void {
-    if (this.isMaster) {
-      this.securityConfigFormGroup = this.fb.group({
-        certfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-        keyfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-        password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-        reqclicert: [false, []],
-      });
-      this.observeValueChanges();
-    }
+    this.updateMasterEnabling();
   }
 
   ngOnDestroy(): void {
@@ -126,6 +115,7 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
     } else {
       this.securityConfigFormGroup.enable({emitEvent: false});
     }
+    this.updateMasterEnabling();
     this.cdr.markForCheck();
   }
 
@@ -137,19 +127,29 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
 
   writeValue(securityConfig: ModbusSecurity): void {
     const { certfile, password, keyfile, server_hostname } = securityConfig;
-    let securityState = {
+    const securityState = {
       certfile: certfile ?? '',
       password: password ?? '',
       keyfile: keyfile ?? '',
-      server_hostname: server_hostname?? '',
+      server_hostname: server_hostname ?? '',
       reqclicert: !!securityConfig.reqclicert,
     };
-    if (this.isMaster) {
-      securityState = { ...securityState, reqclicert: !!securityConfig.reqclicert };
-    } else {
-      securityState = { ...securityState, server_hostname: server_hostname ?? '' };
-    }
+
     this.securityConfigFormGroup.reset(securityState, {emitEvent: false});
+  }
+
+  private updateMasterEnabling(): void {
+    if (this.isMaster) {
+      if (!this.disabled) {
+        this.securityConfigFormGroup.get('reqclicert').enable({emitEvent: false});
+      }
+      this.securityConfigFormGroup.get('server_hostname').disable({emitEvent: false});
+    } else {
+      if (!this.disabled) {
+        this.securityConfigFormGroup.get('server_hostname').enable({emitEvent: false});
+      }
+      this.securityConfigFormGroup.get('reqclicert').disable({emitEvent: false});
+    }
   }
 
   private observeValueChanges(): void {

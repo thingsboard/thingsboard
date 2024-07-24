@@ -236,108 +236,112 @@
             </mat-label>
           </mat-slide-toggle>
         </div>
-        <mat-expansion-panel>
-          <mat-expansion-panel-header>
-            <mat-panel-title>
-              <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
-            </mat-panel-title>
-          </mat-expansion-panel-header>
-          <div class="tb-form-panel no-border no-padding padding-top">
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.connection-timeout</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput type="number" min="0" name="value" formControlName="timeout" placeholder="{{ 'gateway.set' | translate }}"/>
-                </mat-form-field>
+        <div class="tb-form-panel stroked">
+          <mat-expansion-panel class="tb-settings">
+            <mat-expansion-panel-header>
+              <mat-panel-title>
+                <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <div class="tb-form-panel no-border no-padding padding-top">
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" translate>gateway.connection-timeout</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="timeout" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" translate>gateway.byte-order</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="byteOrder">
+                      <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width" translate>gateway.word-order</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <mat-select formControlName="wordOrder">
+                      <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
+                    </mat-select>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
+                <mat-expansion-panel class="tb-settings" [expanded]="showSecurityControl.value">
+                  <mat-expansion-panel-header fxLayout="row wrap">
+                    <mat-panel-title>
+                      <mat-slide-toggle fxLayoutAlign="center" [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
+                        <mat-label>
+                          {{ 'gateway.tls-connection' | translate }}
+                        </mat-label>
+                      </mat-slide-toggle>
+                    </mat-panel-title>
+                  </mat-expansion-panel-header>
+                  <tb-modbus-security-config formControlName="security"></tb-modbus-security-config>
+                </mat-expansion-panel>
+              </div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="retries">
+                  <mat-label>
+                    {{ 'gateway.retries' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="retryOnEmpty">
+                  <mat-label>
+                    {{ 'gateway.retries-on-empty' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row" fxLayoutAlign="space-between center">
+                <mat-slide-toggle class="mat-slide" formControlName="retryOnInvalid">
+                  <mat-label>
+                    {{ 'gateway.retries-on-invalid' | translate }}
+                  </mat-label>
+                </mat-slide-toggle>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-230" translate>gateway.poll-period</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="pollPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-230" translate>gateway.connect-attempt-time</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="connectAttemptTimeMs" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-230" translate>gateway.connect-attempt-count</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="connectAttemptCount" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
+              </div>
+              <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                <div class="fixed-title-width-230" translate>gateway.wait-after-failed-attempts</div>
+                <div class="tb-flex no-gap">
+                  <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                    <input matInput type="number" min="0" name="value" formControlName="waitAfterFailedAttemptsMs" placeholder="{{ 'gateway.set' | translate }}"/>
+                  </mat-form-field>
+                </div>
               </div>
             </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.byte-order</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <mat-select formControlName="byteOrder">
-                    <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.word-order</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <mat-select formControlName="wordOrder">
-                    <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
-                  </mat-select>
-                </mat-form-field>
-              </div>
-            </div>
-            <mat-expansion-panel *ngIf="this.slaveConfigFormGroup.get('security')" [expanded]="showSecurityControl.value">
-              <mat-expansion-panel-header class="nested-expansion-header">
-                <mat-panel-title>
-                  <mat-slide-toggle [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
-                    <mat-label>
-                      {{ 'gateway.tls-connection' | translate }}
-                    </mat-label>
-                  </mat-slide-toggle>
-                </mat-panel-title>
-              </mat-expansion-panel-header>
-              <tb-modbus-security-config formControlName="security"></tb-modbus-security-config>
-            </mat-expansion-panel>
-            <div class="tb-form-row" fxLayoutAlign="space-between center">
-              <mat-slide-toggle class="mat-slide" formControlName="retries">
-                <mat-label>
-                  {{ 'gateway.retries' | translate }}
-                </mat-label>
-              </mat-slide-toggle>
-            </div>
-            <div class="tb-form-row" fxLayoutAlign="space-between center">
-              <mat-slide-toggle class="mat-slide" formControlName="retryOnEmpty">
-                <mat-label>
-                  {{ 'gateway.retries-on-empty' | translate }}
-                </mat-label>
-              </mat-slide-toggle>
-            </div>
-            <div class="tb-form-row" fxLayoutAlign="space-between center">
-              <mat-slide-toggle class="mat-slide" formControlName="retryOnInvalid">
-                <mat-label>
-                  {{ 'gateway.retries-on-invalid' | translate }}
-                </mat-label>
-              </mat-slide-toggle>
-            </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.poll-period</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput type="number" min="0" name="value" formControlName="pollPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
-                </mat-form-field>
-              </div>
-            </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.connect-attempt-time</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput type="number" min="0" name="value" formControlName="connectAttemptTimeMs" placeholder="{{ 'gateway.set' | translate }}"/>
-                </mat-form-field>
-              </div>
-            </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.connect-attempt-count</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput type="number" min="0" name="value" formControlName="connectAttemptCount" placeholder="{{ 'gateway.set' | translate }}"/>
-                </mat-form-field>
-              </div>
-            </div>
-            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-              <div class="fixed-title-width" translate>gateway.wait-after-failed-attempts</div>
-              <div class="tb-flex no-gap">
-                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                  <input matInput type="number" min="0" name="value" formControlName="waitAfterFailedAttemptsMs" placeholder="{{ 'gateway.set' | translate }}"/>
-                </mat-form-field>
-              </div>
-            </div>
-          </div>
-        </mat-expansion-panel>
+          </mat-expansion-panel>
+        </div>
         <div class="tb-form-panel stroked">
           <tb-modbus-values [singleMode]="true" formControlName="values"></tb-modbus-values>
         </div>

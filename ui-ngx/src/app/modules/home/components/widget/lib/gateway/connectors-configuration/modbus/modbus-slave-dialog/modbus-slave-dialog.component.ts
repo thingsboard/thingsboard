@@ -51,6 +51,7 @@ import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
 import { takeUntil } from 'rxjs/operators';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-modbus-slave-dialog',
@@ -80,12 +81,6 @@ import { takeUntil } from 'rxjs/operators';
     :host {
       .slaves-config-container {
         width: 900px;
-      }
-      .nested-expansion-header {
-        .mat-content {
-          height: 100%;
-          overflow: hidden;
-        }
       }
     }
   `],
@@ -169,10 +164,10 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
         rpc: this.data.value.rpc ?? [],
       }
     });
-    this.showSecurityControl.patchValue(!!this.data.value.security);
     this.updateControlsEnabling(this.data.value.type);
     this.observeTypeChange();
     this.observeShowSecurity();
+    this.showSecurityControl.patchValue(!!this.data.value.security && !isEqual(this.data.value.security, {}));
   }
 
   ngOnDestroy(): void {
@@ -192,7 +187,6 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
         slaveResult.port = slaveResult.serialPort;
       }
       delete slaveResult.serialPort;
-      slaveResult.security = this.showSecurityControl.value ? slaveResult.security : {};
       this.dialogRef.close(slaveResult);
     }
   }

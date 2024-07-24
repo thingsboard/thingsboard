@@ -40,7 +40,9 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ModbusClientTypeLabelsMap, ModbusMasterConfig, SlaveConfig,
+  ModbusMasterConfig,
+  ModbusProtocolLabelsMap,
+  SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
@@ -80,7 +82,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
   masterFormGroup: UntypedFormGroup;
   textSearch = this.fb.control('', {nonNullable: true});
 
-  readonly ModbusClientTypeLabelsMap = ModbusClientTypeLabelsMap;
+  readonly ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
 
   private onChange: (value: string) => void = () => {};
   private onTouched: () => void  = () => {};

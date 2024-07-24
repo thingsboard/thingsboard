@@ -181,8 +181,8 @@
         </mat-form-field>
       </div>
     </div>
-    <div>
-      <mat-expansion-panel>
+    <div class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings">
         <mat-expansion-panel-header>
           <mat-panel-title>
             <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
@@ -199,19 +199,20 @@
               </mat-form-field>
             </div>
           </div>
-          <mat-expansion-panel *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial"
-                               [expanded]="showSecurityControl.value">
-            <mat-expansion-panel-header class="nested-expansion-header">
-              <mat-panel-title>
-                <mat-slide-toggle [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
-                  <mat-label>
-                    {{ 'gateway.tls-connection' | translate }}
-                  </mat-label>
-                </mat-slide-toggle>
-              </mat-panel-title>
-            </mat-expansion-panel-header>
-            <tb-modbus-security-config formControlName="security" [isMaster]="true"></tb-modbus-security-config>
-          </mat-expansion-panel>
+          <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
+            <mat-expansion-panel class="tb-settings" [expanded]="showSecurityControl.value">
+              <mat-expansion-panel-header fxLayout="row wrap">
+                <mat-panel-title>
+                  <mat-slide-toggle fxLayoutAlign="center" [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
+                    <mat-label>
+                      {{ 'gateway.tls-connection' | translate }}
+                    </mat-label>
+                  </mat-slide-toggle>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <tb-modbus-security-config formControlName="security"></tb-modbus-security-config>
+            </mat-expansion-panel>
+          </div>
           <ng-container [formGroup]="slaveConfigFormGroup.get('identity')">
             <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
               <div class="fixed-title-width" translate>gateway.vendor-name</div>

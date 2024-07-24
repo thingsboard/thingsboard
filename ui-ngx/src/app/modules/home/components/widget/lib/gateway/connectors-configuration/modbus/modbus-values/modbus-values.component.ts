@@ -20,8 +20,8 @@ import {
   Component,
   forwardRef,
   Input,
-  OnChanges,
   OnDestroy,
+  OnInit,
   Renderer2,
   ViewContainerRef
 } from '@angular/core';
@@ -91,7 +91,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
   `]
 })
 
-export class ModbusValuesComponent implements ControlValueAccessor, Validator, OnChanges, OnDestroy {
+export class ModbusValuesComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
   @coerceBoolean()
   @Input() singleMode = false;
@@ -113,22 +113,11 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
               private renderer: Renderer2,
               private viewContainerRef: ViewContainerRef,
               private cdr: ChangeDetectorRef,
-  ) {
-    this.valuesFormGroup = this.fb.group(this.modbusRegisterTypes.reduce((registersAcc, register) => {
-      return {
-        ...registersAcc,
-        [register]: this.fb.group(this.modbusValueKeys.reduce((acc, key) => ({...acc, [key]: [[], []]}), {})),
-      };
-    }, {}));
+  ) {}
 
+  ngOnInit() {
+    this.initializeValuesFormGroup();
     this.observeValuesChanges();
-  }
-
-  ngOnChanges(): void {
-    if (this.singleMode) {
-      this.valuesFormGroup = this.fb.group(this.modbusValueKeys.reduce((acc, key) => ({...acc, [key]: [[], []]}), {}));
-      this.observeValuesChanges();
-    }
   }
 
   ngOnDestroy(): void {
@@ -217,6 +206,28 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
       });
     }
   }
+
+  private initializeValuesFormGroup(): void {
+    if (this.singleMode) {
+      this.valuesFormGroup = this.fb.group(this.modbusValueKeys.reduce((acc, key) => {
+        acc[key] = this.fb.control([[], []]);
+        return acc;
+      }, {}));
+    } else {
+      this.valuesFormGroup = this.fb.group(
+        this.modbusRegisterTypes.reduce((registersAcc, register) => {
+
+          registersAcc[register] = this.fb.group(this.modbusValueKeys.reduce((acc, key) => {
+            acc[key] = this.fb.control([[], []]);
+            return acc;
+          }, {}));
+
+          return registersAcc;
+        }, {})
+      );
+    }
+  }
+
 
   private observeValuesChanges(): void {
     this.valuesFormGroup.valueChanges
