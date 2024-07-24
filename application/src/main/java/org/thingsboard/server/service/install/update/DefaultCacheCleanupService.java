@@ -61,6 +61,10 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 log.info("Clearing cache to upgrade from version 3.6.4 to 3.7.0");
                 clearAll();
                 break;
+            case "3.7.0":
+                log.info("Clearing cache to upgrade from version 3.7.0 to 3.7.1");
+                clearCacheByName(SECURITY_SETTINGS_CACHE);
+                break;
             default:
                 //Do nothing, since cache cleanup is optional.
         }
@@ -88,4 +92,5 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
         }
         cacheManager.getCacheNames().forEach(this::clearCacheByName);
     }
+
 }
