@@ -3623,6 +3623,7 @@
             "bottom-fluid-color": "Bottom fluid color",
             "display": "Display",
             "value": "Value",
+            "units": "Units",
             "flow-meter-value-hint": "Double value showing on flow meter display",
             "warning-state": "Warning state",
             "warning": "Warning",

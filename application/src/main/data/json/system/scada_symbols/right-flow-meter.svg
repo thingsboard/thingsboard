@@ -53,7 +53,7 @@
     },
     {
       "tag": "value",
-      "stateRenderFunction": "if (!ctx.properties.showValue) {\n    element.hide();\n} else {\n    var value = ctx.values.value;\n    ctx.api.text(element, value.toFixed(0));\n}",
+      "stateRenderFunction": "var value = ctx.values.value;\nctx.api.text(element, value.toFixed(0));\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -62,7 +62,7 @@
     },
     {
       "tag": "valueUnits",
-      "stateRenderFunction": "if (!ctx.properties.showValue) {\n    element.hide();\n} else {\n    var units = ctx.properties.valueUnits;\n    ctx.api.text(element, units || '');\n}",
+      "stateRenderFunction": "var units = ctx.properties.valueUnits;\nctx.api.text(element, units || '');\n",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -239,33 +239,17 @@
   ],
   "properties": [
     {
-      "id": "showValue",
-      "name": "{i18n:scada.symbol.value}",
-      "type": "switch",
-      "default": true,
-      "required": null,
-      "subLabel": null,
-      "divider": null,
-      "fieldSuffix": null,
-      "disableOnProperty": null,
-      "rowClass": "",
-      "fieldClass": "",
-      "min": null,
-      "max": null,
-      "step": null
-    },
-    {
       "id": "valueUnits",
-      "name": "{i18n:scada.symbol.value}",
+      "name": "{i18n:scada.symbol.units}",
       "type": "units",
       "default": "m³/hr",
       "required": null,
       "subLabel": null,
       "divider": null,
       "fieldSuffix": null,
-      "disableOnProperty": "showValue",
+      "disableOnProperty": null,
       "rowClass": "",
-      "fieldClass": "",
+      "fieldClass": "medium-width",
       "min": null,
       "max": null,
       "step": null

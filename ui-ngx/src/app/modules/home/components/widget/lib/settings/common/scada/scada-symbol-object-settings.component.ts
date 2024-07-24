@@ -231,11 +231,15 @@ export class ScadaSymbolObjectSettingsComponent implements OnInit, OnChanges, Co
         if (this.validatorTriggers.length) {
           const observables: Observable<any>[] = [];
           for (const trigger of this.validatorTriggers) {
-            observables.push(propertiesFormGroup.get(trigger).valueChanges);
+            if (propertiesFormGroup.get(trigger)) {
+              observables.push(propertiesFormGroup.get(trigger).valueChanges);
+            }
           }
-          this.validatorSubscription = merge(...observables).subscribe(() => {
-            this.updateValidators();
-          });
+          if (observables.length) {
+            this.validatorSubscription = merge(...observables).subscribe(() => {
+              this.updateValidators();
+            });
+          }
         }
         this.setupValue();
         this.cd.markForCheck();

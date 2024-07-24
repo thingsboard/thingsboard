@@ -99,6 +99,13 @@ export class ScadaSymbolPropertiesComponent implements ControlValueAccessor, OnI
           properties = properties.filter(p => propertyValid(p));
         }
         this.booleanPropertyIds = properties.filter(p => p.type === ScadaSymbolPropertyType.switch).map(p => p.id);
+        properties.forEach((p, i) => {
+          if (p.disableOnProperty && !this.booleanPropertyIds.includes(p.disableOnProperty)) {
+            p.disableOnProperty = null;
+            const controls = this.propertiesFormArray().controls;
+            controls[i].patchValue(p, {emitEvent: false});
+          }
+        });
         this.propagateChange(properties);
       }
     );
