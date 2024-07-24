@@ -105,7 +105,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
   readonly modbusHelpLink =
     'https://thingsboard.io/docs/iot-gateway/config/modbus/#section-master-description-and-configuration-parameters';
   readonly serialSpecificControlKeys = ['serialPort', 'baudrate', 'stopbits', 'bytesize', 'parity', 'strict'];
-  readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host'];
+  readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host', 'wordOrder'];
 
   private destroy$ = new Subject<void>();
 
