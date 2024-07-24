@@ -3625,6 +3625,8 @@
             "value": "Value",
             "units": "Units",
             "flow-meter-value-hint": "Double value showing on flow meter display",
+            "running": "Running",
+            "running-hint": "Indicates whether component is in running state.",
             "warning-state": "Warning state",
             "warning": "Warning",
             "warning-state-hint": "Indicates whether component is in warning state.",
@@ -3643,7 +3645,21 @@
             "active-border-color": "Active border color",
             "warning-border-color": "Warning border color",
             "critical-border-color": "Critical border color",
-            "background-color": "Background color"
+            "background-color": "Background color",
+            "rotation-animation-speed": "Rotation animation speed",
+            "rotation-animation-speed-hint": "Double value indicating rotation animation speed. 1 - normal speed, 0 - no animation, < 1 - slower animation, > 1 - faster animation.",
+            "on-click": "On click",
+            "on-click-hint": "Action invoked when user clicks on the component.",
+            "right-top-connector": "Right top connector",
+            "right-bottom-connector": "Right bottom connector",
+            "left-top-connector": "Left top connector",
+            "left-bottom-connector": "Left bottom connector",
+            "top-left-connector": "Top left connector",
+            "top-right-connector": "Top right connector",
+            "running-color": "Running color",
+            "stopped-color": "Stopped color",
+            "warning-color": "Warning color",
+            "critical-color": "Critical color"
         }
     },
     "item": {
