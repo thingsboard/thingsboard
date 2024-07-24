@@ -7046,6 +7046,7 @@
         "notification": {
             "max-notification-display": "Maximum notifications to display",
             "counter": "Counter",
+            "counter-hint": "Counter will be displayed if \"Widget title\" is enabled",
             "icon": "Icon",
             "counter-value": "Value",
             "counter-color": "Color",
