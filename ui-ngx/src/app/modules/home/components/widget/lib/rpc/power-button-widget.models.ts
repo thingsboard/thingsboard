@@ -36,9 +36,9 @@ export enum PowerButtonLayout {
   default_volume = 'default_volume',
   simplified_volume = 'simplified_volume',
   outlined_volume = 'outlined_volume',
-  default_power = 'default_power',
-  simplified_power = 'simplified_power',
-  outlined_power = 'outlined_power'
+  default_icon = 'default_icon',
+  simplified_icon = 'simplified_icon',
+  outlined_icon = 'outlined_icon'
 }
 
 export const powerButtonLayouts = Object.keys(PowerButtonLayout) as PowerButtonLayout[];
@@ -51,9 +51,9 @@ export const powerButtonLayoutTranslations = new Map<PowerButtonLayout, string>(
     [PowerButtonLayout.default_volume, 'widgets.power-button.layout-default-volume'],
     [PowerButtonLayout.simplified_volume, 'widgets.power-button.layout-simplified-volume'],
     [PowerButtonLayout.outlined_volume, 'widgets.power-button.layout-outlined-volume'],
-    [PowerButtonLayout.default_power, 'widgets.power-button.layout-default-power'],
-    [PowerButtonLayout.simplified_power, 'widgets.power-button.layout-simplified-power'],
-    [PowerButtonLayout.outlined_power, 'widgets.power-button.layout-outlined-power']
+    [PowerButtonLayout.default_icon, 'widgets.power-button.layout-default-icon'],
+    [PowerButtonLayout.simplified_icon, 'widgets.power-button.layout-simplified-icon'],
+    [PowerButtonLayout.outlined_icon, 'widgets.power-button.layout-outlined-icon']
   ]
 );
 
@@ -65,9 +65,9 @@ export const powerButtonLayoutImages = new Map<PowerButtonLayout, string>(
     [PowerButtonLayout.default_volume, 'assets/widget/power-button/default-volume-layout.svg'],
     [PowerButtonLayout.simplified_volume, 'assets/widget/power-button/simplified-volume-layout.svg'],
     [PowerButtonLayout.outlined_volume, 'assets/widget/power-button/outlined-volume-layout.svg'],
-    [PowerButtonLayout.default_power, 'assets/widget/power-button/default-power-layout.svg'],
-    [PowerButtonLayout.simplified_power, 'assets/widget/power-button/simplified-power-layout.svg'],
-    [PowerButtonLayout.outlined_power, 'assets/widget/power-button/outlined-power-layout.svg']
+    [PowerButtonLayout.default_icon, 'assets/widget/power-button/default-icon-layout.svg'],
+    [PowerButtonLayout.simplified_icon, 'assets/widget/power-button/simplified-icon-layout.svg'],
+    [PowerButtonLayout.outlined_icon, 'assets/widget/power-button/outlined-icon-layout.svg']
   ]
 );
 
@@ -266,12 +266,12 @@ export abstract class PowerButtonShape {
         return new SimplifiedVolumePowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
       case PowerButtonLayout.outlined_volume:
         return new OutlinedVolumePowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
-      case PowerButtonLayout.default_power:
-        return new DefaultPowerPowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
-      case PowerButtonLayout.simplified_power:
-        return new SimplifiedPowerPowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
-      case PowerButtonLayout.outlined_power:
-        return new OutlinedPowerPowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
+      case PowerButtonLayout.default_icon:
+        return new DefaultIconPowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
+      case PowerButtonLayout.simplified_icon:
+        return new SimplifiedIconPowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
+      case PowerButtonLayout.outlined_icon:
+        return new OutlinedIconPowerButtonShape(ctx, svgShape, settings, value, disabled, onClick);
     }
   }
 
@@ -744,19 +744,19 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.onLabelShape = this.createOnLabel('400');
   }
 
-  protected addMask(onCircleShape: Circle) {
+  protected addOnCenterToMask(onCircleShape: Circle) {
     this.createMask(onCircleShape,[this.onLabelShape]);
   }
 
-  protected addTimeLine(pressedTimeline: Timeline) {
+  protected addOnCenterTimeLine(pressedTimeline: Timeline) {
     this.onLabelShape.timeline(pressedTimeline);
   }
 
-  protected drawColor(mainColor: PowerButtonColor) {
+  protected drawOffCenterColor(mainColor: PowerButtonColor) {
     this.offLabelShape.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
   }
 
-  protected animation(scale: number) {
+  protected onCenterAnimation(scale: number) {
     powerButtonAnimation(this.onLabelShape).transform({scale, origin: {x: cx, y: cy}});
   }
 
@@ -781,12 +781,12 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.drawOffCenter(this.centerGroup);
     this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 24).center(cx, cy);
     this.drawOnCenter();
-    this.addMask(this.onCircleShape);
+    this.addOnCenterToMask(this.onCircleShape);
     this.innerShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 24, cx, cy, 3, 0.3);
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
-    this.addTimeLine(this.pressedTimeline);
+    this.addOnCenterTimeLine(this.pressedTimeline);
     this.innerShadow.timeline(this.pressedTimeline);
   }
 
@@ -806,7 +806,7 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
       this.innerBorder.fill(this.innerBorderGradient);
       this.innerBorder.attr({ 'fill-opacity': 1 });
     }
-    this.drawColor(mainColor);
+    this.drawOffCenterColor(mainColor);
     this.onCircleShape.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
   }
 
@@ -831,14 +831,14 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
     this.innerShadow.show();
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
-    this.animation(pressedScale);
+    this.onCenterAnimation(pressedScale);
     this.innerShadow.animate(6, 0.6);
   }
 
   protected onPressEnd() {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
-    this.animation(1);
+    this.onCenterAnimation(1);
     this.innerShadow.animateRestore().after(() => {
       if (this.disabled) {
         this.innerShadow.hide();
@@ -848,7 +848,7 @@ class DefaultVolumePowerButtonShape extends PowerButtonShape {
 
 }
 
-class DefaultPowerPowerButtonShape extends DefaultVolumePowerButtonShape {
+class DefaultIconPowerButtonShape extends DefaultVolumePowerButtonShape {
   private offPowerSymbolCircle: Path;
   private offPowerSymbolLine: Path;
   private onPowerSymbolCircle: Path;
@@ -864,21 +864,21 @@ class DefaultPowerPowerButtonShape extends DefaultVolumePowerButtonShape {
     this.onPowerSymbolLine = this.svgShape.path(powerLine).center(cx, cy-12);
   }
 
-  protected addMask(onCircleShape: Circle) {
+  protected addOnCenterToMask(onCircleShape: Circle) {
     this.createMask(onCircleShape, [this.onPowerSymbolCircle, this.onPowerSymbolLine]);
   }
 
-  protected addTimeLine(pressedTimeline: Timeline) {
+  protected addOnCenterTimeLine(pressedTimeline: Timeline) {
     this.onPowerSymbolCircle.timeline(pressedTimeline);
     this.onPowerSymbolLine.timeline(pressedTimeline);
   }
 
-  protected drawColor(mainColor: PowerButtonColor) {
+  protected drawOffCenterColor(mainColor: PowerButtonColor) {
     this.offPowerSymbolCircle.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
     this.offPowerSymbolLine.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
   }
 
-  protected animation(scale: number) {
+  protected onCenterAnimation(scale: number) {
     powerButtonAnimation(this.onPowerSymbolCircle).transform({scale, origin: {x: cx, y: cy}});
     powerButtonAnimation(this.onPowerSymbolLine).transform({scale, origin: {x: cx, y: cy}});
   }
@@ -961,7 +961,7 @@ class SimplifiedVolumePowerButtonShape extends PowerButtonShape {
   }
 }
 
-class SimplifiedPowerPowerButtonShape extends SimplifiedVolumePowerButtonShape {
+class SimplifiedIconPowerButtonShape extends SimplifiedVolumePowerButtonShape {
   private offPowerSymbolCircle: Path;
   private offPowerSymbolLine: Path;
   private onPowerSymbolCircle: Path;
@@ -1004,19 +1004,19 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     this.onLabelShape = this.createOnLabel('800');
   }
 
-  protected addMask(onCircleShape: Circle) {
+  protected addOnCenterToMask(onCircleShape: Circle) {
     this.createMask(onCircleShape,[this.onLabelShape]);
   }
 
-  protected addTimeLine(pressedTimeline: Timeline) {
+  protected addOnCenterTimeLine(pressedTimeline: Timeline) {
     this.onLabelShape.timeline(pressedTimeline);
   }
 
-  protected drawColor(mainColor: PowerButtonColor) {
+  protected drawOffCenterColor(mainColor: PowerButtonColor) {
     this.offLabelShape.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
   }
 
-  protected animation(scale: number) {
+  protected onCenterAnimation(scale: number) {
     powerButtonAnimation(this.onLabelShape).transform({scale, origin: {x: cx, y: cy}});
   }
 
@@ -1039,14 +1039,14 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     this.onCircleShape = this.svgShape.circle(powerButtonShapeSize - 30).center(cx, cy)
     .addTo(this.onCenterGroup);
     this.drawOnCenter();
-    this.addMask(this.onCircleShape);
+    this.addOnCenterToMask(this.onCircleShape);
     this.pressedShadow = new InnerShadowCircle(this.svgShape, powerButtonShapeSize - 30, cx, cy, 0, 0);
     this.backgroundShape.addClass('tb-small-shadow');
 
     this.pressedTimeline = new Timeline();
     this.centerGroup.timeline(this.pressedTimeline);
     this.onCenterGroup.timeline(this.pressedTimeline);
-    this.addTimeLine(this.pressedTimeline);
+    this.addOnCenterTimeLine(this.pressedTimeline);
     this.pressedShadow.timeline(this.pressedTimeline);
   }
 
@@ -1058,7 +1058,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
       this.outerBorder.attr({ 'fill-opacity': 1 });
     }
     this.innerBorder.attr({fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
-    this.drawColor(mainColor);
+    this.drawOffCenterColor(mainColor);
     this.onCircleShape.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
   }
 
@@ -1079,7 +1079,7 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     const pressedScale = 0.75;
     powerButtonAnimation(this.centerGroup).transform({scale: pressedScale});
     powerButtonAnimation(this.onCenterGroup).transform({scale: 0.98});
-    this.animation(pressedScale / 0.98);
+    this.onCenterAnimation(pressedScale / 0.98);
     this.pressedShadow.animate(6, 0.6);
   }
 
@@ -1087,13 +1087,13 @@ class OutlinedVolumePowerButtonShape extends PowerButtonShape {
     this.pressedTimeline.finish();
     powerButtonAnimation(this.centerGroup).transform({scale: 1});
     powerButtonAnimation(this.onCenterGroup).transform({scale: 1});
-    this.animation(1);
+    this.onCenterAnimation(1);
     this.pressedShadow.animateRestore();
   }
 
 }
 
-class OutlinedPowerPowerButtonShape extends OutlinedVolumePowerButtonShape {
+class OutlinedIconPowerButtonShape extends OutlinedVolumePowerButtonShape {
   private offPowerSymbolCircle: Path;
   private offPowerSymbolLine: Path;
   private onPowerSymbolCircle: Path;
@@ -1109,21 +1109,21 @@ class OutlinedPowerPowerButtonShape extends OutlinedVolumePowerButtonShape {
     this.onPowerSymbolLine = this.svgShape.path(powerLineStroke).center(cx, cy-12);
   }
 
-  protected addMask(onCircleShape: Circle) {
+  protected addOnCenterToMask(onCircleShape: Circle) {
     this.createMask(onCircleShape, [this.onPowerSymbolCircle, this.onPowerSymbolLine]);
   }
 
-  protected addTimeLine(pressedTimeline: Timeline) {
+  protected addOnCenterTimeLine(pressedTimeline: Timeline) {
     this.onPowerSymbolCircle.timeline(pressedTimeline);
     this.onPowerSymbolLine.timeline(pressedTimeline);
   }
 
-  protected drawColor(mainColor: PowerButtonColor) {
+  protected drawOffCenterColor(mainColor: PowerButtonColor) {
     this.offPowerSymbolCircle.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
     this.offPowerSymbolLine.attr({ fill: mainColor.hex, 'fill-opacity': mainColor.opacity});
   }
 
-  protected animation(scale: number) {
+  protected onCenterAnimation(scale: number) {
     powerButtonAnimation(this.onPowerSymbolCircle).transform({scale, origin: {x: cx, y: cy}});
     powerButtonAnimation(this.onPowerSymbolLine).transform({scale, origin: {x: cx, y: cy}});
   }
