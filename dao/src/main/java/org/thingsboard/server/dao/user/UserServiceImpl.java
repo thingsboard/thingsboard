@@ -60,6 +60,7 @@ import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.exception.IncorrectParameterException;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
+import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.ArrayList;
@@ -69,6 +70,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
+import java.util.concurrent.TimeUnit;
 
 import static org.thingsboard.server.common.data.StringUtils.generateSafeToken;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -99,6 +101,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     private final UserAuthSettingsDao userAuthSettingsDao;
     private final UserSettingsService userSettingsService;
     private final UserSettingsDao userSettingsDao;
+    private final SecuritySettingsService securitySettingsService;
     private final DataValidator<User> userValidator;
     private final DataValidator<UserCredentials> userCredentialsValidator;
     private final ApplicationEventPublisher eventPublisher;
@@ -175,9 +178,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
                 countService.publishCountEntityEvictEvent(savedUser.getTenantId(), EntityType.USER);
                 UserCredentials userCredentials = new UserCredentials();
                 userCredentials.setEnabled(false);
-                userCredentials.setActivateToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
                 userCredentials.setUserId(new UserId(savedUser.getUuidId()));
                 userCredentials.setAdditionalInfo(JacksonUtil.newObjectNode());
+                userCredentials = generateUserActivationToken(userCredentials);
                 userCredentialsDao.save(user.getTenantId(), userCredentials);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder()
@@ -239,8 +242,12 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         if (userCredentials.isEnabled()) {
             throw new IncorrectParameterException("User credentials already activated");
         }
+        if (userCredentials.isActivationTokenExpired()) {
+            throw new IncorrectParameterException("Activation token expired");
+        }
         userCredentials.setEnabled(true);
         userCredentials.setActivateToken(null);
+        userCredentials.setActivateTokenExpTime(null);
         userCredentials.setPassword(password);
         if (userCredentials.getPassword() != null) {
             updatePasswordHistory(userCredentials);
@@ -260,7 +267,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         if (!userCredentials.isEnabled()) {
             throw new DisabledException(String.format("User credentials not enabled [%s]", email));
         }
-        userCredentials.setResetToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
+        userCredentials = generatePasswordResetToken(userCredentials);
         return saveUserCredentials(tenantId, userCredentials);
     }
 
@@ -270,8 +277,24 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         if (!userCredentials.isEnabled()) {
             throw new IncorrectParameterException("Unable to reset password for inactive user");
         }
-        userCredentials.setResetToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
+        userCredentials = generatePasswordResetToken(userCredentials);
         return saveUserCredentials(tenantId, userCredentials);
+    }
+
+    @Override
+    public UserCredentials generatePasswordResetToken(UserCredentials userCredentials) {
+        userCredentials.setResetToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
+        int ttlHours = securitySettingsService.getSecuritySettings().getPasswordResetTokenTtl();
+        userCredentials.setResetTokenExpTime(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(ttlHours));
+        return userCredentials;
+    }
+
+    @Override
+    public UserCredentials generateUserActivationToken(UserCredentials userCredentials) {
+        userCredentials.setActivateToken(generateSafeToken(DEFAULT_TOKEN_LENGTH));
+        int ttlHours = securitySettingsService.getSecuritySettings().getUserActivationTokenTtl();
+        userCredentials.setActivateTokenExpTime(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(ttlHours));
+        return userCredentials;
     }
 
     @Override

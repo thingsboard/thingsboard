@@ -475,9 +475,11 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     id uuid NOT NULL CONSTRAINT user_credentials_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     activate_token varchar(255) UNIQUE,
+    activate_token_exp_time BIGINT,
     enabled boolean,
     password varchar(255),
     reset_token varchar(255) UNIQUE,
+    reset_token_exp_time BIGINT,
     user_id uuid UNIQUE,
     additional_info varchar DEFAULT '{}'
 );

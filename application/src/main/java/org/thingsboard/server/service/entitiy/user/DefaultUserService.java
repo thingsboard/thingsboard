@@ -56,8 +56,7 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
             if (sendEmail) {
                 UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
                 String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
-                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
-                        userCredentials.getActivateToken());
+                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl, userCredentials.getActivateToken());
                 String email = savedUser.getEmail();
                 try {
                     mailService.sendActivationEmail(activateUrl, email);
