@@ -420,6 +420,8 @@ CREATE TABLE IF NOT EXISTS error_event (
     e_error varchar
 ) PARTITION BY RANGE (ts);
 
+CREATE SEQUENCE IF NOT EXISTS relation_version_seq cache 1000;
+
 CREATE TABLE IF NOT EXISTS relation (
     from_id uuid,
     from_type varchar(255),
@@ -428,6 +430,7 @@ CREATE TABLE IF NOT EXISTS relation (
     relation_type_group varchar(255),
     relation_type varchar(255),
     additional_info varchar,
+    version bigint default 0,
     CONSTRAINT relation_pkey PRIMARY KEY (from_id, from_type, relation_type_group, relation_type, to_id, to_type)
 );
 
