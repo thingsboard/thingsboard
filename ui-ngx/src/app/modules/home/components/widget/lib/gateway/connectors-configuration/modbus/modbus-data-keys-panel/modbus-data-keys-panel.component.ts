@@ -84,8 +84,8 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   constructor(private fb: UntypedFormBuilder) {}
 
   ngOnInit(): void {
-    this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.withFunctionCode = !this.isMaster || (this.keysType !== ModbusValueKey.ATTRIBUTES && this.keysType !== ModbusValueKey.TIMESERIES);
+    this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
   }
 
