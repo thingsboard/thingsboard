@@ -188,10 +188,10 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
     }
 
     private void handleMaxPayloadSizeExceededException(HttpServletResponse response, TbMaxPayloadSizeExceededException exception) throws IOException {
-        response.setStatus(HttpStatus.BAD_REQUEST.value());
+        response.setStatus(HttpStatus.PAYLOAD_TOO_LARGE.value());
         JacksonUtil.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(exception.getMessage(),
-                        ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.BAD_REQUEST));
+                        ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.PAYLOAD_TOO_LARGE));
     }
 
     private void handleSubscriptionException(ThingsboardException subscriptionException, HttpServletResponse response) throws IOException {

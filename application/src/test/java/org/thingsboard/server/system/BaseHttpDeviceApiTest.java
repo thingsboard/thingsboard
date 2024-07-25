@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.system;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import org.junit.Before;
 import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
@@ -26,7 +25,6 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
 
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
@@ -84,8 +82,8 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
         String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
                 JacksonUtil.toString(createRpcResponsePayload(10001)),
                 String.class,
-                status().is4xxClientError());
-        assertThat(errorResponse).contains("Payload size exceeds the configured maximum");
+                status().isPayloadTooLarge());
+        assertThat(errorResponse).contains("Payload size exceeds the limit");
 
         doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
                 JacksonUtil.toString(createRpcResponsePayload(10000)),
@@ -98,8 +96,8 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
         String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
                 JacksonUtil.toString(createRpcRequestPayload(10001)),
                 String.class,
-                status().is4xxClientError());
-        assertThat(errorResponse).contains("Payload size exceeds the configured maximum");
+                status().isPayloadTooLarge());
+        assertThat(errorResponse).contains("Payload size exceeds the limit");
 
         doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
                 JacksonUtil.toString(createRpcRequestPayload(10000)),
@@ -107,24 +105,14 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 status().isOk());
     }
 
-    private ObjectNode createRpcResponsePayload(int size) {
-        ObjectNode rpcResponseBody = JacksonUtil.newObjectNode();
-        char[] chars = new char[size-13];
-        Arrays.fill(chars, 'a');
-        rpcResponseBody.put("result", new String(chars));
-        return rpcResponseBody;
+    private String createRpcResponsePayload(int size) {
+        String value = "a".repeat(size - 19);
+        return "{\"result\":\"" + value + "\"}";
     }
 
-    private ObjectNode createRpcRequestPayload(int size) {
-        ObjectNode rpcResponseBody = JacksonUtil.newObjectNode();
-        char[] chars = new char[size-38];
-        Arrays.fill(chars, 'a');
-        rpcResponseBody.put("method", "get");
-        ObjectNode params = JacksonUtil.newObjectNode();
-        params.put("value", new String(chars));
-        rpcResponseBody.set("params", params);
-
-        return rpcResponseBody;
+    private String createRpcRequestPayload(int size) {
+        String value = "a".repeat(size - 50);
+        return "{\"method\":\"get\",\"params\":{\"value\":\"" + value + "\"}}";
     }
 
     protected ResultActions doGetAsync(String urlTemplate, Object... urlVariables) throws Exception {
