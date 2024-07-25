@@ -762,6 +762,22 @@ spring:
       # This property increases the number of connections in the pool as demand increases. At the same time, the property ensures that the pool doesn't grow to the point of exhausting a system's resources, which ultimately affects an application's performance and availability
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
       registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
+    dedicated:
+      enabled: "${SPRING_DEDICATED_DATASOURCE_ENABLED:true}"
+      # Database driver for Spring JPA - org.postgresql.Driver
+      driverClassName: "${SPRING_DEDICATED_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+      # Database connection URL
+      url: "${SPRING_DEDICATED_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_ce_events}"
+      # Database user name
+      username: "${SPRING_DEDICATED_DATASOURCE_USERNAME:postgres}"
+      # Database user password
+      password: "${SPRING_DEDICATED_DATASOURCE_PASSWORD:postgres}"
+      hikari:
+        # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak. A value of 0 means leak detection is disabled
+        leakDetectionThreshold: "${SPRING_DEDICATED_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
+        # This property increases the number of connections in the pool as demand increases. At the same time, the property ensures that the pool doesn't grow to the point of exhausting a system's resources, which ultimately affects an application's performance and availability
+        maximumPoolSize: "${SPRING_DEDICATED_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
+        registerMbeans: "${SPRING_DEDICATED_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
 
 # Audit log parameters
 audit-log:

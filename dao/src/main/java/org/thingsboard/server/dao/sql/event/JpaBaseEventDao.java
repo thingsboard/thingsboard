@@ -157,7 +157,7 @@ public class JpaBaseEventDao implements EventDao {
             }
         }
         partitioningRepository.createPartitionIfNotExists(event.getType().getTable(), event.getCreatedTime(),
-                partitionConfiguration.getPartitionSizeInMs(event.getType()));
+                partitionConfiguration.getPartitionSizeInMs(event.getType()), eventInsertRepository.getJdbcTemplate());
         return queue.add(event);
     }
 

@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
+import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -55,10 +57,13 @@ public class EventInsertRepository {
 
     private final Map<EventType, String> insertStmtMap = new ConcurrentHashMap<>();
 
+    @Getter
     @Autowired
+    @Qualifier("dedicatedJdbcTemplate")
     protected JdbcTemplate jdbcTemplate;
 
     @Autowired
+    @Qualifier("dedicatedTransactionTemplate")
     private TransactionTemplate transactionTemplate;
 
     @Value("${sql.remove_null_chars:true}")

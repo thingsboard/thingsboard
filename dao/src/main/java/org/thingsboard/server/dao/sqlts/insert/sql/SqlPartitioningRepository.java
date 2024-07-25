@@ -49,11 +49,21 @@ public class SqlPartitioningRepository {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void save(SqlPartition partition) {
+        save(partition, jdbcTemplate);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
+    public void save(SqlPartition partition, JdbcTemplate jdbcTemplate) {
         jdbcTemplate.execute(partition.getQuery());
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED) // executing non-transactionally, so that parent transaction is not aborted on partition save error
     public void createPartitionIfNotExists(String table, long entityTs, long partitionDurationMs) {
+        createPartitionIfNotExists(table, entityTs, partitionDurationMs, jdbcTemplate);
+    }
+
+    @Transactional(propagation = Propagation.NOT_SUPPORTED) // executing non-transactionally, so that parent transaction is not aborted on partition save error
+    public void createPartitionIfNotExists(String table, long entityTs, long partitionDurationMs, JdbcTemplate jdbcTemplate) {
         long partitionStartTs = calculatePartitionStartTime(entityTs, partitionDurationMs);
         Map<Long, SqlPartition> partitions = tablesPartitions.computeIfAbsent(table, t -> new ConcurrentHashMap<>());
         if (!partitions.containsKey(partitionStartTs)) {
@@ -62,7 +72,7 @@ public class SqlPartitioningRepository {
             try {
                 if (partitions.containsKey(partitionStartTs)) return;
                 log.info("Saving partition {}-{} for table {}", partition.getStart(), partition.getEnd(), table);
-                save(partition);
+                save(partition, jdbcTemplate);
                 log.trace("Adding partition to map: {}", partition);
                 partitions.put(partition.getStart(), partition);
             } catch (Exception e) {
