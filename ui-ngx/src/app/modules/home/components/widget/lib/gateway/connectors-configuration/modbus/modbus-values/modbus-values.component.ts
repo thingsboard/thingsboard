@@ -42,6 +42,7 @@ import {
   ModbusRegisterTranslationsMap,
   ModbusRegisterType,
   ModbusRegisterValues,
+  ModbusValue,
   ModbusValueKey,
   ModbusValues,
   ModbusValuesState,
@@ -103,7 +104,7 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
   ModbusValueKey = ModbusValueKey;
   valuesFormGroup: FormGroup;
 
-  private onChange: (value: string) => void;
+  private onChange: (value: ModbusValuesState) => void;
   private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
@@ -125,7 +126,7 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: ModbusValuesState) => void): void {
     this.onChange = fn;
   }
 
@@ -135,15 +136,15 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
 
   writeValue(values: ModbusValuesState): void {
     if (this.singleMode) {
-      this.valuesFormGroup.setValue(this.getSingleRegisterState(values as ModbusValues), {emitEvent: false});
+      this.valuesFormGroup.setValue(this.getSingleRegisterState(values as ModbusValues), { emitEvent: false });
     } else {
-      const registers = values as ModbusRegisterValues;
+      const { holding_registers, coils_initializer, input_registers, discrete_inputs } = values as ModbusRegisterValues;
       this.valuesFormGroup.setValue({
-        holding_registers: this.getSingleRegisterState(registers.holding_registers),
-        coils_initializer: this.getSingleRegisterState(registers.coils_initializer),
-        input_registers: this.getSingleRegisterState(registers.input_registers),
-        discrete_inputs: this.getSingleRegisterState(registers.discrete_inputs),
-      }, {emitEvent: false});
+        holding_registers: this.getSingleRegisterState(holding_registers),
+        coils_initializer: this.getSingleRegisterState(coils_initializer),
+        input_registers: this.getSingleRegisterState(input_registers),
+        discrete_inputs: this.getSingleRegisterState(discrete_inputs),
+      }, { emitEvent: false });
     }
     this.cdr.markForCheck();
   }
@@ -159,69 +160,63 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
     this.cdr.markForCheck();
   }
 
-  getValueGroup(valueKey: ModbusValueKey, register?: ModbusRegisterType) {
+  getValueGroup(valueKey: ModbusValueKey, register?: ModbusRegisterType): FormGroup {
     return register ? this.valuesFormGroup.get(register).get(valueKey).value : this.valuesFormGroup.get(valueKey).value;
   }
 
   manageKeys($event: Event, matButton: MatButton, keysType: ModbusValueKey, register?: ModbusRegisterType): void {
-    if ($event) {
-      $event.stopPropagation();
-    }
+    $event.stopPropagation();
     const trigger = matButton._elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
-    } else {
-      const group = this.valuesFormGroup;
-
-      const keysControl = register ? group.get(register).get(keysType) : group.get(keysType);
-      const ctx = {
-        values: keysControl.value,
-        isMaster: !this.singleMode,
-        keysType,
-        panelTitle: ModbusKeysPanelTitleTranslationsMap.get(keysType),
-        addKeyTitle: ModbusKeysAddKeyTranslationsMap.get(keysType),
-        deleteKeyTitle: ModbusKeysDeleteKeyTranslationsMap.get(keysType),
-        noKeysText: ModbusKeysNoKeysTextTranslationsMap.get(keysType)
-      };
-      const dataKeysPanelPopover = this.popoverService.displayPopover(
-        trigger,
-        this.renderer,
-        this.viewContainerRef,
-        ModbusDataKeysPanelComponent,
-        'leftBottom',
-        false,
-        null,
-        ctx,
-        {},
-        {},
-        {},
-        true
-      );
-      dataKeysPanelPopover.tbComponentRef.instance.popover = dataKeysPanelPopover;
-      dataKeysPanelPopover.tbComponentRef.instance.keysDataApplied.pipe(takeUntil(this.destroy$)).subscribe((keysData) => {
-        dataKeysPanelPopover.hide();
-        keysControl.patchValue(keysData);
-        keysControl.markAsDirty();
-        this.cdr.markForCheck();
-      });
+      return;
     }
+
+    const keysControl = this.getValueGroup(keysType, register);
+    const ctx = {
+      values: keysControl.value,
+      isMaster: !this.singleMode,
+      keysType,
+      panelTitle: ModbusKeysPanelTitleTranslationsMap.get(keysType),
+      addKeyTitle: ModbusKeysAddKeyTranslationsMap.get(keysType),
+      deleteKeyTitle: ModbusKeysDeleteKeyTranslationsMap.get(keysType),
+      noKeysText: ModbusKeysNoKeysTextTranslationsMap.get(keysType)
+    };
+    const dataKeysPanelPopover = this.popoverService.displayPopover(
+      trigger,
+      this.renderer,
+      this.viewContainerRef,
+      ModbusDataKeysPanelComponent,
+      'leftBottom',
+      false,
+      null,
+      ctx,
+      {},
+      {},
+      {},
+      true
+    );
+    dataKeysPanelPopover.tbComponentRef.instance.popover = dataKeysPanelPopover;
+    dataKeysPanelPopover.tbComponentRef.instance.keysDataApplied.pipe(takeUntil(this.destroy$)).subscribe((keysData: ModbusValue[]) => {
+      dataKeysPanelPopover.hide();
+      keysControl.patchValue(keysData);
+      keysControl.markAsDirty();
+      this.cdr.markForCheck();
+    });
   }
 
   private initializeValuesFormGroup(): void {
+    const getValuesFormGroup = () => this.fb.group(this.modbusValueKeys.reduce((acc, key) => {
+      acc[key] = this.fb.control([[], []]);
+      return acc;
+    }, {}));
+
     if (this.singleMode) {
-      this.valuesFormGroup = this.fb.group(this.modbusValueKeys.reduce((acc, key) => {
-        acc[key] = this.fb.control([[], []]);
-        return acc;
-      }, {}));
+      this.valuesFormGroup = getValuesFormGroup();
     } else {
       this.valuesFormGroup = this.fb.group(
         this.modbusRegisterTypes.reduce((registersAcc, register) => {
-
-          registersAcc[register] = this.fb.group(this.modbusValueKeys.reduce((acc, key) => {
-            acc[key] = this.fb.control([[], []]);
-            return acc;
-          }, {}));
-
+          registersAcc[register] = getValuesFormGroup();
           return registersAcc;
         }, {})
       );

@@ -85,7 +85,7 @@ export class ModbusSecurityConfigComponent implements ControlValueAccessor, Vali
       keyfile: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       password: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
       server_hostname: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
-      reqclicert: [{value: false, disabled: true}, []],
+      reqclicert: [{value: false, disabled: true}],
     });
 
     this.observeValueChanges();

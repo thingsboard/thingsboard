@@ -30,12 +30,12 @@ export class GatewayPortTooltipPipe implements PipeTransform {
   transform(portControl: AbstractControl): string {
     if (portControl.hasError('required')) {
       return this.translate.instant('gateway.port-required');
-    } else if (
-      portControl.hasError('min') ||
-      portControl.hasError('max')
-    ) {
-      return this.translate.instant('gateway.port-limits-error',
-        {min: PortLimits.MIN, max: PortLimits.MAX});
+    }
+    if (portControl.hasError('min') || portControl.hasError('max')) {
+      return this.translate.instant('gateway.port-limits-error', {
+        min: PortLimits.MIN,
+        max: PortLimits.MAX,
+      });
     }
     return '';
   }

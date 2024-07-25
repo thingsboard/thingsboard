@@ -485,6 +485,11 @@ export interface MappingInfo {
   buttonTitle: string;
 }
 
+export interface ModbusSlaveInfo {
+  value: SlaveConfig;
+  buttonTitle: string;
+}
+
 export enum ConnectorConfigurationModes {
   BASIC = 'basic',
   ADVANCED = 'advanced'
@@ -852,24 +857,6 @@ export enum ModbusObjectCountByDataType {
   '64float' = 4,
 }
 
-export enum ModbusValueField {
-  Tag = 'tag',
-  Type = 'type',
-  ObjectsCount = 'objectsCount',
-  Address = 'address',
-  Value = 'value',
-}
-
-export const ModbusFieldsTranslationsMap = new Map<ModbusValueField, string>(
-  [
-    [ModbusValueField.Tag, 'gateway.tag'],
-    [ModbusValueField.Type, 'gateway.type'],
-    [ModbusValueField.ObjectsCount, 'gateway.objects_count'],
-    [ModbusValueField.Address, 'gateway.address'],
-    [ModbusValueField.Value, 'gateway.value']
-  ]
-);
-
 export enum ModbusValueKey {
   ATTRIBUTES = 'attributes',
   TIMESERIES = 'timeseries',
@@ -946,7 +933,7 @@ export interface SlaveConfig {
   pollPeriod: number;
   unitId: number;
   deviceName: string;
-  deviceType?: string;
+  deviceType: string;
   sendDataOnlyOnChange: boolean;
   connectAttemptTimeMs: number;
   connectAttemptCount: number;
@@ -959,7 +946,7 @@ export interface SlaveConfig {
   baudrate?: number;
   stopbits?: number;
   bytesize?: number;
-  parity?: string;
+  parity?: ModbusParity;
   strict?: boolean;
 }
 

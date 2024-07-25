@@ -105,10 +105,8 @@
                   <mat-icon matSuffix
                             matTooltipPosition="above"
                             matTooltipClass="tb-error-tooltip"
-                            [matTooltip]="slaveConfigFormGroup.get('serialPort') | getGatewayPortTooltip"
-                            *ngIf="(slaveConfigFormGroup.get('serialPort').hasError('required') ||
-                                            slaveConfigFormGroup.get('serialPort').hasError('min') ||
-                                            slaveConfigFormGroup.get('serialPort').hasError('max')) &&
+                            [matTooltip]="'gateway.port-required' | translate"
+                            *ngIf="slaveConfigFormGroup.get('serialPort').hasError('required') &&
                                             slaveConfigFormGroup.get('serialPort').touched"
                             class="tb-error">
                     warning

@@ -86,11 +86,8 @@
               <mat-icon matSuffix
                         matTooltipPosition="above"
                         matTooltipClass="tb-error-tooltip"
-                        [matTooltip]="slaveConfigFormGroup.get('serialPort') | getGatewayPortTooltip"
-                        *ngIf="(slaveConfigFormGroup.get('serialPort').hasError('required') ||
-                                              slaveConfigFormGroup.get('serialPort').hasError('min') ||
-                                              slaveConfigFormGroup.get('serialPort').hasError('max')) &&
-                                              slaveConfigFormGroup.get('serialPort').touched"
+                        [matTooltip]="'gateway.port-required' | translate"
+                        *ngIf="slaveConfigFormGroup.get('port').hasError('required') && slaveConfigFormGroup.get('port').touched"
                         class="tb-error">
                 warning
               </mat-icon>
@@ -188,7 +185,7 @@
             <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="slaveConfigFormGroup">
+        <div class="tb-form-panel no-border no-padding padding-top">
           <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
             <div class="fixed-title-width" translate>gateway.byte-order</div>
             <div class="tb-flex no-gap">

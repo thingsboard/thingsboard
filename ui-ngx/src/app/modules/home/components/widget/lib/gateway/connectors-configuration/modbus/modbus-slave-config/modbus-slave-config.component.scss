@@ -16,11 +16,6 @@
 $server-config-header-height: 132px;
 
 :host {
-  .nested-expansion-header {
-    ::ng-deep .mat-content {
-      height: 100%;
-    }
-  }
 
   .slave-content {
     height: calc(100% - #{$server-config-header-height});

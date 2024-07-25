@@ -2756,6 +2756,7 @@
     },
     "gateway": {
         "address": "Address",
+        "address-required": "Address required",
         "add-entry": "Add configuration",
         "add-attribute": "Add attribute",
         "add-attribute-update": "Add attribute update",

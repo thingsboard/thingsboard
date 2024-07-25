@@ -68,12 +68,6 @@ import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master
         overflow: hidden !important;
       }
     }
-
-    :host ::ng-deep {
-      .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
-        height: 100%;
-      }
-    }
   `]
 })
 
@@ -83,10 +77,9 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
 
   basicFormGroup: FormGroup;
 
-  onChange: (value: string) => void;
+  onChange: (value: ModbusBasicConfig) => void;
   onTouched: () => void;
 
-  protected readonly connectorType = ConnectorType;
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
@@ -108,7 +101,7 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: ModbusBasicConfig) => void): void {
     this.onChange = fn;
   }
 
@@ -118,8 +111,8 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
 
   writeValue(basicConfig: ModbusBasicConfig): void {
     const editedBase = {
-      slave: basicConfig.slave || {},
-      master: basicConfig.master || {},
+      slave: basicConfig.slave ?? {},
+      master: basicConfig.master ?? {},
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
