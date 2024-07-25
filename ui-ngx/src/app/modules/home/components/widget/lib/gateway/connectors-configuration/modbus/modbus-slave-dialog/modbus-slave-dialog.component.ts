@@ -128,6 +128,10 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
     this.showSecurityControl.patchValue(!!this.data.value.security && !isEqual(this.data.value.security, {}));
   }
 
+  get protocolType(): ModbusProtocolType {
+    return this.slaveConfigFormGroup.get('type').value;
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -236,7 +240,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
   }
 
   private updateSecurityEnabling(isEnabled: boolean): void {
-    if (isEnabled) {
+    if (isEnabled && this.protocolType !== ModbusProtocolType.Serial) {
       this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
     } else {
       this.slaveConfigFormGroup.get('security').disable({emitEvent: false});

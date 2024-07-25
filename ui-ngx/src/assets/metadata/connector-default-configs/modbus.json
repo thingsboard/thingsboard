@@ -200,7 +200,7 @@
             "timeseries": [
                 {
                     "address": 2,
-                    "type": "int",
+                    "type": "8int",
                     "tag": "smm",
                     "objectsCount": 1,
                     "value": "12334"

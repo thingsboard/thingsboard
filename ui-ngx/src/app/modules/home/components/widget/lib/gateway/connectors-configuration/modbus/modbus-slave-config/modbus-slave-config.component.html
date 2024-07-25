@@ -34,7 +34,7 @@
       </tb-toggle-select>
     </div>
     <div class="tb-form-panel no-border no-padding padding-top">
-      <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial"
+      <div *ngIf="protocolType !== ModbusProtocolType.Serial"
            class="tb-form-row column-xs"
            fxLayoutAlign="space-between center"
       >
@@ -54,7 +54,7 @@
           </mat-form-field>
         </div>
       </div>
-      <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial else serialPort"
+      <div *ngIf="protocolType !== ModbusProtocolType.Serial else serialPort"
            class="tb-form-row column-xs"
            fxLayoutAlign="space-between center"
       >
@@ -102,7 +102,7 @@
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="method">
-              <mat-option *ngFor="let method of slaveConfigFormGroup.get('type').value === ModbusProtocolType.Serial ? modbusSerialMethodTypes : modbusMethodTypes"
+              <mat-option *ngFor="let method of protocolType === ModbusProtocolType.Serial ? modbusSerialMethodTypes : modbusMethodTypes"
                           [value]="method">{{ ModbusMethodLabelsMap.get(method) }}</mat-option>
             </mat-select>
           </mat-form-field>
@@ -168,7 +168,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="this.slaveConfigFormGroup.get('type').value === ModbusProtocolType.Serial" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="protocolType === ModbusProtocolType.Serial" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <div class="fixed-title-width" translate>gateway.baudrate</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -196,7 +196,7 @@
               </mat-form-field>
             </div>
           </div>
-          <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
+          <div *ngIf="protocolType !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
             <mat-expansion-panel class="tb-settings" [expanded]="showSecurityControl.value">
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>

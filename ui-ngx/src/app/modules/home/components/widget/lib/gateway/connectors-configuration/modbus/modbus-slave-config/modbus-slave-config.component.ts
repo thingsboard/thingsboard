@@ -134,6 +134,10 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     return this.slaveConfigFormGroup.get('sendDataToThingsBoard').value;
   }
 
+  get protocolType(): ModbusProtocolType {
+    return this.slaveConfigFormGroup.get('type').value;
+  }
+
   ngOnDestroy(): void {
     this.destroy$.next();
     this.destroy$.complete();
@@ -207,7 +211,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       this.showSecurityControl.disable({emitEvent: false});
       this.slaveConfigFormGroup.get('sendDataToThingsBoard').enable({emitEvent: false});
     }
-    this.updateEnablingByProtocol(this.slaveConfigFormGroup.get('type').value);
+    this.updateEnablingByProtocol(this.protocolType);
     this.updateSecurityEnable(this.showSecurityControl.value);
   }
 
@@ -218,7 +222,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   }
 
   private updateSecurityEnable(securityEnabled: boolean): void {
-    if (securityEnabled && this.isSlaveEnabled) {
+    if (securityEnabled && this.isSlaveEnabled && this.protocolType !== ModbusProtocolType.Serial) {
       this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
     } else {
       this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
