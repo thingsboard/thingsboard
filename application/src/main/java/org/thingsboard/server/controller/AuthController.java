@@ -21,7 +21,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
-import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -132,28 +131,28 @@ public class AuthController extends BaseController {
     @ApiOperation(value = "Check Activate User Token (checkActivateToken)",
             notes = "Checks the activation token and forwards user to 'Create Password' page. " +
                     "If token is valid, returns '303 See Other' (redirect) response code with the correct address of 'Create Password' page and same 'activateToken' specified in the URL parameters. " +
-                    "If token is not valid, returns '409 Conflict'.")
+                    "If token is not valid, returns '409 Conflict'. " +
+                    "If token is expired, returns '410 Gone'.")
     @GetMapping(value = "/noauth/activate", params = {"activateToken"})
-    public ResponseEntity<String> checkActivateToken(
+    public ResponseEntity<?> checkActivateToken(
             @Parameter(description = "The activate token string.")
             @RequestParam(value = "activateToken") String activateToken) {
-        HttpHeaders headers = new HttpHeaders();
-        HttpStatus responseStatus;
         UserCredentials userCredentials = userService.findUserCredentialsByActivateToken(TenantId.SYS_TENANT_ID, activateToken);
-        if (userCredentials != null && !userCredentials.isActivationTokenExpired()) {
-            String createURI = "/login/createPassword";
-            try {
-                URI location = new URI(createURI + "?activateToken=" + activateToken);
-                headers.setLocation(location);
-                responseStatus = HttpStatus.SEE_OTHER;
-            } catch (URISyntaxException e) {
-                log.error("Unable to create URI with address [{}]", createURI);
-                responseStatus = HttpStatus.BAD_REQUEST;
-            }
-        } else {
-            responseStatus = HttpStatus.CONFLICT;
+        if (userCredentials == null) {
+            return response(HttpStatus.CONFLICT);
+        } else if (userCredentials.isActivationTokenExpired()) {
+            return response(HttpStatus.GONE);
         }
-        return new ResponseEntity<>(headers, responseStatus);
+
+        String createURI = "/login/createPassword";
+        try {
+            URI location = new URI(createURI + "?activateToken=" + activateToken);
+            return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                    .location(location).build();
+        } catch (URISyntaxException e) {
+            log.error("Unable to create URI with address [{}]", createURI);
+            return response(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @ApiOperation(value = "Request reset password email (requestResetPasswordByEmail)",
@@ -181,32 +180,31 @@ public class AuthController extends BaseController {
     @ApiOperation(value = "Check password reset token (checkResetToken)",
             notes = "Checks the password reset token and forwards user to 'Reset Password' page. " +
                     "If token is valid, returns '303 See Other' (redirect) response code with the correct address of 'Reset Password' page and same 'resetToken' specified in the URL parameters. " +
-                    "If token is not valid, returns '409 Conflict'.")
+                    "If token is not valid, returns '409 Conflict'. " +
+                    "If token is expired, returns '410 Gone'.")
     @GetMapping(value = "/noauth/resetPassword", params = {"resetToken"})
-    public ResponseEntity<String> checkResetToken(
+    public ResponseEntity<?> checkResetToken(
             @Parameter(description = "The reset token string.")
             @RequestParam(value = "resetToken") String resetToken) {
-        HttpHeaders headers = new HttpHeaders();
-        HttpStatus responseStatus;
-        String resetURI = "/login/resetPassword";
         UserCredentials userCredentials = userService.findUserCredentialsByResetToken(TenantId.SYS_TENANT_ID, resetToken);
-
-        if (userCredentials != null && !userCredentials.isResetTokenExpired()) {
-            if (!rateLimitService.checkRateLimit(LimitedApi.PASSWORD_RESET, userCredentials.getUserId(), defaultLimitsConfiguration)) {
-                return ResponseEntity.status(HttpStatus.TOO_MANY_REQUESTS).build();
-            }
-            try {
-                URI location = new URI(resetURI + "?resetToken=" + resetToken);
-                headers.setLocation(location);
-                responseStatus = HttpStatus.SEE_OTHER;
-            } catch (URISyntaxException e) {
-                log.error("Unable to create URI with address [{}]", resetURI);
-                responseStatus = HttpStatus.BAD_REQUEST;
-            }
-        } else {
-            responseStatus = HttpStatus.CONFLICT;
+        if (userCredentials == null) {
+            return response(HttpStatus.CONFLICT);
+        } else if (userCredentials.isResetTokenExpired()) {
+            return response(HttpStatus.GONE);
         }
-        return new ResponseEntity<>(headers, responseStatus);
+        if (!rateLimitService.checkRateLimit(LimitedApi.PASSWORD_RESET, userCredentials.getUserId(), defaultLimitsConfiguration)) {
+            return response(HttpStatus.TOO_MANY_REQUESTS);
+        }
+
+        String resetURI = "/login/resetPassword";
+        try {
+            URI location = new URI(resetURI + "?resetToken=" + resetToken);
+            return ResponseEntity.status(HttpStatus.SEE_OTHER)
+                    .location(location).build();
+        } catch (URISyntaxException e) {
+            log.error("Unable to create URI with address [{}]", resetURI);
+            return response(HttpStatus.BAD_REQUEST);
+        }
     }
 
     @ApiOperation(value = "Activate User",
