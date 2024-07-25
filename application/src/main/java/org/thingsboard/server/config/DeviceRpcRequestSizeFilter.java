@@ -29,16 +29,14 @@ import org.thingsboard.server.common.msg.tools.TbMaxPayloadSizeExceededException
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 
 import java.io.IOException;
-import java.util.HashSet;
 import java.util.List;
-import java.util.Set;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
 
-    private final Set<String> urls = new HashSet<>(List.of("/api/v1/*/rpc/**", "/api/plugins/rpc/**", "/api/rpc/**"));
+    private final List<String> urls = List.of("/api/v1/*/rpc/**", "/api/plugins/rpc/**", "/api/rpc/**");
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final ThingsboardErrorResponseHandler errorResponseHandler;
     
