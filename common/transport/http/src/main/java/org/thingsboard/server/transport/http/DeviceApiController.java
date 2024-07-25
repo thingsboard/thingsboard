@@ -21,6 +21,8 @@ import com.google.gson.JsonParser;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponse;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -265,6 +267,11 @@ public class DeviceApiController implements TbTransportService {
     @Operation(summary = "Reply to RPC commands (replyToCommand)",
             description = "Replies to server originated RPC command identified by 'requestId' parameter. The response is arbitrary JSON.\n\n" +
                     REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "RPC reply to command request was sent to Core."),
+            @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
+            @ApiResponse(responseCode = "413", description = "Request payload is too large."),
+    })
     @RequestMapping(value = "/{deviceToken}/rpc/{requestId}", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> replyToCommand(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))
@@ -292,6 +299,11 @@ public class DeviceApiController implements TbTransportService {
                     "{\"result\": 4}" +
                     MARKDOWN_CODE_BLOCK_END +
                     REQUIRE_ACCESS_TOKEN)
+    @ApiResponses(value = {
+            @ApiResponse(responseCode = "200", description = "RPC request to server was sent to Rule Engine."),
+            @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
+            @ApiResponse(responseCode = "413", description = "Request payload too large."),
+    })
     @RequestMapping(value = "/{deviceToken}/rpc", method = RequestMethod.POST)
     public DeferredResult<ResponseEntity> postRpcRequest(
             @Parameter(description = ACCESS_TOKEN_PARAM_DESCRIPTION, required = true , schema = @Schema(defaultValue = "YOUR_DEVICE_ACCESS_TOKEN"))

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.config;
 
-import com.amazonaws.HttpMethod;
 import jakarta.servlet.FilterChain;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -23,23 +22,24 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
-import org.springframework.security.web.util.matcher.NegatedRequestMatcher;
-import org.springframework.security.web.util.matcher.RequestMatcher;
 import org.springframework.stereotype.Component;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.thingsboard.server.common.msg.tools.TbMaxPayloadSizeExceededException;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 
 import java.io.IOException;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Set;
 
 @Slf4j
 @Component
 @RequiredArgsConstructor
 public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
 
-    private final RequestMatcher uriMatcher = new AntPathRequestMatcher("/api/v1/*/rpc/**", HttpMethod.POST.name());
-    private final RequestMatcher matcher = new NegatedRequestMatcher(uriMatcher);
+    private final Set<String> urls = new HashSet<>(List.of("/api/v1/*/rpc/**", "/api/plugins/rpc/**", "/api/rpc/**"));
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final ThingsboardErrorResponseHandler errorResponseHandler;
     
     @Value("${transport.http.rpc_max_payload_size:65536}")
@@ -60,7 +60,12 @@ public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return matcher.matches(request);
+        for (String url : urls) {
+            if (pathMatcher.match(url, request.getRequestURI())) {
+                return false;
+            }
+        }
+        return true;
     }
 
     @Override
