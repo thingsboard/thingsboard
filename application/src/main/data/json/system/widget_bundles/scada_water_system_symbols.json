@@ -29,11 +29,13 @@
     "horizontal_inline_flow_meter",
     "vertical_inline_flow_meter",
     "centrifugal_pump",
-    "horizontal_tank_with_screen",
+    "small_right_motor_pump",
+    "small_left_motor_pump",
+    "right_motor_pump",
+    "left_motor_pump",
     "horizontal_faucet",
+    "horizontal_tank_with_screen",
     "vertical_tank_with_level",
-    "pump_left",
-    "pump",
     "level_and_fan"
   ]
 }
