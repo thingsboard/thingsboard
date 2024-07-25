@@ -252,9 +252,6 @@ public class TbDeviceProfileNode implements TbNode {
                 String persistAlarmRulesState = "persistAlarmRulesState";
                 String fetchAlarmRulesStateOnStart = "fetchAlarmRulesStateOnStart";
                 if (oldConfiguration.has(persistAlarmRulesState)) {
-
-                }
-                if (oldConfiguration.has(fetchAlarmRulesStateOnStart)) {
                     if (!oldConfiguration.get(persistAlarmRulesState).asBoolean()) {
                         hasChanges = true;
                         ((ObjectNode) oldConfiguration).put(fetchAlarmRulesStateOnStart, false);
