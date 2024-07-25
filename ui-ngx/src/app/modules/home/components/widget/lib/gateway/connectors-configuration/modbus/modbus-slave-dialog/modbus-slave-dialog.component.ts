@@ -120,47 +120,8 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
     super(store, router, dialogRef);
 
     this.showSecurityControl = this.fb.control(false);
-    this.slaveConfigFormGroup = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      type: [ModbusProtocolType.TCP],
-      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
-      serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      method: [ModbusMethodType.SOCKET, [Validators.required]],
-      baudrate: [this.modbusBaudrates[0]],
-      stopbits: [1],
-      bytesize: [ModbusByteSizes[0]],
-      parity: [ModbusParity.None],
-      strict: [true],
-      unitId: [0, [Validators.required]],
-      deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      sendDataOnlyOnChange: [false],
-      timeout: [35],
-      byteOrder: [ModbusOrderType.BIG],
-      wordOrder: [ModbusOrderType.BIG],
-      retries: [true],
-      retryOnEmpty: [true],
-      retryOnInvalid: [true],
-      pollPeriod: [5000],
-      connectAttemptTimeMs: [5000],
-      connectAttemptCount: [5],
-      waitAfterFailedAttemptsMs: [300000],
-      values: [{}],
-      security: [{}],
-    });
-
-    this.slaveConfigFormGroup.patchValue({
-      ...this.data.value,
-      port: this.data.value.type === ModbusProtocolType.Serial ? null : this.data.value.port,
-      serialPort: this.data.value.type === ModbusProtocolType.Serial ? this.data.value.port : '',
-      values: {
-        attributes: this.data.value.attributes ?? [],
-        timeseries: this.data.value.timeseries ?? [],
-        attributeUpdates: this.data.value.attributeUpdates ?? [],
-        rpc: this.data.value.rpc ?? [],
-      }
-    });
+    this.initializeSlaveFormGroup();
+    this.updateSlaveFormGroup();
     this.updateControlsEnabling(this.data.value.type);
     this.observeTypeChange();
     this.observeShowSecurity();
@@ -191,6 +152,51 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
     this.dialogRef.close(slaveResult);
   }
 
+  private initializeSlaveFormGroup(): void {
+    this.slaveConfigFormGroup = this.fb.group({
+      name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      type: [ModbusProtocolType.TCP],
+      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
+      serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      method: [ModbusMethodType.SOCKET, [Validators.required]],
+      baudrate: [this.modbusBaudrates[0]],
+      stopbits: [1],
+      bytesize: [ModbusByteSizes[0]],
+      parity: [ModbusParity.None],
+      strict: [true],
+      unitId: [0, [Validators.required]],
+      deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      sendDataOnlyOnChange: [false],
+      timeout: [35],
+      byteOrder: [ModbusOrderType.BIG],
+      wordOrder: [ModbusOrderType.BIG],
+      retries: [true],
+      retryOnEmpty: [true],
+      retryOnInvalid: [true],
+      pollPeriod: [5000],
+      connectAttemptTimeMs: [5000],
+      connectAttemptCount: [5],
+      waitAfterFailedAttemptsMs: [300000],
+      values: [{}],
+      security: [{}],
+    });
+  }
+
+  private updateSlaveFormGroup(): void {
+    this.slaveConfigFormGroup.patchValue({
+      ...this.data.value,
+      port: this.data.value.type === ModbusProtocolType.Serial ? null : this.data.value.port,
+      serialPort: this.data.value.type === ModbusProtocolType.Serial ? this.data.value.port : '',
+      values: {
+        attributes: this.data.value.attributes ?? [],
+        timeseries: this.data.value.timeseries ?? [],
+        attributeUpdates: this.data.value.attributeUpdates ?? [],
+        rpc: this.data.value.rpc ?? [],
+      }
+    });
+  }
 
   private observeTypeChange(): void {
     this.slaveConfigFormGroup.get('type').valueChanges
