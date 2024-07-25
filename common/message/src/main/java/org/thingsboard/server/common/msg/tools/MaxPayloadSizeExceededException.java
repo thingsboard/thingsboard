@@ -15,9 +15,9 @@
  */
 package org.thingsboard.server.common.msg.tools;
 
-public class TbMaxPayloadSizeExceededException extends RuntimeException {
+public class MaxPayloadSizeExceededException extends RuntimeException {
 
-    public TbMaxPayloadSizeExceededException() {
+    public MaxPayloadSizeExceededException() {
         super("Payload size exceeds the limit");
     }
 }

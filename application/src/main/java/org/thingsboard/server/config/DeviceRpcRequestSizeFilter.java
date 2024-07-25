@@ -25,7 +25,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
-import org.thingsboard.server.common.msg.tools.TbMaxPayloadSizeExceededException;
+import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 
 import java.io.IOException;
@@ -36,7 +36,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
 
-    private final List<String> urls = List.of("/api/v1/*/rpc/**", "/api/plugins/rpc/**", "/api/rpc/**");
+    private final List<String> urls = List.of("/api/plugins/rpc/**", "/api/rpc/**");
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final ThingsboardErrorResponseHandler errorResponseHandler;
     
@@ -50,7 +50,7 @@ public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
                 log.debug("Too large payload size. Url: {}, client ip: {}, content length: {}", request.getRequestURL(),
                         request.getRemoteAddr(), request.getContentLength());
             }
-            errorResponseHandler.handle(new TbMaxPayloadSizeExceededException(), response);
+            errorResponseHandler.handle(new MaxPayloadSizeExceededException(), response);
             return;
         }
         chain.doFilter(request, response);
