@@ -598,6 +598,11 @@ public class TbUtils {
         if (len % 2 > 0) {
             throw new IllegalArgumentException("Hex string must be even-length.");
         }
+        int radix = isHexadecimal(value);
+        if (radix != HEX_RADIX) {
+            throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
+        }
+
         ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
         for (int i = 0; i < hex.length(); i += 2) {
             // Extract two characters from the hex string
