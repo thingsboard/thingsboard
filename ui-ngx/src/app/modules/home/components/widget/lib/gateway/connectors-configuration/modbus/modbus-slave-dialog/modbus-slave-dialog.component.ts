@@ -143,7 +143,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
     }
 
     const { values, type, serialPort, ...rest } = this.slaveConfigFormGroup.value;
-    const slaveResult = { ...rest, ...values };
+    const slaveResult = { ...rest, type, ...values };
 
     if (type === ModbusProtocolType.Serial) {
       slaveResult.port = serialPort;
