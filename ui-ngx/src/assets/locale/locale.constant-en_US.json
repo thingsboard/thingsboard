@@ -3659,7 +3659,17 @@
             "running-color": "Running color",
             "stopped-color": "Stopped color",
             "warning-color": "Warning color",
-            "critical-color": "Critical color"
+            "critical-color": "Critical color",
+            "opened": "Opened",
+            "opened-hint": "Indicates whether component is in opened state.",
+            "open": "Open",
+            "open-hint": "Action invoked when user clicks to open component.",
+            "close": "Close",
+            "close-hint": "Action invoked when user clicks to close component.",
+            "opened-color": "Opened color",
+            "closed-color": "Closed color",
+            "opened-rotation-angle": "Opened rotation angle",
+            "closed-rotation-angle": "Closed rotation angle"
         }
     },
     "item": {
