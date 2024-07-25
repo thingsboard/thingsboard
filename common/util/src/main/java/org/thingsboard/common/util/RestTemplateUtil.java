@@ -15,18 +15,19 @@
  */
 package org.thingsboard.common.util;
 
+import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.http.converter.HttpMessageConverter;
 import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConverter;
-import org.springframework.web.client.RestTemplate;
 
 import java.util.List;
 
 public class RestTemplateUtil {
 
-    public static void excludeJackson2XmlHttpMessageConverter(RestTemplate restTemplate) {
-        List<HttpMessageConverter<?>> messageConverters = restTemplate.getMessageConverters();
+    public static RestTemplateBuilder newRestTemplate() {
+        RestTemplateBuilder builder = new RestTemplateBuilder();
+        List<HttpMessageConverter<?>> messageConverters = builder.build().getMessageConverters();
         messageConverters.removeIf(converter -> converter instanceof MappingJackson2XmlHttpMessageConverter);
-        restTemplate.setMessageConverters(messageConverters);
+        return builder.messageConverters(messageConverters);
     }
 
 }

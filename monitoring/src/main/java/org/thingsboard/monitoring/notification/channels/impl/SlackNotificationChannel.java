@@ -19,14 +19,14 @@ import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.common.util.RestTemplateUtil;
 import org.thingsboard.monitoring.notification.channels.NotificationChannel;
 
 import java.time.Duration;
 import java.util.Map;
+
+import static org.thingsboard.common.util.RestTemplateUtil.newRestTemplate;
 
 @Component
 @ConditionalOnProperty(value = "monitoring.notifications.slack.enabled", havingValue = "true")
@@ -40,11 +40,10 @@ public class SlackNotificationChannel implements NotificationChannel {
 
     @PostConstruct
     private void init() {
-        restTemplate = new RestTemplateBuilder()
+        restTemplate = newRestTemplate()
                 .setConnectTimeout(Duration.ofSeconds(5))
                 .setReadTimeout(Duration.ofSeconds(2))
                 .build();
-        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
     }
 
     @Override

@@ -185,7 +185,7 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.common.util.RestTemplateUtil.excludeJackson2XmlHttpMessageConverter;
+import static org.thingsboard.common.util.RestTemplateUtil.newRestTemplate;
 import static org.thingsboard.server.common.data.StringUtils.isEmpty;
 
 /**
@@ -213,10 +213,8 @@ public class RestClient implements Closeable {
     }
 
     public RestClient(RestTemplate restTemplate, String baseURL) {
-        this.restTemplate = restTemplate;
-        this.loginRestTemplate = new RestTemplate(restTemplate.getRequestFactory());
-        excludeJackson2XmlHttpMessageConverter(this.restTemplate);
-        excludeJackson2XmlHttpMessageConverter(loginRestTemplate);
+        this.restTemplate = newRestTemplate().configure(restTemplate);
+        this.loginRestTemplate = newRestTemplate().requestFactory(restTemplate::getRequestFactory).build();
         this.baseURL = baseURL;
         this.restTemplate.getInterceptors().add((request, bytes, execution) -> {
             HttpRequest wrapper = new HttpRequestWrapper(request);

@@ -23,7 +23,6 @@ import org.springframework.security.oauth2.client.authentication.OAuth2Authentic
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.RestTemplateUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
@@ -32,6 +31,8 @@ import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import static org.thingsboard.common.util.RestTemplateUtil.newRestTemplate;
+
 @Service(value = "customOAuth2ClientMapper")
 @Slf4j
 @TbCoreComponent
@@ -39,7 +40,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private static final String PROVIDER_ACCESS_TOKEN = "provider-access-token";
 
 
-    private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
+    private RestTemplateBuilder restTemplateBuilder = newRestTemplate();
 
     @Override
     public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
@@ -57,7 +58,6 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         }
 
         RestTemplate restTemplate = restTemplateBuilder.build();
-        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
         String request;
         try {
             request = JacksonUtil.getObjectMapperWithJavaTimeModule().writeValueAsString(token.getPrincipal());

@@ -24,7 +24,6 @@ import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.thingsboard.common.util.RestTemplateUtil;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
@@ -36,6 +35,8 @@ import java.util.ArrayList;
 import java.util.Map;
 import java.util.Optional;
 
+import static org.thingsboard.common.util.RestTemplateUtil.newRestTemplate;
+
 @Service(value = "githubOAuth2ClientMapper")
 @Slf4j
 @TbCoreComponent
@@ -44,7 +45,7 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
 
     private static final String AUTHORIZATION = "Authorization";
 
-    private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
+    private RestTemplateBuilder restTemplateBuilder = newRestTemplate();
 
     @Autowired
     private OAuth2Configuration oAuth2Configuration;
@@ -63,7 +64,6 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
         restTemplateBuilder = restTemplateBuilder.defaultHeader(AUTHORIZATION, "token " + oauth2Token);
 
         RestTemplate restTemplate = restTemplateBuilder.build();
-        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
         GithubEmailsResponse githubEmailsResponse;
         try {
             githubEmailsResponse = restTemplate.getForEntity(emailUrl, GithubEmailsResponse.class).getBody();

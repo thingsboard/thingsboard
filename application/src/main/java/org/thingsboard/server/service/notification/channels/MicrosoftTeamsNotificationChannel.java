@@ -20,14 +20,13 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.base.Strings;
 import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
-import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.RestTemplateUtil;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 import org.thingsboard.server.common.data.notification.info.NotificationInfo;
@@ -42,22 +41,19 @@ import java.time.temporal.ChronoUnit;
 import java.util.List;
 import java.util.Optional;
 
+import static org.thingsboard.common.util.RestTemplateUtil.newRestTemplate;
+
 @Component
+@RequiredArgsConstructor
 public class MicrosoftTeamsNotificationChannel implements NotificationChannel<MicrosoftTeamsNotificationTargetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate> {
 
     private final SystemSecurityService systemSecurityService;
 
     @Setter
-    private RestTemplate restTemplate;
-
-    public MicrosoftTeamsNotificationChannel(SystemSecurityService systemSecurityService) {
-        this.systemSecurityService = systemSecurityService;
-        this.restTemplate = new RestTemplateBuilder()
-                .setConnectTimeout(Duration.of(15, ChronoUnit.SECONDS))
-                .setReadTimeout(Duration.of(15, ChronoUnit.SECONDS))
-                .build();
-        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(this.restTemplate);
-    }
+    private RestTemplate restTemplate = newRestTemplate()
+            .setConnectTimeout(Duration.of(15, ChronoUnit.SECONDS))
+            .setReadTimeout(Duration.of(15, ChronoUnit.SECONDS))
+            .build();
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {

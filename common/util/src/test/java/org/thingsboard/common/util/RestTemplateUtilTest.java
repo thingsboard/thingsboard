@@ -20,13 +20,13 @@ import org.springframework.http.converter.xml.MappingJackson2XmlHttpMessageConve
 import org.springframework.web.client.RestTemplate;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.thingsboard.common.util.RestTemplateUtil.newRestTemplate;
 
 public class RestTemplateUtilTest {
 
     @Test
-    public void verifyExcludeJackson2XmlHttpMessageConverterMethod() {
-        RestTemplate restTemplate = new RestTemplate();
-        RestTemplateUtil.excludeJackson2XmlHttpMessageConverter(restTemplate);
+    public void verifyCreationOfRestTemplateWithoutJackson2XmlHttpMessageConverter() {
+        RestTemplate restTemplate = newRestTemplate().build();
         assertThat(restTemplate.getMessageConverters()).doesNotHaveAnyElementsOfTypes(MappingJackson2XmlHttpMessageConverter.class);
     }
 }
