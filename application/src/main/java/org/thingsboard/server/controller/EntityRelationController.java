@@ -81,7 +81,7 @@ public class EntityRelationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public void saveRelation(@Parameter(description = "A JSON value representing the relation.", required = true)
+    public EntityRelation saveRelation(@Parameter(description = "A JSON value representing the relation.", required = true)
                              @RequestBody EntityRelation relation) throws ThingsboardException {
         checkNotNull(relation);
         checkCanCreateRelation(relation.getFrom());
@@ -90,7 +90,7 @@ public class EntityRelationController extends BaseController {
             relation.setTypeGroup(RelationTypeGroup.COMMON);
         }
 
-        tbEntityRelationService.save(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
+        return tbEntityRelationService.save(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete Relation (deleteRelation)",
@@ -98,7 +98,7 @@ public class EntityRelationController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/relation", method = RequestMethod.DELETE, params = {FROM_ID, FROM_TYPE, RELATION_TYPE, TO_ID, TO_TYPE})
     @ResponseStatus(value = HttpStatus.OK)
-    public void deleteRelation(@Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
+    public EntityRelation deleteRelation(@Parameter(description = ENTITY_ID_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_ID) String strFromId,
                                @Parameter(description = ENTITY_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(FROM_TYPE) String strFromType,
                                @Parameter(description = RELATION_TYPE_PARAM_DESCRIPTION, required = true) @RequestParam(RELATION_TYPE) String strRelationType,
                                @Parameter(description = RELATION_TYPE_GROUP_PARAM_DESCRIPTION) @RequestParam(value = "relationTypeGroup", required = false) String strRelationTypeGroup,
@@ -116,7 +116,7 @@ public class EntityRelationController extends BaseController {
 
         RelationTypeGroup relationTypeGroup = parseRelationTypeGroup(strRelationTypeGroup, RelationTypeGroup.COMMON);
         EntityRelation relation = new EntityRelation(fromId, toId, strRelationType, relationTypeGroup);
-        tbEntityRelationService.delete(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
+        return tbEntityRelationService.delete(getTenantId(), getCurrentUser().getCustomerId(), relation, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete common relations (deleteCommonRelations)",

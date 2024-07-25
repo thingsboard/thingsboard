@@ -18,7 +18,10 @@ package org.thingsboard.server.common.data.relation;
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasVersion;
@@ -29,7 +32,8 @@ import java.io.Serializable;
 
 @Slf4j
 @Schema
-@Data
+@EqualsAndHashCode(exclude = "additionalInfoBytes")
+@ToString(exclude = {"additionalInfoBytes"})
 public class EntityRelation implements HasVersion, Serializable {
 
     private static final long serialVersionUID = 2807343040519543363L;
@@ -38,11 +42,17 @@ public class EntityRelation implements HasVersion, Serializable {
     public static final String CONTAINS_TYPE = "Contains";
     public static final String MANAGES_TYPE = "Manages";
 
+    @Setter
     private EntityId from;
+    @Setter
     private EntityId to;
+    @Setter
     @Length(fieldName = "type")
     private String type;
+    @Setter
     private RelationTypeGroup typeGroup;
+    @Getter
+    @Setter
     private Long version;
     private transient JsonNode additionalInfo;
     @JsonIgnore
@@ -95,11 +105,6 @@ public class EntityRelation implements HasVersion, Serializable {
     @Schema(description = "Represents the type group of the relation.", example = "COMMON")
     public RelationTypeGroup getTypeGroup() {
         return typeGroup;
-    }
-
-    @Override
-    public Long getVersion() {
-        return version;
     }
 
     @Schema(description = "Additional parameters of the relation",implementation = com.fasterxml.jackson.databind.JsonNode.class)

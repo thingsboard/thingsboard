@@ -47,7 +47,7 @@ public interface RelationService {
 
     ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityRelation relation);
 
-    boolean deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+    EntityRelation deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
     ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
