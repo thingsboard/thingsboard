@@ -131,9 +131,17 @@ public class TbUtils {
         parserConfig.addImport("parseHexToInt", new MethodStub(TbUtils.class.getMethod("parseHexToInt",
                 String.class, boolean.class)));
         parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                List.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
                 List.class, int.class, int.class)));
         parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
                 List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
+                byte[].class, int.class)));
         parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesToInt", new MethodStub(TbUtils.class.getMethod("parseBytesToInt",
@@ -147,9 +155,17 @@ public class TbUtils {
         parserConfig.addImport("parseHexToLong", new MethodStub(TbUtils.class.getMethod("parseHexToLong",
                 String.class, boolean.class)));
         parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
+                List.class)));
+        parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
                 List.class, int.class, int.class)));
         parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
                 List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
+                byte[].class, int.class)));
         parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesToLong", new MethodStub(TbUtils.class.getMethod("parseBytesToLong",
@@ -163,17 +179,21 @@ public class TbUtils {
         parserConfig.addImport("parseHexToFloat", new MethodStub(TbUtils.class.getMethod("parseHexToFloat",
                 String.class, boolean.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
-                byte[].class, int.class)));
+                List.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                 List.class, int.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
-                byte[].class, int.class, boolean.class)));
-        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
-                List.class, int.class, boolean.class)));
-        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
-                byte[].class, int.class, int.class, boolean.class)));
+                List.class, int.class, int.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                 List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                byte[].class, int.class, int.class)));
+        parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
+                byte[].class, int.class, int.class, boolean.class)));
         parserConfig.addImport("parseLittleEndianHexToDouble", new MethodStub(TbUtils.class.getMethod("parseLittleEndianHexToDouble",
                 String.class)));
         parserConfig.addImport("parseBigEndianHexToDouble", new MethodStub(TbUtils.class.getMethod("parseBigEndianHexToDouble",
@@ -183,17 +203,21 @@ public class TbUtils {
         parserConfig.addImport("parseHexToDouble", new MethodStub(TbUtils.class.getMethod("parseHexToDouble",
                 String.class, boolean.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
-                byte[].class, int.class)));
-        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
-                byte[].class, int.class, boolean.class)));
-        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
-                byte[].class, int.class, int.class, boolean.class)));
+                List.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 List.class, int.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
-                List.class, int.class, boolean.class)));
+                List.class, int.class, int.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class, int.class)));
+        parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class, int.class, boolean.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
                 double.class, int.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
@@ -740,16 +764,28 @@ public class TbUtils {
         return Base64.getDecoder().decode(input);
     }
 
+    public static int parseBytesToInt(List<Byte> data) {
+        return parseBytesToInt(Bytes.toArray(data));
+    }
+
+    public static int parseBytesToInt(List<Byte> data, int offset) {
+        return parseBytesToInt(Bytes.toArray(data), offset);
+    }
+
     public static int parseBytesToInt(List<Byte> data, int offset, int length) {
-        return parseBytesToInt(data, offset, length, true);
+        return parseBytesToInt(Bytes.toArray(data), offset, length);
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset, int length, boolean bigEndian) {
-        final byte[] bytes = new byte[data.size()];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = data.get(i);
-        }
-        return parseBytesToInt(bytes, offset, length, bigEndian);
+        return parseBytesToInt(Bytes.toArray(data), offset, length, bigEndian);
+    }
+
+    public static int parseBytesToInt(byte[] data) {
+        return parseBytesToInt(data, 0);
+    }
+
+    public static int parseBytesToInt(byte[] data, int offset) {
+        return parseBytesToInt(data, offset, BYTES_LEN_INT_MAX);
     }
 
     public static int parseBytesToInt(byte[] data, int offset, int length) {
@@ -776,16 +812,28 @@ public class TbUtils {
         return bb.getInt();
     }
 
+    public static long parseBytesToLong(List<Byte> data) {
+        return parseBytesToLong(Bytes.toArray(data));
+    }
+
+    public static long parseBytesToLong(List<Byte> data, int offset) {
+        return parseBytesToLong(Bytes.toArray(data), offset);
+    }
+
     public static long parseBytesToLong(List<Byte> data, int offset, int length) {
-        return parseBytesToLong(data, offset, length, true);
+        return parseBytesToLong(Bytes.toArray(data), offset, length);
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset, int length, boolean bigEndian) {
-        final byte[] bytes = new byte[data.size()];
-        for (int i = 0; i < bytes.length; i++) {
-            bytes[i] = data.get(i);
-        }
-        return parseBytesToLong(bytes, offset, length, bigEndian);
+        return parseBytesToLong(Bytes.toArray(data), offset, length, bigEndian);
+    }
+
+    public static long parseBytesToLong(byte[] data) {
+        return parseBytesToLong(data, 0);
+    }
+
+    public static long parseBytesToLong(byte[] data, int offset) {
+        return parseBytesToLong(data, offset, BYTES_LEN_LONG_MAX);
     }
 
     public static long parseBytesToLong(byte[] data, int offset, int length) {
@@ -812,31 +860,42 @@ public class TbUtils {
         return bb.getLong();
     }
 
-    public static float parseBytesToFloat(byte[] data, int offset) {
-        return parseBytesToFloat(data, offset, true);
+    public static float parseBytesToFloat(List data) {
+        return parseBytesToFloat(Bytes.toArray(data), 0);
     }
 
     public static float parseBytesToFloat(List data, int offset) {
-        return parseBytesToFloat(data, offset, true);
+        return parseBytesToFloat(Bytes.toArray(data), offset, BYTES_LEN_INT_MAX);
     }
 
-    public static float parseBytesToFloat(List data, int offset, boolean bigEndian) {
-        return parseBytesToFloat(Bytes.toArray(data), offset, bigEndian);
-    }
-
-    public static float parseBytesToFloat(byte[] data, int offset, boolean bigEndian) {
-        return parseBytesToFloat(data, offset, BYTES_LEN_INT_MAX, bigEndian);
+    public static float parseBytesToFloat(List data, int offset, int length) {
+        return parseBytesToFloat(Bytes.toArray(data), offset, length, true);
     }
 
     public static float parseBytesToFloat(List data, int offset, int length, boolean bigEndian) {
         return parseBytesToFloat(Bytes.toArray(data), offset, length, bigEndian);
     }
 
+    public static float parseBytesToFloat(byte[] data) {
+        return parseBytesToFloat(data, 0);
+    }
+
+    public static float parseBytesToFloat(byte[] data, int offset) {
+        return parseBytesToFloat(data, offset, BYTES_LEN_INT_MAX);
+    }
+
+    public static float parseBytesToFloat(byte[] data, int offset, int length) {
+        return parseBytesToFloat(data, offset, length, true);
+    }
+
     public static float parseBytesToFloat(byte[] data, int offset, int length, boolean bigEndian) {
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
         if (length > BYTES_LEN_INT_MAX) {
             throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_INT_MAX + " bytes is allowed!");
         }
+        if (offset + length > data.length) {
+            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+        }
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
         if (bytesToNumber.length < BYTES_LEN_INT_MAX) {
             byte[] extendedBytes = new byte[BYTES_LEN_INT_MAX];
             Arrays.fill(extendedBytes, (byte) 0);
@@ -847,37 +906,48 @@ public class TbUtils {
         if (!Float.isNaN(floatValue)) {
             return floatValue;
         } else {
-            long longValue = parseBytesToLong(bytesToNumber, offset, length, bigEndian);
+            long longValue = parseBytesToLong(bytesToNumber, 0, BYTES_LEN_INT_MAX);
             BigDecimal bigDecimalValue = new BigDecimal(longValue);
             return bigDecimalValue.floatValue();
         }
     }
 
-    public static double parseBytesToDouble(byte[] data, int offset) {
-        return parseBytesToDouble(data, offset, true);
+    public static double parseBytesToDouble(List data) {
+        return parseBytesToDouble(Bytes.toArray(data));
     }
 
     public static double parseBytesToDouble(List data, int offset) {
-        return parseBytesToDouble(data, offset, true);
+        return parseBytesToDouble(Bytes.toArray(data), offset);
     }
 
-    public static double parseBytesToDouble(List data, int offset, boolean bigEndian) {
-        return parseBytesToDouble(Bytes.toArray(data), offset, bigEndian);
+    public static double parseBytesToDouble(List data, int offset, int length) {
+        return parseBytesToDouble(Bytes.toArray(data), offset, length);
     }
 
     public static double parseBytesToDouble(List data, int offset, int length, boolean bigEndian) {
         return parseBytesToDouble(Bytes.toArray(data), offset, length, bigEndian);
     }
 
-    public static double parseBytesToDouble(byte[] data, int offset, boolean bigEndian) {
-        return parseBytesToDouble(data, offset, BYTES_LEN_LONG_MAX, bigEndian);
+    public static double parseBytesToDouble(byte[] data) {
+        return parseBytesToDouble(data, 0);
+    }
+
+    public static double parseBytesToDouble(byte[] data, int offset) {
+        return parseBytesToDouble(data, offset, BYTES_LEN_LONG_MAX);
+    }
+
+    public static double parseBytesToDouble(byte[] data, int offset, int length) {
+        return parseBytesToDouble(data, offset, length, true);
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, int length, boolean bigEndian) {
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
         if (length > BYTES_LEN_LONG_MAX) {
             throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_LONG_MAX + " bytes is allowed!");
         }
+        if (offset + length > data.length) {
+            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+        }
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
         if (bytesToNumber.length < BYTES_LEN_LONG_MAX) {
             byte[] extendedBytes = new byte[BYTES_LEN_LONG_MAX];
             Arrays.fill(extendedBytes, (byte) 0);
