@@ -201,7 +201,21 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
   private observeTypeChange(): void {
     this.slaveConfigFormGroup.get('type').valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(type => this.updateControlsEnabling(type));
+      .subscribe(type => {
+        this.updateControlsEnabling(type);
+        this.updateMethodType(type);
+      });
+  }
+
+  private updateMethodType(type: ModbusProtocolType): void {
+    if (this.slaveConfigFormGroup.get('method').value !== ModbusMethodType.RTU) {
+      this.slaveConfigFormGroup.get('method').patchValue(
+        type === ModbusProtocolType.Serial
+          ? ModbusSerialMethodType.ASCII
+          : ModbusMethodType.SOCKET,
+        {emitEvent: false}
+      );
+    }
   }
 
   private updateControlsEnabling(type: ModbusProtocolType): void {

@@ -161,7 +161,9 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
   }
 
   getValueGroup(valueKey: ModbusValueKey, register?: ModbusRegisterType): FormGroup {
-    return register ? this.valuesFormGroup.get(register).get(valueKey).value : this.valuesFormGroup.get(valueKey).value;
+    return register
+      ? this.valuesFormGroup.get(register).get(valueKey) as FormGroup
+      : this.valuesFormGroup.get(valueKey) as FormGroup;
   }
 
   manageKeys($event: Event, matButton: MatButton, keysType: ModbusValueKey, register?: ModbusRegisterType): void {

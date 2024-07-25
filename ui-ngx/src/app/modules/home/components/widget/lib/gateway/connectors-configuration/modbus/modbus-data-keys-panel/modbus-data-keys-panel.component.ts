@@ -105,7 +105,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       type: [ModbusDataType.BYTES, [Validators.required]],
       address: [null, [Validators.required]],
       objectsCount: [1, [Validators.required]],
-      functionCode: [this.getDefaultFunctionCodes()[0]],
+      functionCode: [{ value: this.getDefaultFunctionCodes()[0], disabled: !this.withFunctionCode }, [Validators.required]],
       id: [{value: generateSecret(5), disabled: true}],
     });
     this.observeKeyDataType(dataKeyFormGroup);
@@ -154,7 +154,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       type: [type, [Validators.required]],
       address: [address, [Validators.required]],
       objectsCount: [objectsCount, [Validators.required]],
-      functionCode: [functionCode, [Validators.required]],
+      functionCode: [{ value: functionCode, disabled: !this.withFunctionCode }, [Validators.required]],
       id: [{ value: generateSecret(5), disabled: true }],
     });
   }
@@ -164,8 +164,16 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       if (!this.editableDataTypes.includes(dataType)) {
         keyFormGroup.get('objectsCount').patchValue(ModbusObjectCountByDataType[dataType], {emitEvent: false});
       }
-      this.functionCodesMap.set(keyFormGroup.get('id').value, this.getFunctionCodes(dataType));
+      this.updateFunctionCodes(keyFormGroup, dataType);
     });
+  }
+
+  private updateFunctionCodes(keyFormGroup: FormGroup, dataType: ModbusDataType): void {
+    const functionCodes = this.getFunctionCodes(dataType);
+    this.functionCodesMap.set(keyFormGroup.get('id').value, functionCodes);
+    if (!functionCodes.includes(keyFormGroup.get('functionCode').value)) {
+      keyFormGroup.get('functionCode').patchValue(functionCodes[0], {emitEvent: false});
+    }
   }
 
   private getFunctionCodes(dataType: ModbusDataType): number[] {
