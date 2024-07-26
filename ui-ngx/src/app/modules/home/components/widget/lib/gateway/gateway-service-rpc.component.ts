@@ -206,9 +206,6 @@ export class GatewayServiceRPCComponent implements OnInit {
   private updateTemplates() {
     this.templates = this.subscription.data[0].data[0][1].length ?
       JSON.parse(this.subscription.data[0].data[0][1]) : [];
-    if (this.templates.length && this.commandForm.get('params').value == "{}") {
-      this.commandForm.get('params').patchValue(this.templates[0].config);
-    }
     this.cd.detectChanges();
   }
 
