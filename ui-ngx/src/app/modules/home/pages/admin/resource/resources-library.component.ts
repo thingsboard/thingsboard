@@ -103,9 +103,9 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   updateForm(entity: Resource) {
     if (this.isEdit) {
       this.entityForm.get('resourceType').disable({emitEvent: false});
+      this.entityForm.get('data').disable({emitEvent: false});
       if (entity.resourceType !== ResourceType.JS_MODULE) {
         this.entityForm.get('fileName').disable({emitEvent: false});
-        this.entityForm.get('data').disable({emitEvent: false});
       }
     }
     this.entityForm.patchValue({
