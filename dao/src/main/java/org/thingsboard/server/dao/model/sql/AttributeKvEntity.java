@@ -15,8 +15,12 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.EmbeddedId;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
+import jakarta.persistence.Transient;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
@@ -27,11 +31,6 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.model.ToData;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.EmbeddedId;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
-import jakarta.persistence.Transient;
 import java.io.Serializable;
 
 import static org.thingsboard.server.dao.model.ModelConstants.BOOLEAN_VALUE_COLUMN;
@@ -40,12 +39,12 @@ import static org.thingsboard.server.dao.model.ModelConstants.JSON_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LAST_UPDATE_TS_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
 @Data
-@EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = "attribute_kv")
-public class AttributeKvEntity extends VersionedEntity implements ToData<AttributeKvEntry>, Serializable {
+public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable {
 
     @EmbeddedId
     private AttributeKvCompositeKey id;
@@ -67,6 +66,9 @@ public class AttributeKvEntity extends VersionedEntity implements ToData<Attribu
 
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;
+
+    @Column(name = VERSION_COLUMN)
+    private Long version;
 
     @Transient
     protected String strKey;
