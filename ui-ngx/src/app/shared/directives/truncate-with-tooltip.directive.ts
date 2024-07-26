@@ -33,7 +33,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
   selector: '[tbTruncateWithTooltip]',
   providers: [MatTooltip],
 })
-export class TruncateTooltipDirective implements OnInit, AfterViewInit, OnDestroy {
+export class TruncateWithTooltipDirective implements OnInit, AfterViewInit, OnDestroy {
 
   @Input('tbTruncateWithTooltip')
   text: string;
