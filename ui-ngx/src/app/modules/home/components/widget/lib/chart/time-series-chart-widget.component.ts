@@ -171,6 +171,6 @@ export class TimeSeriesChartWidgetComponent implements OnInit, OnDestroy, AfterV
   }
 
   public toggleLegendKey(legendKey: LegendKey) {
-    this.timeSeriesChart.toggleKey(legendKey.dataKey);
+    this.timeSeriesChart.toggleKey(legendKey.dataKey, legendKey.dataIndex);
   }
 }
