@@ -25,21 +25,29 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ConnectorBaseConfig,
   ConnectorType,
   MappingType,
+  OPCBasicConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import {
-  BrokerConfigControlComponent,
-  MappingTableComponent,
-  SecurityConfigComponent,
-  ServerConfigComponent,
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import {
+  SecurityConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+import {
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import {
+  OpcServerConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-server-config/opc-server-config.component';
 
 @Component({
   selector: 'tb-opc-ua-basic-config',
@@ -65,7 +73,7 @@ import { Subject } from 'rxjs';
     WorkersConfigControlComponent,
     BrokerConfigControlComponent,
     MappingTableComponent,
-    ServerConfigComponent,
+    OpcServerConfigComponent,
   ],
   styleUrls: ['./opc-ua-basic-config.component.scss']
 })
@@ -109,7 +117,7 @@ export class OpcUaBasicConfigComponent implements ControlValueAccessor, Validato
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: ConnectorBaseConfig): void {
+  writeValue(basicConfig: OPCBasicConfig): void {
     const editedBase = {
       server: basicConfig.server || {},
       mapping: basicConfig.mapping || [],
