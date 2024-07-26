@@ -49,7 +49,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
+import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipes/gateway-port-tooltip.pipe';
 import { takeUntil } from 'rxjs/operators';
 import { isEqual } from '@core/utils';
 
@@ -77,13 +77,7 @@ import { isEqual } from '@core/utils';
     ModbusSecurityConfigComponent,
     GatewayPortTooltipPipe,
   ],
-  styles: [`
-    :host {
-      .slaves-config-container {
-        width: 80vw;
-        max-width: 900px;      }
-    }
-  `],
+  styleUrls: ['./modbus-slave-dialog.component.scss'],
 })
 export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialogComponent, SlaveConfig> implements OnDestroy {
 

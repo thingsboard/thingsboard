@@ -58,17 +58,7 @@ import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master
     ModbusMasterTableComponent,
     EllipsisChipListDirective,
   ],
-  styles: [`
-    :host {
-      height: 100%;
-    }
-
-    :host ::ng-deep {
-      .mat-mdc-tab-body-content {
-        overflow: hidden !important;
-      }
-    }
-  `]
+  styleUrls: ['./modbus-basic-config.component.scss'],
 })
 
 export class ModbusBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {

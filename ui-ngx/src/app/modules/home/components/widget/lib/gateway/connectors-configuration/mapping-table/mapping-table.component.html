@@ -64,7 +64,7 @@
                            [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
             {{ column.title | translate }}
           </mat-header-cell>
-          <mat-cell tbTruncateTooltip *matCellDef="let mapping" class="table-value-column"
+          <mat-cell tbTruncateWithTooltip *matCellDef="let mapping" class="table-value-column"
                     [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
             {{ mapping[column.def] }}
           </mat-cell>

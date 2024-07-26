@@ -13,15 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$server-config-header-height: 132px;
-
 :host {
-  .slave-content {
-    height: calc(100% - #{$server-config-header-height});
-    overflow: auto;
+  .mat-mdc-tab-body-wrapper {
+    min-height: 320px;
   }
+}
 
-  .slave-container {
-    display: inherit;
-  }
+::ng-deep .mdc-evolution-chip-set__chips {
+  align-items: center;
 }

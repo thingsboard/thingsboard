@@ -26,17 +26,24 @@ import {
 import { fromEvent, Subject } from 'rxjs';
 import { filter, takeUntil, tap } from 'rxjs/operators';
 import { MatTooltip, TooltipPosition } from '@angular/material/tooltip';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Directive({
   standalone: true,
-  selector: '[tbTruncateTooltip]',
+  selector: '[tbTruncateWithTooltip]',
   providers: [MatTooltip],
-
 })
 export class TruncateTooltipDirective implements OnInit, AfterViewInit, OnDestroy {
-  @Input('tbTruncateTooltip') text: string;
-  @Input() tooltipEnabled = true;
-  @Input() position: TooltipPosition = 'above';
+
+  @Input('tbTruncateWithTooltip')
+  text: string;
+
+  @Input()
+  @coerceBoolean()
+  tooltipEnabled = true;
+
+  @Input()
+  position: TooltipPosition = 'above';
 
   private destroy$ = new Subject<void>();
 

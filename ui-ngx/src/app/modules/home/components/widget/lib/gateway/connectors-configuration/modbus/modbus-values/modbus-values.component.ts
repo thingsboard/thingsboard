@@ -79,17 +79,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     SharedModule,
     EllipsisChipListDirective,
   ],
-  styles: [`
-    :host {
-      .mat-mdc-tab-body-wrapper {
-        min-height: 320px;
-      }
-    }
-
-    ::ng-deep .mdc-evolution-chip-set__chips {
-      align-items: center;
-    }
-  `]
+  styleUrls: ['./modbus-values.component.scss']
 })
 
 export class ModbusValuesComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
