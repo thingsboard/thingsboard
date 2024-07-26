@@ -36,8 +36,8 @@
   <div class="tb-form-row space-between tb-flex">
     <div class="fixed-title-width" translate>gateway.attributes</div>
     <div class="tb-flex ellipsis-chips-container">
-      <mat-chip-listbox [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.ATTRIBUTES, register)" class="tb-flex">
-        <mat-chip *ngFor="let attribute of getValueGroup(ModbusValueKey.ATTRIBUTES, register)">
+      <mat-chip-listbox [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.ATTRIBUTES, register).value" class="tb-flex">
+        <mat-chip *ngFor="let attribute of getValueGroup(ModbusValueKey.ATTRIBUTES, register).value">
           {{ attribute.tag }}
         </mat-chip>
         <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -57,8 +57,8 @@
   <div class="tb-form-row space-between tb-flex">
     <div class="fixed-title-width" translate>gateway.timeseries</div>
     <div class="tb-flex ellipsis-chips-container">
-      <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.TIMESERIES, register)">
-        <mat-chip *ngFor="let telemetry of getValueGroup(ModbusValueKey.TIMESERIES, register)">
+      <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.TIMESERIES, register).value">
+        <mat-chip *ngFor="let telemetry of getValueGroup(ModbusValueKey.TIMESERIES, register).value">
           {{ telemetry.tag }}
         </mat-chip>
         <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -78,8 +78,8 @@
   <div class="tb-form-row space-between tb-flex">
     <div class="fixed-title-width" translate>gateway.attribute-updates</div>
     <div class="tb-flex ellipsis-chips-container">
-      <mat-chip-listbox [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.ATTRIBUTES_UPDATES, register)" class="tb-flex">
-        <mat-chip *ngFor="let attributeUpdate of getValueGroup(ModbusValueKey.ATTRIBUTES_UPDATES, register)">
+      <mat-chip-listbox [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.ATTRIBUTES_UPDATES, register).value" class="tb-flex">
+        <mat-chip *ngFor="let attributeUpdate of getValueGroup(ModbusValueKey.ATTRIBUTES_UPDATES, register).value">
           {{ attributeUpdate.tag }}
         </mat-chip>
         <mat-chip class="mat-mdc-chip ellipsis-chip">
@@ -99,8 +99,8 @@
   <div class="tb-form-row space-between tb-flex">
     <div class="fixed-title-width" translate>gateway.rpc-requests</div>
     <div class="tb-flex ellipsis-chips-container">
-      <mat-chip-listbox [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.RPC_REQUESTS, register)" class="tb-flex">
-        <mat-chip *ngFor="let rpcRequest of getValueGroup(ModbusValueKey.RPC_REQUESTS, register)">
+      <mat-chip-listbox [tb-ellipsis-chip-list]="getValueGroup(ModbusValueKey.RPC_REQUESTS, register).value" class="tb-flex">
+        <mat-chip *ngFor="let rpcRequest of getValueGroup(ModbusValueKey.RPC_REQUESTS, register).value">
           {{ rpcRequest.tag }}
         </mat-chip>
         <mat-chip class="mat-mdc-chip ellipsis-chip">

@@ -15,242 +15,249 @@
     limitations under the License.
 
 -->
-<div class="tb-form-panel no-border no-padding padding-top" [formGroup]="slaveConfigFormGroup">
-  <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
-  <div class="tb-form-row" fxLayoutAlign="space-between center">
-    <mat-slide-toggle class="mat-slide" formControlName="sendDataToThingsBoard">
-      <mat-label>
-        {{ 'gateway.enable' | translate }}
-      </mat-label>
-    </mat-slide-toggle>
-  </div>
-  <div class="tb-flex row space-between align-center no-gap fill-width">
-    <div class="fixed-title-width" translate>gateway.server-slave-config</div>
-    <tb-toggle-select formControlName="type" appearance="fill">
-      <tb-toggle-option *ngFor="let type of modbusProtocolTypes" [value]="type">{{ ModbusProtocolLabelsMap.get(type) }}</tb-toggle-option>
-    </tb-toggle-select>
-  </div>
+<div [formGroup]="slaveConfigFormGroup" class="slave-container">
   <div class="tb-form-panel no-border no-padding padding-top">
-    <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial"
-         class="tb-form-row column-xs"
-         fxLayoutAlign="space-between center"
-    >
-      <div class="fixed-title-width tb-required" translate>gateway.host</div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput name="value" formControlName="host" placeholder="{{ 'gateway.set' | translate }}"/>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="('gateway.host-required') | translate"
-                    *ngIf="slaveConfigFormGroup.get('host').hasError('required')
-                                           && slaveConfigFormGroup.get('host').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
-      </div>
+    <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
+    <div class="tb-form-row" fxLayoutAlign="space-between center">
+      <mat-slide-toggle class="mat-slide" formControlName="sendDataToThingsBoard">
+        <mat-label>
+          {{ 'gateway.enable' | translate }}
+        </mat-label>
+      </mat-slide-toggle>
     </div>
-    <div *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial else serialPort"
-         class="tb-form-row column-xs"
-         fxLayoutAlign="space-between center"
-    >
-      <div class="fixed-title-width tb-required" translate>gateway.port</div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" min="{{portLimits.MIN}}" max="{{portLimits.MAX}}"
-                 name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
-          <mat-icon matSuffix
-                    matTooltipPosition="above"
-                    matTooltipClass="tb-error-tooltip"
-                    [matTooltip]="slaveConfigFormGroup.get('port') | getGatewayPortTooltip"
-                    *ngIf="(slaveConfigFormGroup.get('port').hasError('required') ||
-                                            slaveConfigFormGroup.get('port').hasError('min') ||
-                                            slaveConfigFormGroup.get('port').hasError('max')) &&
-                                            slaveConfigFormGroup.get('port').touched"
-                    class="tb-error">
-            warning
-          </mat-icon>
-        </mat-form-field>
-      </div>
+  </div>
+  <div class="slave-content tb-form-panel no-border no-padding padding-top" >
+    <div class="tb-flex row space-between align-center no-gap fill-width">
+      <div class="fixed-title-width" translate>gateway.server-slave-config</div>
+      <tb-toggle-select formControlName="type" appearance="fill">
+        <tb-toggle-option *ngFor="let type of modbusProtocolTypes" [value]="type">{{ ModbusProtocolLabelsMap.get(type) }}</tb-toggle-option>
+      </tb-toggle-select>
     </div>
-    <ng-template #serialPort>
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-        <div class="fixed-title-width tb-required" translate>gateway.port</div>
+    <div class="tb-form-panel no-border no-padding padding-top">
+      <div *ngIf="protocolType !== ModbusProtocolType.Serial"
+           class="tb-form-row column-xs"
+           fxLayoutAlign="space-between center"
+      >
+        <div class="fixed-title-width tb-required" translate>gateway.host</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput name="value" formControlName="serialPort" placeholder="{{ 'gateway.set' | translate }}"/>
+            <input matInput name="value" formControlName="host" placeholder="{{ 'gateway.set' | translate }}"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="slaveConfigFormGroup.get('serialPort') | getGatewayPortTooltip"
-                      *ngIf="(slaveConfigFormGroup.get('serialPort').hasError('required') ||
-                                            slaveConfigFormGroup.get('serialPort').hasError('min') ||
-                                            slaveConfigFormGroup.get('serialPort').hasError('max')) &&
-                                            slaveConfigFormGroup.get('serialPort').touched"
+                      [matTooltip]="('gateway.host-required') | translate"
+                      *ngIf="slaveConfigFormGroup.get('host').hasError('required')
+                                             && slaveConfigFormGroup.get('host').touched"
                       class="tb-error">
               warning
             </mat-icon>
           </mat-form-field>
         </div>
       </div>
-    </ng-template>
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.framer-type' | translate }}" translate>
-        gateway.method
-      </div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="method">
-            <mat-option *ngFor="let method of modbusMethodTypes" [value]="method">{{ ModbusMethodLabelsMap.get(method) }}</mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-    </div>
-  </div>
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width tb-required" translate>gateway.unit-id</div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" name="value" formControlName="unitId" placeholder="{{ 'gateway.set' | translate }}"/>
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="('gateway.unit-id-required') | translate"
-                  *ngIf="slaveConfigFormGroup.get('unitId').hasError('required') &&
-                                           slaveConfigFormGroup.get('unitId').touched"
-                  class="tb-error">
-          warning
-        </mat-icon>
-      </mat-form-field>
-    </div>
-  </div>
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width tb-required" translate>gateway.device-name</div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput name="value" formControlName="deviceName" placeholder="{{ 'gateway.set' | translate }}"/>
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="('gateway.device-name-required') | translate"
-                  *ngIf="slaveConfigFormGroup.get('deviceName').hasError('required') &&
-                                           slaveConfigFormGroup.get('deviceName').touched"
-                  class="tb-error">
-          warning
-        </mat-icon>
-      </mat-form-field>
-    </div>
-  </div>
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width tb-required" translate>gateway.device-profile</div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput name="value" formControlName="deviceType" placeholder="{{ 'gateway.set' | translate }}"/>
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="('gateway.device-profile-required') | translate"
-                  *ngIf="slaveConfigFormGroup.get('deviceType').hasError('required') &&
-                                           slaveConfigFormGroup.get('deviceType').touched"
-                  class="tb-error">
-          warning
-        </mat-icon>
-      </mat-form-field>
-    </div>
-  </div>
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width" translate>gateway.poll-period</div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" name="value" formControlName="pollPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
-      </mat-form-field>
-    </div>
-  </div>
-  <div *ngIf="this.slaveConfigFormGroup.get('type').value === ModbusProtocolType.Serial" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width" translate>gateway.baudrate</div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" name="value" formControlName="baudrate" placeholder="{{ 'gateway.set' | translate }}"/>
-      </mat-form-field>
-    </div>
-  </div>
-  <mat-expansion-panel>
-    <mat-expansion-panel-header>
-      <mat-panel-title>
-        <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
-      </mat-panel-title>
-    </mat-expansion-panel-header>
-    <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="slaveConfigFormGroup">
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-        <div class="fixed-title-width" translate>gateway.byte-order</div>
+      <div *ngIf="protocolType !== ModbusProtocolType.Serial else serialPort"
+           class="tb-form-row column-xs"
+           fxLayoutAlign="space-between center"
+      >
+        <div class="fixed-title-width tb-required" translate>gateway.port</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="byteOrder">
-              <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
+            <input matInput type="number" min="{{portLimits.MIN}}" max="{{portLimits.MAX}}"
+                   name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="slaveConfigFormGroup.get('port') | getGatewayPortTooltip"
+                      *ngIf="(slaveConfigFormGroup.get('port').hasError('required') ||
+                                              slaveConfigFormGroup.get('port').hasError('min') ||
+                                              slaveConfigFormGroup.get('port').hasError('max')) &&
+                                              slaveConfigFormGroup.get('port').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <ng-template #serialPort>
+        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+          <div class="fixed-title-width tb-required" translate>gateway.port</div>
+          <div class="tb-flex no-gap">
+            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+              <input matInput name="value" formControlName="serialPort" placeholder="{{ 'gateway.set' | translate }}"/>
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="'gateway.port-required' | translate"
+                        *ngIf="slaveConfigFormGroup.get('port').hasError('required') && slaveConfigFormGroup.get('port').touched"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+        </div>
+      </ng-template>
+      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.framer-type' | translate }}" translate>
+          gateway.method
+        </div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="method">
+              <mat-option *ngFor="let method of protocolType === ModbusProtocolType.Serial ? modbusSerialMethodTypes : modbusMethodTypes"
+                          [value]="method">{{ ModbusMethodLabelsMap.get(method) }}</mat-option>
             </mat-select>
           </mat-form-field>
         </div>
       </div>
-      <mat-expansion-panel *ngIf="this.slaveConfigFormGroup.get('type').value !== ModbusProtocolType.Serial"
-                           [expanded]="showSecurityControl.value">
-        <mat-expansion-panel-header class="nested-expansion-header">
+    </div>
+    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width tb-required" translate>gateway.unit-id</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" name="value" formControlName="unitId" placeholder="{{ 'gateway.set' | translate }}"/>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="('gateway.unit-id-required') | translate"
+                    *ngIf="slaveConfigFormGroup.get('unitId').hasError('required') &&
+                                             slaveConfigFormGroup.get('unitId').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width tb-required" translate>gateway.device-name</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput name="value" formControlName="deviceName" placeholder="{{ 'gateway.set' | translate }}"/>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="('gateway.device-name-required') | translate"
+                    *ngIf="slaveConfigFormGroup.get('deviceName').hasError('required') &&
+                                             slaveConfigFormGroup.get('deviceName').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width tb-required" translate>gateway.device-profile</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput name="value" formControlName="deviceType" placeholder="{{ 'gateway.set' | translate }}"/>
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="('gateway.device-profile-required') | translate"
+                    *ngIf="slaveConfigFormGroup.get('deviceType').hasError('required') &&
+                                             slaveConfigFormGroup.get('deviceType').touched"
+                    class="tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width" translate>gateway.poll-period</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" name="value" formControlName="pollPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+    </div>
+    <div *ngIf="protocolType === ModbusProtocolType.Serial" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div class="fixed-title-width" translate>gateway.baudrate</div>
+      <div class="tb-flex no-gap">
+        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="baudrate">
+            <mat-option *ngFor="let rate of modbusBaudrates" [value]="rate">{{ rate }}</mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings">
+        <mat-expansion-panel-header>
           <mat-panel-title>
-            <mat-slide-toggle [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
-              <mat-label>
-                {{ 'gateway.tls-connection' | translate }}
-              </mat-label>
-            </mat-slide-toggle>
+            <div class="tb-form-panel-title" translate>gateway.advanced-connection-settings</div>
           </mat-panel-title>
         </mat-expansion-panel-header>
-        <tb-modbus-security-config formControlName="security" [disabled]="!slaveConfigFormGroup.get('sendDataToThingsBoard').value || !showSecurityControl.value" [isMaster]="true"></tb-modbus-security-config>
+        <div class="tb-form-panel no-border no-padding padding-top">
+          <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+            <div class="fixed-title-width" translate>gateway.byte-order</div>
+            <div class="tb-flex no-gap">
+              <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                <mat-select formControlName="byteOrder">
+                  <mat-option *ngFor="let order of modbusOrderType" [value]="order">{{ order }}</mat-option>
+                </mat-select>
+              </mat-form-field>
+            </div>
+          </div>
+          <div *ngIf="protocolType !== ModbusProtocolType.Serial" class="tb-form-panel stroked tb-slide-toggle">
+            <mat-expansion-panel class="tb-settings" [expanded]="showSecurityControl.value">
+              <mat-expansion-panel-header fxLayout="row wrap">
+                <mat-panel-title>
+                  <mat-slide-toggle fxLayoutAlign="center" [formControl]="showSecurityControl" class="mat-slide" (click)="$event.stopPropagation()">
+                    <mat-label>
+                      {{ 'gateway.tls-connection' | translate }}
+                    </mat-label>
+                  </mat-slide-toggle>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <tb-modbus-security-config formControlName="security"></tb-modbus-security-config>
+            </mat-expansion-panel>
+          </div>
+          <ng-container [formGroup]="slaveConfigFormGroup.get('identity')">
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.vendor-name</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="vendorName" placeholder="{{ 'gateway.set' | translate }}"/>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.product-code</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="productCode" placeholder="{{ 'gateway.set' | translate }}"/>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.vendor-url</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="vendorUrl" placeholder="{{ 'gateway.set' | translate }}"/>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.product-name</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="productName" placeholder="{{ 'gateway.set' | translate }}"/>
+                </mat-form-field>
+              </div>
+            </div>
+            <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+              <div class="fixed-title-width" translate>gateway.model-name</div>
+              <div class="tb-flex no-gap">
+                <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                  <input matInput name="value" formControlName="modelName" placeholder="{{ 'gateway.set' | translate }}"/>
+                </mat-form-field>
+              </div>
+            </div>
+          </ng-container>
+        </div>
       </mat-expansion-panel>
-      <ng-container [formGroup]="slaveConfigFormGroup.get('identity')">
-        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-          <div class="fixed-title-width" translate>gateway.vendor-name</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput name="value" formControlName="vendorName" placeholder="{{ 'gateway.set' | translate }}"/>
-            </mat-form-field>
-          </div>
-        </div>
-        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-          <div class="fixed-title-width" translate>gateway.product-code</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput name="value" formControlName="productCode" placeholder="{{ 'gateway.set' | translate }}"/>
-            </mat-form-field>
-          </div>
-        </div>
-        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-          <div class="fixed-title-width" translate>gateway.vendor-url</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput name="value" formControlName="vendorUrl" placeholder="{{ 'gateway.set' | translate }}"/>
-            </mat-form-field>
-          </div>
-        </div>
-        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-          <div class="fixed-title-width" translate>gateway.product-name</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput name="value" formControlName="productName" placeholder="{{ 'gateway.set' | translate }}"/>
-            </mat-form-field>
-          </div>
-        </div>
-        <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-          <div class="fixed-title-width" translate>gateway.model-name</div>
-          <div class="tb-flex no-gap">
-            <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-              <input matInput name="value" formControlName="modelName" placeholder="{{ 'gateway.set' | translate }}"/>
-            </mat-form-field>
-          </div>
-        </div>
-      </ng-container>
     </div>
-  </mat-expansion-panel>
-  <div class="tb-form-panel stroked">
-    <div class="tb-form-panel-title" translate>gateway.values</div>
-    <tb-modbus-values formControlName="values" [disabled]="!slaveConfigFormGroup.get('sendDataToThingsBoard').value"></tb-modbus-values>
+    <div class="tb-form-panel stroked">
+      <div class="tb-form-panel-title" translate>gateway.values</div>
+      <tb-modbus-values formControlName="values"></tb-modbus-values>
+    </div>
   </div>
 </div>

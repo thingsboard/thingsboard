@@ -15,7 +15,7 @@
 ///
 
 import { Pipe, PipeTransform } from '@angular/core';
-import { PortLimits, } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { PortLimits } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { AbstractControl } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
 
@@ -30,12 +30,12 @@ export class GatewayPortTooltipPipe implements PipeTransform {
   transform(portControl: AbstractControl): string {
     if (portControl.hasError('required')) {
       return this.translate.instant('gateway.port-required');
-    } else if (
-      portControl.hasError('min') ||
-      portControl.hasError('max')
-    ) {
-      return this.translate.instant('gateway.port-limits-error',
-        {min: PortLimits.MIN, max: PortLimits.MAX});
+    }
+    if (portControl.hasError('min') || portControl.hasError('max')) {
+      return this.translate.instant('gateway.port-limits-error', {
+        min: PortLimits.MIN,
+        max: PortLimits.MAX,
+      });
     }
     return '';
   }

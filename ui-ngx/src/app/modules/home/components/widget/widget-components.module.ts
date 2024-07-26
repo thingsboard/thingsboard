@@ -109,20 +109,38 @@ import {
 import {
   NotificationTypeFilterPanelComponent
 } from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
-import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
+import { GatewayHelpLinkPipe } from '@home/pipes/gateway-help-link.pipe';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import {
-  BrokerConfigControlComponent,
-  DeviceInfoTableComponent,
-  MappingDataKeysPanelComponent,
-  MappingTableComponent,
-  MqttBasicConfigComponent,
-  OpcUaBasicConfigComponent,
-  OpcServerConfigComponent,
-  TypeValuePanelComponent,
-  WorkersConfigControlComponent,
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+import {
+  OpcServerConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-server-config/opc-server-config.component';
+import {
+  MqttBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config/mqtt-basic-config.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import {
+  OpcUaBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-ua-basic-config/opc-ua-basic-config.component';
+import {
   ModbusBasicConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
-import { EllipsisChipListDirective } from '@shared/directives/public-api';
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.component';
+import {
+  DeviceInfoTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table/device-info-table.component';
+import {
+  MappingDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel/mapping-data-keys-panel.component';
+import {
+  TypeValuePanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
 
 @NgModule({
   declarations: [
@@ -190,25 +208,26 @@ import { EllipsisChipListDirective } from '@shared/directives/public-api';
     LabelCardWidgetComponent,
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
-    NotificationTypeFilterPanelComponent],
-    imports: [
-        CommonModule,
-        SharedModule,
-        RpcWidgetsModule,
-        HomePageWidgetsModule,
-        SharedHomeComponentsModule,
-        RestConnectorSecurityComponent,
-        GatewayHelpLinkPipe,
-        BrokerConfigControlComponent,
-        WorkersConfigControlComponent,
-        OpcServerConfigComponent,
-        MqttBasicConfigComponent,
-        MappingTableComponent,
-        OpcUaBasicConfigComponent,
-        KeyValueIsNotEmptyPipe,
-        ModbusBasicConfigComponent,
-        EllipsisChipListDirective,
-    ],
+    NotificationTypeFilterPanelComponent
+  ],
+  imports: [
+    CommonModule,
+    SharedModule,
+    RpcWidgetsModule,
+    HomePageWidgetsModule,
+    SharedHomeComponentsModule,
+    RestConnectorSecurityComponent,
+    GatewayHelpLinkPipe,
+    BrokerConfigControlComponent,
+    WorkersConfigControlComponent,
+    OpcServerConfigComponent,
+    MqttBasicConfigComponent,
+    MappingTableComponent,
+    OpcUaBasicConfigComponent,
+    KeyValueIsNotEmptyPipe,
+    ModbusBasicConfigComponent,
+    EllipsisChipListDirective,
+  ],
   exports: [
     EntitiesTableWidgetComponent,
     AlarmsTableWidgetComponent,

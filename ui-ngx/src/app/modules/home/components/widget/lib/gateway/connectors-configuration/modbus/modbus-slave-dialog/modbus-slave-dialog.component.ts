@@ -17,21 +17,27 @@
 import { ChangeDetectionStrategy, Component, forwardRef, Inject, OnDestroy } from '@angular/core';
 import {
   FormBuilder,
+  FormControl,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormControl,
   UntypedFormGroup,
   Validators,
 } from '@angular/forms';
 import {
-  MappingInfo,
+  ModbusBaudrates,
+  ModbusByteSizes,
   ModbusMethodLabelsMap,
   ModbusMethodType,
   ModbusOrderType,
+  ModbusParity,
+  ModbusParityLabelsMap,
   ModbusProtocolLabelsMap,
   ModbusProtocolType,
+  ModbusSerialMethodType,
+  ModbusSlaveInfo,
   noLeadTrailSpacesRegex,
-  PortLimits, SlaveConfig,
+  PortLimits,
+  SlaveConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -43,8 +49,9 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
-import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip/gateway-port-tooltip.pipe';
+import { GatewayPortTooltipPipe } from '@home/pipes/gateway-port-tooltip.pipe';
 import { takeUntil } from 'rxjs/operators';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-modbus-slave-dialog',
@@ -73,33 +80,33 @@ import { takeUntil } from 'rxjs/operators';
   styles: [`
     :host {
       .slaves-config-container {
-        width: 900px;
-      }
-      .nested-expansion-header {
-        .mat-content {
-          height: 100%;
-          overflow: hidden;
-        }
-      }
+        width: 80vw;
+        max-width: 900px;      }
     }
   `],
 })
 export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialogComponent, SlaveConfig> implements OnDestroy {
 
   slaveConfigFormGroup: UntypedFormGroup;
-  showSecurityControl: UntypedFormControl;
+  showSecurityControl: FormControl<boolean>;
   portLimits = PortLimits;
 
   readonly modbusProtocolTypes = Object.values(ModbusProtocolType);
   readonly modbusMethodTypes = Object.values(ModbusMethodType);
+  readonly modbusSerialMethodTypes = Object.values(ModbusSerialMethodType);
+  readonly modbusParities = Object.values(ModbusParity);
+  readonly modbusByteSizes = ModbusByteSizes;
+  readonly modbusBaudrates = ModbusBaudrates;
   readonly modbusOrderType = Object.values(ModbusOrderType);
   readonly ModbusProtocolType = ModbusProtocolType;
+  readonly ModbusParityLabelsMap = ModbusParityLabelsMap;
   readonly ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
   readonly ModbusMethodLabelsMap = ModbusMethodLabelsMap;
   readonly modbusHelpLink =
     'https://thingsboard.io/docs/iot-gateway/config/modbus/#section-master-description-and-configuration-parameters';
-  readonly serialSpecificControlKeys = ['serialPort', 'baudrate', 'stopbits', 'bytesize', 'parity', 'strict'];
-  readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host'];
+
+  private readonly serialSpecificControlKeys = ['serialPort', 'baudrate', 'stopbits', 'bytesize', 'parity', 'strict'];
+  private readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host', 'wordOrder'];
 
   private destroy$ = new Subject<void>();
 
@@ -107,60 +114,22 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
     private fb: FormBuilder,
     protected store: Store<AppState>,
     protected router: Router,
-    @Inject(MAT_DIALOG_DATA) public data: MappingInfo,
+    @Inject(MAT_DIALOG_DATA) public data: ModbusSlaveInfo,
     public dialogRef: MatDialogRef<ModbusSlaveDialogComponent, SlaveConfig>,
   ) {
     super(store, router, dialogRef);
 
     this.showSecurityControl = this.fb.control(false);
-    this.slaveConfigFormGroup = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      type: [ModbusProtocolType.TCP, [Validators.required]],
-      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
-      serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      method: [ModbusMethodType.SOCKET, []],
-      baudrate: [null, []],
-      stopbits: [null, []],
-      bytesize: [null, []],
-      parity: [null, []],
-      strict: [false, []],
-      unitId: [null, [Validators.required]],
-      deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      sendDataOnlyOnChange: [false, []],
-      timeout: [],
-      byteOrder: [ModbusOrderType.BIG, []],
-      wordOrder: [ModbusOrderType.BIG, []],
-      retries: [false, []],
-      retryOnEmpty: [false, []],
-      retryOnInvalid: [false, []],
-      pollPeriod: [null, []],
-      connectAttemptTimeMs: [null, []],
-      connectAttemptCount: [null, []],
-      waitAfterFailedAttemptsMs: [null, []],
-      values: [{}, []],
-      security: [{}],
-    });
-
-    this.slaveConfigFormGroup.patchValue({
-      ...this.data.value,
-      port: this.data.value.type === ModbusProtocolType.Serial
-        ? null
-        : this.data.value.port,
-      serialPort: this.data.value.type === ModbusProtocolType.Serial
-        ? this.data.value.port
-        : '',
-      values: {
-        attributes: this.data.value.attributes ?? [],
-        timeseries: this.data.value.timeseries ?? [],
-        attributeUpdates: this.data.value.attributeUpdates ?? [],
-        rpc: this.data.value.rpc ?? [],
-      }
-    });
-    this.showSecurityControl.patchValue(!!this.data.value.security);
+    this.initializeSlaveFormGroup();
+    this.updateSlaveFormGroup();
     this.updateControlsEnabling(this.data.value.type);
     this.observeTypeChange();
+    this.observeShowSecurity();
+    this.showSecurityControl.patchValue(!!this.data.value.security && !isEqual(this.data.value.security, {}));
+  }
+
+  get protocolType(): ModbusProtocolType {
+    return this.slaveConfigFormGroup.get('type').value;
   }
 
   ngOnDestroy(): void {
@@ -173,30 +142,108 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
   }
 
   add(): void {
-    if (this.slaveConfigFormGroup.valid) {
-      const slaveResult = {...this.slaveConfigFormGroup.value, ...this.slaveConfigFormGroup.value.values};
-      delete slaveResult.values;
-      if (slaveResult.type === ModbusProtocolType.Serial) {
-        slaveResult.port = slaveResult.serialPort;
-      }
-      delete slaveResult.serialPort;
-      this.dialogRef.close(slaveResult);
+    if (!this.slaveConfigFormGroup.valid) {
+      return;
     }
+
+    const { values, type, serialPort, ...rest } = this.slaveConfigFormGroup.value;
+    const slaveResult = { ...rest, type, ...values };
+
+    if (type === ModbusProtocolType.Serial) {
+      slaveResult.port = serialPort;
+    }
+
+    this.dialogRef.close(slaveResult);
   }
 
-  private observeTypeChange(): void {
-    this.slaveConfigFormGroup.get('type').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(type => {
-      this.updateControlsEnabling(type);
+  private initializeSlaveFormGroup(): void {
+    this.slaveConfigFormGroup = this.fb.group({
+      name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      type: [ModbusProtocolType.TCP],
+      host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
+      serialPort: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      method: [ModbusMethodType.SOCKET, [Validators.required]],
+      baudrate: [this.modbusBaudrates[0]],
+      stopbits: [1],
+      bytesize: [ModbusByteSizes[0]],
+      parity: [ModbusParity.None],
+      strict: [true],
+      unitId: [0, [Validators.required]],
+      deviceName: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      deviceType: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      sendDataOnlyOnChange: [false],
+      timeout: [35],
+      byteOrder: [ModbusOrderType.BIG],
+      wordOrder: [ModbusOrderType.BIG],
+      retries: [true],
+      retryOnEmpty: [true],
+      retryOnInvalid: [true],
+      pollPeriod: [5000],
+      connectAttemptTimeMs: [5000],
+      connectAttemptCount: [5],
+      waitAfterFailedAttemptsMs: [300000],
+      values: [{}],
+      security: [{}],
     });
   }
 
-  private updateControlsEnabling(type: ModbusProtocolType): void {
-    if (type === ModbusProtocolType.Serial) {
-      this.serialSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
-      this.tcpUdpSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.disable({emitEvent: false}));
-    } else {
-      this.serialSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.disable({emitEvent: false}));
-      this.tcpUdpSpecificControlKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({emitEvent: false}));
+  private updateSlaveFormGroup(): void {
+    this.slaveConfigFormGroup.patchValue({
+      ...this.data.value,
+      port: this.data.value.type === ModbusProtocolType.Serial ? null : this.data.value.port,
+      serialPort: this.data.value.type === ModbusProtocolType.Serial ? this.data.value.port : '',
+      values: {
+        attributes: this.data.value.attributes ?? [],
+        timeseries: this.data.value.timeseries ?? [],
+        attributeUpdates: this.data.value.attributeUpdates ?? [],
+        rpc: this.data.value.rpc ?? [],
+      }
+    });
+  }
+
+  private observeTypeChange(): void {
+    this.slaveConfigFormGroup.get('type').valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(type => {
+        this.updateControlsEnabling(type);
+        this.updateMethodType(type);
+      });
+  }
+
+  private updateMethodType(type: ModbusProtocolType): void {
+    if (this.slaveConfigFormGroup.get('method').value !== ModbusMethodType.RTU) {
+      this.slaveConfigFormGroup.get('method').patchValue(
+        type === ModbusProtocolType.Serial
+          ? ModbusSerialMethodType.ASCII
+          : ModbusMethodType.SOCKET,
+        {emitEvent: false}
+      );
     }
-  };
+  }
+
+  private updateControlsEnabling(type: ModbusProtocolType): void {
+    const [enableKeys, disableKeys] = type === ModbusProtocolType.Serial
+      ? [this.serialSpecificControlKeys, this.tcpUdpSpecificControlKeys]
+      : [this.tcpUdpSpecificControlKeys, this.serialSpecificControlKeys];
+
+    enableKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({ emitEvent: false }));
+    disableKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.disable({ emitEvent: false }));
+
+    this.updateSecurityEnabling(this.showSecurityControl.value);
+  }
+
+  private observeShowSecurity(): void {
+    this.showSecurityControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => this.updateSecurityEnabling(value));
+  }
+
+  private updateSecurityEnabling(isEnabled: boolean): void {
+    if (isEnabled && this.protocolType !== ModbusProtocolType.Serial) {
+      this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
+    } else {
+      this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
+    }
+  }
 }

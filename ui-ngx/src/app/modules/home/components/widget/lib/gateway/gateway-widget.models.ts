@@ -493,6 +493,11 @@ export interface MappingInfo {
   buttonTitle: string;
 }
 
+export interface ModbusSlaveInfo {
+  value: SlaveConfig;
+  buttonTitle: string;
+}
+
 export enum ConnectorConfigurationModes {
   BASIC = 'basic',
   ADVANCED = 'advanced'
@@ -789,10 +794,32 @@ export enum ModbusMethodType {
   RTU = 'rtu',
 }
 
-export const ModbusMethodLabelsMap = new Map<ModbusMethodType, string>(
+export enum ModbusSerialMethodType {
+  RTU = 'rtu',
+  ASCII = 'ascii',
+}
+
+export const ModbusMethodLabelsMap = new Map<ModbusMethodType | ModbusSerialMethodType, string>(
   [
     [ModbusMethodType.SOCKET, 'Socket'],
     [ModbusMethodType.RTU, 'RTU'],
+    [ModbusSerialMethodType.ASCII, 'ASCII'],
+  ]
+);
+
+export const ModbusByteSizes = [5, 6, 7 ,8];
+
+export enum ModbusParity {
+  Even = 'E',
+  Odd = 'O',
+  None = 'N'
+}
+
+export const ModbusParityLabelsMap = new Map<ModbusParity, string>(
+  [
+    [ModbusParity.Even, 'Even'],
+    [ModbusParity.Odd, 'Odd'],
+    [ModbusParity.None, 'None'],
   ]
 );
 
@@ -802,17 +829,17 @@ export enum ModbusOrderType {
 }
 
 export enum ModbusRegisterType {
-  HoldingRegister = 'holding_registers',
+  HoldingRegisters = 'holding_registers',
   CoilsInitializer = 'coils_initializer',
-  InputRegister = 'input_registers',
+  InputRegisters = 'input_registers',
   DiscreteInputs = 'discrete_inputs'
 }
 
 export const ModbusRegisterTranslationsMap = new Map<ModbusRegisterType, string>(
   [
-    [ModbusRegisterType.HoldingRegister, 'gateway.holding_registers'],
+    [ModbusRegisterType.HoldingRegisters, 'gateway.holding_registers'],
     [ModbusRegisterType.CoilsInitializer, 'gateway.coils_initializer'],
-    [ModbusRegisterType.InputRegister, 'gateway.input_registers'],
+    [ModbusRegisterType.InputRegisters, 'gateway.input_registers'],
     [ModbusRegisterType.DiscreteInputs, 'gateway.discrete_inputs']
   ]
 );
@@ -821,6 +848,9 @@ export enum ModbusDataType {
   STRING = 'string',
   BYTES = 'bytes',
   BITS = 'bits',
+  INT8 = '8int',
+  UINT8 = '8uint',
+  FLOAT8 = '8float',
   INT16 = '16int',
   UINT16 = '16uint',
   FLOAT16 = '16float',
@@ -833,6 +863,9 @@ export enum ModbusDataType {
 }
 
 export enum ModbusObjectCountByDataType {
+  '8int' = 1,
+  '8uint' = 1,
+  '8float' = 1,
   '16int' = 1,
   '16uint' = 1,
   '16float' = 1,
@@ -843,24 +876,6 @@ export enum ModbusObjectCountByDataType {
   '64uint' = 4,
   '64float' = 4,
 }
-
-export enum ModbusValueField {
-  Tag = 'tag',
-  Type = 'type',
-  ObjectsCount = 'objectsCount',
-  Address = 'address',
-  Value = 'value',
-}
-
-export const ModbusFieldsTranslationsMap = new Map<ModbusValueField, string>(
-  [
-    [ModbusValueField.Tag, 'gateway.tag'],
-    [ModbusValueField.Type, 'gateway.type'],
-    [ModbusValueField.ObjectsCount, 'gateway.objects_count'],
-    [ModbusValueField.Address, 'gateway.address'],
-    [ModbusValueField.Value, 'gateway.value']
-  ]
-);
 
 export enum ModbusValueKey {
   ATTRIBUTES = 'attributes',
@@ -892,7 +907,7 @@ export const ModbusKeysDeleteKeyTranslationsMap = new Map<ModbusValueKey, string
     [ModbusValueKey.ATTRIBUTES, 'gateway.delete-attribute'],
     [ModbusValueKey.TIMESERIES, 'gateway.delete-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
-    [ModbusValueKey.RPC_REQUESTS, 'gateway.delete-rpc-requests']
+    [ModbusValueKey.RPC_REQUESTS, 'gateway.delete-rpc-request']
   ]
 );
 
@@ -902,14 +917,6 @@ export const ModbusKeysNoKeysTextTranslationsMap = new Map<ModbusValueKey, strin
     [ModbusValueKey.TIMESERIES, 'gateway.no-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.no-rpc-requests']
-  ]
-);
-
-export const ModbusClientTypeLabelsMap = new Map<ModbusProtocolType, string>(
-  [
-    [ModbusProtocolType.TCP, 'TCP/UDP'],
-    [ModbusProtocolType.UDP, 'TCP/UDP'],
-    [ModbusProtocolType.Serial, 'Serial'],
   ]
 );
 
@@ -946,7 +953,7 @@ export interface SlaveConfig {
   pollPeriod: number;
   unitId: number;
   deviceName: string;
-  deviceType?: string;
+  deviceType: string;
   sendDataOnlyOnChange: boolean;
   connectAttemptTimeMs: number;
   connectAttemptCount: number;
@@ -959,7 +966,7 @@ export interface SlaveConfig {
   baudrate?: number;
   stopbits?: number;
   bytesize?: number;
-  parity?: string;
+  parity?: ModbusParity;
   strict?: boolean;
 }
 
@@ -1021,3 +1028,5 @@ export interface ModbusIdentity {
   productName?: string;
   modelName?: string;
 }
+
+export const ModbusBaudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];

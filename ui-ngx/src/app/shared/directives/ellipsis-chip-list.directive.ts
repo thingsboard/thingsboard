@@ -61,8 +61,11 @@ export class EllipsisChipListDirective implements OnDestroy {
     ).subscribe(() => {
       this.adjustChips();
     });
+    this.observeIntersection();
+  }
 
-    this.intersectionObserver = new IntersectionObserver((entries) => {
+  private observeIntersection(): void {
+    this.intersectionObserver = new IntersectionObserver(entries => {
       entries.forEach(entry => {
         if (entry.isIntersecting) {
           this.adjustChips();

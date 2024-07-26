@@ -14,22 +14,32 @@
 /// limitations under the License.
 ///
 
-import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
-import { AbstractControl, FormGroup, UntypedFormArray, UntypedFormBuilder, Validators } from '@angular/forms';
+import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angular/core';
+import {
+  AbstractControl,
+  FormArray,
+  FormGroup,
+  UntypedFormArray,
+  UntypedFormBuilder,
+  UntypedFormGroup,
+  Validators
+} from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
   ModbusDataType,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
-  ModbusRegisterType,
   ModbusValue,
   ModbusValueKey,
   noLeadTrailSpacesRegex,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
-import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
+import { GatewayHelpLinkPipe } from '@home/pipes/gateway-help-link.pipe';
 import { generateSecret } from '@core/utils';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -42,22 +52,21 @@ import { generateSecret } from '@core/utils';
     GatewayHelpLinkPipe,
   ]
 })
-export class ModbusDataKeysPanelComponent implements OnInit {
+export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
+  @coerceBoolean()
   @Input() isMaster = false;
   @Input() panelTitle: string;
   @Input() addKeyTitle: string;
   @Input() deleteKeyTitle: string;
   @Input() noKeysText: string;
-  @Input() register: ModbusRegisterType;
   @Input() keysType: ModbusValueKey;
   @Input() values: ModbusValue[];
   @Input() popover: TbPopoverComponent<ModbusDataKeysPanelComponent>;
 
   @Output() keysDataApplied = new EventEmitter<Array<ModbusValue>>();
 
-  keysListFormArray: UntypedFormArray;
-  errorText = '';
+  keysListFormArray: FormArray<UntypedFormGroup>;
   modbusDataTypes = Object.values(ModbusDataType);
   withFunctionCode = true;
   functionCodesMap = new Map();
@@ -65,20 +74,28 @@ export class ModbusDataKeysPanelComponent implements OnInit {
 
   readonly editableDataTypes = [ModbusDataType.BYTES, ModbusDataType.BITS, ModbusDataType.STRING];
   readonly ModbusFunctionCodeTranslationsMap = ModbusFunctionCodeTranslationsMap;
-  readonly defaultReadFunctionCodes = [3, 4];
-  readonly defaultWriteFunctionCodes = [5, 6, 15, 16];
-  readonly stringAttrUpdatesWriteFunctionCodes = [6, 16];
+
+  private destroy$ = new Subject<void>();
+
+  private readonly defaultReadFunctionCodes = [3, 4];
+  private readonly defaultWriteFunctionCodes = [5, 6, 15, 16];
+  private readonly stringAttrUpdatesWriteFunctionCodes = [6, 16];
 
   constructor(private fb: UntypedFormBuilder) {}
 
   ngOnInit(): void {
-    this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.withFunctionCode = !this.isMaster || (this.keysType !== ModbusValueKey.ATTRIBUTES && this.keysType !== ModbusValueKey.TIMESERIES);
+    this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
   }
 
-  trackByKey(_: number, keyControl: AbstractControl): AbstractControl {
-    return keyControl;
+  ngOnDestroy(): void {
+    this.destroy$.next();
+    this.destroy$.complete();
+  }
+
+  trackByControlId(_: number, keyControl: AbstractControl): string {
+    return keyControl.value.id;
   }
 
   addKey(): void {
@@ -86,9 +103,9 @@ export class ModbusDataKeysPanelComponent implements OnInit {
       tag: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       value: [{value: '', disabled: !this.isMaster}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       type: [ModbusDataType.BYTES, [Validators.required]],
-      address: [0, [Validators.required]],
+      address: [null, [Validators.required]],
       objectsCount: [1, [Validators.required]],
-      functionCode: [this.getDefaultFunctionCodes()[0]],
+      functionCode: [{ value: this.getDefaultFunctionCodes()[0], disabled: !this.withFunctionCode }, [Validators.required]],
       id: [{value: generateSecret(5), disabled: true}],
     });
     this.observeKeyDataType(dataKeyFormGroup);
@@ -105,7 +122,7 @@ export class ModbusDataKeysPanelComponent implements OnInit {
   }
 
   cancel(): void {
-    this.popover?.hide();
+    this.popover.hide();
   }
 
   applyKeysData(): void {
@@ -114,53 +131,68 @@ export class ModbusDataKeysPanelComponent implements OnInit {
 
   private prepareKeysFormArray(values: ModbusValue[]): UntypedFormArray {
     const keysControlGroups: Array<AbstractControl> = [];
+
     if (values) {
-      values.forEach(keyData => {
-        const { tag, value, type, address, objectsCount, functionCode } = keyData;
-        const dataKeyFormGroup = this.fb.group({
-          tag: [tag, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          value: [{value, disabled: !this.isMaster}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          type: [type, [Validators.required]],
-          address: [address, [Validators.required]],
-          objectsCount: [objectsCount, [Validators.required]],
-          functionCode: [functionCode, []],
-          id: [{value: generateSecret(5), disabled: true}],
-        });
+      values.forEach(value => {
+        const dataKeyFormGroup = this.createDataKeyFormGroup(value);
         this.observeKeyDataType(dataKeyFormGroup);
-        this.functionCodesMap.set(dataKeyFormGroup.get('id').value, this.getFunctionCodes(type));
+        this.functionCodesMap.set(dataKeyFormGroup.get('id').value, this.getFunctionCodes(value.type));
 
         keysControlGroups.push(dataKeyFormGroup);
       });
     }
+
     return this.fb.array(keysControlGroups);
   }
 
-  private observeKeyDataType(keyFormGroup: FormGroup): void {
-    keyFormGroup.get('type').valueChanges.subscribe(dataType => {
-      const objectsCountControl = keyFormGroup.get('objectsCount');
-      if (!this.editableDataTypes.includes(dataType)) {
-        objectsCountControl.patchValue(ModbusObjectCountByDataType[dataType]);
-      }
-      this.functionCodesMap.set(keyFormGroup.get('id').value, this.getFunctionCodes(dataType));
+  private createDataKeyFormGroup(modbusValue: ModbusValue): FormGroup {
+    const { tag, value, type, address, objectsCount, functionCode } = modbusValue;
+
+    return this.fb.group({
+      tag: [tag, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      value: [{ value, disabled: !this.isMaster }, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      type: [type, [Validators.required]],
+      address: [address, [Validators.required]],
+      objectsCount: [objectsCount, [Validators.required]],
+      functionCode: [{ value: functionCode, disabled: !this.withFunctionCode }, [Validators.required]],
+      id: [{ value: generateSecret(5), disabled: true }],
     });
+  }
+
+  private observeKeyDataType(keyFormGroup: FormGroup): void {
+    keyFormGroup.get('type').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(dataType => {
+      if (!this.editableDataTypes.includes(dataType)) {
+        keyFormGroup.get('objectsCount').patchValue(ModbusObjectCountByDataType[dataType], {emitEvent: false});
+      }
+      this.updateFunctionCodes(keyFormGroup, dataType);
+    });
+  }
+
+  private updateFunctionCodes(keyFormGroup: FormGroup, dataType: ModbusDataType): void {
+    const functionCodes = this.getFunctionCodes(dataType);
+    this.functionCodesMap.set(keyFormGroup.get('id').value, functionCodes);
+    if (!functionCodes.includes(keyFormGroup.get('functionCode').value)) {
+      keyFormGroup.get('functionCode').patchValue(functionCodes[0], {emitEvent: false});
+    }
   }
 
   private getFunctionCodes(dataType: ModbusDataType): number[] {
     if (this.keysType === ModbusValueKey.ATTRIBUTES_UPDATES) {
-      if (dataType === ModbusDataType.STRING) {
-        return this.stringAttrUpdatesWriteFunctionCodes;
-      }
-      return this.defaultWriteFunctionCodes;
+      return dataType === ModbusDataType.STRING
+        ? this.stringAttrUpdatesWriteFunctionCodes
+        : this.defaultWriteFunctionCodes;
     }
+
     const functionCodes = [...this.defaultReadFunctionCodes];
     if (dataType === ModbusDataType.BITS) {
       const bitsFunctionCodes = [1, 2];
-      bitsFunctionCodes.forEach(code => functionCodes.push(code));
+      functionCodes.push(...bitsFunctionCodes);
       functionCodes.sort();
     }
     if (this.keysType === ModbusValueKey.RPC_REQUESTS) {
-      this.defaultWriteFunctionCodes.forEach(code => functionCodes.push(code));
+      functionCodes.push(...this.defaultWriteFunctionCodes);
     }
+
     return functionCodes;
   }
 

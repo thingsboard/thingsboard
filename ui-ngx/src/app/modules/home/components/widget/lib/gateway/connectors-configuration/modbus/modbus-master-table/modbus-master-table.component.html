@@ -60,19 +60,19 @@
     <div class="table-container">
       <table mat-table [dataSource]="dataSource">
         <ng-container [matColumnDef]="'name'">
-          <mat-header-cell *matHeaderCellDef class="table-value-column request-column">
+          <mat-header-cell *matHeaderCellDef class="table-value-column">
             {{ 'gateway.name' | translate }}
           </mat-header-cell>
-          <mat-cell *matCellDef="let mapping" class="table-value-column request-column">
+          <mat-cell *matCellDef="let mapping" class="table-value-column">
             {{ mapping['name'] }}
           </mat-cell>
         </ng-container>
         <ng-container [matColumnDef]="'type'">
-          <mat-header-cell *matHeaderCellDef class="table-value-column request-column">
+          <mat-header-cell *matHeaderCellDef class="table-value-column">
             {{ 'gateway.client-communication-type' | translate }}
           </mat-header-cell>
-          <mat-cell *matCellDef="let mapping" class="table-value-column request-column">
-            {{ ModbusClientTypeLabelsMap.get(mapping['type']) }}
+          <mat-cell *matCellDef="let mapping" class="table-value-column">
+            {{ ModbusProtocolLabelsMap.get(mapping['type']) }}
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
@@ -111,7 +111,7 @@
           </mat-cell>
         </ng-container>
         <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="['name', 'type', 'actions']; sticky: true"></mat-header-row>
-        <mat-row *matRowDef="let mapping; columns: ['name', 'type', 'actions'];"></mat-row>
+        <mat-row *matRowDef="let mapping; columns: ['name', 'type', 'actions']"></mat-row>
       </table>
       <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">

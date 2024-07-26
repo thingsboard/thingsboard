@@ -17,6 +17,7 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   ElementRef,
   forwardRef,
@@ -40,13 +41,15 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ModbusClientTypeLabelsMap, ModbusMasterConfig, SlaveConfig,
+  ModbusMasterConfig,
+  ModbusProtocolLabelsMap,
+  SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TbDatasource } from '@shared/abstract/datasource/datasource.abstract';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
+import { TbTableDatasource } from '@home/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-modbus-master-table',
@@ -74,15 +77,12 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
 
   textSearchMode = false;
   dataSource: SlavesDatasource;
-  hidePageSize = false;
-  activeValue = false;
-  dirtyValue = false;
   masterFormGroup: UntypedFormGroup;
   textSearch = this.fb.control('', {nonNullable: true});
 
-  readonly ModbusClientTypeLabelsMap = ModbusClientTypeLabelsMap;
+  readonly ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
 
-  private onChange: (value: string) => void = () => {};
+  private onChange: (value: ModbusMasterConfig) => void = () => {};
   private onTouched: () => void  = () => {};
 
   private destroy$ = new Subject<void>();
@@ -91,10 +91,10 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     public translate: TranslateService,
     public dialog: MatDialog,
     private dialogService: DialogService,
-    private fb: FormBuilder
+    private fb: FormBuilder,
+    private cdr: ChangeDetectorRef,
   ) {
-    this.masterFormGroup =  this.fb.group({ slaves: this.fb.array([])});
-    this.dirtyValue = !this.activeValue;
+    this.masterFormGroup =  this.fb.group({ slaves: this.fb.array([]) });
     this.dataSource = new SlavesDatasource();
   }
 
@@ -122,13 +122,10 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
       debounceTime(150),
       distinctUntilChanged((prev, current) => (prev ?? '') === current.trim()),
       takeUntil(this.destroy$)
-    ).subscribe((text) => {
-      const searchText = text.trim();
-      this.updateTableData(this.slaves.value, searchText.trim());
-    });
+    ).subscribe(text => this.updateTableData(this.slaves.value, text.trim()));
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: ModbusMasterConfig) => void): void {
     this.onChange = fn;
   }
 
@@ -149,10 +146,10 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
 
   enterFilterMode(): void {
     this.textSearchMode = true;
-    setTimeout(() => {
-      this.searchInputField.nativeElement.focus();
-      this.searchInputField.nativeElement.setSelectionRange(0, 0);
-    }, 10);
+    this.cdr.detectChanges();
+    const searchInput = this.searchInputField.nativeElement;
+    searchInput.focus();
+    searchInput.setSelectionRange(0, 0);
   }
 
   exitFilterMode(): void {
@@ -165,19 +162,20 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     if ($event) {
       $event.stopPropagation();
     }
-    const value = isDefinedAndNotNull(index) ? this.slaves.at(index).value : {};
+    const withIndex = isDefinedAndNotNull(index);
+    const value = withIndex ? this.slaves.at(index).value : {};
     this.dialog.open<ModbusSlaveDialogComponent, any, any>(ModbusSlaveDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         value,
-        buttonTitle: isUndefinedOrNull(index) ?  'action.add' : 'action.apply'
+        buttonTitle: withIndex ? 'action.add' : 'action.apply'
       }
     }).afterClosed()
       .pipe(take(1), takeUntil(this.destroy$))
       .subscribe(res => {
         if (res) {
-          if (isDefinedAndNotNull(index)) {
+          if (withIndex) {
             this.slaves.at(index).patchValue(res);
           } else {
             this.slaves.push(this.fb.control(res));
@@ -197,7 +195,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
       this.translate.instant('action.no'),
       this.translate.instant('action.yes'),
       true
-    ).subscribe((result) => {
+    ).pipe(take(1), takeUntil(this.destroy$)).subscribe((result) => {
       if (result) {
         this.slaves.removeAt(index);
         this.masterFormGroup.markAsDirty();
@@ -206,15 +204,14 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
   }
 
   private updateTableData(data: SlaveConfig[], textSearch?: string): void {
-    let tableValue = data;
     if (textSearch) {
-      tableValue = tableValue.filter(value =>
-        Object.values(value).some(val =>
-          val.toString().toLowerCase().includes(textSearch.toLowerCase())
+      data = data.filter(item =>
+        Object.values(item).some(value =>
+          value.toString().toLowerCase().includes(textSearch.toLowerCase())
         )
       );
     }
-    this.dataSource.loadData(tableValue);
+    this.dataSource.loadData(data);
   }
 
   private pushDataAsFormArrays(slaves: SlaveConfig[]): void {
@@ -224,7 +221,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
   }
 }
 
-export class SlavesDatasource extends TbDatasource<SlaveConfig> {
+export class SlavesDatasource extends TbTableDatasource<SlaveConfig> {
   constructor() {
     super();
   }
