@@ -90,9 +90,6 @@ import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
-import {
-  EllipsisChipListDirective
-} from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
@@ -112,18 +109,38 @@ import {
 import {
   NotificationTypeFilterPanelComponent
 } from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
-import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
+import { GatewayHelpLinkPipe } from '@home/components/widget/lib/gateway/pipes/gateway-help-link.pipe';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import {
-  BrokerConfigControlComponent,
-  DeviceInfoTableComponent,
-  MappingDataKeysPanelComponent,
-  MappingTableComponent,
-  MqttBasicConfigComponent,
-  OpcUaBasicConfigComponent,
-  ServerConfigComponent,
-  TypeValuePanelComponent,
-  WorkersConfigControlComponent,
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+import {
+  OpcServerConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-server-config/opc-server-config.component';
+import {
+  MqttBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config/mqtt-basic-config.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import {
+  OpcUaBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc-ua-basic-config/opc-ua-basic-config.component';
+import {
+  ModbusBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.component';
+import {
+  DeviceInfoTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table/device-info-table.component';
+import {
+  MappingDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel/mapping-data-keys-panel.component';
+import {
+  TypeValuePanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 
 @NgModule({
@@ -164,7 +181,6 @@ import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/sc
     GatewayConfigurationComponent,
     GatewayRemoteConfigurationDialogComponent,
     GatewayServiceRPCConnectorTemplateDialogComponent,
-    EllipsisChipListDirective,
     ValueCardWidgetComponent,
     AggregatedValueCardWidgetComponent,
     CountWidgetComponent,
@@ -206,11 +222,13 @@ import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/sc
     GatewayHelpLinkPipe,
     BrokerConfigControlComponent,
     WorkersConfigControlComponent,
-    ServerConfigComponent,
+    OpcServerConfigComponent,
     MqttBasicConfigComponent,
     MappingTableComponent,
     OpcUaBasicConfigComponent,
-    KeyValueIsNotEmptyPipe
+    KeyValueIsNotEmptyPipe,
+    ModbusBasicConfigComponent,
+    EllipsisChipListDirective,
   ],
   exports: [
     EntitiesTableWidgetComponent,

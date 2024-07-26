@@ -669,6 +669,26 @@ public class TbUtilsTest {
     }
 
     @Test
+    public void hexToBytes_Test() {
+        String input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF33";
+        byte[] expected = {1, 117, 43, 3, 103, -6, 0, 5, 0, 1, 4, -120, -1, -1, -1, -1, -1, -1, -1, -1, 51};
+        List<Byte> actual = TbUtils.hexToBytes(ctx, input);
+        Assertions.assertEquals(toList(expected), actual);
+        try {
+            input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF3";
+            actual = TbUtils.hexToBytes(ctx, input);
+        } catch (IllegalArgumentException e) {
+            Assertions.assertTrue(e.getMessage().contains("Hex string must be even-length."));
+        }
+        try {
+            input = "0x01752B0367KA000500010488FFFFFFFFFFFFFFFF33";
+            actual = TbUtils.hexToBytes(ctx, input);
+        } catch (NumberFormatException e) {
+            Assertions.assertTrue(e.getMessage().contains("Value: \"" + input + "\" is not numeric or hexDecimal format!"));
+        }
+    }
+
+    @Test
     public void floatToHex_Test() {
         Float value = 123456789.00f;
         String expectedHex = "0x4CEB79A3";

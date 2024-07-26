@@ -25,7 +25,9 @@ import {
   FormBuilder,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormGroup, ValidationErrors, Validator,
+  UntypedFormGroup,
+  ValidationErrors,
+  Validator,
   Validators
 } from '@angular/forms';
 import { SharedModule } from '@shared/shared.module';
@@ -33,6 +35,7 @@ import { CommonModule } from '@angular/common';
 import { WorkersConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 
 @Component({
   selector: 'tb-workers-config-control',
@@ -42,6 +45,7 @@ import { takeUntil } from 'rxjs/operators';
   imports: [
     CommonModule,
     SharedModule,
+    TruncateWithTooltipDirective,
   ],
   providers: [
     {
@@ -91,7 +95,11 @@ export class WorkersConfigControlComponent implements OnDestroy, ControlValueAcc
   }
 
   writeValue(workersConfig: WorkersConfig): void {
-    this.workersConfigFormGroup.patchValue(workersConfig, {emitEvent: false});
+    const { maxNumberOfWorkers, maxMessageNumberPerWorker } = workersConfig;
+    this.workersConfigFormGroup.reset({
+      maxNumberOfWorkers: maxNumberOfWorkers || 100,
+      maxMessageNumberPerWorker: maxMessageNumberPerWorker || 10,
+    }, {emitEvent: false});
   }
 
   validate(): ValidationErrors | null {
