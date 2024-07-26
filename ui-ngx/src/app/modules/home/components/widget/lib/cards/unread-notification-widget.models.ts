@@ -35,7 +35,7 @@ export const unreadNotificationDefaultSettings: UnreadNotificationWidgetSettings
   showCounter: true,
   counterValueFont: {
     family: 'Roboto',
-    size: 14,
+    size: 12,
     sizeUnit: 'px',
     style: 'normal',
     weight: '600',
