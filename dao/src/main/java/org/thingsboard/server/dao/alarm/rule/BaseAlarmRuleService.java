@@ -143,6 +143,16 @@ public class BaseAlarmRuleService extends AbstractEntityService implements Alarm
     }
 
     @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        AlarmRule alarmRule = alarmRuleDao.findById(tenantId, id.getId());
+        if (alarmRule == null) {
+            return;
+        }
+
+        deleteAlarmRule(tenantId, alarmRule.getId());
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.ALARM_RULE;
     }

@@ -17,7 +17,8 @@
 import { Component, EventEmitter, Input, OnInit, Output } from '@angular/core';
 import {
   ConnectorType,
-  RPCTemplate
+  RPCTemplate,
+  SNMPMethodsTranslations
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
@@ -49,6 +50,7 @@ export class GatewayServiceRPCConnectorTemplatesComponent implements OnInit {
 
   public readonly originalOrder = (): number => 0;
   public readonly isObject = (value: any) => isLiteralObject(value);
+  public readonly SNMPMethodsTranslations = SNMPMethodsTranslations;
 
   constructor(private attributeService: AttributeService) {
   }

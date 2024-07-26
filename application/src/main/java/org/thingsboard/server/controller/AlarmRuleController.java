@@ -104,6 +104,28 @@ public class AlarmRuleController extends BaseController {
         tbAlarmRuleService.delete(alarmRule, getCurrentUser());
     }
 
+    @ApiOperation(value = "Get Tenant AlarmRules (getAlarmRules)",
+            notes = "Returns a page of alarm rules owned by tenant. " +
+                    PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @RequestMapping(value = "/alarmRules", params = {"pageSize", "page"}, method = RequestMethod.GET)
+    @ResponseBody
+    public PageData<AlarmRule> getAlarmRules(
+            @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+            @RequestParam int pageSize,
+            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+            @RequestParam int page,
+            @Parameter(description = ALARM_RULE_TEXT_SEARCH_DESCRIPTION)
+            @RequestParam(required = false) String textSearch,
+            @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"createdTime", "name", "alarmType"}))
+            @RequestParam(required = false) String sortProperty,
+            @Parameter(description = SORT_ORDER_DESCRIPTION, schema = @Schema(allowableValues = {"ASC", "DESC"}))
+            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        TenantId tenantId = getCurrentUser().getTenantId();
+        return checkNotNull(alarmRuleService.findAlarmRules(tenantId, pageLink));
+    }
+
     @ApiOperation(value = "Get Tenant AlarmRuleInfos (getAlarmRuleInfos)",
             notes = "Returns a page of alarm rule infos owned by tenant. " +
                     PAGE_DATA_PARAMETERS + TENANT_AUTHORITY_PARAGRAPH)

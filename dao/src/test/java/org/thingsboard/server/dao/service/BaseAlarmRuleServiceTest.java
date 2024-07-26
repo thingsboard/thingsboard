@@ -130,7 +130,33 @@ public class BaseAlarmRuleServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testFindDeviceProfileInfos() {
+    public void testFindAlarmRules() {
+        List<AlarmRule> alarmRules = new ArrayList<>();
+
+        for (int i = 0; i < 28; i++) {
+            AlarmRule alarmRule = createAlarmRule(tenantId, ALARM_RULE_NAME + i);
+            alarmRules.add(alarmRuleService.saveAlarmRule(tenantId, alarmRule));
+        }
+
+        List<AlarmRule> loadedAlarmRules = new ArrayList<>();
+        PageLink pageLink = new PageLink(17);
+        PageData<AlarmRule> pageData;
+        do {
+            pageData = alarmRuleService.findAlarmRules(tenantId, pageLink);
+            loadedAlarmRules.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
+
+        alarmRules.sort(idComparator);
+        loadedAlarmRules.sort(idComparator);
+
+        Assert.assertEquals(alarmRules, loadedAlarmRules);
+    }
+
+    @Test
+    public void testFindAlarmRuleInfos() {
         List<AlarmRule> alarmRules = new ArrayList<>();
 
         for (int i = 0; i < 28; i++) {

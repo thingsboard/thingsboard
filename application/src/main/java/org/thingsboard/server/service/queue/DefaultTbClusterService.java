@@ -24,12 +24,14 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.ApiUsageState;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
@@ -167,7 +169,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToVersionControl(TenantId tenantId, TransportProtos.ToVersionControlServiceMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, tenantId, tenantId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, TenantId.SYS_TENANT_ID, tenantId);
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getTbVersionControlMsgProducer().send(tpi, new TbProtoQueueMsg<>(tenantId.getId(), msg), callback);
         //TODO: ashvayka
@@ -347,29 +349,33 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void onResourceChange(TbResourceInfo resource, TbQueueCallback callback) {
-        TenantId tenantId = resource.getTenantId();
-        log.trace("[{}][{}][{}] Processing change resource", tenantId, resource.getResourceType(), resource.getResourceKey());
-        TransportProtos.ResourceUpdateMsg resourceUpdateMsg = TransportProtos.ResourceUpdateMsg.newBuilder()
-                .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
-                .setResourceType(resource.getResourceType().name())
-                .setResourceKey(resource.getResourceKey())
-                .build();
-        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceUpdateMsg(resourceUpdateMsg).build();
-        broadcast(transportMsg, callback);
+        if (resource.getResourceType() == ResourceType.LWM2M_MODEL) {
+            TenantId tenantId = resource.getTenantId();
+            log.trace("[{}][{}][{}] Processing change resource", tenantId, resource.getResourceType(), resource.getResourceKey());
+            TransportProtos.ResourceUpdateMsg resourceUpdateMsg = TransportProtos.ResourceUpdateMsg.newBuilder()
+                    .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
+                    .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                    .setResourceType(resource.getResourceType().name())
+                    .setResourceKey(resource.getResourceKey())
+                    .build();
+            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceUpdateMsg(resourceUpdateMsg).build();
+            broadcast(transportMsg, DataConstants.LWM2M_TRANSPORT_NAME, callback);
+        }
     }
 
     @Override
     public void onResourceDeleted(TbResourceInfo resource, TbQueueCallback callback) {
-        log.trace("[{}] Processing delete resource", resource);
-        TransportProtos.ResourceDeleteMsg resourceUpdateMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
-                .setTenantIdMSB(resource.getTenantId().getId().getMostSignificantBits())
-                .setTenantIdLSB(resource.getTenantId().getId().getLeastSignificantBits())
-                .setResourceType(resource.getResourceType().name())
-                .setResourceKey(resource.getResourceKey())
-                .build();
-        ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceDeleteMsg(resourceUpdateMsg).build();
-        broadcast(transportMsg, callback);
+        if (resource.getResourceType() == ResourceType.LWM2M_MODEL) {
+            log.trace("[{}][{}][{}] Processing delete resource", resource.getTenantId(), resource.getResourceType(), resource.getResourceKey());
+            TransportProtos.ResourceDeleteMsg resourceDeleteMsg = TransportProtos.ResourceDeleteMsg.newBuilder()
+                    .setTenantIdMSB(resource.getTenantId().getId().getMostSignificantBits())
+                    .setTenantIdLSB(resource.getTenantId().getId().getLeastSignificantBits())
+                    .setResourceType(resource.getResourceType().name())
+                    .setResourceKey(resource.getResourceKey())
+                    .build();
+            ToTransportMsg transportMsg = ToTransportMsg.newBuilder().setResourceDeleteMsg(resourceDeleteMsg).build();
+            broadcast(transportMsg, DataConstants.LWM2M_TRANSPORT_NAME, callback);
+        }
     }
 
     @Override
@@ -396,8 +402,19 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void broadcast(ToTransportMsg transportMsg, TbQueueCallback callback) {
-        TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransportNfProducer = producerProvider.getTransportNotificationsMsgProducer();
         Set<String> tbTransportServices = partitionService.getAllServiceIds(ServiceType.TB_TRANSPORT);
+        broadcast(transportMsg, tbTransportServices, callback);
+    }
+
+    private void broadcast(ToTransportMsg transportMsg, String transportType, TbQueueCallback callback) {
+        Set<String> tbTransportServices = partitionService.getAllServices(ServiceType.TB_TRANSPORT).stream()
+                .filter(info -> info.getTransportsList().contains(transportType))
+                .map(TransportProtos.ServiceInfo::getServiceId).collect(Collectors.toSet());
+        broadcast(transportMsg, tbTransportServices, callback);
+    }
+
+    private void broadcast(ToTransportMsg transportMsg, Set<String> tbTransportServices, TbQueueCallback callback) {
+        TbQueueProducer<TbProtoQueueMsg<ToTransportMsg>> toTransportNfProducer = producerProvider.getTransportNotificationsMsgProducer();
         TbQueueCallback proxyCallback = callback != null ? new MultipleTbQueueCallbackWrapper(tbTransportServices.size(), callback) : null;
         for (String transportServiceId : tbTransportServices) {
             TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_TRANSPORT, transportServiceId);

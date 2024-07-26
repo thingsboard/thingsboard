@@ -170,7 +170,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 updateSchema("3.6.4", 3006004, "3.7.0", 3007000, null);
                 break;
             case "3.7.0":
-                updateSchema("3.7.0", 3007000, "3.8.0", 3008000, conn -> {
+                updateSchema("3.7.0", 3007000, "3.7.1", 3007001, null);
+                break;
+            case "3.7.1":
+                updateSchema("3.7.1", 3007001, "3.8.0", 3008000, conn -> {
                     log.info("Alarm Rules migration ...");
 
                     List<ListenableFuture<?>> futures = new ArrayList<>();
@@ -325,4 +328,5 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         }
         return isOldSchema;
     }
+
 }

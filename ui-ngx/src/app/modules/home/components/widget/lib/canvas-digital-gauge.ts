@@ -238,10 +238,10 @@ export class CanvasDigitalGauge extends BaseGauge {
     }
 
     if (options.neonGlowBrightness) {
-      options.neonColorTitle = tinycolor(options.colorTitle).brighten(options.neonGlowBrightness).toHexString();
-      options.neonColorLabel = tinycolor(options.colorLabel).brighten(options.neonGlowBrightness).toHexString();
-      options.neonColorValue = tinycolor(options.colorValue).brighten(options.neonGlowBrightness).toHexString();
-      options.neonColorMinMax = tinycolor(options.colorMinMax).brighten(options.neonGlowBrightness).toHexString();
+      options.neonColorTitle = tinycolor(options.colorTitle).brighten(options.neonGlowBrightness).toRgbString();
+      options.neonColorLabel = tinycolor(options.colorLabel).brighten(options.neonGlowBrightness).toRgbString();
+      options.neonColorValue = tinycolor(options.colorValue).brighten(options.neonGlowBrightness).toRgbString();
+      options.neonColorMinMax = tinycolor(options.colorMinMax).brighten(options.neonGlowBrightness).toRgbString();
     }
 
     return options;

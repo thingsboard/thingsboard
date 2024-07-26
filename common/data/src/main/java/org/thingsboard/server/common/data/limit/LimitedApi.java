@@ -41,6 +41,7 @@ public enum LimitedApi {
     TRANSPORT_MESSAGES_PER_TENANT("transport messages", true),
     TRANSPORT_MESSAGES_PER_DEVICE("transport messages per device", false),
     TRANSPORT_MESSAGES_PER_GATEWAY("transport messages per gateway", false),
+    TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE("transport messages per gateway device", false),
     EMAILS("emails sending", true);
 
     private Function<DefaultTenantProfileConfiguration, String> configExtractor;

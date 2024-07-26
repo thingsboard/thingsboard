@@ -668,7 +668,7 @@ export enum SnmpAuthenticationProtocol {
   SHA_256 = 'SHA_256',
   SHA_384 = 'SHA_384',
   SHA_512 = 'SHA_512',
-  MD5 = 'MD%'
+  MD5 = 'MD5'
 }
 
 export const SnmpAuthenticationProtocolTranslationMap = new Map<SnmpAuthenticationProtocol, string>([
