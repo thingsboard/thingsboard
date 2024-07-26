@@ -399,7 +399,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   private clearOutConnectorForm(): void {
     this.initialConnector = null;
-    this.connectorForm.setControl('basicConfig', this.fb.group({}), {emitEvent: false});
     this.connectorForm.setValue({
       mode: ConnectorConfigurationModes.BASIC,
       name: '',
