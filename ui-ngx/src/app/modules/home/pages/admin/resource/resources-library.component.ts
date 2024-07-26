@@ -83,7 +83,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
       resourceType: [entity?.resourceType ? entity.resourceType : ResourceType.JS_MODULE, Validators.required],
       fileName: [entity ? entity.fileName : null, Validators.required],
-      data: [entity ? entity.data : null, Validators.required]
+      data: [entity ? entity.data : null, this.isAdd ? [Validators.required] : []]
     });
   }
 
@@ -92,7 +92,6 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
       this.entityForm.get('resourceType').disable({emitEvent: false});
       if (entity.resourceType !== ResourceType.JS_MODULE) {
         this.entityForm.get('fileName').disable({emitEvent: false});
-        this.entityForm.get('data').disable({emitEvent: false});
       }
     }
     this.entityForm.patchValue({
