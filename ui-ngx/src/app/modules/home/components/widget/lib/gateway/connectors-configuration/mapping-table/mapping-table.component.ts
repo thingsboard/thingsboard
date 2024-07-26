@@ -58,7 +58,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { TruncateTooltipDirective } from '@shared/directives/truncate-tooltip.directive';
-import { TbTableDatasource } from '@home/components/table/table-datasource.abstract';
+import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-mapping-table',

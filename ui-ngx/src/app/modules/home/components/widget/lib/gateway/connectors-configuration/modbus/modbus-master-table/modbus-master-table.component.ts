@@ -49,7 +49,7 @@ import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
-import { TbTableDatasource } from '@home/components/table/table-datasource.abstract';
+import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-modbus-master-table',
