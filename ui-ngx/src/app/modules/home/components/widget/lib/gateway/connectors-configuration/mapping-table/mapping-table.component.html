@@ -75,15 +75,22 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let mapping; let i = index"
                     [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px'}">
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+            <ng-template #rowActions>
               <button mat-icon-button
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
                       (click)="manageMapping($event, i)">
                 <tb-icon>edit</tb-icon>
               </button>
               <button mat-icon-button
+                      matTooltip="{{ 'action.delete' | translate }}"
+                      matTooltipPosition="above"
                       (click)="deleteMapping($event, i)">
                 <tb-icon>delete</tb-icon>
               </button>
+            </ng-template>
+            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+              <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
             </div>
             <div fxHide fxShow.lt-lg fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-icon-button
@@ -92,14 +99,7 @@
                 <mat-icon class="material-icons">more_vert</mat-icon>
               </button>
               <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <button mat-icon-button
-                        (click)="manageMapping($event, i)">
-                  <tb-icon>edit</tb-icon>
-                </button>
-                <button mat-icon-button
-                        (click)="deleteMapping($event, i)">
-                  <tb-icon>delete</tb-icon>
-                </button>
+                <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
               </mat-menu>
             </div>
           </mat-cell>

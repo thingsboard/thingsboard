@@ -185,7 +185,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     });
   }
 
-  deleteMapping($event: Event, index: number): void {
+  deleteSlave($event: Event, index: number): void {
     if ($event) {
       $event.stopPropagation();
     }
