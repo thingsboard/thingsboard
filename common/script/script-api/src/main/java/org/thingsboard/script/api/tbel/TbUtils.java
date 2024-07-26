@@ -785,7 +785,7 @@ public class TbUtils {
         long bits = Double.doubleToRawLongBits(d);
 
         // Format the integer bits as a hexadecimal string
-        String result = String.format("0x%16X", bits);
+        String result = String.format("0x%016X", bits);
         return bigEndian ? result : reverseHexStringByOrder(result);
     }
 
@@ -802,15 +802,15 @@ public class TbUtils {
     }
 
     public static int parseBytesToInt(List<Byte> data) {
-        return parseBytesToInt(Bytes.toArray(data));
+        return parseBytesToInt(data, 0);
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset) {
-        return parseBytesToInt(Bytes.toArray(data), offset);
+        return parseBytesToInt(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset, int length) {
-        return parseBytesToInt(Bytes.toArray(data), offset, length);
+        return parseBytesToInt(data, offset, length, true);
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset, int length, boolean bigEndian) {
@@ -842,15 +842,15 @@ public class TbUtils {
     }
 
     public static long parseBytesToLong(List<Byte> data) {
-        return parseBytesToLong(Bytes.toArray(data));
+        return parseBytesToLong(data, 0);
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset) {
-        return parseBytesToLong(Bytes.toArray(data), offset);
+        return parseBytesToLong(data, offset, validateLength(data.size(), offset, BYTES_LEN_LONG_MAX));
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset, int length) {
-        return parseBytesToLong(Bytes.toArray(data), offset, length);
+        return parseBytesToLong(data, offset, length, true);
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset, int length, boolean bigEndian) {
@@ -882,15 +882,15 @@ public class TbUtils {
     }
 
     public static float parseBytesToFloat(List data) {
-        return parseBytesToFloat(Bytes.toArray(data), 0);
+        return parseBytesToFloat(data, 0);
     }
 
     public static float parseBytesToFloat(List data, int offset) {
-        return parseBytesToFloat(Bytes.toArray(data), offset, BYTES_LEN_INT_MAX);
+        return parseBytesToFloat(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
     }
 
     public static float parseBytesToFloat(List data, int offset, int length) {
-        return parseBytesToFloat(Bytes.toArray(data), offset, length, true);
+        return parseBytesToFloat(data, offset, length, true);
     }
 
     public static float parseBytesToFloat(List data, int offset, int length, boolean bigEndian) {
@@ -902,7 +902,7 @@ public class TbUtils {
     }
 
     public static float parseBytesToFloat(byte[] data, int offset) {
-        return parseBytesToFloat(data, offset, BYTES_LEN_INT_MAX);
+        return parseBytesToFloat(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
     }
 
     public static float parseBytesToFloat(byte[] data, int offset, int length) {
@@ -910,8 +910,14 @@ public class TbUtils {
     }
 
     public static float parseBytesToFloat(byte[] data, int offset, int length, boolean bigEndian) {
-        byte[] bytesToNumber = prepareBytesToFloat(data, offset, length, bigEndian, BYTES_LEN_INT_MAX);
-        float floatValue = ByteBuffer.wrap(bytesToNumber).getFloat();
+        var bb = ByteBuffer.allocate(BYTES_LEN_INT_MAX);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+        }
+        bb.position(bigEndian ? BYTES_LEN_INT_MAX - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+        float floatValue = bb.getFloat();
         if (Float.isNaN(floatValue)) {
             throw new NumberFormatException("byte[] 0x" + bytesToHex(data) + " is a Not-a-Number (NaN) value");
         }
@@ -954,15 +960,15 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(List data) {
-        return parseBytesToDouble(Bytes.toArray(data));
+        return parseBytesToDouble(data, 0);
     }
 
     public static double parseBytesToDouble(List data, int offset) {
-        return parseBytesToDouble(Bytes.toArray(data), offset);
+        return parseBytesToDouble(data, offset, validateLength(data.size(), offset, BYTES_LEN_LONG_MAX));
     }
 
     public static double parseBytesToDouble(List data, int offset, int length) {
-        return parseBytesToDouble(Bytes.toArray(data), offset, length);
+        return parseBytesToDouble(data, offset, length, true);
     }
 
     public static double parseBytesToDouble(List data, int offset, int length, boolean bigEndian) {
@@ -974,7 +980,7 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(byte[] data, int offset) {
-        return parseBytesToDouble(data, offset, BYTES_LEN_LONG_MAX);
+        return parseBytesToDouble(data, offset, validateLength(data.length, offset, BYTES_LEN_LONG_MAX));
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, int length) {
@@ -982,9 +988,14 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, int length, boolean bigEndian) {
-        validationNumberByLength(data, offset, length, BYTES_LEN_LONG_MAX);
-        byte[] bytesToNumber = prepareBytesToFloat(data, offset, length, bigEndian, BYTES_LEN_LONG_MAX);
-        double doubleValue = ByteBuffer.wrap(bytesToNumber).getDouble();
+        var bb = ByteBuffer.allocate(BYTES_LEN_LONG_MAX);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
+        }
+        bb.position(bigEndian ? BYTES_LEN_LONG_MAX - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+        double doubleValue = bb.getDouble();
         if (Double.isNaN(doubleValue)) {
             throw new NumberFormatException("byte[] 0x" + bytesToHex(data) + " is a Not-a-Number (NaN) value");
         }
@@ -1248,7 +1259,6 @@ public class TbUtils {
         return isHexPref ? "0x" + result : result;
     }
 
-
     private static void validationNumberByLength(byte[] data, int offset, int length, int bytesLenMax) {
         if (offset > data.length) {
             throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
@@ -1261,18 +1271,6 @@ public class TbUtils {
         if (length > bytesLenMax) {
             throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + bytesLenMax + " bytes is allowed!");
         }
-    }
-
-    private static byte[] prepareBytesToFloat(byte[] data, int offset, int length, boolean bigEndian,
-                                              int bytesLenMax) {
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian, bytesLenMax);
-        if (bytesToNumber.length < bytesLenMax) {
-            byte[] extendedBytes = new byte[bytesLenMax];
-            Arrays.fill(extendedBytes, (byte) 0);
-            System.arraycopy(bytesToNumber, 0, extendedBytes, 0, bytesToNumber.length);
-            bytesToNumber = extendedBytes;
-        }
-        return bytesToNumber;
     }
 
     private static int validateLength(int dataLength, int offset, int bytesLenMax) {
