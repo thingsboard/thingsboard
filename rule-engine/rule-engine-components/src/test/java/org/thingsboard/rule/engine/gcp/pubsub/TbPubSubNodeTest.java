@@ -108,15 +108,16 @@ class TbPubSubNodeTest {
     @ParameterizedTest
     @MethodSource
     public void givenForceAckIsTrueAndMessageAttributesPatterns_whenOnMsg_thenEnqueueForTellNext(
-            String attributeName, String attributeValue, TbMsgMetaData metaData, String data) {
+            String attributeName, String attributeValue, TbMsgMetaData metaData, String data) throws IOException, TbNodeException {
         config.setMessageAttributes(Map.of(attributeName, attributeValue));
-        ReflectionTestUtils.setField(node, "forceAck", true);
-        init();
+        given(ctxMock.isExternalNodeForceAck()).willReturn(true);
+        willReturn(pubSubClientMock).given(node).initPubSubClient(ctxMock);
 
         String messageId = "2070443601311540";
         given(pubSubClientMock.publish(any())).willReturn(ApiFutures.immediateFuture(messageId));
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
         node.onMsg(ctxMock, msg);
 
@@ -153,15 +154,44 @@ class TbPubSubNodeTest {
     }
 
     @Test
-    public void givenForceAckIsFalseAndErrorOccursOnTheGCP_whenOnMsg_thenTellFailure() {
-        init();
-        ReflectionTestUtils.setField(node, "forceAck", false);
+    public void givenForceAckIsFalse_whenOnMsg_thenTellSuccess() throws IOException, TbNodeException {
+        given(ctxMock.isExternalNodeForceAck()).willReturn(false);
+        willReturn(pubSubClientMock).given(node).initPubSubClient(ctxMock);
+
+        String messageId = "2070443601311540";
+        given(pubSubClientMock.publish(any())).willReturn(ApiFutures.immediateFuture(messageId));
+        given(ctxMock.getExternalCallExecutor()).willReturn(executor);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        TbMsgMetaData metadata = new TbMsgMetaData();
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metadata, TbMsg.EMPTY_JSON_OBJECT);
+        node.onMsg(ctxMock, msg);
+
+        then(ctxMock).should(never()).ack(msg);
+        PubsubMessage.Builder pubsubMessageBuilder = PubsubMessage.newBuilder();
+        pubsubMessageBuilder.setData(ByteString.copyFromUtf8(msg.getData()));
+        then(pubSubClientMock).should().publish(pubsubMessageBuilder.build());
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        metadata.putValue("messageId", messageId);
+        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metadata);
+        assertThat(actualMsg.getValue())
+                .usingRecursiveComparison()
+                .ignoringFields("ctx")
+                .isEqualTo(expectedMsg);
+    }
+
+    @Test
+    public void givenForceAckIsFalseAndErrorOccursOnTheGCP_whenOnMsg_thenTellFailure() throws IOException, TbNodeException {
+        given(ctxMock.isExternalNodeForceAck()).willReturn(false);
+        willReturn(pubSubClientMock).given(node).initPubSubClient(ctxMock);
 
         String errorMsg = "Something went wrong!";
         ApiFuture<String> failedFuture = ApiFutures.immediateFailedFuture(new RuntimeException(errorMsg));
         given(pubSubClientMock.publish(any())).willReturn(failedFuture);
         given(ctxMock.getExternalCallExecutor()).willReturn(executor);
 
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         TbMsgMetaData metaData = new TbMsgMetaData();
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
         node.onMsg(ctxMock, msg);
@@ -170,6 +200,34 @@ class TbPubSubNodeTest {
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<Throwable> actualError = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(actualMsg.capture(), actualError.capture());
+        metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
+        TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        assertThat(actualMsg.getValue())
+                .usingRecursiveComparison()
+                .ignoringFields("ctx")
+                .isEqualTo(expectedMsg);
+        assertThat(actualError.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
+    }
+
+    @Test
+    public void givenForceAckIsTrueAndErrorOccursOnTheGCP_whenOnMsg_thenEnqueueForTellFailure() throws IOException, TbNodeException {
+        given(ctxMock.isExternalNodeForceAck()).willReturn(true);
+        willReturn(pubSubClientMock).given(node).initPubSubClient(ctxMock);
+
+        String errorMsg = "Something went wrong!";
+        ApiFuture<String> failedFuture = ApiFutures.immediateFailedFuture(new RuntimeException(errorMsg));
+        given(pubSubClientMock.publish(any())).willReturn(failedFuture);
+        given(ctxMock.getExternalCallExecutor()).willReturn(executor);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
+        node.onMsg(ctxMock, msg);
+
+        then(ctxMock).should().ack(msg);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        ArgumentCaptor<Throwable> actualError = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().enqueueForTellFailure(actualMsg.capture(), actualError.capture());
         metaData.putValue("error", RuntimeException.class + ": " + errorMsg);
         TbMsg expectedMsg = TbMsg.transformMsgMetadata(msg, metaData);
         assertThat(actualMsg.getValue())
@@ -192,11 +250,6 @@ class TbPubSubNodeTest {
         ReflectionTestUtils.setField(node, "pubSubClient", null);
         node.destroy();
         then(pubSubClientMock).shouldHaveNoInteractions();
-    }
-
-    private void init() {
-        ReflectionTestUtils.setField(node, "config", config);
-        ReflectionTestUtils.setField(node, "pubSubClient", pubSubClientMock);
     }
 
 }
