@@ -14,21 +14,16 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, OnInit, ViewContainerRef } from '@angular/core';
+import { Component, Input, OnInit } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
-import { OverlayRef } from '@angular/cdk/overlay';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup } from '@angular/forms';
-import { TimeService } from '@core/services/time.service';
-import { TranslateService } from '@ngx-translate/core';
+import { TbPopoverComponent } from '@shared/components/popover.component';
 
-export interface TimezonePanelData {
-  timezone: string;
-  isEdit: boolean;
+export interface TimezoneSelectionResult {
+  timezone: string | null;
 }
-
-export const TIMEZONE_PANEL_DATA = new InjectionToken<any>('TimezonePanelData');
 
 @Component({
   selector: 'tb-timezone-panel',
@@ -37,35 +32,49 @@ export const TIMEZONE_PANEL_DATA = new InjectionToken<any>('TimezonePanelData');
 })
 export class TimezonePanelComponent extends PageComponent implements OnInit {
 
-  timezone: string;
-  result: string;
+  @Input()
+  timezone: string | null;
+
+  @Input()
+  userTimezoneByDefault: boolean;
+
+  @Input()
+  localBrowserTimezonePlaceholderOnEmpty: boolean;
+
+  @Input()
+  defaultTimezone: string;
+
+  @Input()
+  onClose: (result: TimezoneSelectionResult | null) => void;
+
+  @Input()
+  popoverComponent: TbPopoverComponent;
 
   timezoneForm: FormGroup;
 
-  constructor(@Inject(TIMEZONE_PANEL_DATA) public data: TimezonePanelData,
-              public overlayRef: OverlayRef,
-              protected store: Store<AppState>,
-              public fb: FormBuilder,
-              private timeService: TimeService,
-              private translate: TranslateService,
-              public viewContainerRef: ViewContainerRef) {
+  constructor(protected store: Store<AppState>,
+              public fb: FormBuilder) {
     super(store);
-    this.timezone = this.data.timezone;
+  }
+
+  ngOnInit(): void {
     this.timezoneForm = this.fb.group({
       timezone: [this.timezone]
     });
   }
 
-  ngOnInit(): void {
-  }
-
   update() {
-    this.result = this.timezoneForm.get('timezone').value;
-    this.overlayRef.dispose();
+    if (this.onClose) {
+      this.onClose({
+        timezone: this.timezoneForm.get('timezone').value
+      });
+    }
   }
 
   cancel() {
-    this.overlayRef.dispose();
+    if (this.onClose) {
+      this.onClose(null);
+    }
   }
 
 }

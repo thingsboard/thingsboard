@@ -17,6 +17,8 @@
 -->
 <button *ngIf="asButton && !strokedButton && !flatButton"
         [disabled]="timezoneDisabled"
+        [matTooltip]="tooltipValue()"
+        [matTooltipPosition]="tooltipPosition"
         type="button"
         mat-raised-button color="primary"
         (click)="toggleTimezone($event)">
@@ -25,6 +27,8 @@
 </button>
 <button *ngIf="asButton && strokedButton"
         [disabled]="timezoneDisabled"
+        [matTooltip]="tooltipValue()"
+        [matTooltipPosition]="tooltipPosition"
         type="button"
         mat-stroked-button color="primary"
         (click)="toggleTimezone($event)">
@@ -33,6 +37,8 @@
 </button>
 <button *ngIf="asButton && flatButton"
         [disabled]="timezoneDisabled"
+        [matTooltip]="tooltipValue()"
+        [matTooltipPosition]="tooltipPosition"
         type="button"
         mat-button
         (click)="toggleTimezone($event)">
@@ -40,16 +46,16 @@
   <span>{{displayValue()}}</span>
 </button>
 <section *ngIf="!asButton"
-         class="tb-timewindow"
+         class="tb-timezone"
          [class]="{'no-padding': noPadding}"
-         matTooltip="{{ 'timewindow.edit' | translate }}"
+         [matTooltip]="tooltipValue()"
          [matTooltipPosition]="tooltipPosition"
          [style]="timezoneComponentStyle"
          (click)="toggleTimezone($event)">
   <tb-icon *ngIf="computedTimezoneStyle.showIcon && computedTimezoneStyle.iconPosition === 'left'"
            [style]="timezoneIconStyle">{{ computedTimezoneStyle.icon }}</tb-icon>
-  <div class="tb-timewindow-label" [fxHide]="hideLabel">
-    {{innerValue}}
+  <div class="tb-timezone-label" [fxHide]="hideLabel">
+    {{timezoneInfo}}
   </div>
   <tb-icon *ngIf="computedTimezoneStyle.showIcon && computedTimezoneStyle.iconPosition === 'right'"
            [style]="timezoneIconStyle">{{ computedTimezoneStyle.icon }}</tb-icon>

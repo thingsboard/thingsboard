@@ -17,26 +17,19 @@
 import {
   ChangeDetectorRef,
   Component,
-  ElementRef,
   forwardRef,
   HostBinding,
-  Injector,
   Input,
   OnChanges,
-  OnInit, Renderer2,
+  OnInit,
+  Renderer2,
   SimpleChanges,
-  StaticProvider,
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { TranslateService } from '@ngx-translate/core';
-import { MillisecondsToTimeStringPipe } from '@shared/pipe/milliseconds-to-time-string.pipe';
-import { DatePipe } from '@angular/common';
-import { TimeService } from '@core/services/time.service';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
-import { ComponentPortal } from '@angular/cdk/portal';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   ComponentStyle,
@@ -45,15 +38,10 @@ import {
   textStyle,
   TimezoneStyle
 } from '@shared/models/widget-settings.models';
-import { DEFAULT_OVERLAY_POSITIONS } from '@shared/models/overlay.models';
-import { fromEvent } from 'rxjs';
-import {
-  TIMEZONE_PANEL_DATA,
-  TimezonePanelComponent,
-  TimezonePanelData
-} from '@shared/components/time/timezone-panel.component';
+import { TimezonePanelComponent, TimezoneSelectionResult } from '@shared/components/time/timezone-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { TimewindowStylePanelComponent } from '@home/components/widget/config/timewindow-style-panel.component';
+import { getTimezoneInfo, TimezoneInfo } from '@shared/models/time/time.models';
+import { TimeService } from '@core/services/time.service';
 
 // @dynamic
 @Component({
@@ -82,10 +70,6 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
   @Input()
   @coerceBoolean()
   disablePanel = false;
-
-  @Input()
-  @coerceBoolean()
-  isToolbar = false;
 
   @Input()
   @coerceBoolean()
@@ -145,7 +129,8 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
   @Input()
   set localBrowserTimezonePlaceholderOnEmpty(value: boolean) {
     this.localBrowserTimezonePlaceholderOnEmptyValue = coerceBooleanProperty(value);
-  }defaultTimezoneId: string = null;
+  }
+  defaultTimezoneId: string = null;
 
   @Input()
   set defaultTimezone(timezone: string) {
@@ -163,7 +148,10 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  innerValue: string;
+  modelValue: string | null;
+  timezoneInfo: TimezoneInfo;
+
+  private localBrowserTimezoneInfoPlaceholder: TimezoneInfo = this.timeService.getLocalBrowserTimezoneInfoPlaceholder();
 
   timezoneDisabled: boolean;
 
@@ -173,16 +161,12 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
 
   private propagateChange = (_: any) => {};
 
-  constructor(private overlay: Overlay,
-              private translate: TranslateService,
-              private timeService: TimeService,
-              private millisecondsToTimeStringPipe: MillisecondsToTimeStringPipe,
-              private datePipe: DatePipe,
+  constructor(private translate: TranslateService,
               private cd: ChangeDetectorRef,
-              private nativeElement: ElementRef,
               public viewContainerRef: ViewContainerRef,
               private popoverService: TbPopoverService,
-              private renderer: Renderer2) {
+              private renderer: Renderer2,
+              private timeService: TimeService) {
   }
 
   ngOnInit() {
@@ -202,82 +186,38 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   toggleTimezone($event: Event) {
-    console.log($event);
     if ($event) {
       $event.stopPropagation();
     }
     if (this.disablePanel) {
       return;
     }
-    // const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
-    // if (this.popoverService.hasPopover(trigger)) {
-    //   this.popoverService.hidePopover(trigger);
-    // } else {
-    //   const timezoneSelectionPopover = this.popoverService.displayPopover(trigger, this.renderer,
-    //     this.viewContainerRef, TimewindowStylePanelComponent, 'left', true, null,
-    //     ctx,
-    //     {},
-    //     {}, {}, true);
-    //   timewindowStylePanelPopover.tbComponentRef.instance.popover = timewindowStylePanelPopover;
-    //   timewindowStylePanelPopover.tbComponentRef.instance.timewindowStyleApplied.subscribe((timewindowStyle) => {
-    //     timewindowStylePanelPopover.hide();
-    //     this.modelValue = timewindowStyle;
-    //     this.propagateChange(this.modelValue);
-    //   });
-    //
-    //   // if (componentRef.instance.result) {
-    //   //   this.innerValue = componentRef.instance.result;
-    //   //   this.timezoneDisabled = this.isTimezoneDisabled();
-    //   //   this.updateDisplayValue();
-    //   //   this.notifyChanged();
-    //   // }
-    // }
-    const config = new OverlayConfig({
-      panelClass: 'tb-timezone-panel',
-      backdropClass: 'cdk-overlay-transparent-backdrop',
-      hasBackdrop: true,
-      maxHeight: '30vh',
-      height: 'min-content'
-    });
-
-    config.positionStrategy = this.overlay.position()
-      .flexibleConnectedTo(this.nativeElement)
-      .withPositions(DEFAULT_OVERLAY_POSITIONS);
-
-    // TODO: change panel to popover
-    const overlayRef = this.overlay.create(config);
-    overlayRef.backdropClick().subscribe(() => {
-      overlayRef.dispose();
-    });
-    const providers: StaticProvider[] = [
-      {
-        provide: TIMEZONE_PANEL_DATA,
-        useValue: {
-          timezone: this.innerValue,
-          isEdit: this.isEdit
-        } as TimezonePanelData
-      },
-      {
-        provide: OverlayRef,
-        useValue: overlayRef
-      }
-    ];
-    const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    const componentRef = overlayRef.attach(new ComponentPortal(TimezonePanelComponent,
-      this.viewContainerRef, injector));
-    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
-      overlayRef.updatePosition();
-    });
-    componentRef.onDestroy(() => {
-      resizeWindows$.unsubscribe();
-      // TODO: if value check makes impossible to select browser timezone (null)
-      if (componentRef.instance.result) {
-        this.innerValue = componentRef.instance.result;
-        this.timezoneDisabled = this.isTimezoneDisabled();
-        this.updateDisplayValue();
-        this.notifyChanged();
-      }
-    });
+    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const timezoneSelectionPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, TimezonePanelComponent, ['bottomRight', 'leftBottom'], true, null,
+        {
+          timezone: this.modelValue,
+          userTimezoneByDefault: this.userTimezoneByDefaultValue,
+          localBrowserTimezonePlaceholderOnEmpty: this.localBrowserTimezonePlaceholderOnEmptyValue,
+          defaultTimezone: this.defaultTimezoneId,
+          onClose: (result: TimezoneSelectionResult | null) => {
+            timezoneSelectionPopover.hide();
+            if (result) {
+              this.modelValue = result.timezone;
+              this.setTimezoneInfo();
+              this.timezoneDisabled = this.isTimezoneDisabled();
+              this.updateDisplayValue();
+              this.notifyChanged();
+            }
+          }
+        },
+        {},
+        {}, {}, true);
+      timezoneSelectionPopover.tbComponentRef.instance.popoverComponent = timezoneSelectionPopover;
+    }
     this.cd.detectChanges();
   }
 
@@ -304,19 +244,23 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
     this.timezoneDisabled = this.isTimezoneDisabled();
   }
 
-  writeValue(value: string): void {
-    this.innerValue = value;
+  writeValue(value: string | null): void {
+    this.modelValue = value;
+    this.setTimezoneInfo();
     this.timezoneDisabled = this.isTimezoneDisabled();
     this.updateDisplayValue();
   }
 
   notifyChanged() {
-    this.propagateChange(this.innerValue);
+    this.propagateChange(this.modelValue);
   }
 
   displayValue(): string {
-    // TODO: only offset should be displayed, timezone name shouldn't be present
-    return this.displayTimezoneValue ? this.innerValue : this.translate.instant('timezone.timezone');
+    return this.displayTimezoneValue && this.timezoneInfo ? this.timezoneInfo.offset : this.translate.instant('timezone.timezone');
+  }
+
+  tooltipValue(): string {
+    return this.timezoneInfo ? `${this.timezoneInfo.name} (${this.timezoneInfo.offset})` : undefined;
   }
 
   updateDisplayValue() {
@@ -325,6 +269,19 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
 
   private isTimezoneDisabled(): boolean {
     return this.disabled;
+  }
+
+  private setTimezoneInfo() {
+    const foundTimezone = getTimezoneInfo(this.modelValue, this.defaultTimezoneId, this.userTimezoneByDefaultValue);
+    if (foundTimezone !== null) {
+      this.timezoneInfo = foundTimezone;
+    } else {
+      if (this.localBrowserTimezonePlaceholderOnEmptyValue) {
+        this.timezoneInfo = this.localBrowserTimezoneInfoPlaceholder;
+      } else {
+        this.timezoneInfo = null;
+      }
+    }
   }
 
 }

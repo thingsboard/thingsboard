@@ -59,10 +59,12 @@
             </ng-container>
           </ng-container>
           </section>
-        <ng-container *ngIf="!isEdit && (timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
+        <section class="tb-form-panel stroked tb-flex row align-center space-between"
+                 *ngIf="!isEdit && (timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
+          <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
           <ng-container *ngTemplateOutlet="timezoneSelection">
           </ng-container>
-        </ng-container>
+        </section>
         <ng-container *ngTemplateOutlet="aggregationConfig">
         </ng-container>
       </div>
@@ -115,10 +117,12 @@
             </ng-container>
           </ng-container>
         </section>
-        <ng-container *ngIf="!isEdit && timewindow.hideInterval">
+        <section class="tb-form-panel stroked tb-flex row align-center space-between"
+                 *ngIf="!isEdit && timewindow.hideInterval">
+          <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
           <ng-container *ngTemplateOutlet="timezoneSelection">
           </ng-container>
-        </ng-container>
+        </section>
         <ng-container *ngTemplateOutlet="aggregationConfig">
         </ng-container>
       </div>
@@ -189,7 +193,10 @@
   </ng-template>
   <ng-template #timezoneSelection>
     <ng-container *ngIf="timezone && (isEdit || !timewindow.hideTimezone)">
-      <tb-timezone asButton strokedButton displayTimezoneValue="false" formControlName="timezone"></tb-timezone>
+      <tb-timezone asButton strokedButton noMargin
+                   localBrowserTimezonePlaceholderOnEmpty="true"
+                   formControlName="timezone">
+      </tb-timezone>
     </ng-container>
   </ng-template>
 </form>

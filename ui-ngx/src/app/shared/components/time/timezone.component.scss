@@ -23,7 +23,7 @@
   .mdc-button {
     max-width: 100%;
   }
-  section.tb-timewindow {
+  section.tb-timezone {
     padding: 0 8px;
     &.no-padding {
       padding: 0;
@@ -38,7 +38,7 @@
     gap: 4px;
     width: 100%;
 
-    .tb-timewindow-label {
+    .tb-timezone-label {
       overflow: hidden;
       text-overflow: ellipsis;
       white-space: nowrap;

@@ -1,10 +1,11 @@
 <form [formGroup]="timezoneForm" class="mat-content">
   <section class="tb-form-panel">
     <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
-    <tb-timezone-select localBrowserTimezonePlaceholderOnEmpty="true"
+    <tb-timezone-select [localBrowserTimezonePlaceholderOnEmpty]="localBrowserTimezonePlaceholderOnEmpty"
                         formControlName="timezone"
                         subscriptSizing="dynamic"
-                        appearance="outline">
+                        appearance="outline"
+                        displayLabel="false">
     </tb-timezone-select>
   </section>
 </form>
