@@ -27,6 +27,7 @@ import {
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
   ModbusDataType,
+  ModbusEditableDataTypes,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
   ModbusValue,
@@ -72,7 +73,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   functionCodesMap = new Map();
   defaultFunctionCodes = [];
 
-  readonly editableDataTypes = [ModbusDataType.BYTES, ModbusDataType.BITS, ModbusDataType.STRING];
+  readonly ModbusEditableDataTypes = ModbusEditableDataTypes;
   readonly ModbusFunctionCodeTranslationsMap = ModbusFunctionCodeTranslationsMap;
 
   private destroy$ = new Subject<void>();
@@ -161,7 +162,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   private observeKeyDataType(keyFormGroup: FormGroup): void {
     keyFormGroup.get('type').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(dataType => {
-      if (!this.editableDataTypes.includes(dataType)) {
+      if (!this.ModbusEditableDataTypes.includes(dataType)) {
         keyFormGroup.get('objectsCount').patchValue(ModbusObjectCountByDataType[dataType], {emitEvent: false});
       }
       this.updateFunctionCodes(keyFormGroup, dataType);

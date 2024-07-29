@@ -98,7 +98,7 @@
                           name="value"
                           formControlName="objectsCount"
                           placeholder="{{ 'gateway.set' | translate }}"
-                          [readonly]="!editableDataTypes.includes(keyControl.get('type').value)"
+                          [readonly]="!ModbusEditableDataTypes.includes(keyControl.get('type').value)"
                         />
                       </mat-form-field>
                     </div>
