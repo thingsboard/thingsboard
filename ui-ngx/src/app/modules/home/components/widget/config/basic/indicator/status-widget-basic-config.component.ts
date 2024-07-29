@@ -29,7 +29,7 @@ import {
   statusWidgetLayoutImages,
   statusWidgetLayouts,
   statusWidgetLayoutTranslations,
-  StatusWidgetSettings
+  StatusWidgetSettings, StatusWidgetStateSettings
 } from '@home/components/widget/lib/indicator/status-widget.models';
 
 @Component({
@@ -66,6 +66,7 @@ export class StatusWidgetBasicConfigComponent extends BasicWidgetConfigComponent
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: StatusWidgetSettings = {...statusWidgetDefaultSettings, ...(configData.config.settings || {})};
+
     this.statusWidgetConfigForm = this.fb.group({
       targetDevice: [configData.config.targetDevice, []],
 
@@ -79,6 +80,7 @@ export class StatusWidgetBasicConfigComponent extends BasicWidgetConfigComponent
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -99,6 +101,7 @@ export class StatusWidgetBasicConfigComponent extends BasicWidgetConfigComponent
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;

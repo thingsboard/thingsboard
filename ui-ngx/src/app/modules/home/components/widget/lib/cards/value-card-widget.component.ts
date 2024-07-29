@@ -37,7 +37,7 @@ import {
   getLabel,
   getSingleTsValue,
   iconStyle,
-  overlayStyle,
+  overlayStyle, resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
@@ -96,6 +96,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   private panelResize$: ResizeObserver;
 
@@ -139,6 +140,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.labelStyle = textStyle(this.settings.labelFont);
     this.labelColor =  ColorProcessor.fromSettings(this.settings.labelColor);
     this.valueStyle = textStyle(this.settings.valueFont);
+    console.log(this.valueStyle);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showDate = this.settings.showDate;
@@ -148,6 +150,7 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   public ngAfterViewInit() {
@@ -199,8 +202,16 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   private onResize() {
-    const panelWidth = this.valueCardPanel.nativeElement.getBoundingClientRect().width - squareLayoutPadding;
-    const panelHeight = this.valueCardPanel.nativeElement.getBoundingClientRect().height - (this.horizontal ? 0 : squareLayoutPadding);
+    const paddingLeft = getComputedStyle(this.valueCardPanel.nativeElement).paddingLeft;
+    const paddingRight = getComputedStyle(this.valueCardPanel.nativeElement).paddingRight;
+    const paddingTop = getComputedStyle(this.valueCardPanel.nativeElement).paddingTop;
+    const paddingBottom = getComputedStyle(this.valueCardPanel.nativeElement).paddingBottom;
+    const pLeft = resolveCssSize(paddingLeft)[0];
+    const pRight = resolveCssSize(paddingRight)[0];
+    const pTop = resolveCssSize(paddingTop)[0];
+    const pBottom = resolveCssSize(paddingBottom)[0];
+    const panelWidth = this.valueCardPanel.nativeElement.getBoundingClientRect().width - (pLeft + pRight);
+    const panelHeight = this.valueCardPanel.nativeElement.getBoundingClientRect().height - (pTop + pBottom);
     let scale: number;
     if (!this.horizontal) {
       const size = Math.min(panelWidth, panelHeight);

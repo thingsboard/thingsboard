@@ -35,7 +35,7 @@ import {
   backgroundStyle,
   ComponentStyle,
   iconStyle,
-  overlayStyle,
+  overlayStyle, resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { Observable } from 'rxjs';
@@ -74,6 +74,7 @@ export class SingleSwitchWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
   overlayInset = '12px';
 
   value = false;
@@ -123,6 +124,7 @@ export class SingleSwitchWidgetComponent extends
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.layout = this.settings.layout;
 
@@ -234,8 +236,16 @@ export class SingleSwitchWidgetComponent extends
     const height = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height;
     const switchScale = height / initialSwitchHeight;
     const paddingScale = Math.min(switchScale, 1);
-    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - (horizontalLayoutPadding * paddingScale);
-    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - (verticalLayoutPadding * paddingScale);
+    const paddingLeft = getComputedStyle(this.singleSwitchPanel.nativeElement).paddingLeft;
+    const paddingRight = getComputedStyle(this.singleSwitchPanel.nativeElement).paddingRight;
+    const paddingTop = getComputedStyle(this.singleSwitchPanel.nativeElement).paddingTop;
+    const paddingBottom = getComputedStyle(this.singleSwitchPanel.nativeElement).paddingBottom;
+    const pLeft = resolveCssSize(paddingLeft)[0];
+    const pRight = resolveCssSize(paddingRight)[0];
+    const pTop = resolveCssSize(paddingTop)[0];
+    const pBottom = resolveCssSize(paddingBottom)[0];
+    const panelWidth = this.singleSwitchPanel.nativeElement.getBoundingClientRect().width - (pLeft + pRight);
+    const panelHeight = this.singleSwitchPanel.nativeElement.getBoundingClientRect().height - (pTop + pBottom);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(1)`);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', 'auto');
     let contentWidth = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().width;
