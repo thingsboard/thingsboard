@@ -324,6 +324,9 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("isHexadecimal", new MethodStub(TbUtils.class.getMethod("isHexadecimal",
                 String.class)));
+        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("byteArrayToExecutionArrayList",
+                ExecutionContext.class, byte[].class)));
+
     }
 
     public static String btoa(String input) {
@@ -1230,6 +1233,15 @@ public class TbUtils {
             return -1;
         }
         return str.matches("^-?(0[xX])?[0-9a-fA-F]+$") ? HEX_RADIX : -1;
+    }
+
+    public static List byteArrayToExecutionArrayList(ExecutionContext ctx, byte[] byteArray) {
+        List<Byte> byteList = new ArrayList<>();
+        for (byte b : byteArray) {
+            byteList.add(b);
+        }
+        List list = new ExecutionArrayList(byteList, ctx);
+        return list;
     }
 
     private static byte isValidIntegerToByte(Integer val) {
