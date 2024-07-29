@@ -125,9 +125,9 @@ public class TbMqttNode extends TbAbstractExternalNode {
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
         prepareMqttClientConfig(config);
-        MqttClient client = MqttClient.create(config, null, ctx.getExternalCallExecutor());
+        MqttClient client = getMqttClient(ctx, config);
         client.setEventLoop(ctx.getSharedEventLoop());
-        Promise<MqttConnectResult> connectFuture = connectMqttClient(client);
+        Promise<MqttConnectResult> connectFuture = client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
         MqttConnectResult result;
         try {
             result = connectFuture.get(this.mqttNodeConfiguration.getConnectTimeoutSec(), TimeUnit.SECONDS);
@@ -146,8 +146,8 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return client;
     }
 
-    protected Promise<MqttConnectResult> connectMqttClient(MqttClient client) {
-        return client.connect(this.mqttNodeConfiguration.getHost(), this.mqttNodeConfiguration.getPort());
+    public MqttClient getMqttClient(TbContext ctx, MqttClientConfig config) {
+        return MqttClient.create(config, null, ctx.getExternalCallExecutor());
     }
 
     protected void prepareMqttClientConfig(MqttClientConfig config) {
