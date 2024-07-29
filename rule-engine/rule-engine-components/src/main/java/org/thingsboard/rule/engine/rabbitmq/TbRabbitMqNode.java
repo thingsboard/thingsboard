@@ -64,16 +64,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbRabbitMqNodeConfiguration.class);
-        ConnectionFactory factory = new ConnectionFactory();
-        factory.setHost(this.config.getHost());
-        factory.setPort(this.config.getPort());
-        factory.setVirtualHost(this.config.getVirtualHost());
-        factory.setUsername(this.config.getUsername());
-        factory.setPassword(this.config.getPassword());
-        factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
-        factory.setConnectionTimeout(this.config.getConnectionTimeout());
-        factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
-        this.config.getClientProperties().forEach((k,v) -> factory.getClientProperties().put(k,v));
+        ConnectionFactory factory = getConnectionFactory();
         try {
             this.connection = factory.newConnection();
             this.channel = this.connection.createChannel();
@@ -88,6 +79,20 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
                 t -> tellFailure(ctx, processException(tbMsg, t), t));
+    }
+
+    protected ConnectionFactory getConnectionFactory() {
+        ConnectionFactory factory = new ConnectionFactory();
+        factory.setHost(this.config.getHost());
+        factory.setPort(this.config.getPort());
+        factory.setVirtualHost(this.config.getVirtualHost());
+        factory.setUsername(this.config.getUsername());
+        factory.setPassword(this.config.getPassword());
+        factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
+        factory.setConnectionTimeout(this.config.getConnectionTimeout());
+        factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
+        this.config.getClientProperties().forEach((k,v) -> factory.getClientProperties().put(k,v));
+        return factory;
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
@@ -132,7 +137,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         }
     }
 
-    private static AMQP.BasicProperties convert(String name) throws TbNodeException {
+    protected static AMQP.BasicProperties convert(String name) throws TbNodeException {
         switch (name) {
             case "BASIC":
                 return MessageProperties.BASIC;
