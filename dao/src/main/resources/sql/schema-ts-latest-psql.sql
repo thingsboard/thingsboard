@@ -14,7 +14,7 @@
 -- limitations under the License.
 --
 
-CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1000;
+CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1;
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest
 (

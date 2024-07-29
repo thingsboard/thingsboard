@@ -102,7 +102,7 @@ CREATE TABLE IF NOT EXISTS audit_log (
     action_failure_details varchar(1000000)
 ) PARTITION BY RANGE (created_time);
 
-CREATE SEQUENCE IF NOT EXISTS attribute_kv_version_seq cache 1000;
+CREATE SEQUENCE IF NOT EXISTS attribute_kv_version_seq cache 1;
 
 CREATE TABLE IF NOT EXISTS attribute_kv (
   entity_id uuid,
@@ -420,7 +420,7 @@ CREATE TABLE IF NOT EXISTS error_event (
     e_error varchar
 ) PARTITION BY RANGE (ts);
 
-CREATE SEQUENCE IF NOT EXISTS relation_version_seq cache 1000;
+CREATE SEQUENCE IF NOT EXISTS relation_version_seq cache 1;
 
 CREATE TABLE IF NOT EXISTS relation (
     from_id uuid,
@@ -544,7 +544,7 @@ CREATE TABLE IF NOT EXISTS entity_view (
     CONSTRAINT entity_view_external_id_unq_key UNIQUE (tenant_id, external_id)
 );
 
-CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1000;
+CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1;
 
 CREATE TABLE IF NOT EXISTS ts_kv_latest
 (
