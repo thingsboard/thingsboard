@@ -959,8 +959,8 @@ transport:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
     # HTTP maximum request processing timeout in milliseconds
     max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
-    # RPC maximum request size
-    rpc_max_payload_size: "${HTTP_RPC_MAX_PAYLOAD_SIZE:65536}" # max rpc payload size in bytes
+    # Maximum request size
+    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE:65536}" # max payload size in bytes
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.

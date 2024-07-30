@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "transport.http.rpc_max_payload_size=10000"
+        "transport.http.max_payload_size=10000"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 

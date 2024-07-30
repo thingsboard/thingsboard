@@ -34,18 +34,18 @@ import java.util.List;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class DeviceRpcRequestSizeFilter extends OncePerRequestFilter {
+public class RequestSizeFilter extends OncePerRequestFilter {
 
     private final List<String> urls = List.of("/api/plugins/rpc/**", "/api/rpc/**");
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
     private final ThingsboardErrorResponseHandler errorResponseHandler;
     
-    @Value("${transport.http.rpc_max_payload_size:65536}")
-    private int rpcMaxPayloadSize;
+    @Value("${transport.http.max_payload_size:65536}")
+    private int maxPayloadSize;
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
-        if (request.getContentLength() > rpcMaxPayloadSize) {
+        if (request.getContentLength() > maxPayloadSize) {
             if (log.isDebugEnabled()) {
                 log.debug("Too large payload size. Url: {}, client ip: {}, content length: {}", request.getRequestURL(),
                         request.getRemoteAddr(), request.getContentLength());

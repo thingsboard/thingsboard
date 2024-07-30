@@ -40,7 +40,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "transport.http.rpc_max_payload_size=10000"
+        "transport.http.max_payload_size=10000"
 })
 public class RpcControllerTest extends AbstractControllerTest {
 
