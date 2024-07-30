@@ -326,7 +326,10 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("byteArrayToExecutionArrayList",
                 ExecutionContext.class, byte[].class)));
-
+        parserConfig.addImport("padStart", new MethodStub(TbUtils.class.getMethod("padStart",
+                String.class, int.class, char.class)));
+        parserConfig.addImport("padEnd", new MethodStub(TbUtils.class.getMethod("padEnd",
+                String.class, int.class, char.class)));
     }
 
     public static String btoa(String input) {
@@ -629,6 +632,9 @@ public class TbUtils {
 
     public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String value) {
         String hex = prepareNumberString(value, true);
+        if (hex == null) {
+            throw new IllegalArgumentException("Hex string must be not empty!");
+        }
         int len = hex.length();
         if (len % 2 > 0) {
             throw new IllegalArgumentException("Hex string must be even-length.");
@@ -1242,6 +1248,20 @@ public class TbUtils {
         }
         List list = new ExecutionArrayList(byteList, ctx);
         return list;
+    }
+
+    public static String padStart(String str, int targetLength, char padString) {
+        while (str.length() < targetLength) {
+            str = padString + str;
+        }
+        return str;
+    }
+
+    public static String padEnd(String str, int targetLength, char padString) {
+        while (str.length() < targetLength) {
+            str = str + padString;
+        }
+        return str;
     }
 
     private static byte isValidIntegerToByte(Integer val) {

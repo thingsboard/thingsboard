@@ -770,15 +770,21 @@ public class TbUtilsTest {
         Assertions.assertEquals(toList(expected), actual);
         try {
             input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF3";
-            actual = TbUtils.hexToBytes(ctx, input);
+            TbUtils.hexToBytes(ctx, input);
         } catch (IllegalArgumentException e) {
             Assertions.assertTrue(e.getMessage().contains("Hex string must be even-length."));
         }
         try {
             input = "0x01752B0367KA000500010488FFFFFFFFFFFFFFFF33";
-            actual = TbUtils.hexToBytes(ctx, input);
+            TbUtils.hexToBytes(ctx, input);
         } catch (NumberFormatException e) {
             Assertions.assertTrue(e.getMessage().contains("Value: \"" + input + "\" is not numeric or hexDecimal format!"));
+        }
+        try {
+            input = "";
+            TbUtils.hexToBytes(ctx, input);
+        } catch (IllegalArgumentException e) {
+            Assertions.assertTrue(e.getMessage().contains("Hex string must be not empty"));
         }
     }
 
@@ -898,6 +904,40 @@ public class TbUtilsTest {
     public void isHexadecimal_Test() {
         Assertions.assertEquals(16, TbUtils.isHexadecimal("F5D7039"));
         Assertions.assertEquals(-1, TbUtils.isHexadecimal("K100110"));
+    }
+
+    @Test
+    public void padStart_Test() {
+        String binaryString = "010011";
+        String expected = "00010011";
+        Assertions.assertEquals(expected, TbUtils.padStart(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "1001010011";
+        Assertions.assertEquals(expected, TbUtils.padStart(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "******1001010011";
+        Assertions.assertEquals(expected, TbUtils.padStart(binaryString, 16, '*'));
+        String fullNumber = "203439900FFCD5581";
+        String last4Digits = fullNumber.substring(11);
+        expected = "***********CD5581";
+        Assertions.assertEquals(expected, TbUtils.padStart(last4Digits, fullNumber.length(), '*'));
+    }
+
+    @Test
+    public void padEnd_Test() {
+        String binaryString = "010011";
+        String expected = "01001100";
+        Assertions.assertEquals(expected, TbUtils.padEnd(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "1001010011";
+        Assertions.assertEquals(expected, TbUtils.padEnd(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "1001010011******";
+        Assertions.assertEquals(expected, TbUtils.padEnd(binaryString, 16, '*'));
+        String fullNumber = "203439900FFCD5581";
+        String last4Digits = fullNumber.substring(0, 11);
+        expected = "203439900FF******";
+        Assertions.assertEquals(expected, TbUtils.padEnd(last4Digits, fullNumber.length(), '*'));
     }
 
     private static List<Byte> toList(byte[] data) {
