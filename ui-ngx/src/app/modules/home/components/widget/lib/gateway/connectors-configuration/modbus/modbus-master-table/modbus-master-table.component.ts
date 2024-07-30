@@ -45,7 +45,7 @@ import {
   ModbusProtocolLabelsMap,
   SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
@@ -139,9 +139,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
   }
 
   validate(): ValidationErrors | null {
-    return this.slaves.controls.length ? null : {
-      slavesFormGroup: {valid: false}
-    };
+    return null;
   }
 
   enterFilterMode(): void {

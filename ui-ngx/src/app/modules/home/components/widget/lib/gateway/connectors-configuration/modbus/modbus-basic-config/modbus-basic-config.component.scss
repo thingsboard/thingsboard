@@ -16,9 +16,3 @@
 :host {
   height: 100%;
 }
-
-:host ::ng-deep {
-  .mat-mdc-tab-body-content {
-    overflow: hidden !important;
-  }
-}

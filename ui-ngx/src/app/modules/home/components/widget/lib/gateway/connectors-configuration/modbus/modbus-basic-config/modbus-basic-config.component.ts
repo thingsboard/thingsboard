@@ -18,6 +18,7 @@ import { ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy, Templ
 import {
   ControlValueAccessor,
   FormBuilder,
+  FormControl,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
@@ -34,6 +35,7 @@ import { Subject } from 'rxjs';
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import { ModbusSlaveConfigComponent } from '../modbus-slave-config/modbus-slave-config.component';
 import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master-table.component';
+import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-modbus-basic-config',
@@ -67,6 +69,7 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
   @Input() generalTabContent: TemplateRef<any>;
 
   basicFormGroup: FormGroup;
+  enableSlaveControl: FormControl<boolean>;
 
   onChange: (value: ModbusBasicConfig) => void;
   onTouched: () => void;
@@ -78,12 +81,20 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
       master: [],
       slave: [],
     });
+    this.enableSlaveControl = new FormControl(false);
 
     this.basicFormGroup.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         this.onChange(value);
         this.onTouched();
+      });
+
+    this.enableSlaveControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enable => {
+        this.updateSlaveEnabling(enable);
+        this.basicFormGroup.get('slave').updateValueAndValidity();
       });
   }
 
@@ -107,11 +118,12 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
+    this.enableSlaveControl.setValue(!!basicConfig.slave && !isEqual(basicConfig.slave, {}));
   }
 
   validate(basicConfigControl: UntypedFormControl): ValidationErrors | null {
     const masterHasSlaves = !!basicConfigControl.value.master?.slaves?.length;
-    const slaveEnabled = basicConfigControl.value.slave?.sendDataToThingsBoard;
+    const slaveEnabled = this.enableSlaveControl.value;
     const slaveIsValid = this.basicFormGroup.get('slave').valid;
 
     if ((slaveEnabled && slaveIsValid) || (masterHasSlaves && !slaveEnabled)) {
@@ -119,5 +131,13 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
     }
 
     return { basicFormGroup: { valid: false } };
+  }
+
+  private updateSlaveEnabling(isEnabled: boolean): void {
+    if (isEnabled) {
+      this.basicFormGroup.get('slave').enable({emitEvent: false});
+    } else {
+      this.basicFormGroup.get('slave').disable({emitEvent: false});
+    }
   }
 }
