@@ -140,7 +140,6 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
     this.labelStyle = textStyle(this.settings.labelFont);
     this.labelColor =  ColorProcessor.fromSettings(this.settings.labelColor);
     this.valueStyle = textStyle(this.settings.valueFont);
-    console.log(this.valueStyle);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showDate = this.settings.showDate;
