@@ -229,7 +229,7 @@ export class StatusWidgetComponent extends
     this.showLabel = stateSettings.showLabel && this.layout !== StatusWidgetLayout.icon;
     this.showStatus = stateSettings.showStatus && this.layout !== StatusWidgetLayout.icon;
     this.icon = stateSettings.icon;
-    this.padding = stateSettings.background.overlay.enabled ? undefined : this.settings.padding;
+    this.padding = stateSettings.backgroundDisabled.overlay.enabled || stateSettings.background.overlay.enabled  ? undefined : this.settings.padding;
 
     const primaryColor = disabled ? stateSettings.primaryColorDisabled : stateSettings.primaryColor;
     const secondaryColor = disabled ? stateSettings.secondaryColorDisabled : stateSettings.secondaryColor;
