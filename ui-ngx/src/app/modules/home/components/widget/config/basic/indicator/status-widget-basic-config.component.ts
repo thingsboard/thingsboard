@@ -29,7 +29,7 @@ import {
   statusWidgetLayoutImages,
   statusWidgetLayouts,
   statusWidgetLayoutTranslations,
-  StatusWidgetSettings, StatusWidgetStateSettings
+  StatusWidgetSettings
 } from '@home/components/widget/lib/indicator/status-widget.models';
 
 @Component({
@@ -66,7 +66,6 @@ export class StatusWidgetBasicConfigComponent extends BasicWidgetConfigComponent
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
     const settings: StatusWidgetSettings = {...statusWidgetDefaultSettings, ...(configData.config.settings || {})};
-
     this.statusWidgetConfigForm = this.fb.group({
       targetDevice: [configData.config.targetDevice, []],
 

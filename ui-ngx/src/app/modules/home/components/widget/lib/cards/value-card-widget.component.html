@@ -21,8 +21,8 @@
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </div>
   <div #valueCardContent class="tb-value-card-content" [class]="this.layout">
-    <ng-container class="aboba" [ngSwitch]="layout">
-      <ng-template class="aboba" [ngSwitchCase]="valueCardLayout.square">
+    <ng-container [ngSwitch]="layout">
+      <ng-template [ngSwitchCase]="valueCardLayout.square">
         <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
         <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
       </ng-template>
