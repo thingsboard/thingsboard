@@ -170,6 +170,7 @@ export interface ConnectorSecurity {
   pathToCACert?: string;
   pathToPrivateKey?: string;
   pathToClientCert?: string;
+  mode?: ModeType;
 }
 
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
