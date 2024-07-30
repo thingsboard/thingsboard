@@ -24,7 +24,7 @@ import {
   ValidationErrors,
   Validator,
 } from '@angular/forms';
-import { ConnectorType, ModbusBasicConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { ModbusBasicConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { takeUntil } from 'rxjs/operators';
@@ -109,8 +109,14 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
   }
 
   validate(): ValidationErrors | null {
-    return this.basicFormGroup.valid ? null : {
-      basicFormGroup: {valid: false}
-    };
+    const masterHasSlaves = !!this.basicFormGroup.get('master').value.slaves?.length;
+    const slaveEnabled = this.basicFormGroup.get('slave').value.sendDataToThingsBoard;
+    const slaveIsValid = this.basicFormGroup.get('slave').valid;
+
+    if ((slaveEnabled && slaveIsValid) || (masterHasSlaves && !slaveEnabled)) {
+      return null;
+    }
+
+    return { basicFormGroup: { valid: false } };
   }
 }
