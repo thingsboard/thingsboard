@@ -124,7 +124,7 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
   validate(basicConfigControl: UntypedFormControl): ValidationErrors | null {
     const masterHasSlaves = !!basicConfigControl.value.master?.slaves?.length;
     const slaveEnabled = this.enableSlaveControl.value;
-    const slaveIsValid = this.basicFormGroup.get('slave').valid;
+    const slaveIsValid = this.basicFormGroup.valid;
 
     if ((slaveEnabled && slaveIsValid) || (masterHasSlaves && !slaveEnabled)) {
       return null;
