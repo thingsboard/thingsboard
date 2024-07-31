@@ -17,6 +17,7 @@ package org.thingsboard.server.config;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
 import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.boot.web.servlet.FilterRegistrationBean;
@@ -56,6 +57,7 @@ import org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2Autho
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.rest.RestLoginProcessingFilter;
 import org.thingsboard.server.service.security.auth.rest.RestPublicLoginProcessingFilter;
+import org.thingsboard.server.transport.http.config.RequestSizeFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -81,6 +83,11 @@ public class ThingsboardSecurityConfiguration {
     public static final String WS_ENTRY_POINT = "/api/ws/**";
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     public static final String DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT = "/api/device-connectivity/mqtts/certificate/download";
+
+    @Value("${server.http.max_payload_size:16777216}")
+    private int maxPayloadSize;
+    @Value("${transport.http.max_payload_size:65536}")
+    private int httpTransportMaxPayloadSize;
 
     @Autowired
     private ThingsboardErrorResponseHandler restAccessDeniedHandler;
@@ -124,8 +131,15 @@ public class ThingsboardSecurityConfiguration {
     @Autowired
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
-    @Autowired
-    private RequestSizeFilter requestSizeFilter;
+    @Bean
+    protected RequestSizeFilter httpTransportRequestSizeFilter() {
+        return new RequestSizeFilter(httpTransportMaxPayloadSize);
+    }
+
+    @Bean
+    protected RequestSizeFilter requestSizeFilter() {
+        return new RequestSizeFilter(maxPayloadSize);
+    }
 
     @Bean
     protected FilterRegistrationBean<ShallowEtagHeaderFilter> buildEtagFilter() throws Exception {
@@ -203,6 +217,20 @@ public class ThingsboardSecurityConfiguration {
     }
 
     @Bean
+    @Order(1)
+    SecurityFilterChain httpTransportFilterChain(HttpSecurity http) throws Exception {
+        http
+                .securityMatchers(matchers -> matchers.requestMatchers(DEVICE_API_ENTRY_POINT))
+                .cors(cors -> {})
+                .csrf(AbstractHttpConfigurer::disable)
+                .authorizeHttpRequests(config -> config
+                        .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll())
+                .addFilterBefore(httpTransportRequestSizeFilter(), UsernamePasswordAuthenticationFilter.class);
+        return http.build();
+    }
+
+    @Bean
+    @Order(2)
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.headers(headers -> headers
                         .cacheControl(config -> {})
@@ -214,7 +242,6 @@ public class ThingsboardSecurityConfiguration {
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(NON_TOKEN_BASED_AUTH_ENTRY_POINTS).permitAll() // static resources, user activation and password reset end-points (webjars included)
                         .requestMatchers(
-                                DEVICE_API_ENTRY_POINT, // Device HTTP Transport API
                                 FORM_BASED_LOGIN_ENTRY_POINT, // Login end-point
                                 PUBLIC_LOGIN_ENTRY_POINT, // Public login end-point
                                 TOKEN_REFRESH_ENTRY_POINT, // Token refresh end-point
@@ -228,7 +255,7 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(requestSizeFilter, UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(requestSizeFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login

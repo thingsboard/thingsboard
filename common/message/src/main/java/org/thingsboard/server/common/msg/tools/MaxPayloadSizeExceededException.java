@@ -15,9 +15,15 @@
  */
 package org.thingsboard.server.common.msg.tools;
 
+import lombok.Getter;
+
 public class MaxPayloadSizeExceededException extends RuntimeException {
 
-    public MaxPayloadSizeExceededException() {
-        super("Payload size exceeds the limit");
+    @Getter
+    private final int limit;
+
+    public MaxPayloadSizeExceededException(int limit) {
+        super("Payload size exceeds the limit " + limit);
+        this.limit = limit;
     }
 }

@@ -136,9 +136,6 @@ public class DeviceApiController implements TbTransportService {
 
     private static final String ACCESS_TOKEN_PARAM_DESCRIPTION = "Your device access token.";
 
-    @Value("${transport.http.max_payload_size:65536}")
-    private int maxPayloadSize;
-
     @Autowired
     private HttpTransportContext transportContext;
 
@@ -289,7 +286,6 @@ public class DeviceApiController implements TbTransportService {
             @PathVariable("requestId") Integer requestId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Reply to the RPC request, JSON. For example: {\"status\":\"success\"}", required = true)
             @RequestBody String json, HttpServletRequest httpServletRequest) {
-        checkPayloadSize(httpServletRequest);
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -320,7 +316,6 @@ public class DeviceApiController implements TbTransportService {
             @PathVariable("deviceToken") String deviceToken,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The RPC request JSON", required = true)
             @RequestBody String json, HttpServletRequest httpServletRequest) {
-        checkPayloadSize(httpServletRequest);
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -441,12 +436,6 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(JsonConverter.convertToProvisionRequestMsg(json),
                 new DeviceProvisionCallback(responseWriter));
         return responseWriter;
-    }
-
-    private void checkPayloadSize(HttpServletRequest httpServletRequest) {
-        if (httpServletRequest.getContentLength() > maxPayloadSize) {
-            throw new MaxPayloadSizeExceededException();
-        }
     }
 
     private DeferredResult<ResponseEntity> getOtaPackageCallback(String deviceToken, String title, String version, int size, int chunk, OtaPackageType firmwareType) {
