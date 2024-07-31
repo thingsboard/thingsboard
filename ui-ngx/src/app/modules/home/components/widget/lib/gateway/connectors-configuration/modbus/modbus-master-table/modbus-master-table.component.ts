@@ -169,7 +169,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         value,
-        buttonTitle: withIndex ? 'action.add' : 'action.apply'
+        buttonTitle: withIndex ? 'action.apply' : 'action.add'
       }
     }).afterClosed()
       .pipe(take(1), takeUntil(this.destroy$))
