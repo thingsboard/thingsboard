@@ -1019,24 +1019,39 @@ public class TbUtilsTest {
         boolean expectedLowVoltage = true;
         boolean actualLowVoltage = actualArray[7] == 1;
         Assertions.assertEquals(expectedLowVoltage, actualLowVoltage);
+
+        byteVal = (byte) 0x39;
+        actualArray = TbUtils.parseByteToBinaryArray(byteVal);
         int expectedLowCurrent1Alarm = 1;  //  0x39 = 00 11 10 01 (Bin0): 0 == 1
-        int expectedHighCurrent1Alarm = 0;  //  0x39 = 00 11 10 01 (Bin1): 0 == 0
+        int expectedHighCurrent1Alarm = 0; //  0x39 = 00 11 10 01 (Bin1): 0 == 0
         int expectedLowCurrent2Alarm = 0;  //  0x39 = 00 11 10 01 (Bin2): 0 == 0
         int expectedHighCurrent2Alarm = 1; //  0x39 = 00 11 10 01 (Bin3): 0 == 1
         int expectedLowCurrent3Alarm = 1;  //  0x39 = 00 11 10 01 (Bin4): 0 == 1
-        int expectedHighCurrent3Alarm = 1;  //  0x39 = 00 11 10 01 (Bin5): 0 == 1
-        int actualLowCurrent1Alarm = actualArray[0];
-        int actualHighCurrent1Alarm = actualArray[1];
-        int actualLowCurrent2Alarm = actualArray[2];
-        int actualHighCurrent2Alarm = actualArray[3];
-        int actualLowCurrent3Alarm = actualArray[4];
-        int actualHighCurrent3Alarm = actualArray[5];
+        int expectedHighCurrent3Alarm = 1; //  0x39 = 00 11 10 01 (Bin5): 0 == 1
+        int actualLowCurrent1Alarm = actualArray[7];
+        int actualHighCurrent1Alarm = actualArray[6];
+        int actualLowCurrent2Alarm = actualArray[5];
+        int actualHighCurrent2Alarm = actualArray[4];
+        int actualLowCurrent3Alarm = actualArray[3];
+        int actualHighCurrent3Alarm = actualArray[2];
         Assertions.assertEquals(expectedLowCurrent1Alarm, actualLowCurrent1Alarm);
         Assertions.assertEquals(expectedHighCurrent1Alarm, actualHighCurrent1Alarm);
         Assertions.assertEquals(expectedLowCurrent2Alarm, actualLowCurrent2Alarm);
         Assertions.assertEquals(expectedHighCurrent2Alarm, actualHighCurrent2Alarm);
         Assertions.assertEquals(expectedLowCurrent3Alarm, actualLowCurrent3Alarm);
         Assertions.assertEquals(expectedHighCurrent3Alarm, actualHighCurrent3Alarm);
+
+        byteVal = (byte) 0x36;
+        actualArray = TbUtils.parseByteToBinaryArray(byteVal);
+        int expectedMultiplier1 = 2;
+        int expectedMultiplier2 = 1;
+        int expectedMultiplier3 = 3;
+        int actualMultiplier1 = TbUtils.parseBinaryArrayToInt(actualArray, 6, 2);
+        int actualMultiplier2 = TbUtils.parseBinaryArrayToInt(actualArray, 4, 2);
+        int actualMultiplier3 = TbUtils.parseBinaryArrayToInt(actualArray, 2, 2);
+        Assertions.assertEquals(expectedMultiplier1, actualMultiplier1);
+        Assertions.assertEquals(expectedMultiplier2, actualMultiplier2);
+        Assertions.assertEquals(expectedMultiplier3, actualMultiplier3);
     }
 
     private static List<Byte> toList(byte[] data) {
