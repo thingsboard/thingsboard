@@ -19,7 +19,7 @@ import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
 import { Validators } from '@angular/forms';
 
-export const noLeadTrailSpacesRegex: RegExp = /^(?! )[\S\s]*(?<! )$/;
+export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',
