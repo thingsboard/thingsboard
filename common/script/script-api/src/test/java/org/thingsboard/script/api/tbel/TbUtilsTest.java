@@ -958,6 +958,12 @@ public class TbUtilsTest {
         actualArray = TbUtils.parseByteToBinaryArray(byteVal, bitArray.length);
         actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
+
+        bitArray = new byte[]{1, 0, 0, 1, 1, 1};
+        expected = toList(bitArray);
+        actualArray = TbUtils.parseByteToBinaryArray(byteVal, bitArray.length, false);
+        actual = toList(actualArray);
+        Assertions.assertEquals(expected, actual);
     }
 
     @Test
@@ -1021,19 +1027,19 @@ public class TbUtilsTest {
         Assertions.assertEquals(expectedLowVoltage, actualLowVoltage);
 
         byteVal = (byte) 0x39;
-        actualArray = TbUtils.parseByteToBinaryArray(byteVal);
+        actualArray = TbUtils.parseByteToBinaryArray(byteVal, 6, false);
         int expectedLowCurrent1Alarm = 1;  //  0x39 = 00 11 10 01 (Bin0): 0 == 1
         int expectedHighCurrent1Alarm = 0; //  0x39 = 00 11 10 01 (Bin1): 0 == 0
         int expectedLowCurrent2Alarm = 0;  //  0x39 = 00 11 10 01 (Bin2): 0 == 0
         int expectedHighCurrent2Alarm = 1; //  0x39 = 00 11 10 01 (Bin3): 0 == 1
         int expectedLowCurrent3Alarm = 1;  //  0x39 = 00 11 10 01 (Bin4): 0 == 1
         int expectedHighCurrent3Alarm = 1; //  0x39 = 00 11 10 01 (Bin5): 0 == 1
-        int actualLowCurrent1Alarm = actualArray[7];
-        int actualHighCurrent1Alarm = actualArray[6];
-        int actualLowCurrent2Alarm = actualArray[5];
-        int actualHighCurrent2Alarm = actualArray[4];
-        int actualLowCurrent3Alarm = actualArray[3];
-        int actualHighCurrent3Alarm = actualArray[2];
+        int actualLowCurrent1Alarm = actualArray[0];
+        int actualHighCurrent1Alarm = actualArray[1];
+        int actualLowCurrent2Alarm = actualArray[2];
+        int actualHighCurrent2Alarm = actualArray[3];
+        int actualLowCurrent3Alarm = actualArray[4];
+        int actualHighCurrent3Alarm = actualArray[5];
         Assertions.assertEquals(expectedLowCurrent1Alarm, actualLowCurrent1Alarm);
         Assertions.assertEquals(expectedHighCurrent1Alarm, actualHighCurrent1Alarm);
         Assertions.assertEquals(expectedLowCurrent2Alarm, actualLowCurrent2Alarm);

@@ -17,6 +17,7 @@ package org.thingsboard.script.api.tbel;
 
 import com.google.common.primitives.Bytes;
 import lombok.extern.slf4j.Slf4j;
+import lombok.val;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
@@ -335,6 +336,8 @@ public class TbUtils {
                 byte.class)));
         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
                 byte.class, int.class)));
+         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
                 List.class)));
         parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
@@ -1299,14 +1302,23 @@ public class TbUtils {
         return parseByteToBinaryArray(byteValue, BIN_LEN_MAX);
     }
 
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength) {
+        return parseByteToBinaryArray(byteValue, binLength, true);
+    }
+
     /**
+     * bigEndian = true
      * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
      * to ensure proper alignment (highest bit to low end).
      */
-    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength) {
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength, boolean bigEndian) {
         byte[] bins = new byte[binLength];
         for (int i = 0; i < binLength; i++) {
-            bins[binLength - 1 - i] = (byte) ((byteValue >> i) & 1);
+            if(bigEndian) {
+                bins[binLength - 1 - i] = (byte) ((byteValue >> i) & 1);
+            } else {
+                bins[i] = (byte) ((byteValue >> i) & 1);
+            }
         }
         return bins;
     }
