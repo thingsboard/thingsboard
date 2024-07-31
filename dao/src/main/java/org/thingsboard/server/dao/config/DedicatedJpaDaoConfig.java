@@ -13,11 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.dao.config;
 
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -29,6 +29,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.orm.jpa.JpaTransactionManager;
 import org.springframework.orm.jpa.LocalContainerEntityManagerFactoryBean;
 import org.springframework.transaction.support.TransactionTemplate;
+import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.model.sql.ErrorEventEntity;
 import org.thingsboard.server.dao.model.sql.LifecycleEventEntity;
 import org.thingsboard.server.dao.model.sql.RuleChainDebugEventEntity;
@@ -38,74 +39,55 @@ import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
 import javax.sql.DataSource;
 import java.util.Objects;
 
+/*
+ * To make entity use a dedicated datasource:
+ * - add its JpaRepository to exclusions list in @EnableJpaRepositories in JpaDaoConfig
+ * - add the package of this JpaRepository to @EnableJpaRepositories in DefaultDedicatedJpaDaoConfig
+ * - add the package of this JpaRepository to @EnableJpaRepositories in DedicatedJpaDaoConfig
+ * - add the entity class to packages list in dedicatedEntityManagerFactory in DedicatedJpaDaoConfig
+ * */
+@ConditionalOnProperty(value = "spring.datasource.dedicated.enabled", havingValue = "true")
 @Configuration
-@EnableJpaRepositories(value = "org.thingsboard.server.dao.sql.event", bootstrapMode = BootstrapMode.LAZY,
+@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit"},
+        bootstrapMode = BootstrapMode.LAZY,
         entityManagerFactoryRef = "dedicatedEntityManagerFactory", transactionManagerRef = "dedicatedTransactionManager")
 public class DedicatedJpaDaoConfig {
-
-    @Value("${spring.datasource.dedicated.enabled:false}")
-    private boolean dedicatedDataSourceEnabled;
 
     @Bean
     @ConfigurationProperties("spring.datasource.dedicated")
     public DataSourceProperties dedicatedDataSourceProperties() {
-        if (dedicatedDataSourceEnabled) {
-            return new DataSourceProperties();
-        } else {
-            return null;
-        }
+        return new DataSourceProperties();
     }
 
     @ConfigurationProperties(prefix = "spring.datasource.dedicated.hikari")
     @Bean
     public DataSource dedicatedDataSource(@Qualifier("dedicatedDataSourceProperties") DataSourceProperties dedicatedDataSourceProperties) {
-        if (dedicatedDataSourceEnabled) {
-            return dedicatedDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
-        } else {
-            return null;
-        }
+        return dedicatedDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean
     public LocalContainerEntityManagerFactoryBean dedicatedEntityManagerFactory(@Qualifier("dedicatedDataSource") DataSource dedicatedDataSource,
-                                                                                @Qualifier("dataSource") DataSource defaultDataSource,
                                                                                 EntityManagerFactoryBuilder builder) {
-        if (dedicatedDataSourceEnabled) {
-            return builder
-                    .dataSource(dedicatedDataSource)
-                    .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class)
-                    .persistenceUnit("dedicated")
-                    .build();
-        } else {
-            return null;
-        }
+        return builder
+                .dataSource(dedicatedDataSource)
+                .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class)
+                .persistenceUnit("dedicated")
+                .build();
     }
 
     @Bean
     public JpaTransactionManager dedicatedTransactionManager(@Qualifier("dedicatedEntityManagerFactory") LocalContainerEntityManagerFactoryBean dedicatedEntityManagerFactory) {
-        if (dedicatedDataSourceEnabled) {
-            return new JpaTransactionManager(Objects.requireNonNull(dedicatedEntityManagerFactory.getObject()));
-        } else {
-            return null;
-        }
+        return new JpaTransactionManager(Objects.requireNonNull(dedicatedEntityManagerFactory.getObject()));
     }
 
     @Bean
     public TransactionTemplate dedicatedTransactionTemplate(@Qualifier("dedicatedTransactionManager") JpaTransactionManager dedicatedTransactionManager) {
-        if (dedicatedDataSourceEnabled) {
-            return new TransactionTemplate(dedicatedTransactionManager);
-        } else {
-            return null;
-        }
+        return new TransactionTemplate(dedicatedTransactionManager);
     }
 
     @Bean
     public JdbcTemplate dedicatedJdbcTemplate(@Qualifier("dedicatedDataSource") DataSource dedicatedDataSource) {
-        if (dedicatedDataSourceEnabled) {
-            return new JdbcTemplate(dedicatedDataSource);
-        } else {
-            return null;
-        }
+        return new JdbcTemplate(dedicatedDataSource);
     }
 
 }

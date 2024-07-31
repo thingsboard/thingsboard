@@ -24,6 +24,10 @@ import org.springframework.test.context.junit4.SpringRunner;
 import org.springframework.test.context.support.DependencyInjectionTestExecutionListener;
 import org.springframework.test.context.support.DirtiesContextTestExecutionListener;
 import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.dao.config.DedicatedJpaDaoConfig;
+import org.thingsboard.server.dao.config.JpaDaoConfig;
+import org.thingsboard.server.dao.config.SqlTsDaoConfig;
+import org.thingsboard.server.dao.config.SqlTsLatestDaoConfig;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 /**

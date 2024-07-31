@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -48,7 +47,6 @@ public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, Au
 
     private final AuditLogRepository auditLogRepository;
     private final SqlPartitioningRepository partitioningRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     @Value("${sql.audit_logs.partition_size:168}")
     private int partitionSizeInHours;
