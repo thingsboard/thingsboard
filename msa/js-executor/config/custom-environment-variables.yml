@@ -38,6 +38,17 @@ kafka:
   topic_properties: "TB_QUEUE_KAFKA_JE_TOPIC_PROPERTIES"
   use_confluent_cloud: "TB_QUEUE_KAFKA_USE_CONFLUENT_CLOUD"
   client_id: "KAFKA_CLIENT_ID" #inject pod name to easy identify the client using /opt/kafka/bin/kafka-consumer-groups.sh
+  ssl:
+    # Enable or disable SSL for Kafka communication.
+    enabled: "TB_KAFKA_SSL_ENABLED"
+    # Path to the server certificate file. This file can hold the server certificate or a certificate chain and may include the server private key.
+    cert_file: "TB_KAFKA_SSL_PEM_CERTIFICATE"
+    # Optional: Path to the server certificate private key file. Required if the private key is not included in the server certificate file.
+    key_file: "TB_KAFKA_SSL_PEM_KEY"
+    # Optional: Password for the server certificate private key, if applicable.
+    key_password: "TB_KAFKA_SSL_PEM_KEY_PASSWORD"
+    # Optional: Path to a custom CA certificate file. Defaults to trusting well-known CAs curated by Mozilla.
+    ca_file: "TB_KAFKA_SSL_PEM_TRUSTS_CERTIFICATE"
   confluent:
     sasl:
       mechanism: "TB_QUEUE_KAFKA_CONFLUENT_SASL_MECHANISM"

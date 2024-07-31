@@ -342,9 +342,12 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public AlarmApiCallResult createOrUpdateActiveAlarm(AlarmCreateOrUpdateActiveRequest request, boolean alarmCreationEnabled) {
+        UUID tenantUUID = request.getTenantId().getId();
+        log.debug("[{}] createOrUpdateActiveAlarm [{}] {}", tenantUUID, alarmCreationEnabled, request);
+
         AlarmPropagationInfo ap = getSafePropagationInfo(request.getPropagation());
         return toAlarmApiResult(alarmRepository.createOrUpdateActiveAlarm(
-                request.getTenantId().getId(),
+                tenantUUID,
                 request.getCustomerId() != null ? request.getCustomerId().getId() : CustomerId.NULL_UUID,
                 request.getEdgeAlarmId() != null ? request.getEdgeAlarmId().getId() : UUID.randomUUID(),
                 System.currentTimeMillis(),
@@ -364,10 +367,14 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public AlarmApiCallResult updateAlarm(AlarmUpdateRequest request) {
+        UUID tenantUUID = request.getTenantId().getId();
+        UUID alarmUUID = request.getAlarmId().getId();
+        log.debug("[{}][{}] updateAlarm {}", tenantUUID, alarmUUID, request);
+
         AlarmPropagationInfo ap = getSafePropagationInfo(request.getPropagation());
         return toAlarmApiResult(alarmRepository.updateAlarm(
-                request.getTenantId().getId(),
-                request.getAlarmId().getId(),
+                tenantUUID,
+                alarmUUID,
                 request.getSeverity().name(),
                 request.getStartTs(), request.getEndTs(),
                 getDetailsAsString(request.getDetails()),
@@ -380,11 +387,13 @@ public class JpaAlarmDao extends JpaAbstractDao<AlarmEntity, Alarm> implements A
 
     @Override
     public AlarmApiCallResult acknowledgeAlarm(TenantId tenantId, AlarmId id, long ackTs) {
+        log.debug("[{}][{}] acknowledgeAlarm [{}]", tenantId, id, ackTs);
         return toAlarmApiResult(alarmRepository.acknowledgeAlarm(tenantId.getId(), id.getId(), ackTs));
     }
 
     @Override
     public AlarmApiCallResult clearAlarm(TenantId tenantId, AlarmId id, long clearTs, JsonNode details) {
+        log.debug("[{}][{}] clearAlarm [{}]", tenantId, id, clearTs);
         return toAlarmApiResult(alarmRepository.clearAlarm(tenantId.getId(), id.getId(), clearTs, details != null ? getDetailsAsString(details) : null));
     }
 

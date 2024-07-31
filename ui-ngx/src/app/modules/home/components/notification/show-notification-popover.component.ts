@@ -29,7 +29,7 @@ import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.model
 @Component({
   selector: 'tb-show-notification-popover',
   templateUrl: './show-notification-popover.component.html',
-  styleUrls: []
+  styleUrls: ['show-notification-popover.component.scss']
 })
 export class ShowNotificationPopoverComponent extends PageComponent implements OnDestroy, OnInit {
 

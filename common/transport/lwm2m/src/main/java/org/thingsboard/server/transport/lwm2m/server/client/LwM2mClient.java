@@ -61,7 +61,6 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LWM2M_OBJECT_VERSION_DEFAULT;
@@ -417,14 +416,14 @@ public class LwM2mClient {
 
     private static Set<ContentFormat> clientSupportContentFormat(Registration registration) {
         Set<ContentFormat> contentFormats = new HashSet<>();
-        contentFormats.add(ContentFormat.DEFAULT);
         Attribute ct = Arrays.stream(registration.getObjectLinks())
                 .filter(link -> link.getUriReference().equals("/"))
                 .findFirst()
                 .map(link -> link.getAttributes().get("ct")).orElse(null);
-        if (ct != null) {
-            Set codes = Stream.of(ct.getValue()).collect(Collectors.toSet());
-            contentFormats.addAll(codes);
+        if (ct != null && ct.getValue() instanceof Collection<?>) {
+            contentFormats.addAll((Collection<? extends ContentFormat>) ct.getValue());
+        } else {
+            contentFormats.add(ContentFormat.DEFAULT);
         }
         return contentFormats;
     }

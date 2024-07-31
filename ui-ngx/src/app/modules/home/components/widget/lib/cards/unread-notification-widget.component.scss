@@ -1,0 +1,65 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+@import "../../../../../../../scss/constants";
+
+.tb-no-notification-svg-color {
+  color: $tb-primary-color;
+}
+
+.tb-unread-notification-panel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px 24px 24px;
+  > div:not(.tb-unread-notification-overlay) {
+    z-index: 1;
+  }
+  div.tb-widget-title {
+    padding: 0;
+  }
+  .tb-unread-notification-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    right: 12px;
+  }
+  .tb-unread-notification-content {
+    height: 100%;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    .tb-no-notification-text {
+      text-align: center;
+      margin-bottom: 12px;
+      color: rgba(0, 0, 0, 0.38);
+    }
+  }
+  .notification-counter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 22px;
+    background-color: green;
+    border-radius: 5px;
+  }
+}

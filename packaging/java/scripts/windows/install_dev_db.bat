@@ -5,7 +5,7 @@ setlocal ENABLEEXTENSIONS
 SET BASE=${project.basedir}\target
 SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
 
-SET jarfile=%BASE%\thingsboard-${project.version}-boot.jar
+SET jarfile=%BASE%\${pkg.name}-${project.version}-boot.jar
 SET installDir=%BASE%\data
 SET loadDemo=true
 

@@ -3,7 +3,7 @@
 <div class="divider"></div>
 <br/>
 
-All widget related JavaScript code according to the [Widget API{:target="_blank"}](${siteBaseUrl}/docs/user-guide/contribution/widgets-development/#basic-widget-api).
+All widget related JavaScript code according to the [Widget API{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development/#basic-widget-api).
 The built-in variable **self** is a reference to the widget instance.<br>
 Each widget function should be defined as a property of the **self** variable.
 **self** variable has property **ctx** of type [WidgetContext{:target="_blank"}](https://github.com/thingsboard/thingsboard/blob/5bb6403407aa4898084832d6698aa9ea6d484889/ui-ngx/src/app/modules/home/models/widget-component.models.ts#L107) - a reference to widget context that has all necessary API and data used by widget instance.
@@ -129,7 +129,7 @@ Browser debugger (if enabled) will automatically pause code execution at the deb
 
 ##### Further reading
 
-For more information read  [Widgets Development Guide{:target="_blank"}](${siteBaseUrl}/docs/user-guide/contribution/widgets-development).
+For more information read  [Widgets Development Guide{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/contribution/widgets-development).
 
 <br>
 <br>

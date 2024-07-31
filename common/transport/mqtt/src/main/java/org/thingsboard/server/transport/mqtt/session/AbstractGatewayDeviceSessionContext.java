@@ -59,6 +59,8 @@ public abstract class AbstractGatewayDeviceSessionContext<T extends AbstractGate
                 .setDeviceType(deviceInfo.getDeviceType())
                 .setGwSessionIdMSB(parent.getSessionId().getMostSignificantBits())
                 .setGwSessionIdLSB(parent.getSessionId().getLeastSignificantBits())
+                .setGatewayIdMSB(parent.gateway.getDeviceId().getId().getMostSignificantBits())
+                .setGatewayIdLSB(parent.gateway.getDeviceId().getId().getLeastSignificantBits())
                 .setDeviceProfileIdMSB(deviceInfo.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(deviceInfo.getDeviceProfileId().getId().getLeastSignificantBits())
                 .build());

@@ -18,13 +18,17 @@
 <div class="tb-form-panel no-border no-padding">
   <div class="tb-form-table" [formGroup]="relationFiltersFormGroup">
     <div class="tb-form-table-header">
+      <div *ngIf="enableNotOption" class="tb-form-table-header-cell flex-18"></div>
       <div class="tb-form-table-header-cell flex-50">{{ 'relation.relation-type' | translate }}</div>
       <div class="tb-form-table-header-cell flex-50">{{ 'entity.entity-types' | translate }}</div>
       <div class="tb-form-table-header-cell actions-header"></div>
     </div>
     <div class="tb-form-table-body" formArrayName="relationFilters">
-      <div class="tb-form-table-row"
+      <div class="tb-form-table-row align-start"
            *ngFor="let relationFilterControl of relationFiltersFormArray.controls; let $index = index">
+        <mat-chip-listbox *ngIf="enableNotOption" class="flex-18 center-stretch" [formControl]="relationFilterControl.get('negate')">
+          <mat-chip-option color="primary" [value]="true">{{ 'relation.not' | translate }}</mat-chip-option>
+        </mat-chip-listbox>
         <tb-relation-type-autocomplete subscriptSizing="dynamic"
                                        class="flex-50" showLabel="false"
                                        [additionalClasses]="['tb-inline-field']"

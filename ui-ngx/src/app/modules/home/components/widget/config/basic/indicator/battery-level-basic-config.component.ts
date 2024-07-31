@@ -22,6 +22,7 @@ import { BasicWidgetConfigComponent } from '@home/components/widget/config/widge
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
   DataKey,
+  Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -74,6 +75,15 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
     return [BatteryLevelLayout.vertical_divided, BatteryLevelLayout.horizontal_divided].includes(layout);
   }
 
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.widgetConfig.config.datasources;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
+  }
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
               private fb: UntypedFormBuilder) {
@@ -121,6 +131,7 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -157,6 +168,7 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;

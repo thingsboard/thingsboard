@@ -19,6 +19,7 @@ import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.CommonClientConfigs;
+import org.apache.kafka.clients.admin.AdminClient;
 import org.apache.kafka.clients.admin.AdminClientConfig;
 import org.apache.kafka.clients.consumer.ConsumerConfig;
 import org.apache.kafka.clients.producer.ProducerConfig;
@@ -34,6 +35,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.TbProperty;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
+import javax.annotation.PreDestroy;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -143,13 +145,7 @@ public class TbKafkaSettings {
     @Setter
     private Map<String, List<TbProperty>> consumerPropertiesPerTopic = Collections.emptyMap();
 
-    public Properties toAdminProps() {
-        Properties props = toProps();
-        props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
-        props.put(AdminClientConfig.RETRIES_CONFIG, retries);
-
-        return props;
-    }
+    private volatile AdminClient adminClient;
 
     public Properties toConsumerProps(String topic) {
         Properties props = toProps();
@@ -218,6 +214,31 @@ public class TbKafkaSettings {
             props.put(SslConfigs.SSL_KEYSTORE_LOCATION_CONFIG, sslKeystoreLocation);
             props.put(SslConfigs.SSL_KEYSTORE_PASSWORD_CONFIG, sslKeystorePassword);
             props.put(SslConfigs.SSL_KEY_PASSWORD_CONFIG, sslKeyPassword);
+        }
+    }
+
+    public AdminClient getAdminClient() {
+        if (adminClient == null) {
+            synchronized (this) {
+                if (adminClient == null) {
+                    adminClient = AdminClient.create(toAdminProps());
+                }
+            }
+        }
+        return adminClient;
+    }
+
+    protected Properties toAdminProps() {
+        Properties props = toProps();
+        props.put(AdminClientConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
+        props.put(AdminClientConfig.RETRIES_CONFIG, retries);
+        return props;
+    }
+
+    @PreDestroy
+    private void destroy() {
+        if (adminClient != null) {
+            adminClient.close();
         }
     }
 

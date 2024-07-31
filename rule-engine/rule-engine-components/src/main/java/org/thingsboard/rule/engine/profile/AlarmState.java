@@ -250,8 +250,9 @@ class AlarmState {
             newAlarm.setCleared(false);
             newAlarm.setSeverity(severity);
             long startTs = dataSnapshot.getTs();
-            if (startTs == 0L) {
-                startTs = System.currentTimeMillis();
+            long currentTime = System.currentTimeMillis();
+            if (startTs == 0L || startTs > currentTime) {
+                startTs = currentTime;
             }
             newAlarm.setStartTs(startTs);
             newAlarm.setEndTs(startTs);

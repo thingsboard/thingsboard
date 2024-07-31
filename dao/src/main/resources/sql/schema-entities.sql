@@ -896,3 +896,14 @@ CREATE TABLE IF NOT EXISTS queue_stats (
     service_id varchar(255) NOT NULL,
     CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
 );
+
+CREATE TABLE IF NOT EXISTS mobile_app_settings (
+    id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    use_default_app boolean,
+    android_config VARCHAR(1000),
+    ios_config VARCHAR(1000),
+    qr_code_config VARCHAR(100000),
+    CONSTRAINT mobile_app_settings_tenant_id_unq_key UNIQUE (tenant_id)
+);

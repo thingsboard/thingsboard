@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -117,8 +118,8 @@ public class TenantProfileController extends BaseController {
                     "Let's review the example of tenant profile data below: " +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
                     "{\n" +
-                    "  \"name\": \"Default\",\n" +
-                    "  \"description\": \"Default tenant profile\",\n" +
+                    "  \"name\": \"Your name\",\n" +
+                    "  \"description\": \"Your description\",\n" +
                     "  \"isolatedTbRuleEngine\": false,\n" +
                     "  \"profileData\": {\n" +
                     "    \"configuration\": {\n" +
@@ -138,6 +139,12 @@ public class TenantProfileController extends BaseController {
                     "      \"transportDeviceMsgRateLimit\": \"20:1,600:60\",\n" +
                     "      \"transportDeviceTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
                     "      \"transportDeviceTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayDeviceMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayDeviceTelemetryMsgRateLimit\": \"20:1,600:60\",\n" +
+                    "      \"transportGatewayDeviceTelemetryDataPointsRateLimit\": \"20:1,600:60\",\n" +
                     "      \"maxTransportMessages\": 10000000,\n" +
                     "      \"maxTransportDataPoints\": 10000000,\n" +
                     "      \"maxREExecutions\": 4000000,\n" +
@@ -155,7 +162,7 @@ public class TenantProfileController extends BaseController {
                     "      \"warnThreshold\": 0\n" +
                     "    }\n" +
                     "  },\n" +
-                    "  \"default\": true\n" +
+                    "  \"default\": false\n" +
                     "}" +
                     MARKDOWN_CODE_BLOCK_END +
                     "Remove 'id', from the request body example (below) to create new Tenant Profile entity." +
@@ -245,7 +252,8 @@ public class TenantProfileController extends BaseController {
 
     @GetMapping(value = "/tenantProfiles", params = {"ids"})
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
-    public List<TenantProfile> getTenantProfilesByIds(@RequestParam("ids") UUID[] ids) {
+    public List<TenantProfile> getTenantProfilesByIds(@Parameter(description = "Comma-separated list of tenant profile ids", array = @ArraySchema(schema = @Schema(type = "string")))
+                                                      @RequestParam("ids") UUID[] ids) {
         return tenantProfileService.findTenantProfilesByIds(TenantId.SYS_TENANT_ID, ids);
     }
 

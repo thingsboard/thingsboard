@@ -33,7 +33,6 @@
   }
 
   .mat-mdc-dialog-content {
-    max-height: 670px;
     height: 670px;
   }
 
@@ -48,6 +47,7 @@
       .mdc-evolution-chip-set__chips {
         justify-content: flex-end;
         align-items: center;
+        flex-wrap: nowrap;
       }
     }
   }
@@ -72,5 +72,15 @@
 
   .mat-mdc-form-field-icon-suffix {
     display: flex;
+  }
+
+  .device-config {
+    gap: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .device-node-pattern-field {
+    flex-basis: 3%;
   }
 }

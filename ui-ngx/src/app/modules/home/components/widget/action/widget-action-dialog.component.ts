@@ -118,7 +118,7 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
   ngOnInit(): void {
     this.widgetActionFormGroup = this.fb.group({
       actionSourceId: [this.action.actionSourceId, Validators.required],
-      columnIndex: [this.checkColumnIndex(this.action.columnIndex), Validators.required],
+      columnIndex: [{value: this.checkColumnIndex(this.action.columnIndex), disabled: true}, Validators.required],
       name: [this.action.name, [this.validateActionName(), Validators.required]],
       icon: [this.action.icon, Validators.required],
       useShowWidgetActionFunction: [this.action.useShowWidgetActionFunction],
@@ -132,12 +132,11 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.widgetActionFormGroup.get('name').updateValueAndValidity();
       this.updateShowWidgetActionForm();
       if (value === 'cellClick') {
-        this.widgetActionFormGroup.get('columnIndex').setValidators([Validators.required]);
+        this.widgetActionFormGroup.get('columnIndex').enable();
         this.getCellClickColumnsInfo();
       } else {
-        this.widgetActionFormGroup.get('columnIndex').clearValidators();
+        this.widgetActionFormGroup.get('columnIndex').disable();
       }
-      this.widgetActionFormGroup.get('columnIndex').updateValueAndValidity();
     });
     this.widgetActionFormGroup.get('useShowWidgetActionFunction').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -145,10 +144,12 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
       this.updateShowWidgetActionForm();
     });
     setTimeout(() => {
-      if (this.action?.actionSourceId === 'cellClick' && isDefinedAndNotNull(this.action.columnIndex) &&
-        this.widgetActionFormGroup.get('columnIndex').value === null) {
-        this.columnIndexPlaceholderText = `${this.action.columnIndex} (${this.translate.instant('widget-config.not-set')})`;
-        this.columnIndexSelect.focus();
+      if (this.action?.actionSourceId === 'cellClick') {
+        this.widgetActionFormGroup.get('columnIndex').enable();
+        if (isDefinedAndNotNull(this.action.columnIndex) && this.widgetActionFormGroup.get('columnIndex').value === null) {
+          this.columnIndexPlaceholderText = `${this.action.columnIndex} (${this.translate.instant('widget-config.not-set')})`;
+          this.columnIndexSelect.focus();
+        }
       }
     });
   }
@@ -253,9 +254,6 @@ export class WidgetActionDialogComponent extends DialogComponent<WidgetActionDia
         {...this.widgetActionFormGroup.value, ...this.widgetActionFormGroup.get('widgetAction').value};
       delete (result as any).widgetAction;
       result.id = this.action.id;
-      if (!isDefinedAndNotNull(result.columnIndex)) {
-        delete result.columnIndex;
-      }
       this.dialogRef.close(result);
     }
   }

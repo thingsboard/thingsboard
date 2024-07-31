@@ -37,7 +37,7 @@ import { AbstractControl, UntypedFormGroup } from '@angular/forms';
 import { Observable } from 'rxjs';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { isNotEmptyStr, mergeDeep } from '@core/utils';
+import { isNotEmptyStr, mergeDeepIgnoreArray } from '@core/utils';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import { ComponentStyle, Font, TimewindowStyle } from '@shared/models/widget-settings.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
@@ -72,7 +72,7 @@ export const widgetTypesData = new Map<widgetType, WidgetTypeData>(
         icon: 'timeline',
         configHelpLinkId: 'widgetsConfigTimeseries',
         template: {
-          fullFqn: 'system.charts.basic_timeseries'
+          fullFqn: 'system.time_series_chart'
         }
       }
     ],
@@ -878,7 +878,7 @@ export abstract class WidgetSettingsComponent extends PageComponent implements
     if (!value) {
       this.settingsValue = this.defaultSettings();
     } else {
-      this.settingsValue = mergeDeep(this.defaultSettings(), value);
+      this.settingsValue = mergeDeepIgnoreArray(this.defaultSettings(), value);
     }
     if (!this.settingsSet) {
       this.settingsSet = true;

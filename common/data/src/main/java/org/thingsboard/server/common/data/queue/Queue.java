@@ -73,4 +73,11 @@ public class Queue extends BaseDataWithAdditionalInfo<QueueId> implements HasNam
                 .filter(JsonNode::isTextual).map(JsonNode::asText).orElse(null);
     }
 
+    @JsonIgnore
+    public boolean isDuplicateMsgToAllPartitions() {
+        return Optional.ofNullable(getAdditionalInfo())
+                .map(info -> info.get("duplicateMsgToAllPartitions"))
+                .filter(JsonNode::isBoolean).map(JsonNode::asBoolean).orElse(false);
+    }
+
 }

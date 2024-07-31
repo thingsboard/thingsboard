@@ -24,9 +24,14 @@ import org.springframework.boot.test.mock.mockito.MockBean;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AssetId;
+import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -44,6 +49,7 @@ import org.thingsboard.server.queue.TbQueueCallback;
 import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.DefaultTbQueueMsgHeaders;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.common.TbRuleEngineProducerService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.discovery.TopicService;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
@@ -91,6 +97,8 @@ public class DefaultTbClusterServiceTest {
     protected PartitionService partitionService;
     @MockBean
     protected TbQueueProducerProvider producerProvider;
+    @MockBean
+    protected TbRuleEngineProducerService ruleEngineProducerService;
 
     @SpyBean
     protected TopicService topicService;
@@ -386,5 +394,45 @@ public class DefaultTbClusterServiceTest {
         queue.setTopic("main");
         queue.setPartitions(10);
         return queue;
+    }
+
+    @Test
+    public void testGetRuleEngineProfileForUpdatedAndDeletedDevice() {
+        DeviceId deviceId = new DeviceId(UUID.randomUUID());
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+        DeviceProfileId deviceProfileId = new DeviceProfileId(UUID.randomUUID());
+
+        Device device = new Device(deviceId);
+        device.setDeviceProfileId(deviceProfileId);
+
+        // device updated
+        TbMsg tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_UPDATED).build();
+        ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, deviceId, tbMsg);
+        verify(deviceProfileCache, times(1)).get(tenantId, deviceId);
+
+        // device deleted
+        tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_DELETED).data(JacksonUtil.toString(device)).build();
+        ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, deviceId, tbMsg);
+        verify(deviceProfileCache, times(1)).get(tenantId, deviceProfileId);
+    }
+
+    @Test
+    public void testGetRuleEngineProfileForUpdatedAndDeletedAsset() {
+        AssetId assetId = new AssetId(UUID.randomUUID());
+        TenantId tenantId = new TenantId(UUID.randomUUID());
+        AssetProfileId assetProfileId = new AssetProfileId(UUID.randomUUID());
+
+        Asset asset = new Asset(assetId);
+        asset.setAssetProfileId(assetProfileId);
+
+        // asset updated
+        TbMsg tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_UPDATED).build();
+        ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, assetId, tbMsg);
+        verify(assetProfileCache, times(1)).get(tenantId, assetId);
+
+        // asset deleted
+        tbMsg = TbMsg.builder().internalType(TbMsgType.ENTITY_DELETED).data(JacksonUtil.toString(asset)).build();
+        ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, assetId, tbMsg);
+        verify(assetProfileCache, times(1)).get(tenantId, assetProfileId);
     }
 }
