@@ -349,6 +349,18 @@ public class TbUtils {
                 long.class)));
         parserConfig.addImport("parseLongToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseLongToBinaryArray",
                 long.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class, int.class, int.class)));
     }
 
     public static String btoa(String input) {
@@ -850,7 +862,7 @@ public class TbUtils {
     }
 
     public static int parseBytesToInt(byte[] data, int offset) {
-        return parseBytesToInt(data, offset, BYTES_LEN_INT_MAX);
+        return parseBytesToInt(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
     }
 
     public static int parseBytesToInt(byte[] data, int offset, int length) {
@@ -1283,45 +1295,88 @@ public class TbUtils {
         return str;
     }
 
-    public static int[] parseByteToBinaryArray(byte byteValue) {
+    public static byte[] parseByteToBinaryArray(byte byteValue) {
         return parseByteToBinaryArray(byteValue, BIN_LEN_MAX);
     }
 
-    public static int[] parseByteToBinaryArray(byte byteValue, int binLength) {
-        int[] bins = new int[binLength];
+    /**
+     * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
+     * to ensure proper alignment (highest bit to low end).
+     */
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength) {
+        byte[] bins = new byte[binLength];
         for (int i = 0; i < binLength; i++) {
-            bins[i] = (byteValue & (1 << i)) >> i;
+            bins[binLength - 1 - i] = (byte) ((byteValue >> i) & 1);
         }
         return bins;
     }
 
-    public static int[] parseBytesToBinaryArray(List listValue) {
+    public static byte[] parseBytesToBinaryArray(List listValue) {
         return parseBytesToBinaryArray(listValue, listValue.size() * BIN_LEN_MAX);
     }
 
-    public static int[] parseBytesToBinaryArray(List listValue, int binLength) {
+    public static byte[] parseBytesToBinaryArray(List listValue, int binLength) {
         return parseBytesToBinaryArray(Bytes.toArray(listValue), binLength);
     }
 
-    public static int[] parseBytesToBinaryArray(byte[] bytesValue) {
+    public static byte[] parseBytesToBinaryArray(byte[] bytesValue) {
         return parseLongToBinaryArray(parseBytesToLong(bytesValue), bytesValue.length * BIN_LEN_MAX);
     }
 
-    public static int[] parseBytesToBinaryArray(byte[] bytesValue, int binLength) {
+    public static byte[] parseBytesToBinaryArray(byte[] bytesValue, int binLength) {
         return parseLongToBinaryArray(parseBytesToLong(bytesValue), binLength);
     }
 
-    public static int[] parseLongToBinaryArray(long longValue) {
+    public static byte[] parseLongToBinaryArray(long longValue) {
         return parseLongToBinaryArray(longValue, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
     }
 
-    public static int[] parseLongToBinaryArray(long longValue, int binsLength) {
+    /**
+     * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
+     * to ensure proper alignment (highest bit to low end).
+     */
+    public static byte[] parseLongToBinaryArray(long longValue, int binsLength) {
         int len = Math.min(binsLength, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
-        int[] bins = new int[len];
+        byte[] bins = new byte[len];
         for (int i = 0; i < len; i++) {
-            bins[i] = (int) ((longValue & (1 << i)) >> i);
+            bins[len - 1 - i] = (byte) ((longValue >> i) & 1);
         }
         return bins;
+    }
+
+    public static int parseBinaryArrayToInt(List listValue) {
+        return parseBinaryArrayToInt(listValue, 0);
+    }
+
+    public static int parseBinaryArrayToInt(List listValue, int offset) {
+        return parseBinaryArrayToInt(listValue, offset, listValue.size());
+    }
+
+    public static int parseBinaryArrayToInt(List listValue, int offset, int length) {
+        return parseBinaryArrayToInt(Bytes.toArray(listValue), offset, length);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue) {
+        return parseBinaryArrayToInt(bytesValue, 0);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue, int offset) {
+        return parseBinaryArrayToInt(bytesValue, offset, bytesValue.length);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue, int offset, int length) {
+        int result = 0;
+        int len = Math.min(length + offset, bytesValue.length);
+        for (int i = offset; i < len; i++) {
+            result = (result << 1) | (bytesValue[i] & 1);
+        }
+
+        // For the one byte (8 bit) only If the most significant bit (sign) is set, we convert the result into a negative number
+        if ((bytesValue.length == BIN_LEN_MAX)
+                && offset == 0 && bytesValue[0] == 1) {
+            result -= (1 << (len - offset));
+        }
+        return result;
     }
 
     private static byte isValidIntegerToByte(Integer val) {

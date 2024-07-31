@@ -944,20 +944,19 @@ public class TbUtilsTest {
         Assertions.assertEquals(expected, TbUtils.padEnd(last4Digits, fullNumber.length(), '*'));
     }
 
-
     @Test
     public void parseByteToBinaryArray_Test() {
         byte byteVal = 0x39;
-        int[] bitArray = {1, 0, 0, 1, 1, 1, 0, 0};
-        List expected = Arrays.stream(bitArray).boxed().toList();
-        int[] actualArray = TbUtils.parseByteToBinaryArray(byteVal);
-        List<Integer> actual = Arrays.stream(actualArray).boxed().toList();
+        byte[] bitArray = {0, 0, 1, 1, 1, 0, 0, 1};
+        List expected = toList(bitArray);
+        byte[] actualArray = TbUtils.parseByteToBinaryArray(byteVal);
+        List actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
-        bitArray = new int[]{1, 0, 0, 1, 1, 1};
-        expected = Arrays.stream(bitArray).boxed().toList();
+        bitArray = new byte[]{1, 1, 1, 0, 0, 1};
+        expected = toList(bitArray);
         actualArray = TbUtils.parseByteToBinaryArray(byteVal, bitArray.length);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
     }
 
@@ -966,47 +965,78 @@ public class TbUtilsTest {
         long longValue = 57L;
         byte[] bytesValue = new byte[]{0x39};   // 57
         List<Byte> listValue = toList(bytesValue);
-        int[] bitArray = {1, 0, 0, 1, 1, 1, 0, 0};
-        List expected = Arrays.stream(bitArray).boxed().toList();
-        int[] actualArray = TbUtils.parseBytesToBinaryArray(listValue);
-        List<Integer> actual = Arrays.stream(actualArray).boxed().toList();
+        byte[] bitArray = {0, 0, 1, 1, 1, 0, 0, 1};
+        List expected = toList(bitArray);
+        byte[] actualArray = TbUtils.parseBytesToBinaryArray(listValue);
+        List actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
         actualArray = TbUtils.parseLongToBinaryArray(longValue, listValue.size() * 8);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
-        bitArray = new int[]{1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        expected = Arrays.stream(bitArray).boxed().toList();
+        bitArray = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 1, 0, 0, 1};
+        expected = toList(bitArray);
         actualArray = TbUtils.parseLongToBinaryArray(longValue);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
         longValue = 52914L;
         bytesValue = new byte[]{(byte) 0xCE, (byte) 0xB2};   // 52914
         listValue = toList(bytesValue);
-        bitArray = new int[]{0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1};
-        expected = Arrays.stream(bitArray).boxed().toList();
+        bitArray = new byte[]{1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0};
+        expected = toList(bitArray);
         actualArray = TbUtils.parseBytesToBinaryArray(listValue);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
         actualArray = TbUtils.parseLongToBinaryArray(longValue, listValue.size() * 8);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
-        bitArray = new int[]{0, 1, 0, 0};
-        expected = Arrays.stream(bitArray).boxed().toList();
+        bitArray = new byte[]{0, 0, 1, 0};
+        expected = toList(bitArray);
         actualArray = TbUtils.parseLongToBinaryArray(longValue, 4);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
 
-        bitArray = new int[]{0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
-        expected = Arrays.stream(bitArray).boxed().toList();
+        bitArray = new byte[]{0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 1, 0, 0, 1, 1, 1, 0, 1, 0, 1, 1, 0, 0, 1, 0};
+        expected = toList(bitArray);
         actualArray = TbUtils.parseLongToBinaryArray(longValue);
-        actual = Arrays.stream(actualArray).boxed().toList();
+        actual = toList(actualArray);
         Assertions.assertEquals(expected, actual);
+    }
 
+    @Test
+    public void parseBinaryArrayToInt_Test() {
+        byte byteVal = (byte) 0x9F;
+        int expectedVolt = 31;
+        byte[] actualArray = TbUtils.parseByteToBinaryArray(byteVal);
+        int actual = TbUtils.parseBinaryArrayToInt(actualArray);
+        Assertions.assertEquals(byteVal, actual);
+        int actualVolt = TbUtils.parseBinaryArrayToInt(actualArray, 1, 7);
+        Assertions.assertEquals(expectedVolt, actualVolt);
+        boolean expectedLowVoltage = true;
+        boolean actualLowVoltage = actualArray[7] == 1;
+        Assertions.assertEquals(expectedLowVoltage, actualLowVoltage);
+        int expectedLowCurrent1Alarm = 1;  //  0x39 = 00 11 10 01 (Bin0): 0 == 1
+        int expectedHighCurrent1Alarm = 0;  //  0x39 = 00 11 10 01 (Bin1): 0 == 0
+        int expectedLowCurrent2Alarm = 0;  //  0x39 = 00 11 10 01 (Bin2): 0 == 0
+        int expectedHighCurrent2Alarm = 1; //  0x39 = 00 11 10 01 (Bin3): 0 == 1
+        int expectedLowCurrent3Alarm = 1;  //  0x39 = 00 11 10 01 (Bin4): 0 == 1
+        int expectedHighCurrent3Alarm = 1;  //  0x39 = 00 11 10 01 (Bin5): 0 == 1
+        int actualLowCurrent1Alarm = actualArray[0];
+        int actualHighCurrent1Alarm = actualArray[1];
+        int actualLowCurrent2Alarm = actualArray[2];
+        int actualHighCurrent2Alarm = actualArray[3];
+        int actualLowCurrent3Alarm = actualArray[4];
+        int actualHighCurrent3Alarm = actualArray[5];
+        Assertions.assertEquals(expectedLowCurrent1Alarm, actualLowCurrent1Alarm);
+        Assertions.assertEquals(expectedHighCurrent1Alarm, actualHighCurrent1Alarm);
+        Assertions.assertEquals(expectedLowCurrent2Alarm, actualLowCurrent2Alarm);
+        Assertions.assertEquals(expectedHighCurrent2Alarm, actualHighCurrent2Alarm);
+        Assertions.assertEquals(expectedLowCurrent3Alarm, actualLowCurrent3Alarm);
+        Assertions.assertEquals(expectedHighCurrent3Alarm, actualHighCurrent3Alarm);
     }
 
     private static List<Byte> toList(byte[] data) {
