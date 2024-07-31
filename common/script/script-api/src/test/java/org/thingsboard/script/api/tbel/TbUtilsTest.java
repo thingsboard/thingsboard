@@ -226,11 +226,11 @@ public class TbUtilsTest {
 
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("0xFG"));
 
-        Assertions.assertEquals(java.util.Optional.of(102).get(), TbUtils.parseInt("1100110", 2));
-        Assertions.assertEquals(java.util.Optional.of(-102).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111111111110011010", 2));
-        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("1100210", 2));
-        Assertions.assertEquals(java.util.Optional.of(13158).get(), TbUtils.parseInt("11001101100110", 2));
-        Assertions.assertEquals(java.util.Optional.of(-13158).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111100110010011010", 2));
+        Assertions.assertEquals(java.util.Optional.of(102).get(), TbUtils.parseInt("1100110", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(-102).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111111111110011010", MIN_RADIX));
+        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("1100210", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(13158).get(), TbUtils.parseInt("11001101100110", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(-13158).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111100110010011010", MIN_RADIX));
 
 
         Assertions.assertEquals(java.util.Optional.of(63).get(), TbUtils.parseInt("77", 8));
@@ -397,9 +397,9 @@ public class TbUtilsTest {
         Assertions.assertEquals(java.util.Optional.of(4294967295L).get(), TbUtils.parseLong("FFFFFFFF"));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("0xFGFFFFFF"));
 
-        Assertions.assertEquals(java.util.Optional.of(13158L).get(), TbUtils.parseLong("11001101100110", 2));
-        Assertions.assertEquals(java.util.Optional.of(-13158L).get(), TbUtils.parseLong("1111111111111111111111111111111111111111111111111100110010011010", 2));
-        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("11001101100210", 2));
+        Assertions.assertEquals(java.util.Optional.of(13158L).get(), TbUtils.parseLong("11001101100110", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(-13158L).get(), TbUtils.parseLong("1111111111111111111111111111111111111111111111111100110010011010", MIN_RADIX));
+        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("11001101100210", MIN_RADIX));
 
         Assertions.assertEquals(java.util.Optional.of(9223372036854775807L).get(), TbUtils.parseLong("777777777777777777777", 8));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("1787", 8));
@@ -720,9 +720,13 @@ public class TbUtilsTest {
 
     @Test
     public void numberToString_Test() {
-        Assertions.assertEquals("11001101100110", TbUtils.intLongToString(13158L, 2));
-        Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToString(-102L, 2));
-        Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToString(-13158L, 2));
+        Assertions.assertEquals("00111010", TbUtils.intLongToString(58L, MIN_RADIX));
+        Assertions.assertEquals("0000000010011110", TbUtils.intLongToString(158L, MIN_RADIX));
+        Assertions.assertEquals("00000000000000100000001000000001", TbUtils.intLongToString(131585L, MIN_RADIX));
+        Assertions.assertEquals("0111111111111111111111111111111111111111111111111111111111111111", TbUtils.intLongToString(Long.MAX_VALUE, MIN_RADIX));
+        Assertions.assertEquals("1000000000000000000000000000000000000000000000000000000000000001", TbUtils.intLongToString(-Long.MAX_VALUE, MIN_RADIX));
+        Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToString(-102L, MIN_RADIX));
+        Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToString(-13158L, MIN_RADIX));
         Assertions.assertEquals("777777777777777777777", TbUtils.intLongToString(Long.MAX_VALUE, 8));
         Assertions.assertEquals("1000000000000000000000", TbUtils.intLongToString(Long.MIN_VALUE, 8));
         Assertions.assertEquals("9223372036854775807", TbUtils.intLongToString(Long.MAX_VALUE));

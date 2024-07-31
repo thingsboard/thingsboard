@@ -715,7 +715,7 @@ public class TbUtils {
             return Long.toString(number, radix);
         }
         return switch (radix) {
-            case MIN_RADIX -> Long.toBinaryString(number);
+            case MIN_RADIX -> formatBinary(Long.toBinaryString(number));
             case OCTAL_RADIX -> Long.toOctalString(number);
             case DEC_RADIX -> Long.toString(number);
             case HEX_RADIX -> prepareNumberHexString(number, bigEndian, pref, -1, -1);
@@ -1307,6 +1307,14 @@ public class TbUtils {
 
     private static int validateLength(int dataLength, int offset, int bytesLenMax) {
         return (dataLength < offset) ? dataLength : Math.min((dataLength - offset), bytesLenMax);
+    }
+
+    private static String formatBinary(String binaryString) {
+        int format = binaryString.length() < 8 ? 8 :
+                     binaryString.length() < 16 ? 16 :
+                     binaryString.length() < 32 ? 32 :
+                     binaryString.length() < 64 ? 64 : 0;
+        return format == 0 ? binaryString : String.format("%" + format + "s", binaryString).replace(' ', '0');
     }
 }
 
