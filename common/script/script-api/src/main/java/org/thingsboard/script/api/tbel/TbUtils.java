@@ -63,6 +63,7 @@ public class TbUtils {
     private static final int HEX_LEN_LONG_MAX = 16;
     private static final int BYTES_LEN_INT_MAX = 4;
     private static final int BYTES_LEN_LONG_MAX = 8;
+    private static final int BIN_LEN_MAX = 8;
 
     private static final LinkedHashMap<String, String> mdnEncodingReplacements = new LinkedHashMap<>();
 
@@ -330,6 +331,24 @@ public class TbUtils {
                 String.class, int.class, char.class)));
         parserConfig.addImport("padEnd", new MethodStub(TbUtils.class.getMethod("padEnd",
                 String.class, int.class, char.class)));
+        parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class)));
+        parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class, int.class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                List.class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseLongToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseLongToBinaryArray",
+                long.class)));
+        parserConfig.addImport("parseLongToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseLongToBinaryArray",
+                long.class, int.class)));
     }
 
     public static String btoa(String input) {
@@ -871,7 +890,7 @@ public class TbUtils {
     }
 
     public static long parseBytesToLong(byte[] data, int offset) {
-        return parseBytesToLong(data, offset, BYTES_LEN_LONG_MAX);
+        return parseBytesToLong(data, offset, validateLength(data.length, offset, BYTES_LEN_LONG_MAX));
     }
 
     public static long parseBytesToLong(byte[] data, int offset, int length) {
@@ -1264,6 +1283,47 @@ public class TbUtils {
         return str;
     }
 
+    public static int[] parseByteToBinaryArray(byte byteValue) {
+        return parseByteToBinaryArray(byteValue, BIN_LEN_MAX);
+    }
+
+    public static int[] parseByteToBinaryArray(byte byteValue, int binLength) {
+        int[] bins = new int[binLength];
+        for (int i = 0; i < binLength; i++) {
+            bins[i] = (byteValue & (1 << i)) >> i;
+        }
+        return bins;
+    }
+
+    public static int[] parseBytesToBinaryArray(List listValue) {
+        return parseBytesToBinaryArray(listValue, listValue.size() * BIN_LEN_MAX);
+    }
+
+    public static int[] parseBytesToBinaryArray(List listValue, int binLength) {
+        return parseBytesToBinaryArray(Bytes.toArray(listValue), binLength);
+    }
+
+    public static int[] parseBytesToBinaryArray(byte[] bytesValue) {
+        return parseLongToBinaryArray(parseBytesToLong(bytesValue), bytesValue.length * BIN_LEN_MAX);
+    }
+
+    public static int[] parseBytesToBinaryArray(byte[] bytesValue, int binLength) {
+        return parseLongToBinaryArray(parseBytesToLong(bytesValue), binLength);
+    }
+
+    public static int[] parseLongToBinaryArray(long longValue) {
+        return parseLongToBinaryArray(longValue, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
+    }
+
+    public static int[] parseLongToBinaryArray(long longValue, int binsLength) {
+        int len = Math.min(binsLength, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
+        int[] bins = new int[len];
+        for (int i = 0; i < len; i++) {
+            bins[i] = (int) ((longValue & (1 << i)) >> i);
+        }
+        return bins;
+    }
+
     private static byte isValidIntegerToByte(Integer val) {
         if (val > 255 || val < -128) {
             throw new NumberFormatException("The value '" + val + "' could not be correctly converted to a byte. " +
@@ -1311,9 +1371,9 @@ public class TbUtils {
 
     private static String formatBinary(String binaryString) {
         int format = binaryString.length() < 8 ? 8 :
-                     binaryString.length() < 16 ? 16 :
-                     binaryString.length() < 32 ? 32 :
-                     binaryString.length() < 64 ? 64 : 0;
+                binaryString.length() < 16 ? 16 :
+                        binaryString.length() < 32 ? 32 :
+                                binaryString.length() < 64 ? 64 : 0;
         return format == 0 ? binaryString : String.format("%" + format + "s", binaryString).replace(' ', '0');
     }
 }
