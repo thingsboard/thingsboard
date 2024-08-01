@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.device;
 
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
@@ -564,6 +565,11 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         device.setName(provisionRequest.getDeviceName());
         device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
+        ObjectNode additionalInfoNode = JacksonUtil.newObjectNode();
+        if (provisionRequest.getGateway()) {
+            additionalInfoNode.put("gateway", true);
+        }
+        device.setAdditionalInfo(additionalInfoNode);
         Device savedDevice = saveDevice(device);
         if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getX509CertHash()) ||
