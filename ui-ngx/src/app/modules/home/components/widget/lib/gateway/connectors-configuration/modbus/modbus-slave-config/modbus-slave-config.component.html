@@ -16,6 +16,16 @@
 
 -->
 <div [formGroup]="slaveConfigFormGroup" class="slave-container">
+  <div class="tb-form-panel no-border no-padding padding-top">
+    <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
+    <div class="tb-form-row" fxLayoutAlign="space-between center">
+      <mat-slide-toggle class="mat-slide" [formControl]="enableSlaveControl">
+        <mat-label>
+          {{ 'gateway.enable' | translate }}
+        </mat-label>
+      </mat-slide-toggle>
+    </div>
+  </div>
   <div class="slave-content tb-form-panel no-border no-padding padding-top" >
     <div class="tb-flex row space-between align-center no-gap fill-width">
       <div class="fixed-title-width" translate>gateway.server-slave-config</div>

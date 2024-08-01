@@ -77,6 +77,7 @@ import { isEqual } from '@core/utils';
 export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   slaveConfigFormGroup: UntypedFormGroup;
+  enableSlaveControl: FormControl<boolean>;
   showSecurityControl: FormControl<boolean>;
   ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
   ModbusMethodLabelsMap = ModbusMethodLabelsMap;
@@ -89,7 +90,6 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   readonly ModbusProtocolType = ModbusProtocolType;
   readonly modbusBaudrates = ModbusBaudrates;
 
-  private isSlaveEnabled = false;
   private readonly serialSpecificControlKeys = ['serialPort', 'baudrate'];
   private readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host'];
 
@@ -100,6 +100,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
 
   constructor(private fb: FormBuilder) {
     this.showSecurityControl = this.fb.control(false);
+    this.enableSlaveControl = this.fb.control(false);
     this.slaveConfigFormGroup = this.fb.group({
       type: [ModbusProtocolType.TCP],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -127,6 +128,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     this.observeValueChanges();
     this.observeTypeChange();
     this.observeShowSecurity();
+    this.observeFormEnable();
   }
 
   get protocolType(): ModbusProtocolType {
@@ -153,13 +155,9 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   }
 
   writeValue(slaveConfig: ModbusSlave): void {
+    this.enableSlaveControl.patchValue(!!slaveConfig && !isEqual(slaveConfig, {}));
     this.showSecurityControl.patchValue(!!slaveConfig.security && !isEqual(slaveConfig.security, {}));
     this.updateSlaveConfig(slaveConfig);
-  }
-
-  setDisabledState(isDisabled: boolean): void {
-    this.isSlaveEnabled = !isDisabled;
-    this.updateFormEnableState();
   }
 
   private observeValueChanges(): void {
@@ -175,11 +173,20 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     });
   }
 
+  private observeFormEnable(): void {
+    this.enableSlaveControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(value => {
+        this.updateFormEnableState(value);
+        this.slaveConfigFormGroup.updateValueAndValidity({emitEvent: !!this.onChange});
+      });
+  }
+
   private observeTypeChange(): void {
     this.slaveConfigFormGroup.get('type').valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(type => {
-        this.updateFormEnableState();
+        this.updateFormEnableState(this.enableSlaveControl.value);
         this.updateMethodType(type);
       });
   }
@@ -195,8 +202,8 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     }
   }
 
-  private updateFormEnableState(): void {
-    if (this.isSlaveEnabled) {
+  private updateFormEnableState(enabled: boolean): void {
+    if (enabled) {
       this.slaveConfigFormGroup.enable({emitEvent: false});
       this.showSecurityControl.enable({emitEvent: false});
     } else {
@@ -214,7 +221,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
   }
 
   private updateSecurityEnable(securityEnabled: boolean): void {
-    if (securityEnabled && this.isSlaveEnabled && this.protocolType !== ModbusProtocolType.Serial) {
+    if (securityEnabled && this.enableSlaveControl.value && this.protocolType !== ModbusProtocolType.Serial) {
       this.slaveConfigFormGroup.get('security').enable({emitEvent: false});
     } else {
       this.slaveConfigFormGroup.get('security').disable({emitEvent: false});
@@ -226,7 +233,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     const enableKeys = isSerial ? this.serialSpecificControlKeys : this.tcpUdpSpecificControlKeys;
     const disableKeys = isSerial ? this.tcpUdpSpecificControlKeys : this.serialSpecificControlKeys;
 
-    if (this.isSlaveEnabled) {
+    if (this.enableSlaveControl.value) {
       enableKeys.forEach(key => this.slaveConfigFormGroup.get(key)?.enable({ emitEvent: false }));
     }
 
