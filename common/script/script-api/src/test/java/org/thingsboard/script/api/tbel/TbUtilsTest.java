@@ -226,11 +226,11 @@ public class TbUtilsTest {
 
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("0xFG"));
 
-        Assertions.assertEquals(java.util.Optional.of(102).get(), TbUtils.parseInt("1100110", 2));
-        Assertions.assertEquals(java.util.Optional.of(-102).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111111111110011010", 2));
-        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("1100210", 2));
-        Assertions.assertEquals(java.util.Optional.of(13158).get(), TbUtils.parseInt("11001101100110", 2));
-        Assertions.assertEquals(java.util.Optional.of(-13158).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111100110010011010", 2));
+        Assertions.assertEquals(java.util.Optional.of(102).get(), TbUtils.parseInt("1100110", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(-102).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111111111110011010", MIN_RADIX));
+        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseInt("1100210", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(13158).get(), TbUtils.parseInt("11001101100110", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(-13158).get(), TbUtils.parseInt("1111111111111111111111111111111111111111111111111100110010011010", MIN_RADIX));
 
 
         Assertions.assertEquals(java.util.Optional.of(63).get(), TbUtils.parseInt("77", 8));
@@ -397,9 +397,9 @@ public class TbUtilsTest {
         Assertions.assertEquals(java.util.Optional.of(4294967295L).get(), TbUtils.parseLong("FFFFFFFF"));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("0xFGFFFFFF"));
 
-        Assertions.assertEquals(java.util.Optional.of(13158L).get(), TbUtils.parseLong("11001101100110", 2));
-        Assertions.assertEquals(java.util.Optional.of(-13158L).get(), TbUtils.parseLong("1111111111111111111111111111111111111111111111111100110010011010", 2));
-        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("11001101100210", 2));
+        Assertions.assertEquals(java.util.Optional.of(13158L).get(), TbUtils.parseLong("11001101100110", MIN_RADIX));
+        Assertions.assertEquals(java.util.Optional.of(-13158L).get(), TbUtils.parseLong("1111111111111111111111111111111111111111111111111100110010011010", MIN_RADIX));
+        Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("11001101100210", MIN_RADIX));
 
         Assertions.assertEquals(java.util.Optional.of(9223372036854775807L).get(), TbUtils.parseLong("777777777777777777777", 8));
         Assertions.assertThrows(NumberFormatException.class, () -> TbUtils.parseLong("1787", 8));
@@ -720,9 +720,13 @@ public class TbUtilsTest {
 
     @Test
     public void numberToString_Test() {
-        Assertions.assertEquals("11001101100110", TbUtils.intLongToString(13158L, 2));
-        Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToString(-102L, 2));
-        Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToString(-13158L, 2));
+        Assertions.assertEquals("00111010", TbUtils.intLongToString(58L, MIN_RADIX));
+        Assertions.assertEquals("0000000010011110", TbUtils.intLongToString(158L, MIN_RADIX));
+        Assertions.assertEquals("00000000000000100000001000000001", TbUtils.intLongToString(131585L, MIN_RADIX));
+        Assertions.assertEquals("0111111111111111111111111111111111111111111111111111111111111111", TbUtils.intLongToString(Long.MAX_VALUE, MIN_RADIX));
+        Assertions.assertEquals("1000000000000000000000000000000000000000000000000000000000000001", TbUtils.intLongToString(-Long.MAX_VALUE, MIN_RADIX));
+        Assertions.assertEquals("1111111111111111111111111111111111111111111111111111111110011010", TbUtils.intLongToString(-102L, MIN_RADIX));
+        Assertions.assertEquals("1111111111111111111111111111111111111111111111111100110010011010", TbUtils.intLongToString(-13158L, MIN_RADIX));
         Assertions.assertEquals("777777777777777777777", TbUtils.intLongToString(Long.MAX_VALUE, 8));
         Assertions.assertEquals("1000000000000000000000", TbUtils.intLongToString(Long.MIN_VALUE, 8));
         Assertions.assertEquals("9223372036854775807", TbUtils.intLongToString(Long.MAX_VALUE));
@@ -770,15 +774,21 @@ public class TbUtilsTest {
         Assertions.assertEquals(toList(expected), actual);
         try {
             input = "0x01752B0367FA000500010488FFFFFFFFFFFFFFFF3";
-            actual = TbUtils.hexToBytes(ctx, input);
+            TbUtils.hexToBytes(ctx, input);
         } catch (IllegalArgumentException e) {
             Assertions.assertTrue(e.getMessage().contains("Hex string must be even-length."));
         }
         try {
             input = "0x01752B0367KA000500010488FFFFFFFFFFFFFFFF33";
-            actual = TbUtils.hexToBytes(ctx, input);
+            TbUtils.hexToBytes(ctx, input);
         } catch (NumberFormatException e) {
             Assertions.assertTrue(e.getMessage().contains("Value: \"" + input + "\" is not numeric or hexDecimal format!"));
+        }
+        try {
+            input = "";
+            TbUtils.hexToBytes(ctx, input);
+        } catch (IllegalArgumentException e) {
+            Assertions.assertTrue(e.getMessage().contains("Hex string must be not empty"));
         }
     }
 
@@ -898,6 +908,105 @@ public class TbUtilsTest {
     public void isHexadecimal_Test() {
         Assertions.assertEquals(16, TbUtils.isHexadecimal("F5D7039"));
         Assertions.assertEquals(-1, TbUtils.isHexadecimal("K100110"));
+    }
+
+    @Test
+    public void padStart_Test() {
+        String binaryString = "010011";
+        String expected = "00010011";
+        Assertions.assertEquals(expected, TbUtils.padStart(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "1001010011";
+        Assertions.assertEquals(expected, TbUtils.padStart(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "******1001010011";
+        Assertions.assertEquals(expected, TbUtils.padStart(binaryString, 16, '*'));
+        String fullNumber = "203439900FFCD5581";
+        String last4Digits = fullNumber.substring(11);
+        expected = "***********CD5581";
+        Assertions.assertEquals(expected, TbUtils.padStart(last4Digits, fullNumber.length(), '*'));
+    }
+
+    @Test
+    public void padEnd_Test() {
+        String binaryString = "010011";
+        String expected = "01001100";
+        Assertions.assertEquals(expected, TbUtils.padEnd(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "1001010011";
+        Assertions.assertEquals(expected, TbUtils.padEnd(binaryString, 8, '0'));
+        binaryString = "1001010011";
+        expected = "1001010011******";
+        Assertions.assertEquals(expected, TbUtils.padEnd(binaryString, 16, '*'));
+        String fullNumber = "203439900FFCD5581";
+        String last4Digits = fullNumber.substring(0, 11);
+        expected = "203439900FF******";
+        Assertions.assertEquals(expected, TbUtils.padEnd(last4Digits, fullNumber.length(), '*'));
+    }
+
+
+    @Test
+    public void parseByteToBinaryArray_Test() {
+        byte byteVal = 0x39;
+        int[] bitArray = {1, 0, 0, 1, 1, 1, 0, 0};
+        List expected = Arrays.stream(bitArray).boxed().toList();
+        int[] actualArray = TbUtils.parseByteToBinaryArray(byteVal);
+        List<Integer> actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        bitArray = new int[]{1, 0, 0, 1, 1, 1};
+        expected = Arrays.stream(bitArray).boxed().toList();
+        actualArray = TbUtils.parseByteToBinaryArray(byteVal, bitArray.length);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+    }
+
+    @Test
+    public void parseBytesToBinaryArray_Test() {
+        long longValue = 57L;
+        byte[] bytesValue = new byte[]{0x39};   // 57
+        List<Byte> listValue = toList(bytesValue);
+        int[] bitArray = {1, 0, 0, 1, 1, 1, 0, 0};
+        List expected = Arrays.stream(bitArray).boxed().toList();
+        int[] actualArray = TbUtils.parseBytesToBinaryArray(listValue);
+        List<Integer> actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        actualArray = TbUtils.parseLongToBinaryArray(longValue, listValue.size() * 8);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        bitArray = new int[]{1, 0, 0, 1, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        expected = Arrays.stream(bitArray).boxed().toList();
+        actualArray = TbUtils.parseLongToBinaryArray(longValue);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        longValue = 52914L;
+        bytesValue = new byte[]{(byte) 0xCE, (byte) 0xB2};   // 52914
+        listValue = toList(bytesValue);
+        bitArray = new int[]{0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1};
+        expected = Arrays.stream(bitArray).boxed().toList();
+        actualArray = TbUtils.parseBytesToBinaryArray(listValue);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        actualArray = TbUtils.parseLongToBinaryArray(longValue, listValue.size() * 8);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        bitArray = new int[]{0, 1, 0, 0};
+        expected = Arrays.stream(bitArray).boxed().toList();
+        actualArray = TbUtils.parseLongToBinaryArray(longValue, 4);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
+        bitArray = new int[]{0, 1, 0, 0, 1, 1, 0, 1, 0, 1, 1, 1, 0, 0, 1, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0};
+        expected = Arrays.stream(bitArray).boxed().toList();
+        actualArray = TbUtils.parseLongToBinaryArray(longValue);
+        actual = Arrays.stream(actualArray).boxed().toList();
+        Assertions.assertEquals(expected, actual);
+
     }
 
     private static List<Byte> toList(byte[] data) {
