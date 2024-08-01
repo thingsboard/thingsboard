@@ -127,8 +127,8 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
 
     this.observeValueChanges();
     this.observeTypeChange();
-    this.observeFormEnable();
     this.observeShowSecurity();
+    this.observeFormEnable();
   }
 
   get protocolType(): ModbusProtocolType {
@@ -173,21 +173,21 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
     });
   }
 
-  private observeTypeChange(): void {
-    this.slaveConfigFormGroup.get('type').valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(type => {
-        this.updateFormEnableState(this.enableSlaveControl.value);
-        this.updateMethodType(type);
-      });
-  }
-
   private observeFormEnable(): void {
     this.enableSlaveControl.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         this.updateFormEnableState(value);
         this.slaveConfigFormGroup.updateValueAndValidity({emitEvent: !!this.onChange});
+      });
+  }
+
+  private observeTypeChange(): void {
+    this.slaveConfigFormGroup.get('type').valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(type => {
+        this.updateFormEnableState(this.enableSlaveControl.value);
+        this.updateMethodType(type);
       });
   }
 
