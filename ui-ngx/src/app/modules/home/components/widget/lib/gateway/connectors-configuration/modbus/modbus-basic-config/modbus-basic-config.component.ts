@@ -22,6 +22,7 @@ import {
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
+  UntypedFormControl,
   ValidationErrors,
   Validator,
 } from '@angular/forms';
@@ -121,10 +122,15 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
     this.enableSlaveControl.setValue(!!basicConfig.slave && !isEqual(basicConfig.slave, {}));
   }
 
-  validate(): ValidationErrors | null {
-    return this.basicFormGroup.valid ? null : {
-      basicFormGroup: {valid: false}
-    };
+  validate(basicFormControl: UntypedFormControl): ValidationErrors | null {
+    const { master, slave } = basicFormControl.value;
+    const isEmpty = !master?.slaves?.length && (isEqual(slave, {}) || !slave);
+    if (!this.basicFormGroup.valid || isEmpty) {
+      return {
+        basicFormGroup: {valid: false}
+      };
+    }
+    return null;
   }
 
   private updateSlaveEnabling(isEnabled: boolean): void {
