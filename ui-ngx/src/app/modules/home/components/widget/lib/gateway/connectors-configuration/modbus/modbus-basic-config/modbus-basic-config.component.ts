@@ -95,7 +95,6 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
       .subscribe(enable => {
         this.updateSlaveEnabling(enable);
         this.basicFormGroup.get('slave').updateValueAndValidity({emitEvent: !!this.onChange});
-        this.basicFormGroup.get('master').updateValueAndValidity({emitEvent: !!this.onChange});
       });
   }
 
