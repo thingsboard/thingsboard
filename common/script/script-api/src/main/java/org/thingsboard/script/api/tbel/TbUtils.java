@@ -17,7 +17,6 @@ package org.thingsboard.script.api.tbel;
 
 import com.google.common.primitives.Bytes;
 import lombok.extern.slf4j.Slf4j;
-import lombok.val;
 import org.apache.commons.lang3.ArrayUtils;
 import org.mvel2.ExecutionContext;
 import org.mvel2.ParserConfiguration;
@@ -294,6 +293,8 @@ public class TbUtils {
                 ExecutionContext.class, List.class)));
         parserConfig.addImport("base64ToHex", new MethodStub(TbUtils.class.getMethod("base64ToHex",
                 String.class)));
+        parserConfig.addImport("hexToBase64", new MethodStub(TbUtils.class.getMethod("hexToBase64",
+                String.class)));
         parserConfig.addImport("base64ToBytes", new MethodStub(TbUtils.class.getMethod("base64ToBytes",
                 String.class)));
         parserConfig.addImport("bytesToBase64", new MethodStub(TbUtils.class.getMethod("bytesToBase64",
@@ -326,7 +327,7 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("isHexadecimal", new MethodStub(TbUtils.class.getMethod("isHexadecimal",
                 String.class)));
-        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("byteArrayToExecutionArrayList",
+        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("bytesToExecutionArrayList",
                 ExecutionContext.class, byte[].class)));
         parserConfig.addImport("padStart", new MethodStub(TbUtils.class.getMethod("padStart",
                 String.class, int.class, char.class)));
@@ -678,16 +679,8 @@ public class TbUtils {
             throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
         }
 
-        ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
-        for (int i = 0; i < hex.length(); i += 2) {
-            // Extract two characters from the hex string
-            String byteString = hex.substring(i, i + 2);
-            // Parse the hex string to a byte
-            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
-            // Add the byte to the ArrayList
-            data.add(byteValue);
-        }
-        return data;
+        byte [] data = hexToBytes(hex);
+        return bytesToExecutionArrayList(ctx, data);
     }
 
     public static List<Integer> printUnsignedBytes(ExecutionContext ctx, List<Byte> byteArray) {
@@ -834,6 +827,10 @@ public class TbUtils {
 
     public static String base64ToHex(String base64) {
         return bytesToHex(Base64.getDecoder().decode(base64));
+    }
+
+    public static String hexToBase64(String hex) {
+        return bytesToBase64(hexToBytes(hex));
     }
 
     public static String bytesToBase64(byte[] bytes) {
@@ -1275,12 +1272,12 @@ public class TbUtils {
         return str.matches("^-?(0[xX])?[0-9a-fA-F]+$") ? HEX_RADIX : -1;
     }
 
-    public static List byteArrayToExecutionArrayList(ExecutionContext ctx, byte[] byteArray) {
+    public static ExecutionArrayList<Byte> bytesToExecutionArrayList(ExecutionContext ctx, byte[] byteArray) {
         List<Byte> byteList = new ArrayList<>();
         for (byte b : byteArray) {
             byteList.add(b);
         }
-        List list = new ExecutionArrayList(byteList, ctx);
+        ExecutionArrayList<Byte> list = new ExecutionArrayList(byteList, ctx);
         return list;
     }
 
@@ -1442,6 +1439,19 @@ public class TbUtils {
                         binaryString.length() < 32 ? 32 :
                                 binaryString.length() < 64 ? 64 : 0;
         return format == 0 ? binaryString : String.format("%" + format + "s", binaryString).replace(' ', '0');
+    }
+
+    private static byte[] hexToBytes(String hex) {
+        byte [] data = new byte[hex.length()/2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            // Extract two characters from the hex string
+            String byteString = hex.substring(i, i + 2);
+            // Parse the hex string to a byte
+            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
+            // Add the byte to the ArrayList
+            data[i/2] = byteValue;
+        }
+        return data;
     }
 }
 

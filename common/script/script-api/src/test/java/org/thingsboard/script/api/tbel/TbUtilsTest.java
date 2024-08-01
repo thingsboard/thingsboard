@@ -1060,6 +1060,14 @@ public class TbUtilsTest {
         Assertions.assertEquals(expectedMultiplier3, actualMultiplier3);
     }
 
+    @Test
+    public void hexToBase64_Test() {
+        String hex = "014A000A02202007060000014A019F03E800C81B5801014A029F030A0000000000014A032405DD05D41B5836014A049F39000000000000";
+        String expected = "AUoACgIgIAcGAAABSgGfA+gAyBtYAQFKAp8DCgAAAAAAAUoDJAXdBdQbWDYBSgSfOQAAAAAAAA==";
+        String actual = TbUtils.hexToBase64(hex);
+        Assertions.assertEquals(expected, actual);
+    }
+
     private static List<Byte> toList(byte[] data) {
         List<Byte> result = new ArrayList<>(data.length);
         for (Byte b : data) {
