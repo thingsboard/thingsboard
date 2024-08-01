@@ -84,10 +84,8 @@ public class ThingsboardSecurityConfiguration {
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     public static final String DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT = "/api/device-connectivity/mqtts/certificate/download";
 
-    @Value("${server.http.max_payload_size:16777216}")
-    private int maxPayloadSize;
-    @Value("${transport.http.max_payload_size:65536}")
-    private int httpTransportMaxPayloadSize;
+    @Value("${server.http.max_payload_size:/api/image*/**=52428800;/api/**=16777216}")
+    private String maxPayloadSizeConfig;
 
     @Autowired
     private ThingsboardErrorResponseHandler restAccessDeniedHandler;
@@ -132,13 +130,8 @@ public class ThingsboardSecurityConfiguration {
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
     @Bean
-    protected RequestSizeFilter httpTransportRequestSizeFilter() {
-        return new RequestSizeFilter(httpTransportMaxPayloadSize);
-    }
-
-    @Bean
     protected RequestSizeFilter requestSizeFilter() {
-        return new RequestSizeFilter(maxPayloadSize);
+        return new RequestSizeFilter(maxPayloadSizeConfig);
     }
 
     @Bean
@@ -217,20 +210,6 @@ public class ThingsboardSecurityConfiguration {
     }
 
     @Bean
-    @Order(1)
-    SecurityFilterChain httpTransportFilterChain(HttpSecurity http) throws Exception {
-        http
-                .securityMatchers(matchers -> matchers.requestMatchers(DEVICE_API_ENTRY_POINT))
-                .cors(cors -> {})
-                .csrf(AbstractHttpConfigurer::disable)
-                .authorizeHttpRequests(config -> config
-                        .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll())
-                .addFilterBefore(httpTransportRequestSizeFilter(), UsernamePasswordAuthenticationFilter.class);
-        return http.build();
-    }
-
-    @Bean
-    @Order(2)
     SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http.headers(headers -> headers
                         .cacheControl(config -> {})

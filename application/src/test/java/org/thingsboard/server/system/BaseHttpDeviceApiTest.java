@@ -42,7 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
-        "transport.http.max_payload_size=10000"
+        "transport.http.max_payload_size=/api/v1/*/attributes=20000;/api/v1/**=10000"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
@@ -80,13 +80,13 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
     @Test
     public void testReplyToCommandWithLargeResponse() throws Exception {
         String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
-                JacksonUtil.toString(createRpcResponsePayload(10001)),
+                JacksonUtil.toString(createJsonPayloadOfSize(10001)),
                 String.class,
                 status().isPayloadTooLarge());
         assertThat(errorResponse).contains("Payload size exceeds the limit");
 
         doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
-                JacksonUtil.toString(createRpcResponsePayload(10000)),
+                JacksonUtil.toString(createJsonPayloadOfSize(10000)),
                 String.class,
                 status().isOk());
     }
@@ -105,7 +105,21 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 status().isOk());
     }
 
-    private String createRpcResponsePayload(int size) {
+    @Test
+    public void testPostLargeAttribute() throws Exception {
+        String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes",
+                JacksonUtil.toString(createJsonPayloadOfSize(20001)),
+                String.class,
+                status().isPayloadTooLarge());
+        assertThat(errorResponse).contains("Payload size exceeds the limit");
+
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes",
+                JacksonUtil.toString(createJsonPayloadOfSize(20000)),
+                String.class,
+                status().isOk());
+    }
+
+    private String createJsonPayloadOfSize(int size) {
         String value = "a".repeat(size - 19);
         return "{\"result\":\"" + value + "\"}";
     }

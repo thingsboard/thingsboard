@@ -22,28 +22,56 @@ import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
+import org.springframework.util.AntPathMatcher;
 import org.springframework.web.filter.OncePerRequestFilter;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 
 import java.io.IOException;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
 public class RequestSizeFilter extends OncePerRequestFilter {
 
-    private final int maxPayloadSize;
+    private final Map<String, Long> limits = new LinkedHashMap<>();
+    private final AntPathMatcher pathMatcher = new AntPathMatcher();
+
+    public RequestSizeFilter(String limitsConfiguration) {
+        for (String limit : limitsConfiguration.split(";")) {
+            try {
+                String urlPathPattern = limit.split("=")[0];
+                long maxPayloadSize = Long.parseLong(limit.split("=")[1]);
+                limits.put(urlPathPattern, maxPayloadSize);
+            } catch (Exception e) {
+                throw new IllegalArgumentException("Failed to parse size limits configuration: " + limitsConfiguration);
+            }
+        }
+    }
 
     @Override
     public void doFilterInternal(HttpServletRequest request, HttpServletResponse response, FilterChain chain) throws IOException, ServletException {
+        for (String url : limits.keySet()) {
+            if (pathMatcher.match(url, request.getRequestURI())) {
+                if (checkMaxPayloadSizeExceeded(request, response, limits.get(url))) {
+                    return;
+                }
+                break;
+            }
+        }
+        chain.doFilter(request, response);
+    }
+
+    private boolean checkMaxPayloadSizeExceeded(HttpServletRequest request, HttpServletResponse response, long maxPayloadSize) throws IOException {
         if (request.getContentLength() > maxPayloadSize) {
             if (log.isDebugEnabled()) {
                 log.debug("Too large payload size. Url: {}, client ip: {}, content length: {}", request.getRequestURL(), request.getRemoteAddr(), request.getContentLength());
             }
             handleMaxPayloadSizeExceededException(response, new MaxPayloadSizeExceededException(maxPayloadSize));
-            return;
+            return true;
         }
-        chain.doFilter(request, response);
+        return false;
     }
 
     @Override

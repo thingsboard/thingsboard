@@ -20,9 +20,9 @@ import lombok.Getter;
 public class MaxPayloadSizeExceededException extends RuntimeException {
 
     @Getter
-    private final int limit;
+    private final long limit;
 
-    public MaxPayloadSizeExceededException(int limit) {
+    public MaxPayloadSizeExceededException(long limit) {
         super("Payload size exceeds the limit " + limit);
         this.limit = limit;
     }

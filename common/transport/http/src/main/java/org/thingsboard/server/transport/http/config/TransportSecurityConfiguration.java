@@ -27,27 +27,29 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
 @Order(SecurityProperties.BASIC_AUTH_ORDER)
-@ConditionalOnExpression("('${service.type:null}'=='tb-transport')")
+@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
 public class TransportSecurityConfiguration {
     public static final String DEVICE_API_ENTRY_POINT = "/api/v1/**";
 
-    @Value("${transport.http.max_payload_size:65536}")
-    private int maxPayloadSize;
+    @Value("${transport.http.max_payload_size:/api/v1/*/attributes=52428800;/api/v1/**=65536}")
+    private String maxPayloadSizeConfig;
 
     @Bean
     protected RequestSizeFilter httpTransportRequestSizeFilter() {
-        return new RequestSizeFilter(maxPayloadSize);
+        return new RequestSizeFilter(maxPayloadSizeConfig);
     }
 
     @Bean
+    @Order(1)
     SecurityFilterChain httpTransportFilterChain(HttpSecurity http) throws Exception {
         http
-                .securityMatchers(matchers -> matchers.requestMatchers(DEVICE_API_ENTRY_POINT))
+                .securityMatcher(AntPathRequestMatcher.antMatcher(DEVICE_API_ENTRY_POINT))
                 .cors(cors -> {
                 })
                 .csrf(AbstractHttpConfigurer::disable)

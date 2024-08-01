@@ -52,8 +52,8 @@ server:
         key_password: "${SSL_KEY_PASSWORD:thingsboard}"
   # HTTP settings
   http:
-    # Maximum request size
-    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE:16777216}" # max payload size in bytes
+    # Semi-colon-separated list of urlPattern=maxPayloadSize pairs that define max http request size for specified url pattern.
+    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/image*/**=52428800;/api/**=16777216}"
   # HTTP/2 support (takes effect only if server SSL is enabled)
   http2:
     # Enable/disable HTTP/2 support
@@ -963,8 +963,8 @@ transport:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
     # HTTP maximum request processing timeout in milliseconds
     max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
-    # HTTP maximum request size
-    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE:65536}" # max payload size in bytes
+    # Semi-colon-separated list of urlPattern=maxPayloadSize pairs that define max http request size for specified url pattern.
+    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/v1/*/attributes=52428800;/api/v1/**=65536}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.
