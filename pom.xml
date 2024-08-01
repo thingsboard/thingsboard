@@ -2092,10 +2092,6 @@
                         <groupId>io.jsonwebtoken</groupId>
                         <artifactId>jjwt-impl</artifactId>
                     </exclusion>
-                    <exclusion>
-                        <groupId>com.fasterxml.jackson.dataformat</groupId>
-                        <artifactId>jackson-dataformat-xml</artifactId>
-                    </exclusion>
                 </exclusions>
             </dependency>
             <dependency>
