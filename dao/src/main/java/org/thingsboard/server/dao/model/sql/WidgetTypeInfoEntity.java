@@ -16,6 +16,9 @@
 package org.thingsboard.server.dao.model.sql;
 
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Immutable;
@@ -24,9 +27,6 @@ import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.util.HashMap;
 import java.util.Map;
 
