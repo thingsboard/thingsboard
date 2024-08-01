@@ -27,6 +27,10 @@ import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * RestTemplate firstly uses MappingJackson2XmlHttpMessageConverter converter instead of MappingJackson2HttpMessageConverter.
+ * It produces error UnsupportedMediaType, so this converter had to be shadowed for read and write operations to use the correct converter
+ */
 public class MappingJackson2XmlHttpMessageConverter extends AbstractJackson2HttpMessageConverter {
     private static final List<MediaType> problemDetailMediaTypes;
 
