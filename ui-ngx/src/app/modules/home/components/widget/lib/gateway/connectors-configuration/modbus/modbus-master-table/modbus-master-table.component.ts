@@ -43,6 +43,8 @@ import {
 import {
   ModbusMasterConfig,
   ModbusProtocolLabelsMap,
+  ModbusSlaveInfo,
+  ModbusValues,
   SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
@@ -164,7 +166,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     }
     const withIndex = isDefinedAndNotNull(index);
     const value = withIndex ? this.slaves.at(index).value : {};
-    this.dialog.open<ModbusSlaveDialogComponent, any, any>(ModbusSlaveDialogComponent, {
+    this.dialog.open<ModbusSlaveDialogComponent, ModbusSlaveInfo, ModbusValues>(ModbusSlaveDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
