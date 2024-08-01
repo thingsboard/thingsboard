@@ -18,10 +18,10 @@ import { ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy, Templ
 import {
   ControlValueAccessor,
   FormBuilder,
+  FormControl,
   FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
-  UntypedFormControl,
   ValidationErrors,
   Validator,
 } from '@angular/forms';
@@ -68,6 +68,7 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
   @Input() generalTabContent: TemplateRef<any>;
 
   basicFormGroup: FormGroup;
+  enableSlaveControl: FormControl<boolean>;
 
   onChange: (value: ModbusBasicConfig) => void;
   onTouched: () => void;
@@ -79,12 +80,21 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
       master: [],
       slave: [],
     });
+    this.enableSlaveControl = new FormControl(false);
 
     this.basicFormGroup.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
         this.onChange(value);
         this.onTouched();
+      });
+
+    this.enableSlaveControl.valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(enable => {
+        this.updateSlaveEnabling(enable);
+        this.basicFormGroup.get('slave').updateValueAndValidity({emitEvent: !!this.onChange});
+        this.basicFormGroup.get('master').updateValueAndValidity({emitEvent: !!this.onChange});
       });
   }
 
@@ -108,16 +118,20 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
+    this.enableSlaveControl.setValue(!!basicConfig.slave && !isEqual(basicConfig.slave, {}));
   }
 
-  validate(basicFormControl: UntypedFormControl): ValidationErrors | null {
-    const { master, slave } = basicFormControl.value;
-    const isEmpty = !master?.slaves?.length && (isEqual(slave, {}) || !slave);
-    if (!this.basicFormGroup.valid || isEmpty) {
-      return {
-        basicFormGroup: {valid: false}
-      };
+  validate(): ValidationErrors | null {
+    return this.basicFormGroup.valid ? null : {
+      basicFormGroup: {valid: false}
+    };
+  }
+
+  private updateSlaveEnabling(isEnabled: boolean): void {
+    if (isEnabled) {
+      this.basicFormGroup.get('slave').enable({emitEvent: false});
+    } else {
+      this.basicFormGroup.get('slave').disable({emitEvent: false});
     }
-    return null;
   }
 }
