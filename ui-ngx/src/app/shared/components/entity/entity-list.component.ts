@@ -187,8 +187,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.modelValue = [...value];
       this.entityService.getEntities(this.entityType, value).subscribe(
         (entities) => {
+          this.modelValue = entities.map(entity => entity.id.id);
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
+          this.propagateChange(this.modelValue);
         }
       );
     } else {
