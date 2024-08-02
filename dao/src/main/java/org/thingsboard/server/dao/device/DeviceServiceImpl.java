@@ -28,6 +28,7 @@ import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cache.device.DeviceCacheEvictEvent;
 import org.thingsboard.server.cache.device.DeviceCacheKey;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceIdInfo;
 import org.thingsboard.server.common.data.DeviceInfo;
@@ -567,7 +568,7 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
         device.setTenantId(profile.getTenantId());
         ObjectNode additionalInfoNode = JacksonUtil.newObjectNode();
         if (provisionRequest.getGateway()) {
-            additionalInfoNode.put("gateway", true);
+            additionalInfoNode.put(DataConstants.GATEWAY_PARAMETER, true);
         }
         device.setAdditionalInfo(additionalInfoNode);
         Device savedDevice = saveDevice(device);
