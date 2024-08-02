@@ -490,7 +490,25 @@ public class EdgeController extends BaseController {
         if (fromEdgeSyncResponse.isSuccess()) {
             response.setResult(new ResponseEntity<>(HttpStatus.OK));
         } else {
-            response.setErrorResult(new ThingsboardException("Edge is not connected", ThingsboardErrorCode.GENERAL));
+            response.setErrorResult(new ThingsboardException(fromEdgeSyncResponse.getError(), ThingsboardErrorCode.GENERAL));
+        }
+    }
+
+    @ApiOperation(value = "Is edge sync process is active (isEdgeSyncProcessActive)",
+            notes = "Returns 'true' if edge is currently in sync process, 'false' - otherwise." + TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    @GetMapping(value = "/edge/sync/{edgeId}/active")
+    public Boolean isEdgeSyncProcessActive(
+            @Parameter(description = EDGE_ID_PARAM_DESCRIPTION, required = true)
+            @PathVariable("edgeId") String strEdgeId) throws ThingsboardException {
+        checkParameter("edgeId", strEdgeId);
+        if (isEdgesEnabled() && edgeRpcServiceOpt.isPresent()) {
+            EdgeId edgeId = new EdgeId(toUUID(strEdgeId));
+            edgeId = checkNotNull(edgeId);
+            Edge edge = checkEdgeId(edgeId, Operation.READ);
+            return edgeRpcServiceOpt.get().isEdgeSyncProcessActive(edge.getTenantId(), edge.getId());
+        } else {
+            throw new ThingsboardException("Edges support disabled", ThingsboardErrorCode.GENERAL);
         }
     }
 

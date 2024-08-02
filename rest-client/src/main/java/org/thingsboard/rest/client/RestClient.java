@@ -2950,6 +2950,10 @@ public class RestClient implements Closeable {
         return restTemplate.getForEntity(baseURL + "/api/edges/enabled", Boolean.class).getBody();
     }
 
+    public Boolean isEdgeSyncProcessActive(EdgeId edgeId) {
+        return restTemplate.getForEntity(baseURL + "/api/edge/sync/" + edgeId.getId() + "/active", Boolean.class).getBody();
+    }
+
     public Edge saveEdge(Edge edge) {
         return restTemplate.postForEntity(baseURL + "/api/edge", edge, Edge.class).getBody();
     }

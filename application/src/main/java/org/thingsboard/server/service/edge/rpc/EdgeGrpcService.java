@@ -292,17 +292,31 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
                 session.startSyncProcess(true);
                 success = true;
             }
-            clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success));
+            clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success, null));
         }
     }
 
     @Override
     public void processSyncRequest(ToEdgeSyncRequest request, Consumer<FromEdgeSyncResponse> responseConsumer) {
-        log.trace("[{}][{}] Processing sync edge request [{}]", request.getTenantId(), request.getId(), request.getEdgeId());
         UUID requestId = request.getId();
-        localSyncEdgeRequests.put(requestId, responseConsumer);
-        clusterService.pushEdgeSyncRequestToCore(request);
-        scheduleSyncRequestTimeout(request, requestId);
+        EdgeGrpcSession session = sessions.get(request.getEdgeId());
+        if (!session.isSyncCompleted()) {
+            responseConsumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false, "Sync process is active at the moment"));
+        } else {
+            log.trace("[{}][{}] Processing sync edge request [{}]", request.getTenantId(), request.getId(), request.getEdgeId());
+            localSyncEdgeRequests.put(requestId, responseConsumer);
+            clusterService.pushEdgeSyncRequestToCore(request);
+            scheduleSyncRequestTimeout(request, requestId);
+        }
+    }
+
+    @Override
+    public Boolean isEdgeSyncProcessActive(TenantId tenantId, EdgeId edgeId) {
+        EdgeGrpcSession session = sessions.get(edgeId);
+        if (session == null) {
+            return false;
+        }
+        return !session.isSyncCompleted();
     }
 
     private void scheduleSyncRequestTimeout(ToEdgeSyncRequest request, UUID requestId) {
@@ -312,7 +326,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             Consumer<FromEdgeSyncResponse> consumer = localSyncEdgeRequests.remove(requestId);
             if (consumer != null) {
                 log.trace("[{}] timeout for processing sync edge request.", requestId);
-                consumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false));
+                consumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false, "Edge is not connected"));
             }
         }, 20, TimeUnit.SECONDS);
     }

@@ -124,7 +124,7 @@ class ProtoUtilsTest {
 
     @Test
     void protoFromEdgeSyncResponseSerialization() {
-        FromEdgeSyncResponse msg = new FromEdgeSyncResponse(id, tenantId, edgeId, true);
+        FromEdgeSyncResponse msg = new FromEdgeSyncResponse(id, tenantId, edgeId, true, null);
         assertThat(ProtoUtils.fromProto(ProtoUtils.toProto(msg))).as("deserialized").isEqualTo(msg);
     }
 
