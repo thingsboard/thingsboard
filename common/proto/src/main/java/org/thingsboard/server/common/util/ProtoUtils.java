@@ -159,6 +159,7 @@ public class ProtoUtils {
                 .setEdgeIdMSB(response.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(response.getEdgeId().getId().getLeastSignificantBits())
                 .setSuccess(response.isSuccess())
+                .setError(response.getError())
                 .build();
     }
 
