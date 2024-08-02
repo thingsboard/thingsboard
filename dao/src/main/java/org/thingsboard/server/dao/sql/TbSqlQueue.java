@@ -19,13 +19,13 @@ import com.google.common.util.concurrent.ListenableFuture;
 
 import java.util.Comparator;
 import java.util.List;
-import java.util.function.Consumer;
+import java.util.function.Function;
 
-public interface TbSqlQueue<E> {
+public interface TbSqlQueue<E, R> {
 
-    void init(ScheduledLogExecutorComponent logExecutor, Consumer<List<E>> saveFunction, Comparator<E> batchUpdateComparator, int queueIndex);
+    void init(ScheduledLogExecutorComponent logExecutor, Function<List<E>, List<R>> saveFunction, Comparator<E> batchUpdateComparator, Function<List<TbSqlQueueElement<E, R>>, List<TbSqlQueueElement<E, R>>> filter, int queueIndex);
 
     void destroy();
 
-    ListenableFuture<Void> add(E element);
+    ListenableFuture<R> add(E element);
 }

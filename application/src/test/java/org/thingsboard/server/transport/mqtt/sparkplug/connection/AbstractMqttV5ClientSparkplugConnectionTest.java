@@ -63,7 +63,9 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
                     return finalFuture.get().get().isPresent();
                 });
         TsKvEntry actualTsKvEntry = finalFuture.get().get().get();
-        Assert.assertEquals(expectedTsKvEntry, actualTsKvEntry);
+        Assert.assertEquals(expectedTsKvEntry.getKey(), actualTsKvEntry.getKey());
+        Assert.assertEquals(expectedTsKvEntry.getValue(), actualTsKvEntry.getValue());
+        Assert.assertEquals(expectedTsKvEntry.getTs(), actualTsKvEntry.getTs());
     }
 
     protected void processClientWithCorrectNodeAccessTokenWithoutNDEATH_Test() throws Exception {
@@ -95,20 +97,27 @@ public abstract class AbstractMqttV5ClientSparkplugConnectionTest extends Abstra
         List<Device> devices = connectClientWithCorrectAccessTokenWithNDEATHCreatedDevices(cntDevices, ts);
 
         TsKvEntry tsKvEntry = new BasicTsKvEntry(ts, new StringDataEntry(messageName(STATE), ONLINE.name()));
-        AtomicReference<ListenableFuture<List<TsKvEntry>>> finalFuture = new AtomicReference<>();
         await(alias + messageName(STATE) + ", device: " + savedGateway.getName())
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
-                    finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
-                    return finalFuture.get().get().contains(tsKvEntry);
+                    var foundEntry = tsService.findAllLatest(tenantId, savedGateway.getId()).get().stream()
+                            .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
+                            .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
+                            .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
+                            .findFirst();
+                    return foundEntry.isPresent();
                 });
 
         for (Device device : devices) {
             await(alias + messageName(STATE) + ", device: " + device.getName())
                     .atMost(40, TimeUnit.SECONDS)
                     .until(() -> {
-                        finalFuture.set(tsService.findAllLatest(tenantId, device.getId()));
-                        return finalFuture.get().get().contains(tsKvEntry);
+                        var foundEntry = tsService.findAllLatest(tenantId, device.getId()).get().stream()
+                                .filter(tsKv -> tsKv.getKey().equals(tsKvEntry.getKey()))
+                                .filter(tsKv -> tsKv.getValue().equals(tsKvEntry.getValue()))
+                                .filter(tsKv -> tsKv.getTs() == tsKvEntry.getTs())
+                                .findFirst();
+                        return foundEntry.isPresent();
                     });
         }
     }
