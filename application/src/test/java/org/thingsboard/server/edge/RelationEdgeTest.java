@@ -48,7 +48,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         relation.setTo(asset.getId());
         relation.setTypeGroup(RelationTypeGroup.COMMON);
         edgeImitator.expectMessageAmount(1);
-        relation = doPost("/api/relation", relation, EntityRelation.class);
+        relation = doPost("/api/v2/relation", relation, EntityRelation.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
@@ -60,7 +60,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
 
         // delete relation
         edgeImitator.expectMessageAmount(1);
-        var deletedRelation = doDelete("/api/relation?" +
+        var deletedRelation = doDelete("/api/v2/relation?" +
                 "fromId=" + relation.getFrom().getId().toString() +
                 "&fromType=" + relation.getFrom().getEntityType().name() +
                 "&relationType=" + relation.getType() +
@@ -118,7 +118,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         deviceToAssetRelation.setTypeGroup(RelationTypeGroup.COMMON);
 
         edgeImitator.expectMessageAmount(1);
-        deviceToAssetRelation = doPost("/api/relation", deviceToAssetRelation, EntityRelation.class);
+        deviceToAssetRelation = doPost("/api/v2/relation", deviceToAssetRelation, EntityRelation.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         EntityRelation assetToTenantRelation = new EntityRelation();
