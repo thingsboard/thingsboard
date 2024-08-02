@@ -293,6 +293,8 @@ public class TbUtils {
                 ExecutionContext.class, List.class)));
         parserConfig.addImport("base64ToHex", new MethodStub(TbUtils.class.getMethod("base64ToHex",
                 String.class)));
+        parserConfig.addImport("hexToBase64", new MethodStub(TbUtils.class.getMethod("hexToBase64",
+                String.class)));
         parserConfig.addImport("base64ToBytes", new MethodStub(TbUtils.class.getMethod("base64ToBytes",
                 String.class)));
         parserConfig.addImport("bytesToBase64", new MethodStub(TbUtils.class.getMethod("bytesToBase64",
@@ -325,7 +327,7 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("isHexadecimal", new MethodStub(TbUtils.class.getMethod("isHexadecimal",
                 String.class)));
-        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("byteArrayToExecutionArrayList",
+        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("bytesToExecutionArrayList",
                 ExecutionContext.class, byte[].class)));
         parserConfig.addImport("padStart", new MethodStub(TbUtils.class.getMethod("padStart",
                 String.class, int.class, char.class)));
@@ -335,6 +337,8 @@ public class TbUtils {
                 byte.class)));
         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
                 byte.class, int.class)));
+         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class, int.class, boolean.class)));
         parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
                 List.class)));
         parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
@@ -349,6 +353,18 @@ public class TbUtils {
                 long.class)));
         parserConfig.addImport("parseLongToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseLongToBinaryArray",
                 long.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class, int.class, int.class)));
     }
 
     public static String btoa(String input) {
@@ -663,16 +679,8 @@ public class TbUtils {
             throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
         }
 
-        ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
-        for (int i = 0; i < hex.length(); i += 2) {
-            // Extract two characters from the hex string
-            String byteString = hex.substring(i, i + 2);
-            // Parse the hex string to a byte
-            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
-            // Add the byte to the ArrayList
-            data.add(byteValue);
-        }
-        return data;
+        byte [] data = hexToBytes(hex);
+        return bytesToExecutionArrayList(ctx, data);
     }
 
     public static List<Integer> printUnsignedBytes(ExecutionContext ctx, List<Byte> byteArray) {
@@ -821,6 +829,10 @@ public class TbUtils {
         return bytesToHex(Base64.getDecoder().decode(base64));
     }
 
+    public static String hexToBase64(String hex) {
+        return bytesToBase64(hexToBytes(hex));
+    }
+
     public static String bytesToBase64(byte[] bytes) {
         return Base64.getEncoder().encodeToString(bytes);
     }
@@ -850,7 +862,7 @@ public class TbUtils {
     }
 
     public static int parseBytesToInt(byte[] data, int offset) {
-        return parseBytesToInt(data, offset, BYTES_LEN_INT_MAX);
+        return parseBytesToInt(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
     }
 
     public static int parseBytesToInt(byte[] data, int offset, int length) {
@@ -1260,12 +1272,12 @@ public class TbUtils {
         return str.matches("^-?(0[xX])?[0-9a-fA-F]+$") ? HEX_RADIX : -1;
     }
 
-    public static List byteArrayToExecutionArrayList(ExecutionContext ctx, byte[] byteArray) {
+    public static ExecutionArrayList<Byte> bytesToExecutionArrayList(ExecutionContext ctx, byte[] byteArray) {
         List<Byte> byteList = new ArrayList<>();
         for (byte b : byteArray) {
             byteList.add(b);
         }
-        List list = new ExecutionArrayList(byteList, ctx);
+        ExecutionArrayList<Byte> list = new ExecutionArrayList(byteList, ctx);
         return list;
     }
 
@@ -1283,45 +1295,97 @@ public class TbUtils {
         return str;
     }
 
-    public static int[] parseByteToBinaryArray(byte byteValue) {
+    public static byte[] parseByteToBinaryArray(byte byteValue) {
         return parseByteToBinaryArray(byteValue, BIN_LEN_MAX);
     }
 
-    public static int[] parseByteToBinaryArray(byte byteValue, int binLength) {
-        int[] bins = new int[binLength];
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength) {
+        return parseByteToBinaryArray(byteValue, binLength, true);
+    }
+
+    /**
+     * bigEndian = true
+     * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
+     * to ensure proper alignment (highest bit to low end).
+     */
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength, boolean bigEndian) {
+        byte[] bins = new byte[binLength];
         for (int i = 0; i < binLength; i++) {
-            bins[i] = (byteValue & (1 << i)) >> i;
+            if(bigEndian) {
+                bins[binLength - 1 - i] = (byte) ((byteValue >> i) & 1);
+            } else {
+                bins[i] = (byte) ((byteValue >> i) & 1);
+            }
         }
         return bins;
     }
 
-    public static int[] parseBytesToBinaryArray(List listValue) {
+    public static byte[] parseBytesToBinaryArray(List listValue) {
         return parseBytesToBinaryArray(listValue, listValue.size() * BIN_LEN_MAX);
     }
 
-    public static int[] parseBytesToBinaryArray(List listValue, int binLength) {
+    public static byte[] parseBytesToBinaryArray(List listValue, int binLength) {
         return parseBytesToBinaryArray(Bytes.toArray(listValue), binLength);
     }
 
-    public static int[] parseBytesToBinaryArray(byte[] bytesValue) {
+    public static byte[] parseBytesToBinaryArray(byte[] bytesValue) {
         return parseLongToBinaryArray(parseBytesToLong(bytesValue), bytesValue.length * BIN_LEN_MAX);
     }
 
-    public static int[] parseBytesToBinaryArray(byte[] bytesValue, int binLength) {
+    public static byte[] parseBytesToBinaryArray(byte[] bytesValue, int binLength) {
         return parseLongToBinaryArray(parseBytesToLong(bytesValue), binLength);
     }
 
-    public static int[] parseLongToBinaryArray(long longValue) {
+    public static byte[] parseLongToBinaryArray(long longValue) {
         return parseLongToBinaryArray(longValue, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
     }
 
-    public static int[] parseLongToBinaryArray(long longValue, int binsLength) {
+    /**
+     * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
+     * to ensure proper alignment (highest bit to low end).
+     */
+    public static byte[] parseLongToBinaryArray(long longValue, int binsLength) {
         int len = Math.min(binsLength, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
-        int[] bins = new int[len];
+        byte[] bins = new byte[len];
         for (int i = 0; i < len; i++) {
-            bins[i] = (int) ((longValue & (1 << i)) >> i);
+            bins[len - 1 - i] = (byte) ((longValue >> i) & 1);
         }
         return bins;
+    }
+
+    public static int parseBinaryArrayToInt(List listValue) {
+        return parseBinaryArrayToInt(listValue, 0);
+    }
+
+    public static int parseBinaryArrayToInt(List listValue, int offset) {
+        return parseBinaryArrayToInt(listValue, offset, listValue.size());
+    }
+
+    public static int parseBinaryArrayToInt(List listValue, int offset, int length) {
+        return parseBinaryArrayToInt(Bytes.toArray(listValue), offset, length);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue) {
+        return parseBinaryArrayToInt(bytesValue, 0);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue, int offset) {
+        return parseBinaryArrayToInt(bytesValue, offset, bytesValue.length);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue, int offset, int length) {
+        int result = 0;
+        int len = Math.min(length + offset, bytesValue.length);
+        for (int i = offset; i < len; i++) {
+            result = (result << 1) | (bytesValue[i] & 1);
+        }
+
+        // For the one byte (8 bit) only If the most significant bit (sign) is set, we convert the result into a negative number
+        if ((bytesValue.length == BIN_LEN_MAX)
+                && offset == 0 && bytesValue[0] == 1) {
+            result -= (1 << (len - offset));
+        }
+        return result;
     }
 
     private static byte isValidIntegerToByte(Integer val) {
@@ -1375,6 +1439,19 @@ public class TbUtils {
                         binaryString.length() < 32 ? 32 :
                                 binaryString.length() < 64 ? 64 : 0;
         return format == 0 ? binaryString : String.format("%" + format + "s", binaryString).replace(' ', '0');
+    }
+
+    private static byte[] hexToBytes(String hex) {
+        byte [] data = new byte[hex.length()/2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            // Extract two characters from the hex string
+            String byteString = hex.substring(i, i + 2);
+            // Parse the hex string to a byte
+            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
+            // Add the byte to the ArrayList
+            data[i/2] = byteValue;
+        }
+        return data;
     }
 }
 
