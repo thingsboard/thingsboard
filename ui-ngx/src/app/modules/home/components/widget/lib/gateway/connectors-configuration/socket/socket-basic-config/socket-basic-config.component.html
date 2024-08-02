@@ -1,0 +1,13 @@
+<mat-tab-group [formGroup]="basicFormGroup">
+  <mat-tab label="{{ 'gateway.general' | translate }}">
+    <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.socket' | translate }}">
+    <tb-socket-config formControlName="socket"></tb-socket-config>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.devices' | translate }}">
+    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
+      <tb-devices-config formControlName="devices" [required]="true"></tb-devices-config>
+    </div>
+  </mat-tab>
+</mat-tab-group>

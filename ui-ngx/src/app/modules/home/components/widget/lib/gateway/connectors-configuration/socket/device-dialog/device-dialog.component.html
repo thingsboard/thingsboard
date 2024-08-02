@@ -1,0 +1,175 @@
+
+<div [formGroup]="mappingForm" class="key-mapping">
+  <mat-toolbar color="primary">
+    <h2>{{ 'gateway.device-dialog-title' | translate}}</h2>
+    <span fxFlex></span>
+    <div [tb-help]="helpLinkId()"></div>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <div mat-dialog-content>
+    <div class="tb-form-panel no-border no-padding" fxLayout="column">
+      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width tb-required" translate>gateway.address-filter</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput name="value" formControlName="addressFilter"
+                   placeholder="{{ 'gateway.set' | translate }}"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="('gateway.address-filter-required') | translate"
+                      *ngIf="mappingForm.get('addressFilter').hasError('required')
+                                           && mappingForm.get('addressFilter').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width tb-required" translate>gateway.device-name</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput name="value" formControlName="deviceName"
+                   placeholder="{{ 'gateway.set' | translate }}"/>
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="('gateway.device-name-required') | translate"
+                      *ngIf="mappingForm.get('deviceName').hasError('required')
+                                           && mappingForm.get('deviceName').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width" translate>gateway.device-profile</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput name="value" formControlName="deviceProfile"
+                   placeholder="{{ 'gateway.set' | translate }}"/>
+          </mat-form-field>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width" translate>gateway.timeseries</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox class="tb-flex" [tb-ellipsis-chip-list]="socketTelemetry">
+            <mat-chip *ngFor="let telemetry of socketTelemetry">
+              {{ telemetry }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  #socketTelemetryButton
+                  (click)="manageKeys($event, socketTelemetryButton, SocketValueKey.TIMESERIES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width" translate>gateway.attributes</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox [tb-ellipsis-chip-list]="socketAttributes" class="tb-flex">
+            <mat-chip *ngFor="let attribute of socketAttributes">
+              {{ attribute }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  #attributesButton
+                  (click)="manageKeys($event, attributesButton, SocketValueKey.ATTRIBUTES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width" translate>gateway.attribute-requests</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox [tb-ellipsis-chip-list]="socketAttributesRequests" class="tb-flex">
+            <mat-chip *ngFor="let request of socketAttributesRequests">
+              {{ request }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  #attributeRequestsButton
+                  (click)="manageKeys($event, attributeRequestsButton, SocketValueKey.ATTRIBUTES_REQUESTS)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width" translate>gateway.attribute-updates</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox [tb-ellipsis-chip-list]="socketAttributesUpdates" class="tb-flex">
+            <mat-chip *ngFor="let attribute of socketAttributesUpdates">
+              {{ attribute }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  #attributesUpdatesButton
+                  (click)="manageKeys($event, attributesUpdatesButton, SocketValueKey.ATTRIBUTES_UPDATES)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+      <div class="tb-form-row space-between tb-flex">
+        <div class="fixed-title-width" translate>gateway.rpc-methods</div>
+        <div class="tb-flex ellipsis-chips-container">
+          <mat-chip-listbox [tb-ellipsis-chip-list]="socketRpcMethods" class="tb-flex">
+            <mat-chip *ngFor="let attribute of socketRpcMethods">
+              {{ attribute }}
+            </mat-chip>
+            <mat-chip class="mat-mdc-chip ellipsis-chip">
+              <label class="ellipsis-text"></label>
+            </mat-chip>
+          </mat-chip-listbox>
+          <button type="button"
+                  mat-icon-button
+                  color="primary"
+                  #rpcMethodsButton
+                  (click)="manageKeys($event, rpcMethodsButton, SocketValueKey.RPC_METHODS)">
+            <tb-icon matButtonIcon>edit</tb-icon>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div mat-dialog-actions fxLayoutAlign="end center">
+    <button mat-button color="primary"
+            type="button"
+            cdkFocusInitial
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button color="primary"
+            (click)="add()"
+            [disabled]="mappingForm.invalid || !mappingForm.dirty || !keysPopupClosed">
+      {{ this.data.buttonTitle | translate }}
+    </button>
+  </div>
+</div>

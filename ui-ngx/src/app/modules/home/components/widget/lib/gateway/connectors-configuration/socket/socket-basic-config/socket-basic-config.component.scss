@@ -1,0 +1,9 @@
+:host {
+  height: 100%;
+}
+
+:host ::ng-deep {
+  .mat-mdc-tab-group, .mat-mdc-tab-body-wrapper {
+    height: 100%;
+  }
+}
