@@ -22,6 +22,7 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -138,7 +139,7 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
 
     protected void processTestProvisioningCreateNewGatewayDevice() throws Exception {
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
-                .deviceName("Test Provision gateway device")
+                .deviceName("Test Provision device3")
                 .transportPayloadType(TransportPayloadType.PROTOBUF)
                 .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
                 .provisionKey("testProvisionKey")
@@ -150,14 +151,15 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
         byte[] responseBytesMsg = createMqttClientAndPublish(provisionRequestMsg);
         ProvisionDeviceResponseMsg response = ProvisionDeviceResponseMsg.parseFrom(responseBytesMsg);
 
-        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision gateway device");
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
 
         JsonNode additionalInfo = createdDevice.getAdditionalInfo();
         Assert.assertNotNull(additionalInfo);
-        Assert.assertTrue(additionalInfo.has("gateway"));
-        Assert.assertTrue(additionalInfo.get("gateway").asBoolean());
+        Assert.assertTrue(additionalInfo.has(DataConstants.GATEWAY_PARAMETER)
+                && additionalInfo.get(DataConstants.GATEWAY_PARAMETER).isBoolean());
+        Assert.assertTrue(additionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
