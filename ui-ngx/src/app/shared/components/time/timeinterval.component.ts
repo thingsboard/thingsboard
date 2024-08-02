@@ -22,6 +22,7 @@ import { MatFormFieldAppearance, SubscriptSizing } from '@angular/material/form-
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Interval, IntervalMath, TimeInterval } from '@shared/models/time/time.models';
 import { isDefined } from '@core/utils';
+import { IntervalType } from '@shared/models/telemetry/telemetry.models';
 
 @Component({
   selector: 'tb-timeinterval',
@@ -98,6 +99,12 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
 
   advanced = false;
 
+  customTimeInterval: TimeInterval = {
+    name: 'timeinterval.custom',
+    translateParams: {},
+    value: IntervalType.CUSTOM
+  };
+
   private modelValue: Interval;
   private rendered = false;
   private propagateChangeValue: any;
@@ -134,8 +141,14 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
       const min = this.timeService.boundMinInterval(this.minValue);
       const max = this.timeService.boundMaxInterval(this.maxValue);
       if (IntervalMath.numberValue(this.modelValue) >= min && IntervalMath.numberValue(this.modelValue) <= max) {
-        this.advanced = !this.timeService.matchesExistingInterval(this.minValue, this.maxValue, this.modelValue, this.useCalendarIntervals);
-        this.setInterval(this.modelValue);
+        const advanced = !this.timeService.matchesExistingInterval(this.minValue, this.maxValue, this.modelValue,
+          this.useCalendarIntervals);
+        if (advanced && this.disabledAdvanced) {
+          this.boundInterval();
+        } else {
+          this.advanced = advanced;
+          this.setInterval(this.modelValue);
+        }
       } else {
         this.boundInterval();
       }
@@ -143,9 +156,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor {
   }
 
   private setInterval(interval: Interval) {
-    if (!this.advanced) {
+    // if (!this.advanced) {
       this.interval = interval;
-    }
+    // }
     const intervalSeconds = Math.floor(IntervalMath.numberValue(interval) / 1000);
     this.days = Math.floor(intervalSeconds / 86400);
     this.hours = Math.floor((intervalSeconds % 86400) / 3600);

@@ -4609,6 +4609,7 @@
         "minutes": "Minutes",
         "seconds": "Seconds",
         "advanced": "Advanced",
+        "custom": "Custom",
         "predefined": {
           "yesterday": "Yesterday",
           "day-before-yesterday": "Day before yesterday",

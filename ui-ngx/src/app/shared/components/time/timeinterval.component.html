@@ -20,8 +20,18 @@
     <label class="tb-small hide-label" translate>timewindow.hide</label>
     <mat-checkbox [(ngModel)]="hideFlag" (ngModelChange)="onHideFlagChange()"></mat-checkbox>
   </section>
-  <section class="interval-section" fxLayout="column" fxFlex [fxShow]="advanced && (isEdit || !hideFlag)">
-    <section fxLayout="row wrap" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px">
+  <section class="interval-section" fxLayout="column" fxFlex fxLayoutGap="16px">
+    <section fxLayout="row" fxFlex [fxShow]="isEdit || !hideFlag">
+      <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+        <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
+        <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="interval" (ngModelChange)="onIntervalChange()" style="min-width: 150px;">
+          <mat-option *ngFor="let interval of intervals" [value]="interval.value">
+            {{ interval.name | translate:interval.translateParams }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </section>
+    <section fxLayout="row wrap" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px" [fxShow]="advanced && (isEdit || !hideFlag)">
       <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.days</mat-label>
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" min="0" [(ngModel)]="days" (ngModelChange)="onTimeInputChange('days')"/>
@@ -39,16 +49,6 @@
         <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="secs" (ngModelChange)="onTimeInputChange('secs')"/>
       </mat-form-field>
     </section>
-  </section>
-  <section fxLayout="row" fxFlex [fxShow]="!advanced && (isEdit || !hideFlag)">
-    <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-      <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
-      <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="interval" (ngModelChange)="onIntervalChange()" style="min-width: 150px;">
-        <mat-option *ngFor="let interval of intervals" [value]="interval.value">
-          {{ interval.name | translate:interval.translateParams }}
-        </mat-option>
-      </mat-select>
-    </mat-form-field>
   </section>
   <section fxLayout="column" fxLayoutAlign="center center" [fxShow]="(isEdit || !hideFlag) && !disabledAdvanced">
     <label class="tb-small advanced-label" translate>timeinterval.advanced</label>

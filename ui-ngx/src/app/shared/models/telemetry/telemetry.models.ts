@@ -186,7 +186,8 @@ export enum IntervalType {
   WEEK = 'WEEK',
   WEEK_ISO = 'WEEK_ISO',
   MONTH = 'MONTH',
-  QUARTER = 'QUARTER'
+  QUARTER = 'QUARTER',
+  CUSTOM = 'CUSTOM'
 }
 
 export class TimeseriesSubscriptionCmd extends SubscriptionCmd {
