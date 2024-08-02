@@ -33,24 +33,27 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
+import {
+  SecurityConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
 
 @Component({
-  selector: 'tb-server-config',
-  templateUrl: './server-config.component.html',
-  styleUrls: ['./server-config.component.scss'],
+  selector: 'tb-opc-server-config',
+  templateUrl: './opc-server-config.component.html',
+  styleUrls: ['./opc-server-config.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => OpcServerConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ServerConfigComponent),
+      useExisting: forwardRef(() => OpcServerConfigComponent),
       multi: true
     }
   ],
@@ -59,9 +62,10 @@ import { takeUntil } from 'rxjs/operators';
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
+    TruncateWithTooltipDirective,
   ]
 })
-export class ServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class OpcServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
 
   securityPolicyTypes = SecurityPolicyTypes;
   serverConfigFormGroup: UntypedFormGroup;
@@ -112,6 +116,16 @@ export class ServerConfigComponent implements ControlValueAccessor, Validator, O
   }
 
   writeValue(serverConfig: ServerConfig): void {
-    this.serverConfigFormGroup.patchValue(serverConfig, {emitEvent: false});
+    const { timeoutInMillis, scanPeriodInMillis, enableSubscriptions, subCheckPeriodInMillis, showMap, security } = serverConfig;
+    const serverConfigState = {
+      ...serverConfig,
+      timeoutInMillis: timeoutInMillis || 1000,
+      scanPeriodInMillis: scanPeriodInMillis || 1000,
+      enableSubscriptions: enableSubscriptions || true,
+      subCheckPeriodInMillis: subCheckPeriodInMillis || 10,
+      showMap: showMap || false,
+      security: security || SecurityPolicy.BASIC128,
+    };
+    this.serverConfigFormGroup.reset(serverConfigState, {emitEvent: false});
   }
 }

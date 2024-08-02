@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.validation.constraints.NotEmpty;
 import java.util.Set;
 import java.util.UUID;
 

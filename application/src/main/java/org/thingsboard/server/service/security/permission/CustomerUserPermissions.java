@@ -19,8 +19,6 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.ResourceType;
-import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.DashboardId;

@@ -77,7 +77,7 @@
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <tb-font-settings formControlName="counterValueFont"
                           clearButton
-                          [previewText]="unreadNotificationWidgetConfigForm.get('maxNotificationDisplay').value.toString()"
+                          [previewText]="countPreviewFn"
                           [initialPreviewStyle]="widgetConfig.config.titleStyle">
         </tb-font-settings>
         <tb-color-input asBoxInput

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
@@ -33,7 +34,6 @@ import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
