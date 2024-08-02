@@ -329,7 +329,9 @@ public class MqttProvisionProtoDeviceTest extends AbstractMqttIntegrationTest {
                         ProvisionDeviceCredentialsMsg.newBuilder()
                                 .setProvisionDeviceKey("testProvisionKey")
                                 .setProvisionDeviceSecret("testProvisionSecret")
-                ).build()
+                )
+                .setGateway(isGateway)
+                .build()
                 .toByteArray();
     }
 
