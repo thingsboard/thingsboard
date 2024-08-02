@@ -38,6 +38,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -50,6 +52,10 @@ import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 
 @RestController
@@ -112,8 +118,18 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Get OAuth2 Client Registration infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos")
-    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfos() throws ThingsboardException {
-        return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId());
+    public PageData<OAuth2ClientInfo> findTenantOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                                  @RequestParam int pageSize,
+                                                                  @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                                  @RequestParam int page,
+                                                                  @Parameter(description = "Case-insensitive 'substring' filter based on rule's name")
+                                                                  @RequestParam(required = false) String textSearch,
+                                                                  @Parameter(description = SORT_PROPERTY_DESCRIPTION)
+                                                                  @RequestParam(required = false) String sortProperty,
+                                                                  @Parameter(description = SORT_ORDER_DESCRIPTION)
+                                                                  @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
     }
 
     @ApiOperation(value = "Get OAuth2 Client Registration by id (getOAuth2ClientById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)

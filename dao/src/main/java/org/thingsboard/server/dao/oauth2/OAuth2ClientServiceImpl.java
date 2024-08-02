@@ -28,6 +28,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -94,7 +96,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     @Override
     public List<OAuth2Client> findOAuth2ClientsByTenantId(TenantId tenantId) {
         log.trace("Executing findOAuth2ClientsByTenantId [{}]", tenantId);
-        return oauth2ClientDao.findByTenantId(tenantId.getId());
+        return oauth2ClientDao.findByTenantId(tenantId.getId(), new PageLink(Integer.MAX_VALUE)).getData();
     }
 
     @Override
@@ -125,12 +127,15 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    public List<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId) {
+    public PageData<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findOAuth2ClientInfosByTenantId tenantId=[{}]", tenantId);
-        return oauth2ClientDao.findByTenantId(tenantId.getId())
+        PageData<OAuth2Client> clientInfos = oauth2ClientDao.findByTenantId(tenantId.getId(), pageLink);
+        List<OAuth2ClientInfo> oAuth2ClientInfos = clientInfos
+                .getData()
                 .stream()
                 .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList());
+        return new PageData<>(oAuth2ClientInfos, clientInfos.getTotalPages(), clientInfos.getTotalPages(), clientInfos.hasNext());
     }
 
     @Override

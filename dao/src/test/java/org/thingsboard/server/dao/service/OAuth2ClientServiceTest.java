@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 
 import java.util.ArrayList;
@@ -99,9 +101,9 @@ public class OAuth2ClientServiceTest extends AbstractServiceTest {
         List<OAuth2Client> retrieved = oAuth2ClientService.findOAuth2ClientsByTenantId(TenantId.SYS_TENANT_ID);
         assertThat(retrieved).containsOnlyOnceElementsOf(oAuth2Clients);
 
-        List<OAuth2ClientInfo> retrievedInfos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID);
+        PageData<OAuth2ClientInfo> retrievedInfos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10));
         List<OAuth2ClientInfo> oAuth2ClientInfos = oAuth2Clients.stream().map(OAuth2ClientInfo::new).collect(Collectors.toList());
-        assertThat(retrievedInfos).containsOnlyOnceElementsOf(oAuth2ClientInfos);
+        assertThat(retrievedInfos.getData()).containsOnlyOnceElementsOf(oAuth2ClientInfos);
     }
 
 }

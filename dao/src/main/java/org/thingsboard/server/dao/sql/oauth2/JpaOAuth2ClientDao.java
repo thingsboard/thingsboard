@@ -22,6 +22,8 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.OAuth2ClientEntity;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
@@ -49,8 +51,8 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
-    public List<OAuth2Client> findByTenantId(UUID tenantId) {
-        return DaoUtil.convertDataList(repository.findByTenantId(tenantId));
+    public PageData<OAuth2Client> findByTenantId(UUID tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(repository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
     }
 
     @Override

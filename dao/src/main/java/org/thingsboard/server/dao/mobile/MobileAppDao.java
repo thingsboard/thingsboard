@@ -20,13 +20,15 @@ import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 
 public interface MobileAppDao extends Dao<MobileApp> {
 
-    List<MobileApp> findByTenantId(TenantId tenantId);
+    PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink);
 
     List<MobileAppOauth2Client> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId);
 

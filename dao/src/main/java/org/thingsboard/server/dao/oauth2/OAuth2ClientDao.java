@@ -18,6 +18,8 @@ package org.thingsboard.server.dao.oauth2;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
@@ -25,7 +27,7 @@ import java.util.UUID;
 
 public interface OAuth2ClientDao extends Dao<OAuth2Client> {
 
-    List<OAuth2Client> findByTenantId(UUID tenantId);
+    PageData<OAuth2Client> findByTenantId(UUID tenantId, PageLink pageLink);
 
     List<OAuth2Client> findEnabledByDomainName(String domainName);
 

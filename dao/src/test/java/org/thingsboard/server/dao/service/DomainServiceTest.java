@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 
@@ -91,16 +93,16 @@ public class DomainServiceTest extends AbstractServiceTest {
             Domain savedOauth2Client = domainService.saveDomain(SYSTEM_TENANT_ID, oAuth2Client);
             domains.add(savedOauth2Client);
         }
-        List<DomainInfo> retrieved = domainService.findDomainInfosByTenantId(TenantId.SYS_TENANT_ID);
+        PageData<DomainInfo> retrieved = domainService.findDomainInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10, 0));
         List<DomainInfo> domainInfos = domains.stream().map(domain -> new DomainInfo(domain, Collections.emptyList())).toList();
-        assertThat(retrieved).containsOnlyOnceElementsOf(domainInfos);
+        assertThat(retrieved.getData()).containsOnlyOnceElementsOf(domainInfos);
     }
 
     @Test
     public void tesGetDomainInfo() {
         OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "Test google client");
         OAuth2Client savedOauth2Client = oAuth2ClientService.saveOAuth2Client(SYSTEM_TENANT_ID, oAuth2Client);
-        List<OAuth2ClientInfo> infos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID);
+        PageData<OAuth2ClientInfo> infos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10));
 
         Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "test.domain.com", true, true);
         Domain savedDomain = domainService.saveDomain(SYSTEM_TENANT_ID, domain);
@@ -109,7 +111,7 @@ public class DomainServiceTest extends AbstractServiceTest {
 
         // check domain info
         DomainInfo retrievedInfo = domainService.findDomainInfoById(SYSTEM_TENANT_ID, savedDomain.getId());
-        assertThat(retrievedInfo).isEqualTo(new DomainInfo(savedDomain, infos));
+        assertThat(retrievedInfo).isEqualTo(new DomainInfo(savedDomain, infos.getData()));
 
         //find clients by domain name
         List<OAuth2ClientLoginInfo> oauth2LoginInfo = oAuth2ClientService.findOAuth2ClientLoginInfosByDomainName(savedDomain.getName());

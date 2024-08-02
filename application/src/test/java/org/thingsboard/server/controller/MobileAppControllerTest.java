@@ -20,23 +20,18 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
-import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -46,6 +41,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class MobileAppControllerTest extends AbstractControllerTest {
 
+    static final TypeReference<PageData<MobileAppInfo>> PAGE_DATA_MOBILE_APP_TYPE_REF = new TypeReference<>() {
+    };
+    static final TypeReference<PageData<OAuth2ClientInfo>> PAGE_DATA_OAUTH2_CLIENT_TYPE_REF = new TypeReference<>() {
+    };
+
     @Before
     public void setUp() throws Exception {
         loginSysAdmin();
@@ -53,16 +53,14 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @After
     public void tearDown() throws Exception {
-        List<MobileAppInfo> mobileAppInfos = doGetTyped("/api/mobileApp/infos", new TypeReference<List<MobileAppInfo>>() {
-        });
-        for (MobileApp mobileApp : mobileAppInfos) {
+        PageData<MobileAppInfo> pageData = doGetTypedWithPageLink("/api/mobileApp/infos?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        for (MobileApp mobileApp : pageData.getData()) {
             doDelete("/api/mobileApp/" + mobileApp.getId().getId())
                     .andExpect(status().isOk());
         }
 
-        List<OAuth2ClientInfo> oAuth2ClientInfos = doGetTyped("/api/oauth2/client/infos", new TypeReference<List<OAuth2ClientInfo>>() {
-        });
-        for (OAuth2ClientInfo oAuth2ClientInfo : oAuth2ClientInfos) {
+        PageData<OAuth2ClientInfo> clients = doGetTypedWithPageLink("/api/oauth2/client/infos?", PAGE_DATA_OAUTH2_CLIENT_TYPE_REF, new PageLink(10, 0));
+        for (OAuth2ClientInfo oAuth2ClientInfo : clients.getData()) {
             doDelete("/api/oauth2/client/" + oAuth2ClientInfo.getId().getId().toString())
                     .andExpect(status().isOk());
         }
@@ -70,17 +68,15 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveMobileApp() throws Exception {
-        List<MobileAppInfo> MobileAppInfos = doGetTyped("/api/mobileApp/infos", new TypeReference<List<MobileAppInfo>>() {
-        });
-        assertThat(MobileAppInfos).isEmpty();
+        PageData<MobileAppInfo> pageData = doGetTypedWithPageLink("/api/mobileApp/infos?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        assertThat(pageData.getData()).isEmpty();
 
         MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.test.package", true);
         MobileApp savedMobileApp = doPost("/api/mobileApp", mobileApp, MobileApp.class);
 
-        List<MobileAppInfo> MobileAppInfos2 = doGetTyped("/api/mobileApp/infos", new TypeReference<List<MobileAppInfo>>() {
-        });
-        assertThat(MobileAppInfos2).hasSize(1);
-        assertThat(MobileAppInfos2.get(0)).isEqualTo(new MobileAppInfo(savedMobileApp, Collections.emptyList()));
+        PageData<MobileAppInfo> pageData2 = doGetTypedWithPageLink("/api/mobileApp/infos?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        assertThat(pageData2.getData()).hasSize(1);
+        assertThat(pageData2.getData().get(0)).isEqualTo(new MobileAppInfo(savedMobileApp, Collections.emptyList()));
 
         MobileAppInfo retrievedMobileAppInfo = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());
         assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppInfo(savedMobileApp, Collections.emptyList()));

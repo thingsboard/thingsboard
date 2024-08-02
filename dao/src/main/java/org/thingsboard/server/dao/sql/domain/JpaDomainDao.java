@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.domain.DomainOauth2Client;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.domain.DomainDao;
 import org.thingsboard.server.dao.model.sql.DomainEntity;
@@ -54,8 +56,8 @@ public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implement
     }
 
     @Override
-    public List<Domain> findByTenantId(TenantId tenantId) {
-        return DaoUtil.convertDataList(domainRepository.findByTenantId(tenantId.getId()));
+    public PageData<Domain> findByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(domainRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

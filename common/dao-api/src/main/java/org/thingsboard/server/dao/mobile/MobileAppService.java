@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
@@ -32,7 +34,7 @@ public interface MobileAppService extends EntityDaoService {
 
     MobileApp findMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
-    List<MobileAppInfo> findMobileAppInfosByTenantId(TenantId tenantId);
+    PageData<MobileAppInfo> findMobileAppInfosByTenantId(TenantId tenantId, PageLink pageLink);
 
     MobileAppInfo findMobileAppInfoById(TenantId tenantId, MobileAppId mobileAppId);
 

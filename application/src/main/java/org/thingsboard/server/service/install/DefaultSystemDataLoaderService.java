@@ -308,7 +308,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             jwtSettingsService.saveJwtSettings(jwtSettings);
         }
 
-        List<MobileApp> mobiles = oAuth2MobileDao.findByTenantId(TenantId.SYS_TENANT_ID);
+        List<MobileApp> mobiles = oAuth2MobileDao.findByTenantId(TenantId.SYS_TENANT_ID, new PageLink(Integer.MAX_VALUE,0)).getData();
         if (CollectionUtils.isNotEmpty(mobiles)) {
             mobiles.stream()
                     .filter(config -> !validateKeyLength(config.getAppSecret()))

@@ -20,22 +20,17 @@ import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
-import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -45,6 +40,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class DomainControllerTest extends AbstractControllerTest {
 
+    static final TypeReference<PageData<DomainInfo>> PAGE_DATA_DOMAIN_TYPE_REF = new TypeReference<>() {
+    };
+    static final TypeReference<PageData<OAuth2ClientInfo>> PAGE_DATA_OAUTH2_CLIENT_TYPE_REF = new TypeReference<>() {
+    };
+
     @Before
     public void setUp() throws Exception {
         loginSysAdmin();
@@ -52,16 +52,14 @@ public class DomainControllerTest extends AbstractControllerTest {
 
     @After
     public void tearDown() throws Exception {
-        List<DomainInfo> domains = doGetTyped("/api/domain/infos", new TypeReference<List<DomainInfo>>() {
-        });
-        for (Domain domain : domains) {
+        PageData<DomainInfo> pageData = doGetTypedWithPageLink("/api/domain/infos?", PAGE_DATA_DOMAIN_TYPE_REF, new PageLink(10, 0));
+        for (Domain domain : pageData.getData()) {
             doDelete("/api/domain/" + domain.getId().getId())
                     .andExpect(status().isOk());
         }
 
-        List<OAuth2ClientInfo> oAuth2ClientInfos = doGetTyped("/api/oauth2/client/infos", new TypeReference<List<OAuth2ClientInfo>>() {
-        });
-        for (OAuth2ClientInfo oAuth2ClientInfo : oAuth2ClientInfos) {
+        PageData<OAuth2ClientInfo> clients = doGetTypedWithPageLink("/api/oauth2/client/infos?", PAGE_DATA_OAUTH2_CLIENT_TYPE_REF, new PageLink(10, 0));
+        for (OAuth2ClientInfo oAuth2ClientInfo : clients.getData()) {
             doDelete("/api/oauth2/client/" + oAuth2ClientInfo.getId().getId().toString())
                     .andExpect(status().isOk());
         }
@@ -69,17 +67,15 @@ public class DomainControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveDomain() throws Exception {
-        List<DomainInfo> domainInfos = doGetTyped("/api/domain/infos", new TypeReference<List<DomainInfo>>() {
-        });
-        assertThat(domainInfos).isEmpty();
+        PageData<DomainInfo> pageData = doGetTypedWithPageLink("/api/domain/infos?", PAGE_DATA_DOMAIN_TYPE_REF, new PageLink(10, 0));
+        assertThat(pageData.getData()).isEmpty();
 
         Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
-        List<DomainInfo> domainInfos2 = doGetTyped("/api/domain/infos", new TypeReference<List<DomainInfo>>() {
-        });
-        assertThat(domainInfos2).hasSize(1);
-        assertThat(domainInfos2.get(0)).isEqualTo(new DomainInfo(savedDomain, Collections.emptyList()));
+        PageData<DomainInfo> pageData2 = doGetTypedWithPageLink("/api/domain/infos?", PAGE_DATA_DOMAIN_TYPE_REF, new PageLink(10, 0));
+        assertThat(pageData2.getData()).hasSize(1);
+        assertThat(pageData2.getData().get(0)).isEqualTo(new DomainInfo(savedDomain, Collections.emptyList()));
 
         DomainInfo retrievedDomainInfo = doGet("/api/domain/info/{id}", DomainInfo.class, savedDomain.getId().getId());
         assertThat(retrievedDomainInfo).isEqualTo(new DomainInfo(savedDomain, Collections.emptyList()));

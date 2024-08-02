@@ -36,6 +36,8 @@ import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.domain.TbDomainService;
@@ -45,8 +47,11 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.List;
 import java.util.UUID;
 
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
+import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
-import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
@@ -91,8 +96,18 @@ public class DomainController extends BaseController {
     @ApiOperation(value = "Get Domain infos (getTenantDomainInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/domain/infos")
-    public List<DomainInfo> getTenantDomainInfos() throws ThingsboardException {
-        return domainService.findDomainInfosByTenantId(getTenantId());
+    public PageData<DomainInfo> getTenantDomainInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                     @RequestParam int pageSize,
+                                                     @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                     @RequestParam int page,
+                                                     @Parameter(description = "Case-insensitive 'substring' filter based on rule's name")
+                                                     @RequestParam(required = false) String textSearch,
+                                                     @Parameter(description = SORT_PROPERTY_DESCRIPTION)
+                                                     @RequestParam(required = false) String sortProperty,
+                                                     @Parameter(description = SORT_ORDER_DESCRIPTION)
+                                                     @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
+        return domainService.findDomainInfosByTenantId(getTenantId(), pageLink);
     }
 
     @ApiOperation(value = "Get Domain info by Id (getDomainInfoById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)

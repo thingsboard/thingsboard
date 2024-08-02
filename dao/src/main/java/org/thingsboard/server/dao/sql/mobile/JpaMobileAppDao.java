@@ -24,6 +24,8 @@ import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.model.sql.MobileAppEntity;
@@ -54,8 +56,8 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
     }
 
     @Override
-    public List<MobileApp> findByTenantId(TenantId tenantId) {
-        return DaoUtil.convertDataList(mobileAppRepository.findByTenantId(tenantId.getId()));
+    public PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(mobileAppRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

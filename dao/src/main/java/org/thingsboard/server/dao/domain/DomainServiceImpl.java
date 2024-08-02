@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -117,16 +119,16 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     }
 
     @Override
-    public List<DomainInfo> findDomainInfosByTenantId(TenantId tenantId) {
+    public PageData<DomainInfo> findDomainInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDomainInfosByTenantId [{}]", tenantId);
-        List<Domain> domains = domainDao.findByTenantId(tenantId);
+        PageData<Domain> pageData = domainDao.findByTenantId(tenantId, pageLink);
         List<DomainInfo> domainInfos = new ArrayList<>();
-        domains.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(domain -> {
+        pageData.getData().stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(domain -> {
             domainInfos.add(new DomainInfo(domain, oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
                     .map(OAuth2ClientInfo::new)
                     .collect(Collectors.toList())));
         });
-        return domainInfos;
+        return new PageData<>(domainInfos, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }
 
     @Override

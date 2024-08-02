@@ -20,6 +20,8 @@ import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
@@ -32,7 +34,7 @@ public interface DomainService extends EntityDaoService {
 
     Domain findDomainById(TenantId tenantId, DomainId domainId);
 
-    List<DomainInfo> findDomainInfosByTenantId(TenantId tenantId);
+    PageData<DomainInfo> findDomainInfosByTenantId(TenantId tenantId, PageLink pageLink);
 
     DomainInfo findDomainInfoById(TenantId tenantId, DomainId domainId);
 

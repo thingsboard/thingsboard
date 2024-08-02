@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.dao.sql.oauth2;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -27,7 +29,7 @@ import java.util.UUID;
 
 public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity, UUID> {
 
-    List<OAuth2ClientEntity> findByTenantId(@Param("tenantId") UUID tenantId);
+    Page<OAuth2ClientEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +

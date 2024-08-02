@@ -31,6 +31,8 @@ import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppInfo;
 import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -89,16 +91,16 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     }
 
     @Override
-    public List<MobileAppInfo> findMobileAppInfosByTenantId(TenantId tenantId) {
+    public PageData<MobileAppInfo> findMobileAppInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findMobileAppInfosByTenantId [{}]", tenantId);
-        List<MobileApp> mobileApps = mobileAppDao.findByTenantId(tenantId);
+        PageData<MobileApp> pageData = mobileAppDao.findByTenantId(tenantId, pageLink);
         List<MobileAppInfo> mobileAppInfos = new ArrayList<>();
-        mobileApps.stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(mobileApp -> {
+        pageData.getData().stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(mobileApp -> {
             mobileAppInfos.add(new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
                     .map(OAuth2ClientInfo::new)
                     .collect(Collectors.toList())));
         });
-        return mobileAppInfos;
+        return new PageData<>(mobileAppInfos, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }
 
     @Override

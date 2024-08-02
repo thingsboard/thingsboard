@@ -20,13 +20,15 @@ import org.thingsboard.server.common.data.domain.DomainOauth2Client;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.Dao;
 
 import java.util.List;
 
 public interface DomainDao extends Dao<Domain> {
 
-    List<Domain> findByTenantId(TenantId tenantId);
+    PageData<Domain> findByTenantId(TenantId tenantId, PageLink pageLink);
 
     int countDomainByTenantIdAndOauth2Enabled(TenantId tenantId, boolean oauth2Enabled);
 

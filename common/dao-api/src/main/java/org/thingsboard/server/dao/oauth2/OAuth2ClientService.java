@@ -21,6 +21,8 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
@@ -44,5 +46,5 @@ public interface OAuth2ClientService extends EntityDaoService {
 
     void deleteOauth2ClientsByTenantId(TenantId tenantId);
 
-    List<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId);
+    PageData<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId, PageLink pageLink);
 }

@@ -25,6 +25,8 @@ import org.thingsboard.server.common.data.mobile.MobileAppInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 
@@ -77,16 +79,16 @@ public class MobileAppServiceTest extends AbstractServiceTest {
             MobileApp savedOauth2Client = mobileAppService.saveMobileApp(SYSTEM_TENANT_ID, oAuth2Client);
             MobileApps.add(savedOauth2Client);
         }
-        List<MobileAppInfo> retrieved = mobileAppService.findMobileAppInfosByTenantId(TenantId.SYS_TENANT_ID);
+        PageData<MobileAppInfo> retrieved = mobileAppService.findMobileAppInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10, 0));
         List<MobileAppInfo> MobileAppInfos = MobileApps.stream().map(MobileApp -> new MobileAppInfo(MobileApp, Collections.emptyList())).toList();
-        assertThat(retrieved).containsOnlyOnceElementsOf(MobileAppInfos);
+        assertThat(retrieved.getData()).containsOnlyOnceElementsOf(MobileAppInfos);
     }
 
     @Test
     public void tesGetMobileAppInfo() {
         OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "Test google client");
         OAuth2Client savedOauth2Client = oAuth2ClientService.saveOAuth2Client(SYSTEM_TENANT_ID, oAuth2Client);
-        List<OAuth2ClientInfo> infos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID);
+        PageData<OAuth2ClientInfo> infos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10));
 
         MobileApp MobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.app", true);
         MobileApp savedMobileApp = mobileAppService.saveMobileApp(SYSTEM_TENANT_ID, MobileApp);
@@ -95,7 +97,7 @@ public class MobileAppServiceTest extends AbstractServiceTest {
 
         // check MobileApp info
         MobileAppInfo retrievedInfo = mobileAppService.findMobileAppInfoById(SYSTEM_TENANT_ID, savedMobileApp.getId());
-        assertThat(retrievedInfo).isEqualTo(new MobileAppInfo(savedMobileApp, infos));
+        assertThat(retrievedInfo).isEqualTo(new MobileAppInfo(savedMobileApp, infos.getData()));
 
         //find clients by MobileApp name
         List<OAuth2ClientLoginInfo> oauth2LoginInfo = oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(savedMobileApp.getName(), null);
