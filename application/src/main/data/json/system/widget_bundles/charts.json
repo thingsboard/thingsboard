@@ -21,7 +21,7 @@
     "doughnut",
     "horizontal_doughnut",
     "polar_area",
-    "charts.radar_chart_js",
+    "radar",
     "charts.basic_timeseries",
     "charts.state_chart",
     "charts.timeseries_bars_flot",
@@ -29,6 +29,7 @@
     "charts.pie",
     "charts.pie_chart_js",
     "charts.doughnut_chart_js",
-    "charts.polar_area_chart_js"
+    "charts.polar_area_chart_js",
+    "charts.radar_chart_js"
   ]
 }

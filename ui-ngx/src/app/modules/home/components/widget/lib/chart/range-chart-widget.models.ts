@@ -21,7 +21,8 @@ import {
   filterIncludingColorRanges,
   Font,
   simpleDateFormat,
-  sortedColorRange
+  sortedColorRange,
+  ValueSourceType
 } from '@shared/models/widget-settings.models';
 import { LegendPosition } from '@shared/models/widget.models';
 import {
@@ -33,13 +34,10 @@ import {
   timeSeriesChartGridDefaultSettings,
   TimeSeriesChartGridSettings,
   TimeSeriesChartKeySettings,
-  TimeSeriesChartLineType,
   TimeSeriesChartSeriesType,
   TimeSeriesChartSettings,
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
-  TimeSeriesChartThresholdType,
-  TimeSeriesChartTooltipWidgetSettings,
   TimeSeriesChartVisualMapPiece,
   TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
@@ -52,8 +50,12 @@ import {
   chartColorScheme,
   ChartFillType,
   ChartLabelPosition,
+  ChartLineType,
   ChartShape
 } from '@home/components/widget/lib/chart/chart.models';
+import {
+  TimeSeriesChartTooltipWidgetSettings
+} from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 
 export interface RangeItem {
   index: number;
@@ -78,7 +80,7 @@ export interface RangeChartWidgetSettings extends TimeSeriesChartTooltipWidgetSe
   step: boolean;
   stepType: LineSeriesStepType;
   smooth: boolean;
-  lineType: TimeSeriesChartLineType;
+  lineType: ChartLineType;
   lineWidth: number;
   showPoints: boolean;
   showPointLabel: boolean;
@@ -118,7 +120,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   rangeThreshold: mergeDeep({} as Partial<TimeSeriesChartThreshold>,
     timeSeriesChartThresholdDefaultSettings,
     { lineColor: '#37383b',
-      lineType: TimeSeriesChartLineType.dashed,
+      lineType: ChartLineType.dashed,
       startSymbol: ChartShape.circle,
       startSymbolSize: 5,
       endSymbol: ChartShape.arrow,
@@ -132,7 +134,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
   step: false,
   stepType: LineSeriesStepType.start,
   smooth: false,
-  lineType: TimeSeriesChartLineType.solid,
+  lineType: ChartLineType.solid,
   lineWidth: 2,
   showPoints: false,
   showPointLabel: false,
@@ -220,7 +222,7 @@ export const rangeChartDefaultSettings: RangeChartWidgetSettings = {
 export const rangeChartTimeSeriesSettings = (settings: RangeChartWidgetSettings, rangeItems: RangeItem[],
                                              decimals: number, units: string): DeepPartial<TimeSeriesChartSettings> => {
   let thresholds: DeepPartial<TimeSeriesChartThreshold>[] = settings.showRangeThresholds ? getMarkPoints(rangeItems).map(item => ({
-    ...{type: TimeSeriesChartThresholdType.constant,
+    ...{type: ValueSourceType.constant,
     yAxisId: 'default',
     units,
     decimals,

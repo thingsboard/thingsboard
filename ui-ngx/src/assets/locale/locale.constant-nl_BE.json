@@ -425,9 +425,9 @@
             "issuer-name": "Naam van de uitgever",
             "issuer-name-required": "De naam van de uitgever is vereist.",
             "signings-key": "Sleutel ondertekenen",
-            "signings-key-hint": "Base64-gecodeerde tekenreeks die ten minste 256 bits aan gegevens vertegenwoordigt.",
+            "signings-key-hint": "Base64-gecodeerde tekenreeks die ten minste 512 bits aan gegevens vertegenwoordigt.",
             "signings-key-required": "Ondertekeningssleutel is vereist.",
-            "signings-key-min-length": "De ondertekeningssleutel moet ten minste 256 bits aan gegevens bevatten.",
+            "signings-key-min-length": "De ondertekeningssleutel moet ten minste 512 bits aan gegevens bevatten.",
             "signings-key-base64": "De ondertekeningssleutel moet de base64-indeling hebben.",
             "expiration-time": "Vervaltijd token (sec)",
             "expiration-time-required": "De vervaltijd van het token is vereist.",
@@ -1857,7 +1857,7 @@
             "short-id": "Korte server-ID",
             "short-id-tooltip": "Server-id kort Id. Wordt gebruikt als koppeling naar het Object-exemplaar van de koppeling.\nDeze id identificeert elke LwM2M-server die is geconfigureerd voor de LwM2M-client op unieke wijze.\nResource MOET worden ingesteld wanneer de Bootstrap-Server Resource een waarde van 'false' heeft.\nDe waarden ID:0 en ID:65535 mogen NIET worden gebruikt voor het identificeren van de LwM2M-server.",
             "short-id-required": "Een korte server-ID is vereist.",
-            "short-id-range": "Korte server-ID moet tussen 1 en 65534 liggen.",
+            "short-id-range": "Korte server-ID moet tussen {{ min }} en {{ max }} liggen.",
             "short-id-pattern": "Korte server-ID moet een positief geheel getal zijn.",
             "lifetime": "Levensduur klantregistratie",
             "lifetime-required": "Levenslange registratie van klanten is vereist.",
@@ -1935,8 +1935,7 @@
                 "step": "Stap",
                 "min-evaluation-period": "Minimale evaluatieperiode",
                 "max-evaluation-period": "Maximale evaluatieperiode"
-            },
-            "composite-operations-support": "Ondersteunt samengestelde lees-/schrijf-/observatiebewerkingen"
+            }
         },
         "snmp": {
             "add-communication-config": "Communicatieconfiguratie toevoegen",

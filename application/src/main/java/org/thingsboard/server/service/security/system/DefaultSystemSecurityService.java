@@ -18,6 +18,8 @@ package org.thingsboard.server.service.security.system;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.Resource;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.passay.CharacterRule;
 import org.passay.EnglishCharacterData;
@@ -57,13 +59,10 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.dao.user.UserServiceImpl;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.exception.UserPasswordExpiredException;
-import org.thingsboard.server.service.security.exception.UserPasswordNotValidException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.utils.MiscUtils;
 import ua_parser.Client;
 
-import jakarta.annotation.Resource;
-import jakarta.servlet.http.HttpServletRequest;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -74,6 +73,8 @@ import static org.thingsboard.server.common.data.CacheConstants.SECURITY_SETTING
 @Service
 @Slf4j
 public class DefaultSystemSecurityService implements SystemSecurityService {
+
+    public static final int DEFAULT_MOBILE_SECRET_KEY_LENGTH = 64;
 
     @Autowired
     private AdminSettingsService adminSettingsService;
@@ -109,6 +110,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             securitySettings.setPasswordPolicy(new UserPasswordPolicy());
             securitySettings.getPasswordPolicy().setMinimumLength(6);
             securitySettings.getPasswordPolicy().setMaximumLength(72);
+            securitySettings.setMobileSecretKeyLength(DEFAULT_MOBILE_SECRET_KEY_LENGTH);
         }
         return securitySettings;
     }

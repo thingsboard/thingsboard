@@ -40,12 +40,14 @@
     <div fxFlex class="table-container">
       <table mat-table [dataSource]="entityDatasource" [trackBy]="trackByEntityId"
                  matSort [matSortActive]="sortOrderProperty" [matSortDirection]="pageLinkSortDirection()" matSortDisableClear>
-        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; trackBy: trackByColumnDef;">
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of columns; let $index = index; trackBy: trackByColumnDef;">
           <mat-header-cell [ngStyle]="headerStyle(column)" *matHeaderCellDef mat-sort-header [disabled]="!column.sortable"> {{ column.title }} </mat-header-cell>
-          <mat-cell *matCellDef="let entity; let row = index"
-                    [innerHTML]="cellContent(entity, column, row)"
-                    [ngStyle]="cellStyle(entity, column, row)">
-          </mat-cell>
+            <mat-cell *matCellDef="let entity; let row = index"
+                      [innerHTML]="cellContent(entity, column, row)"
+                      [ngStyle]="cellStyle(entity, column, row)"
+                      (click)="onCellClick($event, entity, column, $index)"
+                      [class.tb-pointer]="columnHasCellClick($index)">
+            </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" [stickyEnd]="enableStickyAction">
           <mat-header-cell *matHeaderCellDef [ngStyle.gt-md]="{ minWidth: (entityDatasource.countCellButtonAction * 48) + 'px',

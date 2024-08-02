@@ -105,9 +105,10 @@ public class MobileAppNotificationChannel implements NotificationChannel<User, M
                 firebaseService.sendMessage(ctx.getTenantId(), credentials, token, subject, body, data, unreadCount);
             } catch (FirebaseMessagingException e) {
                 MessagingErrorCode errorCode = e.getMessagingErrorCode();
-                if (errorCode == MessagingErrorCode.UNREGISTERED || errorCode == MessagingErrorCode.INVALID_ARGUMENT) {
+                if (errorCode == MessagingErrorCode.UNREGISTERED || errorCode == MessagingErrorCode.INVALID_ARGUMENT || errorCode == MessagingErrorCode.SENDER_ID_MISMATCH) {
                     validTokens.remove(token);
                     userService.removeMobileSession(recipient.getTenantId(), token);
+                    log.debug("[{}][{}] Removed invalid FCM token due to {} {} ({})", recipient.getTenantId(), recipient.getId(), errorCode, e.getMessage(), token);
                     continue;
                 }
                 throw new RuntimeException("Failed to send message via FCM: " + e.getMessage(), e);

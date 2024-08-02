@@ -70,7 +70,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.deviceId = deviceId;
     }
 
-    @Schema(description = "Type of the credentials", allowableValues ="ACCESS_TOKEN, X509_CERTIFICATE, MQTT_BASIC, LWM2M_CREDENTIALS")
+    @Schema(description = "Type of the credentials", allowableValues = {"ACCESS_TOKEN", "X509_CERTIFICATE", "MQTT_BASIC", "LWM2M_CREDENTIALS"})
     @Override
     public DeviceCredentialsType getCredentialsType() {
         return credentialsType;

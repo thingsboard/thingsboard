@@ -386,8 +386,7 @@ export class UtilsService {
       this.window.performance.now() : Date.now();
   }
 
-  public getQueryParam(name: string): string {
-    const url = this.window.location.href;
+  public getQueryParam(name: string, url = this.window.location.href): string {
     name = name.replace(/[\[\]]/g, '\\$&');
     const regex = new RegExp('[?&]' + name + '(=([^&#]*)|&|#|$)');
     const results = regex.exec(url);
@@ -455,6 +454,10 @@ export class UtilsService {
 
   public isDefined(value: any): boolean {
     return isDefined(value);
+  }
+
+  public isDefinedAndNotNull(value: any): boolean {
+    return isDefinedAndNotNull(value);
   }
 
   public defaultValue(value: any, defaultValue: any): any {

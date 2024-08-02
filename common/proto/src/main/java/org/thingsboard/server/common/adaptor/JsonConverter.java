@@ -466,6 +466,13 @@ public class JsonConverter {
         return result;
     }
 
+    public static JsonObject toGatewayDeviceDisconnectJson(String deviceName, int reasonCode) {
+        JsonObject result = new JsonObject();
+        result.addProperty(DEVICE_PROPERTY, deviceName);
+        result.addProperty("reason", reasonCode);
+        return result;
+    }
+
     public static JsonElement toErrorJson(String errorMsg) {
         JsonObject error = new JsonObject();
         error.addProperty("error", errorMsg);
@@ -590,11 +597,11 @@ public class JsonConverter {
         return GSON.fromJson(element, type);
     }
 
-    public static void setTypeCastEnabled(boolean enabled) {
+    static void setTypeCastEnabled(boolean enabled) {
         isTypeCastEnabled = enabled;
     }
 
-    public static void setMaxStringValueLength(int length) {
+    static void setMaxStringValueLength(int length) {
         maxStringValueLength = length;
     }
 

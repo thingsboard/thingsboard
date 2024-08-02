@@ -21,11 +21,11 @@ import org.eclipse.californium.core.coap.CoAP;
 import org.eclipse.californium.core.coap.Response;
 import org.eclipse.californium.core.observe.ObserveRelation;
 import org.eclipse.californium.core.server.resources.CoapExchange;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerContext;
+import org.thingsboard.server.coapserver.TbCoapTransportComponent;
 import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -81,7 +81,7 @@ import static org.eclipse.californium.core.coap.Message.NONE;
 
 @Slf4j
 @Service
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.coap.enabled}'=='true')")
+@TbCoapTransportComponent
 public class DefaultCoapClientContext implements CoapClientContext {
 
     private final CoapServerContext config;
@@ -266,7 +266,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
             }
             if (psmActivityTimer == null || psmActivityTimer == 0L) {
-                psmActivityTimer = config.getPsmActivityTimer();
+                psmActivityTimer = transportContext.getPsmActivityTimer();
             }
 
             timeout = psmActivityTimer;
@@ -277,7 +277,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
             }
             if (pagingTransmissionWindow == null || pagingTransmissionWindow == 0L) {
-                pagingTransmissionWindow = config.getPagingTransmissionWindow();
+                pagingTransmissionWindow = transportContext.getPagingTransmissionWindow();
             }
             timeout = pagingTransmissionWindow;
         }
@@ -757,7 +757,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
                 }
                 if (psmActivityTimer == null || psmActivityTimer == 0L) {
-                    psmActivityTimer = config.getPsmActivityTimer();
+                    psmActivityTimer = transportContext.getPsmActivityTimer();
                 }
                 return timeSinceLastUplink <= psmActivityTimer;
             } else {
@@ -767,7 +767,7 @@ public class DefaultCoapClientContext implements CoapClientContext {
 
                 }
                 if (pagingTransmissionWindow == null || pagingTransmissionWindow == 0L) {
-                    pagingTransmissionWindow = config.getPagingTransmissionWindow();
+                    pagingTransmissionWindow = transportContext.getPagingTransmissionWindow();
                 }
                 boolean allowed = timeSinceLastUplink <= pagingTransmissionWindow;
                 if (!allowed) {

@@ -14,148 +14,48 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
-import {
-  legendPositions,
-  legendPositionTranslationMap,
-  WidgetSettings,
-  WidgetSettingsComponent
-} from '@shared/models/widget.models';
+import { Component, TemplateRef, ViewChild } from '@angular/core';
+import { WidgetSettings } from '@shared/models/widget.models';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
-import {
-  LatestChartTooltipValueType,
-  latestChartTooltipValueTypes,
-  latestChartTooltipValueTypeTranslations
-} from '@home/components/widget/lib/chart/latest-chart.models';
 import {
   polarAreaChartWidgetDefaultSettings,
   PolarAreaChartWidgetSettings
 } from '@home/components/widget/lib/chart/polar-area-widget.models';
+import {
+  LatestChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/latest-chart-widget-settings.component';
 
 @Component({
   selector: 'tb-polar-area-chart-widget-settings',
-  templateUrl: './polar-area-chart-widget-settings.component.html',
-  styleUrls: []
+  templateUrl: './latest-chart-widget-settings.component.html',
+  styleUrls: ['./../widget-settings.scss']
 })
-export class PolarAreaChartWidgetSettingsComponent extends WidgetSettingsComponent {
+export class PolarAreaChartWidgetSettingsComponent extends LatestChartWidgetSettingsComponent<PolarAreaChartWidgetSettings> {
 
-  legendPositions = legendPositions;
-
-  legendPositionTranslationMap = legendPositionTranslationMap;
-
-  latestChartTooltipValueTypes = latestChartTooltipValueTypes;
-
-  latestChartTooltipValueTypeTranslationMap = latestChartTooltipValueTypeTranslations;
-
-  polarAreaChartWidgetSettingsForm: UntypedFormGroup;
-
-  valuePreviewFn = this._valuePreviewFn.bind(this);
-
-  tooltipValuePreviewFn = this._tooltipValuePreviewFn.bind(this);
+  @ViewChild('polarAreaChart')
+  polarAreaChartConfigTemplate: TemplateRef<any>;
 
   constructor(protected store: Store<AppState>,
-              private fb: UntypedFormBuilder) {
-    super(store);
+              protected fb: UntypedFormBuilder) {
+    super(store, fb);
   }
 
-  protected settingsForm(): UntypedFormGroup {
-    return this.polarAreaChartWidgetSettingsForm;
+  protected defaultLatestChartSettings() {
+    return polarAreaChartWidgetDefaultSettings;
   }
 
-  protected defaultSettings(): WidgetSettings {
-    return mergeDeep<PolarAreaChartWidgetSettings>({} as PolarAreaChartWidgetSettings, polarAreaChartWidgetDefaultSettings);
+  public latestChartConfigTemplate(): TemplateRef<any> {
+    return this.polarAreaChartConfigTemplate;
   }
 
-  protected onSettingsSet(settings: WidgetSettings) {
-    this.polarAreaChartWidgetSettingsForm = this.fb.group({
-
-      sortSeries: [settings.sortSeries, []],
-
-      barSettings: [settings.barSettings, []],
-
-      axisMin: [settings.axisMin, []],
-      axisMax: [settings.axisMax, []],
-      axisTickLabelFont: [settings.axisTickLabelFont, []],
-      axisTickLabelColor: [settings.axisTickLabelColor, []],
-      angleAxisStartAngle: [settings.angleAxisStartAngle, [Validators.min(0), Validators.max(360)]],
-
-      animation: [settings.animation, []],
-
-      showLegend: [settings.showLegend, []],
-      legendPosition: [settings.legendPosition, []],
-      legendLabelFont: [settings.legendLabelFont, []],
-      legendLabelColor: [settings.legendLabelColor, []],
-      legendValueFont: [settings.legendValueFont, []],
-      legendValueColor: [settings.legendValueColor, []],
-
-      showTooltip: [settings.showTooltip, []],
-      tooltipValueType: [settings.tooltipValueType, []],
-      tooltipValueDecimals: [settings.tooltipValueDecimals, []],
-      tooltipValueFont: [settings.tooltipValueFont, []],
-      tooltipValueColor: [settings.tooltipValueColor, []],
-      tooltipBackgroundColor: [settings.tooltipBackgroundColor, []],
-      tooltipBackgroundBlur: [settings.tooltipBackgroundBlur, []],
-
-      background: [settings.background, []]
-    });
+  protected setupLatestChartControls(latestChartWidgetSettingsForm: UntypedFormGroup, settings: WidgetSettings) {
+    latestChartWidgetSettingsForm.addControl('barSettings', this.fb.control(settings.barSettings, []));
+    latestChartWidgetSettingsForm.addControl('axisMin', this.fb.control(settings.axisMin, []));
+    latestChartWidgetSettingsForm.addControl('axisMax', this.fb.control(settings.axisMax, []));
+    latestChartWidgetSettingsForm.addControl('axisTickLabelFont', this.fb.control(settings.axisTickLabelFont, []));
+    latestChartWidgetSettingsForm.addControl('axisTickLabelColor', this.fb.control(settings.axisTickLabelColor, [Validators.min(0)]));
+    latestChartWidgetSettingsForm.addControl('angleAxisStartAngle', this.fb.control(settings.angleAxisStartAngle, []));
   }
-
-  protected validatorTriggers(): string[] {
-    return ['showLegend', 'showTooltip'];
-  }
-
-  protected updateValidators(emitEvent: boolean) {
-    const showLegend: boolean = this.polarAreaChartWidgetSettingsForm.get('showLegend').value;
-    const showTooltip: boolean = this.polarAreaChartWidgetSettingsForm.get('showTooltip').value;
-
-    if (showLegend) {
-      this.polarAreaChartWidgetSettingsForm.get('legendPosition').enable();
-      this.polarAreaChartWidgetSettingsForm.get('legendLabelFont').enable();
-      this.polarAreaChartWidgetSettingsForm.get('legendLabelColor').enable();
-      this.polarAreaChartWidgetSettingsForm.get('legendValueFont').enable();
-      this.polarAreaChartWidgetSettingsForm.get('legendValueColor').enable();
-    } else {
-      this.polarAreaChartWidgetSettingsForm.get('legendPosition').disable();
-      this.polarAreaChartWidgetSettingsForm.get('legendLabelFont').disable();
-      this.polarAreaChartWidgetSettingsForm.get('legendLabelColor').disable();
-      this.polarAreaChartWidgetSettingsForm.get('legendValueFont').disable();
-      this.polarAreaChartWidgetSettingsForm.get('legendValueColor').disable();
-    }
-    if (showTooltip) {
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueType').enable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueDecimals').enable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueFont').enable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueColor').enable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipBackgroundColor').enable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipBackgroundBlur').enable();
-    } else {
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueType').disable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueDecimals').disable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueFont').disable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipValueColor').disable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipBackgroundColor').disable();
-      this.polarAreaChartWidgetSettingsForm.get('tooltipBackgroundBlur').disable();
-    }
-  }
-
-  private _valuePreviewFn(): string {
-    const units: string = this.widgetConfig.config.units;
-    const decimals: number = this.widgetConfig.config.decimals;
-    return formatValue(110, decimals, units, false);
-  }
-
-  private _tooltipValuePreviewFn(): string {
-    const tooltipValueType: LatestChartTooltipValueType = this.polarAreaChartWidgetSettingsForm.get('tooltipValueType').value;
-    const decimals: number = this.polarAreaChartWidgetSettingsForm.get('tooltipValueDecimals').value;
-    if (tooltipValueType === LatestChartTooltipValueType.percentage) {
-      return formatValue(35, decimals, '%', false);
-    } else {
-      const units: string = this.widgetConfig.config.units;
-      return formatValue(110, decimals, units, false);
-    }
-  }
-
 }

@@ -21,6 +21,5 @@ import lombok.Data;
 public abstract class TbAbstractCustomerActionNodeConfiguration {
 
     private String customerNamePattern;
-    private long customerCacheExpiration;
 
 }

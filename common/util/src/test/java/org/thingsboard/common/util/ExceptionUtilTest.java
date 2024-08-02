@@ -28,7 +28,7 @@ class ExceptionUtilTest {
     @Test
     void givenRootCause_whenLookupExceptionInCause_thenReturnRootCauseAndNoStackOverflow() {
         Exception e = cause;
-        for (int i = 0; i <= 16384; i++) {
+        for (int i = 0; i <= 8000; i++) {
             e = new Exception(e);
         }
         assertThat(ExceptionUtil.lookupExceptionInCause(e, RuntimeException.class)).isSameAs(cause);

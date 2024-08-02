@@ -21,6 +21,7 @@ import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
 
+import java.io.Serial;
 import java.util.Map;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -28,6 +29,7 @@ import java.util.stream.Collectors;
 @ToString(callSuper = true)
 public class PartitionChangeEvent extends TbApplicationEvent {
 
+    @Serial
     private static final long serialVersionUID = -8731788167026510559L;
 
     @Getter

@@ -1260,7 +1260,7 @@
       "mode": "Güvenlik yapılandırma modu",
       "short-id": "Kısa ID",
       "short-id-required": "Kısa ID gerekli.",
-      "short-id-range": "Kısa ID 1 ile 65534 aralığında olmalıdır.",
+      "short-id-range": "Kısa ID {{ min }} ile {{ max }} aralığında olmalıdır.",
       "short-id-pattern": "Kısa ID pozitif bir tam sayı olmalıdır.",
       "lifetime": "İstemci kayıt ömrü",
       "lifetime-required": "İstemci kayıt ömrü gerekli.",
@@ -1316,8 +1316,7 @@
         "step": "Adım",
         "min-evaluation-period": "Minimum değerlendirme süresi",
         "max-evaluation-period": "Maksimum değerlendirme süresi"
-      },
-      "composite-operations-support": "İç içe Okuma/Yazma/Gözlemleme işlemlerini destekler"
+      }
     },
     "snmp": {
       "add-communication-config": "İletişim yapılandırması ekle",

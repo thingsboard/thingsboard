@@ -52,7 +52,9 @@ public class DefaultTbTenantService extends AbstractTbEntityService implements T
         Tenant savedTenant = tenantService.saveTenant(tenant, tenantId -> {
             installScripts.createDefaultRuleChains(tenantId);
             installScripts.createDefaultEdgeRuleChains(tenantId);
-            installScripts.createDefaultTenantDashboards(tenantId, null);
+            if (!isTestProfile()) {
+                installScripts.createDefaultTenantDashboards(tenantId, null);
+            }
         });
         tenantProfileCache.evict(savedTenant.getId());
 

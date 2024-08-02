@@ -431,9 +431,9 @@
             "issuer-name": "Nombre del emisor",
             "issuer-name-required": "Se requiere nombre del emisor.",
             "signings-key": "Clave de firma",
-            "signings-key-hint": "Una string codificada en Base64 representando por lo menos 256 bits de datos.",
+            "signings-key-hint": "Una string codificada en Base64 representando por lo menos 512 bits de datos.",
             "signings-key-required": "Se requiere clave de firma.",
-            "signings-key-min-length": "La clave de firma debe tener al menos 256 bits de datos.",
+            "signings-key-min-length": "La clave de firma debe tener al menos 512 bits de datos.",
             "signings-key-base64": "La clave de firma debe estar en formato base64.",
             "expiration-time": "Caducidad del token (en segundos)",
             "expiration-time-required": "Se requiere caducidad del token.",
@@ -1757,7 +1757,7 @@
             "short-id": "Short server ID",
             "short-id-tooltip": "Id corto del servidor. Usado como enlace para asociar las instancias de objetos del servidor.\nEste identificador sirve para identificar únicamente cada servidor LwM2M configurado para el cliente LwM2M.\nLos recursos DEBEN ser ajustados cuando el servidor Bootstrap tenga un valor de 'false'.\nLos valores ID:0 and ID:65535 NO DEBEN ser usados para identificar al servidor LwM2M.",
             "short-id-required": "Se requiere Short server ID.",
-            "short-id-range": "Short server ID debe estar en un rango de 1 a 65534.",
+            "short-id-range": "Short server ID debe estar en un rango de {{ min }} a {{ max }}.",
             "short-id-pattern": "Short server ID debe ser un número entero positivo.",
             "lifetime": "Ciclo de vida registro de cliente (Registration Lifetime)",
             "lifetime-required": "Se requiere ciclo de vida.",
@@ -1835,8 +1835,7 @@
                 "step": "Paso",
                 "min-evaluation-period": "Período mínimo de evaluación",
                 "max-evaluation-period": "Período máximo de evaluación"
-            },
-            "composite-operations-support": "Soporta operaciones Lectura/Escritura/Observación Compuestas"
+            }
         },
         "snmp": {
             "add-communication-config": "Añadir configuración de comunicaciones",

@@ -1632,7 +1632,7 @@
             "short-id": "Identificador curt del servidor",
             "short-id-tooltip": "Identificador curt del servidor. S'utilitza com a enllaç a la instància d'objecte del servidor associada.\nAquest identificador identifica de manera única cada servidor LwM2M configurat per al client LwM2M.\nEl recurs S'HA d'establir quan el recurs del servidor Bootstrap té un valor 'fals'.\nEls valors ID:0 i ID :65535 NO S'HAN d'utilitzar per identificar el servidor LwM2M.",
             "short-id-required": "Cal identificador curt del servidor.",
-            "short-id-range": "L'identificador de servidor curt hauria d'estar entre 1 i 65534.",
+            "short-id-range": "L'identificador de servidor curt hauria d'estar entre {{ min }} i {{ max }}.",
             "short-id-pattern": "L'identificador de servidor curt ha de ser un nombre enter positiu.",
             "lifetime": "Vida útil del registre del client",
             "lifetime-required": "Cal vida útil del registre del client.",
@@ -1710,8 +1710,7 @@
                 "step": "Pas",
                 "min-evaluation-period": "Període mínim d'avaluació",
                 "max-evaluation-period": "Període màxim d'avaluació"
-            },
-            "composite-operations-support": "Admet operacions compostes de lectura/escriptura/observació"
+            }
         },
         "snmp": {
             "add-communication-config": "Afegeix la configuració de comunicació",

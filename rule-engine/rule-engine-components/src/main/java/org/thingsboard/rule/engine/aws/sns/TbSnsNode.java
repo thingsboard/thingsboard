@@ -35,8 +35,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.concurrent.ExecutionException;
-
 import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
@@ -81,34 +79,34 @@ public class TbSnsNode extends TbAbstractExternalNode {
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+    public void onMsg(TbContext ctx, TbMsg msg) {
         var tbMsg = ackIfNeeded(ctx, msg);
         withCallback(publishMessageAsync(ctx, tbMsg),
                 m -> tellSuccess(ctx, m),
-                t -> tellFailure(ctx, processException(ctx, tbMsg, t), t));
+                t -> tellFailure(ctx, processException(tbMsg, t), t));
     }
 
     private ListenableFuture<TbMsg> publishMessageAsync(TbContext ctx, TbMsg msg) {
-        return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(ctx, msg));
+        return ctx.getExternalCallExecutor().executeAsync(() -> publishMessage(msg));
     }
 
-    private TbMsg publishMessage(TbContext ctx, TbMsg msg) {
+    private TbMsg publishMessage(TbMsg msg) {
         String topicArn = TbNodeUtils.processPattern(this.config.getTopicArnPattern(), msg);
         PublishRequest publishRequest = new PublishRequest()
                 .withTopicArn(topicArn)
                 .withMessage(msg.getData());
         PublishResult result = this.snsClient.publish(publishRequest);
-        return processPublishResult(ctx, msg, result);
+        return processPublishResult(msg, result);
     }
 
-    private TbMsg processPublishResult(TbContext ctx, TbMsg origMsg, PublishResult result) {
+    private TbMsg processPublishResult(TbMsg origMsg, PublishResult result) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(MESSAGE_ID, result.getMessageId());
         metaData.putValue(REQUEST_ID, result.getSdkResponseMetadata().getRequestId());
         return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private TbMsg processException(TbContext ctx, TbMsg origMsg, Throwable t) {
+    private TbMsg processException(TbMsg origMsg, Throwable t) {
         TbMsgMetaData metaData = origMsg.getMetaData().copy();
         metaData.putValue(ERROR, t.getClass() + ": " + t.getMessage());
         return TbMsg.transformMsgMetadata(origMsg, metaData);

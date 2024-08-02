@@ -92,8 +92,8 @@
           <div translate>widgets.time-series-chart.line-type</div>
           <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="lineType">
-              <mat-option *ngFor="let lineType of timeSeriesLineTypes" [value]="lineType">
-                {{ timeSeriesLineTypeTranslations.get(lineType) | translate }}
+              <mat-option *ngFor="let lineType of chartLineTypes" [value]="lineType">
+                {{ chartLineTypeTranslations.get(lineType) | translate }}
               </mat-option>
             </mat-select>
           </mat-form-field>

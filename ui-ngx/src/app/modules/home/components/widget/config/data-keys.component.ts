@@ -532,10 +532,11 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
         {
-          color: key.color
+          color: key.color,
+          colorCancelButton: true
         },
         {},
-        {}, {}, true);
+        {}, {}, false, () => {}, {padding: '12px 4px 12px 12px'});
       colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
       colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
         colorPickerPopover.hide();

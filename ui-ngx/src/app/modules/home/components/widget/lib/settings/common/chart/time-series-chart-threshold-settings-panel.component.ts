@@ -20,8 +20,6 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import {
   TimeSeriesChartThreshold,
   TimeSeriesChartYAxisId,
-  timeSeriesLineTypes,
-  timeSeriesLineTypeTranslations,
   timeSeriesThresholdLabelPositions,
   timeSeriesThresholdLabelPositionTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
@@ -29,7 +27,12 @@ import { merge } from 'rxjs';
 import { WidgetConfig } from '@shared/models/widget.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { ChartShape, chartShapes, chartShapeTranslations } from '@home/components/widget/lib/chart/chart.models';
+import {
+  chartLineTypes, chartLineTypeTranslations,
+  ChartShape,
+  chartShapes,
+  chartShapeTranslations
+} from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-time-series-chart-threshold-settings-panel',
@@ -40,9 +43,9 @@ import { ChartShape, chartShapes, chartShapeTranslations } from '@home/component
 })
 export class TimeSeriesChartThresholdSettingsPanelComponent implements OnInit {
 
-  timeSeriesLineTypes = timeSeriesLineTypes;
+  chartLineTypes = chartLineTypes;
 
-  timeSeriesLineTypeTranslations = timeSeriesLineTypeTranslations;
+  chartLineTypeTranslations = chartLineTypeTranslations;
 
   chartShapes = chartShapes;
 

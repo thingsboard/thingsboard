@@ -25,7 +25,7 @@ import {
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { formatValue, mergeDeep } from '@core/utils';
+import { formatValue, mergeDeepIgnoreArray } from '@core/utils';
 import {
   rangeChartDefaultSettings,
   RangeChartWidgetSettings
@@ -33,11 +33,16 @@ import {
 import { DateFormatProcessor, DateFormatSettings } from '@shared/models/widget-settings.models';
 import {
   lineSeriesStepTypes,
-  lineSeriesStepTypeTranslations,
-  timeSeriesLineTypes,
-  timeSeriesLineTypeTranslations
+  lineSeriesStepTypeTranslations
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { chartLabelPositions, chartLabelPositionTranslations, chartShapes, chartShapeTranslations } from '@home/components/widget/lib/chart/chart.models';
+import {
+  chartLabelPositions,
+  chartLabelPositionTranslations,
+  chartLineTypes,
+  chartLineTypeTranslations,
+  chartShapes,
+  chartShapeTranslations
+} from '@home/components/widget/lib/chart/chart.models';
 
 @Component({
   selector: 'tb-range-chart-widget-settings',
@@ -59,9 +64,9 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
 
   lineSeriesStepTypeTranslations = lineSeriesStepTypeTranslations;
 
-  timeSeriesLineTypes = timeSeriesLineTypes;
+  chartLineTypes = chartLineTypes;
 
-  timeSeriesLineTypeTranslations = timeSeriesLineTypeTranslations;
+  chartLineTypeTranslations = chartLineTypeTranslations;
 
   chartLabelPositions = chartLabelPositions;
 
@@ -94,7 +99,7 @@ export class RangeChartWidgetSettingsComponent extends WidgetSettingsComponent {
   }
 
   protected defaultSettings(): WidgetSettings {
-    return mergeDeep<RangeChartWidgetSettings>({} as RangeChartWidgetSettings, rangeChartDefaultSettings);
+    return mergeDeepIgnoreArray<RangeChartWidgetSettings>({} as RangeChartWidgetSettings, rangeChartDefaultSettings);
   }
 
   protected onSettingsSet(settings: WidgetSettings) {

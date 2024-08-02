@@ -204,6 +204,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnsWithCellClick: Array<number> = [];
 
   private rowStylesInfo: RowStyleInfo;
 
@@ -321,6 +322,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
+  public onEditModeChanged() {
+    if (this.textSearchMode || this.enableSelection && this.alarmsDatasource.selection.hasValue()) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
+  }
+
   public pageLinkSortDirection(): SortDirection {
     return entityDataPageLinkSortDirection(this.pageLink);
   }
@@ -351,6 +359,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : false;
     this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
+    this.columnsWithCellClick = this.ctx.actionsApi.getActionDescriptors('cellClick').map(action => action.columnIndex);
     let enableFilter;
     if (isDefined(this.settings.enableFilter)) {
       enableFilter = this.settings.enableFilter;
@@ -487,7 +496,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys, this.ngZone, this.ctx, actionCellDescriptors);
     if (this.enableSelection) {
       this.alarmsDatasource.selectionModeChanged$.subscribe((selectionMode) => {
-        const hideTitlePanel = selectionMode || this.textSearchMode;
+        const hideTitlePanel = selectionMode || this.textSearchMode && !this.ctx.isEdit;
         if (this.ctx.hideTitlePanel !== hideTitlePanel) {
           this.ctx.hideTitlePanel = hideTitlePanel;
           this.ctx.detectChanges(true);
@@ -785,6 +794,33 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       this.cellContentCache[index] = res;
     }
     return res;
+  }
+
+  public onCellClick($event: Event, alarm: AlarmDataInfo, key: EntityColumn, columnIndex: number) {
+    this.alarmsDatasource.toggleCurrentAlarm(alarm);
+    const descriptors = this.ctx.actionsApi.getActionDescriptors('cellClick');
+    let descriptor;
+    if (descriptors.length) {
+      descriptor = descriptors.find(desc => desc.columnIndex === columnIndex);
+    }
+    if ($event && descriptor) {
+      $event.stopPropagation();
+      let entityId;
+      let entityName;
+      let entityLabel;
+      if (alarm && alarm.originator) {
+        entityId = alarm.originator;
+        entityName = alarm.entityName;
+        entityLabel = alarm.entityLabel;
+      }
+      this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, {alarm, key}, entityLabel);
+    }
+  }
+
+  public columnHasCellClick(columnIndex: number) {
+    if (this.columnsWithCellClick.length) {
+      return this.columnsWithCellClick.includes(columnIndex);
+    }
   }
 
   public onRowClick($event: Event, alarm: AlarmDataInfo) {

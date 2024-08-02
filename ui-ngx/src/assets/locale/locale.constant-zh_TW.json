@@ -1432,7 +1432,7 @@
             "short-id": "短伺服器ID",
             "short-id-tooltip": "短伺服器ID。用作關聯伺服器物件實例的鏈接。 \n此標識符唯一標識為LwM2M伺服器客戶端配置的每個LwM2M 伺服器。\n當引導伺服器資源的值為'false'時，必須設置資源。\nID:0值和ID:65535值不得用於識別LwM2M伺服器。.",
             "short-id-required": "短伺服器ID必填",
-            "short-id-range": "短伺服器ID長度需介於1到65534。",
+            "short-id-range": "短伺服器ID長度需介於{{ min }}到{{ max }}。",
             "short-id-pattern": "短伺服器ID需為正整數",
             "lifetime": "客戶登記使用期限",
             "lifetime-required": "客戶登記使用期限必填",
@@ -1510,8 +1510,7 @@
                 "step": "步",
                 "min-evaluation-period": "最小評估期間",
                 "max-evaluation-period": "最大評估期間"
-            },
-            "composite-operations-support": "支持複合讀/寫/觀察 操作"
+            }
         },
         "snmp": {
             "add-communication-config": "新增通訊配置",

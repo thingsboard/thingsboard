@@ -451,9 +451,9 @@
             "issuer-name": "发行者名称",
             "issuer-name-required": "发行者名称必填。",
             "signings-key": "签名密钥",
-            "signings-key-hint": "Base64编码的字符串，至少256位数据。",
+            "signings-key-hint": "Base64编码的字符串，至少512位数据。",
             "signings-key-required": "签名密钥必填。",
-            "signings-key-min-length": "签名密钥必须至少为256位的数据。",
+            "signings-key-min-length": "签名密钥必须至少为512位的数据。",
             "signings-key-base64": "签名密钥必须是Base64格式。",
             "expiration-time": "令牌过期时间（秒）",
             "expiration-time-required": "令牌过期时间是必填。",
@@ -1794,7 +1794,7 @@
             "short-id": "服务器ID",
             "short-id-tooltip": "服务器ID用作关联服务器对象实例的链接。",
             "short-id-required": "服务器ID必填。",
-            "short-id-range": "服务器ID应在1到65534范围内。",
+            "short-id-range": "服务器ID应在{{ min }}到{{ max }}范围内。",
             "short-id-pattern": "服务器ID必须是一个正整数。",
             "lifetime": "客户端注册生命周期",
             "lifetime-required": "客户端注册生命周期必填。",
@@ -1872,8 +1872,7 @@
                 "step": "步长",
                 "min-evaluation-period": "最小评估周期",
                 "max-evaluation-period": "最大评估周期"
-            },
-            "composite-operations-support": "支持复合读取/写入/观察操作"
+            }
         },
         "snmp": {
             "add-communication-config": "添加通信配置",

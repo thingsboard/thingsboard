@@ -68,6 +68,7 @@ import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DataValidator;
 import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
+import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
 import org.thingsboard.server.dao.user.UserService;
 
@@ -116,6 +117,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     @Autowired
     private DataValidator<Edge> edgeValidator;
 
+    @Autowired
+    private JpaExecutorService executor;
+
     @Value("${edges.enabled}")
     @Getter
     private boolean edgesEnabled;
@@ -149,7 +153,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Override
     public ListenableFuture<Edge> findEdgeByIdAsync(TenantId tenantId, EdgeId edgeId) {
-        log.trace("Executing findEdgeById [{}]", edgeId);
+        log.trace("Executing findEdgeByIdAsync [{}]", edgeId);
         validateId(edgeId, id -> INCORRECT_EDGE_ID + id);
         return edgeDao.findByIdAsync(tenantId, edgeId.getId());
     }
@@ -161,6 +165,13 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
         return cache.getAndPutInTransaction(new EdgeCacheKey(tenantId, name),
                 () -> edgeDao.findEdgeByTenantIdAndName(tenantId.getId(), name)
                         .orElse(null), true);
+    }
+
+    @Override
+    public ListenableFuture<Edge> findEdgeByTenantIdAndNameAsync(TenantId tenantId, String name) {
+        log.trace("Executing findEdgeByTenantIdAndNameAsync [{}][{}]", tenantId, name);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        return executor.submit(() -> findEdgeByTenantIdAndName(tenantId, name));
     }
 
     @Override
@@ -197,6 +208,9 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public Edge assignEdgeToCustomer(TenantId tenantId, EdgeId edgeId, CustomerId customerId) {
         log.trace("[{}] Executing assignEdgeToCustomer [{}][{}]", tenantId, edgeId, customerId);
         Edge edge = findEdgeById(tenantId, edgeId);
+        if (customerId.equals(edge.getCustomerId())) {
+            return edge;
+        }
         edge.setCustomerId(customerId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)
                 .body(JacksonUtil.toString(customerId)).actionType(ActionType.ASSIGNED_TO_CUSTOMER).build());
@@ -207,7 +221,10 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     public Edge unassignEdgeFromCustomer(TenantId tenantId, EdgeId edgeId) {
         log.trace("[{}] Executing unassignEdgeFromCustomer [{}]", tenantId, edgeId);
         Edge edge = findEdgeById(tenantId, edgeId);
-        var customerId = edge.getCustomerId();
+        CustomerId customerId = edge.getCustomerId();
+        if (customerId == null) {
+            return edge;
+        }
         edge.setCustomerId(null);
         Edge result = saveEdge(edge);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).entityId(edgeId)

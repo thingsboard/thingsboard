@@ -30,6 +30,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-relation-filters',
@@ -48,6 +49,10 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   @Input() disabled: boolean;
 
   @Input() allowedEntityTypes: Array<EntityType | AliasEntityType>;
+
+  @Input()
+  @coerceBoolean()
+  enableNotOption = false;
 
   relationFiltersFormGroup: UntypedFormGroup;
 
@@ -118,10 +123,23 @@ export class RelationFiltersComponent extends PageComponent implements ControlVa
   }
 
   private createRelationFilterFormGroup(filter: RelationEntityTypeFilter): AbstractControl {
-    return this.fb.group({
+    const formGroup = this.fb.group({
       relationType: [filter ? filter.relationType : null],
       entityTypes: [filter ? filter.entityTypes : []]
     });
+    if (this.enableNotOption) {
+      formGroup.addControl('negate', this.fb.control({value: filter ? filter.negate : false, disabled: true}));
+      formGroup.get('relationType').valueChanges.pipe(
+        takeUntil(this.destroy$)
+      ).subscribe(value => {
+        if (value) {
+          formGroup.get('negate').enable({emitEvent: false});
+        } else {
+          formGroup.get('negate').disable({emitEvent: false});
+        }
+      });
+    }
+    return formGroup;
   }
 
   private updateModel() {

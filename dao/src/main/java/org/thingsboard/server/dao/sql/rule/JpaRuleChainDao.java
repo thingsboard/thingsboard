@@ -33,7 +33,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -127,6 +126,11 @@ public class JpaRuleChainDao extends JpaAbstractDao<RuleChainEntity, RuleChain> 
     public RuleChainId getExternalIdByInternal(RuleChainId internalId) {
         return Optional.ofNullable(ruleChainRepository.getExternalIdById(internalId.getId()))
                 .map(RuleChainId::new).orElse(null);
+    }
+
+    @Override
+    public RuleChain findDefaultEntityByTenantId(UUID tenantId) {
+        return findRootRuleChainByTenantIdAndType(tenantId, RuleChainType.CORE);
     }
 
     @Override

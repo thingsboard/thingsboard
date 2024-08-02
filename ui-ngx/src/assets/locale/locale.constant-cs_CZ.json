@@ -1247,7 +1247,7 @@
           "mode": "Režim konfigurace bezpečnosti",
           "short-id": "Krátké ID",
           "short-id-required": "Krátké ID je povinné.",
-          "short-id-range": "Krátké ID by mělo být v rozsahu od 1 do 65534.",
+          "short-id-range": "Krátké ID by mělo být v rozsahu od {{ min }} do {{ max }}.",
           "short-id-pattern": "Krátké ID musí být kladné celé číslo.",
           "lifetime": "Doba platnosti registrace klienta",
           "lifetime-required": "Doba platnosti registrace klienta je povinná.",
@@ -1301,8 +1301,7 @@
               "step": "Krok",
               "min-evaluation-period": "Minimální interval evaluace",
               "max-evaluation-period": "Maximální interval evaluace"
-          },
-          "composite-operations-support": "Podporuje kompozitní Read/Write/Observe operace"
+          }
       },
       "snmp": {
           "add-communication-config": "Přidat konfiguraci komunikace",

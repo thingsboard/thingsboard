@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-alarms-table-widget \n    [ctx]=\"ctx\">\n</tb-alarms-table-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n}\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.alarmsTableWidget.onDataUpdated();\n}\n\nself.actionSources = function() {\n    return {\n        'actionCellButton': {\n            name: 'widget-action.action-cell-button',\n            multiple: true,\n            hasShowCondition: true\n        },\n        'rowClick': {\n            name: 'widget-action.row-click',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n}\n",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.alarmsTableWidget.onDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.alarmsTableWidget.onEditModeChanged();\n}\n\nself.actionSources = function() {\n    return {\n        'actionCellButton': {\n            name: 'widget-action.action-cell-button',\n            multiple: true,\n            hasShowCondition: true\n        },\n        'rowClick': {\n            name: 'widget-action.row-click',\n            multiple: false\n        },\n        'cellClick': {\n            name: 'widget-action.cell-click',\n            multiple: true\n        }\n    };\n}\n\nself.onDestroy = function() {\n}\n",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "tb-alarms-table-widget-settings",

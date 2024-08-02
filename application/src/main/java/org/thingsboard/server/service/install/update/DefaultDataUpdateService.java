@@ -26,22 +26,27 @@ import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Service;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
+import org.thingsboard.server.dao.customer.CustomerDao;
+import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.device.DeviceConnectivityConfiguration;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
+import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.service.component.ComponentDiscoveryService;
 import org.thingsboard.server.service.component.RuleNodeClassInfo;
 import org.thingsboard.server.utils.TbNodeUpgradeUtils;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 
 @Service
@@ -67,6 +72,15 @@ public class DefaultDataUpdateService implements DataUpdateService {
     @Autowired
     DeviceConnectivityConfiguration connectivityConfiguration;
 
+    @Autowired
+    private CustomerDao customerDao;
+
+    @Autowired
+    private CustomerService customerService;
+
+    @Autowired
+    private TenantProfileService tenantProfileService;
+
     @Override
     public void updateData(String fromVersion) throws Exception {
         switch (fromVersion) {
@@ -74,8 +88,124 @@ public class DefaultDataUpdateService implements DataUpdateService {
                 log.info("Updating data from version 3.6.0 to 3.6.1 ...");
                 migrateDeviceConnectivity();
                 break;
+            case "3.6.4":
+                log.info("Updating data from version 3.6.4 to 3.7.0 ...");
+                updateCustomersWithTheSameTitle();
+                updateMaxRuleNodeExecsPerMessage();
+                updateGatewayRateLimits();
+                break;
             default:
                 throw new RuntimeException("Unable to update data, unsupported fromVersion: " + fromVersion);
+        }
+    }
+
+    private void updateGatewayRateLimits() {
+        var tenantProfiles = new PageDataIterable<>(link -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, link), DEFAULT_PAGE_SIZE);
+        tenantProfiles.forEach(tenantProfile -> {
+            var configurationOpt = tenantProfile.getProfileConfiguration();
+            configurationOpt.ifPresent(configuration -> {
+                boolean updated = false;
+                if (configuration.getTransportDeviceMsgRateLimit() != null) {
+                    if (configuration.getTransportGatewayMsgRateLimit() == null) {
+                        configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceMsgRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                        updated = true;
+                    }
+                }
+                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null) {
+                    if (configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
+                        configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceTelemetryMsgRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                        updated = true;
+                    }
+                }
+                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null) {
+                    if (configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
+                        configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceTelemetryDataPointsRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                        updated = true;
+                    }
+                }
+                if (updated) {
+                    try {
+                        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+                    } catch (Exception e) {
+                        log.error("Failed to update tenant profile with id: {} due to: ", tenantProfile.getId(), e);
+                    }
+                }
+            });
+        });
+    }
+
+    private void updateMaxRuleNodeExecsPerMessage() {
+        var tenantProfiles = new PageDataIterable<>(
+                link -> tenantProfileService.findTenantProfiles(TenantId.SYS_TENANT_ID, link), DEFAULT_PAGE_SIZE);
+        tenantProfiles.forEach(tenantProfile -> {
+            var configurationOpt = tenantProfile.getProfileConfiguration();
+            configurationOpt.ifPresent(configuration -> {
+                if (configuration.getMaxRuleNodeExecsPerMessage() == 0) {
+                    configuration.setMaxRuleNodeExecutionsPerMessage(1000);
+                    try {
+                        tenantProfileService.saveTenantProfile(TenantId.SYS_TENANT_ID, tenantProfile);
+                    } catch (Exception e) {
+                        log.error("Failed to update tenant profile with id: {} due to: ", tenantProfile.getId(), e);
+                    }
+                }
+            });
+        });
+    }
+
+    private void updateCustomersWithTheSameTitle() {
+        var customers = new ArrayList<Customer>();
+        new PageDataIterable<>(pageLink ->
+                customerDao.findCustomersWithTheSameTitle(pageLink), DEFAULT_PAGE_SIZE
+        ).forEach(customers::add);
+        if (customers.isEmpty()) {
+            return;
+        }
+        var firstCustomer = customers.get(0);
+        var titleToDeduplicate = firstCustomer.getTitle();
+        var tenantIdToDeduplicate = firstCustomer.getTenantId();
+        int duplicateCounter = 1;
+
+        for (int i = 1; i < customers.size(); i++) {
+            var currentCustomer = customers.get(i);
+            if (currentCustomer.getTitle().equals(titleToDeduplicate) && currentCustomer.getTenantId().equals(tenantIdToDeduplicate)) {
+                duplicateCounter++;
+                String currentTitle = currentCustomer.getTitle();
+                String newTitle = currentTitle + " " + duplicateCounter;
+                try {
+                    Optional<Customer> customerOpt = customerService.findCustomerByTenantIdAndTitle(tenantIdToDeduplicate, newTitle);
+                    if (customerOpt.isPresent()) {
+                        // fallback logic: customer with title 'currentTitle + " " + duplicateCounter;' might be another duplicate.
+                        newTitle = currentTitle + "_" + currentCustomer.getId();
+                    }
+                } catch (Exception e) {
+                    log.trace("Failed to find customer with title due to: ", e);
+                    // fallback logic: customer with title 'currentTitle + " " + duplicateCounter;' might be another duplicate.
+                    newTitle = currentTitle + "_" + currentCustomer.getId();
+                }
+                currentCustomer.setTitle(newTitle);
+                try {
+                    customerService.saveCustomer(currentCustomer);
+                } catch (Exception e) {
+                    log.error("[{}] Failed to update customer with id and title: {}, oldTitle: {}, due to: ",
+                            currentCustomer.getTenantId(), newTitle, currentTitle, e);
+                }
+                continue;
+            }
+            titleToDeduplicate = currentCustomer.getTitle();
+            tenantIdToDeduplicate = currentCustomer.getTenantId();
+            duplicateCounter = 1;
         }
     }
 
@@ -91,14 +221,14 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Override
     public void upgradeRuleNodes() {
-        try {
-            int totalRuleNodesUpgraded = 0;
-            log.info("Starting rule nodes upgrade ...");
-            var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
-            log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
-            for (var ruleNodeClassInfo : nodeClassToVersionMap) {
-                var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
-                var toVersion = ruleNodeClassInfo.getCurrentVersion();
+        int totalRuleNodesUpgraded = 0;
+        log.info("Starting rule nodes upgrade ...");
+        var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
+        log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
+        for (var ruleNodeClassInfo : nodeClassToVersionMap) {
+            var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
+            var toVersion = ruleNodeClassInfo.getCurrentVersion();
+            try {
                 log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
                 var ruleNodesIdsToUpgrade = getRuleNodesIdsWithTypeAndVersionLessThan(ruleNodeClassInfo.getClassName(), toVersion);
                 if (ruleNodesIdsToUpgrade.isEmpty()) {
@@ -110,11 +240,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     totalRuleNodesUpgraded += processRuleNodePack(ruleNodePack, ruleNodeClassInfo);
                     log.info("{} upgraded rule nodes so far ...", totalRuleNodesUpgraded);
                 }
+            } catch (Exception e) {
+                log.error("Unexpected error during {} rule nodes upgrade: ", ruleNodeTypeForLogs, e);
             }
-            log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}", totalRuleNodesUpgraded);
-        } catch (Exception e) {
-            log.error("Unexpected error during rule nodes upgrade: ", e);
         }
+        log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}", totalRuleNodesUpgraded);
     }
 
     private int processRuleNodePack(List<RuleNodeId> ruleNodeIdsBatch, RuleNodeClassInfo ruleNodeClassInfo) {

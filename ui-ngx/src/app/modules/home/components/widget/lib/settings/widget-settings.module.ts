@@ -74,7 +74,6 @@ import {
 import {
   DigitalGaugeWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/gauge/digital-gauge-widget-settings.component';
-import { FixedColorLevelComponent } from '@home/components/widget/lib/settings/gauge/fixed-color-level.component';
 import { TickValueComponent } from '@home/components/widget/lib/settings/gauge/tick-value.component';
 import { FlotWidgetSettingsComponent } from '@home/components/widget/lib/settings/chart/flot-widget-settings.component';
 import {
@@ -351,10 +350,26 @@ import {
 import {
   PolarAreaChartWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/chart/polar-area-chart-widget-settings.component';
+import {
+  RadarChartWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/chart/radar-chart-widget-settings.component';
+import {
+  MobileAppQrCodeWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/mobile-app-qr-code-widget-settings.component';
+import {
+  LabelCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-card-widget-settings.component';
+import {
+  LabelValueCardWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/label-value-card-widget-settings.component';
+import {
+  UnreadNotificationWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/unread-notification-widget-settings.component';
 
 @NgModule({
   declarations: [
     QrCodeWidgetSettingsComponent,
+    MobileAppQrCodeWidgetSettingsComponent,
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
@@ -373,7 +388,6 @@ import {
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
     LabelDataKeyComponent,
@@ -476,7 +490,11 @@ import {
     StatusWidgetSettingsComponent,
     PieChartWidgetSettingsComponent,
     BarChartWidgetSettingsComponent,
-    PolarAreaChartWidgetSettingsComponent
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent,
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
   ],
   imports: [
     CommonModule,
@@ -486,6 +504,7 @@ import {
   ],
   exports: [
     QrCodeWidgetSettingsComponent,
+    MobileAppQrCodeWidgetSettingsComponent,
     TimeseriesTableWidgetSettingsComponent,
     TimeseriesTableKeySettingsComponent,
     TimeseriesTableLatestKeySettingsComponent,
@@ -504,7 +523,6 @@ import {
     AnalogueLinearGaugeWidgetSettingsComponent,
     AnalogueCompassWidgetSettingsComponent,
     DigitalGaugeWidgetSettingsComponent,
-    FixedColorLevelComponent,
     TickValueComponent,
     FlotWidgetSettingsComponent,
     LabelDataKeyComponent,
@@ -607,7 +625,11 @@ import {
     StatusWidgetSettingsComponent,
     PieChartWidgetSettingsComponent,
     BarChartWidgetSettingsComponent,
-    PolarAreaChartWidgetSettingsComponent
+    PolarAreaChartWidgetSettingsComponent,
+    RadarChartWidgetSettingsComponent,
+    LabelCardWidgetSettingsComponent,
+    LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -615,6 +637,7 @@ export class WidgetSettingsModule {
 
 export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsComponent>} = {
   'tb-qrcode-widget-settings': QrCodeWidgetSettingsComponent,
+  'tb-mobile-app-qr-code-widget-settings': MobileAppQrCodeWidgetSettingsComponent,
   'tb-timeseries-table-widget-settings': TimeseriesTableWidgetSettingsComponent,
   'tb-timeseries-table-key-settings': TimeseriesTableKeySettingsComponent,
   'tb-timeseries-table-latest-key-settings': TimeseriesTableLatestKeySettingsComponent,
@@ -704,5 +727,9 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-status-widget-settings': StatusWidgetSettingsComponent,
   'tb-pie-chart-widget-settings': PieChartWidgetSettingsComponent,
   'tb-bar-chart-widget-settings': BarChartWidgetSettingsComponent,
-  'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent
+  'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent,
+  'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent,
+  'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
+  'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent,
+  'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent
 };

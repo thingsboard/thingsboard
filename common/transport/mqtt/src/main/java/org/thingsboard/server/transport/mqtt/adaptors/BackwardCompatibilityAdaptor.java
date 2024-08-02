@@ -20,8 +20,8 @@ import io.netty.handler.codec.mqtt.MqttPublishMessage;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.mqtt.session.MqttDeviceAwareSessionContext;
 
@@ -143,6 +143,12 @@ public class BackwardCompatibilityAdaptor implements MqttTransportAdaptor {
     @Override
     public Optional<MqttMessage> convertToPublish(MqttDeviceAwareSessionContext ctx, TransportProtos.ProvisionDeviceResponseMsg provisionResponse) throws AdaptorException {
         log.warn("[{}] invoked not implemented adaptor method! ProvisionDeviceResponseMsg: {}", ctx.getSessionId(), provisionResponse);
+        return Optional.empty();
+    }
+
+    @Override
+    public Optional<MqttMessage> convertToGatewayDeviceDisconnectPublish(MqttDeviceAwareSessionContext ctx, String deviceName, int reasonCode) throws AdaptorException {
+        log.warn("[{}] invoked not implemented adaptor method! Device name: {} ReasonCode: {}", ctx.getSessionId(), deviceName, reasonCode);
         return Optional.empty();
     }
 

@@ -199,6 +199,16 @@ public abstract class BaseApiUsageState {
         return getApiUsageState().getEntityId();
     }
 
+    @Override
+    public String toString() {
+        return "BaseApiUsageState{" +
+                "apiUsageState=" + apiUsageState +
+                ", currentCycleTs=" + currentCycleTs +
+                ", nextCycleTs=" + nextCycleTs +
+                ", currentHourTs=" + currentHourTs +
+                '}';
+    }
+
     @Data
     @Builder
     public static class StatsCalculationResult {

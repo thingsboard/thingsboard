@@ -106,8 +106,6 @@ public class NotificationController extends BaseController {
     private final NotificationCenter notificationCenter;
     private final NotificationSettingsService notificationSettingsService;
 
-    private static final String DELIVERY_METHOD_ALLOWABLE_VALUES = "WEB,MOBILE_APP";
-
     @ApiOperation(value = "Get notifications (getNotifications)",
             notes = "Returns the page of notifications for current user." + NEW_LINE +
                     PAGE_DATA_PARAMETERS +
@@ -175,7 +173,7 @@ public class NotificationController extends BaseController {
                                                    @RequestParam(required = false) String sortOrder,
                                                    @Parameter(description = "To search for unread notifications only")
                                                    @RequestParam(defaultValue = "false") boolean unreadOnly,
-                                                   @Parameter(description = "Delivery method", schema = @Schema(allowableValues = {DELIVERY_METHOD_ALLOWABLE_VALUES}))
+                                                   @Parameter(description = "Delivery method", schema = @Schema(allowableValues = {"WEB", "MOBILE_APP"}))
                                                    @RequestParam(defaultValue = "WEB") NotificationDeliveryMethod deliveryMethod,
                                                    @AuthenticationPrincipal SecurityUser user) throws ThingsboardException {
         // no permissions
@@ -188,7 +186,7 @@ public class NotificationController extends BaseController {
                     AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @GetMapping("/notifications/unread/count")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public Integer getUnreadNotificationsCount(@Parameter(description = "Delivery method", schema = @Schema(allowableValues = {DELIVERY_METHOD_ALLOWABLE_VALUES}))
+    public Integer getUnreadNotificationsCount(@Parameter(description = "Delivery method", schema = @Schema(allowableValues = {"WEB", "MOBILE_APP"}))
                                                @RequestParam(defaultValue = "MOBILE_APP") NotificationDeliveryMethod deliveryMethod,
                                                @AuthenticationPrincipal SecurityUser user) {
         return notificationService.countUnreadNotificationsByRecipientId(user.getTenantId(), deliveryMethod, user.getId());
@@ -211,7 +209,7 @@ public class NotificationController extends BaseController {
                     AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PutMapping("/notifications/read")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    public void markAllNotificationsAsRead(@Parameter(description = "Delivery method", schema = @Schema(allowableValues = {DELIVERY_METHOD_ALLOWABLE_VALUES}))
+    public void markAllNotificationsAsRead(@Parameter(description = "Delivery method", schema = @Schema(allowableValues = {"WEB", "MOBILE_APP"}))
                                            @RequestParam(defaultValue = "WEB") NotificationDeliveryMethod deliveryMethod,
                                            @AuthenticationPrincipal SecurityUser user) {
         // no permissions

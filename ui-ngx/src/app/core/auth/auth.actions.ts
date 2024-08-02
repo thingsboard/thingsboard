@@ -27,6 +27,7 @@ export enum AuthActionTypes {
   UPDATE_AUTH_USER = '[Auth] Update Auth User',
   UPDATE_LAST_PUBLIC_DASHBOARD_ID = '[Auth] Update Last Public Dashboard Id',
   UPDATE_HAS_REPOSITORY = '[Auth] Change Has Repository',
+  UPDATE_MOBILE_QR_ENABLED = '[Auth] Update Mobile QR Enabled',
   UPDATE_OPENED_MENU_SECTION = '[Preferences] Update Opened Menu Section',
   PUT_USER_SETTINGS = '[Preferences] Put user settings',
   DELETE_USER_SETTINGS = '[Preferences] Delete user settings',
@@ -72,6 +73,12 @@ export class ActionAuthUpdateHasRepository implements Action {
   constructor(readonly payload: { hasRepository: boolean }) {}
 }
 
+export class ActionUpdateMobileQrCodeEnabled implements Action {
+  readonly type = AuthActionTypes.UPDATE_MOBILE_QR_ENABLED;
+
+  constructor(readonly payload: { mobileQrEnabled: boolean }) {}
+}
+
 export class ActionPreferencesUpdateOpenedMenuSection implements Action {
   readonly type = AuthActionTypes.UPDATE_OPENED_MENU_SECTION;
 
@@ -93,4 +100,4 @@ export class ActionPreferencesDeleteUserSettings implements Action {
 export type AuthActions = ActionAuthAuthenticated | ActionAuthUnauthenticated |
   ActionAuthLoadUser | ActionAuthUpdateUserDetails | ActionAuthUpdateLastPublicDashboardId | ActionAuthUpdateHasRepository |
   ActionPreferencesUpdateOpenedMenuSection | ActionPreferencesPutUserSettings | ActionPreferencesDeleteUserSettings |
-  ActionAuthUpdateAuthUser;
+  ActionAuthUpdateAuthUser | ActionUpdateMobileQrCodeEnabled;

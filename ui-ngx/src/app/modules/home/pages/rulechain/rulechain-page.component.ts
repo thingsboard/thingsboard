@@ -77,7 +77,7 @@ import {
 } from '@shared/models/rule-node.models';
 import { FcRuleNodeModel, FcRuleNodeTypeModel, RuleChainMenuContextInfo } from './rulechain-page.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
-import { NEVER, Observable, of, ReplaySubject, startWith, skip, Subject } from 'rxjs';
+import { NEVER, Observable, of, ReplaySubject, skip, startWith, Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, mergeMap, takeUntil, tap } from 'rxjs/operators';
 import { ISearchableComponent } from '../../models/searchable-component.models';
 import { deepClone, isDefinedAndNotNull } from '@core/utils';
@@ -373,7 +373,7 @@ export class RuleChainPageComponent extends PageComponent
               return false;
             }
             return true;
-          }, ['INPUT', 'SELECT', 'TEXTAREA'],
+          }, [],
           this.translate.instant('rulenode.select-all-objects'))
       );
       this.hotKeys.push(
@@ -384,7 +384,7 @@ export class RuleChainPageComponent extends PageComponent
               return false;
             }
             return true;
-          }, ['INPUT', 'SELECT', 'TEXTAREA'],
+          }, [],
           this.translate.instant('rulenode.copy-selected'))
       );
       this.hotKeys.push(
@@ -397,7 +397,7 @@ export class RuleChainPageComponent extends PageComponent
               return false;
             }
             return true;
-          }, ['INPUT', 'SELECT', 'TEXTAREA'],
+          }, [],
           this.translate.instant('action.paste'))
       );
       this.hotKeys.push(
@@ -442,7 +442,7 @@ export class RuleChainPageComponent extends PageComponent
               return false;
             }
             return true;
-          }, ['INPUT', 'SELECT', 'TEXTAREA'],
+          }, [],
           this.translate.instant('rulenode.delete-selected-objects'))
       );
       this.hotKeys.push(

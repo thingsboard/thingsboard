@@ -26,9 +26,7 @@ import {
   LineSeriesSettings,
   lineSeriesStepTypes,
   lineSeriesStepTypeTranslations,
-  TimeSeriesChartType,
-  timeSeriesLineTypes,
-  timeSeriesLineTypeTranslations
+  TimeSeriesChartType
 } from '@home/components/widget/lib/chart/time-series-chart.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -38,6 +36,8 @@ import { DataKeyConfigComponent } from '@home/components/widget/config/data-key-
 import {
   chartLabelPositions,
   chartLabelPositionTranslations,
+  chartLineTypes,
+  chartLineTypeTranslations,
   chartShapes,
   chartShapeTranslations
 } from '@home/components/widget/lib/chart/chart.models';
@@ -62,9 +62,9 @@ export class TimeSeriesChartLineSettingsComponent implements OnInit, ControlValu
 
   lineSeriesStepTypeTranslations = lineSeriesStepTypeTranslations;
 
-  timeSeriesLineTypes = timeSeriesLineTypes;
+  chartLineTypes = chartLineTypes;
 
-  timeSeriesLineTypeTranslations = timeSeriesLineTypeTranslations;
+  chartLineTypeTranslations = chartLineTypeTranslations;
 
   chartLabelPositions = chartLabelPositions;
 

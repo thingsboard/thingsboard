@@ -19,22 +19,22 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.context.event.ApplicationReadyEvent;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.actors.ActorSystemContext;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
+import org.thingsboard.server.common.data.queue.QueueConfig;
 import org.thingsboard.server.common.msg.edge.EdgeSessionMsg;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
@@ -46,11 +46,12 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeNotificationMsg;
 import org.thingsboard.server.queue.TbQueueConsumer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
+import org.thingsboard.server.queue.discovery.QueueKey;
 import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
-import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.EdgeContextComponent;
+import org.thingsboard.server.service.queue.consumer.MainQueueConsumerManager;
 import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 
@@ -61,8 +62,6 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
@@ -75,50 +74,58 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
 
     @Value("${queue.edge.pool-interval:25}")
-    private int pollDuration;
+    private int pollInterval;
     @Value("${queue.edge.pack-processing-timeout:10000}")
     private int packProcessingTimeout;
+    @Value("${queue.core.consumer-per-partition:true}")
+    private boolean consumerPerPartition;
     @Value("${queue.edge.pack-processing-retries:3}")
     private int packProcessingRetries;
     @Value("${queue.edge.stats.enabled:false}")
     private boolean statsEnabled;
 
-    private final TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> mainConsumer;
+    private final TbCoreQueueFactory queueFactory;
     private final EdgeContextComponent edgeCtx;
     private final EdgeConsumerStats stats;
 
-    protected volatile ExecutorService consumersExecutor;
+    private MainQueueConsumerManager<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig> mainConsumer;
 
     public DefaultTbEdgeConsumerService(TbCoreQueueFactory tbCoreQueueFactory, ActorSystemContext actorContext,
                                         StatsFactory statsFactory, EdgeContextComponent edgeCtx) {
         super(actorContext, null, null, null, null, null,
-                null, tbCoreQueueFactory.createToEdgeNotificationsMsgConsumer(), null);
-        this.mainConsumer = tbCoreQueueFactory.createEdgeMsgConsumer();
+                null, null);
         this.edgeCtx = edgeCtx;
         this.stats = new EdgeConsumerStats(statsFactory);
+        this.queueFactory = tbCoreQueueFactory;
     }
 
     @PostConstruct
-    public void initExecutor() {
-        super.init("tb-edge-notification-consumer");
-        this.consumersExecutor = Executors.newCachedThreadPool(ThingsBoardThreadFactory.forName("tb-edge-consumer"));
+    public void init() {
+        super.init("tb-edge");
+
+        this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig>builder()
+                .queueKey(new QueueKey(ServiceType.TB_CORE))
+                .config(EdgeQueueConfig.of(consumerPerPartition, (int) pollInterval))
+                .msgPackProcessor(this::processMsgs)
+                .consumerCreator((config, partitionId) -> queueFactory.createEdgeMsgConsumer())
+                .consumerExecutor(consumersExecutor)
+                .scheduler(scheduler)
+                .taskExecutor(mgmtExecutor)
+                .build();
     }
 
     @PreDestroy
-    public void shutdownExecutor() {
-        stopped = true;
-        if (consumersExecutor != null) {
-            consumersExecutor.shutdown();
-        }
-    }
-
-    @AfterStartUp(order = AfterStartUp.REGULAR_SERVICE)
-    public void onApplicationEvent(ApplicationReadyEvent event) {
-        super.onApplicationEvent(event);
+    public void destroy() {
+        super.destroy();
     }
 
     @Override
-    public void onTbApplicationEvent(PartitionChangeEvent event) {
+    protected void startConsumers() {
+        super.startConsumers();
+    }
+
+    @Override
+    protected void onTbApplicationEvent(PartitionChangeEvent event) {
         if (ServiceType.TB_CORE.equals(event.getServiceType())) {
             var partitions = event.getPartitionsMap().entrySet()
                     .stream()
@@ -126,68 +133,47 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                     .flatMap(entry -> entry.getValue().stream())
                     .collect(Collectors.toSet());
             log.info("Subscribing to partitions: {}", partitions);
-            this.mainConsumer.subscribe(partitions);
+            mainConsumer.update(partitions);
         }
     }
 
-    @Override
-    protected void launchMainConsumers() {
-        consumersExecutor.submit(() -> {
-            while (!stopped) {
+    private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, EdgeQueueConfig edgeQueueConfig) throws InterruptedException {
+        List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
+        ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
+                Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
+        CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
+        TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
+                processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
+        PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
+        Future<?> submitFuture = consumersExecutor.submit(() -> {
+            orderedMsgList.forEach((element) -> {
+                UUID id = element.getUuid();
+                TbProtoQueueMsg<ToEdgeMsg> msg = element.getMsg();
+                TbCallback callback = new TbPackCallback<>(id, ctx);
                 try {
-                    List<TbProtoQueueMsg<ToEdgeMsg>> msgs = mainConsumer.poll(pollDuration);
-                    if (msgs.isEmpty()) {
-                        continue;
+                    ToEdgeMsg toEdgeMsg = msg.getValue();
+                    pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
+                    if (toEdgeMsg.hasEdgeNotificationMsg()) {
+                        pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), 0, packProcessingRetries, callback);
                     }
-                    List<IdMsgPair<ToEdgeMsg>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
-                    ConcurrentMap<UUID, TbProtoQueueMsg<ToEdgeMsg>> pendingMap = orderedMsgList.stream().collect(
-                            Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
-                    CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
-                    TbPackProcessingContext<TbProtoQueueMsg<ToEdgeMsg>> ctx = new TbPackProcessingContext<>(
-                            processingTimeoutLatch, pendingMap, new ConcurrentHashMap<>());
-                    PendingMsgHolder pendingMsgHolder = new PendingMsgHolder();
-                    Future<?> submitFuture = consumersExecutor.submit(() -> {
-                        orderedMsgList.forEach((element) -> {
-                            UUID id = element.getUuid();
-                            TbProtoQueueMsg<ToEdgeMsg> msg = element.getMsg();
-                            TbCallback callback = new TbPackCallback<>(id, ctx);
-                            try {
-                                ToEdgeMsg toEdgeMsg = msg.getValue();
-                                pendingMsgHolder.setToEdgeMsg(toEdgeMsg);
-                                if (toEdgeMsg.hasEdgeNotificationMsg()) {
-                                    pushNotificationToEdge(toEdgeMsg.getEdgeNotificationMsg(), 0, packProcessingRetries, callback);
-                                }
-                                if (statsEnabled) {
-                                    stats.log(toEdgeMsg);
-                                }
-                            } catch (Throwable e) {
-                                log.warn("[{}] Failed to process message: {}", id, msg, e);
-                                callback.onFailure(e);
-                            }
-                        });
-                    });
-                    if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
-                        if (!submitFuture.isDone()) {
-                            submitFuture.cancel(true);
-                            ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
-                            log.info("Timeout to process message: {}", lastSubmitMsg);
-                        }
-                        ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
+                    if (statsEnabled) {
+                        stats.log(toEdgeMsg);
                     }
-                    mainConsumer.commit();
-                } catch (Exception e) {
-                    if (!stopped) {
-                        log.warn("Failed to obtain messages from queue.", e);
-                        try {
-                            Thread.sleep(pollDuration);
-                        } catch (InterruptedException e2) {
-                            log.trace("Failed to wait until the server has capacity to handle new requests", e2);
-                        }
-                    }
+                } catch (Throwable e) {
+                    log.warn("[{}] Failed to process message: {}", id, msg, e);
+                    callback.onFailure(e);
                 }
-            }
-            log.info("TB Edge request consumer stopped.");
+            });
         });
+        if (!processingTimeoutLatch.await(packProcessingTimeout, TimeUnit.MILLISECONDS)) {
+            if (!submitFuture.isDone()) {
+                submitFuture.cancel(true);
+                ToEdgeMsg lastSubmitMsg = pendingMsgHolder.getToEdgeMsg();
+                log.info("Timeout to process message: {}", lastSubmitMsg);
+            }
+            ctx.getFailedMap().forEach((id, msg) -> log.warn("[{}] Failed to process message: {}", id, msg.getValue()));
+        }
+        consumer.commit();
     }
 
     private static class PendingMsgHolder {
@@ -203,12 +189,22 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     @Override
     protected long getNotificationPollDuration() {
-        return pollDuration;
+        return pollInterval;
     }
 
     @Override
     protected long getNotificationPackProcessingTimeout() {
         return packProcessingTimeout;
+    }
+
+    @Override
+    protected int getMgmtThreadPoolSize() {
+        return Math.max(Runtime.getRuntime().availableProcessors(), 4);
+    }
+
+    @Override
+    protected TbQueueConsumer<TbProtoQueueMsg<ToEdgeNotificationMsg>> createNotificationsConsumer() {
+        return queueFactory.createToEdgeNotificationsMsgConsumer();
     }
 
     @Override
@@ -329,9 +325,15 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     @Override
     protected void stopConsumers() {
-        if (mainConsumer != null) {
-            mainConsumer.unsubscribe();
-        }
+        super.stopConsumers();
+        mainConsumer.stop();
+        mainConsumer.awaitStop();
+    }
+
+    @Data(staticConstructor = "of")
+    public static class EdgeQueueConfig implements QueueConfig {
+        private final boolean consumerPerPartition;
+        private final int pollInterval;
     }
 
 }

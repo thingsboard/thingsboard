@@ -71,4 +71,16 @@ public class TopicService {
         return prefix.isBlank() ? topic : prefix + "." + topic;
     }
 
+    public String buildConsumerGroupId(String servicePrefix, TenantId tenantId, String queueName, Integer partitionId) {
+        return this.buildTopicName(
+                servicePrefix + queueName
+                + (tenantId.isSysTenantId() ? "" : ("-isolated-" + tenantId))
+                + "-consumer"
+                + suffix(partitionId));
+    }
+
+    String suffix(Integer partitionId) {
+        return partitionId == null ? "" : "-" + partitionId;
+    }
+
 }

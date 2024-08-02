@@ -24,6 +24,7 @@ import { Text } from '@svgdotjs/svg.js';
 import { TranslateService } from '@ngx-translate/core';
 import { TbLatestChart } from '@home/components/widget/lib/chart/latest-chart';
 import { formatValue } from '@core/utils';
+import { toAnimationOption } from '@home/components/widget/lib/chart/chart.models';
 
 const shapeSize = 134;
 const shapeSegmentWidth = 13.4;
@@ -98,14 +99,7 @@ export class TbPieChart extends TbLatestChart<PieChartSettings> {
             show: this.settings.showLabel
           }
         },
-        animation: this.settings.animation.animation,
-        animationThreshold: this.settings.animation.animationThreshold,
-        animationDuration: this.settings.animation.animationDuration,
-        animationEasing: this.settings.animation.animationEasing,
-        animationDelay: this.settings.animation.animationDelay,
-        animationDurationUpdate: this.settings.animation.animationDurationUpdate,
-        animationEasingUpdate: this.settings.animation.animationEasingUpdate,
-        animationDelayUpdate: this.settings.animation.animationDelayUpdate
+        ...toAnimationOption(this.ctx, this.settings.animation)
       }
     ];
   }
