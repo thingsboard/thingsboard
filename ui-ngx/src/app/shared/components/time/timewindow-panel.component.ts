@@ -102,6 +102,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     }
   ];
 
+  realtimeTypeSelectionAvailable: boolean;
+  realtimeIntervalSelectionAvailable: boolean;
+  historyTypeSelectionAvailable: boolean;
+  historyIntervalSelectionAvailable: boolean;
+
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
               public overlayRef: OverlayRef,
               protected store: Store<AppState>,
@@ -138,6 +143,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         value: this.realtimeTypes.INTERVAL
       });
     }
+
+    this.realtimeTypeSelectionAvailable = this.realtimeTimewindowOptions.length > 1;
+    this.historyTypeSelectionAvailable = this.historyTimewindowOptions.length > 1;
+    this.realtimeIntervalSelectionAvailable = this.isEdit || !(this.timewindow.hideInterval ||
+      (this.timewindow.hideLastInterval && this.timewindow.hideQuickInterval));
+    this.historyIntervalSelectionAvailable = this.isEdit || !this.timewindow.hideInterval;
   }
 
   ngOnInit(): void {

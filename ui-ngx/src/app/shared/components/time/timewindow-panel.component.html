@@ -20,13 +20,12 @@
                  (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked"
-                 *ngIf="isEdit || !(timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
+        <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
           <div class="tb-flex space-between"
-               [ngClass]="{'align-end': realtimeTimewindowOptions.length > 1, 'align-center': realtimeTimewindowOptions.length <= 1 }">
+               [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
             <div class="tb-flex column">
               <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-              <ng-container formGroupName="realtime" *ngIf="realtimeTimewindowOptions.length > 1">
+              <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
                 <tb-toggle-select appearance="fill" [options]="realtimeTimewindowOptions" formControlName="realtimeType"
                                   style="max-width: 100%">
                 </tb-toggle-select>
@@ -61,24 +60,18 @@
             </ng-container>
           </ng-container>
         </section>
-        <section class="tb-form-panel stroked tb-flex row align-center space-between"
-                 *ngIf="!isEdit && (timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
-          <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
-          <ng-container *ngTemplateOutlet="timezoneSelection">
-          </ng-container>
-        </section>
         <ng-container *ngTemplateOutlet="aggregationConfig">
         </ng-container>
       </div>
     </mat-tab>
     <mat-tab label="{{ 'timewindow.history' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideInterval">
+        <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
           <div class="tb-flex space-between"
-               [ngClass]="{'align-end': historyTimewindowOptions.length > 1, 'align-center': historyTimewindowOptions.length <= 1 }">
+               [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
             <div class="tb-flex column">
               <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-              <ng-container formGroupName="history" *ngIf="historyTimewindowOptions.length > 1">
+              <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
                 <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType"
                                   style="max-width: 100%">
                 </tb-toggle-select>
@@ -120,12 +113,6 @@
                             timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
               </tb-quick-time-interval>
             </ng-container>
-          </ng-container>
-        </section>
-        <section class="tb-form-panel stroked tb-flex row align-center space-between"
-                 *ngIf="!isEdit && timewindow.hideInterval">
-          <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
-          <ng-container *ngTemplateOutlet="timezoneSelection">
           </ng-container>
         </section>
         <ng-container *ngTemplateOutlet="aggregationConfig">
@@ -195,6 +182,13 @@
         </ng-container>
       </section>
     </div>
+  </ng-template>
+  <ng-template #timezoneSelectionPanel>
+    <section class="tb-form-panel stroked tb-flex row align-center space-between">
+      <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
+      <ng-container *ngTemplateOutlet="timezoneSelection">
+      </ng-container>
+    </section>
   </ng-template>
   <ng-template #timezoneSelection>
     <ng-container *ngIf="timezone && (isEdit || !timewindow.hideTimezone)">
