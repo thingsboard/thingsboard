@@ -32,6 +32,7 @@
             <tb-notification [notification]="notification"
                              (markAsRead)="markAsRead($event)">
             </tb-notification>
+            <mat-divider *ngIf="!last" style="margin: 4px"></mat-divider>
           </div>
         </section>
       </div>

@@ -30,6 +30,8 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
 
   unreadNotificationWidgetSettingsForm: UntypedFormGroup;
 
+  countPreviewFn = this._countPreviewFn.bind(this);
+
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder) {
     super(store);
@@ -76,6 +78,10 @@ export class UnreadNotificationWidgetSettingsComponent extends WidgetSettingsCom
       this.unreadNotificationWidgetSettingsForm.get('counterValueColor').disable({emitEvent});
       this.unreadNotificationWidgetSettingsForm.get('counterColor').disable({emitEvent});
     }
+  }
+
+  private _countPreviewFn(): string {
+    return this.unreadNotificationWidgetSettingsForm.get('maxNotificationDisplay').value?.toString() || '6';
   }
 
 }

@@ -16,6 +16,11 @@
 package org.thingsboard.server.dao.service;
 
 import com.google.common.collect.Iterators;
+import jakarta.validation.ConstraintViolation;
+import jakarta.validation.Validation;
+import jakarta.validation.Validator;
+import jakarta.validation.constraints.AssertTrue;
+import jakarta.validation.metadata.ConstraintDescriptor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.hibernate.validator.HibernateValidator;
@@ -30,11 +35,6 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 import org.thingsboard.server.dao.exception.DataValidationException;
 
-import jakarta.validation.ConstraintViolation;
-import jakarta.validation.Validation;
-import jakarta.validation.Validator;
-import jakarta.validation.constraints.AssertTrue;
-import jakarta.validation.metadata.ConstraintDescriptor;
 import java.util.Collection;
 import java.util.Set;
 import java.util.stream.Collectors;

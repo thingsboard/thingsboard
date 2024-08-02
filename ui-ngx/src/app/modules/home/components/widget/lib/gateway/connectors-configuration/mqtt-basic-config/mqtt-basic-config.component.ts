@@ -25,22 +25,28 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ConnectorBaseConfig,
   MappingType,
+  MQTTBasicConfig,
   RequestMappingData,
   RequestType,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import {
-  BrokerConfigControlComponent,
-  MappingTableComponent,
-  SecurityConfigComponent,
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { isObject } from 'lodash';
+import {
+  SecurityConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+import {
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
 
 @Component({
   selector: 'tb-mqtt-basic-config',
@@ -112,17 +118,18 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: ConnectorBaseConfig): void {
+  writeValue(basicConfig: MQTTBasicConfig): void {
+    const { broker, dataMapping = [], requestsMapping } = basicConfig;
     const editedBase = {
-      workers: {
-        maxNumberOfWorkers: basicConfig.broker?.maxNumberOfWorkers,
-        maxMessageNumberPerWorker: basicConfig.broker?.maxMessageNumberPerWorker,
-      },
-      dataMapping: basicConfig.dataMapping || [],
-      broker: basicConfig.broker || {},
-      requestsMapping: Array.isArray(basicConfig.requestsMapping)
-        ? basicConfig.requestsMapping
-        : this.getRequestDataArray(basicConfig.requestsMapping),
+      workers: broker && (broker.maxNumberOfWorkers || broker.maxMessageNumberPerWorker) ? {
+        maxNumberOfWorkers: broker.maxNumberOfWorkers,
+        maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
+      } : {},
+      dataMapping: dataMapping || [],
+      broker: broker || {},
+      requestsMapping: Array.isArray(requestsMapping)
+        ? requestsMapping
+        : this.getRequestDataArray(requestsMapping),
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});

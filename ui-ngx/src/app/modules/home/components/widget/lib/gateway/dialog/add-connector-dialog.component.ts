@@ -33,7 +33,7 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
-import { takeUntil, tap } from "rxjs/operators";
+import { takeUntil, tap } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-add-connector-dialog',

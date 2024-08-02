@@ -15,15 +15,14 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Immutable;
 import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.dao.model.ModelConstants;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 
 @Data
 @EqualsAndHashCode(callSuper = true)

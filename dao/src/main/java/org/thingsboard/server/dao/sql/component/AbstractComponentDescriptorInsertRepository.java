@@ -15,6 +15,9 @@
  */
 package org.thingsboard.server.dao.sql.component;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -24,10 +27,6 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.thingsboard.server.dao.model.sql.ComponentDescriptorEntity;
-
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
 
 @Slf4j
 public abstract class AbstractComponentDescriptorInsertRepository implements ComponentDescriptorInsertRepository {
