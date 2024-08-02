@@ -60,7 +60,7 @@ import {
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { debounceTime, take, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, filter, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
 
@@ -132,6 +132,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private sharedAttributeData: Array<AttributeData> = [];
 
   private basicConfigSub: Subscription;
+
+  private connectorUpdateInProgress = false;
 
   private subscriptionOptions: WidgetSubscriptionOptions = {
     callbacks: {
@@ -210,6 +212,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
 
     this.connectorForm.get('configurationJson').valueChanges.pipe(
+      filter(() => !this.connectorUpdateInProgress),
       takeUntil(this.destroy$)
     ).subscribe((config) => {
       const basicConfig = this.connectorForm.get('basicConfig');
@@ -275,7 +278,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   saveConnector(): void {
-    const value = this.connectorForm.get('type').value === ConnectorType.MQTT ? this.getMappedMQTTValue() : this.connectorForm.value;
+    const value = { ...this.connectorForm.value };
     value.configuration = camelCase(value.name) + '.json';
     delete value.basicConfig;
     if (value.type !== ConnectorType.GRPC) {
@@ -336,20 +339,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     });
   }
 
-  private getMappedMQTTValue(): GatewayConnector {
-    const value = this.connectorForm.value;
-    return {
-      ...value,
-      configurationJson: {
-        ...value.configurationJson,
-        broker: {
-          ...value.configurationJson.broker,
-          ...value.configurationJson.workers,
-        }
-      }
-    };
-  }
-
   private updateData(reload: boolean = false): void {
     this.pageLink.sortOrder.property = this.sort.active;
     this.pageLink.sortOrder.direction = Direction[this.sort.direction.toUpperCase()];
@@ -383,7 +372,9 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
     const sharedIndex = this.sharedAttributeData.findIndex(data => {
       const sharedData = data.value;
-      return sharedData.name === connectorData.name && sharedData.ts && sharedData.ts <= connectorData.ts;
+      return sharedData.name === connectorData.name
+        && sharedData.ts && sharedData.ts <= connectorData.ts
+        && isEqual(sharedData.value, connectorData.value);
     });
     return sharedIndex !== -1;
   }
@@ -684,6 +675,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.basicConfigSub.unsubscribe();
     }
     this.basicConfigSub = this.connectorForm.get('basicConfig').valueChanges.pipe(
+      filter(() => !this.connectorUpdateInProgress),
       takeUntil(this.destroy$)
     ).subscribe((config) => {
       const configJson = this.connectorForm.get('configurationJson');
@@ -734,13 +726,16 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       case ConnectorType.MQTT:
       case ConnectorType.OPCUA:
       case ConnectorType.MODBUS:
-        this.connectorForm.get('type').patchValue(connector.type, {emitValue: false, onlySelf: true});
-        this.connectorForm.get('basicConfig').setValue({}, {emitEvent: false});
+        this.connectorUpdateInProgress = true;
+        if (connector.name !== this.connectorForm.value.name) {
+          this.connectorForm.get('basicConfig').setValue({}, {emitEvent: false});
+        }
 
         setTimeout(() => {
           this.connectorForm.patchValue({...connector, mode: connector.mode || ConnectorConfigurationModes.BASIC});
           this.createBasicConfigWatcher();
           this.connectorForm.markAsPristine();
+          this.connectorUpdateInProgress = false;
         });
         break;
       default:

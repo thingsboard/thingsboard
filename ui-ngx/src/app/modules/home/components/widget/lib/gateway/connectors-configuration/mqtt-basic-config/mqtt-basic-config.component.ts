@@ -84,7 +84,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
   mappingTypes = MappingType;
   basicFormGroup: FormGroup;
 
-  private onChange: (value: string) => void;
+  private onChange: (value: MQTTBasicConfig) => void;
   private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
@@ -100,7 +100,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.basicFormGroup.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        this.onChange(value);
+        this.onChange(this.getMappedMQTTConfig(value));
         this.onTouched();
       });
   }
@@ -110,7 +110,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: MQTTBasicConfig) => void): void {
     this.onChange = fn;
   }
 
@@ -133,6 +133,18 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
+  }
+
+  private getMappedMQTTConfig(basicConfig: MQTTBasicConfig): MQTTBasicConfig {
+    const { broker, workers, dataMapping, requestsMapping  } = basicConfig || {};
+    return workers ? {
+      dataMapping,
+      requestsMapping,
+      broker: {
+        ...broker,
+        ...workers,
+      }
+    } : basicConfig;
   }
 
   validate(): ValidationErrors | null {

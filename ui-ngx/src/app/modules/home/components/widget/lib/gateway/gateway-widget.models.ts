@@ -182,7 +182,7 @@ export interface MQTTBasicConfig {
   dataMapping: ConverterConnectorMapping[];
   requestsMapping: Record<RequestType, RequestMappingData> | RequestMappingData[];
   broker: BrokerConfig;
-  workers: WorkersConfig;
+  workers?: WorkersConfig;
 }
 
 export interface OPCBasicConfig {
