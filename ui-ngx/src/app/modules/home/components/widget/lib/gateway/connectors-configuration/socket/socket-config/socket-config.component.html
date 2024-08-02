@@ -1,0 +1,57 @@
+<div class="tb-form-panel no-border no-padding padding-top" [formGroup]="socketConfigFormGroup">
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width tb-required" translate>gateway.connection-type</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput name="value" formControlName="connectionType" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="('gateway.connection-type-required') | translate"
+                  *ngIf="socketConfigFormGroup.get('connectionType').hasError('required')
+                                           && socketConfigFormGroup.get('connectionType').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width tb-required" translate>gateway.port</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="{{portLimits.MIN}}" max="{{portLimits.MAX}}"
+               name="value" formControlName="port" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="portErrorTooltip"
+                  *ngIf="(socketConfigFormGroup.get('port').hasError('required') ||
+                                            socketConfigFormGroup.get('port').hasError('min') ||
+                                            socketConfigFormGroup.get('port').hasError('max')) &&
+                                            socketConfigFormGroup.get('port').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width tb-required" translate>gateway.buffer-size</div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" name="value" formControlName="bufferSize"
+               placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="('gateway.buffer-size-required') | translate"
+                  *ngIf="socketConfigFormGroup.get('bufferSize').hasError('required')
+                                           && socketConfigFormGroup.get('bufferSize').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+</div>

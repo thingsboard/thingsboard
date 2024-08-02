@@ -44,6 +44,16 @@ export enum PortLimits {
   MAX = 65535
 }
 
+export enum RequestsType {
+  Shared = 'Shared',
+  Client = 'Client'
+}
+
+export enum ExpressionType {
+  Constant = 'Constant',
+  Expression = 'Expression'
+}
+
 export const GatewayStatus = {
   ...GatewayLogLevel,
   ...DeviceGatewayStatus
@@ -138,7 +148,13 @@ export interface OpcUaMapping {
   deviceProfileExpression?: string;
 }
 
-export type MappingValue = DataMapping | RequestsMapping | OpcUaMapping;
+export interface DeviceConfigValue {
+  addressFilter: string;
+  deviceName: string;
+  deviceProfile: string;
+}
+
+export type MappingValue = DataMapping | RequestsMapping | OpcUaMapping | DeviceConfigValue;
 
 export interface ServerConfig {
   name: string;
@@ -163,6 +179,12 @@ export interface BrokerConfig {
   security: ConnectorSecurity;
 }
 
+export interface SocketConfig {
+  connectionType: string;
+  port: number;
+  bufferSize: number;
+}
+
 export interface ConnectorSecurity {
   type: SecurityType;
   username?: string;
@@ -172,17 +194,26 @@ export interface ConnectorSecurity {
   pathToClientCert?: string;
 }
 
-export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
+export type ConnectorMapping =
+  DeviceConnectorMapping
+  | RequestMappingData
+  | ConverterConnectorMapping
+  | DevicesConfigMapping;
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
 
-export type ConnectorBaseConfig = MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+export type ConnectorBaseConfig = MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig | SocketBasicConfig;
 
 export interface MQTTBasicConfig {
   dataMapping: ConverterConnectorMapping[];
   requestsMapping: Record<RequestType, RequestMappingData> | RequestMappingData[];
   broker: BrokerConfig;
   workers: WorkersConfig;
+}
+
+export interface SocketBasicConfig {
+  socket: any;
+  devices: any;
 }
 
 export interface OPCBasicConfig {
@@ -219,6 +250,11 @@ export interface Timeseries {
   value: string;
 }
 
+export interface DeviceDataKey {
+  key: string;
+  byte: [];
+}
+
 interface RpcArgument {
   type: string;
   value: number;
@@ -229,10 +265,27 @@ export interface RpcMethod {
   arguments: RpcArgument[];
 }
 
+export interface DeviceRpcMethod {
+  method: string;
+  processing: string;
+  encoding: SocketEncoding;
+}
+
 export interface AttributesUpdate {
   key: string;
   type: string;
   value: string;
+}
+
+export interface DeviceAttributesUpdate {
+  encoding: SocketEncoding;
+  attributeOnPlatform: string;
+}
+
+export interface DeviceAttributesRequests {
+  type: RequestsType;
+  requestExpression: any;
+  attributeNameExpression: any;
 }
 
 export interface Converter {
@@ -265,6 +318,17 @@ export interface DeviceConnectorMapping {
   timeseries?: Timeseries[];
   rpc_methods?: RpcMethod[];
   attributes_updates?: AttributesUpdate[];
+}
+
+export interface DevicesConfigMapping {
+  addressFilter: string;
+  deviceName: string;
+  deviceProfile: string;
+  timeseries: DeviceDataKey[];
+  attributes: DeviceDataKey[];
+  attributes_requests: DeviceAttributesRequests[];
+  attributes_updates: DeviceAttributesUpdate[];
+  rpc_methods: DeviceRpcMethod[];
 }
 
 export enum ConnectorType {
@@ -473,7 +537,7 @@ export interface CreatedConnectorConfigData {
   logLevel: GatewayLogLevel;
   useDefaults: boolean;
   sendDataOnlyOnChange: boolean;
-  configurationJson?: {[key: string]: any};
+  configurationJson?: { [key: string]: any };
 }
 
 export interface MappingDataKey {
@@ -484,12 +548,23 @@ export interface MappingDataKey {
 
 export interface RpcMethodsMapping {
   method: string;
-  arguments: Array<MappingDataKey>;
+  encoding: SocketEncoding;
+  withResponse: boolean;
+}
+
+export interface SocketAttributeUpdates {
+  encoding: SocketEncoding;
+  attributeOnPlatform: string;
 }
 
 export interface MappingInfo {
   mappingType: MappingType;
-  value: {[key: string]: any};
+  value: { [key: string]: any };
+  buttonTitle: string;
+}
+
+export interface DeviceMappingInfo {
+  value: { [key: string]: any };
   buttonTitle: string;
 }
 
@@ -536,9 +611,9 @@ export const RestSecurityTypeTranslationsMap = new Map<RestSecurityType, string>
 );
 
 export const MqttVersions = [
-  { name: 3.1, value: 3 },
-  { name: 3.11, value: 4 },
-  { name: 5, value: 5 }
+  {name: 3.1, value: 3},
+  {name: 3.11, value: 4},
+  {name: 5, value: 5}
 ];
 
 export enum MappingType {
@@ -571,7 +646,7 @@ export const HelpLinkByMappingTypeMap = new Map<MappingType, string>(
   ]
 );
 
-export const QualityTypes = [0, 1 ,2];
+export const QualityTypes = [0, 1, 2];
 
 export const QualityTypeTranslationsMap = new Map<number, string>(
   [
@@ -770,9 +845,9 @@ export enum SecurityPolicy {
 }
 
 export const SecurityPolicyTypes = [
-  { value: SecurityPolicy.BASIC128, name: 'Basic128RSA15' },
-  { value: SecurityPolicy.BASIC256, name: 'Basic256' },
-  { value: SecurityPolicy.BASIC256SHA, name: 'Basic256SHA256' }
+  {value: SecurityPolicy.BASIC128, name: 'Basic128RSA15'},
+  {value: SecurityPolicy.BASIC256, name: 'Basic256'},
+  {value: SecurityPolicy.BASIC256SHA, name: 'Basic256SHA256'}
 ];
 
 export enum ModbusProtocolType {
@@ -807,7 +882,7 @@ export const ModbusMethodLabelsMap = new Map<ModbusMethodType | ModbusSerialMeth
   ]
 );
 
-export const ModbusByteSizes = [5, 6, 7 ,8];
+export const ModbusByteSizes = [5, 6, 7, 8];
 
 export enum ModbusParity {
   Even = 'E',
@@ -1030,3 +1105,62 @@ export interface ModbusIdentity {
 }
 
 export const ModbusBaudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
+
+export enum SocketValueKey {
+  TIMESERIES = 'timeseries',
+  ATTRIBUTES = 'attributes',
+  ATTRIBUTES_REQUESTS = 'attributes_requests',
+  ATTRIBUTES_UPDATES = 'attributes_updates',
+  RPC_METHODS = 'rpc_methods',
+}
+
+export enum SocketEncoding {
+  UTF8 = 'UTF-8',
+  HEX = 'HEX',
+  UTF16 = 'UTF-16',
+  UTF32 = 'UTF-32',
+  UTF16BE = 'UTF-16-BE',
+  UTF16LE = 'UTF-16-LE',
+  UTF32BE = 'UTF-32-BE',
+  UTF32LE = 'UTF-32-LE',
+}
+
+export const SocketKeysPanelTitleTranslationsMap = new Map<SocketValueKey, string>(
+  [
+    [SocketValueKey.ATTRIBUTES, 'gateway.attributes'],
+    [SocketValueKey.TIMESERIES, 'gateway.timeseries'],
+    [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.attribute-requests'],
+    [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
+    [SocketValueKey.RPC_METHODS, 'gateway.rpc-requests']
+  ]
+);
+
+export const SocketKeysAddKeyTranslationsMap = new Map<SocketValueKey, string>(
+  [
+    [SocketValueKey.ATTRIBUTES, 'gateway.add-attribute'],
+    [SocketValueKey.TIMESERIES, 'gateway.add-timeseries'],
+    [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.add-attribute-request'],
+    [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
+    [SocketValueKey.RPC_METHODS, 'gateway.add-rpc-request']
+  ]
+);
+
+export const SocketKeysDeleteKeyTranslationsMap = new Map<SocketValueKey, string>(
+  [
+    [SocketValueKey.ATTRIBUTES, 'gateway.delete-attribute'],
+    [SocketValueKey.TIMESERIES, 'gateway.delete-timeseries'],
+    [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.delete-attribute-request'],
+    [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
+    [SocketValueKey.RPC_METHODS, 'gateway.delete-rpc-request']
+  ]
+);
+
+export const SocketKeysNoKeysTextTranslationsMap = new Map<SocketValueKey, string>(
+  [
+    [SocketValueKey.ATTRIBUTES, 'gateway.no-attributes'],
+    [SocketValueKey.TIMESERIES, 'gateway.no-timeseries'],
+    [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.no-attribute-requests'],
+    [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
+    [SocketValueKey.RPC_METHODS, 'gateway.no-rpc-requests']
+  ]
+);

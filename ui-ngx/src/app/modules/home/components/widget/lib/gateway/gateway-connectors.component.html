@@ -187,6 +187,10 @@
                                   formControlName="basicConfig"
                                   [generalTabContent]="generalTabContent">
           </tb-modbus-basic-config>
+          <tb-socket-basic-config *ngSwitchCase="connectorType.SOCKET"
+                                  formControlName="basicConfig"
+                                  [generalTabContent]="generalTabContent">
+          </tb-socket-basic-config>
         </ng-container>
       </ng-container>
       <ng-template #defaultConfig>

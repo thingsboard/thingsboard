@@ -141,6 +141,21 @@ import {
 import {
   TypeValuePanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
+import {
+  DeviceDialogComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/socket/device-dialog/device-dialog.component';
+import {
+  SocketBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/socket/socket-basic-config/socket-basic-config.component';
+import {
+  SocketConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/socket/socket-config/socket-config.component';
+import {
+  DevicesConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/socket/devices-config/devices-config.component';
+import {
+  DeviceDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/socket/device-data-keys-pannel/device-data-keys-panel.component';
 
 @NgModule({
   declarations: [
@@ -168,8 +183,10 @@ import {
     GatewayConnectorComponent,
     AddConnectorDialogComponent,
     MappingDialogComponent,
+    DeviceDialogComponent,
     DeviceInfoTableComponent,
     MappingDataKeysPanelComponent,
+    DeviceDataKeysPanelComponent,
     TypeValuePanelComponent,
     GatewayLogsComponent,
     GatewayStatisticsComponent,
@@ -224,6 +241,9 @@ import {
     MqttBasicConfigComponent,
     MappingTableComponent,
     OpcUaBasicConfigComponent,
+    SocketBasicConfigComponent,
+    SocketConfigComponent,
+    DevicesConfigComponent,
     KeyValueIsNotEmptyPipe,
     ModbusBasicConfigComponent,
     EllipsisChipListDirective,
@@ -252,8 +272,10 @@ import {
     GatewayConnectorComponent,
     AddConnectorDialogComponent,
     MappingDialogComponent,
+    DeviceDialogComponent,
     DeviceInfoTableComponent,
     MappingDataKeysPanelComponent,
+    DeviceDataKeysPanelComponent,
     TypeValuePanelComponent,
     GatewayLogsComponent,
     GatewayServiceRPCConnectorComponent,
