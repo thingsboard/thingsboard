@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.util;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
-import org.thingsboard.server.dao.dashboard.DashboardServiceImpl;
 
 import java.util.Arrays;
 import java.util.HashMap;

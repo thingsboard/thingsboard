@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.entitiy.user;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -31,8 +32,6 @@ import org.thingsboard.server.dao.user.UserService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATTERN;
 
