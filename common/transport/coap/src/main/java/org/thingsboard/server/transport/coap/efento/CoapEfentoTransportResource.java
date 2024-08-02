@@ -28,18 +28,17 @@ import org.eclipse.californium.core.network.Exchange;
 import org.eclipse.californium.core.server.resources.CoapExchange;
 import org.eclipse.californium.core.server.resources.Resource;
 import org.springframework.util.CollectionUtils;
+import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.adaptor.ProtoConverter;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.device.profile.CoapDeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.DeviceProfileTransportConfiguration;
 import org.thingsboard.server.common.data.device.profile.EfentoCoapDeviceTypeConfiguration;
-import org.thingsboard.server.common.adaptor.AdaptorException;
 import org.thingsboard.server.common.transport.auth.SessionInfoCreator;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.coap.ConfigProtos;
 import org.thingsboard.server.gen.transport.coap.DeviceInfoProtos;
-import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos.ProtoChannel;
 import org.thingsboard.server.transport.coap.AbstractCoapTransportResource;
@@ -59,13 +58,12 @@ import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.google.gson.JsonParser.parseString;
-import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_FLOODING;
-import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OK_ALARM;
-import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OUTPUT_CONTROL;
 import static org.thingsboard.server.transport.coap.CoapTransportService.CONFIGURATION;
 import static org.thingsboard.server.transport.coap.CoapTransportService.CURRENT_TIMESTAMP;
 import static org.thingsboard.server.transport.coap.CoapTransportService.DEVICE_INFO;
 import static org.thingsboard.server.transport.coap.CoapTransportService.MEASUREMENTS;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.isBinarySensor;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.isSensorError;
 
 @Slf4j
 public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
@@ -224,7 +222,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
+    public List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
         String serialNumber = CoapEfentoUtils.convertByteArrayToString(protoMeasurements.getSerialNum().toByteArray());
         boolean batteryStatus = protoMeasurements.getBatteryStatus();
         int measurementPeriodBase = protoMeasurements.getMeasurementPeriodBase();
@@ -240,17 +238,16 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         Map<Long, JsonObject> valuesMap = new TreeMap<>();
         for (int channel = 0; channel < channelsList.size(); channel++) {
             ProtoChannel protoChannel = channelsList.get(channel);
+            List<Integer> sampleOffsetsList = protoChannel.getSampleOffsetsList();
+            if (CollectionUtils.isEmpty(sampleOffsetsList)) {
+                log.trace("[{}][{}] sampleOffsetsList list is empty!", sessionId, protoChannel.getType().name());
+                continue;
+            }
             boolean isBinarySensor = isBinarySensor(protoChannel.getType());
             int channelPeriodFactor = (measurementPeriodFactor == 0 ? (isBinarySensor ? 14 : 1) : measurementPeriodFactor);
             int measurementPeriod = measurementPeriodBase * channelPeriodFactor;
             long measurementPeriodMillis = TimeUnit.SECONDS.toMillis(measurementPeriod);
             long startTimestampMillis = TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp());
-            List<Integer> sampleOffsetsList = protoChannel.getSampleOffsetsList();
-
-            if (CollectionUtils.isEmpty(sampleOffsetsList)) {
-                log.trace("[{}][{}] sampleOffsetsList list is empty!", sessionId, protoChannel.getType().name());
-                continue;
-            }
 
             for (int i = 0; i < sampleOffsetsList.size(); i++) {
                 int sampleOffset = sampleOffsetsList.get(i);
@@ -261,17 +258,19 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
 
                 JsonObject values;
                 if (isBinarySensor) {
+                    boolean currentIsOk = sampleOffset < 0;
+                    Integer previousSampleOffset = i > 0 ? sampleOffsetsList.get(i - 1) : null;
+                    if (previousSampleOffset != null) {  //compare with previous value
+                        boolean previousIsOk = previousSampleOffset < 0;
+                        if (currentIsOk == previousIsOk) {
+                            break;
+                        }
+                    }
                     long sampleOffsetMillis = TimeUnit.SECONDS.toMillis(sampleOffset);
-                    long measurementTimestamp = startTimestampMillis + Math.abs(sampleOffsetMillis) - 1;
+                    long measurementTimestamp = startTimestampMillis + Math.abs(sampleOffsetMillis);
                     values = valuesMap.computeIfAbsent(measurementTimestamp - 1000, k ->
                             CoapEfentoUtils.setDefaultMeasurements(serialNumber, batteryStatus, measurementPeriod, nextTransmissionAtMillis, signal, k));
-                    Integer previousSampleOffset = i > 0 ? sampleOffsetsList.get(i - 1) : null;
-                    boolean previousValueIsOk = previousSampleOffset != null && previousSampleOffset < 0;
-                    boolean valueIsOk = sampleOffset < 0;
-                    if (binaryValueNotChanged(valueIsOk, previousValueIsOk)) {
-                        break;
-                    }
-                    addBinarySample(protoChannel, valueIsOk, values, channel + 1);
+                    addBinarySample(protoChannel, currentIsOk, values, channel + 1, sessionId);
                 } else {
                     long timestampMillis = startTimestampMillis + i * measurementPeriodMillis;
                     values = valuesMap.computeIfAbsent(timestampMillis, k -> CoapEfentoUtils.setDefaultMeasurements(
@@ -288,14 +287,6 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         return valuesMap.entrySet().stream()
                 .map(entry -> new EfentoTelemetry(entry.getKey(), entry.getValue()))
                 .collect(Collectors.toList());
-    }
-
-    private boolean isBinarySensor(MeasurementTypeProtos.MeasurementType type) {
-        return type == MEASUREMENT_TYPE_OK_ALARM || type == MEASUREMENT_TYPE_FLOODING || type == MEASUREMENT_TYPE_OUTPUT_CONTROL;
-    }
-
-    private boolean isSensorError(int sampleOffset) {
-        return sampleOffset >= 8355840 && sampleOffset <= 8388607;
     }
 
     private void addContinuesSample(ProtoChannel protoChannel, int sampleOffset, JsonObject values, int channelNumber, UUID sessionId) {
@@ -396,24 +387,21 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    private void addBinarySample(ProtoChannel protoChannel, boolean valueIsOk, JsonObject values, int channel) {
+    private void addBinarySample(ProtoChannel protoChannel, boolean valueIsOk, JsonObject values, int channel, UUID sessionId) {
         switch (protoChannel.getType()) {
             case MEASUREMENT_TYPE_OK_ALARM:
                 values.addProperty("ok_alarm_" + channel, valueIsOk ? "OK" : "ALARM");
+                break;
             case MEASUREMENT_TYPE_FLOODING:
                 values.addProperty("flooding_" + channel, valueIsOk ? "OK" : "WATER_DETECTED");
+                break;
             case MEASUREMENT_TYPE_OUTPUT_CONTROL:
                 values.addProperty("output_control_" + channel, valueIsOk ? "OFF" : "ON");
+                break;
+            default:
+                log.trace("[{}],[{}] Unsupported binary measurementType! Ignoring.", sessionId, protoChannel.getType().name());
+                break;
         }
-    }
-
-    private static boolean binaryValueNotChanged(boolean currentIsOk, boolean previousIsOk) {
-        boolean isOk = previousIsOk && currentIsOk;
-        boolean isAlarm = !previousIsOk && !currentIsOk;
-        if (isOk || isAlarm) {
-            return true;
-        }
-        return false;
     }
 
     private EfentoTelemetry getEfentoDeviceInfo(DeviceInfoProtos.ProtoDeviceInfo protoDeviceInfo) {
