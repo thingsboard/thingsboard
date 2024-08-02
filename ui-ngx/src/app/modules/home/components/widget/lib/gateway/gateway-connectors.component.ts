@@ -372,9 +372,11 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
     const sharedIndex = this.sharedAttributeData.findIndex(data => {
       const sharedData = data.value;
-      return sharedData.name === connectorData.name
-        && sharedData.ts && sharedData.ts <= connectorData.ts
-        && isEqual(sharedData.value, connectorData.value);
+      const hasSameName = sharedData.name === connectorData.name;
+      const hasEmptyConfig = isEqual(sharedData.configurationJson, {}) && hasSameName;
+      const hasSameConfig =isEqual(sharedData.configurationJson, connectorData.configurationJson);
+      const isRecentlyCreated = sharedData.ts && sharedData.ts <= connectorData.ts;
+      return hasSameName && isRecentlyCreated && (hasSameConfig || hasEmptyConfig);
     });
     return sharedIndex !== -1;
   }
