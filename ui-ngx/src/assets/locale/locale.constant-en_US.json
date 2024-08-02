@@ -1078,7 +1078,9 @@
         "date-from": "Date from",
         "time-from": "Time from",
         "date-to": "Date to",
-        "time-to": "Time to"
+        "time-to": "Time to",
+        "from": "From",
+        "to": "To"
     },
     "dashboard": {
         "dashboard": "Dashboard",

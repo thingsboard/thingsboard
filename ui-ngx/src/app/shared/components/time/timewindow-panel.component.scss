@@ -35,19 +35,6 @@
     overflow: hidden;
   }
 
-  .mat-padding {
-    padding: 0 16px;
-  }
-
-  .hide-label {
-    margin-bottom: 5px;
-    margin-right: 5px;
-  }
-
-  tb-timeinterval[ng-reflect-fxe-show="true"] {
-    margin-bottom: -16px;
-  }
-
   .limit-slider-container {
     .limit-slider-value {
       margin-left: 16px;
@@ -60,9 +47,6 @@
   }
 
   @media #{$mat-gt-sm} {
-    .history-time-input {
-      min-width: 364px;
-    }
     .limit-slider-container {
       > label {
         margin-right: 16px;
@@ -75,15 +59,6 @@
 }
 
 :host ::ng-deep {
-  .mat-mdc-radio-button {
-    display: block;
-    .mdc-form-field {
-      align-items: start;
-      > label {
-        padding-top: 10px;
-      }
-    }
-  }
   .mat-mdc-tab-group:not(.tb-headless) {
     height: 100%;
   }

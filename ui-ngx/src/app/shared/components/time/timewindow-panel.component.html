@@ -23,11 +23,10 @@
         <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
           <div class="tb-flex space-between"
                [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
-            <div class="tb-flex column">
+            <div class="tb-flex column no-flex flex-xs">
               <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
               <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
-                <tb-toggle-select appearance="fill" [options]="realtimeTimewindowOptions" formControlName="realtimeType"
-                                  style="max-width: 100%">
+                <tb-toggle-select appearance="fill" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
                 </tb-toggle-select>
               </ng-container>
             </div>
@@ -69,11 +68,10 @@
         <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
           <div class="tb-flex space-between"
                [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
-            <div class="tb-flex column">
+            <div class="tb-flex column no-flex flex-xs">
               <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
               <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
-                <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType"
-                                  style="max-width: 100%">
+                <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType">
                 </tb-toggle-select>
               </ng-container>
             </div>
@@ -97,6 +95,8 @@
             <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED">
               <tb-datetime-period
                 formControlName="fixedTimewindow"
+                subscriptSizing="dynamic"
+                appearance="outline"
                 class="history-time-input"
                 [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                               timewindowForm.get('history.historyType').value === historyTypes.FIXED">
@@ -126,7 +126,7 @@
         <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideAggregation">
           <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
           <mat-form-field subscriptSizing="dynamic" appearance="outline">
-            <mat-select formControlName="type" style="min-width: 150px;">
+            <mat-select formControlName="type">
               <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
                 {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
               </mat-option>

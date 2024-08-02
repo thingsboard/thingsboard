@@ -265,6 +265,12 @@
     gap: 8px;
     &.no-flex {
       flex: none;
+      &.flex-xs {
+        @media #{$mat-xs} {
+          width: auto;
+          flex: 1;
+        }
+      }
     }
     &.row {
       flex-direction: row;
