@@ -45,6 +45,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-list',
@@ -105,6 +106,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @Input()
   hint: string;
+
+  @Input()
+  @coerceBoolean()
+  propagateOnSubscribe = false;
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
@@ -187,10 +192,11 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.modelValue = [...value];
       this.entityService.getEntities(this.entityType, value).subscribe(
         (entities) => {
-          this.modelValue = entities.map(entity => entity.id.id);
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
-          this.propagateChange(this.modelValue);
+          if (this.propagateOnSubscribe) {
+            this.propagateChange(this.modelValue);
+          }
         }
       );
     } else {
