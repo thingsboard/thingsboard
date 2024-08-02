@@ -125,7 +125,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       });
     }
 
-    if (this.isEdit || (!this.timewindow.hideLastInterval && !this.quickIntervalOnly)) {
+    if ((this.isEdit || !this.timewindow.hideLastInterval) && !this.quickIntervalOnly) {
       this.realtimeTimewindowOptions.push({
         name: this.translate.instant('timewindow.last'),
         value: this.realtimeTypes.LAST_INTERVAL

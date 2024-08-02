@@ -22,14 +22,16 @@
       <div class="tb-flex column">
         <section class="tb-form-panel stroked"
                  *ngIf="isEdit || !(timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
-          <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-          <div class="tb-flex align-center space-between">
-            <ng-container formGroupName="realtime">
-              <tb-toggle-select *ngIf="!quickIntervalOnly || isEdit || (!timewindow.hideLastInterval && !timewindow.hideQuickInterval)"
-                                appearance="fill" [options]="realtimeTimewindowOptions" formControlName="realtimeType"
-                                style="max-width: 100%">
-              </tb-toggle-select>
-            </ng-container>
+          <div class="tb-flex space-between"
+               [ngClass]="{'align-end': realtimeTimewindowOptions.length > 1, 'align-center': realtimeTimewindowOptions.length <= 1 }">
+            <div class="tb-flex column">
+              <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
+              <ng-container formGroupName="realtime" *ngIf="realtimeTimewindowOptions.length > 1">
+                <tb-toggle-select appearance="fill" [options]="realtimeTimewindowOptions" formControlName="realtimeType"
+                                  style="max-width: 100%">
+                </tb-toggle-select>
+              </ng-container>
+            </div>
 
             <ng-container *ngTemplateOutlet="timezoneSelection">
             </ng-container>
@@ -58,7 +60,7 @@
               </tb-quick-time-interval>
             </ng-container>
           </ng-container>
-          </section>
+        </section>
         <section class="tb-form-panel stroked tb-flex row align-center space-between"
                  *ngIf="!isEdit && (timewindow.hideInterval || (timewindow.hideLastInterval && timewindow.hideQuickInterval))">
           <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
@@ -72,13 +74,16 @@
     <mat-tab label="{{ 'timewindow.history' | translate }}">
       <div class="tb-flex column">
         <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideInterval">
-          <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-          <div class="tb-flex align-center space-between">
-            <ng-container formGroupName="history">
-              <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType"
-                                style="max-width: 100%">
-              </tb-toggle-select>
-            </ng-container>
+          <div class="tb-flex space-between"
+               [ngClass]="{'align-end': historyTimewindowOptions.length > 1, 'align-center': historyTimewindowOptions.length <= 1 }">
+            <div class="tb-flex column">
+              <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
+              <ng-container formGroupName="history" *ngIf="historyTimewindowOptions.length > 1">
+                <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType"
+                                  style="max-width: 100%">
+                </tb-toggle-select>
+              </ng-container>
+            </div>
 
             <ng-container *ngTemplateOutlet="timezoneSelection">
             </ng-container>
