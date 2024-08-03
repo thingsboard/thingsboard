@@ -487,6 +487,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     }
     if (!this.widgetContext.inited && this.isReady()) {
       this.widgetContext.inited = true;
+      this.widgetContext.destroyed = false;
       this.dashboardWidget.updateWidgetParams();
       this.widgetContext.detectContainerChanges();
       if (this.cafs.init) {

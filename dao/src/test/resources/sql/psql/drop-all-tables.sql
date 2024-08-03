@@ -34,6 +34,7 @@ DROP TABLE IF EXISTS stats_event;
 DROP TABLE IF EXISTS lc_event;
 DROP TABLE IF EXISTS error_event;
 DROP TABLE IF EXISTS relation;
+DROP SEQUENCE IF EXISTS relation_version_seq;
 DROP TABLE IF EXISTS tenant;
 DROP TABLE IF EXISTS ts_kv;
 DROP TABLE IF EXISTS ts_kv_latest;

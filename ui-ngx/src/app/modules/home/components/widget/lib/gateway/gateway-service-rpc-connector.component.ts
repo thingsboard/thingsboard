@@ -53,7 +53,7 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
-import { takeUntil, tap } from "rxjs/operators";
+import { filter, takeUntil, tap } from "rxjs/operators";
 import { Subject } from "rxjs";
 
 @Component({
@@ -80,7 +80,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   saveTemplate: EventEmitter<RPCTemplateConfig> = new EventEmitter();
 
   commandForm: FormGroup;
-  isMQTTWithResponse: FormControl;
   codesArray: Array<number> = [1, 2, 3, 4, 5, 6, 15, 16];
   ConnectorType = ConnectorType;
   modbusCommandTypes = Object.values(ModbusCommandTypes) as ModbusCommandTypes[];
@@ -135,7 +134,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
         this.propagateChange({...this.commandForm.value, ...value});
       }
     });
-    this.isMQTTWithResponse = this.fb.control(false);
     this.observeMQTTWithResponse();
   }
 
@@ -153,9 +151,10 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestTopicExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTopicExpression: [{ value: null, disabled: true }, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTimeout: [null, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
+          responseTimeout: [{ value: null, disabled: true }, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-        })
+          withResponse: [false, []],
+        });
         break;
       case ConnectorType.MODBUS:
         formGroup = this.fb.group({
@@ -407,12 +406,21 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   }
 
   private observeMQTTWithResponse(): void {
-    this.isMQTTWithResponse.valueChanges.pipe(
-      tap((isActive: boolean) => {
-        const responseControl = this.commandForm.get('responseTopicExpression');
-        isActive ? responseControl.enable() : responseControl.disable();
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe();
+    if (this.connectorType === ConnectorType.MQTT) {
+      this.commandForm.get('withResponse').valueChanges.pipe(
+        tap((isActive: boolean) => {
+          const responseTopicControl = this.commandForm.get('responseTopicExpression');
+          const responseTimeoutControl = this.commandForm.get('responseTimeout');
+          if (isActive) {
+            responseTopicControl.enable();
+            responseTimeoutControl.enable();
+          } else {
+            responseTopicControl.disable();
+            responseTimeoutControl.disable();
+          }
+        }),
+        takeUntil(this.destroy$),
+      ).subscribe();
+    }
   }
 }

@@ -13,19 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+:host {
+  .mat-mdc-tab-body-wrapper {
+    min-height: 320px;
+  }
+}
 
-import jakarta.persistence.Column;
-import jakarta.persistence.MappedSuperclass;
-import lombok.Data;
-
-import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
-
-@Data
-@MappedSuperclass
-public abstract class VersionedEntity {
-
-    @Column(name = VERSION_COLUMN)
-    protected Long version;
-
+::ng-deep .mdc-evolution-chip-set__chips {
+  align-items: center;
 }
