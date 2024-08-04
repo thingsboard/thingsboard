@@ -56,6 +56,7 @@ export interface WidgetReference {
   widgetId: string;
   originalSize: WidgetSize;
   originalColumns: number;
+  breakpoint: string;
 }
 
 export interface RuleNodeConnection {
@@ -85,7 +86,8 @@ export class ItemBufferService {
               private ruleChainService: RuleChainService,
               private utils: UtilsService) {}
 
-  public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetItem {
+  public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                           widget: Widget, breakpoint: string): WidgetItem {
     const aliasesInfo: AliasesInfo = {
       datasourceAliases: {},
       targetDeviceAlias: null
@@ -93,8 +95,8 @@ export class ItemBufferService {
     const filtersInfo: FiltersInfo = {
       datasourceFilters: {}
     };
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     const datasources: Datasource[] = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
     if (widget.config && dashboard.configuration
       && dashboard.configuration.entityAliases) {
@@ -146,13 +148,14 @@ export class ItemBufferService {
     };
   }
 
-  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
-    const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
+  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: string): void {
+    const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_ITEM, widgetItem);
   }
 
-  public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): void {
-    const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget);
+  public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                             widget: Widget, breakpoint: string): void {
+    const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_REFERENCE, widgetReference);
   }
 
@@ -160,11 +163,11 @@ export class ItemBufferService {
     return this.storeHas(WIDGET_ITEM);
   }
 
-  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId): boolean {
+  public canPasteWidgetReference(dashboard: Dashboard, state: string, layout: DashboardLayoutId, breakpoint: string): boolean {
     const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
     if (widgetReference) {
       if (widgetReference.dashboardId === dashboard.id.id) {
-        if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout)
+        if ((widgetReference.sourceState !== state || widgetReference.sourceLayout !== layout || widgetReference.breakpoint !== breakpoint)
           && dashboard.configuration.widgets[widgetReference.widgetId]) {
           return true;
         }
@@ -387,13 +390,17 @@ export class ItemBufferService {
     return ruleChainImport;
   }
 
-  private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId): number {
+  private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                             breakpoint: string): number {
     let originalColumns = 24;
     let gridSettings = null;
     const state = dashboard.configuration.states[sourceState];
     const layoutCount = Object.keys(state.layouts).length;
     if (state) {
-      const layout = state.layouts[sourceLayout];
+      let layout = state.layouts[sourceLayout];
+      if (breakpoint !== 'default') {
+        layout = layout.breakpoints[breakpoint];
+      }
       if (layout) {
         gridSettings = layout.gridSettings;
 
@@ -407,8 +414,12 @@ export class ItemBufferService {
     return originalColumns;
   }
 
-  private getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget): WidgetSize {
-    const layout = dashboard.configuration.states[sourceState].layouts[sourceLayout];
+  private getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget,
+                          breakpoint: string): WidgetSize {
+    let layout = dashboard.configuration.states[sourceState].layouts[sourceLayout];
+    if (breakpoint !== 'default') {
+      layout = layout.breakpoints[breakpoint];
+    }
     const widgetLayout = layout.widgets[widget.id];
     return {
       sizeX: widgetLayout.sizeX,
@@ -432,16 +443,17 @@ export class ItemBufferService {
   }
 
   private prepareWidgetReference(dashboard: Dashboard, sourceState: string,
-                                 sourceLayout: DashboardLayoutId, widget: Widget): WidgetReference {
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget);
+                                 sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: string): WidgetReference {
+    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     return {
       dashboardId: dashboard.id.id,
       sourceState,
       sourceLayout,
       widgetId: widget.id,
       originalSize,
-      originalColumns
+      originalColumns,
+      breakpoint
     };
   }
 
