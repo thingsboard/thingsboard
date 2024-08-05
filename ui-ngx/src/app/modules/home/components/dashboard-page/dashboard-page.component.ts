@@ -1374,6 +1374,33 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
+  copyEditWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
+    $event.stopPropagation();
+
+    const widgetItem = deepClone(this.itembuffer.prepareWidgetItem(this.dashboard, this.dashboardCtx.state,
+      layoutCtx.id, widget, layoutCtx.breakpoint));
+
+    const targetRow = layoutCtx.widgetLayouts[widget.id].row;
+    const targetColumn = layoutCtx.widgetLayouts[widget.id].col;
+
+    if (layoutCtx.widgets.removeWidgetId(widget.id)) {
+      this.dashboardUtils.removeWidgetFromLayout(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
+        widget.id, layoutCtx.breakpoint);
+    }
+
+    widgetItem.widget.id = this.utils.guid();
+
+    this.itembuffer.addWidgetToDashboard(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widgetItem.widget,
+      widgetItem.aliasesInfo, widgetItem.filtersInfo,
+      this.entityAliasesUpdated.bind(this), this.filtersUpdated.bind(this),
+      widgetItem.originalColumns, widgetItem.originalSize, targetRow, targetColumn, layoutCtx.breakpoint
+    ).subscribe(() => {
+      layoutCtx.widgets.addWidgetId(widgetItem.widget.id);
+      this.runChangeDetection();
+      this.editWidget($event,layoutCtx, widgetItem.widget);
+    });
+  }
+
   copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     this.itembuffer.copyWidget(this.dashboard,
       this.dashboardCtx.state, layoutCtx.id, widget, layoutCtx.breakpoint);
@@ -1385,7 +1412,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
-    this.itembuffer.pasteWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
+    this.itembuffer.pasteWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id, layoutCtx.breakpoint,
             pos, this.entityAliasesUpdated.bind(this), this.filtersUpdated.bind(this)).subscribe(
       (widget) => {
         layoutCtx.widgets.addWidgetId(widget.id);
@@ -1394,7 +1421,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   pasteWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition) {
-    this.itembuffer.pasteWidgetReference(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
+    this.itembuffer.pasteWidgetReference(this.dashboard, this.dashboardCtx.state, layoutCtx.id, layoutCtx.breakpoint,
       pos).subscribe(
       (widget) => {
         layoutCtx.widgets.addWidgetId(widget.id);

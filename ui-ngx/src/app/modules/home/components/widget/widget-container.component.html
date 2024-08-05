@@ -64,6 +64,14 @@
       </button>
       <button mat-icon-button
               [fxShow]="isEditActionEnabled && !widget.isFullscreen"
+              *ngIf="isReferenceWidget"
+              (click)="onCopyEdit($event)"
+              matTooltip="Edit copy widget"
+              matTooltipPosition="above">
+        <tb-icon>mdi:circle-edit-outline</tb-icon>
+      </button>
+      <button mat-icon-button
+              [fxShow]="isEditActionEnabled && !widget.isFullscreen"
               (click)="onEdit($event)"
               matTooltip="{{ 'widget.edit' | translate }}"
               matTooltipPosition="above">

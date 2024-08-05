@@ -177,7 +177,9 @@ export class ItemBufferService {
   }
 
   public pasteWidget(targetDashboard: Dashboard, targetState: string,
-                     targetLayout: DashboardLayoutId, position: WidgetPosition,
+                     targetLayout: DashboardLayoutId,
+                     breakpoint: string,
+                     position: WidgetPosition,
                      onAliasesUpdateFunction: () => void,
                      onFiltersUpdateFunction: () => void): Observable<Widget> {
     const widgetItem: WidgetItem = this.storeGet(WIDGET_ITEM);
@@ -197,7 +199,7 @@ export class ItemBufferService {
       return this.addWidgetToDashboard(targetDashboard, targetState,
                                 targetLayout, widget, aliasesInfo, filtersInfo,
                                 onAliasesUpdateFunction, onFiltersUpdateFunction,
-                                originalColumns, originalSize, targetRow, targetColumn).pipe(
+                                originalColumns, originalSize, targetRow, targetColumn, breakpoint).pipe(
         map(() => widget)
       );
     } else {
@@ -205,8 +207,11 @@ export class ItemBufferService {
     }
   }
 
-  public pasteWidgetReference(targetDashboard: Dashboard, targetState: string,
-                              targetLayout: DashboardLayoutId, position: WidgetPosition): Observable<Widget> {
+  public pasteWidgetReference(targetDashboard: Dashboard,
+                              targetState: string,
+                              targetLayout: DashboardLayoutId,
+                              breakpoint: string,
+                              position: WidgetPosition): Observable<Widget> {
     const widgetReference: WidgetReference = this.storeGet(WIDGET_REFERENCE);
     if (widgetReference) {
       const widget = targetDashboard.configuration.widgets[widgetReference.widgetId];
@@ -222,7 +227,7 @@ export class ItemBufferService {
         return this.addWidgetToDashboard(targetDashboard, targetState,
           targetLayout, widget, null,
           null, null, null, originalColumns,
-          originalSize, targetRow, targetColumn).pipe(
+          originalSize, targetRow, targetColumn, breakpoint).pipe(
           map(() => widget)
         );
       } else {
@@ -242,7 +247,8 @@ export class ItemBufferService {
                               originalColumns: number,
                               originalSize: WidgetSize,
                               row: number,
-                              column: number): Observable<Dashboard> {
+                              column: number,
+                              breakpoint = 'default'): Observable<Dashboard> {
     let theDashboard: Dashboard;
     if (dashboard) {
       theDashboard = dashboard;
@@ -273,7 +279,7 @@ export class ItemBufferService {
       }
     }
     this.dashboardUtils.addWidgetToLayout(theDashboard, targetState, targetLayout, widget,
-                                          originalColumns, originalSize, row, column);
+                                          originalColumns, originalSize, row, column, breakpoint);
     if (callAliasUpdateFunction) {
       onAliasesUpdateFunction();
     }
@@ -406,8 +412,7 @@ export class ItemBufferService {
 
       }
     }
-    if (gridSettings &&
-      gridSettings.columns) {
+    if (gridSettings && gridSettings.columns) {
       originalColumns = gridSettings.columns;
     }
     originalColumns = originalColumns * layoutCount;
