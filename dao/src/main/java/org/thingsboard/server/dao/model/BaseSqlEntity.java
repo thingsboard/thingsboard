@@ -16,6 +16,9 @@
 package org.thingsboard.server.dao.model;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
+import jakarta.persistence.Id;
+import jakarta.persistence.MappedSuperclass;
 import lombok.Data;
 import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.common.util.JacksonUtil;
@@ -24,9 +27,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UUIDBased;
 import org.thingsboard.server.dao.DaoUtil;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Id;
-import jakarta.persistence.MappedSuperclass;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
