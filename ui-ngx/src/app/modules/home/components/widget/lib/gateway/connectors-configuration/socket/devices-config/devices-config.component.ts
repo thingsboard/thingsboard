@@ -44,7 +44,6 @@ import {
   DevicesConfigMapping,
   MappingInfo,
   MappingType,
-  MappingTypeTranslationsMap,
   MappingValue
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { DataSource } from '@angular/cdk/collections';
@@ -247,17 +246,17 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
 
   private getMappingValue(value: ConnectorMapping): MappingValue {
     return {
-      addressFilter: (value as DevicesConfigMapping).addressFilter,
+      address: (value as DevicesConfigMapping).address,
       deviceName: (value as DevicesConfigMapping).deviceName,
-      deviceProfile: (value as DevicesConfigMapping).deviceProfile
+      deviceType: (value as DevicesConfigMapping).deviceType
     };
   }
 
   private setMappingColumns(): void {
     this.deviceConfigColumns.push(
-      {def: 'addressFilter', title: 'gateway.address-filter'},
+      {def: 'address', title: 'gateway.address-filter'},
       {def: 'deviceName', title: 'gateway.device-name'},
-      {def: 'deviceProfile', title: 'gateway.device-profile'}
+      {def: 'deviceType', title: 'gateway.device-profile'}
     );
   }
 }

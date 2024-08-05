@@ -109,13 +109,13 @@
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" formControlName="method"
+                        <input matInput name="value" formControlName="methodRPC"
                                placeholder="{{ 'gateway.set' | translate }}"/>
                         <mat-icon matSuffix
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
                                   [matTooltip]="('gateway.method-required') | translate"
-                                  *ngIf="keyControl.get('method').hasError('required') && keyControl.get('method').touched"
+                                  *ngIf="keyControl.get('methodRPC').hasError('required') && keyControl.get('methodRPC').touched"
                                   class="tb-error">
                           warning
                         </mat-icon>
@@ -216,13 +216,13 @@
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" formControlName="attributeOnPlatform"
+                        <input matInput name="value" formControlName="attributeOnThingsBoard"
                                placeholder="{{ 'gateway.set' | translate }}"/>
                         <mat-icon matSuffix
                                   matTooltipPosition="above"
                                   matTooltipClass="tb-error-tooltip"
-                                  [matTooltip]="('gateway.method-required') | translate"
-                                  *ngIf="keyControl.get('attributeOnPlatform').hasError('required') && keyControl.get('attributeOnPlatform').touched"
+                                  [matTooltip]="('gateway.attribute-on-platform-required') | translate"
+                                  *ngIf="keyControl.get('attributeOnThingsBoard').hasError('required') && keyControl.get('attributeOnThingsBoard').touched"
                                   class="tb-error">
                           warning
                         </mat-icon>

@@ -113,21 +113,21 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
     let dataKeyFormGroup: FormGroup;
     if (this.keysType === SocketValueKey.RPC_METHODS) {
       dataKeyFormGroup = this.fb.group({
-        method: ['', [Validators.required]],
+        methodRPC: ['', [Validators.required]],
         encoding: [SocketEncoding.UTF16, [Validators.required]],
         withResponse: [true]
       });
     } else if (this.keysType === SocketValueKey.ATTRIBUTES_UPDATES) {
       dataKeyFormGroup = this.fb.group({
         encoding: [SocketEncoding.UTF16, [Validators.required]],
-        attributeOnPlatform: ['', [Validators.required]],
+        attributeOnThingsBoard: ['', [Validators.required]],
       });
     } else if (this.keysType === SocketValueKey.ATTRIBUTES_REQUESTS) {
       dataKeyFormGroup = this.fb.group({
         type: [RequestsType.Shared, [Validators.required]],
-        expressionType: [ExpressionType.Constant, [Validators.required]],
-        requestExpression: ['', [Validators.required]],
-        attributeNameExpression: ['', [Validators.required]]
+        expressionType : [ExpressionType.Constant, [Validators.required]],
+        requestExpression: ['', []],
+        attributeNameExpression: ['', []]
       });
     } else {
       dataKeyFormGroup = this.fb.group({
@@ -165,7 +165,7 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
         let dataKeyFormGroup: FormGroup;
         if (this.keysType === SocketValueKey.RPC_METHODS) {
           dataKeyFormGroup = this.fb.group({
-            method: [keyData.method, [Validators.required]],
+            methodRPC: [keyData.methodRPC, [Validators.required]],
             encoding: [keyData.encoding, [Validators.required]],
             withResponse: [true]
           });
@@ -173,13 +173,13 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
           dataKeyFormGroup = this.fb.group({
             type: [keyData.type, [Validators.required]],
             expressionType: [keyData.expressionType, [Validators.required]],
-            requestExpression: [keyData.requestExpression, [Validators.required]],
-            attributeNameExpression: [keyData.attributeNameExpression, [Validators.required]]
+            requestExpression: [keyData.requestExpression, []],
+            attributeNameExpression: [keyData.attributeNameExpression, []]
           });
         } else if (this.keysType === SocketValueKey.ATTRIBUTES_UPDATES) {
           dataKeyFormGroup = this.fb.group({
             encoding: [keyData.encoding, [Validators.required]],
-            attributeOnPlatform: [keyData.attributeOnPlatform, [Validators.required]],
+            attributeOnThingsBoard: [keyData.attributeOnThingsBoard, [Validators.required]],
           });
         } else {
           const {key, byteFrom, byteTo} = keyData;
@@ -197,9 +197,9 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
 
   valueTitle(keyControl: FormControl): string {
     const controlName = this.keysType === SocketValueKey.RPC_METHODS
-      ? 'method'
+      ? 'methodRPC'
       : this.keysType === SocketValueKey.ATTRIBUTES_UPDATES
-        ? 'attributeOnPlatform'
+        ? 'attributeOnThingsBoard'
         : this.keysType === SocketValueKey.ATTRIBUTES_REQUESTS
           ? 'requestExpression'
           : 'value';

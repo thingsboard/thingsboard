@@ -149,9 +149,9 @@ export interface OpcUaMapping {
 }
 
 export interface DeviceConfigValue {
-  addressFilter: string;
+  address: string;
   deviceName: string;
-  deviceProfile: string;
+  deviceType: string;
 }
 
 export type MappingValue = DataMapping | RequestsMapping | OpcUaMapping | DeviceConfigValue;
@@ -180,7 +180,7 @@ export interface BrokerConfig {
 }
 
 export interface SocketConfig {
-  connectionType: string;
+  address: string;
   port: number;
   bufferSize: number;
 }
@@ -266,8 +266,8 @@ export interface RpcMethod {
 }
 
 export interface DeviceRpcMethod {
-  method: string;
-  processing: string;
+  methodRPC: string;
+  withResponse: true;
   encoding: SocketEncoding;
 }
 
@@ -279,13 +279,14 @@ export interface AttributesUpdate {
 
 export interface DeviceAttributesUpdate {
   encoding: SocketEncoding;
-  attributeOnPlatform: string;
+  attributeOnThingsBoard: string;
 }
 
 export interface DeviceAttributesRequests {
   type: RequestsType;
-  requestExpression: any;
-  attributeNameExpression: any;
+  expressionType: ExpressionType;
+  requestExpression: string;
+  attributeNameExpression: string;
 }
 
 export interface Converter {
@@ -321,9 +322,9 @@ export interface DeviceConnectorMapping {
 }
 
 export interface DevicesConfigMapping {
-  addressFilter: string;
+  address: string;
   deviceName: string;
-  deviceProfile: string;
+  deviceType: string;
   timeseries: DeviceDataKey[];
   attributes: DeviceDataKey[];
   attributes_requests: DeviceAttributesRequests[];
@@ -559,11 +560,6 @@ export interface SocketAttributeUpdates {
 
 export interface MappingInfo {
   mappingType: MappingType;
-  value: { [key: string]: any };
-  buttonTitle: string;
-}
-
-export interface DeviceMappingInfo {
   value: { [key: string]: any };
   buttonTitle: string;
 }
