@@ -40,6 +40,7 @@ import { generateSecret } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -50,6 +51,7 @@ import { Subject } from 'rxjs';
     CommonModule,
     SharedModule,
     GatewayHelpLinkPipe,
+    TruncateWithTooltipDirective,
   ]
 })
 export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
@@ -78,8 +80,9 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   private destroy$ = new Subject<void>();
 
   private readonly defaultReadFunctionCodes = [3, 4];
-  private readonly defaultWriteFunctionCodes = [5, 6, 15, 16];
-  private readonly stringAttrUpdatesWriteFunctionCodes = [6, 16];
+  private readonly bitsReadFunctionCodes = [1, 2];
+  private readonly defaultWriteFunctionCodes = [6, 16];
+  private readonly bitsWriteFunctionCodes = [5, 15];
 
   constructor(private fb: UntypedFormBuilder) {}
 
@@ -177,23 +180,23 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   private getFunctionCodes(dataType: ModbusDataType): number[] {
+    const writeFunctionCodes = [
+      ...(dataType === ModbusDataType.BITS ? this.bitsWriteFunctionCodes : []), ...this.defaultWriteFunctionCodes
+    ];
+
     if (this.keysType === ModbusValueKey.ATTRIBUTES_UPDATES) {
-      return dataType === ModbusDataType.STRING
-        ? this.stringAttrUpdatesWriteFunctionCodes
-        : this.defaultWriteFunctionCodes;
+      return writeFunctionCodes.sort((a, b) => a - b);
     }
 
     const functionCodes = [...this.defaultReadFunctionCodes];
     if (dataType === ModbusDataType.BITS) {
-      const bitsFunctionCodes = [1, 2];
-      functionCodes.push(...bitsFunctionCodes);
-      functionCodes.sort();
+      functionCodes.push(...this.bitsReadFunctionCodes);
     }
     if (this.keysType === ModbusValueKey.RPC_REQUESTS) {
-      functionCodes.push(...this.defaultWriteFunctionCodes);
+      functionCodes.push(...writeFunctionCodes);
     }
 
-    return functionCodes;
+    return functionCodes.sort((a, b) => a - b);
   }
 
   private getDefaultFunctionCodes(): number[] {
