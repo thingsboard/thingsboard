@@ -56,11 +56,6 @@ import { coerceBoolean } from '@shared/decorators/coercion';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => EntityListComponent),
       multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => EntityListComponent),
-      multi: true
     }
   ]
 })
@@ -194,7 +189,8 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
         (entities) => {
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
-          if (this.syncedIdListPropagator) {
+          if (this.syncedIdListPropagator && this.modelValue.length !== entities.length) {
+            this.modelValue = entities.map(entity => entity.id.id);
             this.propagateChange(this.modelValue);
           }
         }
@@ -205,12 +201,6 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.modelValue = null;
     }
     this.dirty = true;
-  }
-
-  validate(): ValidationErrors | null {
-    return this.entityListFormGroup.valid ? null : {
-      entities: {valid: false}
-    };
   }
 
   private reset() {
