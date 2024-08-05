@@ -79,7 +79,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .updateProcessor(this::handleNotificationsSubscriptionUpdate)
                 .limit(cmd.getLimit())
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
 
         fetchUnreadNotifications(subscription);
         sendUpdate(sessionRef.getSessionId(), subscription.createFullUpdate());
@@ -97,7 +97,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsCountSubscriptionUpdate)
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
 
         fetchUnreadNotificationsCount(subscription);
         sendUpdate(sessionRef.getSessionId(), subscription.createUpdate());
