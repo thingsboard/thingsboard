@@ -222,7 +222,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         }
     }
 
-    public List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
+    List<EfentoTelemetry> getEfentoMeasurements(MeasurementsProtos.ProtoMeasurements protoMeasurements, UUID sessionId) {
         String serialNumber = CoapEfentoUtils.convertByteArrayToString(protoMeasurements.getSerialNum().toByteArray());
         boolean batteryStatus = protoMeasurements.getBatteryStatus();
         int measurementPeriodBase = protoMeasurements.getMeasurementPeriodBase();
