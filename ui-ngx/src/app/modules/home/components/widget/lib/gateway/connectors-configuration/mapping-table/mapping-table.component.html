@@ -18,7 +18,7 @@
 <div class="tb-mapping-table tb-absolute-fill">
   <div fxFlex fxLayout="column" class="tb-mapping-table-content">
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
-      <div class="mat-toolbar-tools">
+      <div class="mat-toolbar-tools" *ngIf="(dataSource.isEmpty() | async) === false">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-mapping-table-title">{{mappingTypeTranslationsMap.get(mappingType) | translate}}</span>
         </div>

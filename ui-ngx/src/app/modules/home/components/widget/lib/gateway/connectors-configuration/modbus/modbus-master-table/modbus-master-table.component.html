@@ -21,7 +21,7 @@
   </div>
   <div fxFlex fxLayout="column" class="tb-master-table-content">
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
-      <div class="mat-toolbar-tools">
+      <div class="mat-toolbar-tools" *ngIf="(dataSource.isEmpty() | async) === false">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
           <span class="tb-master-table-title">{{ 'gateway.servers-slaves' | translate}}</span>
         </div>
