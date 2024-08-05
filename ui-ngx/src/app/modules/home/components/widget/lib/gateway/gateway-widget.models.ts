@@ -1104,7 +1104,7 @@ export const SocketKeysPanelTitleTranslationsMap = new Map<SocketValueKey, strin
     [SocketValueKey.TIMESERIES, 'gateway.timeseries'],
     [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.attribute-requests'],
     [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.attribute-updates'],
-    [SocketValueKey.RPC_METHODS, 'gateway.rpc-requests']
+    [SocketValueKey.RPC_METHODS, 'gateway.rpc-methods']
   ]
 );
 
@@ -1114,7 +1114,7 @@ export const SocketKeysAddKeyTranslationsMap = new Map<SocketValueKey, string>(
     [SocketValueKey.TIMESERIES, 'gateway.add-timeseries'],
     [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.add-attribute-request'],
     [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.add-attribute-update'],
-    [SocketValueKey.RPC_METHODS, 'gateway.add-rpc-request']
+    [SocketValueKey.RPC_METHODS, 'gateway.add-rpc-method']
   ]
 );
 
@@ -1124,7 +1124,7 @@ export const SocketKeysDeleteKeyTranslationsMap = new Map<SocketValueKey, string
     [SocketValueKey.TIMESERIES, 'gateway.delete-timeseries'],
     [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.delete-attribute-request'],
     [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.delete-attribute-update'],
-    [SocketValueKey.RPC_METHODS, 'gateway.delete-rpc-request']
+    [SocketValueKey.RPC_METHODS, 'gateway.delete-rpc-method']
   ]
 );
 
@@ -1134,6 +1134,6 @@ export const SocketKeysNoKeysTextTranslationsMap = new Map<SocketValueKey, strin
     [SocketValueKey.TIMESERIES, 'gateway.no-timeseries'],
     [SocketValueKey.ATTRIBUTES_REQUESTS, 'gateway.no-attribute-requests'],
     [SocketValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
-    [SocketValueKey.RPC_METHODS, 'gateway.no-rpc-requests']
+    [SocketValueKey.RPC_METHODS, 'gateway.no-rpc-methods']
   ]
 );
