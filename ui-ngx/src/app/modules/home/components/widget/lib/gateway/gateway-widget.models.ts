@@ -176,11 +176,18 @@ export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | Con
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
 
-export type ConnectorBaseConfig = MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+export type ConnectorBaseConfig = ConnectorBaseInfo | MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+
+export interface ConnectorBaseInfo {
+  name: string;
+  id: string;
+  enableRemoteLogging: boolean;
+  logLevel: GatewayLogLevel;
+}
 
 export interface MQTTBasicConfig {
   dataMapping: ConverterConnectorMapping[];
-  requestsMapping: Record<RequestType, RequestMappingData> | RequestMappingData[];
+  requestsMapping: Record<RequestType, RequestMappingData[]> | RequestMappingData[];
   broker: BrokerConfig;
   workers?: WorkersConfig;
 }

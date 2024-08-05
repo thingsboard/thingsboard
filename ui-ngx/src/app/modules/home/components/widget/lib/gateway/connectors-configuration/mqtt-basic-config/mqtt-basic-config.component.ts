@@ -47,6 +47,7 @@ import {
 import {
   MappingTableComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-mqtt-basic-config',
@@ -136,15 +137,20 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
   }
 
   private getMappedMQTTConfig(basicConfig: MQTTBasicConfig): MQTTBasicConfig {
-    const { broker, workers, dataMapping, requestsMapping  } = basicConfig || {};
-    return workers ? {
-      dataMapping,
-      requestsMapping,
-      broker: {
+    let { broker, workers, dataMapping, requestsMapping  } = basicConfig || {};
+
+    if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {
+      broker = {
         ...broker,
         ...workers,
-      }
-    } : basicConfig;
+      };
+    }
+
+    if ((requestsMapping as RequestMappingData[])?.length) {
+      requestsMapping = this.getRequestDataObject(requestsMapping as RequestMappingData[]);
+    }
+
+    return { broker, workers, dataMapping, requestsMapping };
   }
 
   validate(): ValidationErrors | null {
@@ -153,7 +159,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     };
   }
 
-  private getRequestDataArray(value: Record<RequestType, RequestMappingData>): RequestMappingData[] {
+  private getRequestDataArray(value: Record<RequestType, RequestMappingData[]>): RequestMappingData[] {
     const mappingConfigs = [];
 
     if (isObject(value)) {
@@ -168,5 +174,21 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     }
 
     return mappingConfigs;
+  }
+
+  private getRequestDataObject(array: RequestMappingData[]): Record<RequestType, RequestMappingData[]> {
+    const result = {
+      connectRequests: [],
+      disconnectRequests: [],
+      attributeRequests: [],
+      attributeUpdates: [],
+      serverSideRpc: [],
+    };
+
+    array.forEach(({ requestType, requestValue }) => {
+      result[requestType].push(requestValue);
+    });
+
+    return result as Record<RequestType, RequestMappingData[]>;
   }
 }
