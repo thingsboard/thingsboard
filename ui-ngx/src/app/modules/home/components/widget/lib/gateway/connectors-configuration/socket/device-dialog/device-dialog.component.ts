@@ -23,18 +23,22 @@ import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import {
   DeviceAttributesRequests,
-  DeviceAttributesUpdate, DeviceDataKey, DeviceRpcMethod,
+  DeviceAttributesUpdate,
+  DeviceDataKey,
+  DeviceRpcMethod,
   MappingInfo,
   MappingValue,
   noLeadTrailSpacesRegex,
+  SocketKeysAddKeyTranslationsMap,
+  SocketKeysDeleteKeyTranslationsMap,
+  SocketKeysNoKeysTextTranslationsMap,
   SocketKeysPanelTitleTranslationsMap,
   SocketValueKey,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
-import { startWith, takeUntil } from 'rxjs/operators';
+import { takeUntil } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { TranslateService } from '@ngx-translate/core';
 import {
   DeviceDataKeysPanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/socket/device-data-keys-pannel/device-data-keys-panel.component';
@@ -60,8 +64,7 @@ export class DeviceDialogComponent extends DialogComponent<DeviceDialogComponent
               private fb: FormBuilder,
               private popoverService: TbPopoverService,
               private renderer: Renderer2,
-              private viewContainerRef: ViewContainerRef,
-              private translate: TranslateService) {
+              private viewContainerRef: ViewContainerRef) {
     super(store, router, dialogRef);
     this.createMappingForm();
   }
@@ -75,11 +78,11 @@ export class DeviceDialogComponent extends DialogComponent<DeviceDialogComponent
   }
 
   get socketRpcMethods(): Array<string> {
-    return this.mappingForm.get('rpc_methods').value?.map((value: DeviceRpcMethod) => value.method) || [];
+    return this.mappingForm.get('rpc_methods').value?.map((value: DeviceRpcMethod) => value.methodRPC) || [];
   }
 
   get socketAttributesUpdates(): Array<string> {
-    return this.mappingForm.get('attributes_updates')?.value?.map((value: DeviceAttributesUpdate) => value.attributeOnPlatform) || [];
+    return this.mappingForm.get('attributes_updates')?.value?.map((value: DeviceAttributesUpdate) => value.attributeOnThingsBoard) || [];
   }
 
   get socketAttributesRequests(): Array<string> {
@@ -128,9 +131,9 @@ export class DeviceDialogComponent extends DialogComponent<DeviceDialogComponent
         keys: keysControl.value,
         keysType,
         panelTitle: SocketKeysPanelTitleTranslationsMap.get(keysType),
-        addKeyTitle: SocketKeysPanelTitleTranslationsMap.get(keysType),
-        deleteKeyTitle: SocketKeysPanelTitleTranslationsMap.get(keysType),
-        noKeysText: SocketKeysPanelTitleTranslationsMap.get(keysType)
+        addKeyTitle: SocketKeysAddKeyTranslationsMap.get(keysType),
+        deleteKeyTitle: SocketKeysDeleteKeyTranslationsMap.get(keysType),
+        noKeysText: SocketKeysNoKeysTextTranslationsMap.get(keysType)
       };
       this.keysPopupClosed = false;
       const dataKeysPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
@@ -152,30 +155,30 @@ export class DeviceDialogComponent extends DialogComponent<DeviceDialogComponent
 
   private prepareMappingData(): { [key: string]: unknown } {
     const formValue = this.mappingForm.value;
-    const {addressFilter, deviceName, deviceProfile} = formValue;
+    const {address, deviceName, deviceType} = formValue;
     return {
-      addressFilter,
+      address,
       deviceName,
-      deviceProfile
+      deviceType
     };
   }
 
   private prepareFormValueData(): { [key: string]: unknown } {
     if (this.data.value && Object.keys(this.data.value).length) {
-      const {addressFilter, deviceName, deviceProfile} = this.data.value;
+      const {address, deviceName, deviceType} = this.data.value;
       return {
-        addressFilter,
+        address,
         deviceName,
-        deviceProfile
+        deviceType
       };
     }
   }
 
   private createDataMappingForm(): void {
     this.mappingForm = this.fb.group({
-      addressFilter: ['127.0.0.1:50001', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      address: ['127.0.0.1:50001', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       deviceName: ['Device Example', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-      deviceProfile: ['Default', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      deviceType: ['Default', [Validators.pattern(noLeadTrailSpacesRegex)]],
       timeseries: [[], []],
       attributes: [[], []],
       attributes_requests: [[], []],

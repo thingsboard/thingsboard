@@ -2792,6 +2792,7 @@
         "attribute-name-expression-required": "Attribute name expression required.",
         "attribute-name-expression-hint": "Hint for Attribute name expression",
         "attribute-on-platform": "Attribute on platform",
+        "attribute-on-platform-required": "Attribute on platform is required",
         "basic": "Basic",
         "byte": "Byte",
         "byte-order": "Byte order",

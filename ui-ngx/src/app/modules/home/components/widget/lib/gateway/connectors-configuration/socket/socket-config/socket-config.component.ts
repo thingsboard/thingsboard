@@ -52,7 +52,7 @@ export class SocketConfigComponent implements ControlValueAccessor, Validator, O
   constructor(private fb: FormBuilder,
               private translate: TranslateService) {
     this.socketConfigFormGroup = this.fb.group({
-      connectionType: ['127.0.0.1', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      address: ['127.0.0.1', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: ['50000', [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       bufferSize: ['1024', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
     });
