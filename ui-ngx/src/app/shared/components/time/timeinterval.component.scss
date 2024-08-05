@@ -18,22 +18,21 @@
 :host {
   min-width: 355px;
 
-  .advanced-switch {
-    margin-bottom: 16px;
+  .tb-form-panel {
+    gap: 12px;
   }
 
-  .advanced-label {
-    margin: 5px 0;
-  }
-
-  .hide-label {
-    margin-bottom: 5px;
-    margin-right: 5px;
+  .advanced-input {
+    gap: 8px;
   }
 
   @media #{$mat-xs} {
     min-width: 0;
     width: 100%;
+
+    .advanced-input {
+      gap: 12px;
+    }
   }
 }
 

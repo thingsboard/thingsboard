@@ -15,43 +15,37 @@
     limitations under the License.
 
 -->
-<section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px">
-  <section fxLayout="column" fxLayoutAlign="start center" [fxShow]="isEdit">
-    <label class="tb-small hide-label" translate>timewindow.hide</label>
-    <mat-checkbox [(ngModel)]="hideFlag" (ngModelChange)="onHideFlagChange()"></mat-checkbox>
-  </section>
-  <section class="interval-section" fxLayout="column" fxFlex fxLayoutGap="16px">
-    <section fxLayout="row" fxFlex [fxShow]="isEdit || !hideFlag">
-      <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-        <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
-        <mat-select [disabled]="hideFlag || disabled" [(ngModel)]="interval" (ngModelChange)="onIntervalChange()" style="min-width: 150px;">
-          <mat-option *ngFor="let interval of intervals" [value]="interval.value">
-            {{ interval.name | translate:interval.translateParams }}
-          </mat-option>
-        </mat-select>
-      </mat-form-field>
-    </section>
-    <section fxLayout="row wrap" fxLayoutAlign="start start" fxFlex fxLayoutGap="6px" [fxShow]="advanced && (isEdit || !hideFlag)">
-      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+<section class="tb-form-panel no-border no-padding" [formGroup]="timeintervalFormGroup">
+  <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+    <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
+    <mat-select formControlName="interval">
+      <mat-option *ngFor="let interval of intervals" [value]="interval.value">
+        {{ interval.name | translate:interval.translateParams }}
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <section class="tb-form-row column-xs no-border no-padding tb-standard-fields advanced-input"
+           formGroupName="customInterval"
+           [fxShow]="advanced">
+    <div class="tb-flex">
+      <mat-form-field class="number-input flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.days</mat-label>
-        <input matInput [disabled]="hideFlag || disabled" type="number" step="1" min="0" [(ngModel)]="days" (ngModelChange)="onTimeInputChange('days')"/>
+        <input matInput type="number" step="1" min="0" formControlName="days" />
       </mat-form-field>
-      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+      <mat-form-field class="number-input flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.hours</mat-label>
-        <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="hours" (ngModelChange)="onTimeInputChange('hours')"/>
+        <input matInput type="number" step="1" formControlName="hours" />
       </mat-form-field>
-      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+    </div>
+    <div class="tb-flex">
+      <mat-form-field class="number-input flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.minutes</mat-label>
-        <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="mins" (ngModelChange)="onTimeInputChange('mins')"/>
+        <input matInput type="number" step="1" formControlName="mins" />
       </mat-form-field>
-      <mat-form-field class="number-input" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+      <mat-form-field class="number-input flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
         <mat-label translate>timeinterval.seconds</mat-label>
-        <input matInput [disabled]="hideFlag || disabled" type="number" step="1" [(ngModel)]="secs" (ngModelChange)="onTimeInputChange('secs')"/>
+        <input matInput type="number" step="1" formControlName="secs" />
       </mat-form-field>
-    </section>
-  </section>
-  <section fxLayout="column" fxLayoutAlign="center center" [fxShow]="(isEdit || !hideFlag) && !disabledAdvanced">
-    <label class="tb-small advanced-label" translate>timeinterval.advanced</label>
-    <mat-slide-toggle [disabled]="hideFlag || disabled" class="advanced-switch" [(ngModel)]="advanced" (ngModelChange)="onAdvancedChange()"></mat-slide-toggle>
+    </div>
   </section>
 </section>
