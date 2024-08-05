@@ -34,18 +34,15 @@ import {
   ControlValueAccessor,
   FormArray,
   FormBuilder,
-  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormGroup,
-  ValidationErrors,
-  Validator,
 } from '@angular/forms';
 import {
   ModbusMasterConfig,
   ModbusProtocolLabelsMap,
   SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
@@ -62,16 +59,11 @@ import { TbTableDatasource } from '@shared/components/table/table-datasource.abs
       useExisting: forwardRef(() => ModbusMasterTableComponent),
       multi: true
     },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ModbusMasterTableComponent),
-      multi: true
-    }
   ],
   standalone: true,
   imports: [CommonModule, SharedModule]
 })
-export class ModbusMasterTableComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
+export class ModbusMasterTableComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -136,12 +128,6 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
   writeValue(master: ModbusMasterConfig): void {
     this.slaves.clear();
     this.pushDataAsFormArrays(master.slaves);
-  }
-
-  validate(): ValidationErrors | null {
-    return this.slaves.controls.length ? null : {
-      slavesFormGroup: {valid: false}
-    };
   }
 
   enterFilterMode(): void {
