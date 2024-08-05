@@ -33,6 +33,4 @@ public interface EdgeRpcService {
     void deleteEdge(TenantId tenantId, EdgeId edgeId);
 
     void processSyncRequest(ToEdgeSyncRequest request, Consumer<FromEdgeSyncResponse> responseConsumer);
-
-    Boolean isEdgeSyncProcessActive(TenantId tenantId, EdgeId edgeId);
 }

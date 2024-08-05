@@ -287,12 +287,16 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private void startSyncProcess(TenantId tenantId, EdgeId edgeId, UUID requestId) {
         EdgeGrpcSession session = sessions.get(edgeId);
         if (session != null) {
-            boolean success = false;
-            if (session.isConnected()) {
-                session.startSyncProcess(true);
-                success = true;
+            if (!session.isSyncCompleted()) {
+                clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, false, "Sync process is active at the moment"));
+            } else {
+                boolean success = false;
+                if (session.isConnected()) {
+                    session.startSyncProcess(true);
+                    success = true;
+                }
+                clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success, ""));
             }
-            clusterService.pushEdgeSyncResponseToCore(new FromEdgeSyncResponse(requestId, tenantId, edgeId, success, ""));
         }
     }
 
@@ -300,7 +304,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     public void processSyncRequest(ToEdgeSyncRequest request, Consumer<FromEdgeSyncResponse> responseConsumer) {
         UUID requestId = request.getId();
         EdgeGrpcSession session = sessions.get(request.getEdgeId());
-        if (!session.isSyncCompleted()) {
+        if (session != null && !session.isSyncCompleted()) {
             responseConsumer.accept(new FromEdgeSyncResponse(requestId, request.getTenantId(), request.getEdgeId(), false, "Sync process is active at the moment"));
         } else {
             log.trace("[{}][{}] Processing sync edge request [{}]", request.getTenantId(), request.getId(), request.getEdgeId());
@@ -308,15 +312,6 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
             clusterService.pushEdgeSyncRequestToCore(request);
             scheduleSyncRequestTimeout(request, requestId);
         }
-    }
-
-    @Override
-    public Boolean isEdgeSyncProcessActive(TenantId tenantId, EdgeId edgeId) {
-        EdgeGrpcSession session = sessions.get(edgeId);
-        if (session == null) {
-            return false;
-        }
-        return !session.isSyncCompleted();
     }
 
     private void scheduleSyncRequestTimeout(ToEdgeSyncRequest request, UUID requestId) {
