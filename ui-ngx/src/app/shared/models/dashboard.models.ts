@@ -83,9 +83,12 @@ export interface GridSettings {
 export interface DashboardLayout {
   widgets: WidgetLayouts;
   gridSettings: GridSettings;
+  breakpoints?: {[breakpoint: string]: Omit<DashboardLayout, 'breakpoints'>};
 }
 
-export interface DashboardLayoutInfo {
+export declare type DashboardLayoutInfo = {[breakpoint: string]: BreakpointLayoutInfo};
+
+export interface BreakpointLayoutInfo {
   widgetIds?: string[];
   widgetLayouts?: WidgetLayouts;
   gridSettings?: GridSettings;

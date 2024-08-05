@@ -155,6 +155,9 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             resourceValidator.validateDelete(tenantId, resourceId);
         }
         TbResource resource = findResourceById(tenantId, resourceId);
+        if (resource == null) {
+            return;
+        }
         resourceDao.removeById(tenantId, resourceId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(resource).entityId(resourceId).build());
     }

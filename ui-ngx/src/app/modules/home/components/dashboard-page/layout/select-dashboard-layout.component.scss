@@ -13,15 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.attributes;
+:host {
+  pointer-events: all;
+  width: min-content; //for Safari
+}
 
-import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.util.SqlDao;
-
-@Repository
-@Transactional
-@SqlDao
-public class SqlAttributesInsertRepository extends AttributeKvInsertRepository {
-
+:host ::ng-deep {
+  .mat-mdc-select.select-dashboard-layout {
+    .mat-mdc-select-value {
+      max-width: 200px;
+    }
+    .mat-mdc-select-arrow {
+      width: 24px;
+    }
+  }
 }

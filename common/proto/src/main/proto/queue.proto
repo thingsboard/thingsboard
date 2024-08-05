@@ -101,6 +101,12 @@ message SessionInfoProto {
   bool isGateway = 18;
 }
 
+message RestApiCallResponseMsgProto {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  bytes response = 5;
+}
+
 enum SessionEvent {
   OPEN = 0;
   CLOSED = 1;
@@ -157,11 +163,13 @@ message AttributeValueProto {
   string string_v = 7;
   string json_v = 8;
   optional string key = 9;
+  optional int64 version = 10;
 }
 
 message TsKvProto {
   int64 ts = 1;
   KeyValueProto kv = 2;
+  optional int64 version = 3;
 }
 
 message TsKvListProto {
@@ -1486,6 +1494,7 @@ message ToCoreNotificationMsg {
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11;
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12;
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+  RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */

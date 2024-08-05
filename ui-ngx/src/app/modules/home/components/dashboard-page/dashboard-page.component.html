@@ -58,6 +58,9 @@
                 <mat-icon>view_compact</mat-icon>
                 {{'layout.layouts' | translate}}
               </button>
+              <tb-select-dashboard-layout
+                [dashboardCtrl]="this">
+              </tb-select-dashboard-layout>
             </div>
           </ng-container>
           <tb-states-component fxFlex.lt-md
@@ -282,7 +285,8 @@
           </mat-form-field>
         </section>
         <mat-drawer-container class="tb-dashboard-layouts" fxFlex
-                              [ngClass]="{ 'tb-shrinked' : isEditingWidget }">
+                              [class]="{'tb-shrinked' : isEditingWidget,
+                                        'diagonal-stripes': !layouts.right.show && layouts.main.layoutCtx.breakpoint !== 'default'}">
           <mat-drawer *ngIf="layouts.right.show"
                       id="tb-right-layout"
                       [ngStyle]="{minWidth: rightLayoutSize.width,
@@ -308,8 +312,9 @@
           </mat-drawer>
           <mat-drawer-content [fxShow]="layouts.main.show"
                               id="tb-main-layout"
-                              [ngStyle]="{width: mainLayoutSize.width,
-                                          height: mainLayoutSize.height}">
+                              [style]="{width: mainLayoutSize.width,
+                                        height: mainLayoutSize.height,
+                                        maxWidth: mainLayoutSize.maxWidth}">
             <tb-dashboard-layout
               [dashboardCheatSheet]="cheatSheetComponent"
               [layoutCtx]="mobileDisplayRightLayoutFirst ? layouts.right.layoutCtx : layouts.main.layoutCtx"

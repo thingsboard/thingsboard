@@ -38,6 +38,8 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { LayoutType } from '@shared/models/dashboard.models';
+import { deepClone, isNotEmptyStr } from '@core/utils';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -129,11 +131,14 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   private rxSubscriptions = new Array<Subscription>();
 
-  constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
-              private itembuffer: ItemBufferService,
-              private imagePipe: ImagePipe,
-              private sanitizer: DomSanitizer) {
+  constructor(
+    protected store: Store<AppState>,
+    private translate: TranslateService,
+    private itembuffer: ItemBufferService,
+    private imagePipe: ImagePipe,
+    private sanitizer: DomSanitizer,
+    private dashboardUtils: DashboardUtilsService,
+  ) {
     super(store);
     this.initHotKeys();
   }
@@ -199,7 +204,7 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
       new Hotkey('ctrl+i', (event: KeyboardEvent) => {
           if (this.isEdit && !this.isEditingWidget && !this.widgetEditMode) {
             if (this.itembuffer.canPasteWidgetReference(this.dashboardCtx.getDashboard(),
-              this.dashboardCtx.state, this.layoutCtx.id)) {
+              this.dashboardCtx.state, this.layoutCtx.id, this.layoutCtx.breakpoint)) {
               event.preventDefault();
               this.pasteWidgetReference(event);
             }
@@ -308,6 +313,47 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   pasteWidgetReference($event: Event) {
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
+  }
+
+  updatedCurrentBreakpoint(breakpoint?: string, showLayout = true) {
+    if (!isNotEmptyStr(breakpoint)) {
+      breakpoint = this.dashboardCtx.breakpoint;
+    }
+    this.layoutCtx.breakpoint = breakpoint;
+    const layoutInfo = this.getLayoutDataForBreakpoint(breakpoint);
+    if (layoutInfo.gridSettings) {
+      this.layoutCtx.gridSettings = layoutInfo.gridSettings;
+    }
+    this.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    this.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
+    if (showLayout && this.layoutCtx.ctrl) {
+      this.layoutCtx.ctrl.reload();
+    }
+    this.layoutCtx.ignoreLoading = true;
+  }
+
+  private getLayoutDataForBreakpoint(breakpoint: string) {
+    if (this.layoutCtx.layoutData[breakpoint]) {
+      return this.layoutCtx.layoutData[breakpoint];
+    }
+    return this.layoutCtx.layoutData.default;
+  }
+
+  createBreakpointConfig(breakpoint: string) {
+    const currentDashboard = this.dashboardCtx.getDashboard();
+    const dashboardConfiguration = currentDashboard.configuration;
+    const states = dashboardConfiguration.states;
+    const state = states[this.dashboardCtx.state];
+    const layout = state.layouts[this.layoutCtx.id];
+    if (!layout.breakpoints) {
+      layout.breakpoints = {};
+    }
+    layout.breakpoints[breakpoint] = {
+      gridSettings: deepClone(layout.gridSettings),
+      widgets: deepClone(layout.widgets),
+    };
+    this.layoutCtx.layoutData =
+      this.dashboardUtils.getStateLayoutsData(currentDashboard, this.dashboardCtx.state)[this.layoutCtx.id];
   }
 
 }

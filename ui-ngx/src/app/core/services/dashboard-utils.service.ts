@@ -18,18 +18,18 @@ import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
 import {
+  BreakpointLayoutInfo,
   Dashboard,
   DashboardConfiguration,
   DashboardLayout,
   DashboardLayoutId,
-  DashboardLayoutInfo,
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined, isEqual } from '@core/utils';
 import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
@@ -542,22 +542,34 @@ export class DashboardUtilsService {
       for (const l of Object.keys(state.layouts)) {
         const layout: DashboardLayout = state.layouts[l];
         if (layout) {
-          result[l] = {
-            widgetIds: [],
-            widgetLayouts: {},
-            gridSettings: {}
-          } as DashboardLayoutInfo;
-          for (const id of Object.keys(layout.widgets)) {
-            result[l].widgetIds.push(id);
+          result[l]= {
+            default: this.getBreakpointLayoutData(layout)
+          };
+          if (layout.breakpoints) {
+            for (const breakpoint of Object.keys(layout.breakpoints)) {
+              result[l][breakpoint] = this.getBreakpointLayoutData(layout.breakpoints[breakpoint]);
+            }
           }
-          result[l].widgetLayouts = layout.widgets;
-          result[l].gridSettings = layout.gridSettings;
         }
       }
       return result;
     } else {
       return null;
     }
+  }
+
+  private getBreakpointLayoutData(layout: DashboardLayout): BreakpointLayoutInfo {
+    const result: BreakpointLayoutInfo = {
+      widgetIds: [],
+      widgetLayouts: {},
+      gridSettings: {}
+    };
+    for (const id of Object.keys(layout.widgets)) {
+      result.widgetIds.push(id);
+    }
+    result.widgetLayouts = layout.widgets;
+    result.gridSettings = layout.gridSettings;
+    return result;
   }
 
   public getWidgetsArray(dashboard: Dashboard): Array<Widget> {
@@ -586,11 +598,15 @@ export class DashboardUtilsService {
                            originalColumns?: number,
                            originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
-                           column?: number): void {
+                           column?: number,
+                           breakpoint = 'default'): void {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const state = states[targetState];
-    const layout = state.layouts[targetLayout];
+    let layout = state.layouts[targetLayout];
+    if (breakpoint !== 'default' && layout.breakpoints?.[breakpoint]) {
+      layout = layout.breakpoints[breakpoint];
+    }
     const layoutCount = Object.keys(state.layouts).length;
     if (!widget.id) {
       widget.id = this.utils.guid();
@@ -648,12 +664,17 @@ export class DashboardUtilsService {
   public removeWidgetFromLayout(dashboard: Dashboard,
                                 targetState: string,
                                 targetLayout: DashboardLayoutId,
-                                widgetId: string) {
+                                widgetId: string,
+                                breakpoint: string) {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const state = states[targetState];
     const layout = state.layouts[targetLayout];
-    delete layout.widgets[widgetId];
+    if (layout.breakpoints[breakpoint]) {
+      delete layout.breakpoints[breakpoint].widgets[widgetId];
+    } else {
+      delete layout.widgets[widgetId];
+    }
     this.removeUnusedWidgets(dashboard);
   }
 
@@ -721,15 +742,45 @@ export class DashboardUtilsService {
       for (const s of Object.keys(states)) {
         const state = states[s];
         for (const l of Object.keys(state.layouts)) {
-          const layout = state.layouts[l];
+          const layout: DashboardLayout = state.layouts[l];
           if (layout.widgets[widgetId]) {
             found = true;
             break;
+          }
+          if (layout.breakpoints) {
+            for (const breakpoint of Object.keys(layout.breakpoints)) {
+              if (layout.breakpoints[breakpoint].widgets[widgetId]) {
+                found = true;
+                break;
+              }
+            }
           }
         }
       }
       if (!found) {
         delete dashboardConfiguration.widgets[widgetId];
+      }
+    }
+  }
+
+  public removeBreakpointsDuplicateInLayouts(dashboard: Dashboard) {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    for (const s of Object.keys(states)) {
+      const state = states[s];
+      for (const l of Object.keys(state.layouts)) {
+        const layout: DashboardLayout = state.layouts[l];
+        if (layout.breakpoints) {
+          for (const breakpoint of Object.keys(layout.breakpoints)) {
+            const breakpointLayout = layout.breakpoints[breakpoint];
+            if (isEqual(breakpointLayout.widgets, layout.widgets) && isEqual(breakpointLayout.gridSettings, layout.gridSettings)) {
+              delete layout.breakpoints[breakpoint];
+              if (isEqual(layout.breakpoints, {})) {
+                delete layout.breakpoints;
+              }
+            }
+          }
+        }
       }
     }
   }

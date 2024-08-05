@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.event.EventType;
 
-import jakarta.annotation.PostConstruct;
 import java.util.concurrent.TimeUnit;
 
 @Component

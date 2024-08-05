@@ -63,6 +63,7 @@ public class TbUtils {
     private static final int HEX_LEN_LONG_MAX = 16;
     private static final int BYTES_LEN_INT_MAX = 4;
     private static final int BYTES_LEN_LONG_MAX = 8;
+    private static final int BIN_LEN_MAX = 8;
 
     private static final LinkedHashMap<String, String> mdnEncodingReplacements = new LinkedHashMap<>();
 
@@ -194,6 +195,22 @@ public class TbUtils {
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesToFloat",
                 byte[].class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                List.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                byte[].class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                byte[].class, int.class, int.class)));
+        parserConfig.addImport("parseBytesIntToFloat", new MethodStub(TbUtils.class.getMethod("parseBytesIntToFloat",
+                byte[].class, int.class, int.class, boolean.class)));
         parserConfig.addImport("parseLittleEndianHexToDouble", new MethodStub(TbUtils.class.getMethod("parseLittleEndianHexToDouble",
                 String.class)));
         parserConfig.addImport("parseBigEndianHexToDouble", new MethodStub(TbUtils.class.getMethod("parseBigEndianHexToDouble",
@@ -217,6 +234,22 @@ public class TbUtils {
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
                 byte[].class, int.class, int.class)));
         parserConfig.addImport("parseBytesToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesToDouble",
+                byte[].class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                List.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                List.class, int.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                byte[].class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
+                byte[].class, int.class, int.class)));
+        parserConfig.addImport("parseBytesLongToDouble", new MethodStub(TbUtils.class.getMethod("parseBytesLongToDouble",
                 byte[].class, int.class, int.class, boolean.class)));
         parserConfig.addImport("toFixed", new MethodStub(TbUtils.class.getMethod("toFixed",
                 double.class, int.class)));
@@ -260,6 +293,8 @@ public class TbUtils {
                 ExecutionContext.class, List.class)));
         parserConfig.addImport("base64ToHex", new MethodStub(TbUtils.class.getMethod("base64ToHex",
                 String.class)));
+        parserConfig.addImport("hexToBase64", new MethodStub(TbUtils.class.getMethod("hexToBase64",
+                String.class)));
         parserConfig.addImport("base64ToBytes", new MethodStub(TbUtils.class.getMethod("base64ToBytes",
                 String.class)));
         parserConfig.addImport("bytesToBase64", new MethodStub(TbUtils.class.getMethod("bytesToBase64",
@@ -292,6 +327,44 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("isHexadecimal", new MethodStub(TbUtils.class.getMethod("isHexadecimal",
                 String.class)));
+        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("bytesToExecutionArrayList",
+                ExecutionContext.class, byte[].class)));
+        parserConfig.addImport("padStart", new MethodStub(TbUtils.class.getMethod("padStart",
+                String.class, int.class, char.class)));
+        parserConfig.addImport("padEnd", new MethodStub(TbUtils.class.getMethod("padEnd",
+                String.class, int.class, char.class)));
+        parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class)));
+        parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class, int.class)));
+         parserConfig.addImport("parseByteToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseByteToBinaryArray",
+                byte.class, int.class, boolean.class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                List.class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                List.class, int.class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                byte[].class)));
+        parserConfig.addImport("parseBytesToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseBytesToBinaryArray",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseLongToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseLongToBinaryArray",
+                long.class)));
+        parserConfig.addImport("parseLongToBinaryArray", new MethodStub(TbUtils.class.getMethod("parseLongToBinaryArray",
+                long.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                List.class, int.class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class, int.class)));
+        parserConfig.addImport("parseBinaryArrayToInt", new MethodStub(TbUtils.class.getMethod("parseBinaryArrayToInt",
+                byte[].class, int.class, int.class)));
     }
 
     public static String btoa(String input) {
@@ -594,6 +667,9 @@ public class TbUtils {
 
     public static ExecutionArrayList<Byte> hexToBytes(ExecutionContext ctx, String value) {
         String hex = prepareNumberString(value, true);
+        if (hex == null) {
+            throw new IllegalArgumentException("Hex string must be not empty!");
+        }
         int len = hex.length();
         if (len % 2 > 0) {
             throw new IllegalArgumentException("Hex string must be even-length.");
@@ -603,16 +679,8 @@ public class TbUtils {
             throw new NumberFormatException("Value: \"" + value + "\" is not numeric or hexDecimal format!");
         }
 
-        ExecutionArrayList<Byte> data = new ExecutionArrayList<>(ctx);
-        for (int i = 0; i < hex.length(); i += 2) {
-            // Extract two characters from the hex string
-            String byteString = hex.substring(i, i + 2);
-            // Parse the hex string to a byte
-            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
-            // Add the byte to the ArrayList
-            data.add(byteValue);
-        }
-        return data;
+        byte [] data = hexToBytes(hex);
+        return bytesToExecutionArrayList(ctx, data);
     }
 
     public static List<Integer> printUnsignedBytes(ExecutionContext ctx, List<Byte> byteArray) {
@@ -674,7 +742,7 @@ public class TbUtils {
             return Long.toString(number, radix);
         }
         return switch (radix) {
-            case MIN_RADIX -> Long.toBinaryString(number);
+            case MIN_RADIX -> formatBinary(Long.toBinaryString(number));
             case OCTAL_RADIX -> Long.toOctalString(number);
             case DEC_RADIX -> Long.toString(number);
             case HEX_RADIX -> prepareNumberHexString(number, bigEndian, pref, -1, -1);
@@ -753,12 +821,16 @@ public class TbUtils {
         long bits = Double.doubleToRawLongBits(d);
 
         // Format the integer bits as a hexadecimal string
-        String result = String.format("0x%16X", bits);
+        String result = String.format("0x%016X", bits);
         return bigEndian ? result : reverseHexStringByOrder(result);
     }
 
     public static String base64ToHex(String base64) {
         return bytesToHex(Base64.getDecoder().decode(base64));
+    }
+
+    public static String hexToBase64(String hex) {
+        return bytesToBase64(hexToBytes(hex));
     }
 
     public static String bytesToBase64(byte[] bytes) {
@@ -770,15 +842,15 @@ public class TbUtils {
     }
 
     public static int parseBytesToInt(List<Byte> data) {
-        return parseBytesToInt(Bytes.toArray(data));
+        return parseBytesToInt(data, 0);
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset) {
-        return parseBytesToInt(Bytes.toArray(data), offset);
+        return parseBytesToInt(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset, int length) {
-        return parseBytesToInt(Bytes.toArray(data), offset, length);
+        return parseBytesToInt(data, offset, length, true);
     }
 
     public static int parseBytesToInt(List<Byte> data, int offset, int length, boolean bigEndian) {
@@ -790,7 +862,7 @@ public class TbUtils {
     }
 
     public static int parseBytesToInt(byte[] data, int offset) {
-        return parseBytesToInt(data, offset, BYTES_LEN_INT_MAX);
+        return parseBytesToInt(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
     }
 
     public static int parseBytesToInt(byte[] data, int offset, int length) {
@@ -798,15 +870,7 @@ public class TbUtils {
     }
 
     public static int parseBytesToInt(byte[] data, int offset, int length, boolean bigEndian) {
-        if (offset > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
-        }
-        if (length > BYTES_LEN_INT_MAX) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum 4 bytes is allowed!");
-        }
-        if (offset + length > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
-        }
+        validationNumberByLength(data, offset, length, BYTES_LEN_INT_MAX);
         var bb = ByteBuffer.allocate(4);
         if (!bigEndian) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -818,15 +882,15 @@ public class TbUtils {
     }
 
     public static long parseBytesToLong(List<Byte> data) {
-        return parseBytesToLong(Bytes.toArray(data));
+        return parseBytesToLong(data, 0);
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset) {
-        return parseBytesToLong(Bytes.toArray(data), offset);
+        return parseBytesToLong(data, offset, validateLength(data.size(), offset, BYTES_LEN_LONG_MAX));
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset, int length) {
-        return parseBytesToLong(Bytes.toArray(data), offset, length);
+        return parseBytesToLong(data, offset, length, true);
     }
 
     public static long parseBytesToLong(List<Byte> data, int offset, int length, boolean bigEndian) {
@@ -838,7 +902,7 @@ public class TbUtils {
     }
 
     public static long parseBytesToLong(byte[] data, int offset) {
-        return parseBytesToLong(data, offset, BYTES_LEN_LONG_MAX);
+        return parseBytesToLong(data, offset, validateLength(data.length, offset, BYTES_LEN_LONG_MAX));
     }
 
     public static long parseBytesToLong(byte[] data, int offset, int length) {
@@ -846,15 +910,7 @@ public class TbUtils {
     }
 
     public static long parseBytesToLong(byte[] data, int offset, int length, boolean bigEndian) {
-        if (offset > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
-        }
-        if (length > BYTES_LEN_LONG_MAX) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_LONG_MAX + " bytes is allowed!");
-        }
-        if (offset + length > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
-        }
+        validationNumberByLength(data, offset, length, BYTES_LEN_LONG_MAX);
         var bb = ByteBuffer.allocate(BYTES_LEN_LONG_MAX);
         if (!bigEndian) {
             bb.order(ByteOrder.LITTLE_ENDIAN);
@@ -866,15 +922,15 @@ public class TbUtils {
     }
 
     public static float parseBytesToFloat(List data) {
-        return parseBytesToFloat(Bytes.toArray(data), 0);
+        return parseBytesToFloat(data, 0);
     }
 
     public static float parseBytesToFloat(List data, int offset) {
-        return parseBytesToFloat(Bytes.toArray(data), offset, BYTES_LEN_INT_MAX);
+        return parseBytesToFloat(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
     }
 
     public static float parseBytesToFloat(List data, int offset, int length) {
-        return parseBytesToFloat(Bytes.toArray(data), offset, length, true);
+        return parseBytesToFloat(data, offset, length, true);
     }
 
     public static float parseBytesToFloat(List data, int offset, int length, boolean bigEndian) {
@@ -886,7 +942,7 @@ public class TbUtils {
     }
 
     public static float parseBytesToFloat(byte[] data, int offset) {
-        return parseBytesToFloat(data, offset, BYTES_LEN_INT_MAX);
+        return parseBytesToFloat(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
     }
 
     public static float parseBytesToFloat(byte[] data, int offset, int length) {
@@ -894,39 +950,65 @@ public class TbUtils {
     }
 
     public static float parseBytesToFloat(byte[] data, int offset, int length, boolean bigEndian) {
-        if (length > BYTES_LEN_INT_MAX) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_INT_MAX + " bytes is allowed!");
+        var bb = ByteBuffer.allocate(BYTES_LEN_INT_MAX);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
         }
-        if (offset + length > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+        bb.position(bigEndian ? BYTES_LEN_INT_MAX - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+        float floatValue = bb.getFloat();
+        if (Float.isNaN(floatValue)) {
+            throw new NumberFormatException("byte[] 0x" + bytesToHex(data) + " is a Not-a-Number (NaN) value");
         }
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
-        if (bytesToNumber.length < BYTES_LEN_INT_MAX) {
-            byte[] extendedBytes = new byte[BYTES_LEN_INT_MAX];
-            Arrays.fill(extendedBytes, (byte) 0);
-            System.arraycopy(bytesToNumber, 0, extendedBytes, 0, bytesToNumber.length);
-            bytesToNumber = extendedBytes;
-        }
-        float floatValue = ByteBuffer.wrap(bytesToNumber).getFloat();
-        if (!Float.isNaN(floatValue)) {
-            return floatValue;
-        } else {
-            long longValue = parseBytesToLong(bytesToNumber, 0, BYTES_LEN_INT_MAX);
-            BigDecimal bigDecimalValue = new BigDecimal(longValue);
-            return bigDecimalValue.floatValue();
-        }
+        return floatValue;
+    }
+
+    public static float parseBytesIntToFloat(List data) {
+        return parseBytesIntToFloat(data, 0);
+    }
+
+    public static float parseBytesIntToFloat(List data, int offset) {
+        return parseBytesIntToFloat(data, offset, validateLength(data.size(), offset, BYTES_LEN_INT_MAX));
+    }
+
+    public static float parseBytesIntToFloat(List data, int offset, int length) {
+        return parseBytesIntToFloat(data, offset, length, true);
+    }
+
+    public static float parseBytesIntToFloat(List data, int offset, int length, boolean bigEndian) {
+        return parseBytesIntToFloat(Bytes.toArray(data), offset, length, bigEndian);
+    }
+
+    public static float parseBytesIntToFloat(byte[] data) {
+        return parseBytesIntToFloat(data, 0);
+    }
+
+    public static float parseBytesIntToFloat(byte[] data, int offset) {
+        return parseBytesIntToFloat(data, offset, validateLength(data.length, offset, BYTES_LEN_INT_MAX));
+    }
+
+    public static float parseBytesIntToFloat(byte[] data, int offset, int length) {
+        return parseBytesIntToFloat(data, offset, length, true);
+    }
+
+    public static float parseBytesIntToFloat(byte[] data, int offset, int length, boolean bigEndian) {
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian, BYTES_LEN_INT_MAX);
+        long longValue = parseBytesToLong(bytesToNumber, 0, length);
+        BigDecimal bigDecimalValue = new BigDecimal(longValue);
+        return bigDecimalValue.floatValue();
     }
 
     public static double parseBytesToDouble(List data) {
-        return parseBytesToDouble(Bytes.toArray(data));
+        return parseBytesToDouble(data, 0);
     }
 
     public static double parseBytesToDouble(List data, int offset) {
-        return parseBytesToDouble(Bytes.toArray(data), offset);
+        return parseBytesToDouble(data, offset, validateLength(data.size(), offset, BYTES_LEN_LONG_MAX));
     }
 
     public static double parseBytesToDouble(List data, int offset, int length) {
-        return parseBytesToDouble(Bytes.toArray(data), offset, length);
+        return parseBytesToDouble(data, offset, length, true);
     }
 
     public static double parseBytesToDouble(List data, int offset, int length, boolean bigEndian) {
@@ -938,7 +1020,7 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(byte[] data, int offset) {
-        return parseBytesToDouble(data, offset, BYTES_LEN_LONG_MAX);
+        return parseBytesToDouble(data, offset, validateLength(data.length, offset, BYTES_LEN_LONG_MAX));
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, int length) {
@@ -946,36 +1028,58 @@ public class TbUtils {
     }
 
     public static double parseBytesToDouble(byte[] data, int offset, int length, boolean bigEndian) {
-        if (length > BYTES_LEN_LONG_MAX) {
-            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + BYTES_LEN_LONG_MAX + " bytes is allowed!");
+        var bb = ByteBuffer.allocate(BYTES_LEN_LONG_MAX);
+        if (!bigEndian) {
+            bb.order(ByteOrder.LITTLE_ENDIAN);
         }
-        if (offset + length > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+        bb.position(bigEndian ? BYTES_LEN_LONG_MAX - length : 0);
+        bb.put(data, offset, length);
+        bb.position(0);
+        double doubleValue = bb.getDouble();
+        if (Double.isNaN(doubleValue)) {
+            throw new NumberFormatException("byte[] 0x" + bytesToHex(data) + " is a Not-a-Number (NaN) value");
         }
-        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian);
-        if (bytesToNumber.length < BYTES_LEN_LONG_MAX) {
-            byte[] extendedBytes = new byte[BYTES_LEN_LONG_MAX];
-            Arrays.fill(extendedBytes, (byte) 0);
-            System.arraycopy(bytesToNumber, 0, extendedBytes, 0, bytesToNumber.length);
-            bytesToNumber = extendedBytes;
-        }
-        double doubleValue = ByteBuffer.wrap(bytesToNumber).getDouble();
-        if (!Double.isNaN(doubleValue)) {
-            return doubleValue;
-        } else {
-            BigInteger bigInt = new BigInteger(1, bytesToNumber);
-            BigDecimal bigDecimalValue = new BigDecimal(bigInt);
-            return bigDecimalValue.doubleValue();
-        }
+        return doubleValue;
     }
 
-    private static byte[] prepareBytesToNumber(byte[] data, int offset, int length, boolean bigEndian) {
-        if (offset > data.length) {
-            throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
-        }
-        if ((offset + length) > data.length) {
-            throw new IllegalArgumentException("Default length is always " + length + " bytes. Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
-        }
+    public static double parseBytesLongToDouble(List data) {
+        return parseBytesLongToDouble(data, 0);
+    }
+
+    public static double parseBytesLongToDouble(List data, int offset) {
+        return parseBytesLongToDouble(data, offset, validateLength(data.size(), offset, BYTES_LEN_LONG_MAX));
+    }
+
+    public static double parseBytesLongToDouble(List data, int offset, int length) {
+        return parseBytesLongToDouble(data, offset, length, true);
+    }
+
+    public static double parseBytesLongToDouble(List data, int offset, int length, boolean bigEndian) {
+        return parseBytesLongToDouble(Bytes.toArray(data), offset, length, bigEndian);
+    }
+
+    public static double parseBytesLongToDouble(byte[] data) {
+        return parseBytesLongToDouble(data, 0);
+    }
+
+    public static double parseBytesLongToDouble(byte[] data, int offset) {
+        return parseBytesLongToDouble(data, offset, validateLength(data.length, offset, BYTES_LEN_LONG_MAX));
+    }
+
+    public static double parseBytesLongToDouble(byte[] data, int offset, int length) {
+        return parseBytesLongToDouble(data, offset, length, true);
+    }
+
+    public static double parseBytesLongToDouble(byte[] data, int offset, int length, boolean bigEndian) {
+        byte[] bytesToNumber = prepareBytesToNumber(data, offset, length, bigEndian, BYTES_LEN_LONG_MAX);
+        BigInteger bigInt = new BigInteger(1, bytesToNumber);
+        BigDecimal bigDecimalValue = new BigDecimal(bigInt);
+        return bigDecimalValue.doubleValue();
+    }
+
+    private static byte[] prepareBytesToNumber(byte[] data, int offset, int length, boolean bigEndian,
+                                               int bytesLenMax) {
+        validationNumberByLength(data, offset, length, bytesLenMax);
         byte[] dataBytesArray = Arrays.copyOfRange(data, offset, (offset + length));
         if (!bigEndian) {
             ArrayUtils.reverse(dataBytesArray);
@@ -1168,6 +1272,122 @@ public class TbUtils {
         return str.matches("^-?(0[xX])?[0-9a-fA-F]+$") ? HEX_RADIX : -1;
     }
 
+    public static ExecutionArrayList<Byte> bytesToExecutionArrayList(ExecutionContext ctx, byte[] byteArray) {
+        List<Byte> byteList = new ArrayList<>();
+        for (byte b : byteArray) {
+            byteList.add(b);
+        }
+        ExecutionArrayList<Byte> list = new ExecutionArrayList(byteList, ctx);
+        return list;
+    }
+
+    public static String padStart(String str, int targetLength, char padString) {
+        while (str.length() < targetLength) {
+            str = padString + str;
+        }
+        return str;
+    }
+
+    public static String padEnd(String str, int targetLength, char padString) {
+        while (str.length() < targetLength) {
+            str = str + padString;
+        }
+        return str;
+    }
+
+    public static byte[] parseByteToBinaryArray(byte byteValue) {
+        return parseByteToBinaryArray(byteValue, BIN_LEN_MAX);
+    }
+
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength) {
+        return parseByteToBinaryArray(byteValue, binLength, true);
+    }
+
+    /**
+     * bigEndian = true
+     * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
+     * to ensure proper alignment (highest bit to low end).
+     */
+    public static byte[] parseByteToBinaryArray(byte byteValue, int binLength, boolean bigEndian) {
+        byte[] bins = new byte[binLength];
+        for (int i = 0; i < binLength; i++) {
+            if(bigEndian) {
+                bins[binLength - 1 - i] = (byte) ((byteValue >> i) & 1);
+            } else {
+                bins[i] = (byte) ((byteValue >> i) & 1);
+            }
+        }
+        return bins;
+    }
+
+    public static byte[] parseBytesToBinaryArray(List listValue) {
+        return parseBytesToBinaryArray(listValue, listValue.size() * BIN_LEN_MAX);
+    }
+
+    public static byte[] parseBytesToBinaryArray(List listValue, int binLength) {
+        return parseBytesToBinaryArray(Bytes.toArray(listValue), binLength);
+    }
+
+    public static byte[] parseBytesToBinaryArray(byte[] bytesValue) {
+        return parseLongToBinaryArray(parseBytesToLong(bytesValue), bytesValue.length * BIN_LEN_MAX);
+    }
+
+    public static byte[] parseBytesToBinaryArray(byte[] bytesValue, int binLength) {
+        return parseLongToBinaryArray(parseBytesToLong(bytesValue), binLength);
+    }
+
+    public static byte[] parseLongToBinaryArray(long longValue) {
+        return parseLongToBinaryArray(longValue, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
+    }
+
+    /**
+     * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
+     * to ensure proper alignment (highest bit to low end).
+     */
+    public static byte[] parseLongToBinaryArray(long longValue, int binsLength) {
+        int len = Math.min(binsLength, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
+        byte[] bins = new byte[len];
+        for (int i = 0; i < len; i++) {
+            bins[len - 1 - i] = (byte) ((longValue >> i) & 1);
+        }
+        return bins;
+    }
+
+    public static int parseBinaryArrayToInt(List listValue) {
+        return parseBinaryArrayToInt(listValue, 0);
+    }
+
+    public static int parseBinaryArrayToInt(List listValue, int offset) {
+        return parseBinaryArrayToInt(listValue, offset, listValue.size());
+    }
+
+    public static int parseBinaryArrayToInt(List listValue, int offset, int length) {
+        return parseBinaryArrayToInt(Bytes.toArray(listValue), offset, length);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue) {
+        return parseBinaryArrayToInt(bytesValue, 0);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue, int offset) {
+        return parseBinaryArrayToInt(bytesValue, offset, bytesValue.length);
+    }
+
+    public static int parseBinaryArrayToInt(byte[] bytesValue, int offset, int length) {
+        int result = 0;
+        int len = Math.min(length + offset, bytesValue.length);
+        for (int i = offset; i < len; i++) {
+            result = (result << 1) | (bytesValue[i] & 1);
+        }
+
+        // For the one byte (8 bit) only If the most significant bit (sign) is set, we convert the result into a negative number
+        if ((bytesValue.length == BIN_LEN_MAX)
+                && offset == 0 && bytesValue[0] == 1) {
+            result -= (1 << (len - offset));
+        }
+        return result;
+    }
+
     private static byte isValidIntegerToByte(Integer val) {
         if (val > 255 || val < -128) {
             throw new NumberFormatException("The value '" + val + "' could not be correctly converted to a byte. " +
@@ -1193,6 +1413,45 @@ public class TbUtils {
         }
         String result = reversedHex.toString();
         return isHexPref ? "0x" + result : result;
+    }
+
+    private static void validationNumberByLength(byte[] data, int offset, int length, int bytesLenMax) {
+        if (offset > data.length) {
+            throw new IllegalArgumentException("Offset: " + offset + " is out of bounds for array with length: " + data.length + "!");
+        }
+
+        if (offset + length > data.length) {
+            throw new IllegalArgumentException("Offset: " + offset + " and Length: " + length + " is out of bounds for array with length: " + data.length + "!");
+        }
+
+        if (length > bytesLenMax) {
+            throw new IllegalArgumentException("Length: " + length + " is too large. Maximum " + bytesLenMax + " bytes is allowed!");
+        }
+    }
+
+    private static int validateLength(int dataLength, int offset, int bytesLenMax) {
+        return (dataLength < offset) ? dataLength : Math.min((dataLength - offset), bytesLenMax);
+    }
+
+    private static String formatBinary(String binaryString) {
+        int format = binaryString.length() < 8 ? 8 :
+                binaryString.length() < 16 ? 16 :
+                        binaryString.length() < 32 ? 32 :
+                                binaryString.length() < 64 ? 64 : 0;
+        return format == 0 ? binaryString : String.format("%" + format + "s", binaryString).replace(' ', '0');
+    }
+
+    private static byte[] hexToBytes(String hex) {
+        byte [] data = new byte[hex.length()/2];
+        for (int i = 0; i < hex.length(); i += 2) {
+            // Extract two characters from the hex string
+            String byteString = hex.substring(i, i + 2);
+            // Parse the hex string to a byte
+            byte byteValue = (byte) Integer.parseInt(byteString, HEX_RADIX);
+            // Add the byte to the ArrayList
+            data[i/2] = byteValue;
+        }
+        return data;
     }
 }
 
