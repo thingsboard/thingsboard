@@ -177,18 +177,15 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
   }
 
   private getRequestDataObject(array: RequestMappingData[]): Record<RequestType, RequestMappingData[]> {
-    const result = {
+    return array.reduce((result, { requestType, requestValue }) => {
+      result[requestType].push(requestValue);
+      return result;
+    }, {
       connectRequests: [],
       disconnectRequests: [],
       attributeRequests: [],
       attributeUpdates: [],
       serverSideRpc: [],
-    };
-
-    array.forEach(({ requestType, requestValue }) => {
-      result[requestType].push(requestValue);
     });
-
-    return result as Record<RequestType, RequestMappingData[]>;
   }
 }
