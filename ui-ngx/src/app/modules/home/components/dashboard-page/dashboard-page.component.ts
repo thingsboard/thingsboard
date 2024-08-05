@@ -254,7 +254,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
-  mainLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
+  mainLayoutSize: {width: string; height: string; maxWidth: string} = {width: '100%', height: '100%', maxWidth: '100%'};
   rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
 
   private dashboardLogoCache: SafeUrl;
@@ -756,6 +756,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private updateMainLayoutSize(): boolean {
     const prevMainLayoutWidth = this.mainLayoutSize.width;
     const prevMainLayoutHeight = this.mainLayoutSize.height;
+    const prevMainLayoutMaxWidth = this.mainLayoutSize.maxWidth;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
       this.mainLayoutSize.width = '100%';
     } else {
@@ -766,7 +767,36 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       this.mainLayoutSize.height = '0px';
     }
-    return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height;
+    if (this.isEdit) {
+      const xOffset = this.dashboardContainer.nativeElement.getBoundingClientRect().x;
+      let width;
+
+      switch (this.layouts.main.layoutCtx.breakpoint) {
+        case 'xl':
+          width = `${5000 - xOffset}px`;
+          break;
+        case 'lg':
+          width = `${1919 - xOffset}px`;
+          break;
+        case 'md':
+          width = `${1279 - xOffset}px`;
+          break;
+        case 'sm':
+          width = '959px';
+          break;
+        case 'xs':
+          width = '599px';
+          break;
+        default:
+          width = '100%';
+      }
+
+      this.mainLayoutSize.maxWidth = width;
+    } else {
+      this.mainLayoutSize.maxWidth = '100%';
+    }
+    return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height ||
+      prevMainLayoutMaxWidth !== this.mainLayoutSize.maxWidth;
   }
 
   private updateRightLayoutSize(): boolean {
@@ -1155,6 +1185,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
     } else {
+      this.dashboardUtils.removeBreakpointsDuplicateInLayouts(this.dashboard);
       this.dashboardService.saveDashboard(this.dashboard).subscribe();
     }
   }

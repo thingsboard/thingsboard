@@ -29,7 +29,7 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined, isEqual } from '@core/utils';
 import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
@@ -738,6 +738,28 @@ export class DashboardUtilsService {
       }
       if (!found) {
         delete dashboardConfiguration.widgets[widgetId];
+      }
+    }
+  }
+
+  public removeBreakpointsDuplicateInLayouts(dashboard: Dashboard) {
+    const dashboardConfiguration = dashboard.configuration;
+    const states = dashboardConfiguration.states;
+    for (const s of Object.keys(states)) {
+      const state = states[s];
+      for (const l of Object.keys(state.layouts)) {
+        const layout: DashboardLayout = state.layouts[l];
+        if (layout.breakpoints) {
+          for (const breakpoint of Object.keys(layout.breakpoints)) {
+            const breakpointLayout = layout.breakpoints[breakpoint];
+            if (isEqual(breakpointLayout.widgets, layout.widgets) && isEqual(breakpointLayout.gridSettings, layout.gridSettings)) {
+              delete layout.breakpoints[breakpoint];
+              if (isEqual(layout.breakpoints, {})) {
+                delete layout.breakpoints;
+              }
+            }
+          }
+        }
       }
     }
   }

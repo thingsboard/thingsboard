@@ -93,12 +93,14 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   private rxSubscriptions = new Array<Subscription>();
 
-  constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
-              private itembuffer: ItemBufferService,
-              private imagePipe: ImagePipe,
-              private sanitizer: DomSanitizer,
-              private dashboardUtils: DashboardUtilsService,) {
+  constructor(
+    protected store: Store<AppState>,
+    private translate: TranslateService,
+    private itembuffer: ItemBufferService,
+    private imagePipe: ImagePipe,
+    private sanitizer: DomSanitizer,
+    private dashboardUtils: DashboardUtilsService,
+  ) {
     super(store);
     this.initHotKeys();
   }
