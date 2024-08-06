@@ -18,7 +18,10 @@ package org.thingsboard.server.transport.coap.efento;
 import com.google.protobuf.ByteString;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
-import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
 
@@ -26,9 +29,42 @@ import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.Mockito.mock;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_AMBIENT_LIGHT;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_ATMOSPHERIC_PRESSURE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_BREATH_VOC;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_CO2_EQUIVALENT;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_CURRENT;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_CURRENT_PRECISE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_DIFFERENTIAL_PRESSURE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_DISTANCE_MM;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_ELECTRICITY_METER;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_FLOODING;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_HIGH_PRESSURE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_HUMIDITY;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_HUMIDITY_ACCURATE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_IAQ;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OK_ALARM;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OUTPUT_CONTROL;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_PERCENTAGE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_PULSE_CNT;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_SOIL_MOISTURE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_STATIC_IAQ;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_TEMPERATURE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_VOLTAGE;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER_ACC_MINOR;
 
 class CoapEfentTransportResourceTest {
 
@@ -40,39 +76,65 @@ class CoapEfentTransportResourceTest {
         coapEfentoTransportResource = new CoapEfentoTransportResource(ctxMock, "testName");
     }
 
-    @Test
-    void checkContinuousSensor() {
+    @ParameterizedTest
+    @MethodSource
+    void checkContinuousSensor(MeasurementType measurementType, List<Integer> sampleOffsets, String property, double expectedValue) {
         long tsInSec = Instant.now().getEpochSecond();
         MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
-                .setMeasurementPeriodFactor(1)
+                .setMeasurementPeriodFactor(0)
                 .setBatteryStatus(true)
                 .setSignal(0)
                 .setNextTransmissionAt(1000)
                 .setTransferReason(0)
                 .setHash(0)
                 .addAllChannels(List.of(MeasurementsProtos.ProtoChannel.newBuilder()
-                                .setType(MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_TEMPERATURE)
+                                .setType(measurementType)
                                 .setTimestamp(Math.toIntExact(tsInSec))
-                                .addAllSampleOffsets(List.of(223, 224))
-                                .build(),
-                        MeasurementsProtos.ProtoChannel.newBuilder()
-                                .setType(MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_HUMIDITY)
-                                .setTimestamp(Math.toIntExact(tsInSec))
-                                .addAllSampleOffsets(List.of(20, 30))
+                                .addAllSampleOffsets(sampleOffsets)
                                 .build()
                 ))
                 .build();
         List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
-        assertThat(efentoMeasurements).hasSize(2);
+        assertThat(efentoMeasurements).hasSize(1);
         assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("temperature_1").getAsDouble()).isEqualTo(22.3);
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("humidity_2").getAsDouble()).isEqualTo(20);
-        assertThat(efentoMeasurements.get(1).getTs()).isEqualTo((tsInSec + 180) * 1000);
-        assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("temperature_1").getAsDouble()).isEqualTo(22.4);
-        assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("humidity_2").getAsDouble()).isEqualTo(30);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(property).getAsDouble()).isEqualTo(expectedValue);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(180);
+    }
+
+    private static Stream<Arguments> checkContinuousSensor() {
+        return Stream.of(
+                Arguments.of(MEASUREMENT_TYPE_TEMPERATURE, List.of(223), "temperature_1", 22.3),
+                Arguments.of(MEASUREMENT_TYPE_WATER_METER, List.of(1050), "pulse_counter_water_1", 1050),
+                Arguments.of(MEASUREMENT_TYPE_HUMIDITY, List.of(20), "humidity_1", 20),
+                Arguments.of(MEASUREMENT_TYPE_ATMOSPHERIC_PRESSURE, List.of(1013), "pressure_1", 101.3),
+                Arguments.of(MEASUREMENT_TYPE_DIFFERENTIAL_PRESSURE, List.of(500), "pressure_diff_1", 500),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT, List.of(300), "pulse_cnt_1", 300),
+                Arguments.of(MEASUREMENT_TYPE_IAQ, List.of(150), "iaq_1", 150),
+                Arguments.of(MEASUREMENT_TYPE_ELECTRICITY_METER, List.of(1200), "watt_hour_1", 1200),
+                Arguments.of(MEASUREMENT_TYPE_SOIL_MOISTURE, List.of(35), "soil_moisture_1", 35),
+                Arguments.of(MEASUREMENT_TYPE_AMBIENT_LIGHT, List.of(500), "ambient_light_1", 50),
+                Arguments.of(MEASUREMENT_TYPE_HIGH_PRESSURE, List.of(200000), "high_pressure_1", 200000),
+                Arguments.of(MEASUREMENT_TYPE_DISTANCE_MM, List.of(1500), "distance_mm_1", 1500),
+                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(125), "acc_counter_water_minor_1", 125),
+                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR, List.of(2500), "acc_counter_water_major_1", 2500),
+                Arguments.of(MEASUREMENT_TYPE_HUMIDITY_ACCURATE, List.of(525), "humidity_relative_1", 52.5),
+                Arguments.of(MEASUREMENT_TYPE_STATIC_IAQ, List.of(110), "static_iaq_1", 110),
+                Arguments.of(MEASUREMENT_TYPE_CO2_EQUIVALENT, List.of(450), "co2_ppm_1", 450),
+                Arguments.of(MEASUREMENT_TYPE_BREATH_VOC, List.of(220), "breath_voc_ppm_1", 220),
+                Arguments.of(MEASUREMENT_TYPE_PERCENTAGE, List.of(80), "percentage_1", 0.80),
+                Arguments.of(MEASUREMENT_TYPE_VOLTAGE, List.of(2400), "voltage_1", 240),
+                Arguments.of(MEASUREMENT_TYPE_CURRENT, List.of(550), "current_1", 5.5),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(180), "pulse_cnt_minor_1", 180),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR, List.of(1200), "pulse_cnt_major_1", 1200),
+                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(550), "elec_meter_minor_1", 550),
+                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR, List.of(5500), "elec_meter_major_1", 5500),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(230), "pulse_cnt_wide_minor_1", 230),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR, List.of(1700), "pulse_cnt_wide_major_1", 1700),
+                Arguments.of(MEASUREMENT_TYPE_CURRENT_PRECISE, List.of(275), "current_precise_1", 0.275)
+        );
     }
 
     @Test
@@ -82,14 +144,14 @@ class CoapEfentTransportResourceTest {
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
-                .setMeasurementPeriodFactor(1)
+                .setMeasurementPeriodFactor(0)
                 .setBatteryStatus(true)
                 .setSignal(0)
                 .setNextTransmissionAt(1000)
                 .setTransferReason(0)
                 .setHash(0)
                 .addChannels(MeasurementsProtos.ProtoChannel.newBuilder()
-                        .setType(MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OK_ALARM)
+                        .setType(MEASUREMENT_TYPE_OK_ALARM)
                         .setTimestamp(Math.toIntExact(tsInSec))
                         .addAllSampleOffsets(List.of(1, 1))
                         .build())
@@ -98,10 +160,12 @@ class CoapEfentTransportResourceTest {
         assertThat(efentoMeasurements).hasSize(1);
         assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
         assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("ok_alarm_1").getAsString()).isEqualTo("ALARM");
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(180 * 14);
     }
 
-    @Test
-    void checkBinarySensorWhenValueIsVarying() {
+    @ParameterizedTest
+    @MethodSource
+    void checkBinarySensorWhenValueIsVarying(MeasurementType measurementType, String property, String expectedValueWhenOffsetOk, String expectedValueWhenOffsetNotOk) {
         long tsInSec = Instant.now().getEpochSecond();
         MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
@@ -114,7 +178,7 @@ class CoapEfentTransportResourceTest {
                 .setTransferReason(0)
                 .setHash(0)
                 .addChannels(MeasurementsProtos.ProtoChannel.newBuilder()
-                        .setType(MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OK_ALARM)
+                        .setType(measurementType)
                         .setTimestamp(Math.toIntExact(tsInSec))
                         .addAllSampleOffsets(List.of(1, -10))
                         .build())
@@ -122,9 +186,63 @@ class CoapEfentTransportResourceTest {
         List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
         assertThat(efentoMeasurements).hasSize(2);
         assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("ok_alarm_1").getAsString()).isEqualTo("ALARM");
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(property).getAsString()).isEqualTo(expectedValueWhenOffsetNotOk);
         assertThat(efentoMeasurements.get(1).getTs()).isEqualTo((tsInSec + 9) * 1000);
-        assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("ok_alarm_1").getAsString()).isEqualTo("OK");
+        assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get(property).getAsString()).isEqualTo(expectedValueWhenOffsetOk);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(180);
+    }
+
+    private static Stream<Arguments> checkBinarySensorWhenValueIsVarying() {
+        return Stream.of(
+                Arguments.of(MEASUREMENT_TYPE_OK_ALARM, "ok_alarm_1", "OK", "ALARM"),
+                Arguments.of(MEASUREMENT_TYPE_FLOODING, "flooding_1", "OK", "WATER_DETECTED"),
+                Arguments.of(MEASUREMENT_TYPE_OUTPUT_CONTROL, "output_control_1", "OFF", "ON")
+        );
+    }
+
+    @Test
+    void checkExceptionWhenChannelsListIsEmpty() {
+        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+                .setSerialNum(integerToByteString(1234))
+                .setCloudToken("test_token")
+                .setMeasurementPeriodBase(180)
+                .setMeasurementPeriodFactor(1)
+                .setBatteryStatus(true)
+                .setSignal(0)
+                .setNextTransmissionAt(1000)
+                .setTransferReason(0)
+                .setHash(0)
+                .build();
+        UUID sessionId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> coapEfentoTransportResource.getEfentoMeasurements(measurements, sessionId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("[" + sessionId + "]: Failed to get Efento measurements, reason: channels list is empty!");
+    }
+
+    @Test
+    void checkExceptionWhenValuesMapIsEmpty() {
+        long tsInSec = Instant.now().getEpochSecond();
+        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+                .setSerialNum(integerToByteString(1234))
+                .setCloudToken("test_token")
+                .setMeasurementPeriodBase(180)
+                .setMeasurementPeriodFactor(1)
+                .setBatteryStatus(true)
+                .setSignal(0)
+                .setNextTransmissionAt(1000)
+                .setTransferReason(0)
+                .setHash(0)
+                .addChannels(MeasurementsProtos.ProtoChannel.newBuilder()
+                        .setType(MEASUREMENT_TYPE_TEMPERATURE)
+                        .setTimestamp(Math.toIntExact(tsInSec))
+                        .build())
+                .build();
+        UUID sessionId = UUID.randomUUID();
+
+        assertThatThrownBy(() -> coapEfentoTransportResource.getEfentoMeasurements(measurements, sessionId))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("[" + sessionId + "]: Failed to collect Efento measurements, reason, values map is empty!");
     }
 
     public static ByteString integerToByteString(Integer intValue) {
