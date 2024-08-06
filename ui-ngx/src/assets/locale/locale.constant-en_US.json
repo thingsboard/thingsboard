@@ -3218,8 +3218,12 @@
         "stopbits": "Stopbits",
         "strict": "Strict",
         "set": "Set",
+        "show-encoding": "Encoding used when writing received string data to storage.",
         "show-help": "Show help",
+        "show-key": "Name for telemetry on platform",
         "show-map": "Show map",
+        "show-type": "The type of requested attribute can be “shared” or “client”",
+        "show-response": "Boolean value that determines whether to send response back to ThingsBoard",
         "socket": "Socket",
         "statistics": {
             "statistic": "Statistic",
