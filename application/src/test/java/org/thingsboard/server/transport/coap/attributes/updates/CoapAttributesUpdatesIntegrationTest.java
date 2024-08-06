@@ -16,7 +16,6 @@
 package org.thingsboard.server.transport.coap.attributes.updates;
 
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.server.resources.Resource;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -25,10 +24,7 @@ import org.thingsboard.server.coapserver.DefaultCoapServerService;
 import org.thingsboard.server.common.transport.service.DefaultTransportService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.coap.CoapTestConfigProperties;
-import org.thingsboard.server.transport.coap.CoapTransportResource;
 import org.thingsboard.server.transport.coap.attributes.AbstractCoapAttributesIntegrationTest;
-
-import static org.mockito.Mockito.spy;
 
 @Slf4j
 @DaoSqlTest

@@ -88,7 +88,7 @@ public class JpaBaseEventDao implements EventDao {
     @Value("${sql.batch_sort:true}")
     private boolean batchSortEnabled;
 
-    private TbSqlBlockingQueueWrapper<Event> queue;
+    private TbSqlBlockingQueueWrapper<Event, Void> queue;
 
     private final Map<EventType, EventRepository<?, ?>> repositories = new ConcurrentHashMap<>();
 

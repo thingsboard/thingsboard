@@ -141,6 +141,7 @@ import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.exception.ThingsboardErrorResponseHandler;
 import org.thingsboard.server.queue.discovery.PartitionService;
+import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
 import org.thingsboard.server.queue.provider.TbQueueProducerProvider;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.action.EntityActionService;
@@ -313,6 +314,9 @@ public abstract class BaseController {
 
     @Autowired
     protected ExportableEntitiesService entitiesService;
+
+    @Autowired
+    protected TbServiceInfoProvider serviceInfoProvider;
 
     @Value("${server.log_controller_error_stack_trace}")
     @Getter

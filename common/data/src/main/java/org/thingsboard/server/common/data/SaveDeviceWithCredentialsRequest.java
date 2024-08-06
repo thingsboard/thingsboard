@@ -16,10 +16,11 @@
 package org.thingsboard.server.common.data;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 
-import jakarta.validation.constraints.NotNull;;
+;
 
 @Schema
 @Data

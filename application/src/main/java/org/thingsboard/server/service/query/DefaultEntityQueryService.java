@@ -62,7 +62,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.security.AccessValidator;
 import org.thingsboard.server.service.security.model.SecurityUser;
-import org.thingsboard.server.service.subscription.TbAttributeSubscriptionScope;
 
 import java.util.ArrayList;
 import java.util.Collection;
