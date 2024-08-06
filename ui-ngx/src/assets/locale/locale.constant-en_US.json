@@ -936,7 +936,7 @@
         "type-relations-delete": "All relation deleted",
         "type-alarm-ack": "Acknowledged",
         "type-alarm-clear": "Cleared",
-        "type-alarm-delete": "Delete",
+        "type-alarm-delete": "Deleted",
         "type-alarm-assign": "Assigned",
         "type-alarm-unassign": "Unassigned",
         "type-added-comment": "Added comment",
