@@ -113,7 +113,7 @@ class CoapEfentTransportResourceTest {
         assertThat(efentoMeasurements.get(1).getTs()).isEqualTo((tsInSec + 180 * 5) * 1000);
         assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("temperature_1").getAsDouble()).isEqualTo(22.4);
         assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("humidity_2").getAsDouble()).isEqualTo(30);
-        checkDefaultMeasurements(measurements, efentoMeasurements,180 * 5, false);
+        checkDefaultMeasurements(measurements, efentoMeasurements, 180 * 5, false);
     }
 
     @ParameterizedTest
@@ -131,10 +131,10 @@ class CoapEfentTransportResourceTest {
                 .setTransferReason(0)
                 .setHash(0)
                 .addAllChannels(List.of(MeasurementsProtos.ProtoChannel.newBuilder()
-                                .setType(measurementType)
-                                .setTimestamp(Math.toIntExact(tsInSec))
-                                .addAllSampleOffsets(sampleOffsets)
-                                .build()
+                        .setType(measurementType)
+                        .setTimestamp(Math.toIntExact(tsInSec))
+                        .addAllSampleOffsets(sampleOffsets)
+                        .build()
                 ))
                 .build();
         List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
@@ -308,9 +308,9 @@ class CoapEfentTransportResourceTest {
             assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("serial").getAsString()).isEqualTo(CoapEfentoUtils.convertByteArrayToString(incomingMeasurements.getSerialNum().toByteArray()));
             assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("battery").getAsString()).isEqualTo(incomingMeasurements.getBatteryStatus() ? "ok" : "low");
             MeasurementsProtos.ProtoChannel protoChannel = incomingMeasurements.getChannelsList().get(0);
-            long measuredAtWhenBinarySensor = TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp()) + Math.abs(TimeUnit.SECONDS.toMillis(protoChannel.getSampleOffsetsList().get(i))) - 1000;
-            long measuredAtWhenContinuousSensor =   TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp() + i * expectedMeasurementInterval);
-            long measuredAt = isBinarySensor ? measuredAtWhenBinarySensor : measuredAtWhenContinuousSensor;
+            long measuredAt = isBinarySensor ?
+                    TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp()) + Math.abs(TimeUnit.SECONDS.toMillis(protoChannel.getSampleOffsetsList().get(i))) - 1000 :
+                    TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp() + i * expectedMeasurementInterval);
             assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("measured_at").getAsString()).isEqualTo(convertTimestampToUtcString(measuredAt));
             assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("next_transmission_at").getAsString()).isEqualTo(convertTimestampToUtcString(TimeUnit.SECONDS.toMillis(incomingMeasurements.getNextTransmissionAt())));
             assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("signal").getAsLong()).isEqualTo(incomingMeasurements.getSignal());
