@@ -20,11 +20,13 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
 public class DeviceProfileCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8220455917177676472L;
 
     private final TenantId tenantId;
@@ -71,4 +73,5 @@ public class DeviceProfileCacheKey implements Serializable {
         }
         return tenantId + "_" + name;
     }
+
 }

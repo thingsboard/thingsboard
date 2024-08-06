@@ -13,30 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.timeseries;
+package org.thingsboard.server.dao.edge;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
-import java.io.Serial;
-import java.io.Serializable;
+public interface RelatedEdgeIdsService {
 
-@EqualsAndHashCode
-@Getter
-@AllArgsConstructor
-public class TsLatestCacheKey implements Serializable {
+    PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
 
-    @Serial
-    private static final long serialVersionUID = 2024369077925351881L;
-
-    private final EntityId entityId;
-    private final String key;
-
-    @Override
-    public String toString() {
-        return "{" + entityId + "}" + key;
-    }
+    void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId);
 
 }

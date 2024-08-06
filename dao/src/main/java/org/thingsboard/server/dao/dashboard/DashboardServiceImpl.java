@@ -20,6 +20,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -43,6 +44,7 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
+import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
@@ -91,6 +93,10 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private EntityCountService countService;
+
+    @Autowired
+    @Lazy
+    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -304,7 +310,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboards from non-existent customer!");
         }
-        new CustomerDashboardsUnassigner(customer).removeEntities(tenantId, customer);
+        new CustomerDashboardsRemover(customer).removeEntities(tenantId, customer);
     }
 
     @Override
@@ -334,6 +340,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
+        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, dashboardId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
                 .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return dashboard;
@@ -352,6 +359,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
+        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, dashboardId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return dashboard;
@@ -413,11 +421,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return EntityType.DASHBOARD;
     }
 
-    private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsRemover extends PaginatedRemover<Customer, DashboardInfo> {
 
-        private Customer customer;
+        private final Customer customer;
 
-        CustomerDashboardsUnassigner(Customer customer) {
+        CustomerDashboardsRemover(Customer customer) {
             this.customer = customer;
         }
 
@@ -435,7 +443,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {
 
-        private Customer customer;
+        private final Customer customer;
 
         CustomerDashboardsUpdater(Customer customer) {
             this.customer = customer;

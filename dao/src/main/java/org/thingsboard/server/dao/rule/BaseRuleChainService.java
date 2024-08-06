@@ -24,6 +24,7 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
@@ -54,6 +55,7 @@ import org.thingsboard.server.common.data.rule.RuleChainUpdateResult;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.data.rule.RuleNodeUpdateResult;
 import org.thingsboard.server.common.data.util.ReflectionUtils;
+import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
@@ -104,6 +106,10 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
 
     @Autowired
     private EntityCountService entityCountService;
+
+    @Autowired
+    @Lazy
+    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     private DataValidator<RuleChain> ruleChainValidator;
@@ -636,6 +642,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to create ruleChain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
+        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, ruleChainId);
         if (!ruleChainId.equals(edge.getRootRuleChainId())) {
             eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(ruleChainId)
                     .actionType(ActionType.ASSIGNED_TO_EDGE).build());
@@ -659,6 +666,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             log.warn("[{}] Failed to delete rule chain relation. Edge Id: [{}]", ruleChainId, edgeId);
             throw new RuntimeException(e);
         }
+        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, ruleChainId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(ruleChainId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return ruleChain;

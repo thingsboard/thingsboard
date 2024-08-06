@@ -22,6 +22,7 @@ import com.google.common.util.concurrent.MoreExecutors;
 import jakarta.annotation.Nullable;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -44,6 +45,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -81,6 +83,10 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Autowired
     private DataValidator<EntityView> entityViewValidator;
+
+    @Autowired
+    @Lazy
+    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     protected JpaExecutorService service;
@@ -153,7 +159,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         log.trace("Executing unassignCustomerEntityViews, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
-        customerEntityViewsUnAssigner.removeEntities(tenantId, customerId);
+        customerEntityViewsRemover.removeEntities(tenantId, customerId);
     }
 
     @Override
@@ -402,6 +408,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
+        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, entityViewId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
                 .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return entityView;
@@ -420,6 +427,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
+        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, entityViewId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return entityView;
@@ -444,7 +452,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return entityViewDao.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
     }
 
-    private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<TenantId, EntityView>() {
+    private final PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<>() {
         @Override
         protected PageData<EntityView> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
             return entityViewDao.findEntityViewsByTenantId(id.getId(), pageLink);
@@ -456,7 +464,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         }
     };
 
-    private PaginatedRemover<CustomerId, EntityView> customerEntityViewsUnAssigner = new PaginatedRemover<CustomerId, EntityView>() {
+    private final PaginatedRemover<CustomerId, EntityView> customerEntityViewsRemover = new PaginatedRemover<>() {
         @Override
         protected PageData<EntityView> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
             return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);

@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.gen.transport.TransportProtos;
+
 import java.util.UUID;
 
 import static org.mockito.BDDMockito.then;
