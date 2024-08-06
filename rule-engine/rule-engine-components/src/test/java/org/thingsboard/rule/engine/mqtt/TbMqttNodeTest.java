@@ -84,7 +84,7 @@ import static org.mockito.BDDMockito.willReturn;
 @ExtendWith(MockitoExtension.class)
 public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
 
-    private final TenantId TENANT_ID =  TenantId.fromUUID(UUID.fromString("d0c5d2a8-3a6e-4c95-8caf-47fbdc8ef98f"));
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("d0c5d2a8-3a6e-4c95-8caf-47fbdc8ef98f"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("09115d92-d333-432a-868c-ccd6e89c9287"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("11699e8f-c3f0-4366-9334-cbf75798314b"));
 
@@ -143,7 +143,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         mockSuccessfulInit();
         mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig)));
 
-        MqttClientConfig mqttClientConfig = new MqttClientConfig(mqttNode.getSslContext());
+        MqttClientConfig mqttClientConfig = new MqttClientConfig();
         mqttNode.prepareMqttClientConfig(mqttClientConfig);
 
         assertThat(mqttClientConfig.getUsername()).isEqualTo("test_username");
@@ -158,7 +158,9 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         mockSuccessfulInit();
         mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig)));
 
-        SslContext actualSslContext = mqttNode.getSslContext();
+        ArgumentCaptor<MqttClientConfig> mqttClientConfig = ArgumentCaptor.forClass(MqttClientConfig.class);
+        then(mqttNode).should().prepareMqttClientConfig(mqttClientConfig.capture());
+        SslContext actualSslContext = mqttClientConfig.getValue().getSslContext();
         assertThat(actualSslContext)
                 .usingRecursiveComparison()
                 .ignoringFields("ctx", "ctxLock", "sessionContext.context.ctx", "sessionContext.context.ctxLock")
@@ -172,7 +174,9 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         mockSuccessfulInit();
         mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig)));
 
-        SslContext actualSslContext = mqttNode.getSslContext();
+        ArgumentCaptor<MqttClientConfig> mqttClientConfig = ArgumentCaptor.forClass(MqttClientConfig.class);
+        then(mqttNode).should().prepareMqttClientConfig(mqttClientConfig.capture());
+        SslContext actualSslContext = mqttClientConfig.getValue().getSslContext();
         assertThat(actualSslContext).isNull();
     }
 
@@ -237,7 +241,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         Future<Void> future = mock(Future.class);
         given(future.isSuccess()).willReturn(true);
         given(mqttClientMock.publish(any(String.class), any(ByteBuf.class), any(MqttQoS.class), anyBoolean())).willReturn(future);
-        willAnswer(invocation-> {
+        willAnswer(invocation -> {
             GenericFutureListener<Future<Void>> listener = invocation.getArgument(0);
             listener.operationComplete(future);
             return null;
@@ -276,7 +280,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         String errorMsg = "Message publishing was failed!";
         Throwable exception = new RuntimeException(errorMsg);
         given(future.cause()).willReturn(exception);
-        willAnswer(invocation-> {
+        willAnswer(invocation -> {
             GenericFutureListener<Future<Void>> listener = invocation.getArgument(0);
             listener.operationComplete(future);
             return null;

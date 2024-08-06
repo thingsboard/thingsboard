@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.mqtt.azure;
 import io.netty.handler.codec.mqtt.MqttVersion;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.AzureIotHubUtil;
+import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -58,7 +59,7 @@ public class TbAzureIotHubNode extends TbMqttNode {
                     pemCredentials.setCaCert(AzureIotHubUtil.getDefaultCaCert());
                 }
             }
-            this.mqttClient = initClient(ctx);
+            this.mqttClient = initAzureClient(ctx);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -73,7 +74,11 @@ public class TbAzureIotHubNode extends TbMqttNode {
         }
     }
 
-    protected TbMqttNodeConfiguration getMqttNodeConfiguration() {
+    TbMqttNodeConfiguration getMqttNodeConfiguration() {
         return this.mqttNodeConfiguration;
+    }
+
+    MqttClient initAzureClient(TbContext ctx) throws Exception {
+        return initClient(ctx);
     }
 }

@@ -146,7 +146,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         return client;
     }
 
-    public MqttClient getMqttClient(TbContext ctx, MqttClientConfig config) {
+    MqttClient getMqttClient(TbContext ctx, MqttClientConfig config) {
         return MqttClient.create(config, null, ctx.getExternalCallExecutor());
     }
 
@@ -159,7 +159,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         }
     }
 
-    protected SslContext getSslContext() throws SSLException {
+    private SslContext getSslContext() throws SSLException {
         return this.mqttNodeConfiguration.isSsl() ? this.mqttNodeConfiguration.getCredentials().initSslContext() : null;
     }
 

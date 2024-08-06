@@ -15,9 +15,7 @@
  */
 package org.thingsboard.rule.engine.mqtt.azure;
 
-import io.netty.channel.EventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttVersion;
-import io.netty.util.concurrent.Promise;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -27,24 +25,14 @@ import org.thingsboard.common.util.AzureIotHubUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
-import org.thingsboard.mqtt.MqttConnectResult;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.credentials.CertPemCredentials;
 import org.thingsboard.rule.engine.mqtt.TbMqttNodeConfiguration;
-import org.thingsboard.server.common.data.id.RuleNodeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.rule.RuleNode;
-
-import java.util.UUID;
-import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatNoException;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyInt;
-import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.spy;
 import static org.mockito.BDDMockito.willReturn;
 
@@ -58,12 +46,6 @@ public class TbAzureIotHubNodeTest {
     protected TbContext ctxMock;
     @Mock
     protected MqttClient mqttClientMock;
-    @Mock
-    protected EventLoopGroup eventLoopGroupMock;
-    @Mock
-    protected Promise<MqttConnectResult> promiseMock;
-    @Mock
-    protected MqttConnectResult resultMock;
 
     @BeforeEach
     public void setUp() {
@@ -93,7 +75,7 @@ public class TbAzureIotHubNodeTest {
         credentials.setCaCert("test-ca-cert.pem");
         azureIotHubNodeConfig.setCredentials(credentials);
 
-        mockSuccessfulInit();
+        willReturn(mqttClientMock).given(azureIotHubNode).initAzureClient(any());
         azureIotHubNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig)));
 
         MqttClientConfig mqttClientConfig = new MqttClientConfig();
@@ -111,7 +93,7 @@ public class TbAzureIotHubNodeTest {
         credentials.setPassword("test-password");
         azureIotHubNodeConfig.setCredentials(credentials);
 
-        mockSuccessfulInit();
+        willReturn(mqttClientMock).given(azureIotHubNode).initAzureClient(any());
 
         assertThatNoException().isThrownBy(
                 () -> azureIotHubNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig))));
@@ -121,13 +103,4 @@ public class TbAzureIotHubNodeTest {
         assertThat(mqttNodeConfiguration.isCleanSession()).isTrue();
     }
 
-    private void mockSuccessfulInit() throws Exception {
-        given(ctxMock.getTenantId()).willReturn(TenantId.fromUUID(UUID.fromString("74aad2a5-3c07-43fb-9c9b-07fafb4e86ce")));
-        given(ctxMock.getSelf()).willReturn(new RuleNode(new RuleNodeId(UUID.fromString("da5eb2ef-4ea7-4ac9-9359-0e727a0c30ce"))));
-        given(ctxMock.getSharedEventLoop()).willReturn(eventLoopGroupMock);
-        willReturn(mqttClientMock).given(azureIotHubNode).getMqttClient(any(), any());
-        given(mqttClientMock.connect(any(), anyInt())).willReturn(promiseMock);
-        given(promiseMock.get(anyLong(), any(TimeUnit.class))).willReturn(resultMock);
-        given(resultMock.isSuccess()).willReturn(true);
-    }
 }
