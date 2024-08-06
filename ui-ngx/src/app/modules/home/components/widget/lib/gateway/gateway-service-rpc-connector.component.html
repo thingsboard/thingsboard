@@ -50,46 +50,6 @@
                  placeholder="${params}"/>
         </mat-form-field>
       </ng-template>
-      <ng-template [ngSwitchCase]="ConnectorType.MODBUS">
-        <mat-form-field>
-          <mat-label>{{ 'gateway.rpc.tag' | translate }}</mat-label>
-          <input matInput formControlName="tag" placeholder="setValue"/>
-        </mat-form-field>
-        <div fxFlex fxLayout="row" fxLayoutGap="10px">
-          <mat-form-field fxFlex="50" class="mat-block">
-            <mat-label>{{ 'gateway.rpc.type' | translate }}</mat-label>
-            <mat-select formControlName="type">
-              <mat-option *ngFor="let type of modbusCommandTypes" [value]="type">
-                {{ type }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-          <mat-form-field fxFlex="50" class="mat-block">
-            <mat-label>{{ 'gateway.rpc.functionCode' | translate }}</mat-label>
-            <mat-select formControlName="functionCode">
-              <mat-option *ngFor="let code of codesArray" [value]="code">
-                {{ modbusCodesTranslate.get(code) | translate}}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <mat-form-field *ngIf="commandForm.get('functionCode').value>4">
-          <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
-          <input matInput formControlName="value" placeholder="value"/>
-        </mat-form-field>
-        <div fxFlex fxLayout="row" fxLayoutGap="10px">
-          <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.address' | translate }}</mat-label>
-            <input matInput formControlName="address" type="number" min="0"
-                   placeholder="1" step="1"/>
-          </mat-form-field>
-          <mat-form-field fxFlex="50">
-            <mat-label>{{ 'gateway.rpc.objectsCount' | translate }}</mat-label>
-            <input matInput formControlName="objectsCount" type="number" min="0"
-                   placeholder="31" step="1"/>
-          </mat-form-field>
-        </div>
-      </ng-template>
       <ng-template [ngSwitchCase]="ConnectorType.BACNET">
         <mat-form-field>
           <mat-label>{{ 'gateway.rpc.methodRPC' | translate }}</mat-label>
