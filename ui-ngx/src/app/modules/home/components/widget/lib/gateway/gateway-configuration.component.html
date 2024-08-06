@@ -220,7 +220,8 @@
           <div translate class="tb-form-panel-title">gateway.logs.local</div>
           <tb-toggle-select class="toggle-group" [formControl]="logSelector">
             <tb-toggle-option *ngFor="let logConfig of localLogsConfigs" [value]="logConfig"
-                              class="first-capital">{{ localLogsConfigTranslateMap.get(logConfig) }}</tb-toggle-option>
+                              class="first-capital">{{ localLogsConfigTranslateMap.get(logConfig) }}
+            </tb-toggle-option>
           </tb-toggle-select>
           <ng-container [formGroup]="getLogFormGroup(logSelector.value)">
             <div class="tb-form-row no-border no-padding tb-standard-fields column-xs">
@@ -233,7 +234,8 @@
               <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>gateway.logs.file-path</mat-label>
                 <input matInput formControlName="filePath"/>
-                <mat-error *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.filePath').hasError('required')">
+                <mat-error
+                  *ngIf="gatewayConfigGroup.get('logs.local.' + logSelector.value + '.filePath').hasError('required')">
                   {{ 'gateway.logs.file-path-required' | translate }}
                 </mat-error>
               </mat-form-field>
@@ -292,9 +294,12 @@
               {{ storageTypesTranslationMap.get(storageType) | translate }}
             </tb-toggle-option>
           </tb-toggle-select>
-          <div class="tb-form-panel-hint">{{ 'gateway.hints.' + gatewayConfigGroup.get('storage.type').value | translate }}</div>
+          <div
+            class="tb-form-panel-hint">{{ 'gateway.hints.' + gatewayConfigGroup.get('storage.type').value | translate }}
+          </div>
           <ng-container [ngSwitch]="gatewayConfigGroup.get('storage.type').value">
-            <section *ngSwitchCase="StorageTypes.MEMORY" class="tb-form-row no-border no-padding tb-standard-fields column-xs">
+            <section *ngSwitchCase="StorageTypes.MEMORY"
+                     class="tb-form-row no-border no-padding tb-standard-fields column-xs">
               <mat-form-field appearance="outline" class="flex">
                 <mat-label translate>gateway.storage-read-record-count</mat-label>
                 <input type="number" matInput formControlName="read_records_count"/>
@@ -551,7 +556,8 @@
                 <mat-label translate>gateway.grpc-min-ping-interval-without-data</mat-label>
                 <input matInput formControlName="minPingIntervalWithoutDataMs" type="number" min="0"/>
                 <mat-icon matIconSuffix style="cursor:pointer;"
-                          matTooltip="{{ 'gateway.hints.grpc-min-ping-interval-without-data' | translate }}">info_outlined
+                          matTooltip="{{ 'gateway.hints.grpc-min-ping-interval-without-data' | translate }}">
+                  info_outlined
                 </mat-icon>
                 <mat-error *ngIf="gatewayConfigGroup.get('grpc.minPingIntervalWithoutDataMs').hasError('required')">
                   {{ 'gateway.grpc-min-ping-interval-without-data-required' | translate }}
@@ -599,7 +605,8 @@
           <ng-container formGroupName="statistics">
             <div fxLayout="row" formArrayName="commands" class="statistics-container"
                  *ngFor="let commandControl of commandFormArray().controls; let $index = index">
-              <section [formGroupName]="$index" class="tb-form-panel stroked no-padding-bottom no-gap command-container">
+              <section [formGroupName]="$index"
+                       class="tb-form-panel stroked no-padding-bottom no-gap command-container">
                 <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
                   <mat-form-field appearance="outline" class="flex">
                     <mat-label translate>gateway.statistics.attribute-name</mat-label>
@@ -646,7 +653,7 @@
                       [disabled]="!gatewayConfigGroup.get('thingsboard.remoteConfiguration').value"
                       matTooltip="{{ 'gateway.statistics.remove' | translate }}"
                       matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
+                <mat-icon>delete</mat-icon>
               </button>
             </div>
             <button mat-stroked-button color="primary"
