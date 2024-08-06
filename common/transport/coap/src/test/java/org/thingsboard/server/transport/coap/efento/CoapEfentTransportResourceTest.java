@@ -23,12 +23,15 @@ import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.MethodSource;
 import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType;
 import org.thingsboard.server.gen.transport.coap.MeasurementsProtos;
+import org.thingsboard.server.gen.transport.coap.MeasurementsProtos.ProtoMeasurements;
 import org.thingsboard.server.transport.coap.CoapTransportContext;
+import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
 import java.util.List;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,6 +68,7 @@ import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.Me
 import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER;
 import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR;
 import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER_ACC_MINOR;
+import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.convertTimestampToUtcString;
 
 class CoapEfentTransportResourceTest {
 
@@ -76,11 +80,47 @@ class CoapEfentTransportResourceTest {
         coapEfentoTransportResource = new CoapEfentoTransportResource(ctxMock, "testName");
     }
 
+    @Test
+    void checkContinuousSensorWithSomeMeasurements() {
+        long tsInSec = Instant.now().getEpochSecond();
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
+                .setSerialNum(integerToByteString(1234))
+                .setCloudToken("test_token")
+                .setMeasurementPeriodBase(180)
+                .setMeasurementPeriodFactor(5)
+                .setBatteryStatus(true)
+                .setSignal(0)
+                .setNextTransmissionAt(1000)
+                .setTransferReason(0)
+                .setHash(0)
+                .addAllChannels(List.of(MeasurementsProtos.ProtoChannel.newBuilder()
+                                .setType(MeasurementType.MEASUREMENT_TYPE_TEMPERATURE)
+                                .setTimestamp(Math.toIntExact(tsInSec))
+                                .addAllSampleOffsets(List.of(223, 224))
+                                .build(),
+                        MeasurementsProtos.ProtoChannel.newBuilder()
+                                .setType(MeasurementType.MEASUREMENT_TYPE_HUMIDITY)
+                                .setTimestamp(Math.toIntExact(tsInSec))
+                                .addAllSampleOffsets(List.of(20, 30))
+                                .build()
+                ))
+                .build();
+        List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
+        assertThat(efentoMeasurements).hasSize(2);
+        assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("temperature_1").getAsDouble()).isEqualTo(22.3);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("humidity_2").getAsDouble()).isEqualTo(20);
+        assertThat(efentoMeasurements.get(1).getTs()).isEqualTo((tsInSec + 180 * 5) * 1000);
+        assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("temperature_1").getAsDouble()).isEqualTo(22.4);
+        assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get("humidity_2").getAsDouble()).isEqualTo(30);
+        checkDefaultMeasurements(measurements, efentoMeasurements,180 * 5, false);
+    }
+
     @ParameterizedTest
     @MethodSource
     void checkContinuousSensor(MeasurementType measurementType, List<Integer> sampleOffsets, String property, double expectedValue) {
         long tsInSec = Instant.now().getEpochSecond();
-        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
@@ -101,7 +141,7 @@ class CoapEfentTransportResourceTest {
         assertThat(efentoMeasurements).hasSize(1);
         assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
         assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(property).getAsDouble()).isEqualTo(expectedValue);
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(180);
+        checkDefaultMeasurements(measurements, efentoMeasurements, 180, false);
     }
 
     private static Stream<Arguments> checkContinuousSensor() {
@@ -140,7 +180,7 @@ class CoapEfentTransportResourceTest {
     @Test
     void checkBinarySensor() {
         long tsInSec = Instant.now().getEpochSecond();
-        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
@@ -160,14 +200,14 @@ class CoapEfentTransportResourceTest {
         assertThat(efentoMeasurements).hasSize(1);
         assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
         assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("ok_alarm_1").getAsString()).isEqualTo("ALARM");
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(180 * 14);
+        checkDefaultMeasurements(measurements, efentoMeasurements, 180 * 14, true);
     }
 
     @ParameterizedTest
     @MethodSource
-    void checkBinarySensorWhenValueIsVarying(MeasurementType measurementType, String property, String expectedValueWhenOffsetOk, String expectedValueWhenOffsetNotOk) {
+    void checkBinarySensorWhenValueIsVarying(MeasurementType measurementType, String property, String expectedValueWhenOffsetNotOk, String expectedValueWhenOffsetOk) {
         long tsInSec = Instant.now().getEpochSecond();
-        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
@@ -189,20 +229,20 @@ class CoapEfentTransportResourceTest {
         assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(property).getAsString()).isEqualTo(expectedValueWhenOffsetNotOk);
         assertThat(efentoMeasurements.get(1).getTs()).isEqualTo((tsInSec + 9) * 1000);
         assertThat(efentoMeasurements.get(1).getValues().getAsJsonObject().get(property).getAsString()).isEqualTo(expectedValueWhenOffsetOk);
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(180);
+        checkDefaultMeasurements(measurements, efentoMeasurements, 180, true);
     }
 
     private static Stream<Arguments> checkBinarySensorWhenValueIsVarying() {
         return Stream.of(
-                Arguments.of(MEASUREMENT_TYPE_OK_ALARM, "ok_alarm_1", "OK", "ALARM"),
-                Arguments.of(MEASUREMENT_TYPE_FLOODING, "flooding_1", "OK", "WATER_DETECTED"),
-                Arguments.of(MEASUREMENT_TYPE_OUTPUT_CONTROL, "output_control_1", "OFF", "ON")
+                Arguments.of(MEASUREMENT_TYPE_OK_ALARM, "ok_alarm_1", "ALARM", "OK"),
+                Arguments.of(MEASUREMENT_TYPE_FLOODING, "flooding_1", "WATER_DETECTED", "OK"),
+                Arguments.of(MEASUREMENT_TYPE_OUTPUT_CONTROL, "output_control_1", "ON", "OFF")
         );
     }
 
     @Test
     void checkExceptionWhenChannelsListIsEmpty() {
-        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
@@ -223,7 +263,7 @@ class CoapEfentTransportResourceTest {
     @Test
     void checkExceptionWhenValuesMapIsEmpty() {
         long tsInSec = Instant.now().getEpochSecond();
-        MeasurementsProtos.ProtoMeasurements measurements = MeasurementsProtos.ProtoMeasurements.newBuilder()
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
                 .setCloudToken("test_token")
                 .setMeasurementPeriodBase(180)
@@ -257,6 +297,25 @@ class CoapEfentTransportResourceTest {
 
         // Create a ByteString from the byte array
         return ByteString.copyFrom(byteArray);
+    }
+
+    private void checkDefaultMeasurements(ProtoMeasurements incomingMeasurements,
+                                          List<CoapEfentoTransportResource.EfentoTelemetry> actualEfentoMeasurements,
+                                          long expectedMeasurementInterval,
+                                          boolean isBinarySensor) {
+        for (int i = 0; i < actualEfentoMeasurements.size(); i++) {
+            CoapEfentoTransportResource.EfentoTelemetry actualEfentoMeasurement = actualEfentoMeasurements.get(i);
+            assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("serial").getAsString()).isEqualTo(CoapEfentoUtils.convertByteArrayToString(incomingMeasurements.getSerialNum().toByteArray()));
+            assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("battery").getAsString()).isEqualTo(incomingMeasurements.getBatteryStatus() ? "ok" : "low");
+            MeasurementsProtos.ProtoChannel protoChannel = incomingMeasurements.getChannelsList().get(0);
+            long measuredAtWhenBinarySensor = TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp()) + Math.abs(TimeUnit.SECONDS.toMillis(protoChannel.getSampleOffsetsList().get(i))) - 1000;
+            long measuredAtWhenContinuousSensor =   TimeUnit.SECONDS.toMillis(protoChannel.getTimestamp() + i * expectedMeasurementInterval);
+            long measuredAt = isBinarySensor ? measuredAtWhenBinarySensor : measuredAtWhenContinuousSensor;
+            assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("measured_at").getAsString()).isEqualTo(convertTimestampToUtcString(measuredAt));
+            assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("next_transmission_at").getAsString()).isEqualTo(convertTimestampToUtcString(TimeUnit.SECONDS.toMillis(incomingMeasurements.getNextTransmissionAt())));
+            assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("signal").getAsLong()).isEqualTo(incomingMeasurements.getSignal());
+            assertThat(actualEfentoMeasurement.getValues().getAsJsonObject().get("measurement_interval").getAsDouble()).isEqualTo(expectedMeasurementInterval);
+        }
     }
 
 }
