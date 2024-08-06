@@ -13,10 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.event;
+package org.thingsboard.server.dao.config;
 
-public interface EventCleanupRepository {
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-    void cleanupEvents(long eventExpTime, boolean debug);
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnProperty(value = "spring.datasource.dedicated.enabled", havingValue = "false", matchIfMissing = true)
+public @interface DefaultDataSource {
 }

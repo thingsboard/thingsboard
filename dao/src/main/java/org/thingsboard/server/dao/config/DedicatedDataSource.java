@@ -15,13 +15,12 @@
  */
 package org.thingsboard.server.dao.config;
 
-import org.springframework.context.annotation.Configuration;
-import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
-import org.springframework.data.repository.config.BootstrapMode;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-@DefaultDataSource
-@Configuration
-@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit"}, bootstrapMode = BootstrapMode.LAZY)
-public class DefaultDedicatedJpaDaoConfig {
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnProperty(value = "spring.datasource.dedicated.enabled", havingValue = "true")
+public @interface DedicatedDataSource {
 }

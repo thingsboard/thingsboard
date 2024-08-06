@@ -15,8 +15,11 @@
  */
 package org.thingsboard.server.controller;
 
+import lombok.Getter;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
@@ -25,4 +28,9 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
         "spring.datasource.dedicated.driverClassName=${spring.datasource.driverClassName}",
 })
 public class AuditLogControllerTest_DedicatedDataSource extends AuditLogControllerTest {
+
+    @Getter
+    @SpyBean
+    private DedicatedSqlPartitioningRepository partitioningRepository;
+
 }

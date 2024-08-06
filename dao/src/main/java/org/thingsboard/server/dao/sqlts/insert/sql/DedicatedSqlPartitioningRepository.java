@@ -21,11 +21,13 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.dao.config.DedicatedDataSource;
 import org.thingsboard.server.dao.timeseries.SqlPartition;
 
 import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_JDBC_TEMPLATE;
 import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_TRANSACTION_MANAGER;
 
+@DedicatedDataSource
 @Repository
 public class DedicatedSqlPartitioningRepository extends SqlPartitioningRepository {
 

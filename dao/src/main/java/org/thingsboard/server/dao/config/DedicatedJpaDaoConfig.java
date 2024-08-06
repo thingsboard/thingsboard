@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.config;
 
 import com.zaxxer.hikari.HikariDataSource;
 import org.springframework.beans.factory.annotation.Qualifier;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.boot.autoconfigure.jdbc.DataSourceProperties;
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.boot.orm.jpa.EntityManagerFactoryBuilder;
@@ -46,7 +45,7 @@ import java.util.Objects;
  * - add the package of this JpaRepository to @EnableJpaRepositories in DedicatedJpaDaoConfig
  * - add the entity class to packages list in dedicatedEntityManagerFactory in DedicatedJpaDaoConfig
  * */
-@ConditionalOnProperty(value = "spring.datasource.dedicated.enabled", havingValue = "true")
+@DedicatedDataSource
 @Configuration
 @EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit"},
         bootstrapMode = BootstrapMode.LAZY,

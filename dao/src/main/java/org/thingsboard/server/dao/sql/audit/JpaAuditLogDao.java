@@ -15,42 +15,33 @@
  */
 package org.thingsboard.server.dao.sql.audit;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
+import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
-import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Collection;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_JDBC_TEMPLATE;
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_PERSISTENCE_UNIT;
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_TRANSACTION_MANAGER;
 import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_TABLE_NAME;
 
+@DefaultDataSource
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -58,39 +49,10 @@ import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_TABLE_NA
 public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, AuditLog> implements AuditLogDao {
 
     private final AuditLogRepository auditLogRepository;
-    private final DedicatedSqlPartitioningRepository partitioningRepository;
-    @Autowired
-    @Qualifier(DEDICATED_JDBC_TEMPLATE)
-    private JdbcTemplate jdbcTemplate;
-    @PersistenceContext(unitName = DEDICATED_PERSISTENCE_UNIT)
-    private EntityManager entityManager;
+    private final SqlPartitioningRepository partitioningRepository;
 
     @Value("${sql.audit_logs.partition_size:168}")
     private int partitionSizeInHours;
-
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
-    @Override
-    public AuditLog save(TenantId tenantId, AuditLog domain) {
-        return super.save(tenantId, domain);
-    }
-
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
-    @Override
-    public AuditLog saveAndFlush(TenantId tenantId, AuditLog domain) {
-        return super.saveAndFlush(tenantId, domain);
-    }
-
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
-    @Override
-    public boolean removeById(TenantId tenantId, UUID id) {
-        return super.removeById(tenantId, id);
-    }
-
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
-    @Override
-    public void removeAllByIds(Collection<UUID> ids) {
-        super.removeAllByIds(ids);
-    }
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
@@ -155,19 +117,6 @@ public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, Au
     @Override
     public void createPartition(AuditLogEntity entity) {
         partitioningRepository.createPartitionIfNotExists(AUDIT_LOG_TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
-    }
-
-    @Override
-    protected EntityManager getEntityManager() {
-        if (entityManager != null) {
-            return entityManager;
-        }
-        return super.getEntityManager();
-    }
-
-    @Override
-    protected JdbcTemplate getJdbcTemplate() {
-        return jdbcTemplate;
     }
 
     @Override

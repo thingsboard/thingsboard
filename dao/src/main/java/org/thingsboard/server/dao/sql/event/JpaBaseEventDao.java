@@ -38,12 +38,13 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.dao.DaoUtil;
+import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.event.EventDao;
 import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
-import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
+import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Comparator;
@@ -54,22 +55,19 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Function;
 
-/**
- * Created by Valerii Sosliuk on 5/3/2017.
- */
-@Slf4j
+@DefaultDataSource
 @Component
 @SqlDao
 @RequiredArgsConstructor
+@Slf4j
 public class JpaBaseEventDao implements EventDao {
 
     private final EventPartitionConfiguration partitionConfiguration;
-    private final DedicatedSqlPartitioningRepository partitioningRepository;
+    private final SqlPartitioningRepository partitioningRepository;
     private final LifecycleEventRepository lcEventRepository;
     private final StatisticsEventRepository statsEventRepository;
     private final ErrorEventRepository errorEventRepository;
     private final EventInsertRepository eventInsertRepository;
-    private final EventCleanupRepository eventCleanupRepository;
     private final RuleNodeDebugEventRepository ruleNodeDebugEventRepository;
     private final RuleChainDebugEventRepository ruleChainDebugEventRepository;
     private final ScheduledLogExecutorComponent logExecutor;
@@ -377,7 +375,7 @@ public class JpaBaseEventDao implements EventDao {
         if (regularEventExpTs > 0) {
             log.info("Going to cleanup regular events with exp time: {}", regularEventExpTs);
             if (cleanupDb) {
-                eventCleanupRepository.cleanupEvents(regularEventExpTs, false);
+                cleanupEvents(regularEventExpTs, false);
             } else {
                 cleanupPartitionsCache(regularEventExpTs, false);
             }
@@ -385,11 +383,23 @@ public class JpaBaseEventDao implements EventDao {
         if (debugEventExpTs > 0) {
             log.info("Going to cleanup debug events with exp time: {}", debugEventExpTs);
             if (cleanupDb) {
-                eventCleanupRepository.cleanupEvents(debugEventExpTs, true);
+                cleanupEvents(debugEventExpTs, true);
             } else {
                 cleanupPartitionsCache(debugEventExpTs, true);
             }
         }
+    }
+
+    private void cleanupEvents(long eventExpTime, boolean debug) {
+        for (EventType eventType : EventType.values()) {
+            if (eventType.isDebug() == debug) {
+                cleanupPartitions(eventType, eventExpTime);
+            }
+        }
+    }
+
+    private void cleanupPartitions(EventType eventType, long eventExpTime) {
+        partitioningRepository.dropPartitionsBefore(eventType.getTable(), eventExpTime, partitionConfiguration.getPartitionSizeInMs(eventType));
     }
 
     private void cleanupPartitionsCache(long expTime, boolean isDebug) {
