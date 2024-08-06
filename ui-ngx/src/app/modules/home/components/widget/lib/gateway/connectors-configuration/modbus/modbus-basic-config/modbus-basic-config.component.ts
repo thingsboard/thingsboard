@@ -85,8 +85,8 @@ export class ModbusBasicConfigComponent implements ControlValueAccessor, Validat
 
     this.basicFormGroup.valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.onChange(value);
+      .subscribe(({ master, slave }) => {
+        this.onChange({ master, slave: slave ?? {} });
         this.onTouched();
       });
 
