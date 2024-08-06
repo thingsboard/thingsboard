@@ -78,7 +78,7 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                     finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
                     return finalFuture.get().get().size() == (listTsKvEntry.size() + 1);
                 });
-        Assert.assertTrue("Actual tsKvEntrys is not containsAll Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
+        Assert.assertTrue("Actual tsKvEntries is not containsAll Expected tsKvEntries", containsIgnoreVersion(finalFuture.get().get(), listTsKvEntry));
     }
 
     protected void processClientWithCorrectAccessTokenPushNodeMetricBuildArraysPrimitiveSimple() throws Exception {
@@ -107,7 +107,20 @@ public abstract class AbstractMqttV5ClientSparkplugTelemetryTest extends Abstrac
                     finalFuture.set(tsService.findAllLatest(tenantId, savedGateway.getId()));
                     return finalFuture.get().get().size() == (listTsKvEntry.size() + 1);
                 });
-        Assert.assertTrue("Actual tsKvEntrys is not containsAll Expected tsKvEntrys", finalFuture.get().get().containsAll(listTsKvEntry));
+        Assert.assertTrue("Actual tsKvEntries is not containsAll Expected tsKvEntries", containsIgnoreVersion(finalFuture.get().get(), listTsKvEntry));
     }
 
+    private static boolean containsIgnoreVersion(List<TsKvEntry> expected, List<TsKvEntry> actual) {
+        for (TsKvEntry actualEntry : actual) {
+            var found = expected.stream()
+                    .filter(tsKv -> tsKv.getKey().equals(actualEntry.getKey()))
+                    .filter(tsKv -> tsKv.getValue().equals(actualEntry.getValue()))
+                    .filter(tsKv -> tsKv.getTs() == actualEntry.getTs())
+                    .findFirst();
+            if (found.isEmpty()) {
+                return false;
+            }
+        }
+        return true;
+    }
 }
