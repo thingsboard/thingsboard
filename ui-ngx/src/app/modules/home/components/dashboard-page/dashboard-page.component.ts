@@ -1216,7 +1216,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
     } else {
-      this.dashboardUtils.removeBreakpointsDuplicateInLayouts(this.dashboard);
       this.dashboardService.saveDashboard(this.dashboard).subscribe();
     }
   }

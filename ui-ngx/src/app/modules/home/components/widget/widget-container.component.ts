@@ -40,6 +40,7 @@ import { GridsterItemComponent } from 'angular-gridster2';
 import { UtilsService } from '@core/services/utils.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { from } from 'rxjs';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export enum WidgetComponentActionType {
   MOUSE_DOWN,
@@ -118,6 +119,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   widgetComponentAction: EventEmitter<WidgetComponentAction> = new EventEmitter<WidgetComponentAction>();
 
   hovered = false;
+  isReferenceWidget = false;
 
   get widgetEditActionsEnabled(): boolean {
     return (this.isEditActionEnabled || this.isRemoveActionEnabled || this.isExportActionEnabled) && !this.widget?.isFullscreen;
@@ -127,19 +129,17 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
   private editWidgetActionsTooltip: ITooltipsterInstance;
 
-  isReferenceWidget = false;
-
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
               private container: ViewContainerRef,
+              private dashboardUtils: DashboardUtilsService,
               private utils: UtilsService) {
     super(store);
   }
 
   ngOnInit(): void {
     this.widget.widgetContext.containerChangeDetector = this.cd;
-    this.isReferenceWidget =  this.dashboardWidgets.isReferenceWidget(this.widget);
     const cssString = this.widget.widget.config.widgetCss;
     if (isNotEmptyStr(cssString)) {
       this.cssClass =
@@ -291,6 +291,11 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         functionAfter: () => {
           this.hovered = false;
           this.cd.markForCheck();
+        },
+        functionBefore: () => {
+          this.isReferenceWidget = this.dashboardUtils.isReferenceWidget(
+            this.widget.widgetContext.dashboard.stateController.dashboardCtrl.dashboardCtx.getDashboard(), this.widget.widgetId);
+          componentRef.instance.cd.detectChanges();
         }
       });
       this.editWidgetActionsTooltip = $(this.gridsterItem.el).tooltipster('instance');
@@ -339,7 +344,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
 @Component({
   template: `<div class="tb-widget-actions-panel">
-    <button mat-icon-button
+    <button mat-icon-button class="tb-mat-20"
             *ngIf="container.isReferenceWidget"
             [fxShow]="container.isEditActionEnabled"
             (click)="container.onCopyEdit($event)"
@@ -380,7 +385,8 @@ export class EditWidgetActionsTooltipComponent implements AfterViewInit {
   @Output()
   viewInited = new EventEmitter();
 
-  constructor(public element: ElementRef<HTMLElement>) {
+  constructor(public element: ElementRef<HTMLElement>,
+              public cd: ChangeDetectorRef) {
   }
 
   ngAfterViewInit() {

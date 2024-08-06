@@ -42,7 +42,6 @@ import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
-import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -140,8 +139,7 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   constructor(private dashboard: IDashboardComponent,
               private widgetsDiffer: IterableDiffer<Widget>,
-              private widgetLayoutsDiffer: KeyValueDiffer<string, WidgetLayout>,
-              private dashboardUtils: DashboardUtilsService) {
+              private widgetLayoutsDiffer: KeyValueDiffer<string, WidgetLayout>) {
   }
 
   doCheck() {
@@ -301,11 +299,6 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   getSelectedWidget(): DashboardWidget {
     return this.dashboardWidgets.find((dashboardWidget) => dashboardWidget.selected);
-  }
-
-  isReferenceWidget(widget: DashboardWidget): boolean {
-    return this.dashboardUtils.isReferenceWidget(this.dashboard.stateController.dashboardCtrl.dashboardCtx.getDashboard(),
-      widget.widgetId);
   }
 
   private findWidgetById(widgetId: string): DashboardWidget {
