@@ -23,7 +23,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 
 public interface RelatedEdgeIdsService {
 
-    PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
+    PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
 
     void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId);
 

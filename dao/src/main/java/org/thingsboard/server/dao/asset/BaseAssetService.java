@@ -21,7 +21,6 @@ import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -92,7 +91,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
     private EntityCountService countService;
 
     @Autowired
-    @Lazy
     private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired

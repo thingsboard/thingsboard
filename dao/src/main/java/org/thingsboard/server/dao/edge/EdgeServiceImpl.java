@@ -484,7 +484,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return Collections.singletonList(new EdgeId(entityId.getId()));
         }
         PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
-                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, EDGE_IDS_CACHE_ITEMS);
+                new PageDataIterableByTenantIdEntityId<>(this::findRelatedEdgeIdsByEntityId, tenantId, entityId, EDGE_IDS_CACHE_ITEMS);
         List<EdgeId> result = new ArrayList<>();
         for (EdgeId edgeId : relatedEdgeIdsIterator) {
             result.add(edgeId);
@@ -510,7 +510,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             case ENTITY_VIEW:
             case DASHBOARD:
             case RULE_CHAIN:
-                return edgeIdsService.findRelatedEdgeIdsByEntityId(tenantId, entityId, pageLink);
+                return edgeIdsService.findEdgeIdsByEntityId(tenantId, entityId, pageLink);
             case USER:
                 User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
                 if (userById == null) {

@@ -48,12 +48,12 @@ public class BaseRelatedEdgeIdsService extends AbstractCachedEntityService<EdgeI
     }
 
     @Override
-    public PageData<EdgeId> findRelatedEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+    public PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         if (pageLink.getPageSize() != EDGE_IDS_CACHE_ITEMS) {
-            return findEdgeIdsByEntityId(tenantId, entityId, pageLink);
+            return findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink);
         }
         return cache.getAndPutInTransaction(new EdgeIdsCacheKey(tenantId, entityId),
-                () -> findEdgeIdsByEntityId(tenantId, entityId, pageLink), false);
+                () -> findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink), false);
     }
 
     @Override
@@ -61,7 +61,7 @@ public class BaseRelatedEdgeIdsService extends AbstractCachedEntityService<EdgeI
         publishEvictEvent(new EdgeIdsEvictEvent(tenantId, entityId));
     }
 
-    private PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+    private PageData<EdgeId> findEdgesByEntityIdAndConvertToEdgeId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         PageData<Edge> pageData = edgeService.findEdgesByTenantIdAndEntityId(tenantId, entityId, pageLink);
         if (pageData == null) {
             return new PageData<>(new ArrayList<>(), 0, 0, false);
