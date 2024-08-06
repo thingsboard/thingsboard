@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.config;
 
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
@@ -28,7 +27,6 @@ import org.thingsboard.server.dao.util.TimescaleDBTsLatestDao;
 @TbAutoConfiguration
 @ComponentScan({"org.thingsboard.server.dao.sqlts.timescale"})
 @EnableJpaRepositories(value = {"org.thingsboard.server.dao.sqlts.insert.latest.sql", "org.thingsboard.server.dao.sqlts.latest"}, bootstrapMode = BootstrapMode.LAZY)
-@EntityScan({"org.thingsboard.server.dao.model.sqlts.latest"})
 @EnableTransactionManagement
 @TimescaleDBTsLatestDao
 public class TimescaleTsLatestDaoConfig {
