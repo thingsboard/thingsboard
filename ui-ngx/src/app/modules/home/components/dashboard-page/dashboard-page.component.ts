@@ -1573,7 +1573,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     return dashboardContextActions;
   }
 
-  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget): Array<WidgetContextMenuItem> {
+  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, isReference: boolean): Array<WidgetContextMenuItem> {
     const widgetContextActions: Array<WidgetContextMenuItem> = [];
     if (this.isEdit && !this.isEditingWidget) {
       widgetContextActions.push(
@@ -1586,6 +1586,18 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           icon: 'edit'
         }
       );
+      if (isReference) {
+        widgetContextActions.push(
+          {
+            action: (event, currentWidget) => {
+              this.copyEditWidget(event, layoutCtx, currentWidget);
+            },
+            enabled: true,
+            value: 'widget.copy-edit',
+            icon: 'edit'
+          }
+        );
+      }
       if (!this.widgetEditMode) {
         widgetContextActions.push(
           {

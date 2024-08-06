@@ -297,8 +297,8 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.dashboardCtrl.prepareDashboardContextMenu(this.layoutCtx);
   }
 
-  prepareWidgetContextMenu($event: Event, widget: Widget): Array<WidgetContextMenuItem> {
-    return this.layoutCtx.dashboardCtrl.prepareWidgetContextMenu(this.layoutCtx, widget);
+  prepareWidgetContextMenu($event: Event, widget: Widget, isReference: boolean): Array<WidgetContextMenuItem> {
+    return this.layoutCtx.dashboardCtrl.prepareWidgetContextMenu(this.layoutCtx, widget, isReference);
   }
 
   copyWidget($event: Event, widget: Widget) {

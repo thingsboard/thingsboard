@@ -421,7 +421,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   private openWidgetContextMenu($event: MouseEvent, widget: DashboardWidget) {
     if (this.callbacks && this.callbacks.prepareWidgetContextMenu) {
-      const items = this.callbacks.prepareWidgetContextMenu($event, widget.widget);
+      const items = this.callbacks.prepareWidgetContextMenu($event, widget.widget, widget.isReference);
       if (items && items.length) {
         $event.preventDefault();
         $event.stopPropagation();

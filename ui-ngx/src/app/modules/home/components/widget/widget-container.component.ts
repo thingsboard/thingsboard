@@ -293,7 +293,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
           this.cd.markForCheck();
         },
         functionBefore: () => {
-          this.isReferenceWidget = this.dashboardUtils.isReferenceWidget(
+          this.widget.isReference = this.dashboardUtils.isReferenceWidget(
             this.widget.widgetContext.dashboard.stateController.dashboardCtrl.dashboardCtx.getDashboard(), this.widget.widgetId);
           componentRef.instance.cd.detectChanges();
         }
@@ -345,10 +345,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 @Component({
   template: `<div class="tb-widget-actions-panel">
     <button mat-icon-button class="tb-mat-20"
-            *ngIf="container.isReferenceWidget"
+            *ngIf="container.widget.isReference"
             [fxShow]="container.isEditActionEnabled"
             (click)="container.onCopyEdit($event)"
-            matTooltip="Edit copy widget"
+            matTooltip="{{ 'widget.edit-copy' | translate }}"
             matTooltipPosition="above">
       <tb-icon>mdi:circle-edit-outline</tb-icon>
     </button>

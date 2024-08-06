@@ -5600,6 +5600,8 @@
         "remove": "Remove widget",
         "delete": "Delete widget",
         "edit": "Edit widget",
+        "edit-copy": "Edit copy widget",
+        "copy-edit": "Copy and edit",
         "remove-widget-title": "Are you sure you want to remove the widget '{{widgetTitle}}'?",
         "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
         "timeseries": "Time series",

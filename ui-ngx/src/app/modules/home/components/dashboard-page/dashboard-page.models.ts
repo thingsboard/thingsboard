@@ -64,7 +64,7 @@ export interface IDashboardController {
   dashboardMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext);
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem>;
-  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget): Array<WidgetContextMenuItem>;
+  prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget, isReference: boolean): Array<WidgetContextMenuItem>;
   copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   copyWidgetReference($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   pasteWidget($event: Event, layoutCtx: DashboardPageLayoutContext, pos: WidgetPosition);

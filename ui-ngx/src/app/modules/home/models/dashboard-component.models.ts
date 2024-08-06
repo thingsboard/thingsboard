@@ -72,7 +72,7 @@ export interface DashboardCallbacks {
   onDashboardMouseDown?: ($event: Event) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;
   prepareDashboardContextMenu?: ($event: Event) => Array<DashboardContextMenuItem>;
-  prepareWidgetContextMenu?: ($event: Event, widget: Widget) => Array<WidgetContextMenuItem>;
+  prepareWidgetContextMenu?: ($event: Event, widget: Widget, isReference: boolean) => Array<WidgetContextMenuItem>;
 }
 
 export interface IDashboardComponent {
@@ -344,6 +344,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   private selectedCallback: (selected: boolean) => void = () => {};
 
   isFullscreen = false;
+  isReference = false;
 
   color: string;
   backgroundColor: string;
