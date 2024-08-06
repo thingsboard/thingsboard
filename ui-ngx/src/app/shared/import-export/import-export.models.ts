@@ -17,6 +17,16 @@
 import { Widget, WidgetTypeDetails } from '@app/shared/models/widget.models';
 import { DashboardLayoutId } from '@shared/models/dashboard.models';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { EntityType } from '@shared/models/entity-type.models';
+
+export const ExportableEntityTypes = [
+  EntityType.DEVICE_PROFILE,
+  EntityType.ASSET_PROFILE,
+  EntityType.RULE_CHAIN,
+  EntityType.DASHBOARD,
+  EntityType.WIDGET_TYPE,
+  EntityType.WIDGETS_BUNDLE
+];
 
 export interface ImportWidgetResult {
   widget: Widget;

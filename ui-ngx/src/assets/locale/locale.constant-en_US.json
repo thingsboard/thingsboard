@@ -2282,6 +2282,13 @@
         "type-edges": "Edges",
         "list-of-edges": "{ count, plural, =1 {One edge} other {List of # edges} }",
         "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
+        "version-conflict": {
+            "label": "Version conflict",
+            "message": "Do you want to cancel your changes or overwrite existing version?",
+            "link": "You can download your version of the {{entityType}} using this",
+            "overwrite": "Overwrite version",
+            "cancel": "Cancel changes"
+        },
         "type-tb-resource": "Resource",
         "type-tb-resources": "Resources",
         "list-of-tb-resources": "{ count, plural, =1 {One resource} other {List of # resources} }",
@@ -2300,7 +2307,8 @@
         "type-notification-request": "Notification request",
         "type-notification-template": "Notification template",
         "type-notification-templates": "Notification templates",
-        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }"
+        "list-of-notification-templates": "{ count, plural, =1 {One notification template} other {List of # notification templates} }",
+        "link": "link"
     },
     "entity-field": {
         "created-time": "Created time",

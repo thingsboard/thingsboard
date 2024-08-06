@@ -34,7 +34,7 @@ import {
 } from '@shared/models/alias.models';
 import { MatDialog } from '@angular/material/dialog';
 import { ImportDialogComponent, ImportDialogData } from '@shared/import-export/import-dialog.component';
-import { forkJoin, Observable, of, Subject } from 'rxjs';
+import { forkJoin, Observable, of, Subject, throwError } from 'rxjs';
 import { catchError, map, mergeMap, switchMap, take, tap } from 'rxjs/operators';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { EntityService } from '@core/http/entity.service';
@@ -378,6 +378,31 @@ export class ImportExportService {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
       }
     });
+  }
+
+  public exportEntity(entityId: EntityId): void {
+    switch (entityId.entityType) {
+      case EntityType.DEVICE_PROFILE:
+        this.exportDeviceProfile(entityId.id);
+        break;
+      case EntityType.ASSET_PROFILE:
+        this.exportAssetProfile(entityId.id);
+        break;
+      case EntityType.RULE_CHAIN:
+        this.exportRuleChain(entityId.id);
+        break;
+      case EntityType.DASHBOARD:
+        this.exportDashboard(entityId.id);
+        break;
+      case EntityType.WIDGET_TYPE:
+        this.exportWidgetType(entityId.id);
+        break;
+      case EntityType.WIDGETS_BUNDLE:
+        this.exportWidgetsBundle(entityId.id);
+        break;
+      default:
+        throwError(() => 'Not supported Entity Type');
+    }
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {

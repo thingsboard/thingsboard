@@ -26,6 +26,8 @@ import { HomeModule } from '@home/home.module';
 import { AppComponent } from './app.component';
 import { DashboardRoutingModule } from '@modules/dashboard/dashboard-routing.module';
 import { RouterModule, Routes } from '@angular/router';
+import { HTTP_INTERCEPTORS } from '@angular/common/http';
+import { EntityConflictInterceptor } from '@shared/interceptors/entity-conflict.interceptor';
 
 const routes: Routes = [
   { path: '**',
@@ -55,7 +57,9 @@ export class PageNotFoundRoutingModule { }
     DashboardRoutingModule,
     PageNotFoundRoutingModule
   ],
-  providers: [],
+  providers: [
+    { provide: HTTP_INTERCEPTORS, useClass: EntityConflictInterceptor, multi: true }
+  ],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
