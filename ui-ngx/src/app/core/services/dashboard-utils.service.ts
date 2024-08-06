@@ -523,6 +523,28 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
+  public isReferenceWidget(dashboard: Dashboard, widgetId: string): boolean {
+    const states = dashboard.configuration.states;
+    let foundWidgetRefs = 0;
+
+    for (const state of Object.values(states)) {
+      for (const layout of Object.values(state.layouts)) {
+        if (layout.widgets[widgetId]) {
+          foundWidgetRefs++;
+        }
+        if (layout.breakpoints) {
+          for (const breakpoint of Object.values(layout.breakpoints)) {
+            if (breakpoint.widgets[widgetId]) {
+              foundWidgetRefs++;
+            }
+          }
+        }
+      }
+    }
+
+    return foundWidgetRefs > 1;
+  }
+
   public getRootStateId(states: {[id: string]: DashboardState }): string {
     for (const stateId of Object.keys(states)) {
       const state = states[stateId];

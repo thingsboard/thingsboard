@@ -42,6 +42,7 @@ import { enumerable } from '@shared/decorators/enumerable';
 import { UtilsService } from '@core/services/utils.service';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentStyle, iconStyle, textStyle } from '@shared/models/widget-settings.models';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface WidgetsData {
   widgets: Array<Widget>;
@@ -65,6 +66,7 @@ export interface WidgetContextMenuItem extends ContextMenuItem {
 
 export interface DashboardCallbacks {
   onEditWidget?: ($event: Event, widget: Widget) => void;
+  onCopyEditWidget?: ($event: Event, widget: Widget) => void;
   onExportWidget?: ($event: Event, widget: Widget, widgeTitle: string) => void;
   onRemoveWidget?: ($event: Event, widget: Widget) => void;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
@@ -138,7 +140,8 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   constructor(private dashboard: IDashboardComponent,
               private widgetsDiffer: IterableDiffer<Widget>,
-              private widgetLayoutsDiffer: KeyValueDiffer<string, WidgetLayout>) {
+              private widgetLayoutsDiffer: KeyValueDiffer<string, WidgetLayout>,
+              private dashboardUtils: DashboardUtilsService) {
   }
 
   doCheck() {
@@ -298,6 +301,11 @@ export class DashboardWidgets implements Iterable<DashboardWidget> {
 
   getSelectedWidget(): DashboardWidget {
     return this.dashboardWidgets.find((dashboardWidget) => dashboardWidget.selected);
+  }
+
+  isReferenceWidget(widget: DashboardWidget): boolean {
+    return this.dashboardUtils.isReferenceWidget(this.dashboard.stateController.dashboardCtrl.dashboardCtx.getDashboard(),
+      widget.widgetId);
   }
 
   private findWidgetById(widgetId: string): DashboardWidget {

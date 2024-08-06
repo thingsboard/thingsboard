@@ -269,6 +269,10 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.layoutCtx.dashboardCtrl.editWidget($event, this.layoutCtx, widget);
   }
 
+  onCopyEditWidget($event: Event, widget: Widget): void {
+    this.layoutCtx.dashboardCtrl.copyEditWidget($event, this.layoutCtx, widget);
+  }
+
   onExportWidget($event: Event, widget: Widget, widgetTitle: string): void {
     this.layoutCtx.dashboardCtrl.exportWidget($event, this.layoutCtx, widget, widgetTitle);
   }

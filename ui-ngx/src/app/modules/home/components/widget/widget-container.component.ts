@@ -47,7 +47,8 @@ export enum WidgetComponentActionType {
   CONTEXT_MENU,
   EDIT,
   EXPORT,
-  REMOVE
+  REMOVE,
+  COPY_EDIT,
 }
 
 export class WidgetComponentAction {
@@ -126,6 +127,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
   private editWidgetActionsTooltip: ITooltipsterInstance;
 
+  isReferenceWidget = false;
+
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
@@ -136,6 +139,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
   ngOnInit(): void {
     this.widget.widgetContext.containerChangeDetector = this.cd;
+    this.isReferenceWidget =  this.dashboardWidgets.isReferenceWidget(this.widget);
     const cssString = this.widget.widget.config.widgetCss;
     if (isNotEmptyStr(cssString)) {
       this.cssClass =
@@ -213,6 +217,13 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.EDIT
+    });
+  }
+
+  onCopyEdit(event: MouseEvent) {
+    this.widgetComponentAction.emit({
+      event,
+      actionType: WidgetComponentActionType.COPY_EDIT
     });
   }
 
@@ -328,6 +339,14 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
 @Component({
   template: `<div class="tb-widget-actions-panel">
+    <button mat-icon-button
+            *ngIf="container.isReferenceWidget"
+            [fxShow]="container.isEditActionEnabled"
+            (click)="container.onCopyEdit($event)"
+            matTooltip="Edit copy widget"
+            matTooltipPosition="above">
+      <tb-icon>mdi:circle-edit-outline</tb-icon>
+    </button>
     <button mat-icon-button class="tb-mat-20"
             [fxShow]="container.isEditActionEnabled"
             (click)="container.onEdit($event)"

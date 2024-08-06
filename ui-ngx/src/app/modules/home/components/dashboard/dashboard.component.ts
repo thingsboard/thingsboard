@@ -453,6 +453,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       case WidgetComponentActionType.EDIT:
         this.editWidget($event, widget);
         break;
+      case WidgetComponentActionType.COPY_EDIT:
+        this.editCopyWidget($event, widget);
+        break;
       case WidgetComponentActionType.EXPORT:
         this.exportWidget($event, widget);
         break;
@@ -480,6 +483,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
     if (this.isEditActionEnabled && this.callbacks && this.callbacks.onEditWidget) {
       this.callbacks.onEditWidget($event, widget.widget);
+    }
+  }
+
+  private editCopyWidget($event: Event, widget: DashboardWidget) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    if (this.isEditActionEnabled && this.callbacks && this.callbacks.onCopyEditWidget) {
+      this.callbacks.onCopyEditWidget($event, widget.widget);
     }
   }
 
