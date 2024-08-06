@@ -171,19 +171,27 @@ export interface ConnectorSecurity {
   pathToCACert?: string;
   pathToPrivateKey?: string;
   pathToClientCert?: string;
+  mode?: ModeType;
 }
 
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
 
-export type ConnectorBaseConfig = MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+export type ConnectorBaseConfig = ConnectorBaseInfo | MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+
+export interface ConnectorBaseInfo {
+  name: string;
+  id: string;
+  enableRemoteLogging: boolean;
+  logLevel: GatewayLogLevel;
+}
 
 export interface MQTTBasicConfig {
   dataMapping: ConverterConnectorMapping[];
-  requestsMapping: Record<RequestType, RequestMappingData> | RequestMappingData[];
+  requestsMapping: Record<RequestType, RequestMappingData[]> | RequestMappingData[];
   broker: BrokerConfig;
-  workers: WorkersConfig;
+  workers?: WorkersConfig;
 }
 
 export interface OPCBasicConfig {
@@ -312,35 +320,15 @@ export interface RPCCommand {
   time: number;
 }
 
-
-export enum ModbusCommandTypes {
-  Bits = 'bits',
-  Bit = 'bit',
-  // eslint-disable-next-line id-blacklist
-  String = 'string',
-  Bytes = 'bytes',
-  Int8 = '8int',
-  Uint8 = '8uint',
-  Int16 = '16int',
-  Uint16 = '16uint',
-  Float16 = '16float',
-  Int32 = '32int',
-  Uint32 = '32uint',
-  Float32 = '32float',
-  Int64 = '64int',
-  Uint64 = '64uint',
-  Float64 = '64float'
-}
-
-export const ModbusCodesTranslate = new Map<number, string>([
-  [1, 'gateway.rpc.read-coils'],
-  [2, 'gateway.rpc.read-discrete-inputs'],
-  [3, 'gateway.rpc.read-multiple-holding-registers'],
-  [4, 'gateway.rpc.read-input-registers'],
-  [5, 'gateway.rpc.write-single-coil'],
-  [6, 'gateway.rpc.write-single-holding-register'],
-  [15, 'gateway.rpc.write-multiple-coils'],
-  [16, 'gateway.rpc.write-multiple-holding-registers']
+export const ModbusFunctionCodeTranslationsMap = new Map<number, string>([
+  [1, 'gateway.function-codes.read-coils'],
+  [2, 'gateway.function-codes.read-discrete-inputs'],
+  [3, 'gateway.function-codes.read-multiple-holding-registers'],
+  [4, 'gateway.function-codes.read-input-registers'],
+  [5, 'gateway.function-codes.write-single-coil'],
+  [6, 'gateway.function-codes.write-single-holding-register'],
+  [15, 'gateway.function-codes.write-multiple-coils'],
+  [16, 'gateway.function-codes.write-multiple-holding-registers']
 ]);
 
 export enum BACnetRequestTypes {
@@ -863,6 +851,8 @@ export enum ModbusDataType {
   FLOAT64 = '64float'
 }
 
+export const ModbusEditableDataTypes = [ModbusDataType.BYTES, ModbusDataType.BITS, ModbusDataType.STRING];
+
 export enum ModbusObjectCountByDataType {
   '8int' = 1,
   '8uint' = 1,
@@ -918,19 +908,6 @@ export const ModbusKeysNoKeysTextTranslationsMap = new Map<ModbusValueKey, strin
     [ModbusValueKey.TIMESERIES, 'gateway.no-timeseries'],
     [ModbusValueKey.ATTRIBUTES_UPDATES, 'gateway.no-attribute-updates'],
     [ModbusValueKey.RPC_REQUESTS, 'gateway.no-rpc-requests']
-  ]
-);
-
-export const ModbusFunctionCodeTranslationsMap = new Map<number, string>(
-  [
-    [1, 'gateway.read-coils'],
-    [2, 'gateway.read-discrete-inputs'],
-    [3, 'gateway.read-multiple-holding-registers'],
-    [4, 'gateway.read-input-registers'],
-    [5, 'gateway.write-coil'],
-    [6, 'gateway.write-register'],
-    [15, 'gateway.write-coils'],
-    [16, 'gateway.write-registers'],
   ]
 );
 
