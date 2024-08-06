@@ -55,6 +55,7 @@ export class PageNotFoundRoutingModule { }
     DashboardRoutingModule,
     PageNotFoundRoutingModule
   ],
+  providers: [],
   bootstrap: [AppComponent]
 })
 export class AppModule { }
