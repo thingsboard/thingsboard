@@ -53,6 +53,11 @@ import java.util.Objects;
         entityManagerFactoryRef = "dedicatedEntityManagerFactory", transactionManagerRef = "dedicatedTransactionManager")
 public class DedicatedJpaDaoConfig {
 
+    public static final String DEDICATED_PERSISTENCE_UNIT = "dedicated";
+    public static final String DEDICATED_TRANSACTION_MANAGER = DEDICATED_PERSISTENCE_UNIT + "TransactionManager";
+    public static final String DEDICATED_TRANSACTION_TEMPLATE = DEDICATED_PERSISTENCE_UNIT + "TransactionTemplate";
+    public static final String DEDICATED_JDBC_TEMPLATE = DEDICATED_PERSISTENCE_UNIT + "JdbcTemplate";
+
     @Bean
     @ConfigurationProperties("spring.datasource.dedicated")
     public DataSourceProperties dedicatedDataSourceProperties() {
@@ -71,21 +76,21 @@ public class DedicatedJpaDaoConfig {
         return builder
                 .dataSource(dedicatedDataSource)
                 .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class)
-                .persistenceUnit("dedicated")
+                .persistenceUnit(DEDICATED_PERSISTENCE_UNIT)
                 .build();
     }
 
-    @Bean
+    @Bean(DEDICATED_TRANSACTION_MANAGER)
     public JpaTransactionManager dedicatedTransactionManager(@Qualifier("dedicatedEntityManagerFactory") LocalContainerEntityManagerFactoryBean dedicatedEntityManagerFactory) {
         return new JpaTransactionManager(Objects.requireNonNull(dedicatedEntityManagerFactory.getObject()));
     }
 
-    @Bean
-    public TransactionTemplate dedicatedTransactionTemplate(@Qualifier("dedicatedTransactionManager") JpaTransactionManager dedicatedTransactionManager) {
+    @Bean(DEDICATED_TRANSACTION_TEMPLATE)
+    public TransactionTemplate dedicatedTransactionTemplate(@Qualifier(DEDICATED_TRANSACTION_MANAGER) JpaTransactionManager dedicatedTransactionManager) {
         return new TransactionTemplate(dedicatedTransactionManager);
     }
 
-    @Bean
+    @Bean(DEDICATED_JDBC_TEMPLATE)
     public JdbcTemplate dedicatedJdbcTemplate(@Qualifier("dedicatedDataSource") DataSource dedicatedDataSource) {
         return new JdbcTemplate(dedicatedDataSource);
     }

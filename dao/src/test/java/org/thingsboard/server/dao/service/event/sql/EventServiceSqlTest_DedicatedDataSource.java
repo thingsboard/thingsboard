@@ -13,10 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.event;
+package org.thingsboard.server.dao.service.event.sql;
 
-public interface EventCleanupRepository {
+import org.springframework.test.context.TestPropertySource;
+import org.thingsboard.server.dao.service.DaoSqlTest;
 
-    void cleanupEvents(long eventExpTime, boolean debug);
-
+@DaoSqlTest
+@TestPropertySource(properties = {
+        "spring.datasource.dedicated.enabled=true",
+        "spring.datasource.dedicated.url=${spring.datasource.url}",
+        "spring.datasource.dedicated.driverClassName=${spring.datasource.driverClassName}"
+})
+public class EventServiceSqlTest_DedicatedDataSource extends EventServiceSqlTest {
 }

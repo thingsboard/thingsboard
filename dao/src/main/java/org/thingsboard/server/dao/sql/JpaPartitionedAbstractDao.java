@@ -31,13 +31,17 @@ public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> exte
     protected E doSave(E entity, boolean isNew) {
         createPartition(entity);
         if (isNew) {
-            entityManager.persist(entity);
+            getEntityManager().persist(entity);
         } else {
-            entity = entityManager.merge(entity);
+            entity = getEntityManager().merge(entity);
         }
         return entity;
     }
 
     public abstract void createPartition(E entity);
+
+    protected EntityManager getEntityManager() {
+        return entityManager;
+    }
 
 }

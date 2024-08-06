@@ -19,8 +19,8 @@ import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
@@ -43,7 +43,7 @@ import org.thingsboard.server.dao.model.sql.EventEntity;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
 import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
-import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Comparator;
@@ -60,40 +60,20 @@ import java.util.function.Function;
 @Slf4j
 @Component
 @SqlDao
+@RequiredArgsConstructor
 public class JpaBaseEventDao implements EventDao {
 
-    @Autowired
-    private EventPartitionConfiguration partitionConfiguration;
-
-    @Autowired
-    private SqlPartitioningRepository partitioningRepository;
-
-    @Autowired
-    private LifecycleEventRepository lcEventRepository;
-
-    @Autowired
-    private StatisticsEventRepository statsEventRepository;
-
-    @Autowired
-    private ErrorEventRepository errorEventRepository;
-
-    @Autowired
-    private EventInsertRepository eventInsertRepository;
-
-    @Autowired
-    private EventCleanupRepository eventCleanupRepository;
-
-    @Autowired
-    private RuleNodeDebugEventRepository ruleNodeDebugEventRepository;
-
-    @Autowired
-    private RuleChainDebugEventRepository ruleChainDebugEventRepository;
-
-    @Autowired
-    ScheduledLogExecutorComponent logExecutor;
-
-    @Autowired
-    private StatsFactory statsFactory;
+    private final EventPartitionConfiguration partitionConfiguration;
+    private final DedicatedSqlPartitioningRepository partitioningRepository;
+    private final LifecycleEventRepository lcEventRepository;
+    private final StatisticsEventRepository statsEventRepository;
+    private final ErrorEventRepository errorEventRepository;
+    private final EventInsertRepository eventInsertRepository;
+    private final EventCleanupRepository eventCleanupRepository;
+    private final RuleNodeDebugEventRepository ruleNodeDebugEventRepository;
+    private final RuleChainDebugEventRepository ruleChainDebugEventRepository;
+    private final ScheduledLogExecutorComponent logExecutor;
+    private final StatsFactory statsFactory;
 
     @Value("${sql.events.batch_size:10000}")
     private int batchSize;
@@ -157,7 +137,7 @@ public class JpaBaseEventDao implements EventDao {
             }
         }
         partitioningRepository.createPartitionIfNotExists(event.getType().getTable(), event.getCreatedTime(),
-                partitionConfiguration.getPartitionSizeInMs(event.getType()), eventInsertRepository.getJdbcTemplate());
+                partitionConfiguration.getPartitionSizeInMs(event.getType()));
         return queue.add(event);
     }
 
@@ -221,11 +201,6 @@ public class JpaBaseEventDao implements EventDao {
         } else {
             getEventRepository(eventFilter.getEventType()).removeEvents(tenantId, entityId, startTime, endTime);
         }
-    }
-
-    @Override
-    public void migrateEvents(long regularEventTs, long debugEventTs) {
-        eventCleanupRepository.migrateEvents(regularEventTs, debugEventTs);
     }
 
     private PageData<? extends Event> findEventByFilter(UUID tenantId, UUID entityId, RuleChainDebugEventFilter eventFilter, TimePageLink pageLink) {

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.sql.event;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Qualifier;
@@ -35,7 +36,6 @@ import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import jakarta.annotation.PostConstruct;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.sql.Types;
@@ -45,6 +45,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_JDBC_TEMPLATE;
+import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_TRANSACTION_TEMPLATE;
 
 @Repository
 @Transactional
@@ -59,11 +62,11 @@ public class EventInsertRepository {
 
     @Getter
     @Autowired
-    @Qualifier("dedicatedJdbcTemplate")
+    @Qualifier(DEDICATED_JDBC_TEMPLATE)
     protected JdbcTemplate jdbcTemplate;
 
     @Autowired
-    @Qualifier("dedicatedTransactionTemplate")
+    @Qualifier(DEDICATED_TRANSACTION_TEMPLATE)
     private TransactionTemplate transactionTemplate;
 
     @Value("${sql.remove_null_chars:true}")

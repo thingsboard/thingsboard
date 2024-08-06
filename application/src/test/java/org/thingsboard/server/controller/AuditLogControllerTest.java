@@ -38,7 +38,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.audit.AuditLogDao;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
 import org.thingsboard.server.service.ttl.AuditLogsCleanUpService;
 
 import java.text.ParseException;
@@ -65,7 +65,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     @Autowired
     private AuditLogDao auditLogDao;
     @SpyBean
-    private SqlPartitioningRepository partitioningRepository;
+    private DedicatedSqlPartitioningRepository partitioningRepository;
     @SpyBean
     private AuditLogsCleanUpService auditLogsCleanUpService;
 
@@ -229,7 +229,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
             createAuditLog(ActionType.LOGIN, tenantAdminUserId, entityTs);
         });
         assertThat(partitioningRepository.fetchPartitions("audit_log"))
-                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());;
+                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());
     }
 
     private AuditLog createAuditLog(ActionType actionType, EntityId entityId, long entityTs) {

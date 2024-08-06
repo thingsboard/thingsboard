@@ -763,11 +763,11 @@ spring:
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
       registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
     dedicated:
-      enabled: "${SPRING_DEDICATED_DATASOURCE_ENABLED:true}"
+      enabled: "${SPRING_DEDICATED_DATASOURCE_ENABLED:false}"
       # Database driver for Spring JPA - org.postgresql.Driver
       driverClassName: "${SPRING_DEDICATED_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}"
       # Database connection URL
-      url: "${SPRING_DEDICATED_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_ce_events}"
+      url: "${SPRING_DEDICATED_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_dedicated}"
       # Database user name
       username: "${SPRING_DEDICATED_DATASOURCE_USERNAME:postgres}"
       # Database user password
