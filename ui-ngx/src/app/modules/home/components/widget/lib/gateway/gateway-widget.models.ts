@@ -19,6 +19,7 @@ import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
 
 export const noLeadTrailSpacesRegex = /^(?! )[\S\s]*(?<! )$/;
+export const integerRegex = /^[-+]?\d+$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',

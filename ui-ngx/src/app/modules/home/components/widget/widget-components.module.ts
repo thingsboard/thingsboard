@@ -141,6 +141,7 @@ import {
 import {
   TypeValuePanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
+import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 
 @NgModule({
   declarations: [
@@ -227,6 +228,7 @@ import {
     KeyValueIsNotEmptyPipe,
     ModbusBasicConfigComponent,
     EllipsisChipListDirective,
+    TruncateWithTooltipDirective,
   ],
   exports: [
     EntitiesTableWidgetComponent,
