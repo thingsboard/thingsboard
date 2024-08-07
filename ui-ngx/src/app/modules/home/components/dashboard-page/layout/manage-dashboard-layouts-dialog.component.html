@@ -76,7 +76,7 @@
 <!--          </div>-->
 <!--        </div>-->
 <!--      </div>-->
-      <div class="table-container" style="width: 700px">
+      <div class="table-container" style="width: 600px">
         <table mat-table [dataSource]="dataSource">
           <ng-container [matColumnDef]="'icon'">
             <mat-header-cell *matHeaderCellDef [style]="{ minWidth: '48px', maxWidth: '48px', width: '48px', textAlign: 'center'}">
@@ -158,7 +158,7 @@
           <div>Add breakpoint</div>
           <mat-form-field fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="new">
-              <mat-option *ngFor="let breakpoint of allowLayoutBreakpoints" [value]="breakpoint">
+              <mat-option *ngFor="let breakpoint of allowBreakpointIds" [value]="breakpoint">
                 {{ breakpoint }}
               </mat-option>
             </mat-select>
@@ -168,7 +168,7 @@
           <div>Copy from</div>
           <mat-form-field fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="copyFrom">
-              <mat-option *ngFor="let breakpoint of selectedLayoutBreakpoints" [value]="breakpoint">
+              <mat-option *ngFor="let breakpoint of selectedBreakpointIds" [value]="breakpoint">
                 {{ breakpoint }}
               </mat-option>
             </mat-select>

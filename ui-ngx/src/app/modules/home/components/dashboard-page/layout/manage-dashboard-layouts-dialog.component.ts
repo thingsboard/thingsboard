@@ -76,7 +76,7 @@ export interface DashboardLayoutSettings {
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
   implements ErrorStateMatcher, OnDestroy {
 
-  @ViewChild('tooltip', {static: true}) tooltip: MatTooltip;
+  @ViewChild('tooltip') tooltip: MatTooltip;
 
   layoutsFormGroup: UntypedFormGroup;
   addBreakpointFormGroup: UntypedFormGroup;
@@ -110,8 +110,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     xl: 'xl'
   };
 
-  allowLayoutBreakpoints = Object.keys(this.layoutBreakpoint);
-  selectedLayoutBreakpoints = ['default'];
+  allowBreakpointIds = Object.keys(this.layoutBreakpoint);
+  selectedBreakpointIds = ['default'];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -122,7 +122,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
               private utils: UtilsService,
               private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
-              private dialog: MatDialog) {
+              private dialog: MatDialog,) {
     super(store, router, dialogRef);
 
     this.layouts = this.data.layouts;
@@ -208,28 +208,17 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       this.layouts.right = this.dashboardUtils.createDefaultLayoutData();
     }
 
-    this.layoutBreakpoints.push({
-      icon: 'mdi:monitor',
-      name: 'Default',
-      layout: this.layouts.main,
-      breakpoint: 'default'
-    });
+    this.addLayoutConfiguration('default');
 
     if (!this.isDividerLayout && this.layouts.main.breakpoints) {
       for (const breakpoint of Object.keys(this.layouts.main.breakpoints)) {
-        this.layoutBreakpoints.push({
-          icon: 'mdi:monitor',
-          name: breakpoint,
-          layout: this.layouts.main.breakpoints[breakpoint],
-          descriptionSize: MediaBreakpoints[breakpoint],
-          breakpoint
-        });
-        this.selectedLayoutBreakpoints.push(breakpoint);
+        this.addLayoutConfiguration(breakpoint);
+        this.selectedBreakpointIds.push(breakpoint);
       }
     }
 
-    this.allowLayoutBreakpoints = Object.keys(this.layoutBreakpoint)
-      .filter((item) => !this.selectedLayoutBreakpoints.includes(item));
+    this.allowBreakpointIds = Object.keys(this.layoutBreakpoint)
+      .filter((item) => !this.selectedBreakpointIds.includes(item));
 
     this.dataSource.loadData(this.layoutBreakpoints);
 
@@ -268,6 +257,15 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
             this.showTooltip(this.layoutsFormGroup.get('fixedWidth'), LayoutWidthType.FIXED,
               this.layoutsFormGroup.get('fixedLayout').value);
             this.layoutsFormGroup.get('sliderFixed').setValue(value, {emitEvent: false});
+          }
+        ));
+
+    this.subscriptions.push(
+      this.layoutsFormGroup.get('layoutType').valueChanges
+        .subscribe(
+          () => {
+            this.dataSource = new DashboardLayoutDatasource();
+            this.dataSource.loadData(this.layoutBreakpoints);
           }
         ));
   }
@@ -450,12 +448,14 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     return this.layoutsFormGroup.get('layoutType').value === LayoutType.divider;
   }
 
-  deleteBreakpoint(breakpoint: string): void {
-    delete this.layouts.main.breakpoints[breakpoint];
+  deleteBreakpoint(breakpointId: string): void {
+    delete this.layouts.main.breakpoints[breakpointId];
     if (isEqual(this.layouts.main.breakpoints, {})) {
       delete this.layouts.main.breakpoints;
     }
-    this.layoutBreakpoints = this.layoutBreakpoints.filter((item) => item.breakpoint !== breakpoint);
+    this.layoutBreakpoints = this.layoutBreakpoints.filter((item) => item.breakpoint !== breakpointId);
+    this.allowBreakpointIds.push(breakpointId);
+    this.selectedBreakpointIds = this.selectedBreakpointIds.filter((item) => item !== breakpointId);
     this.dataSource.loadData(this.layoutBreakpoints);
     this.layoutsFormGroup.markAsDirty();
   }
@@ -464,7 +464,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     this.addBreakpointMode = !this.addBreakpointMode;
     if (this.addBreakpointMode) {
       this.addBreakpointFormGroup.reset({
-        new: this.allowLayoutBreakpoints[0],
+        new: this.allowBreakpointIds[0],
         copyFrom: 'default'
       });
     }
@@ -484,20 +484,30 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       gridSettings: deepClone(sourceLayout.gridSettings),
       widgets: deepClone(sourceLayout.widgets),
     };
-    this.selectedLayoutBreakpoints.push(newBreakpoint);
-    this.allowLayoutBreakpoints = this.allowLayoutBreakpoints.filter((item) => item !== newBreakpoint);
-
-    this.layoutBreakpoints.push({
-      icon: 'mdi:monitor',
-      name: newBreakpoint,
-      layout: this.layouts.main.breakpoints[newBreakpoint],
-      descriptionSize: MediaBreakpoints[newBreakpoint],
-      breakpoint: newBreakpoint
-    });
+    this.selectedBreakpointIds.push(newBreakpoint);
+    this.allowBreakpointIds = this.allowBreakpointIds.filter((item) => item !== newBreakpoint);
+    this.addLayoutConfiguration(newBreakpoint);
 
     this.dataSource.loadData(this.layoutBreakpoints);
 
     this.addBreakpointMode = false;
+  }
+
+  private addLayoutConfiguration(breakpointId: string) {
+    const layout = breakpointId === 'default' ? this.layouts.main : this.layouts.main.breakpoints[breakpointId];
+    const size = breakpointId === 'default' ? '' : this.parseCssQuery(MediaBreakpoints[breakpointId]);
+    this.layoutBreakpoints.push({
+      icon: 'mdi:monitor',
+      name: breakpointId,
+      layout,
+      descriptionSize: size,
+      breakpoint: breakpointId
+    });
+  }
+
+  private parseCssQuery(query: string): string {
+    const value = Array.from(query.matchAll(/\([^:]+:\s+([^()]+)\)/g));
+    return `min-width: ${value[0][1]} and max-width: ${value[1][1]}`;
   }
 }
 

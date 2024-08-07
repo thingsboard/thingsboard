@@ -154,6 +154,7 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
     padding: 8px;
     border: 2px dashed rgba(0, 0, 0, 0.08);
     border-radius: 10px;
+    min-height: 56px;
   }
 }
 
