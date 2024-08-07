@@ -81,7 +81,26 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         super.init(ctx);
         this.config = TbNodeUtils.convert(configuration, TbKafkaNodeConfiguration.class);
         this.initError = null;
-        Properties properties = getKafkaProperties(ctx);
+        Properties properties = new Properties();
+        properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getServiceId());
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
+        properties.put(ProducerConfig.ACKS_CONFIG, config.getAcks());
+        properties.put(ProducerConfig.RETRIES_CONFIG, config.getRetries());
+        properties.put(ProducerConfig.BATCH_SIZE_CONFIG, config.getBatchSize());
+        properties.put(ProducerConfig.LINGER_MS_CONFIG, config.getLinger());
+        properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.getBufferMemory());
+        if (config.getOtherProperties() != null) {
+            config.getOtherProperties().forEach((k, v) -> {
+                if (SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG.equals(k)
+                        || SslConfigs.SSL_KEYSTORE_KEY_CONFIG.equals(k)
+                        || SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG.equals(k)) {
+                    v = v.replace("\\n", "\n");
+                }
+                properties.put(k, v);
+            });
+        }
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
         try {
@@ -98,7 +117,7 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         }
     }
 
-    protected KafkaProducer<String, String> getKafkaProducer(Properties properties) {
+    KafkaProducer<String, String> getKafkaProducer(Properties properties) {
         return new KafkaProducer<>(properties);
     }
 
@@ -143,30 +162,6 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         } catch (Exception e) {
             log.debug("[{}] Failed to process message: {}", ctx.getSelfId(), msg, e);
         }
-    }
-
-    protected Properties getKafkaProperties(TbContext ctx) {
-        Properties properties = new Properties();
-        properties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + ctx.getSelfId().getId().toString() + "-" + ctx.getServiceId());
-        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
-        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
-        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
-        properties.put(ProducerConfig.ACKS_CONFIG, config.getAcks());
-        properties.put(ProducerConfig.RETRIES_CONFIG, config.getRetries());
-        properties.put(ProducerConfig.BATCH_SIZE_CONFIG, config.getBatchSize());
-        properties.put(ProducerConfig.LINGER_MS_CONFIG, config.getLinger());
-        properties.put(ProducerConfig.BUFFER_MEMORY_CONFIG, config.getBufferMemory());
-        if (config.getOtherProperties() != null) {
-            config.getOtherProperties().forEach((k, v) -> {
-                if (SslConfigs.SSL_KEYSTORE_CERTIFICATE_CHAIN_CONFIG.equals(k)
-                        || SslConfigs.SSL_KEYSTORE_KEY_CONFIG.equals(k)
-                        || SslConfigs.SSL_TRUSTSTORE_CERTIFICATES_CONFIG.equals(k)) {
-                    v = v.replace("\\n", "\n");
-                }
-                properties.put(k, v);
-            });
-        }
-        return properties;
     }
 
     @Override

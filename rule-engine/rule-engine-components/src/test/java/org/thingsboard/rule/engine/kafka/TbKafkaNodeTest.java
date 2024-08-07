@@ -82,6 +82,7 @@ public class TbKafkaNodeTest {
     private final long OFFSET = 1;
     private final int PARTITION = 0;
 
+    private final String SERVICE_ID_STR = "test-service-id";
     private final String TEST_TOPIC = "test-topic";
     private final String TEST_KEY = "test-key";
 
@@ -144,7 +145,7 @@ public class TbKafkaNodeTest {
     }
 
     @Test
-    public void verifyGetKafkaPropertiesMethod() throws TbNodeException {
+    public void verifyKafkaProperties() throws TbNodeException {
         String sslKeyStoreCertificateChain = "cbdvch\\nfwrg\nvgwg\\n";
         String sslKeyStoreKey = "nghmh\\nhmmnh\\\\ngreg\nvgwg\\n";
         String sslTruststoreCertificates = "grthrt\fd\\nfwrg\nvgwg\\n";
@@ -155,16 +156,12 @@ public class TbKafkaNodeTest {
                 "ssl.protocol", "TLSv1.2"
         ));
 
-        ReflectionTestUtils.setField(producerMock, "ioThread", ioThreadMock);
-        given(ctxMock.getSelfId()).willReturn(RULE_NODE_ID);
-        String serviceIdStr = "test-service";
-        given(ctxMock.getServiceId()).willReturn(serviceIdStr);
-        willReturn(producerMock).given(node).getKafkaProducer(any());
+        mockSuccessfulInit();
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         Properties expectedProperties = new Properties();
-        expectedProperties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + RULE_NODE_ID.getId() + "-" + serviceIdStr);
+        expectedProperties.put(ProducerConfig.CLIENT_ID_CONFIG, "producer-tb-kafka-node-" + RULE_NODE_ID.getId() + "-" + SERVICE_ID_STR);
         expectedProperties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, config.getBootstrapServers());
         expectedProperties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, config.getValueSerializer());
         expectedProperties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, config.getKeySerializer());
@@ -178,8 +175,9 @@ public class TbKafkaNodeTest {
         expectedProperties.put("ssl.truststore.certificates", sslTruststoreCertificates.replace("\\n", "\n"));
         expectedProperties.put("ssl.protocol", "TLSv1.2");
 
-        Properties actualsProperties = node.getKafkaProperties(ctxMock);
-        assertThat(actualsProperties).isEqualTo(expectedProperties);
+        ArgumentCaptor<Properties> properties = ArgumentCaptor.forClass(Properties.class);
+        then(node).should().getKafkaProducer(properties.capture());
+        assertThat(properties.getValue()).isEqualTo(expectedProperties);
     }
 
     @Test
@@ -361,8 +359,9 @@ public class TbKafkaNodeTest {
     }
 
     private void mockSuccessfulInit() {
+        given(ctxMock.getSelfId()).willReturn(RULE_NODE_ID);
+        given(ctxMock.getServiceId()).willReturn(SERVICE_ID_STR);
         ReflectionTestUtils.setField(producerMock, "ioThread", ioThreadMock);
-        willReturn(mock(Properties.class)).given(node).getKafkaProperties(ctxMock);
         willReturn(producerMock).given(node).getKafkaProducer(any());
     }
 
