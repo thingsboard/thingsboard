@@ -43,7 +43,7 @@ import {
   ScadaSymbolBehavior,
   ScadaSymbolBehaviorType,
   scadaSymbolBehaviorTypes,
-  scadaSymbolBehaviorTypeTranslations
+  scadaSymbolBehaviorTypeTranslations, updateBehaviorDefaultSettings
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { deepClone, isUndefinedOrNull } from '@core/utils';
 import { MatButton } from '@angular/material/button';
@@ -55,6 +55,8 @@ import { ValueToDataType } from '@shared/models/action-widget-settings.models';
 import {
   ScadaSymbolBehaviorsComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behaviors.component';
+import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 
 export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
   if (!behavior.id || !behavior.name || !behavior.type) {
@@ -62,20 +64,20 @@ export const behaviorValid = (behavior: ScadaSymbolBehavior): boolean => {
   }
   switch (behavior.type) {
     case ScadaSymbolBehaviorType.value:
-      if (!behavior.valueType || isUndefinedOrNull(behavior.defaultValue)) {
+      if (!behavior.valueType || !behavior.defaultGetValueSettings) {
         return false;
       }
       break;
     case ScadaSymbolBehaviorType.action:
-      if (!behavior.valueToDataType) {
+      if (!behavior.defaultSetValueSettings) {
         return false;
       }
-      if (behavior.valueToDataType === ValueToDataType.CONSTANT
-        && isUndefinedOrNull(behavior.constantValue)) {
+      if (behavior.defaultSetValueSettings.valueToData?.type === ValueToDataType.CONSTANT
+        && isUndefinedOrNull(behavior.defaultSetValueSettings.valueToData?.constantValue)) {
         return false;
       }
-      if (behavior.valueToDataType === ValueToDataType.FUNCTION
-        && isUndefinedOrNull(behavior.valueToDataFunction)) {
+      if (behavior.defaultSetValueSettings.valueToData?.type === ValueToDataType.FUNCTION
+        && isUndefinedOrNull(behavior.defaultSetValueSettings.valueToData?.valueToDataFunction)) {
         return false;
       }
       break;
@@ -119,6 +121,12 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
 
   @Input()
   index: number;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetActionCallbacks;
 
   @Output()
   behaviorRemoved = new EventEmitter();
@@ -190,6 +198,8 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
       const ctx: any = {
         isAdd: add,
         disabled: this.disabled,
+        aliasController: this.aliasController,
+        callbacks: this.callbacks,
         behavior: deepClone(this.modelValue)
       };
       const scadaSymbolBehaviorPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
@@ -265,13 +275,15 @@ export class ScadaSymbolBehaviorRowComponent implements ControlValueAccessor, On
   }
 
   private onTypeChanged(newType: ScadaSymbolBehaviorType) {
-    const prevType = this.modelValue.type;
+    const prevModel = deepClone(this.modelValue);
     this.modelValue = {...this.modelValue, ...{type: newType}};
+    this.modelValue = updateBehaviorDefaultSettings(this.modelValue);
     if (!behaviorValid(this.modelValue)) {
       this.editBehavior(null, this.editButton, false, () => {
+        this.modelValue = prevModel;
         this.behaviorRowFormGroup.patchValue(
           {
-            type: prevType
+            type: prevModel.type
           }, {emitEvent: true}
         );
       });

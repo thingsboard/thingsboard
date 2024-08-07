@@ -3622,7 +3622,8 @@
             "false-label": "False label",
             "state-label": "State label",
             "default-payload": "Default payload",
-            "not-unique-behavior-ids-error": "Behavior Ids must be unique!"
+            "not-unique-behavior-ids-error": "Behavior Ids must be unique!",
+            "default-settings": "Default settings"
         },
         "property": {
             "property": "Property",

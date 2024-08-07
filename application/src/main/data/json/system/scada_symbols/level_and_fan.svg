@@ -77,74 +77,225 @@
       "id": "level",
       "name": "Level",
       "hint": null,
+      "group": null,
       "type": "value",
       "valueType": "DOUBLE",
-      "defaultValue": 10,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": null,
-      "valueToDataType": null,
-      "constantValue": null,
-      "valueToDataFunction": null
+      "defaultGetValueSettings": {
+        "action": "GET_TIME_SERIES",
+        "defaultValue": null,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "level"
+        },
+        "getTimeSeries": {
+          "key": "level"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "disabled",
       "name": "{i18n:widgets.rpc-state.disabled-state}",
       "hint": "{i18n:widgets.rpc-state.disabled-state-hint}",
+      "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": "",
       "falseLabel": "",
       "stateLabel": "{i18n:widgets.rpc-state.disabled}",
-      "valueToDataType": null,
-      "constantValue": null,
-      "valueToDataFunction": null
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "on",
       "name": "On/Off state",
       "hint": null,
+      "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": true,
       "trueLabel": "{i18n:widgets.rpc-state.on}",
       "falseLabel": "{i18n:widgets.rpc-state.off}",
       "stateLabel": "{i18n:widgets.rpc-state.on}",
-      "valueToDataType": null,
-      "constantValue": null,
-      "valueToDataFunction": null
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "onUpdateState",
       "name": "{i18n:widgets.rpc-state.turn-on}",
       "hint": "{i18n:widgets.rpc-state.turn-on-hint}",
+      "group": null,
       "type": "action",
       "valueType": "BOOLEAN",
-      "valueToDataType": "CONSTANT",
-      "constantValue": true
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SERVER_SCOPE",
+          "key": "state"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": true,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "offUpdateState",
       "name": "{i18n:widgets.rpc-state.turn-off}",
       "hint": "{i18n:widgets.rpc-state.turn-off-hint}",
+      "group": null,
       "type": "action",
       "valueType": "BOOLEAN",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SERVER_SCOPE",
+          "key": "state"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "levelUpdateState",
       "name": "Update level",
+      "hint": null,
+      "group": null,
       "type": "action",
       "valueType": "DOUBLE",
-      "valueToDataType": "VALUE",
-      "constantValue": 0
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "ADD_TIME_SERIES",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SERVER_SCOPE",
+          "key": "state"
+        },
+        "putTimeSeries": {
+          "key": "level"
+        },
+        "valueToData": {
+          "type": "VALUE",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "levelValueClick",
       "name": "On level value click",
-      "type": "widgetAction"
+      "hint": null,
+      "group": null,
+      "type": "widgetAction",
+      "valueType": null,
+      "trueLabel": null,
+      "falseLabel": null,
+      "stateLabel": null,
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "openInSeparateDialog": false,
+        "openInPopover": false
+      }
     }
   ],
   "properties": [

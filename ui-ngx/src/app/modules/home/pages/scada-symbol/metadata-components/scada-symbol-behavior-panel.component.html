@@ -70,11 +70,6 @@
       </mat-form-field>
     </div>
     <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.value">
-      <div class="tb-form-row ">
-        <div class="fixed-title-width" translate>scada.behavior.default-value</div>
-        <tb-value-input fxFlex [valueType]="behaviorFormGroup.get('valueType').value"
-                        formControlName="defaultValue"></tb-value-input>
-      </div>
       <ng-container *ngIf="behaviorFormGroup.get('valueType').value ===  ValueType.BOOLEAN">
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>scada.behavior.true-label</div>
@@ -95,34 +90,41 @@
           </mat-form-field>
         </div>
       </ng-container>
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
+        <tb-get-value-action-settings fxFlex
+                                      panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
+                                      [valueType]="behaviorFormGroup.get('valueType').value"
+                                      [trueLabel]="behaviorFormGroup.get('trueLabel').value | customTranslate"
+                                      [falseLabel]="behaviorFormGroup.get('falseLabel').value | customTranslate"
+                                      [stateLabel]="behaviorFormGroup.get('stateLabel').value | customTranslate"
+                                      [aliasController]="aliasController"
+                                      [widgetType]="widgetType.rpc"
+                                      formControlName="defaultGetValueSettings">
+        </tb-get-value-action-settings>
+      </div>
     </ng-container>
     <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.action">
-      <div class="tb-form-panel stroked">
-        <div class="tb-form-row no-padding no-border column-xs">
-          <div class="fixed-title-width">{{ 'scada.behavior.default-payload' | translate }}</div>
-          <tb-toggle-select fxFlex formControlName="valueToDataType">
-            <tb-toggle-option *ngIf="behaviorFormGroup.get('valueType').value !== ValueType.BOOLEAN" [value]="ValueToDataType.VALUE">{{ 'widgets.value-action.converter-value' | translate }}</tb-toggle-option>
-            <tb-toggle-option *ngIf="behaviorFormGroup.get('valueType').value === ValueType.BOOLEAN" [value]="ValueToDataType.CONSTANT">{{ 'widgets.value-action.converter-constant' | translate }}</tb-toggle-option>
-            <tb-toggle-option [value]="ValueToDataType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
-            <tb-toggle-option [value]="ValueToDataType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>
-          </tb-toggle-select>
-        </div>
-        <tb-value-input *ngIf="behaviorFormGroup.get('valueToDataType').value === ValueToDataType.CONSTANT"
-                        fxFlex
-                        [layout]="{
-                              layout: 'row',
-                              breakpoints: {xs: 'column'}
-                          }"
-                        formControlName="constantValue">
-        </tb-value-input>
-        <tb-js-func *ngIf="behaviorFormGroup.get('valueToDataType').value === ValueToDataType.FUNCTION"
-                    formControlName="valueToDataFunction"
-                    required
-                    [globalVariables]="functionScopeVariables"
-                    [functionArgs]="['value']"
-                    functionTitle="{{ 'widgets.value-action.convert-value-function' | translate }}"
-                    helpId="widget/lib/rpc/convert_value_fn">
-        </tb-js-func>
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
+        <tb-set-value-action-settings fxFlex
+                                      panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
+                                      [valueType]="behaviorFormGroup.get('valueType').value"
+                                      [aliasController]="aliasController"
+                                      [widgetType]="widgetType.rpc"
+                                      formControlName="defaultSetValueSettings">
+        </tb-set-value-action-settings>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="behaviorFormGroup.get('type').value === ScadaSymbolBehaviorType.widgetAction">
+      <div class="tb-form-row">
+        <div class="fixed-title-width" translate>scada.behavior.default-settings</div>
+        <tb-widget-action-settings fxFlex
+                                   panelTitle="{{ behaviorFormGroup.get('name').value | customTranslate }}"
+                                   [callbacks]="callbacks"
+                                   [widgetType]="widgetType.rpc"
+                                   formControlName="defaultWidgetActionSettings">
+        </tb-widget-action-settings>
       </div>
     </ng-container>
   </div>

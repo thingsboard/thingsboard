@@ -112,7 +112,7 @@ export interface ScadaSymbolBehaviorBase {
 
 export interface ScadaSymbolBehaviorValue extends ScadaSymbolBehaviorBase {
   valueType: ValueType;
-  defaultValue: any;
+  defaultGetValueSettings?: GetValueSettings<any>;
   trueLabel?: string;
   falseLabel?: string;
   stateLabel?: string;
@@ -120,9 +120,8 @@ export interface ScadaSymbolBehaviorValue extends ScadaSymbolBehaviorBase {
 
 export interface ScadaSymbolBehaviorAction extends ScadaSymbolBehaviorBase {
   valueType: ValueType;
-  valueToDataType: ValueToDataType;
-  constantValue: any;
-  valueToDataFunction: string;
+  defaultSetValueSettings?: SetValueSettings;
+  defaultWidgetActionSettings?: WidgetAction;
 }
 
 export type ScadaSymbolBehavior = ScadaSymbolBehaviorValue & ScadaSymbolBehaviorAction;
@@ -312,30 +311,47 @@ export const scadaSymbolContentData = (svgContent: string): ScadaSymbolContentDa
   return result;
 };
 
-const defaultGetValueSettings = (get: ScadaSymbolBehaviorValue): GetValueSettings<any> => ({
-    action: GetValueAction.DO_NOTHING,
-    defaultValue: get.defaultValue,
-    executeRpc: {
-    method: 'getState',
-      requestTimeout: 5000,
-      requestPersistent: false,
-      persistentPollingInterval: 1000
-    },
-    getAttribute: {
-      key: 'state',
-        scope: null
-    },
-    getTimeSeries: {
-      key: 'state'
-    },
-    dataToValue: {
-      type: DataToValueType.NONE,
-      compareToValue: true,
-      dataToValueFunction: '/* Should return boolean value */\nreturn data;'
-    }
-  });
+const defaultValueForValueType = (valueType: ValueType): any => {
+  if (!valueType) {
+    return null;
+  }
+  switch (valueType) {
+    case ValueType.STRING:
+      return '';
+    case ValueType.INTEGER:
+    case ValueType.DOUBLE:
+      return 0;
+    case ValueType.BOOLEAN:
+      return false;
+    case ValueType.JSON:
+      return {};
+  }
+};
 
-const defaultSetValueSettings = (set: ScadaSymbolBehaviorAction): SetValueSettings => ({
+export const defaultGetValueSettings = (valueType: ValueType): GetValueSettings<any> => ({
+  action: GetValueAction.DO_NOTHING,
+  defaultValue: defaultValueForValueType(valueType),
+  executeRpc: {
+    method: 'getState',
+    requestTimeout: 5000,
+    requestPersistent: false,
+    persistentPollingInterval: 1000
+  },
+  getAttribute: {
+    key: 'state',
+    scope: null
+  },
+  getTimeSeries: {
+    key: 'state'
+  },
+  dataToValue: {
+    type: DataToValueType.NONE,
+    compareToValue: true,
+    dataToValueFunction: '/* Should return boolean value */\nreturn data;'
+  }
+});
+
+export const defaultSetValueSettings = (valueType: ValueType): SetValueSettings => ({
   action: SetValueAction.EXECUTE_RPC,
   executeRpc: {
     method: 'setState',
@@ -351,20 +367,49 @@ const defaultSetValueSettings = (set: ScadaSymbolBehaviorAction): SetValueSettin
     key: 'state'
   },
   valueToData: {
-    type: set.valueToDataType,
-    constantValue: set.constantValue,
-    valueToDataFunction: set.valueToDataFunction ? set.valueToDataFunction :
+    type: valueType !== ValueType.BOOLEAN ? ValueToDataType.VALUE : ValueToDataType.CONSTANT,
+    constantValue: false,
+    valueToDataFunction:
       '/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;'
   }
 });
 
-const defaultWidgetActionSettings = (widgetAction: ScadaSymbolBehavior): WidgetAction => ({
+export const defaultWidgetActionSettings: WidgetAction = {
   type: WidgetActionType.doNothing,
   targetDashboardStateId: null,
   openRightLayout: false,
   setEntityId: false,
   stateEntityParamName: null
-});
+};
+
+export const updateBehaviorDefaultSettings = (behavior: ScadaSymbolBehavior): ScadaSymbolBehavior => {
+  if (behavior.type) {
+    switch (behavior.type) {
+      case ScadaSymbolBehaviorType.value:
+        delete behavior.defaultSetValueSettings;
+        delete behavior.defaultWidgetActionSettings;
+        if (!behavior.defaultGetValueSettings) {
+          behavior.defaultGetValueSettings = mergeDeep({} as GetValueSettings<any>, defaultGetValueSettings(behavior.valueType));
+        }
+        break;
+      case ScadaSymbolBehaviorType.action:
+        delete behavior.defaultGetValueSettings;
+        delete behavior.defaultWidgetActionSettings;
+        if (!behavior.defaultSetValueSettings) {
+          behavior.defaultSetValueSettings = mergeDeep({} as SetValueSettings, defaultSetValueSettings(behavior.valueType));
+        }
+        break;
+      case ScadaSymbolBehaviorType.widgetAction:
+        delete behavior.defaultGetValueSettings;
+        delete behavior.defaultSetValueSettings;
+        if (!behavior.defaultWidgetActionSettings) {
+          behavior.defaultWidgetActionSettings = mergeDeep({} as WidgetAction, defaultWidgetActionSettings);
+        }
+        break;
+    }
+  }
+  return behavior;
+};
 
 export const defaultScadaSymbolObjectSettings = (metadata: ScadaSymbolMetadata): ScadaSymbolObjectSettings => {
   const settings: ScadaSymbolObjectSettings = {
@@ -373,11 +418,17 @@ export const defaultScadaSymbolObjectSettings = (metadata: ScadaSymbolMetadata):
   };
   for (const behavior of metadata.behavior) {
     if (behavior.type === ScadaSymbolBehaviorType.value) {
-      settings.behavior[behavior.id] = defaultGetValueSettings(behavior as ScadaSymbolBehaviorValue);
+      settings.behavior[behavior.id] =
+        mergeDeep({} as GetValueSettings<any>,
+          defaultGetValueSettings(behavior.valueType), (behavior as ScadaSymbolBehaviorValue).defaultGetValueSettings || {});
     } else if (behavior.type === ScadaSymbolBehaviorType.action) {
-      settings.behavior[behavior.id] = defaultSetValueSettings(behavior as ScadaSymbolBehaviorAction);
+      settings.behavior[behavior.id] =
+        mergeDeep({} as SetValueSettings,
+          defaultSetValueSettings(behavior.valueType), (behavior as ScadaSymbolBehaviorAction).defaultSetValueSettings || {});
     } else if (behavior.type === ScadaSymbolBehaviorType.widgetAction) {
-      settings.behavior[behavior.id] = defaultWidgetActionSettings(behavior);
+      settings.behavior[behavior.id] =
+        mergeDeep({} as WidgetAction,
+          defaultWidgetActionSettings, (behavior as ScadaSymbolBehaviorAction).defaultWidgetActionSettings || {});
     }
   }
   for (const property of metadata.properties) {
@@ -733,17 +784,7 @@ export class ScadaSymbolObject {
 
   private normalizeValue(value: any, type: ValueType): any {
     if (isUndefinedOrNull(value)) {
-      switch (type) {
-        case ValueType.STRING:
-          return '';
-        case ValueType.INTEGER:
-        case ValueType.DOUBLE:
-          return 0;
-        case ValueType.BOOLEAN:
-          return false;
-        case ValueType.JSON:
-          return {};
-      }
+        return defaultValueForValueType(type);
     } else {
       return value;
     }

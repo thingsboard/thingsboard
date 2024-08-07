@@ -101,7 +101,9 @@
     </div>
     <div [fxShow]="selectedOption === 'behavior'" class="mat-content overflow-hidden">
       <tb-scada-symbol-metadata-behaviors
-        formControlName="behavior">
+        formControlName="behavior"
+        [aliasController]="aliasController"
+        [callbacks]="callbacks">
       </tb-scada-symbol-metadata-behaviors>
     </div>
     <div [fxShow]="selectedOption === 'properties'" class="mat-content overflow-hidden">

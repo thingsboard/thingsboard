@@ -35,15 +35,22 @@ import {
   UntypedFormGroup,
   Validator
 } from '@angular/forms';
-import { ScadaSymbolBehavior, ScadaSymbolBehaviorType } from '@home/components/widget/lib/scada/scada-symbol.models';
+import {
+  defaultGetValueSettings,
+  ScadaSymbolBehavior,
+  ScadaSymbolBehaviorType
+} from '@home/components/widget/lib/scada/scada-symbol.models';
 import { ValueType } from '@shared/models/constants';
 import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import {
   behaviorValid,
   ScadaSymbolBehaviorRowComponent
 } from '@home/pages/scada-symbol/metadata-components/scada-symbol-behavior-row.component';
-import { ValueToDataType } from '@shared/models/action-widget-settings.models';
+import { GetValueSettings, ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { TranslateService } from '@ngx-translate/core';
+import { mergeDeep } from '@core/utils';
+import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 
 @Component({
   selector: 'tb-scada-symbol-metadata-behaviors',
@@ -70,6 +77,12 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
 
   @ViewChildren(ScadaSymbolBehaviorRowComponent)
   behaviorRows: QueryList<ScadaSymbolBehaviorRowComponent>;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetActionCallbacks;
 
   @Input()
   disabled: boolean;
@@ -181,10 +194,7 @@ export class ScadaSymbolBehaviorsComponent implements ControlValueAccessor, OnIn
       name: '',
       type: ScadaSymbolBehaviorType.value,
       valueType: ValueType.BOOLEAN,
-      defaultValue: false,
-      valueToDataType: ValueToDataType.CONSTANT,
-      constantValue: false,
-      valueToDataFunction: ''
+      defaultGetValueSettings: mergeDeep({} as GetValueSettings<any>, defaultGetValueSettings(ValueType.BOOLEAN))
     };
     const behaviorsArray = this.behaviorsFormGroup.get('behaviors') as UntypedFormArray;
     const behaviorControl = this.fb.control(behavior, []);
