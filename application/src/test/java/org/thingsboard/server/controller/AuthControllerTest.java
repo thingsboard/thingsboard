@@ -220,6 +220,7 @@ public class AuthControllerTest extends AbstractControllerTest {
         String initialActivationLink = doGet("/api/user/" + user.getId() + "/activationLink", String.class);
         String initialActivationToken = StringUtils.substringAfterLast(initialActivationLink, "activateToken=");
 
+        // expiring activation token
         userCredentials.setActivateTokenExpTime(System.currentTimeMillis() - 1);
         userCredentialsDao.save(tenantId, userCredentials);
         doGet("/api/noauth/activate?activateToken={activateToken}", initialActivationToken)
@@ -229,14 +230,26 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .put("password", "wefewe")).andExpect(status().isBadRequest())
                 .andExpect(jsonPath("$.message", is("Activation token expired")));
 
+        // checking that activation link is regenerated when requested
         String regeneratedActivationLink = doGet("/api/user/" + user.getId() + "/activationLink", String.class);
-        String regeneratedActivationToken = StringUtils.substringAfterLast(regeneratedActivationLink, "activateToken=");
-        assertThat(regeneratedActivationToken).isNotEqualTo(initialActivationLink);
+        assertThat(regeneratedActivationLink).isNotEqualTo(initialActivationLink);
+
+        // checking link renewal if less than 15 minutes before expiration
+        userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
+        userCredentials.setActivateTokenExpTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30));
+        userCredentialsDao.save(tenantId, userCredentials);
+        assertThat(doGet("/api/user/" + user.getId() + "/activationLink", String.class)).isEqualTo(regeneratedActivationLink);
+        userCredentials.setActivateTokenExpTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10));
+        userCredentialsDao.save(tenantId, userCredentials);
+        String newActivationLink = doGet("/api/user/" + user.getId() + "/activationLink", String.class);
+        assertThat(newActivationLink).isNotEqualTo(regeneratedActivationLink);
+        String newActivationToken = StringUtils.substringAfterLast(newActivationLink, "activateToken=");
+
         userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         assertThat(userCredentials.getActivateTokenExpTime()).isCloseTo(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(ttl), Offset.offset(120000L));
 
         doPost("/api/noauth/activate", JacksonUtil.newObjectNode()
-                .put("activateToken", regeneratedActivationToken)
+                .put("activateToken", newActivationToken)
                 .put("password", "wefewe")).andExpect(status().isOk());
     }
 
