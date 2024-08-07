@@ -24,7 +24,7 @@
           <mat-expansion-panel class="tb-settings" [expanded]="last">
             <mat-expansion-panel-header fxLayout="row wrap">
               <mat-panel-title>
-                <div class="title-container">{{ valueTitle(keyControl.get('value').value) }}</div>
+                <div class="title-container" tbTruncateWithTooltip>{{ valueTitle(keyControl.get(keyControl.get('type').value).value) }}</div>
               </mat-panel-title>
             </mat-expansion-panel-header>
             <ng-template matExpansionPanelContent>
@@ -54,13 +54,24 @@
                 <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                   <div class="fixed-title-width tb-required" translate>gateway.value</div>
                   <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
-                    <input matInput required formControlName="value"
-                           placeholder="{{ 'gateway.set' | translate }}"/>
+                    <ng-container [ngSwitch]="keyControl.get('type').value">
+                      <input *ngSwitchCase="MappingValueType.STRING" matInput required formControlName="string"
+                             placeholder="{{ 'gateway.set' | translate }}" />
+                      <input *ngSwitchCase="MappingValueType.INTEGER" matInput required formControlName="integer" type="number"
+                             placeholder="{{ 'gateway.set' | translate }}" />
+                      <input *ngSwitchCase="MappingValueType.DOUBLE" matInput required formControlName="double" type="number"
+                             placeholder="{{ 'gateway.set' | translate }}" />
+                      <mat-select *ngSwitchCase="MappingValueType.BOOLEAN" formControlName="boolean">
+                        <mat-option [value]="true">true</mat-option>
+                        <mat-option [value]="false">false</mat-option>
+                      </mat-select>
+                    </ng-container>
                     <mat-icon matSuffix
                               matTooltipPosition="above"
                               matTooltipClass="tb-error-tooltip"
                               [matTooltip]="('gateway.value-required') | translate"
-                              *ngIf="keyControl.get('value').hasError('required') && keyControl.get('value').touched"
+                              *ngIf="keyControl.get(keyControl.get('type').value).hasError('required')
+                              && keyControl.get(keyControl.get('type').value).touched"
                               class="tb-error">
                       warning
                     </mat-icon>

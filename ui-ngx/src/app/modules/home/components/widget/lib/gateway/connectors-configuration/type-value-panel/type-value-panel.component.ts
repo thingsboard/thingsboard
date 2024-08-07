@@ -18,6 +18,7 @@ import { Component, forwardRef, OnDestroy, OnInit } from '@angular/core';
 import {
   AbstractControl,
   ControlValueAccessor,
+  FormGroup,
   NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormArray,
@@ -28,6 +29,7 @@ import {
 } from '@angular/forms';
 import { isDefinedAndNotNull } from '@core/utils';
 import {
+  integerRegex,
   MappingDataKey,
   MappingValueType,
   mappingValueTypesMap,
@@ -58,6 +60,7 @@ export class TypeValuePanelComponent implements ControlValueAccessor, Validator,
   valueTypeKeys: MappingValueType[] = Object.values(MappingValueType);
   valueTypes = mappingValueTypesMap;
   valueListFormArray: UntypedFormArray;
+  readonly MappingValueType = MappingValueType;
 
   private destroy$ = new Subject<void>();
   private propagateChange = (v: any) => {};
@@ -84,10 +87,24 @@ export class TypeValuePanelComponent implements ControlValueAccessor, Validator,
 
   addKey(): void {
     const dataKeyFormGroup = this.fb.group({
-      type: [MappingValueType.STRING, []],
-      value: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
+      type: [MappingValueType.STRING],
+      string: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+      integer: [{value: 0, disabled: true}, [Validators.required, Validators.pattern(integerRegex)]],
+      double: [{value: 0, disabled: true}, [Validators.required]],
+      boolean: [{value: false, disabled: true}, [Validators.required]],
     });
+    this.observeTypeChange(dataKeyFormGroup);
     this.valueListFormArray.push(dataKeyFormGroup);
+  }
+
+  private observeTypeChange(dataKeyFormGroup: FormGroup): void {
+    dataKeyFormGroup.get('type').valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(type => {
+        dataKeyFormGroup.disable({emitEvent: false});
+        dataKeyFormGroup.get('type').enable({emitEvent: false});
+        dataKeyFormGroup.get(type).enable({emitEvent: false});
+      })
   }
 
   deleteKey($event: Event, index: number): void {
@@ -116,10 +133,17 @@ export class TypeValuePanelComponent implements ControlValueAccessor, Validator,
 
   writeValue(deviceInfoArray: Array<MappingDataKey>): void {
     for (const deviceInfo of deviceInfoArray) {
-      const dataKeyFormGroup = this.fb.group({
-        type: [deviceInfo.type, []],
-        value: [deviceInfo.value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]]
-      });
+      const config = {
+        type: [deviceInfo.type],
+        string: [{value: '', disabled: true}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        integer: [{value: 0, disabled: true}, [Validators.required, Validators.pattern(integerRegex)]],
+        double: [{value: 0, disabled: true}, [Validators.required]],
+        boolean: [{value: false, disabled: true}, [Validators.required]],
+      };
+      config[deviceInfo.type][0] = {value: deviceInfo.value, disabled: false};
+
+      const dataKeyFormGroup = this.fb.group(config);
+      this.observeTypeChange(dataKeyFormGroup);
       this.valueListFormArray.push(dataKeyFormGroup);
     }
   }
@@ -131,6 +155,6 @@ export class TypeValuePanelComponent implements ControlValueAccessor, Validator,
   }
 
   private updateView(value: any): void {
-    this.propagateChange(value);
+    this.propagateChange(value.map(({type, ...config}) => ({type, value: config[type]})));
   }
 }
