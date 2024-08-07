@@ -16,11 +16,11 @@
 package org.thingsboard.server.common.data.security.model.mfa.account;
 
 import com.fasterxml.jackson.annotation.JsonGetter;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.security.model.mfa.provider.TwoFaProviderType;
 
-import jakarta.validation.constraints.NotEmpty;
 import java.util.Set;
 
 @Data

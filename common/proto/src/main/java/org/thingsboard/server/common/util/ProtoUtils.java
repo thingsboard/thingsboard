@@ -17,7 +17,9 @@ package org.thingsboard.server.common.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.google.protobuf.ByteString;
+import com.google.protobuf.InvalidProtocolBufferException;
 import lombok.extern.slf4j.Slf4j;
+import org.jetbrains.annotations.Nullable;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.ApiUsageState;
 import org.thingsboard.server.common.data.ApiUsageStateValue;
@@ -159,6 +161,7 @@ public class ProtoUtils {
                 .setEdgeIdMSB(response.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(response.getEdgeId().getId().getLeastSignificantBits())
                 .setSuccess(response.isSuccess())
+                .setError(response.getError())
                 .build();
     }
 
@@ -167,7 +170,8 @@ public class ProtoUtils {
                 new UUID(proto.getResponseIdMSB(), proto.getResponseIdLSB()),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
                 new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
-                proto.getSuccess()
+                proto.getSuccess(),
+                proto.getError()
         );
     }
 
@@ -256,39 +260,48 @@ public class ProtoUtils {
 
         if (msg.getValues() != null) {
             for (AttributeKvEntry attributeKvEntry : msg.getValues()) {
-                TransportProtos.AttributeValueProto.Builder attributeValueBuilder = TransportProtos.AttributeValueProto.newBuilder()
-                        .setLastUpdateTs(attributeKvEntry.getLastUpdateTs())
-                        .setKey(attributeKvEntry.getKey());
-                switch (attributeKvEntry.getDataType()) {
-                    case BOOLEAN -> {
-                        attributeKvEntry.getBooleanValue().ifPresent(attributeValueBuilder::setBoolV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getBooleanValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.BOOLEAN_V);
-                    }
-                    case STRING -> {
-                        attributeKvEntry.getStrValue().ifPresent(attributeValueBuilder::setStringV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getStrValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.STRING_V);
-                    }
-                    case DOUBLE -> {
-                        attributeKvEntry.getDoubleValue().ifPresent(attributeValueBuilder::setDoubleV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getDoubleValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.DOUBLE_V);
-                    }
-                    case LONG -> {
-                        attributeKvEntry.getLongValue().ifPresent(attributeValueBuilder::setLongV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getLongValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.LONG_V);
-                    }
-                    case JSON -> {
-                        attributeKvEntry.getJsonValue().ifPresent(attributeValueBuilder::setJsonV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getJsonValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.JSON_V);
-                    }
-                }
-                builder.addValues(attributeValueBuilder.build());
+                builder.addValues(toProto(attributeKvEntry));
             }
         }
+        return builder.build();
+    }
+
+    public static TransportProtos.AttributeValueProto toProto(AttributeKvEntry attributeKvEntry) {
+        TransportProtos.AttributeValueProto.Builder builder = TransportProtos.AttributeValueProto.newBuilder()
+                .setLastUpdateTs(attributeKvEntry.getLastUpdateTs())
+                .setKey(attributeKvEntry.getKey());
+        switch (attributeKvEntry.getDataType()) {
+            case BOOLEAN:
+                attributeKvEntry.getBooleanValue().ifPresent(builder::setBoolV);
+                builder.setHasV(attributeKvEntry.getBooleanValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.BOOLEAN_V);
+                break;
+            case STRING:
+                attributeKvEntry.getStrValue().ifPresent(builder::setStringV);
+                builder.setHasV(attributeKvEntry.getStrValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.STRING_V);
+                break;
+            case DOUBLE:
+                attributeKvEntry.getDoubleValue().ifPresent(builder::setDoubleV);
+                builder.setHasV(attributeKvEntry.getDoubleValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.DOUBLE_V);
+                break;
+            case LONG:
+                attributeKvEntry.getLongValue().ifPresent(builder::setLongV);
+                builder.setHasV(attributeKvEntry.getLongValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.LONG_V);
+                break;
+            case JSON:
+                attributeKvEntry.getJsonValue().ifPresent(builder::setJsonV);
+                builder.setHasV(attributeKvEntry.getJsonValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.JSON_V);
+                break;
+        }
+
+        if (attributeKvEntry.getVersion() != null) {
+            builder.setVersion(attributeKvEntry.getVersion());
+        }
+
         return builder.build();
     }
 
@@ -500,18 +513,23 @@ public class ProtoUtils {
         }
         List<AttributeKvEntry> result = new ArrayList<>();
         for (TransportProtos.AttributeValueProto kvEntry : valuesList) {
-            boolean hasValue = kvEntry.getHasV();
-            KvEntry entry = switch (kvEntry.getType()) {
-                case BOOLEAN_V -> new BooleanDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getBoolV() : null);
-                case LONG_V -> new LongDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getLongV() : null);
-                case DOUBLE_V -> new DoubleDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getDoubleV() : null);
-                case STRING_V -> new StringDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getStringV() : null);
-                case JSON_V -> new JsonDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getJsonV() : null);
-                default -> null;
-            };
-            result.add(new BaseAttributeKvEntry(kvEntry.getLastUpdateTs(), entry));
+            result.add(fromProto(kvEntry));
         }
         return result;
+    }
+
+    public static AttributeKvEntry fromProto(TransportProtos.AttributeValueProto proto) {
+        boolean hasValue = proto.getHasV();
+        String key = proto.getKey();
+        KvEntry entry = switch (proto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, hasValue ? proto.getBoolV() : null);
+            case LONG_V -> new LongDataEntry(key, hasValue ? proto.getLongV() : null);
+            case DOUBLE_V -> new DoubleDataEntry(key, hasValue ? proto.getDoubleV() : null);
+            case STRING_V -> new StringDataEntry(key, hasValue ? proto.getStringV() : null);
+            case JSON_V -> new JsonDataEntry(key, hasValue ? proto.getJsonV() : null);
+            default -> null;
+        };
+        return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
     }
 
     public static TransportProtos.DeviceProto toProto(Device device) {

@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.model.BaseEntity;
-
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_ERROR_COLUMN_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.EVENT_MESSAGE_COLUMN_NAME;

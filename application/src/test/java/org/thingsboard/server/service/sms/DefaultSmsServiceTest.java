@@ -27,7 +27,6 @@ import org.springframework.test.context.TestPropertySource;
 import org.testcontainers.shaded.org.apache.commons.lang3.RandomStringUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.AdminSettings;
-import org.thingsboard.server.common.data.FeaturesInfo;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;

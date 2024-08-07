@@ -433,19 +433,20 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public void deleteRuleChainById(TenantId tenantId, RuleChainId ruleChainId) {
         Validator.validateId(ruleChainId, "Incorrect rule chain id for delete request.");
         RuleChain ruleChain = ruleChainDao.findById(tenantId, ruleChainId.getId());
+        if (ruleChain == null) {
+            return;
+        }
 
         List<RuleNode> referencingRuleNodes = getReferencingRuleChainNodes(tenantId, ruleChainId);
         Set<RuleChainId> referencingRuleChainIds = referencingRuleNodes.stream().map(RuleNode::getRuleChainId).collect(Collectors.toSet());
 
-        if (ruleChain != null) {
-            if (ruleChain.isRoot()) {
-                throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
-            }
-            if (RuleChainType.EDGE.equals(ruleChain.getType())) {
-                for (Edge edge : new PageDataIterable<>(link -> edgeService.findEdgesByTenantIdAndEntityId(tenantId, ruleChainId, link), DEFAULT_PAGE_SIZE)) {
-                    if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
-                        throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
-                    }
+        if (ruleChain.isRoot()) {
+            throw new DataValidationException("Deletion of Root Tenant Rule Chain is prohibited!");
+        }
+        if (RuleChainType.EDGE.equals(ruleChain.getType())) {
+            for (Edge edge : new PageDataIterable<>(link -> edgeService.findEdgesByTenantIdAndEntityId(tenantId, ruleChainId, link), DEFAULT_PAGE_SIZE)) {
+                if (edge.getRootRuleChainId() != null && edge.getRootRuleChainId().equals(ruleChainId)) {
+                    throw new DataValidationException("Can't delete rule chain that is root for edge [" + edge.getName() + "]. Please assign another root rule chain first to the edge!");
                 }
             }
         }
@@ -457,6 +458,9 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
         if (force) {
             RuleChain ruleChain = findRuleChainById(tenantId, (RuleChainId) id);
+            if (ruleChain == null) {
+                return;
+            }
             checkRuleNodesAndDelete(tenantId, ruleChain, null);
         } else {
             deleteRuleChainById(tenantId, (RuleChainId) id);

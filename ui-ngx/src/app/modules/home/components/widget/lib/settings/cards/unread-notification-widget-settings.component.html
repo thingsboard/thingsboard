@@ -41,7 +41,9 @@
   <div class="tb-form-panel">
     <div class="tb-form-row no-padding no-border">
       <mat-slide-toggle class="mat-slide" formControlName="showCounter">
-        {{ 'widgets.notification.counter' | translate }}
+        <div tb-hint-tooltip-icon="{{'widgets.notification.counter-hint' | translate}}">
+          {{ 'widgets.notification.counter' | translate }}
+        </div>
       </mat-slide-toggle>
     </div>
     <div class="tb-form-row space-between">
@@ -49,7 +51,7 @@
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <tb-font-settings formControlName="counterValueFont"
                           clearButton
-                          [previewText]="unreadNotificationWidgetSettingsForm.get('maxNotificationDisplay').value.toString()"
+                          [previewText]="countPreviewFn"
                           [initialPreviewStyle]="widgetConfig.config.titleStyle">
         </tb-font-settings>
         <tb-color-input asBoxInput

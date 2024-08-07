@@ -63,7 +63,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
                 break;
             case "3.7.0":
                 log.info("Clearing cache to upgrade from version 3.7.0 to 3.7.1");
-                clearCacheByName(SECURITY_SETTINGS_CACHE);
+                clearAll();
                 break;
             default:
                 //Do nothing, since cache cleanup is optional.
@@ -85,7 +85,7 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
         if (redisTemplate.isPresent()) {
             log.info("Flushing all caches");
             redisTemplate.get().execute((RedisCallback<Object>) connection -> {
-                connection.flushAll();
+                connection.serverCommands().flushAll();
                 return null;
             });
             return;

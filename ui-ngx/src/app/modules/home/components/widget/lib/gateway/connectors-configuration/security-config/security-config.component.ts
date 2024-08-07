@@ -16,6 +16,7 @@
 
 import {
   ChangeDetectionStrategy,
+  ChangeDetectorRef,
   Component,
   forwardRef,
   Input,
@@ -87,7 +88,7 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
 
   private destroy$ = new Subject<void>();
 
-  constructor(private fb: FormBuilder) {}
+  constructor(private fb: FormBuilder, private cdr: ChangeDetectorRef) {}
 
   ngOnInit(): void {
     this.securityFormGroup = this.fb.group({
@@ -127,6 +128,7 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
       }
       this.securityFormGroup.reset(securityInfo, {emitEvent: false});
     }
+    this.cdr.markForCheck();
   }
 
   validate(): ValidationErrors | null {
