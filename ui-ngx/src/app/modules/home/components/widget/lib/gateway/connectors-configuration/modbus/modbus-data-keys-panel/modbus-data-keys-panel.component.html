@@ -26,12 +26,16 @@
             <mat-expansion-panel class="tb-settings" [expanded]="last">
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>
-                  <div class="title-container">
-                    <span *ngIf="isMaster else tagName">
-                      {{ keyControl.get('tag').value }}{{ '-' }}{{ keyControl.get('value').value }}
-                    </span>
-                    <ng-template #tagName>{{ keyControl.get('tag').value }}</ng-template>
+                  <div *ngIf="isMaster else tagName" class="title-container" tbTruncateWithTooltip>
+                    {{ keyControl.get('tag').value }}{{ '-' }}{{ keyControl.get('value').value }}
                   </div>
+                  <ng-template #tagName>
+                    <div class="tb-flex">
+                      <div class="title-container" tbTruncateWithTooltip>{{ 'gateway.key' | translate }}: {{ keyControl.get('tag').value }}</div>
+                      <div class="title-container">{{ 'gateway.address' | translate }}: {{ keyControl.get('address').value }}</div>
+                      <div class="title-container">{{ 'gateway.type' | translate }}: {{ keyControl.get('type').value }}</div>
+                    </div>
+                  </ng-template>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
@@ -98,7 +102,7 @@
                           name="value"
                           formControlName="objectsCount"
                           placeholder="{{ 'gateway.set' | translate }}"
-                          [readonly]="!editableDataTypes.includes(keyControl.get('type').value)"
+                          [readonly]="!ModbusEditableDataTypes.includes(keyControl.get('type').value)"
                         />
                       </mat-form-field>
                     </div>
