@@ -55,7 +55,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
+import { EntityInfoData, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -79,7 +79,7 @@ import { ImageService } from '@core/http/image.service';
 import { ImageExportData, ImageResourceInfo, ImageResourceType } from '@shared/models/resource.models';
 import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
-import { ExportableEntity } from '@shared/models/base-data';
+import { ExportableEntity, HasId } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
@@ -380,29 +380,33 @@ export class ImportExportService {
     });
   }
 
-  public exportEntity(entityId: EntityId): void {
-    switch (entityId.entityType) {
+  public exportEntity(entityData: EntityInfoData): void {
+    let preparedData;
+    switch (entityData.id.entityType) {
       case EntityType.DEVICE_PROFILE:
-        this.exportDeviceProfile(entityId.id);
-        break;
       case EntityType.ASSET_PROFILE:
-        this.exportAssetProfile(entityId.id);
+        preparedData = this.prepareProfileExport(entityData as DeviceProfile | AssetProfile);
         break;
       case EntityType.RULE_CHAIN:
-        this.exportRuleChain(entityId.id);
-        break;
+        this.ruleChainService.getRuleChainMetadata(entityData.id.id)
+          .pipe(
+            take(1),
+            map((ruleChainMetaData) => {
+              const ruleChainExport: RuleChainImport = {
+                ruleChain: this.prepareRuleChain(entityData as RuleChain),
+                metadata: this.prepareRuleChainMetaData(ruleChainMetaData)
+              };
+              return ruleChainExport;
+            }))
+          .subscribe(ruleChainData => this.exportToPc(ruleChainData, entityData.name));
+        return;
       case EntityType.DASHBOARD:
-        this.exportDashboard(entityId.id);
-        break;
-      case EntityType.WIDGET_TYPE:
-        this.exportWidgetType(entityId.id);
-        break;
-      case EntityType.WIDGETS_BUNDLE:
-        this.exportWidgetsBundle(entityId.id);
+        preparedData = this.prepareDashboardExport(entityData as Dashboard);
         break;
       default:
-        throwError(() => 'Not supported Entity Type');
+        preparedData = this.prepareExport(entityData);
     }
+    this.exportToPc(preparedData, entityData.name);
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
@@ -1132,6 +1136,9 @@ export class ImportExportService {
     }
     if (isDefined(exportedData.externalId)) {
       delete exportedData.externalId;
+    }
+    if (isDefined(exportedData.version)) {
+      delete exportedData.version;
     }
     return exportedData;
   }

@@ -22,9 +22,9 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { AssetProfileId } from '@shared/models/id/asset-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { DashboardId } from '@shared/models/id/dashboard-id';
-import { EntityInfoData, HasTenantId } from '@shared/models/entity.models';
+import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
 
-export interface AssetProfile extends BaseData<AssetProfileId>, HasTenantId, ExportableEntity<AssetProfileId> {
+export interface AssetProfile extends BaseData<AssetProfileId>, HasTenantId, HasVersion, ExportableEntity<AssetProfileId> {
   tenantId?: TenantId;
   name: string;
   description?: string;
@@ -42,7 +42,7 @@ export interface AssetProfileInfo extends EntityInfoData {
   defaultDashboardId?: DashboardId;
 }
 
-export interface Asset extends BaseData<AssetId>, HasTenantId, ExportableEntity<AssetId> {
+export interface Asset extends BaseData<AssetId>, HasTenantId, HasVersion, ExportableEntity<AssetId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;

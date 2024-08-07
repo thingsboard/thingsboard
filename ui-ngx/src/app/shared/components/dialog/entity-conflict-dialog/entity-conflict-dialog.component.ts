@@ -18,14 +18,13 @@ import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { SharedModule } from '@shared/shared.module';
 import { ImportExportService } from '@shared/import-export/import-export.service';
-import { ExportableEntityTypes } from '@shared/import-export/import-export.models';
-import { EntityId } from '@shared/models/id/entity-id';
 import { CommonModule } from '@angular/common';
-import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
+import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityInfoData } from '@shared/models/entity.models';
 
 interface EntityConflictDialogData {
   message: string;
-  entityId: EntityId & {entityType: EntityType};
+  entity: EntityInfoData;
 }
 
 @Component({
@@ -39,7 +38,6 @@ interface EntityConflictDialogData {
   ],
 })
 export class EntityConflictDialogComponent {
-  readonly ExportableEntityTypes = ExportableEntityTypes;
   readonly entityTypeTranslations = entityTypeTranslations;
 
   constructor(
@@ -58,6 +56,6 @@ export class EntityConflictDialogComponent {
 
   onLinkClick(event: MouseEvent): void {
     event.preventDefault();
-    this.importExportService.exportEntity(this.data.entityId);
+    this.importExportService.exportEntity(this.data.entity);
   }
 }

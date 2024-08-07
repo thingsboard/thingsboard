@@ -16,48 +16,76 @@
 
 import { Injectable } from '@angular/core';
 import {
+  HttpErrorResponse,
   HttpEvent,
   HttpHandler,
   HttpInterceptor,
   HttpRequest,
-  HttpErrorResponse,
   HttpStatusCode
 } from '@angular/common/http';
-import { Observable, throwError, of } from 'rxjs';
+import { Observable, of, throwError } from 'rxjs';
 import { catchError, switchMap } from 'rxjs/operators';
 import { MatDialog } from '@angular/material/dialog';
-import { EntityConflictDialogComponent } from '@shared/components/dialog/entity-conflict-dialog/entity-conflict-dialog.component';
-import { EntityId } from '@shared/models/id/entity-id';
-
-interface ConflictedEntity { version: number; id: EntityId }
+import {
+  EntityConflictDialogComponent
+} from '@shared/components/dialog/entity-conflict-dialog/entity-conflict-dialog.component';
+import { InterceptorConfigService } from '@core/services/interceptor-config.service';
+import { HasId } from '@shared/models/base-data';
+import { HasVersion } from '@shared/models/entity.models';
 
 @Injectable()
 export class EntityConflictInterceptor implements HttpInterceptor {
-  constructor(private dialog: MatDialog) {}
 
-  intercept(request: HttpRequest<unknown & ConflictedEntity>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+  constructor(
+    private dialog: MatDialog,
+    private interceptorConfigService: InterceptorConfigService
+  ) {}
+
+  intercept(request: HttpRequest<unknown & HasId & HasVersion>, next: HttpHandler): Observable<HttpEvent<unknown>> {
+    if (!request.url.startsWith('/api/')) {
+      return next.handle(request);
+    }
+
     return next.handle(request).pipe(
       catchError((error: HttpErrorResponse) => {
-        if (error.status === HttpStatusCode.Conflict) {
-          return this.resolveConflictRequest(request, error.error.message)
-            .pipe(switchMap(httpRequest => next.handle(httpRequest)));
-        } else {
+        if (error.status !== HttpStatusCode.Conflict) {
           return throwError(() => error);
         }
+
+        return this.handleConflictError(request, next, error);
       })
     );
   }
 
-  private resolveConflictRequest(request: HttpRequest<unknown & ConflictedEntity>, message: string): Observable<HttpRequest<unknown>> {
-    const dialogRef = this.dialog.open(EntityConflictDialogComponent, {data: {message, entityId: request.body.id}});
+  private handleConflictError(
+    request: HttpRequest<unknown & HasId & HasVersion>,
+    next: HttpHandler,
+    error: HttpErrorResponse
+  ): Observable<HttpEvent<unknown>> {
+    if (this.interceptorConfigService.getInterceptorConfig(request).ignoreVersionConflict) {
+      return next.handle(this.updateRequestVersion(request));
+    }
 
-    return dialogRef.afterClosed().pipe(
+    return this.openConflictDialog(request, error.error.message).pipe(
       switchMap(result => {
         if (result) {
-          request.body.version = null;
+          return next.handle(this.updateRequestVersion(request));
         }
-        return of(request);
+        return of(null);
       })
     );
+  }
+
+  private updateRequestVersion(request: HttpRequest<unknown & HasId & HasVersion>): HttpRequest<unknown & HasId & HasVersion> {
+    const body = { ...request.body, version: null };
+    return request.clone({ body });
+  }
+
+  private openConflictDialog(request: HttpRequest<unknown & HasId & HasVersion>, message: string): Observable<boolean> {
+    const dialogRef = this.dialog.open(EntityConflictDialogComponent, {
+      data: { message, entity: request.body }
+    });
+
+    return dialogRef.afterClosed();
   }
 }

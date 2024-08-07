@@ -27,9 +27,9 @@
 <div mat-dialog-content>
   <div class="message-container">
     <span>{{ data.message }}.</span>
-    <span *ngIf="ExportableEntityTypes.includes(data.entityId.entityType)">
+    <span>
       {{ 'entity.version-conflict.link' | translate:
-    { entityType: (entityTypeTranslations.get(data.entityId.entityType).type | translate) }
+    { entityType: (entityTypeTranslations.get(data.entity.id.entityType).type | translate) }
       }}
       <a class="cursor-pointer" (click)="onLinkClick($event)">{{ 'entity.link' | translate }}</a>.
     </span>
