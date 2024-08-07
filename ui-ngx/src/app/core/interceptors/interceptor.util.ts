@@ -19,6 +19,7 @@ import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 
 export class InterceptorUtil {
+
   private static readonly internalUrlPrefixes = [
     '/api/auth/token',
     '/api/rpc'
