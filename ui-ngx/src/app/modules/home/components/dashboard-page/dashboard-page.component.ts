@@ -483,6 +483,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (!this.widgetEditMode && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
       this.setEditMode(true, false);
     }
+    this.setEditMode(true, false);
   }
 
   private init(data: DashboardPageInitData) {

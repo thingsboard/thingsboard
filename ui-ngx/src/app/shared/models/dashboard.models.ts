@@ -51,7 +51,8 @@ export interface WidgetLayouts {
 
 export enum LayoutType {
   default = 'default',
-  scada = 'scada'
+  scada = 'scada',
+  divider = 'divider',
 }
 
 export const layoutTypes = Object.keys(LayoutType) as LayoutType[];
@@ -59,7 +60,8 @@ export const layoutTypes = Object.keys(LayoutType) as LayoutType[];
 export const layoutTypeTranslationMap = new Map<LayoutType, string>(
   [
     [ LayoutType.default, 'dashboard.layout-type-default' ],
-    [ LayoutType.scada, 'dashboard.layout-type-scada' ]
+    [ LayoutType.scada, 'dashboard.layout-type-scada' ],
+    [ LayoutType.divider, 'dashboard.layout-type-divider' ],
   ]
 );
 

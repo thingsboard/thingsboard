@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
+import { Component, Inject, OnDestroy, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -32,8 +32,14 @@ import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { DashboardLayoutId, DashboardStateLayouts, LayoutDimension } from '@app/shared/models/dashboard.models';
-import { deepClone, isDefined } from '@core/utils';
+import {
+  DashboardLayout,
+  DashboardLayoutId,
+  DashboardStateLayouts,
+  LayoutDimension, LayoutType, layoutTypes,
+  layoutTypeTranslationMap
+} from '@app/shared/models/dashboard.models';
+import { deepClone, isDefined, isEqual } from '@core/utils';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import {
   DashboardSettingsDialogComponent,
@@ -46,9 +52,19 @@ import {
 } from '@home/components/dashboard-page/layout/layout.models';
 import { Subscription } from 'rxjs';
 import { MatTooltip } from '@angular/material/tooltip';
+import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
+import { MediaBreakpoints } from '@shared/models/constants';
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
+}
+
+export interface DashboardLayoutSettings {
+  icon: string;
+  name: string;
+  descriptionSize?: string;
+  layout: DashboardLayout;
+  breakpoint: string;
 }
 
 @Component({
@@ -58,11 +74,12 @@ export interface ManageDashboardLayoutsDialogData {
   styleUrls: ['./manage-dashboard-layouts-dialog.component.scss', '../../../components/dashboard/layout-button.scss']
 })
 export class ManageDashboardLayoutsDialogComponent extends DialogComponent<ManageDashboardLayoutsDialogComponent, DashboardStateLayouts>
-  implements ErrorStateMatcher {
+  implements ErrorStateMatcher, OnDestroy {
 
   @ViewChild('tooltip', {static: true}) tooltip: MatTooltip;
 
   layoutsFormGroup: UntypedFormGroup;
+  addBreakpointFormGroup: UntypedFormGroup;
 
   layoutWidthType = LayoutWidthType;
 
@@ -70,11 +87,31 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layoutFixedSize = LayoutFixedSize;
 
+  layoutTypes = layoutTypes;
+  layoutTypeTranslations = layoutTypeTranslationMap;
+
+  dataSource: DashboardLayoutDatasource;
+
+  addBreakpointMode = false;
+
+  private layoutBreakpoints: DashboardLayoutSettings[] = [];
   private readonly layouts: DashboardStateLayouts;
 
   private subscriptions: Array<Subscription> = [];
 
   private submitted = false;
+
+  private layoutBreakpoint = {
+    default: 'Default',
+    xs: 'xs',
+    sm: 'sm',
+    md: 'md',
+    lg: 'lg',
+    xl: 'xl'
+  };
+
+  allowLayoutBreakpoints = Object.keys(this.layoutBreakpoint);
+  selectedLayoutBreakpoints = ['default'];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -89,10 +126,18 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     super(store, router, dialogRef);
 
     this.layouts = this.data.layouts;
+    this.dataSource = new DashboardLayoutDatasource();
+
+    let layoutType = LayoutType.default;
+    if (isDefined(this.layouts.right)) {
+      layoutType = LayoutType.divider;
+    } else if (isDefined(this.layouts.main.gridSettings.layoutType)) {
+      layoutType = this.layouts.main.gridSettings.layoutType;
+    }
 
     this.layoutsFormGroup = this.fb.group({
+        layoutType: [layoutType],
         main: [{value: isDefined(this.layouts.main), disabled: true}],
-        right: [isDefined(this.layouts.right)],
         sliderPercentage: [50],
         sliderFixed: [this.layoutFixedSize.MIN],
         leftWidthPercentage: [50,
@@ -105,6 +150,11 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
         fixedLayout: ['main', []]
       }
     );
+
+    this.addBreakpointFormGroup = this.fb.group({
+      new: [],
+      copyFrom: []
+    });
 
     this.subscriptions.push(
       this.layoutsFormGroup.get('type').valueChanges.subscribe(
@@ -141,7 +191,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
             sliderFixed: this.layouts.main.gridSettings.layoutDimension.fixedWidth
           }, {emitEvent: false});
         } else {
-          const leftWidthPercentage: number = Number(this.layouts.main.gridSettings.layoutDimension.leftWidthPercentage);
+          const leftWidthPercentage = Number(this.layouts.main.gridSettings.layoutDimension.leftWidthPercentage);
           this.layoutsFormGroup.patchValue({
             leftWidthPercentage,
             sliderPercentage: leftWidthPercentage,
@@ -157,6 +207,31 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     if (!this.layouts.right) {
       this.layouts.right = this.dashboardUtils.createDefaultLayoutData();
     }
+
+    this.layoutBreakpoints.push({
+      icon: 'mdi:monitor',
+      name: 'Default',
+      layout: this.layouts.main,
+      breakpoint: 'default'
+    });
+
+    if (!this.isDividerLayout && this.layouts.main.breakpoints) {
+      for (const breakpoint of Object.keys(this.layouts.main.breakpoints)) {
+        this.layoutBreakpoints.push({
+          icon: 'mdi:monitor',
+          name: breakpoint,
+          layout: this.layouts.main.breakpoints[breakpoint],
+          descriptionSize: MediaBreakpoints[breakpoint],
+          breakpoint
+        });
+        this.selectedLayoutBreakpoints.push(breakpoint);
+      }
+    }
+
+    this.allowLayoutBreakpoints = Object.keys(this.layoutBreakpoint)
+      .filter((item) => !this.selectedLayoutBreakpoints.includes(item));
+
+    this.dataSource.loadData(this.layoutBreakpoints);
 
     this.subscriptions.push(
       this.layoutsFormGroup.get('sliderPercentage').valueChanges
@@ -209,8 +284,13 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     return originalErrorState || customErrorState;
   }
 
-  openLayoutSettings(layoutId: DashboardLayoutId) {
-    const gridSettings = deepClone(this.layouts[layoutId].gridSettings);
+  openLayoutSettings(layoutId: DashboardLayoutId, breakpoint?: string) {
+    let gridSettings;
+    if (isDefined(breakpoint) && breakpoint !== 'default') {
+      gridSettings = deepClone(this.layouts[layoutId].breakpoints[breakpoint].gridSettings);
+    } else {
+      gridSettings = deepClone(this.layouts[layoutId].gridSettings);
+    }
     this.dialog.open<DashboardSettingsDialogComponent, DashboardSettingsDialogData,
       DashboardSettingsDialogData>(DashboardSettingsDialogComponent, {
       disableClose: true,
@@ -218,7 +298,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       data: {
         settings: null,
         gridSettings,
-        isRightLayout: this.layoutsFormGroup.get('right').value && layoutId === 'right'
+        isRightLayout: this.isDividerLayout && layoutId === 'right'
       }
     }).afterClosed().subscribe((data) => {
       if (data && data.gridSettings) {
@@ -234,14 +314,16 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   save(): void {
     this.submitted = true;
-    const layouts = ['main', 'right'];
-    for (const l of layouts) {
-      const control = this.layoutsFormGroup.controls[l];
-      if (!control.value) {
-        if (this.layouts[l]) {
-          delete this.layouts[l];
-        }
+    const layoutType = this.layoutsFormGroup.value.layoutType;
+    this.layouts.main.gridSettings.layoutType = layoutType;
+    if (!this.isDividerLayout) {
+      delete this.layouts.right;
+      for (const breakpoint of Object.values(this.layouts.main.breakpoints)) {
+        breakpoint.gridSettings.layoutType = layoutType;
       }
+    } else {
+      delete this.layouts.main.breakpoints;
+      this.layouts.right.gridSettings.layoutType = layoutType;
     }
     delete this.layouts.main.gridSettings.layoutDimension;
     if (this.layouts.right?.gridSettings) {
@@ -271,7 +353,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   buttonFlexValue(): number {
     const formValues = this.layoutsFormGroup.value;
-    if (formValues.right) {
+    if (this.isDividerLayout) {
       if (formValues.type !== LayoutWidthType.FIXED) {
         return formValues.leftWidthPercentage;
       } else {
@@ -296,7 +378,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
   }
 
   setFixedLayout(layout: string): void {
-    if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED && this.layoutsFormGroup.get('right').value) {
+    if (this.layoutsFormGroup.get('type').value === LayoutWidthType.FIXED && this.isDividerLayout) {
       this.layoutsFormGroup.get('fixedLayout').setValue(layout);
       this.layoutsFormGroup.get('fixedLayout').markAsDirty();
     }
@@ -339,7 +421,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layoutButtonClass(side: DashboardLayoutId, border: boolean = false): string {
     const formValues = this.layoutsFormGroup.value;
-    if (formValues.right) {
+    if (this.isDividerLayout) {
       let classString = border ? 'tb-layout-button-main ' : '';
       if (!(formValues.fixedLayout === side || formValues.type === LayoutWidthType.PERCENTAGE)) {
         classString += 'tb-fixed-layout-button';
@@ -350,7 +432,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   layoutButtonText(side: DashboardLayoutId): string {
     const formValues = this.layoutsFormGroup.value;
-    if (!(formValues.fixedLayout === side || !formValues.right || formValues.type === LayoutWidthType.PERCENTAGE)) {
+    if (!(formValues.fixedLayout === side || !this.isDividerLayout || formValues.type === LayoutWidthType.PERCENTAGE)) {
       if (side === 'main') {
         return this.translate.instant('layout.left-side');
       } else {
@@ -361,6 +443,66 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   showPreviewInputs(side: DashboardLayoutId): boolean {
     const formValues = this.layoutsFormGroup.value;
-    return formValues.right && (formValues.type === LayoutWidthType.PERCENTAGE || formValues.fixedLayout === side);
+    return this.isDividerLayout && (formValues.type === LayoutWidthType.PERCENTAGE || formValues.fixedLayout === side);
+  }
+
+  get isDividerLayout(): boolean {
+    return this.layoutsFormGroup.get('layoutType').value === LayoutType.divider;
+  }
+
+  deleteBreakpoint(breakpoint: string): void {
+    delete this.layouts.main.breakpoints[breakpoint];
+    if (isEqual(this.layouts.main.breakpoints, {})) {
+      delete this.layouts.main.breakpoints;
+    }
+    this.layoutBreakpoints = this.layoutBreakpoints.filter((item) => item.breakpoint !== breakpoint);
+    this.dataSource.loadData(this.layoutBreakpoints);
+    this.layoutsFormGroup.markAsDirty();
+  }
+
+  addBreakpoint() {
+    this.addBreakpointMode = !this.addBreakpointMode;
+    if (this.addBreakpointMode) {
+      this.addBreakpointFormGroup.reset({
+        new: this.allowLayoutBreakpoints[0],
+        copyFrom: 'default'
+      });
+    }
+  }
+
+  createdBreakPoint() {
+    const layoutConfig = this.layouts.main;
+    const newBreakpoint = this.addBreakpointFormGroup.value.new;
+    const sourceBreakpoint = this.addBreakpointFormGroup.value.copyFrom;
+    const sourceLayout = sourceBreakpoint === 'default' ? layoutConfig : layoutConfig.breakpoints[sourceBreakpoint];
+
+    if (!layoutConfig.breakpoints) {
+      layoutConfig.breakpoints = {};
+    }
+
+    layoutConfig.breakpoints[newBreakpoint] = {
+      gridSettings: deepClone(sourceLayout.gridSettings),
+      widgets: deepClone(sourceLayout.widgets),
+    };
+    this.selectedLayoutBreakpoints.push(newBreakpoint);
+    this.allowLayoutBreakpoints = this.allowLayoutBreakpoints.filter((item) => item !== newBreakpoint);
+
+    this.layoutBreakpoints.push({
+      icon: 'mdi:monitor',
+      name: newBreakpoint,
+      layout: this.layouts.main.breakpoints[newBreakpoint],
+      descriptionSize: MediaBreakpoints[newBreakpoint],
+      breakpoint: newBreakpoint
+    });
+
+    this.dataSource.loadData(this.layoutBreakpoints);
+
+    this.addBreakpointMode = false;
+  }
+}
+
+export class DashboardLayoutDatasource extends TbTableDatasource<DashboardLayoutSettings> {
+  constructor() {
+    super();
   }
 }

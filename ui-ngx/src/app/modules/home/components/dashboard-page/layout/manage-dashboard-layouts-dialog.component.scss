@@ -15,6 +15,7 @@
  */
 @use '@angular/material' as mat;
 @import '../theme.scss';
+@import '../scss/constants.scss';
 
 $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
 
@@ -120,6 +121,39 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
         }
       }
     }
+  }
+
+  .tb-layout-breakpoints {
+    .tb-form-table-header-cell, .tb-form-table-row-cell {
+      &.tb-icon-breakpoint {
+        width: 48px;
+        min-width: 48px;
+      }
+
+      &.tb-devices-header, &.tb-size-header {
+        flex: 1;
+        min-width: 120px;
+      }
+
+      &.tb-actions-header {
+        width: 80px;
+        min-width: 80px;
+        display: flex;
+        justify-content: end;
+      }
+    }
+  }
+
+  .tb-add-breakpoint-button {
+    cursor: pointer;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    background: #FFFFFF;
+    padding: 8px;
+    border: 2px dashed rgba(0, 0, 0, 0.08);
+    border-radius: 10px;
   }
 }
 
