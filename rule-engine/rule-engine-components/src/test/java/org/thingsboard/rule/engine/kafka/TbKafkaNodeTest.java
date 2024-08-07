@@ -181,12 +181,11 @@ public class TbKafkaNodeTest {
     }
 
     @Test
-    public void givenInitErrorIsNotNull_whenOnMsg_thenTellFailure() throws TbNodeException {
+    public void givenInitErrorIsNotNull_whenOnMsg_thenTellFailure() {
         // GIVEN
-        mockSuccessfulInit();
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         String errorMsg = "Error during kafka initialization!";
-        ReflectionTestUtils.setField(node, "initError", new RuntimeException(errorMsg));
+        ReflectionTestUtils.setField(node, "config", config);
+        ReflectionTestUtils.setField(node, "initError", new ThingsboardKafkaClientError(errorMsg));
 
         // WHEN
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
