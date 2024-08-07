@@ -18,32 +18,29 @@ import { HttpRequest } from '@angular/common/http';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 
-export class InterceptorUtil {
+const internalUrlPrefixes = [
+  '/api/auth/token',
+  '/api/rpc'
+];
 
-  private static readonly internalUrlPrefixes = [
-    '/api/auth/token',
-    '/api/rpc'
-  ];
-
-  static getConfig(req: HttpRequest<unknown>): InterceptorConfig {
-    let config: InterceptorConfig;
-    if (req.params && req.params instanceof InterceptorHttpParams) {
-      config = (req.params as InterceptorHttpParams).interceptorConfig;
-    } else {
-      config = new InterceptorConfig();
-    }
-    if (this.isInternalUrlPrefix(req.url)) {
-      config.ignoreLoading = true;
-    }
-    return config;
+export const getInterceptorConfig = (req: HttpRequest<unknown>): InterceptorConfig => {
+  let config: InterceptorConfig;
+  if (req.params && req.params instanceof InterceptorHttpParams) {
+    config = (req.params as InterceptorHttpParams).interceptorConfig;
+  } else {
+    config = new InterceptorConfig();
   }
-
-  private static isInternalUrlPrefix(url: string): boolean {
-    for (const prefix of this.internalUrlPrefixes) {
-      if (url.startsWith(prefix)) {
-        return true;
-      }
-    }
-    return false;
+  if (isInternalUrlPrefix(req.url)) {
+    config.ignoreLoading = true;
   }
-}
+  return config;
+};
+
+const isInternalUrlPrefix = (url: string): boolean => {
+  for (const prefix of internalUrlPrefixes) {
+    if (url.startsWith(prefix)) {
+      return true;
+    }
+  }
+  return false;
+};

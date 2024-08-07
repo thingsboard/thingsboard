@@ -31,7 +31,7 @@ import {
 } from '@shared/components/dialog/entity-conflict-dialog/entity-conflict-dialog.component';
 import { HasId } from '@shared/models/base-data';
 import { HasVersion } from '@shared/models/entity.models';
-import { InterceptorUtil } from './interceptor.util';
+import { getInterceptorConfig } from './interceptor.util';
 
 @Injectable()
 export class EntityConflictInterceptor implements HttpInterceptor {
@@ -61,8 +61,8 @@ export class EntityConflictInterceptor implements HttpInterceptor {
     next: HttpHandler,
     error: HttpErrorResponse
   ): Observable<HttpEvent<unknown>> {
-    if (InterceptorUtil.getConfig(request).ignoreVersionConflict) {
-      return next.handle(this.updateRequestVersion(request));
+    if (getInterceptorConfig(request).ignoreVersionConflict) {
+      return throwError(() => error);
     }
 
     return this.openConflictDialog(request.body, error.error.message).pipe(

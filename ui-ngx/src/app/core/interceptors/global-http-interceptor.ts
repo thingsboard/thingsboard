@@ -29,7 +29,7 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { parseHttpErrorMessage } from '@core/utils';
-import { InterceptorUtil } from './interceptor.util';
+import { getInterceptorConfig } from './interceptor.util';
 
 const tmpHeaders = {};
 
@@ -50,7 +50,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (req.url.startsWith('/api/')) {
-      const config = InterceptorUtil.getConfig(req);
+      const config = getInterceptorConfig(req);
       this.updateLoadingState(config, true);
       let observable$: Observable<HttpEvent<any>>;
       if (this.isTokenBasedAuthEntryPoint(req.url)) {
@@ -94,7 +94,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   }
 
   private handleResponseError(req: HttpRequest<any>, next: HttpHandler, errorResponse: HttpErrorResponse): Observable<HttpEvent<any>> {
-    const config = InterceptorUtil.getConfig(req);
+    const config = getInterceptorConfig(req);
     let unhandled = false;
     const ignoreErrors = config.ignoreErrors;
     const resendRequest = config.resendRequest;
