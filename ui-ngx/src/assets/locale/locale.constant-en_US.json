@@ -2848,6 +2848,7 @@
         "gateway-configuration": "General Configuration",
         "docker-label": "Use the following instruction to run IoT Gateway in Docker compose with credentials for selected device",
         "install-docker-compose": "Use the instructions to download, install and setup docker compose",
+        "devices": "Devices",
         "device-info-settings": "Device info settings",
         "device-info": {
             "entity-field": "Entity field",
