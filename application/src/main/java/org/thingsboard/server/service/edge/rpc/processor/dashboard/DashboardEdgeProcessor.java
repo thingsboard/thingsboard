@@ -18,16 +18,19 @@ package org.thingsboard.server.service.edge.rpc.processor.dashboard;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DashboardUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -40,6 +43,9 @@ import java.util.UUID;
 
 @Slf4j
 public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor implements DashboardProcessor {
+
+    @Autowired
+    private RelatedEdgeIdsService edgeIdsService;
 
     @Override
     public ListenableFuture<Void> processDashboardMsgFromEdge(TenantId tenantId, Edge edge, DashboardUpdateMsg dashboardUpdateMsg) {
@@ -120,6 +126,9 @@ public abstract class DashboardEdgeProcessor extends BaseDashboardProcessor impl
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addDashboardUpdateMsg(dashboardUpdateMsg)
                         .build();
+                if (edgeEvent.getAction() == EdgeEventActionType.DELETED) {
+                    edgeIdsService.publishRelatedEdgeIdsEvictEvent(edgeEvent.getTenantId(), dashboardId);
+                }
             }
         }
         return downlinkMsg;

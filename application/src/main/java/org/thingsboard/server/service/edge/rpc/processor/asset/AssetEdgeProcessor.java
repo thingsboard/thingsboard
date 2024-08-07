@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.asset;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
@@ -43,6 +45,9 @@ import java.util.UUID;
 
 @Slf4j
 public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements AssetProcessor {
+
+    @Autowired
+    private RelatedEdgeIdsService edgeIdsService;
 
     @Override
     public ListenableFuture<Void> processAssetMsgFromEdge(TenantId tenantId, Edge edge, AssetUpdateMsg assetUpdateMsg) {
@@ -133,6 +138,9 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addAssetUpdateMsg(assetUpdateMsg)
                         .build();
+                if (edgeEvent.getAction() == EdgeEventActionType.DELETED) {
+                    edgeIdsService.publishRelatedEdgeIdsEvictEvent(edgeEvent.getTenantId(), assetId);
+                }
             }
         }
         return downlinkMsg;

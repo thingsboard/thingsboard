@@ -18,6 +18,7 @@ package org.thingsboard.server.service.edge.rpc.processor.entityview;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.util.Pair;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EdgeUtils;
@@ -30,6 +31,7 @@ import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
@@ -41,6 +43,9 @@ import java.util.UUID;
 
 @Slf4j
 public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor implements EntityViewProcessor {
+
+    @Autowired
+    private RelatedEdgeIdsService edgeIdsService;
 
     @Override
     public ListenableFuture<Void> processEntityViewMsgFromEdge(TenantId tenantId, Edge edge, EntityViewUpdateMsg entityViewUpdateMsg) {
@@ -124,6 +129,9 @@ public abstract class EntityViewEdgeProcessor extends BaseEntityViewProcessor im
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addEntityViewUpdateMsg(entityViewUpdateMsg)
                         .build();
+                if (edgeEvent.getAction() == EdgeEventActionType.DELETED) {
+                    edgeIdsService.publishRelatedEdgeIdsEvictEvent(edgeEvent.getTenantId(), entityViewId);
+                }
             }
         }
         return downlinkMsg;
