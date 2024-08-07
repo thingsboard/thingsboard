@@ -29,7 +29,7 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { parseHttpErrorMessage } from '@core/utils';
-import { InterceptorUtil } from '@core/interceptors/interceptor.util';
+import { InterceptorUtil } from './interceptor.util';
 
 const tmpHeaders = {};
 

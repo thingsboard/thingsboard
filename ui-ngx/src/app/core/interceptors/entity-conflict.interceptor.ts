@@ -31,7 +31,7 @@ import {
 } from '@shared/components/dialog/entity-conflict-dialog/entity-conflict-dialog.component';
 import { HasId } from '@shared/models/base-data';
 import { HasVersion } from '@shared/models/entity.models';
-import { InterceptorUtil } from '@core/utils/interceptor.util';
+import { InterceptorUtil } from './interceptor.util';
 
 @Injectable()
 export class EntityConflictInterceptor implements HttpInterceptor {
