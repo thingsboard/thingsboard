@@ -99,6 +99,9 @@ import * as TbJsonPipe from '@shared/pipe/tbJson.pipe';
 import * as TruncatePipe from '@shared/pipe/truncate.pipe';
 import * as ImagePipe from '@shared/pipe/image.pipe';
 
+import * as EllipsisChipListDirective from '@shared/directives/ellipsis-chip-list.directive';
+import * as TruncateWithTooltipDirective from '@shared/directives/truncate-with-tooltip.directive';
+
 import * as coercion from '@shared/decorators/coercion';
 import * as enumerable from '@shared/decorators/enumerable';
 import * as TbInject from '@shared/decorators/tb-inject';
@@ -421,6 +424,9 @@ class ModulesMap implements IModulesMap {
     '@shared/pipe/tbJson.pipe': TbJsonPipe,
     '@shared/pipe/truncate.pipe': TruncatePipe,
     '@shared/pipe/image.pipe': ImagePipe,
+
+    '@shared/directives/ellipsis-chip-list.directive': EllipsisChipListDirective,
+    '@shared/directives/truncate-with-tooltip.directive': TruncateWithTooltipDirective,
 
     '@shared/decorators/coercion': coercion,
     '@shared/decorators/enumerable': enumerable,

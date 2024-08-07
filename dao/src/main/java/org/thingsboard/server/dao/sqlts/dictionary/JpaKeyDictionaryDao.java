@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.dao.sqlts.dictionary;
 
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.hibernate.exception.ConstraintViolationException;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Propagation;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryCompositeKey;
 import org.thingsboard.server.dao.model.sqlts.dictionary.KeyDictionaryEntry;
@@ -34,14 +36,15 @@ import java.util.concurrent.locks.ReentrantLock;
 @Component
 @Slf4j
 @SqlDao
+@RequiredArgsConstructor
 public class JpaKeyDictionaryDao extends JpaAbstractDaoListeningExecutorService implements KeyDictionaryDao {
 
+    private final KeyDictionaryRepository keyDictionaryRepository;
+
     private final ConcurrentMap<String, Integer> keyDictionaryMap = new ConcurrentHashMap<>();
-    protected static final ReentrantLock creationLock = new ReentrantLock();
+    private static final ReentrantLock creationLock = new ReentrantLock();
 
-    @Autowired
-    private KeyDictionaryRepository keyDictionaryRepository;
-
+    @Transactional(propagation = Propagation.NOT_SUPPORTED)
     @Override
     public Integer getOrSaveKeyId(String strKey) {
         Integer keyId = keyDictionaryMap.get(strKey);

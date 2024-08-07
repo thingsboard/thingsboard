@@ -41,8 +41,32 @@
       </button>
     </ng-container>
     <ng-template #connectorForm>
-      <tb-gateway-service-rpc-connector formControlName="params" [connectorType]="connectorType"
-                                        (sendCommand)="sendCommand()" (saveTemplate)="saveTemplate()"/>
+      <tb-gateway-service-rpc-connector
+        *ngIf="connectorType !== ConnectorType.MODBUS else modbusParameters"
+        formControlName="params"
+        [connectorType]="connectorType"
+        (sendCommand)="sendCommand()"
+        (saveTemplate)="saveTemplate()"
+      />
+      <ng-template #modbusParameters>
+        <div fxLayout="column" class="rpc-parameters">
+          <div class="mat-subtitle-1 tb-form-panel-title">{{ 'gateway.rpc.title' | translate: {type: gatewayConnectorDefaultTypesTranslates.get(connectorType)} }}</div>
+          <tb-modbus-rpc-parameters formControlName="params"/>
+          <div class="template-actions" fxFlex fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="10px">
+            <button mat-raised-button
+                    (click)="saveTemplate()"
+                    [disabled]="commandForm.get('params').invalid">
+              {{ 'gateway.rpc-command-save-template' | translate }}
+            </button>
+            <button mat-raised-button
+                    color="primary"
+                    (click)="sendCommand()"
+                    [disabled]="commandForm.get('params').invalid">
+              {{ 'gateway.rpc-command-send' | translate }}
+            </button>
+          </div>
+        </div>
+      </ng-template>
     </ng-template>
   </div>
   <section class="result-block" [formGroup]="commandForm">
