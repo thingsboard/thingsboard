@@ -74,10 +74,6 @@ public class TbAzureIotHubNode extends TbMqttNode {
         }
     }
 
-    TbMqttNodeConfiguration getMqttNodeConfiguration() {
-        return this.mqttNodeConfiguration;
-    }
-
     MqttClient initAzureClient(TbContext ctx) throws Exception {
         return initClient(ctx);
     }

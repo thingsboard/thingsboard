@@ -21,6 +21,7 @@ import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.AzureIotHubUtil;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.mqtt.MqttClient;
@@ -98,7 +99,8 @@ public class TbAzureIotHubNodeTest {
         assertThatNoException().isThrownBy(
                 () -> azureIotHubNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(azureIotHubNodeConfig))));
 
-        TbMqttNodeConfiguration mqttNodeConfiguration = azureIotHubNode.getMqttNodeConfiguration();
+        var mqttNodeConfiguration = (TbMqttNodeConfiguration) ReflectionTestUtils.getField(azureIotHubNode, "mqttNodeConfiguration");
+        assertThat(mqttNodeConfiguration).isNotNull();
         assertThat(mqttNodeConfiguration.getPort()).isEqualTo(8883);
         assertThat(mqttNodeConfiguration.isCleanSession()).isTrue();
     }
