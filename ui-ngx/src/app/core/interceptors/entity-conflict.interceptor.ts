@@ -29,16 +29,15 @@ import { MatDialog } from '@angular/material/dialog';
 import {
   EntityConflictDialogComponent
 } from '@shared/components/dialog/entity-conflict-dialog/entity-conflict-dialog.component';
-import { InterceptorConfigService } from '@core/services/interceptor-config.service';
 import { HasId } from '@shared/models/base-data';
 import { HasVersion } from '@shared/models/entity.models';
+import { InterceptorUtil } from '@core/utils/interceptor.util';
 
 @Injectable()
 export class EntityConflictInterceptor implements HttpInterceptor {
 
   constructor(
     private dialog: MatDialog,
-    private interceptorConfigService: InterceptorConfigService
   ) {}
 
   intercept(request: HttpRequest<unknown & HasId & HasVersion>, next: HttpHandler): Observable<HttpEvent<unknown>> {
@@ -62,11 +61,11 @@ export class EntityConflictInterceptor implements HttpInterceptor {
     next: HttpHandler,
     error: HttpErrorResponse
   ): Observable<HttpEvent<unknown>> {
-    if (this.interceptorConfigService.getInterceptorConfig(request).ignoreVersionConflict) {
+    if (InterceptorUtil.getConfig(request).ignoreVersionConflict) {
       return next.handle(this.updateRequestVersion(request));
     }
 
-    return this.openConflictDialog(request, error.error.message).pipe(
+    return this.openConflictDialog(request.body, error.error.message).pipe(
       switchMap(result => {
         if (result) {
           return next.handle(this.updateRequestVersion(request));
@@ -81,9 +80,9 @@ export class EntityConflictInterceptor implements HttpInterceptor {
     return request.clone({ body });
   }
 
-  private openConflictDialog(request: HttpRequest<unknown & HasId & HasVersion>, message: string): Observable<boolean> {
+  private openConflictDialog(entity: unknown & HasId & HasVersion, message: string): Observable<boolean> {
     const dialogRef = this.dialog.open(EntityConflictDialogComponent, {
-      data: { message, entity: request.body }
+      data: { message, entity }
     });
 
     return dialogRef.afterClosed();

@@ -14,22 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Injectable } from '@angular/core';
 import { HttpRequest } from '@angular/common/http';
 import { InterceptorConfig } from '@core/interceptors/interceptor-config';
 import { InterceptorHttpParams } from '@core/interceptors/interceptor-http-params';
 
-@Injectable({
-  providedIn: 'root'
-})
-export class InterceptorConfigService {
-
-  private readonly internalUrlPrefixes = [
+export class InterceptorUtil {
+  private static readonly internalUrlPrefixes = [
     '/api/auth/token',
     '/api/rpc'
   ];
 
-  getInterceptorConfig(req: HttpRequest<unknown>): InterceptorConfig {
+  static getConfig(req: HttpRequest<unknown>): InterceptorConfig {
     let config: InterceptorConfig;
     if (req.params && req.params instanceof InterceptorHttpParams) {
       config = (req.params as InterceptorHttpParams).interceptorConfig;
@@ -42,7 +37,7 @@ export class InterceptorConfigService {
     return config;
   }
 
-  private isInternalUrlPrefix(url: string): boolean {
+  private static isInternalUrlPrefix(url: string): boolean {
     for (const prefix of this.internalUrlPrefixes) {
       if (url.startsWith(prefix)) {
         return true;
