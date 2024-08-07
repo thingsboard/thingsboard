@@ -92,4 +92,5 @@ public class DefaultCacheCleanupService implements CacheCleanupService {
         }
         cacheManager.getCacheNames().forEach(this::clearCacheByName);
     }
+
 }

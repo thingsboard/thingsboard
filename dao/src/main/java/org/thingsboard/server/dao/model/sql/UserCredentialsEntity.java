@@ -50,8 +50,14 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
     @Column(name = ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_PROPERTY, unique = true)
     private String activateToken;
 
+    @Column(name = ModelConstants.USER_CREDENTIALS_ACTIVATE_TOKEN_EXP_TIME_PROPERTY)
+    private Long activateTokenExpTime;
+
     @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_PROPERTY, unique = true)
     private String resetToken;
+
+    @Column(name = ModelConstants.USER_CREDENTIALS_RESET_TOKEN_EXP_TIME_PROPERTY)
+    private Long resetTokenExpTime;
 
     @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.USER_CREDENTIALS_ADDITIONAL_PROPERTY)
@@ -72,7 +78,9 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         this.enabled = userCredentials.isEnabled();
         this.password = userCredentials.getPassword();
         this.activateToken = userCredentials.getActivateToken();
+        this.activateTokenExpTime = userCredentials.getActivateTokenExpTime();
         this.resetToken = userCredentials.getResetToken();
+        this.resetTokenExpTime = userCredentials.getResetTokenExpTime();
         this.additionalInfo = userCredentials.getAdditionalInfo();
     }
 
@@ -86,7 +94,9 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         userCredentials.setEnabled(enabled);
         userCredentials.setPassword(password);
         userCredentials.setActivateToken(activateToken);
+        userCredentials.setActivateTokenExpTime(activateTokenExpTime);
         userCredentials.setResetToken(resetToken);
+        userCredentials.setResetTokenExpTime(resetTokenExpTime);
         userCredentials.setAdditionalInfo(additionalInfo);
         return userCredentials;
     }
