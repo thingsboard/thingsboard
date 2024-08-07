@@ -82,7 +82,7 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
       timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
       scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],
       enableSubscriptions: [true, []],
-      subCheckPeriodInMillis: [10, [Validators.required, Validators.min(10)]],
+      subCheckPeriodInMillis: [100, [Validators.required, Validators.min(100)]],
       showMap: [false, []],
       security: [SecurityPolicy.BASIC128, []],
       identity: [{}, [Validators.required]]
@@ -122,7 +122,7 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
       timeoutInMillis: timeoutInMillis || 1000,
       scanPeriodInMillis: scanPeriodInMillis || 1000,
       enableSubscriptions: enableSubscriptions || true,
-      subCheckPeriodInMillis: subCheckPeriodInMillis || 10,
+      subCheckPeriodInMillis: subCheckPeriodInMillis || 100,
       showMap: showMap || false,
       security: security || SecurityPolicy.BASIC128,
     };
