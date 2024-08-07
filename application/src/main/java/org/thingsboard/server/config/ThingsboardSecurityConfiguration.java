@@ -57,7 +57,7 @@ import org.thingsboard.server.service.security.auth.oauth2.HttpCookieOAuth2Autho
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationProvider;
 import org.thingsboard.server.service.security.auth.rest.RestLoginProcessingFilter;
 import org.thingsboard.server.service.security.auth.rest.RestPublicLoginProcessingFilter;
-import org.thingsboard.server.transport.http.config.RequestSizeFilter;
+import org.thingsboard.server.transport.http.config.PayloadSizeFilter;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -84,7 +84,7 @@ public class ThingsboardSecurityConfiguration {
     public static final String MAIL_OAUTH2_PROCESSING_ENTRY_POINT = "/api/admin/mail/oauth2/code";
     public static final String DEVICE_CONNECTIVITY_CERTIFICATE_DOWNLOAD_ENTRY_POINT = "/api/device-connectivity/mqtts/certificate/download";
 
-    @Value("${server.http.max_payload_size:/api/image*/**=52428800;/api/**=16777216}")
+    @Value("${server.http.max_payload_size:/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}")
     private String maxPayloadSizeConfig;
 
     @Autowired
@@ -130,8 +130,8 @@ public class ThingsboardSecurityConfiguration {
     private RateLimitProcessingFilter rateLimitProcessingFilter;
 
     @Bean
-    protected RequestSizeFilter requestSizeFilter() {
-        return new RequestSizeFilter(maxPayloadSizeConfig);
+    protected PayloadSizeFilter payloadSizeFilter() {
+        return new PayloadSizeFilter(maxPayloadSizeConfig);
     }
 
     @Bean
@@ -234,7 +234,7 @@ public class ThingsboardSecurityConfiguration {
                 .addFilterBefore(buildRestPublicLoginProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildJwtTokenAuthenticationProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterBefore(buildRefreshTokenProcessingFilter(), UsernamePasswordAuthenticationFilter.class)
-                .addFilterBefore(requestSizeFilter(), UsernamePasswordAuthenticationFilter.class)
+                .addFilterBefore(payloadSizeFilter(), UsernamePasswordAuthenticationFilter.class)
                 .addFilterAfter(rateLimitProcessingFilter, UsernamePasswordAuthenticationFilter.class);
         if (oauth2Configuration != null) {
             http.oauth2Login(login -> login

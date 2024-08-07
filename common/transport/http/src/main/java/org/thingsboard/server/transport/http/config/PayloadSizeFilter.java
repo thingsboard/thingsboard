@@ -33,12 +33,12 @@ import java.util.Map;
 
 @Slf4j
 @RequiredArgsConstructor
-public class RequestSizeFilter extends OncePerRequestFilter {
+public class PayloadSizeFilter extends OncePerRequestFilter {
 
     private final Map<String, Long> limits = new LinkedHashMap<>();
     private final AntPathMatcher pathMatcher = new AntPathMatcher();
 
-    public RequestSizeFilter(String limitsConfiguration) {
+    public PayloadSizeFilter(String limitsConfiguration) {
         for (String limit : limitsConfiguration.split(";")) {
             try {
                 String urlPathPattern = limit.split("=")[0];
@@ -48,6 +48,7 @@ public class RequestSizeFilter extends OncePerRequestFilter {
                 throw new IllegalArgumentException("Failed to parse size limits configuration: " + limitsConfiguration);
             }
         }
+        log.info("Initialized payload size filter with configuration: {}" , limitsConfiguration);
     }
 
     @Override
@@ -65,9 +66,7 @@ public class RequestSizeFilter extends OncePerRequestFilter {
 
     private boolean checkMaxPayloadSizeExceeded(HttpServletRequest request, HttpServletResponse response, long maxPayloadSize) throws IOException {
         if (request.getContentLength() > maxPayloadSize) {
-            if (log.isDebugEnabled()) {
-                log.debug("Too large payload size. Url: {}, client ip: {}, content length: {}", request.getRequestURL(), request.getRemoteAddr(), request.getContentLength());
-            }
+            log.info("[{}] [{}] Payload size {} exceeds the limit of {} bytes", request.getRemoteAddr(), request.getRequestURL(), request.getContentLength(), maxPayloadSize);
             handleMaxPayloadSizeExceededException(response, new MaxPayloadSizeExceededException(maxPayloadSize));
             return true;
         }

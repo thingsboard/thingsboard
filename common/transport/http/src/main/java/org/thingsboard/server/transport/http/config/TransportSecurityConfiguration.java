@@ -16,8 +16,6 @@
 package org.thingsboard.server.transport.http.config;
 
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
-import org.springframework.boot.autoconfigure.security.SecurityProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.annotation.Order;
@@ -32,17 +30,15 @@ import org.springframework.security.web.util.matcher.AntPathRequestMatcher;
 @Configuration
 @EnableWebSecurity
 @EnableMethodSecurity
-@Order(SecurityProperties.BASIC_AUTH_ORDER)
-@ConditionalOnExpression("'${service.type:null}'=='tb-transport' || ('${service.type:null}'=='monolith' && '${transport.api_enabled:true}'=='true' && '${transport.http.enabled}'=='true')")
 public class TransportSecurityConfiguration {
     public static final String DEVICE_API_ENTRY_POINT = "/api/v1/**";
 
-    @Value("${transport.http.max_payload_size:/api/v1/*/attributes=52428800;/api/v1/**=65536}")
+    @Value("${transport.http.max_payload_size:/api/v1/*/rpc/**=65536;/api/v1/**=52428800}")
     private String maxPayloadSizeConfig;
 
     @Bean
-    protected RequestSizeFilter httpTransportRequestSizeFilter() {
-        return new RequestSizeFilter(maxPayloadSizeConfig);
+    protected PayloadSizeFilter transportPayloadSizeFilter() {
+        return new PayloadSizeFilter(maxPayloadSizeConfig);
     }
 
     @Bean
@@ -55,7 +51,7 @@ public class TransportSecurityConfiguration {
                 .csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(config -> config
                         .requestMatchers(DEVICE_API_ENTRY_POINT).permitAll())
-                .addFilterBefore(httpTransportRequestSizeFilter(), UsernamePasswordAuthenticationFilter.class);
+                .addFilterBefore(transportPayloadSizeFilter(), UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }
 }
