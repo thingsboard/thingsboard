@@ -18,7 +18,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { ValueTypeData } from '@shared/models/constants';
 
-export const noLeadTrailSpacesRegex = /^(?! )[\S\s]*(?<! )$/;
+export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
 export const integerRegex = /^[-+]?\d+$/;
 
 export enum StorageTypes {
