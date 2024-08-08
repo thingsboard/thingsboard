@@ -18,39 +18,39 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
-import { MobileApp, MobileAppInfo } from '@shared/models/oauth2.models';
+import { Domain, DomainInfo } from '@shared/models/oauth2.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
 
 @Injectable({
   providedIn: 'root'
 })
-export class MobileAppService {
+export class DomainService {
 
   constructor(
     private http: HttpClient
   ) {
   }
 
-  public saveMobileApp(mobileApp: MobileApp, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<MobileApp> {
-    return this.http.post<MobileApp>(`/api/mobileApp?oauth2ClientIds=${oauth2ClientIds.join(',')}`,
-      mobileApp, defaultHttpOptionsFromConfig(config));
+  public saveDomain(domain: Domain, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<Domain> {
+    return this.http.post<Domain>(`/api/domain?oauth2ClientIds=${oauth2ClientIds.join(',')}`,
+      domain, defaultHttpOptionsFromConfig(config));
   }
 
   public updateOauth2Clients(id: string, oauth2ClientRegistrationIds: Array<string>, config?: RequestConfig): Observable<void> {
-    return this.http.put<void>(`/api/mobileApp/${id}/oauth2Clients`, oauth2ClientRegistrationIds, defaultHttpOptionsFromConfig(config));
+    return this.http.put<void>(`/api/domain/${id}/oauth2Clients`, oauth2ClientRegistrationIds, defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenantMobileAppInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<MobileAppInfo>> {
-    return this.http.get<PageData<MobileAppInfo>>(`/api/mobileApp/infos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  public getTenantDomainInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<DomainInfo>> {
+    return this.http.get<PageData<DomainInfo>>(`/api/domain/infos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getMobileAppInfoById(id: string, config?: RequestConfig): Observable<MobileAppInfo> {
-    return this.http.get<MobileAppInfo>(`/api/mobileApp/info/${id}`, defaultHttpOptionsFromConfig(config));
+  public getDomainInfoById(id: string, config?: RequestConfig): Observable<DomainInfo> {
+    return this.http.get<DomainInfo>(`/api/domain/info/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public deleteMobileApp(id: string, config?: RequestConfig): Observable<void> {
-    return this.http.delete<void>(`/api/mobileApp/${id}`, defaultHttpOptionsFromConfig(config));
+  public deleteDomain(id: string, config?: RequestConfig): Observable<void> {
+    return this.http.delete<void>(`/api/domain/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

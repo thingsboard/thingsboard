@@ -46,6 +46,7 @@ import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   CellActionDescriptorType,
+  ClientChipsEntityTableColumn,
   EntityActionTableColumn,
   EntityColumn,
   EntityLinkTableColumn,
@@ -614,7 +615,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   columnsUpdated(resetData: boolean = false) {
     this.entityColumns = this.entitiesTableConfig.columns.filter(
-      (column) => column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn)
+      (column) => column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn ||
+        column instanceof ClientChipsEntityTableColumn)
       .map(column => column as EntityTableColumn<BaseData<HasId>>);
     this.actionColumns = this.entitiesTableConfig.columns.filter(
       (column) => column instanceof EntityActionTableColumn)

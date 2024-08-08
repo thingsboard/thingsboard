@@ -78,7 +78,7 @@ export interface HeaderActionDescriptor {
   onAction: ($event: MouseEvent) => void;
 }
 
-export type EntityTableColumnType = 'content' | 'action' | 'link';
+export type EntityTableColumnType = 'content' | 'action' | 'link' | 'clients';
 
 export class BaseEntityTableColumn<T extends BaseData<HasId>> {
   constructor(public type: EntityTableColumnType,
@@ -141,7 +141,15 @@ export class DateEntityTableColumn<T extends BaseData<HasId>> extends EntityTabl
   }
 }
 
-export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T>;
+export class ClientChipsEntityTableColumn<T extends BaseData<HasId>> extends BaseEntityTableColumn<T> {
+  constructor(public key: string,
+              public title: string,
+              public width: string = '0px') {
+    super('clients', key, title, width, false);
+  }
+}
+
+export type EntityColumn<T extends BaseData<HasId>> = EntityTableColumn<T> | EntityActionTableColumn<T> | EntityLinkTableColumn<T> | ClientChipsEntityTableColumn<T>;
 
 export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = PageLink, L extends BaseData<HasId> = T> {
 
@@ -159,11 +167,13 @@ export class EntityTableConfig<T extends BaseData<HasId>, P extends PageLink = P
   defaultTimewindowInterval = historyInterval(DAY);
   entityType: EntityType = null;
   tableTitle = '';
+  hideTableTitle = false;
   selectionEnabled = true;
   searchEnabled = true;
   addEnabled = true;
   entitiesDeleteEnabled = true;
   detailsPanelEnabled = true;
+  hideDetailsTabs = false;
   hideDetailsTabsOnEdit = true;
   rowPointer = false;
   actionsColumnTitle = null;
