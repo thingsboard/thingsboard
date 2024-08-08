@@ -51,6 +51,10 @@ import static org.thingsboard.common.util.DonAsynchron.withCallback;
 )
 public class TbRabbitMqNode extends TbAbstractExternalNode {
 
+    private static final String supportedPropertiesStr = String.join(", ",
+            "BASIC", "TEXT_PLAIN", "MINIMAL_BASIC", "MINIMAL_PERSISTENT_BASIC", "PERSISTENT_BASIC", "PERSISTENT_TEXT_PLAIN"
+    );
+
     private static final Charset UTF8 = StandardCharsets.UTF_8;
 
     private static final String ERROR = "error";
@@ -81,7 +85,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
                 t -> tellFailure(ctx, processException(tbMsg, t), t));
     }
 
-    protected ConnectionFactory getConnectionFactory() {
+    ConnectionFactory getConnectionFactory() {
         ConnectionFactory factory = new ConnectionFactory();
         factory.setHost(this.config.getHost());
         factory.setPort(this.config.getPort());
@@ -91,7 +95,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         factory.setAutomaticRecoveryEnabled(this.config.isAutomaticRecoveryEnabled());
         factory.setConnectionTimeout(this.config.getConnectionTimeout());
         factory.setHandshakeTimeout(this.config.getHandshakeTimeout());
-        this.config.getClientProperties().forEach((k,v) -> factory.getClientProperties().put(k,v));
+        this.config.getClientProperties().forEach((k, v) -> factory.getClientProperties().put(k, v));
         return factory;
     }
 
@@ -137,7 +141,7 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
         }
     }
 
-    protected static AMQP.BasicProperties convert(String name) throws TbNodeException {
+    static AMQP.BasicProperties convert(String name) throws TbNodeException {
         switch (name) {
             case "BASIC":
                 return MessageProperties.BASIC;
@@ -152,7 +156,8 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
             case "PERSISTENT_TEXT_PLAIN":
                 return MessageProperties.PERSISTENT_TEXT_PLAIN;
             default:
-                throw new TbNodeException("Message Properties: '" + name + "' is undefined!");
+                throw new TbNodeException("Undefined message properties '" + name +
+                        "'! Only " + supportedPropertiesStr + " message properties are supported!");
         }
     }
 }
