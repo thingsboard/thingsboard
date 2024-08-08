@@ -65,6 +65,10 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     private static final String ALARM_ORIGINATOR_SOURCE = "ALARM_ORIGINATOR";
     private static final String ENTITY_SOURCE = "ENTITY";
 
+    private final String supportedOriginatorSourcesStr = String.join(", ", List.of(
+            CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, ENTITY_SOURCE)
+    );
+
     @Override
     protected TbChangeOriginatorNodeConfiguration loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbChangeOriginatorNodeConfiguration.class);
@@ -110,26 +114,26 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {
         HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, ENTITY_SOURCE);
         if (!knownSources.contains(conf.getOriginatorSource())) {
-            log.error("Unsupported source [{}] for TbChangeOriginatorNode", conf.getOriginatorSource());
-            throw new IllegalArgumentException("Source '" + conf.getOriginatorSource() + "' is unsupported.");
+            log.error("Unsupported source type '[{}]'! Only {} types are allowed.", conf.getOriginatorSource(), supportedOriginatorSourcesStr);
+            throw new IllegalArgumentException("Unsupported source type '" + conf.getOriginatorSource() +
+                    "'! Only " + supportedOriginatorSourcesStr + " types are allowed.");
         }
 
         if (conf.getOriginatorSource().equals(RELATED_SOURCE)) {
             if (conf.getRelationsQuery() == null) {
-                log.error("Related source for TbChangeOriginatorNode should have relations query. Actual [{}]",
-                        conf.getRelationsQuery());
-                throw new IllegalArgumentException("Relations query should be specified for the related entity.");
+                log.error("Relations query should be specified if 'Related entity' source is selected.");
+                throw new IllegalArgumentException("Relations query should be specified if 'Related entity' source is selected.");
             }
         }
 
         if (conf.getOriginatorSource().equals(ENTITY_SOURCE)) {
             if (conf.getEntityType() == null) {
-                log.error("Entity type not specified for [{}]", ENTITY_SOURCE);
-                throw new IllegalArgumentException("Entity type should be specified for the entity.");
+                log.error("Entity type should be specified if '[{}]' source is selected.", ENTITY_SOURCE);
+                throw new IllegalArgumentException("Entity type should be specified if 'Entity by name pattern' source is selected.");
             }
             if (StringUtils.isEmpty(conf.getEntityNamePattern())) {
-                log.error("EntityNamePattern not specified for type [{}]", conf.getEntityType());
-                throw new IllegalArgumentException("Entity name pattern should be specified for the entity.");
+                log.error("Name pattern should be specified if '[{}]' source is selected.", ENTITY_SOURCE);
+                throw new IllegalArgumentException("Name pattern should be specified if 'Entity by name pattern' source is selected.");
             }
             EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }
