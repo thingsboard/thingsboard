@@ -29,7 +29,7 @@ import {
   GridSettings,
   WidgetLayout
 } from '@shared/models/dashboard.models';
-import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined, isEqual } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
 import {
   Datasource,
   datasourcesHasOnlyComparisonAggregation,
@@ -40,7 +40,7 @@ import {
   TargetDeviceType,
   Widget,
   WidgetConfig,
-  WidgetConfigMode,
+  WidgetConfigMode, WidgetSize,
   widgetType,
   WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
@@ -931,6 +931,69 @@ export class DashboardUtilsService {
     } else {
       return aliasId;
     }
+  }
+
+  replaceReferenceWithWidgetCopy(widget: Widget,
+                                 dashboard: Dashboard,
+                                 targetState: string,
+                                 targetLayout: DashboardLayoutId,
+                                 breakpointId: string,
+                                 isRemoveWidget: boolean): Widget {
+
+    const newWidget = deepClone(widget);
+    newWidget.id = this.utils.guid();
+
+    const originalColumns = this.getOriginalColumns(dashboard, targetState, targetLayout, breakpointId);
+    const originalSize = this.getOriginalSize(dashboard, targetState, targetLayout, widget, breakpointId);
+
+    const layout = this.getDashboardLayoutConfig(dashboard.configuration.states[targetState].layouts[targetLayout], breakpointId);
+    const widgetLayout = layout.widgets[widget.id];
+    const targetRow = widgetLayout.row;
+    const targetColumn = widgetLayout.col;
+
+    if (isRemoveWidget) {
+      this.removeWidgetFromLayout(dashboard, targetState, targetLayout, widget.id, breakpointId);
+    }
+
+    this.addWidgetToLayout(dashboard, targetState, targetLayout, newWidget, originalColumns, originalSize,
+      targetRow, targetColumn, breakpointId);
+
+    return newWidget;
+  }
+
+  getDashboardLayoutConfig(layout: DashboardLayout, breakpointId: string): DashboardLayout {
+    if (breakpointId !== 'default') {
+      return layout.breakpoints[breakpointId];
+    }
+    return layout;
+  }
+
+  getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, breakpointId: string): number {
+    let originalColumns = 24;
+    let gridSettings = null;
+    const state = dashboard.configuration.states[sourceState];
+    const layoutCount = Object.keys(state.layouts).length;
+    if (state) {
+      const layout = this.getDashboardLayoutConfig(state.layouts[sourceLayout], breakpointId);
+      if (layout) {
+        gridSettings = layout.gridSettings;
+      }
+    }
+    if (gridSettings && gridSettings.columns) {
+      originalColumns = gridSettings.columns;
+    }
+    originalColumns = originalColumns * layoutCount;
+    return originalColumns;
+  }
+
+  getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                  widget: Widget, breakpointId: string): WidgetSize {
+    const layout = this.getDashboardLayoutConfig(dashboard.configuration.states[sourceState].layouts[sourceLayout], breakpointId);
+    const widgetLayout = layout.widgets[widget.id];
+    return {
+      sizeX: widgetLayout.sizeX,
+      sizeY: widgetLayout.sizeY
+    };
   }
 
 }

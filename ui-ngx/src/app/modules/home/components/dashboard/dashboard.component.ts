@@ -453,14 +453,14 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       case WidgetComponentActionType.EDIT:
         this.editWidget($event, widget);
         break;
-      case WidgetComponentActionType.COPY_EDIT:
-        this.editCopyWidget($event, widget);
-        break;
       case WidgetComponentActionType.EXPORT:
         this.exportWidget($event, widget);
         break;
       case WidgetComponentActionType.REMOVE:
         this.removeWidget($event, widget);
+        break;
+      case WidgetComponentActionType.REPLACE_REFERENCE_WITH_WIDGET_COPY:
+        this.replaceReferenceWithWidgetCopy($event, widget);
         break;
     }
   }
@@ -486,12 +486,12 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  private editCopyWidget($event: Event, widget: DashboardWidget) {
+  private replaceReferenceWithWidgetCopy($event: Event, widget: DashboardWidget) {
     if ($event) {
       $event.stopPropagation();
     }
-    if (this.isEditActionEnabled && this.callbacks && this.callbacks.onCopyEditWidget) {
-      this.callbacks.onCopyEditWidget($event, widget.widget);
+    if (this.isEditActionEnabled && this.callbacks && this.callbacks.replaceReferenceWithWidgetCopy) {
+      this.callbacks.replaceReferenceWithWidgetCopy($event, widget.widget);
     }
   }
 

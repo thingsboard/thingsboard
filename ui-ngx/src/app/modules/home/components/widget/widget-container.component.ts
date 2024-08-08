@@ -49,7 +49,7 @@ export enum WidgetComponentActionType {
   EDIT,
   EXPORT,
   REMOVE,
-  COPY_EDIT,
+  REPLACE_REFERENCE_WITH_WIDGET_COPY,
 }
 
 export class WidgetComponentAction {
@@ -220,10 +220,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     });
   }
 
-  onCopyEdit(event: MouseEvent) {
+  onReplaceReferenceWithWidgetCopy(event: MouseEvent) {
     this.widgetComponentAction.emit({
       event,
-      actionType: WidgetComponentActionType.COPY_EDIT
+      actionType: WidgetComponentActionType.REPLACE_REFERENCE_WITH_WIDGET_COPY
     });
   }
 
@@ -343,37 +343,43 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 }
 
 @Component({
-  template: `<div class="tb-widget-actions-panel">
-    <button mat-icon-button class="tb-mat-20"
-            *ngIf="container.widget.isReference"
-            [fxShow]="container.isEditActionEnabled"
-            (click)="container.onCopyEdit($event)"
-            matTooltip="{{ 'widget.edit-copy' | translate }}"
-            matTooltipPosition="above">
-      <tb-icon>mdi:circle-edit-outline</tb-icon>
-    </button>
-    <button mat-icon-button class="tb-mat-20"
-            [fxShow]="container.isEditActionEnabled"
-            (click)="container.onEdit($event)"
-            matTooltip="{{ 'widget.edit' | translate }}"
-            matTooltipPosition="above">
-      <tb-icon>edit</tb-icon>
-    </button>
-    <button mat-icon-button class="tb-mat-20"
-            [fxShow]="container.isExportActionEnabled"
-            (click)="container.onExport($event)"
-            matTooltip="{{ 'widget.export' | translate }}"
-            matTooltipPosition="above">
-      <tb-icon>file_download</tb-icon>
-    </button>
-    <button mat-icon-button class="tb-mat-20"
-            [fxShow]="container.isRemoveActionEnabled"
-            (click)="container.onRemove($event);"
-            matTooltip="{{ 'widget.remove' | translate }}"
-            matTooltipPosition="above">
-      <tb-icon>close</tb-icon>
-    </button>
-  </div>`,
+  template: `
+    <div class="tb-widget-action-container">
+      <div class="tb-widget-reference-panel tb-primary-fill" *ngIf="container.widget.isReference">
+        {{ 'widget.reference' | translate }}
+        <button mat-icon-button class="tb-mat-16"
+                color="primary"
+                [fxShow]="container.isEditActionEnabled"
+                (click)="container.onReplaceReferenceWithWidgetCopy($event)"
+                matTooltip="{{ 'widget.replace-reference-with-widget-copy' | translate }}"
+                matTooltipPosition="above">
+          <tb-icon matButtonIcon>mdi:file-replace-outline</tb-icon>
+        </button>
+      </div>
+      <div class="tb-widget-actions-panel">
+        <button mat-icon-button class="tb-mat-20"
+                [fxShow]="container.isEditActionEnabled"
+                (click)="container.onEdit($event)"
+                matTooltip="{{ 'widget.edit' | translate }}"
+                matTooltipPosition="above">
+          <tb-icon>edit</tb-icon>
+        </button>
+        <button mat-icon-button class="tb-mat-20"
+                [fxShow]="container.isExportActionEnabled"
+                (click)="container.onExport($event)"
+                matTooltip="{{ 'widget.export' | translate }}"
+                matTooltipPosition="above">
+          <tb-icon>file_download</tb-icon>
+        </button>
+        <button mat-icon-button class="tb-mat-20"
+                [fxShow]="container.isRemoveActionEnabled"
+                (click)="container.onRemove($event);"
+                matTooltip="{{ 'widget.remove' | translate }}"
+                matTooltipPosition="above">
+          <tb-icon>close</tb-icon>
+        </button>
+      </div>
+    </div>`,
   styles: [],
   encapsulation: ViewEncapsulation.None
 })

@@ -13,6 +13,8 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import '../scss/constants';
+
 .tb-widget-container {
   position: absolute;
   inset: 0;
@@ -182,12 +184,30 @@ gridster-item:hover {
       line-height: 12px;
       font-weight: 500;
       color: rgba(0, 0, 0, 0.76);
-      .tb-widget-actions-panel {
+      .tb-widget-action-container {
         display: flex;
-        flex-direction: row;
-        place-content: center flex-start;
-        align-items: center;
-        gap: 8px;
+        flex-direction: column;
+        gap: 6px;
+
+        .tb-widget-actions-panel {
+          display: flex;
+          flex-direction: row;
+          place-content: center space-between;
+          align-items: center;
+          gap: 8px;
+        }
+        .tb-widget-reference-panel {
+          display: flex;
+          flex-direction: row;
+          place-content: center space-between;
+          align-items: center;
+          gap: 8px;
+          font-weight: normal;
+          color: $tb-primary-color;
+          font-size: 11px;
+          padding: 4px 4px 4px 6px;
+          border-radius: 2px;
+        }
       }
     }
   }

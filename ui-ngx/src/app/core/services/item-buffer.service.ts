@@ -95,8 +95,8 @@ export class ItemBufferService {
     const filtersInfo: FiltersInfo = {
       datasourceFilters: {}
     };
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
+    const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     const datasources: Datasource[] = widget.type === widgetType.alarm ? [widget.config.alarmSource] : widget.config.datasources;
     if (widget.config && dashboard.configuration
       && dashboard.configuration.entityAliases) {
@@ -396,42 +396,6 @@ export class ItemBufferService {
     return ruleChainImport;
   }
 
-  private getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
-                             breakpoint: string): number {
-    let originalColumns = 24;
-    let gridSettings = null;
-    const state = dashboard.configuration.states[sourceState];
-    const layoutCount = Object.keys(state.layouts).length;
-    if (state) {
-      let layout = state.layouts[sourceLayout];
-      if (breakpoint !== 'default') {
-        layout = layout.breakpoints[breakpoint];
-      }
-      if (layout) {
-        gridSettings = layout.gridSettings;
-
-      }
-    }
-    if (gridSettings && gridSettings.columns) {
-      originalColumns = gridSettings.columns;
-    }
-    originalColumns = originalColumns * layoutCount;
-    return originalColumns;
-  }
-
-  private getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget,
-                          breakpoint: string): WidgetSize {
-    let layout = dashboard.configuration.states[sourceState].layouts[sourceLayout];
-    if (breakpoint !== 'default') {
-      layout = layout.breakpoints[breakpoint];
-    }
-    const widgetLayout = layout.widgets[widget.id];
-    return {
-      sizeX: widgetLayout.sizeX,
-      sizeY: widgetLayout.sizeY
-    };
-  }
-
   private prepareAliasInfo(entityAlias: EntityAlias): EntityAliasInfo {
     return {
       alias: entityAlias.alias,
@@ -449,8 +413,8 @@ export class ItemBufferService {
 
   private prepareWidgetReference(dashboard: Dashboard, sourceState: string,
                                  sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: string): WidgetReference {
-    const originalColumns = this.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
-    const originalSize = this.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
+    const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
+    const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     return {
       dashboardId: dashboard.id.id,
       sourceState,

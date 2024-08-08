@@ -58,7 +58,7 @@
                 [disabled]="!item.enabled"
                 (click)="item.action(widgetContextMenuEvent, widget)">
           <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
-          <mat-icon *ngIf="item.icon">{{item.icon}}</mat-icon>
+          <tb-icon matMenuItemIcon *ngIf="item.icon">{{item.icon}}</tb-icon>
           <span translate>{{item.value}}</span>
         </button>
       </div>

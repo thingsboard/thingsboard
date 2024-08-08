@@ -5601,10 +5601,9 @@
         "remove": "Remove widget",
         "delete": "Delete widget",
         "edit": "Edit widget",
-        "edit-copy": "Edit copy widget",
-        "copy-edit": "Copy and edit",
         "remove-widget-title": "Are you sure you want to remove the widget '{{widgetTitle}}'?",
         "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
+        "replace-reference-with-widget-copy": "Replace reference with widget copy",
         "timeseries": "Time series",
         "search-data": "Search data",
         "no-data-found": "No data found",
@@ -5685,7 +5684,8 @@
         "search": "Search widget",
         "filter": "Widget filter type",
         "loading-widgets": "Loading widgets...",
-        "widget-template-error": "Invalid widget HTML template."
+        "widget-template-error": "Invalid widget HTML template.",
+        "reference": "Reference"
     },
     "widget-action": {
         "header-button": "Widget header button",

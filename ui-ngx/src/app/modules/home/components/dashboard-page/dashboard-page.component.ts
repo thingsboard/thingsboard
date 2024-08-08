@@ -483,7 +483,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (!this.widgetEditMode && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
       this.setEditMode(true, false);
     }
-    this.setEditMode(true, false);
   }
 
   private init(data: DashboardPageInitData) {
@@ -1419,31 +1418,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }
   }
 
-  copyEditWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
+  replaceReferenceWithWidgetCopy($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     $event.stopPropagation();
 
-    const widgetItem = deepClone(this.itembuffer.prepareWidgetItem(this.dashboard, this.dashboardCtx.state,
-      layoutCtx.id, widget, layoutCtx.breakpoint));
+    const isRemove = layoutCtx.widgets.removeWidgetId(widget.id);
 
-    const targetRow = layoutCtx.widgetLayouts[widget.id].row;
-    const targetColumn = layoutCtx.widgetLayouts[widget.id].col;
+    const widgetCopy = this.dashboardUtils.replaceReferenceWithWidgetCopy(widget, this.dashboard, this.dashboardCtx.state,
+      layoutCtx.id, layoutCtx.breakpoint, isRemove);
 
-    if (layoutCtx.widgets.removeWidgetId(widget.id)) {
-      this.dashboardUtils.removeWidgetFromLayout(this.dashboard, this.dashboardCtx.state, layoutCtx.id,
-        widget.id, layoutCtx.breakpoint);
-    }
+    layoutCtx.widgets.addWidgetId(widgetCopy.id);
 
-    widgetItem.widget.id = this.utils.guid();
-
-    this.itembuffer.addWidgetToDashboard(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widgetItem.widget,
-      widgetItem.aliasesInfo, widgetItem.filtersInfo,
-      this.entityAliasesUpdated.bind(this), this.filtersUpdated.bind(this),
-      widgetItem.originalColumns, widgetItem.originalSize, targetRow, targetColumn, layoutCtx.breakpoint
-    ).subscribe(() => {
-      layoutCtx.widgets.addWidgetId(widgetItem.widget.id);
-      this.runChangeDetection();
-      this.editWidget($event,layoutCtx, widgetItem.widget);
-    });
+    this.runChangeDetection();
   }
 
   copyWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
@@ -1591,11 +1576,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         widgetContextActions.push(
           {
             action: (event, currentWidget) => {
-              this.copyEditWidget(event, layoutCtx, currentWidget);
+              this.replaceReferenceWithWidgetCopy(event, layoutCtx, currentWidget);
             },
             enabled: true,
-            value: 'widget.copy-edit',
-            icon: 'edit'
+            value: 'widget.replace-reference-with-widget-copy',
+            icon: 'mdi:file-replace-outline'
           }
         );
       }
