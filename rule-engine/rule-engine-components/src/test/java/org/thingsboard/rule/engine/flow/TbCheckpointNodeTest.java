@@ -22,6 +22,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.junit.jupiter.params.ParameterizedTest;
 import org.junit.jupiter.params.provider.Arguments;
 import org.junit.jupiter.params.provider.ValueSource;
+import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
@@ -49,11 +50,12 @@ import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.spy;
 import static org.mockito.BDDMockito.then;
-import static org.mockito.BDDMockito.willAnswer;
 
 @Slf4j
 @ExtendWith(MockitoExtension.class)
 public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
+
+    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("37840655-b7dc-4f49-8da3-9429159e0970"));
 
     private TbCheckpointNode node;
     private EmptyNodeConfiguration config;
@@ -80,22 +82,35 @@ public class TbCheckpointNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {DataConstants.MAIN_QUEUE_NAME, DataConstants.HP_QUEUE_NAME, DataConstants.HP_QUEUE_NAME, "Custom queue"})
+    @ValueSource(strings = {DataConstants.MAIN_QUEUE_NAME, DataConstants.HP_QUEUE_NAME, DataConstants.SQ_QUEUE_NAME, "Custom queue"})
     public void givenQueueName_whenOnMsg_thenTransfersMsgToDefinedQueue(String queueName) throws TbNodeException {
         given(ctxMock.getQueueName()).willReturn(queueName);
-        willAnswer(invocationOnMock -> {
-            Runnable onSuccess = invocationOnMock.getArgument(3);
-            onSuccess.run();
-            return null;
-        }).given(ctxMock).enqueueForTellNext(any(TbMsg.class), any(String.class), any(String.class), any(Runnable.class), any(Consumer.class));
 
         node.init(ctxMock, nodeConfiguration);
-        DeviceId deviceId = new DeviceId(UUID.fromString("2cd04871-7f07-41d1-b850-95dd444a6506"));
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         node.onMsg(ctxMock, msg);
 
-        then(ctxMock).should().enqueueForTellNext(eq(msg), eq(queueName), eq(TbNodeConnectionType.SUCCESS), any(), any());
+        ArgumentCaptor<Runnable> onSuccess = ArgumentCaptor.forClass(Runnable.class);
+        then(ctxMock).should().enqueueForTellNext(eq(msg), eq(queueName), eq(TbNodeConnectionType.SUCCESS), onSuccess.capture(), any());
+        onSuccess.getValue().run();
         then(ctxMock).should().ack(msg);
+    }
+
+    @Test
+    public void givenErrorDuringTransfer_whenOnMsg_thenTellFailure() throws TbNodeException {
+        given(ctxMock.getQueueName()).willReturn(DataConstants.HP_QUEUE_NAME);
+
+        node.init(ctxMock, nodeConfiguration);
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<Consumer<Throwable>> onFailure = ArgumentCaptor.forClass(Consumer.class);
+        then(ctxMock).should().enqueueForTellNext(eq(msg), eq(DataConstants.HP_QUEUE_NAME), eq(TbNodeConnectionType.SUCCESS), any(), onFailure.capture());
+        String errorMsg = "Something went wrong.";
+        onFailure.getValue().accept(new RuntimeException(errorMsg));
+        ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
+        assertThat(throwable.getValue()).isInstanceOf(RuntimeException.class).hasMessage(errorMsg);
     }
 
     // Rule nodes upgrade

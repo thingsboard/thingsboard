@@ -43,7 +43,6 @@ public class TbAckNodeTest {
     private EmptyNodeConfiguration config;
     private TbNodeConfiguration nodeConfiguration;
 
-
     @Mock
     private TbContext ctxMock;
 
