@@ -20,25 +20,24 @@ import lombok.EqualsAndHashCode;
 import lombok.RequiredArgsConstructor;
 import lombok.ToString;
 
-import java.util.HashSet;
 import java.util.Set;
-import java.util.concurrent.ConcurrentHashMap;
 
 /**
  * Information about the local websocket subscriptions.
  */
 @RequiredArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode(exclude = {"seqNumber"})
+@EqualsAndHashCode
 @ToString
 public class TbSubscriptionsInfo {
 
     protected boolean notifications;
     protected boolean alarms;
     protected boolean tsAllKeys;
+    protected boolean attrAllKeys; // primitives first for equals performance
     protected Set<String> tsKeys;
-    protected boolean attrAllKeys;
     protected Set<String> attrKeys;
+    @EqualsAndHashCode.Exclude
     protected int seqNumber;
 
     public boolean isEmpty() {
@@ -50,7 +49,7 @@ public class TbSubscriptionsInfo {
     }
 
     protected TbSubscriptionsInfo copy(int seqNumber) {
-        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, tsKeys, attrAllKeys, attrKeys, seqNumber);
+        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, attrAllKeys, tsKeys, attrKeys, seqNumber);
     }
 
 }

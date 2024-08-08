@@ -23,7 +23,6 @@ import org.thingsboard.server.service.subscription.TbSubscription;
 import org.thingsboard.server.service.subscription.TbSubscriptionType;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 @Getter
@@ -33,6 +32,11 @@ public class NotificationsCountSubscription extends AbstractNotificationSubscrip
     public NotificationsCountSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
                                           BiConsumer<TbSubscription<NotificationsSubscriptionUpdate>, NotificationsSubscriptionUpdate> updateProcessor) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.NOTIFICATIONS_COUNT, updateProcessor);
+    }
+
+    @Override
+    protected boolean canEqual(final Object other) {
+        return other instanceof NotificationsCountSubscription;
     }
 
     public UnreadNotificationsCountUpdate createUpdate() {

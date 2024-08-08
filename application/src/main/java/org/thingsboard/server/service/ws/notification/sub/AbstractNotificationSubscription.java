@@ -35,4 +35,9 @@ public abstract class AbstractNotificationSubscription<T> extends TbSubscription
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, type, updateProcessor);
     }
 
+    @Override
+    protected boolean canEqual(final Object other) {
+        return other instanceof AbstractNotificationSubscription;
+    }
+
 }
