@@ -28,7 +28,11 @@ import java.util.UUID;
 
 public interface DomainRepository extends JpaRepository<DomainEntity, UUID> {
 
-    Page<DomainEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+    @Query("SELECT d FROM DomainEntity d WHERE d.tenantId = :tenantId AND " +
+            "(:searchText is NULL OR ilike(d.name, concat('%', :searchText, '%')) = true)")
+    Page<DomainEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+                                      @Param("searchText") String searchText,
+                                      Pageable pageable);
 
     @Transactional
     @Modifying

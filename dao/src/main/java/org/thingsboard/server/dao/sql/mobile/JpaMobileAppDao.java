@@ -57,7 +57,7 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
 
     @Override
     public PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(mobileAppRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(mobileAppRepository.findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

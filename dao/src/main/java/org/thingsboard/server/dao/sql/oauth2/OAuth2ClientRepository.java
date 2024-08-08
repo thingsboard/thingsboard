@@ -29,13 +29,17 @@ import java.util.UUID;
 
 public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity, UUID> {
 
-    Page<OAuth2ClientEntity> findByTenantId(@Param("tenantId") UUID tenantId, Pageable pageable);
+    @Query("SELECT с FROM OAuth2ClientEntity с WHERE с.tenantId = :tenantId AND " +
+            "(:searchText is NULL OR ilike(с.title, concat('%', :searchText, '%')) = true)")
+    Page<OAuth2ClientEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+                                            @Param("searchText") String searchText,
+                                            Pageable pageable);
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN DomainOauth2ClientEntity dc on c.id = dc.oauth2ClientId " +
             "LEFT JOIN DomainEntity domain on dc.domainId = domain.id " +
-            "AND domain.name = :domainName " +
+            "WHERE domain.name = :domainName " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR c.platforms LIKE :platformFilter)")
     List<OAuth2ClientEntity> findEnabledByDomainNameAndPlatformType(@Param("domainName") String domainName,
                                                                     @Param("platformFilter") String platformFilter);
@@ -44,7 +48,7 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN MobileAppOauth2ClientEntity mc on c.id = mc.oauth2ClientId " +
             "LEFT JOIN MobileAppEntity app on mc.mobileAppId = app.id " +
-            "AND app.pkgName = :pkgName " +
+            "WHERE app.pkgName = :pkgName " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR c.platforms LIKE :platformFilter)")
     List<OAuth2ClientEntity> findEnabledByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
                                                                  @Param("platformFilter") String platformFilter);

@@ -123,11 +123,11 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
         log.trace("Executing findDomainInfosByTenantId [{}]", tenantId);
         PageData<Domain> pageData = domainDao.findByTenantId(tenantId, pageLink);
         List<DomainInfo> domainInfos = new ArrayList<>();
-        pageData.getData().stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(domain -> {
+        for (Domain domain : pageData.getData()) {
             domainInfos.add(new DomainInfo(domain, oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
                     .map(OAuth2ClientInfo::new)
                     .collect(Collectors.toList())));
-        });
+        }
         return new PageData<>(domainInfos, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }
 

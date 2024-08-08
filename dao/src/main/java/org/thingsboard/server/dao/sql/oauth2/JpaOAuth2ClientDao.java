@@ -52,7 +52,7 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
 
     @Override
     public PageData<OAuth2Client> findByTenantId(UUID tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(repository.findByTenantId(tenantId, DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(repository.findByTenantId(tenantId, pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

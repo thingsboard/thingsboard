@@ -57,7 +57,7 @@ public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implement
 
     @Override
     public PageData<Domain> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(domainRepository.findByTenantId(tenantId.getId(), DaoUtil.toPageable(pageLink)));
+        return DaoUtil.toPageData(domainRepository.findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
     }
 
     @Override

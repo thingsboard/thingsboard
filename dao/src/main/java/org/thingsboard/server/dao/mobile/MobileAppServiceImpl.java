@@ -20,7 +20,6 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -95,11 +94,11 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         log.trace("Executing findMobileAppInfosByTenantId [{}]", tenantId);
         PageData<MobileApp> pageData = mobileAppDao.findByTenantId(tenantId, pageLink);
         List<MobileAppInfo> mobileAppInfos = new ArrayList<>();
-        pageData.getData().stream().sorted(Comparator.comparing(BaseData::getUuidId)).forEach(mobileApp -> {
+        for (MobileApp mobileApp : pageData.getData()) {
             mobileAppInfos.add(new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
                     .map(OAuth2ClientInfo::new)
                     .collect(Collectors.toList())));
-        });
+        }
         return new PageData<>(mobileAppInfos, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }
 
