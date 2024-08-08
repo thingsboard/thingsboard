@@ -114,7 +114,7 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {
         HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, ENTITY_SOURCE);
         if (!knownSources.contains(conf.getOriginatorSource())) {
-            log.error("Unsupported source type '[{}]'! Only {} types are allowed.", conf.getOriginatorSource(), supportedOriginatorSourcesStr);
+            log.error("Unsupported source type '{}'! Only {} types are allowed.", conf.getOriginatorSource(), supportedOriginatorSourcesStr);
             throw new IllegalArgumentException("Unsupported source type '" + conf.getOriginatorSource() +
                     "'! Only " + supportedOriginatorSourcesStr + " types are allowed.");
         }
@@ -128,11 +128,11 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
 
         if (conf.getOriginatorSource().equals(ENTITY_SOURCE)) {
             if (conf.getEntityType() == null) {
-                log.error("Entity type should be specified if '[{}]' source is selected.", ENTITY_SOURCE);
+                log.error("Entity type should be specified if '{}' source is selected.", ENTITY_SOURCE);
                 throw new IllegalArgumentException("Entity type should be specified if 'Entity by name pattern' source is selected.");
             }
             if (StringUtils.isEmpty(conf.getEntityNamePattern())) {
-                log.error("Name pattern should be specified if '[{}]' source is selected.", ENTITY_SOURCE);
+                log.error("Name pattern should be specified if '{}' source is selected.", ENTITY_SOURCE);
                 throw new IllegalArgumentException("Name pattern should be specified if 'Entity by name pattern' source is selected.");
             }
             EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));

@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -45,8 +44,6 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -55,7 +52,6 @@ import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.device.DeviceService;
@@ -113,29 +109,6 @@ public class TbChangeOriginatorNodeTest {
     public void before() throws TbNodeException {
         node = new TbChangeOriginatorNode();
         config = new TbChangeOriginatorNodeConfiguration().defaultConfiguration();
-    }
-
-    @Test
-    public void newChainCanBeStarted() throws TbNodeException {
-        Asset asset = new Asset();
-        asset.setCustomerId(CUSTOMER_ID);
-
-        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
-
-        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
-        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
-        given(assetServiceMock.findAssetByIdAsync(any(), eq(ASSET_ID))).willReturn(Futures.immediateFuture(asset));
-
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-        node.onMsg(ctxMock, msg);
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
-        then(ctxMock).should().transformMsgOriginator(msgCaptor.capture(), originatorCaptor.capture());
-
-        assertThat(originatorCaptor.getValue()).isEqualTo(CUSTOMER_ID);
     }
 
     @Test
@@ -222,6 +195,7 @@ public class TbChangeOriginatorNodeTest {
         node.onMsg(ctxMock, msg);
 
         then(deviceServiceMock).should().findDeviceById(TENANT_ID, DEVICE_ID);
+        then(ctxMock).should().transformMsgOriginator(msg, CUSTOMER_ID);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
@@ -241,6 +215,7 @@ public class TbChangeOriginatorNodeTest {
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         node.onMsg(ctxMock, msg);
 
+        then(ctxMock).should().transformMsgOriginator(msg, TENANT_ID);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
@@ -297,6 +272,7 @@ public class TbChangeOriginatorNodeTest {
         node.onMsg(ctxMock, msg);
 
         then(alarmServiceMock).should().findAlarmByIdAsync(TENANT_ID, alarmId);
+        then(ctxMock).should().transformMsgOriginator(msg, DEVICE_ID);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
@@ -323,6 +299,7 @@ public class TbChangeOriginatorNodeTest {
 
         String expectedEntityName = TbNodeUtils.processPattern(entityNamePattern, msg);
         then(assetServiceMock).should().findAssetByTenantIdAndName(TENANT_ID, expectedEntityName);
+        then(ctxMock).should().transformMsgOriginator(msg, ASSET_ID);
         ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
         then(ctxMock).should().tellSuccess(actualMsg.capture());
         assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
@@ -356,7 +333,7 @@ public class TbChangeOriginatorNodeTest {
 
         ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
-        assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to found ASSET  entity by name: 'test-asset'!");
+        assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to found asset with name 'test-asset'!");
     }
 
 }
