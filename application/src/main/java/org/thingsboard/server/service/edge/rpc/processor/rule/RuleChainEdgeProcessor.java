@@ -67,10 +67,19 @@ public class RuleChainEdgeProcessor extends BaseEdgeProcessor {
                     RuleChainUpdateMsg ruleChainUpdateMsg = ((RuleChainMsgConstructor)
                             ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
                             .constructRuleChainUpdatedMsg(msgType, ruleChain, isRoot);
-                    downlinkMsg = DownlinkMsg.newBuilder()
+
+                    DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addRuleChainUpdateMsg(ruleChainUpdateMsg)
-                            .build();
+                            .addRuleChainUpdateMsg(ruleChainUpdateMsg);
+
+                    RuleChainMetaData ruleChainMetaData = ruleChainService.loadRuleChainMetaData(edgeEvent.getTenantId(), ruleChainId);
+                    RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg = ((RuleChainMsgConstructor)
+                            ruleChainMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
+                            .constructRuleChainMetadataUpdatedMsg(edgeEvent.getTenantId(), msgType, ruleChainMetaData, edgeVersion);
+                    if (ruleChainMetadataUpdateMsg != null) {
+                        builder.addRuleChainMetadataUpdateMsg(ruleChainMetadataUpdateMsg);
+                    }
+                    downlinkMsg = builder.build();
                 }
             }
             case DELETED, UNASSIGNED_FROM_EDGE -> {
