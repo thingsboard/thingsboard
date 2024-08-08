@@ -45,7 +45,8 @@ export enum WidgetComponentActionType {
   CONTEXT_MENU,
   EDIT,
   EXPORT,
-  REMOVE
+  REMOVE,
+  COPY_EDIT,
 }
 
 export class WidgetComponentAction {
@@ -113,6 +114,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
 
   private cssClass: string;
 
+  isReferenceWidget = false;
+
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
               private renderer: Renderer2,
@@ -122,6 +125,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
 
   ngOnInit(): void {
     this.widget.widgetContext.containerChangeDetector = this.cd;
+    this.isReferenceWidget =  this.dashboardWidgets.isReferenceWidget(this.widget);
     const cssString = this.widget.widget.config.widgetCss;
     if (isNotEmptyStr(cssString)) {
       this.cssClass =
@@ -181,6 +185,13 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, A
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.EDIT
+    });
+  }
+
+  onCopyEdit(event: MouseEvent) {
+    this.widgetComponentAction.emit({
+      event,
+      actionType: WidgetComponentActionType.COPY_EDIT
     });
   }
 

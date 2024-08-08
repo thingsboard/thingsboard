@@ -14,7 +14,13 @@
 /// limitations under the License.
 ///
 
-import { Dashboard, DashboardLayoutId, GridSettings, WidgetLayouts } from '@app/shared/models/dashboard.models';
+import {
+  Dashboard,
+  DashboardLayoutId,
+  DashboardLayoutInfo,
+  GridSettings,
+  WidgetLayouts
+} from '@app/shared/models/dashboard.models';
 import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
@@ -34,6 +40,7 @@ export interface DashboardPageInitData {
 export interface DashboardContext {
   instanceId: string;
   state: string;
+  breakpoint: string;
   getDashboard: () => Dashboard;
   dashboardTimewindow: Timewindow;
   aliasController: IAliasController;
@@ -49,6 +56,7 @@ export interface IDashboardController {
   openDashboardState(stateId: string, openRightLayout: boolean);
   addWidget($event: Event, layoutCtx: DashboardPageLayoutContext);
   editWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  copyEditWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, widgetTitle: string);
   removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
@@ -63,6 +71,8 @@ export interface IDashboardController {
 
 export interface DashboardPageLayoutContext {
   id: DashboardLayoutId;
+  layoutData: DashboardLayoutInfo;
+  breakpoint: string;
   widgets: LayoutWidgetsArray;
   widgetLayouts: WidgetLayouts;
   gridSettings: GridSettings;

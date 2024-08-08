@@ -131,6 +131,9 @@ div.tb-dashboard-page {
           width: max(40%, calc(100% - 1192px));
         }
       }
+      &.diagonal-stripes {
+        background: repeating-linear-gradient(45deg, #ccc, #ccc 10px, #fff0 10px, #fff0 20px);
+      }
     }
 
     mat-drawer.tb-details-drawer {
