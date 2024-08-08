@@ -101,13 +101,13 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
       this.tagFunctionArgs = ['ctx', 'element'];
       this.objectHighlightRules = scadaSymbolElementStateRenderHighlightRules;
       this.propertyHighlightRules = scadaSymbolElementStateRenderPropertiesHighlightRules;
-      this.tagFunctionHelpId = 'widget/lib/timeseries/cell_style_fn'; // TODO:
+      this.tagFunctionHelpId = 'scada/tag_state_render_fn';
     } else if (this.tagFunctionType === 'clickAction') {
       this.panelTitle = 'scada.tag.on-click-action';
       this.tagFunctionArgs = ['ctx', 'element', 'event'];
       this.objectHighlightRules = scadaSymbolClickActionHighlightRules;
       this.propertyHighlightRules = scadaSymbolClickActionPropertiesHighlightRules;
-      this.tagFunctionHelpId = 'widget/lib/timeseries/cell_style_fn';  // TODO:
+      this.tagFunctionHelpId = 'scada/tag_click_action_fn';
     }
   }
 

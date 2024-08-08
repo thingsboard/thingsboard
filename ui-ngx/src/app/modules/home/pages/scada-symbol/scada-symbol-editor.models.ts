@@ -1167,37 +1167,110 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
             description: 'Set text to element(s). Only applicable for elements of type ' +
               '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
               '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
-            args: []
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element or an array of SVG elements',
+                type: 'Element | Array&lt;Element&gt;'
+              },
+              {
+                name: 'text',
+                description: 'Text to be set',
+                type: 'string'
+              }
+            ]
           },
           font: {
             meta: 'function',
             description: 'Set element(s) text font and color. Only applicable for elements of type ' +
               '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
               '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
-            args: []
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element or an array of SVG elements',
+                type: 'Element | Array&lt;Element&gt;'
+              },
+              {
+                name: 'font',
+                description: 'Font settings object used to apply text element font',
+                type: 'Font'
+              },
+              {
+                name: 'color',
+                description: 'Color string used to apply text color of the element',
+                type: 'string'
+              }
+            ]
           },
           disable: {
             meta: 'function',
             description: 'Disables element(s). Disabled element doesn\'t accept any user interaction. ' +
               'For ex. if disabled element has click action, no click action will be performed on user click.',
-            args: []
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element or an array of SVG elements',
+                type: 'Element | Array&lt;Element&gt;'
+              }
+            ]
           },
           enable: {
             meta: 'function',
             description: 'Enables disabled element(s). Enabled element accepts user interaction. ' +
               'For ex. if element has click action, click action will be performed on user click.',
-            args: []
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element or an array of SVG elements',
+                type: 'Element | Array&lt;Element&gt;'
+              }
+            ]
           },
           callAction: {
             meta: 'function',
             description: 'Invokes action specified by behavior of type <b>"Action"</b> found by <b>behaviorId</b>.',
-            args: []
+            args: [
+              {
+                name: 'event',
+                description: 'DOM event',
+                type: 'Event'
+              },
+              {
+                name: 'behaviorId',
+                description: 'Id of the <b>"Action"</b> behavior',
+                type: 'string'
+              },
+              {
+                name: 'value',
+                description: 'Optional value passed to behavior',
+                type: 'any',
+                optional: true
+              },
+              {
+                name: 'observer',
+                description: 'Optional observer callback',
+                type: 'Partial&lt;Observer&lt;void&gt;&gt;',
+                optional: true
+              }
+            ]
           },
           setValue: {
             meta: 'function',
             description: 'Updates value by <b>valueId</b>. See <code>ctx.values</code> for reference. ' +
               'Value update triggers all render functions.',
-            args: []
+            args: [
+              {
+                name: 'valueId',
+                description: 'Id of the value to be updated',
+                type: 'string'
+              },
+              {
+                name: 'value',
+                description: 'New value to be set',
+                type: 'any'
+              }
+            ]
           }
         }
       },
