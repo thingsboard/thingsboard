@@ -3312,6 +3312,7 @@
             "exactly-once": "2 - Exactly once"
         },
         "objects-count": "Objects count",
+        "objects-count-required": "Objects count is required",
         "wait-after-failed-attempts": "Wait after failed attempts (ms)",
         "tls-path-private-key": "Path to private key on gateway",
         "toggle-fullscreen": "Toggle fullscreen",
@@ -3367,7 +3368,6 @@
             "permit-without-calls": "Allow server to keep the GRPC connection alive even when there are no active RPC calls.",
             "path-in-os": "Path in gateway os.",
             "memory": "Your data will be stored in the in-memory queue, it is a fastest but no persistence guarantee.",
-            "framer-type": "Type of framer.",
             "file": "Your data will be stored in separated files and will be saved even after the gateway restart.",
             "sqlite": "Your data will be stored in file based database. And will be saved even after the gateway restart.",
             "opcua-timeout": "Timeout in seconds for connecting to OPC-UA server.",
@@ -3376,7 +3376,33 @@
             "enable-subscription": "If true - the gateway will subscribe to interesting nodes and wait for data update and if false - the gateway will rescan OPC-UA server every scanPeriodInMillis.",
             "show-map": "Show nodes on scanning.",
             "method-name": "Name of method on OPC-UA server.",
-            "arguments": "Arguments for the method (will be overwritten by arguments from the RPC request)."
+            "arguments": "Arguments for the method (will be overwritten by arguments from the RPC request).",
+            "modbus": {
+                "framer-type": "Type of a framer (Socket, RTU, or ASCII), if needed.",
+                "host": "Hostname or IP address of Modbus server.",
+                "port": "Modbus server port for connection.",
+                "unit-id": "Modbus slave ID.",
+                "connection-timeout": "Connection timeout (in seconds) for the Modbus server.",
+                "byte-order": "Byte order for reading data.",
+                "word-order": "Word order when reading multiple registers.",
+                "retries": "Retrying data transmission to the master. Acceptable values: true or false.",
+                "retries-on-empty": "Retry sending data to the master if the data is empty.",
+                "retries-on-invalid": "Retry sending data to the master if it fails.",
+                "poll-period": "Period in milliseconds to check attributes and telemetry on the slave.",
+                "connect-attempt-time": "A waiting period in milliseconds before establishing a connection to the master.",
+                "connect-attempt-count": "The number of connection attempts made through the gateway.",
+                "wait-after-failed-attempts": "A waiting period in milliseconds before attempting to send data to the master.",
+                "serial-port": "Serial port for connection.",
+                "baudrate": "Baud rate for the serial device.",
+                "stopbits": "The number of stop bits sent after each character in a message to indicate the end of the byte.",
+                "bytesize": "The number of bits in a byte of serial data. This can be one of 5, 6, 7, or 8.",
+                "parity": "The type of checksum used to verify data integrity. Options: (E)ven, (O)dd, (N)one.",
+                "strict": "Use inter-character timeout for baudrates ≤ 19200.",
+                "objects-count": "Depends on the selected type.",
+                "address": "Register address to verify.",
+                "key": "Key to be used as the attribute key for the platform instance.",
+                "data-keys": "For more information about function codes and data types click on help icon"
+            }
         }
     },
     "grid": {
