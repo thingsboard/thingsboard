@@ -19,8 +19,9 @@
   <div fxFlex fxLayout="column" class="tb-mapping-table-content">
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools" *ngIf="(dataSource.isEmpty() | async) === false">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
-          <span class="tb-mapping-table-title">{{mappingTypeTranslationsMap.get(mappingType) | translate}}</span>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start"
+             class="title-container">
+          <span class="tb-mapping-table-title">{{ mappingTypeTranslationsMap.get(mappingType) | translate }}</span>
         </div>
         <span fxFlex></span>
         <button mat-icon-button
@@ -104,7 +105,8 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-header-row [ngClass]="{'mat-row-select': true}"
+                        *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
         <mat-row *matRowDef="let mapping; columns: displayedColumns;"></mat-row>
       </table>
       <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"

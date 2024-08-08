@@ -90,8 +90,6 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
 
   expressionType = Object.values(ExpressionType);
 
-  dataKeyType: DataKeyType;
-
   keysListFormArray: UntypedFormArray;
 
   errorText = '';
@@ -131,9 +129,9 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
       });
     } else {
       dataKeyFormGroup = this.fb.group({
-        key: ['name', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-        byteFrom: ['0', [Validators.required]],
-        byteTo: ['-1', [Validators.required]],
+        key: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
+        byteFrom: ['', [Validators.required]],
+        byteTo: ['', [Validators.required]],
       });
     }
     this.keysListFormArray.push(dataKeyFormGroup);

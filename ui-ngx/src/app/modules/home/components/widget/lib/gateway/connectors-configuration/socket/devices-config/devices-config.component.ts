@@ -81,13 +81,6 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
   @coerceBoolean()
   required = false;
 
-  @Input()
-  set mappingType(value: MappingType) {
-    if (this.mappingTypeValue !== value) {
-      this.mappingTypeValue = value;
-    }
-  }
-
   get mappingType(): MappingType {
     return this.mappingTypeValue;
   }
@@ -97,11 +90,10 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
   deviceConfigColumns = [];
   textSearchMode = false;
   dataSource: DevicesConfigDatasource;
-  hidePageSize = false;
   activeValue = false;
   dirtyValue = false;
   mappingTypeValue: MappingType;
-  mappingFormGroup: UntypedFormArray;
+  deviceFormGroup: UntypedFormArray;
   textSearch = this.fb.control('', {nonNullable: true});
 
   private onChange: (value: string) => void = () => {
@@ -115,15 +107,15 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
               public dialog: MatDialog,
               private dialogService: DialogService,
               private fb: FormBuilder) {
-    this.mappingFormGroup = this.fb.array([]);
+    this.deviceFormGroup = this.fb.array([]);
     this.dirtyValue = !this.activeValue;
     this.dataSource = new DevicesConfigDatasource();
   }
 
   ngOnInit(): void {
-    this.setMappingColumns();
+    this.setDeviceColumns();
     this.displayedColumns.push(...this.deviceConfigColumns.map(column => column.def), 'actions');
-    this.mappingFormGroup.valueChanges.pipe(
+    this.deviceFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value) => {
       this.updateTableData(value);
@@ -144,7 +136,7 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
       takeUntil(this.destroy$)
     ).subscribe((text) => {
       const searchText = text.trim();
-      this.updateTableData(this.mappingFormGroup.value, searchText.trim());
+      this.updateTableData(this.deviceFormGroup.value, searchText.trim());
     });
   }
 
@@ -157,13 +149,13 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
   }
 
   writeValue(connectorMappings: ConnectorMapping[]): void {
-    this.mappingFormGroup.clear();
+    this.deviceFormGroup.clear();
     this.pushDataAsFormArrays(connectorMappings);
   }
 
   validate(): ValidationErrors | null {
-    return !this.required || this.mappingFormGroup.controls.length ? null : {
-      mappingFormGroup: {valid: false}
+    return !this.required || this.deviceFormGroup.controls.length ? null : {
+      deviceFormGroup: {valid: false}
     };
   }
 
@@ -176,16 +168,16 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
   }
 
   exitFilterMode(): void {
-    this.updateTableData(this.mappingFormGroup.value);
+    this.updateTableData(this.deviceFormGroup.value);
     this.textSearchMode = false;
     this.textSearch.reset();
   }
 
-  manageMapping($event: Event, index?: number): void {
+  manageDevices($event: Event, index?: number): void {
     if ($event) {
       $event.stopPropagation();
     }
-    const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
+    const value = isDefinedAndNotNull(index) ? this.deviceFormGroup.at(index).value : {};
     this.dialog.open<DeviceDialogComponent, MappingInfo, MappingValue>(DeviceDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
@@ -199,11 +191,11 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
       .subscribe(res => {
         if (res) {
           if (isDefinedAndNotNull(index)) {
-            this.mappingFormGroup.at(index).patchValue(res);
+            this.deviceFormGroup.at(index).patchValue(res);
           } else {
-            this.mappingFormGroup.push(this.fb.group(res));
+            this.deviceFormGroup.push(this.fb.group(res));
           }
-          this.mappingFormGroup.markAsDirty();
+          this.deviceFormGroup.markAsDirty();
         }
       });
   }
@@ -220,7 +212,7 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
     this.dataSource.loadMappings(tableValue);
   }
 
-  deleteMapping($event: Event, index: number): void {
+  deleteDevices($event: Event, index: number): void {
     if ($event) {
       $event.stopPropagation();
     }
@@ -232,15 +224,15 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
       true
     ).subscribe((result) => {
       if (result) {
-        this.mappingFormGroup.removeAt(index);
-        this.mappingFormGroup.markAsDirty();
+        this.deviceFormGroup.removeAt(index);
+        this.deviceFormGroup.markAsDirty();
       }
     });
   }
 
   private pushDataAsFormArrays(data: ConnectorMapping[]): void {
     if (data?.length) {
-      data.forEach((mapping: ConnectorMapping) => this.mappingFormGroup.push(this.fb.control(mapping)));
+      data.forEach((mapping: ConnectorMapping) => this.deviceFormGroup.push(this.fb.control(mapping)));
     }
   }
 
@@ -252,7 +244,7 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
     };
   }
 
-  private setMappingColumns(): void {
+  private setDeviceColumns(): void {
     this.deviceConfigColumns.push(
       {def: 'address', title: 'gateway.address-filter'},
       {def: 'deviceName', title: 'gateway.device-name'},

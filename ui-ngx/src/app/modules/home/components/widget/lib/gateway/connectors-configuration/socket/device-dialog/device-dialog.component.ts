@@ -42,6 +42,7 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import {
   DeviceDataKeysPanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/socket/device-data-keys-pannel/device-data-keys-panel.component';
+import { helpBaseUrl } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-device-dialog',
@@ -101,7 +102,7 @@ export class DeviceDialogComponent extends DialogComponent<DeviceDialogComponent
   }
 
   helpLinkId(): string {
-    return 'https://thingsboard.io/docs/iot-gateway/config/socket/#device-subsection';
+    return `${helpBaseUrl}/docs/iot-gateway/config/socket/#device-subsection`;
   }
 
   cancel(): void {

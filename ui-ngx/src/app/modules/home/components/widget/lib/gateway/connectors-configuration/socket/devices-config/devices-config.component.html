@@ -25,7 +25,7 @@
         </div>
         <span fxFlex></span>
         <button mat-icon-button
-                (click)="manageMapping($event)"
+                (click)="manageDevices($event)"
                 matTooltip="{{ 'action.add' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
@@ -76,11 +76,11 @@
                     [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px'}">
             <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-icon-button
-                      (click)="manageMapping($event, i)">
+                      (click)="manageDevices($event, i)">
                 <tb-icon>edit</tb-icon>
               </button>
               <button mat-icon-button
-                      (click)="deleteMapping($event, i)">
+                      (click)="deleteDevices($event, i)">
                 <tb-icon>delete</tb-icon>
               </button>
             </div>
@@ -92,11 +92,11 @@
               </button>
               <mat-menu #cellActionsMenu="matMenu" xPosition="before">
                 <button mat-icon-button
-                        (click)="manageMapping($event, i)">
+                        (click)="manageDevices($event, i)">
                   <tb-icon>edit</tb-icon>
                 </button>
                 <button mat-icon-button
-                        (click)="deleteMapping($event, i)">
+                        (click)="deleteDevices($event, i)">
                   <tb-icon>delete</tb-icon>
                 </button>
               </mat-menu>
@@ -110,7 +110,7 @@
       <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">
         <button mat-button class="connector"
-                (click)="manageMapping($event)">
+                (click)="manageDevices($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
           <span>{{ 'gateway.add-device' | translate }}</span>
         </button>

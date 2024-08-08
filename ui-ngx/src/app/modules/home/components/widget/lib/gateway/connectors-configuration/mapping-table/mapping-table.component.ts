@@ -43,7 +43,7 @@ import {
   ConnectorMapping,
   ConverterConnectorMapping,
   ConvertorTypeTranslationsMap,
-  DeviceConnectorMapping,
+  DeviceConnectorMapping, DevicesConfigMapping,
   MappingInfo,
   MappingType,
   MappingTypeTranslationsMap,
