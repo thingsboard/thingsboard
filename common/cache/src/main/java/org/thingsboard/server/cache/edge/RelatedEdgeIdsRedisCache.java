@@ -29,10 +29,10 @@ import org.thingsboard.server.common.data.page.PageData;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
 @Service("EdgeIdsCache")
-public class EdgeIdsRedisCache extends RedisTbTransactionalCache<EdgeIdsCacheKey, PageData<EdgeId>> {
+public class RelatedEdgeIdsRedisCache extends RedisTbTransactionalCache<RelatedEdgeIdsCacheKey, PageData<EdgeId>> {
 
-    public EdgeIdsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
-        super(CacheConstants.EDGE_IDS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonTypeReferenceRedisSerializer<>(new TypeReference<>(){}));
+    public RelatedEdgeIdsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.RELATED_EDGE_IDS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonTypeReferenceRedisSerializer<>(new TypeReference<>(){}));
     }
 
 }

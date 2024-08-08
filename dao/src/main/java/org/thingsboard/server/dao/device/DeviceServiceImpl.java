@@ -68,7 +68,6 @@ import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.dao.device.provision.ProvisionFailedException;
 import org.thingsboard.server.dao.device.provision.ProvisionRequest;
 import org.thingsboard.server.dao.device.provision.ProvisionResponseStatus;
-import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.event.EventService;
@@ -124,9 +123,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
 
     @Autowired
     private EntityCountService countService;
-
-    @Autowired
-    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     private JpaExecutorService executor;
@@ -630,7 +626,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             log.warn("[{}] Failed to create device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, deviceId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
                 .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return device;
@@ -652,7 +647,6 @@ public class DeviceServiceImpl extends AbstractCachedEntityService<DeviceCacheKe
             log.warn("[{}] Failed to delete device relation. Edge Id: [{}]", deviceId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, deviceId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(deviceId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return device;

@@ -43,7 +43,6 @@ import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.dao.customer.CustomerDao;
 import org.thingsboard.server.dao.edge.EdgeDao;
-import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
@@ -92,9 +91,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     @Autowired
     private EntityCountService countService;
-
-    @Autowired
-    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     private ApplicationEventPublisher eventPublisher;
@@ -338,7 +334,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to create dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, dashboardId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
                 .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return dashboard;
@@ -357,7 +352,6 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             log.warn("[{}] Failed to delete dashboard relation. Edge Id: [{}]", dashboardId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, dashboardId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(dashboardId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return dashboard;

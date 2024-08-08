@@ -44,7 +44,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
@@ -82,9 +81,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
 
     @Autowired
     private DataValidator<EntityView> entityViewValidator;
-
-    @Autowired
-    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     protected JpaExecutorService service;
@@ -406,7 +402,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to create entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, entityViewId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
                 .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return entityView;
@@ -425,7 +420,6 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
             log.warn("[{}] Failed to delete entityView relation. Edge Id: [{}]", entityViewId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, entityViewId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(entityViewId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return entityView;

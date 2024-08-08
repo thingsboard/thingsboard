@@ -45,7 +45,6 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
-import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.entity.EntityCountService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
@@ -89,9 +88,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
 
     @Autowired
     private EntityCountService countService;
-
-    @Autowired
-    private RelatedEdgeIdsService edgeIdsService;
 
     @Autowired
     private JpaExecutorService executor;
@@ -422,7 +418,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             log.warn("[{}] Failed to create asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, assetId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(assetId)
                 .actionType(ActionType.ASSIGNED_TO_EDGE).build());
         return asset;
@@ -444,7 +439,6 @@ public class BaseAssetService extends AbstractCachedEntityService<AssetCacheKey,
             log.warn("[{}] Failed to delete asset relation. Edge Id: [{}]", assetId, edgeId);
             throw new RuntimeException(e);
         }
-        edgeIdsService.publishRelatedEdgeIdsEvictEvent(tenantId, assetId);
         eventPublisher.publishEvent(ActionEntityEvent.builder().tenantId(tenantId).edgeId(edgeId).entityId(assetId)
                 .actionType(ActionType.UNASSIGNED_FROM_EDGE).build());
         return asset;

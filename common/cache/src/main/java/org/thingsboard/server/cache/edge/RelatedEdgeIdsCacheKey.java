@@ -15,16 +15,31 @@
  */
 package org.thingsboard.server.cache.edge;
 
-import lombok.Data;
+import lombok.Builder;
+import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-@Data
+import java.io.Serial;
+import java.io.Serializable;
+
+@Getter
+@EqualsAndHashCode
 @RequiredArgsConstructor
-public class EdgeIdsEvictEvent {
+@Builder
+public class RelatedEdgeIdsCacheKey implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 5118170671697650121L;
 
     private final TenantId tenantId;
     private final EntityId entityId;
+
+    @Override
+    public String toString() {
+        return tenantId + "_" + entityId;
+    }
 
 }

@@ -25,7 +25,7 @@ public class CacheConstants {
     public static final String USER_CACHE = "users";
     public static final String ENTITY_VIEW_CACHE = "entityViews";
     public static final String EDGE_CACHE = "edges";
-    public static final String EDGE_IDS_CACHE = "edgeIds";
+    public static final String RELATED_EDGE_IDS_CACHE = "relatedEdgeIds";
     public static final String CLAIM_DEVICES_CACHE = "claimDevices";
     public static final String SECURITY_SETTINGS_CACHE = "securitySettings";
     public static final String TENANT_PROFILE_CACHE = "tenantProfiles";
