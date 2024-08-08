@@ -53,7 +53,7 @@ public class EntitiesByNameAndTypeLoader {
                 throw new IllegalStateException("Unexpected entity type " + entityType.name());
         }
         if (targetEntity == null) {
-            throw new IllegalStateException("Failed to found " + entityType.name().toLowerCase() + " with name '" + entityName + "'!");
+            throw new IllegalStateException("Failed to found " + entityType.getNormalName().toLowerCase() + " with name '" + entityName + "'!");
         }
         return targetEntity.getId();
     }
