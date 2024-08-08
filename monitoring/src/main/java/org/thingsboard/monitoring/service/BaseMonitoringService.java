@@ -100,7 +100,10 @@ public abstract class BaseMonitoringService<C extends MonitoringConfig<T>, T ext
             reporter.reportLatency(Latencies.LOG_IN, stopWatch.getTime());
 
             try (WsClient wsClient = wsClientFactory.createClient(accessToken)) {
+                stopWatch.start();
                 wsClient.subscribeForTelemetry(devices, TransportHealthChecker.TEST_TELEMETRY_KEY).waitForReply();
+                reporter.reportLatency(Latencies.WS_SUBSCRIBE, stopWatch.getTime());
+
                 for (BaseHealthChecker<C, T> healthChecker : healthCheckers) {
                     check(healthChecker, wsClient);
                 }
