@@ -38,7 +38,9 @@
         <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
-              <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
+              <span *ngIf="!entitiesTableConfig.hideTableTitle && entitiesTableConfig.tableTitle" class="tb-entity-table-title">
+                {{ entitiesTableConfig.tableTitle }}
+              </span>
               <tb-anchor #entityTableHeader></tb-anchor>
               <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
                               (ngModelChange)="onTimewindowChange()"
@@ -165,12 +167,19 @@
                         [matTooltip]="cellTooltip(entity, column, row)"
                         matTooltipPosition="above"
                         [ngStyle]="cellStyle(entity, column, row)">
-                <ng-container *ngIf="column.type == 'link' && column.entityURL(entity) as detailsPageURL; else defaultContent">
-                  <a [routerLink]="detailsPageURL" [innerHTML]="cellContent(entity, column, row)" (click)="$event.stopPropagation();"></a>
+                <ng-container [ngSwitch]="column.type">
+                  <ng-template [ngSwitchCase]="'link'">
+                    <a *ngIf="column.entityURL(entity) as detailsPageURL; else defaultContent"
+                       [routerLink]="detailsPageURL" [innerHTML]="cellContent(entity, column, row)"
+                       (click)="$event.stopPropagation();"></a>
+                  </ng-template>
+                  <ng-template [ngSwitchCase]="'clients'">
+                    <tb-client-chips [clientsEntity]="entity"></tb-client-chips>
+                  </ng-template>
+                  <ng-template #defaultContent ngSwitchDefault>
+                    <span [innerHTML]="cellContent(entity, column, row)"></span>
+                  </ng-template>
                 </ng-container>
-                <ng-template #defaultContent>
-                  <span [innerHTML]="cellContent(entity, column, row)"></span>
-                </ng-template>
                 <ng-template [ngIf]="column.actionCell">
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
@@ -209,7 +218,7 @@
                         matTooltipPosition="above"
                         (click)="column.actionDescriptor.onAction($event, entity)">
                   <tb-icon [ngStyle]="column.actionDescriptor.style">
-                    {{column.actionDescriptor.icon}}
+                    {{column.actionDescriptor.iconFunction ? column.actionDescriptor.iconFunction(entity) : column.actionDescriptor.icon}}
                   </tb-icon>
                 </button>
               </mat-cell>

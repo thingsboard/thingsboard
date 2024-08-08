@@ -21,7 +21,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { HasConfirmForm } from '@core/guards/confirm-on-exit.guard';
 import { Subject, takeUntil } from 'rxjs';
-import { MobileAppService } from '@core/http/mobile-app.service';
+import { MobileApplicationService } from '@core/http/mobile-application.service';
 import {
   BadgePosition,
   badgePositionTranslationsMap,
@@ -45,7 +45,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
   badgePositionTranslationsMap = badgePositionTranslationsMap;
 
   constructor(protected store: Store<AppState>,
-              private mobileAppService: MobileAppService,
+              private mobileAppService: MobileApplicationService,
               private fb: FormBuilder) {
     super(store);
     this.buildMobileAppSettingsForm();

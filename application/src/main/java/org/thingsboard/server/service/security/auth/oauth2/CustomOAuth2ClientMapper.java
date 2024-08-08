@@ -25,7 +25,7 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
@@ -42,7 +42,7 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client registration) {
         OAuth2MapperConfig config = registration.getMapperConfig();
         OAuth2User oauth2User = getOAuth2User(token, providerAccessToken, config.getCustom());
         return getOrCreateSecurityUserFromOAuth2User(oauth2User, registration);

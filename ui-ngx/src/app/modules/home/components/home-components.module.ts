@@ -171,6 +171,7 @@ import {
 import { WidgetConfigComponentsModule } from '@home/components/widget/config/widget-config-components.module';
 import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
+import { ClientChipsComponent } from '@home/pages/admin/oauth2/clients/client-chips.component';
 
 @NgModule({
   declarations:
@@ -308,7 +309,8 @@ import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delet
       RateLimitsComponent,
       RateLimitsTextComponent,
       RateLimitsDetailsDialogComponent,
-      SendNotificationButtonComponent
+      SendNotificationButtonComponent,
+      ClientChipsComponent
     ],
   imports: [
     CommonModule,

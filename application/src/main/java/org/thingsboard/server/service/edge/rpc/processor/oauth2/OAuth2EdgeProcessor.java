@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.gen.edge.v1.DownlinkMsg;
 import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -37,21 +37,21 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 @TbCoreComponent
 public class OAuth2EdgeProcessor extends BaseEdgeProcessor {
 
-    public DownlinkMsg convertOAuth2EventToDownlink(EdgeEvent edgeEvent) {
+    public DownlinkMsg convertOAuth2ProviderEventToDownlink(EdgeEvent edgeEvent) {
         DownlinkMsg downlinkMsg = null;
-        OAuth2Info oAuth2Info = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Info.class);
-        if (oAuth2Info != null) {
-            OAuth2UpdateMsg oAuth2UpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Info);
+        OAuth2Client oAuth2Client = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Client.class);
+        if (oAuth2Client != null) {
+            OAuth2UpdateMsg oAuth2ProviderUpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Client);
             downlinkMsg = DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                    .addOAuth2UpdateMsg(oAuth2UpdateMsg)
+                    .addOAuth2UpdateMsg(oAuth2ProviderUpdateMsg)
                     .build();
         }
         return downlinkMsg;
     }
 
     public ListenableFuture<Void> processOAuth2Notification(TenantId tenantId, TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg) {
-        OAuth2Info oAuth2Info = JacksonUtil.fromString(edgeNotificationMsg.getBody(), OAuth2Info.class);
+        OAuth2Client oAuth2Info = JacksonUtil.fromString(edgeNotificationMsg.getBody(), OAuth2Client.class);
         if (oAuth2Info == null) {
             return Futures.immediateFuture(null);
         }

@@ -228,7 +228,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
   }
 
   hideDetailsTabs(): boolean {
-    return this.isEditValue && this.entitiesTableConfig.hideDetailsTabsOnEdit;
+    return this.entitiesTableConfig.hideDetailsTabs || this.isEditValue && this.entitiesTableConfig.hideDetailsTabsOnEdit;
   }
 
   reloadEntity(): Observable<BaseData<HasId>> {

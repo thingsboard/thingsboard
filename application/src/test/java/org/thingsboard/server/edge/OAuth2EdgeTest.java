@@ -15,19 +15,14 @@
  */
 package org.thingsboard.server.edge;
 
-import com.google.common.collect.Lists;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.oauth2.MapperType;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2DomainInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2ParamsInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2RegistrationInfo;
-import org.thingsboard.server.common.data.oauth2.SchemeType;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 
@@ -45,59 +40,47 @@ public class OAuth2EdgeTest extends AbstractEdgeTest {
         // enable oauth
         edgeImitator.allowIgnoredTypes();
         edgeImitator.expectMessageAmount(1);
-        OAuth2Info oAuth2Info = createDefaultOAuth2Info();
-        oAuth2Info = doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
+        OAuth2Client oAuth2Client = createDefaultOAuth2Info();
+        oAuth2Client = doPost("/api/oauth2/config", oAuth2Client, OAuth2Client.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
-        OAuth2UpdateMsg oAuth2UpdateMsg = (OAuth2UpdateMsg) latestMessage;
-        OAuth2Info result = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
-        Assert.assertEquals(oAuth2Info, result);
+        OAuth2UpdateMsg oAuth2ProviderUpdateMsg = (OAuth2UpdateMsg) latestMessage;
+        OAuth2Client result = JacksonUtil.fromString(oAuth2ProviderUpdateMsg.getEntity(), OAuth2Client.class, true);
+        Assert.assertEquals(oAuth2Client, result);
 
         // disable oauth support
         edgeImitator.expectMessageAmount(1);
-        oAuth2Info.setEnabled(false);
-        oAuth2Info.setEdgeEnabled(false);
-        doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
+        doPost("/api/oauth2/config", oAuth2Client, OAuth2Client.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
-        oAuth2UpdateMsg = (OAuth2UpdateMsg) latestMessage;
-        result = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
-        Assert.assertEquals(oAuth2Info, result);
+        oAuth2ProviderUpdateMsg = (OAuth2UpdateMsg) latestMessage;
+        result = JacksonUtil.fromString(oAuth2ProviderUpdateMsg.getEntity(), OAuth2Client.class, true);
+        Assert.assertEquals(oAuth2Client, result);
 
         edgeImitator.ignoreType(OAuth2UpdateMsg.class);
         loginTenantAdmin();
     }
 
-    private OAuth2Info createDefaultOAuth2Info() {
-        return new OAuth2Info(true, true, Lists.newArrayList(
-                OAuth2ParamsInfo.builder()
-                        .domainInfos(Lists.newArrayList(
-                                OAuth2DomainInfo.builder().name("domain").scheme(SchemeType.MIXED).build()
-                        ))
-                        .mobileInfos(Collections.emptyList())
-                        .clientRegistrations(Lists.newArrayList(
-                                validRegistrationInfo()
-                        ))
-                        .build()
-        ));
+    private OAuth2Client createDefaultOAuth2Info() {
+        return validRegistrationInfo();
     }
 
-    private OAuth2RegistrationInfo validRegistrationInfo() {
-        return OAuth2RegistrationInfo.builder()
-                .clientId(UUID.randomUUID().toString())
-                .clientSecret(UUID.randomUUID().toString())
-                .authorizationUri(UUID.randomUUID().toString())
-                .accessTokenUri(UUID.randomUUID().toString())
-                .scope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()))
-                .platforms(Collections.emptyList())
-                .userInfoUri(UUID.randomUUID().toString())
-                .userNameAttributeName(UUID.randomUUID().toString())
-                .jwkSetUri(UUID.randomUUID().toString())
-                .clientAuthenticationMethod(UUID.randomUUID().toString())
-                .loginButtonLabel(UUID.randomUUID().toString())
-                .mapperConfig(
+    private OAuth2Client validRegistrationInfo() {
+        OAuth2Client oAuth2Client = new OAuth2Client();
+        oAuth2Client.setClientId(UUID.randomUUID().toString());
+        oAuth2Client.setClientSecret(UUID.randomUUID().toString());
+        oAuth2Client.setAuthorizationUri(UUID.randomUUID().toString());
+        oAuth2Client.setAccessTokenUri(UUID.randomUUID().toString());
+        oAuth2Client.setScope(Arrays.asList(UUID.randomUUID().toString(), UUID.randomUUID().toString()));
+        oAuth2Client.setPlatforms(Collections.emptyList());
+        oAuth2Client.setUserInfoUri(UUID.randomUUID().toString());
+        oAuth2Client.setUserNameAttributeName(UUID.randomUUID().toString());
+        oAuth2Client.setJwkSetUri(UUID.randomUUID().toString());
+        oAuth2Client.setClientAuthenticationMethod(UUID.randomUUID().toString());
+        oAuth2Client.setLoginButtonLabel(UUID.randomUUID().toString());
+        oAuth2Client.setMapperConfig(
                         OAuth2MapperConfig.builder()
                                 .type(MapperType.CUSTOM)
                                 .custom(
@@ -105,9 +88,8 @@ public class OAuth2EdgeTest extends AbstractEdgeTest {
                                                 .url(UUID.randomUUID().toString())
                                                 .build()
                                 )
-                                .build()
-                )
-                .build();
+                                .build());
+        return oAuth2Client;
     }
 
 }

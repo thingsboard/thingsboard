@@ -49,7 +49,7 @@ import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.relation.RelationService;
@@ -257,7 +257,7 @@ public abstract class BaseEdgeProcessorTest {
     protected ResourceService resourceService;
 
     @MockBean
-    protected OAuth2Service oAuth2Service;
+    protected OAuth2ClientService oAuth2ClientService;
 
     @MockBean
     @Lazy

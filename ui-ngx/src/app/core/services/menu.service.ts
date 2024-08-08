@@ -282,7 +282,30 @@ export class MenuService {
             name: 'admin.oauth2.oauth2',
             type: 'link',
             path: '/security-settings/oauth2',
-            icon: 'mdi:shield-account'
+            icon: 'mdi:shield-account',
+            pages: [
+              {
+                id: 'domains',
+                name: 'admin.oauth2.domains',
+                type: 'link',
+                path: '/security-settings/oauth2/domains',
+                icon: 'domain'
+              },
+              {
+                id: 'mobile_app',
+                name: 'admin.oauth2.mobile-apps',
+                type: 'link',
+                path: '/security-settings/oauth2/mobile-applications',
+                icon: 'smartphone'
+              },
+              {
+                id: 'clients',
+                name: 'admin.oauth2.clients',
+                type: 'link',
+                path: '/security-settings/oauth2/clients',
+                icon: 'public'
+              }
+            ]
           }
         ]
       }
