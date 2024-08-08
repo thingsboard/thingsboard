@@ -15,7 +15,7 @@
  */
 
 :host {
-  .tb-mapping-keys-panel {
+  .tb-device-keys-panel {
     width: 77vw;
     max-width: 700px;
 
@@ -29,10 +29,6 @@
     .key-panel {
       height: 500px;
       overflow: auto;
-    }
-
-    tb-value-input {
-      width: 100%;
     }
 
     .tb-form-panel {

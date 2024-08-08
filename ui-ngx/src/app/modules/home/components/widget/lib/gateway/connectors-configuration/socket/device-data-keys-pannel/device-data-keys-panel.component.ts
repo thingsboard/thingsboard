@@ -28,28 +28,28 @@ import {
   UntypedFormBuilder,
   Validators
 } from '@angular/forms';
-import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { coerceBoolean } from '@shared/decorators/coercion';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { PageComponent } from '@shared/components/page.component';
 import {
   DeviceAttributesRequests,
-  DeviceDataKey, ExpressionType,
-  mappingValueTypesMap,
-  noLeadTrailSpacesRegex, RequestsType,
-  RpcMethodsMapping, SocketAttributeUpdates, SocketEncoding, SocketValueKey,
+  DeviceDataKey,
+  ExpressionType,
+  noLeadTrailSpacesRegex,
+  RequestsType,
+  RpcMethodsMapping,
+  SocketAttributeUpdates,
+  SocketEncoding,
+  SocketValueKey,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-device-data-keys-panel',
   templateUrl: './device-data-keys-panel.component.html',
-  styleUrls: ['./device-data-keys-panel.component.scss'],
-  providers: []
+  styleUrls: ['./device-data-keys-panel.component.scss']
 })
-export class DeviceDataKeysPanelComponent extends PageComponent implements OnInit {
+export class DeviceDataKeysPanelComponent implements OnInit {
 
   @Input()
   panelTitle: string;
@@ -64,23 +64,16 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
   noKeysText: string;
 
   @Input()
-  keys: Array<DeviceDataKey> | { [key: string]: any };
+  keys: Array<DeviceDataKey> | Record<string, string | number | boolean>;
 
   @Input()
   keysType: SocketValueKey;
 
   @Input()
-  valueTypes: Map<string, any> = mappingValueTypesMap;
-
-  @Input()
-  @coerceBoolean()
-  rawData = false;
-
-  @Input()
   popover: TbPopoverComponent<DeviceDataKeysPanelComponent>;
 
   @Output()
-  keysDataApplied = new EventEmitter<Array<DeviceDataKey> | { [key: string]: unknown }>();
+  keysDataApplied = new EventEmitter<Array<DeviceDataKey> | Record<string, string | number | boolean>>();
 
   SocketValueKey = SocketValueKey;
 
@@ -92,11 +85,8 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
 
   keysListFormArray: UntypedFormArray;
 
-  errorText = '';
-
   constructor(private fb: UntypedFormBuilder,
               protected store: Store<AppState>) {
-    super(store);
   }
 
   ngOnInit(): void {
@@ -123,7 +113,7 @@ export class DeviceDataKeysPanelComponent extends PageComponent implements OnIni
     } else if (this.keysType === SocketValueKey.ATTRIBUTES_REQUESTS) {
       dataKeyFormGroup = this.fb.group({
         type: [RequestsType.Shared, [Validators.required]],
-        expressionType : [ExpressionType.Constant, [Validators.required]],
+        expressionType: [ExpressionType.Constant, [Validators.required]],
         requestExpression: ['', []],
         attributeNameExpression: ['', []]
       });
