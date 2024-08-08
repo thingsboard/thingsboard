@@ -106,23 +106,13 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   private uniqNameRequired(): ValidatorFn {
-    return (c: UntypedFormControl) => {
-      const newName = c.value.trim().toLowerCase();
-      const found = this.data.dataSourceData.find((connectorAttr) => {
-        const connectorData = connectorAttr.value;
-        return connectorData.name.toLowerCase() === newName;
-      });
-      if (found) {
-        if (c.hasError('required')) {
-          return c.getError('required');
-        }
-        return {
-          duplicateName: {
-            valid: false
-          }
-        };
-      }
-      return null;
+    return (control: UntypedFormControl) => {
+      const newName = control.value.trim().toLowerCase();
+      const isDuplicate = this.data.dataSourceData.some(({ value: { name } }) =>
+        name.toLowerCase() === newName
+      );
+
+      return isDuplicate ? { duplicateName: { valid: false } } : null;
     };
   }
 
@@ -137,6 +127,6 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
         }
       }),
       takeUntil(this.destroy$),
-    ).subscribe()
+    ).subscribe();
   }
 }
