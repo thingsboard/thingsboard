@@ -53,12 +53,8 @@ public class TbTimeSeriesSubscription extends TbSubscription<TelemetrySubscripti
     }
 
     @Override
-    public boolean equals(Object o) {
-        return super.equals(o);
+    protected boolean canEqual(final Object other) {
+        return other instanceof TbTimeSeriesSubscription;
     }
 
-    @Override
-    public int hashCode() {
-        return super.hashCode();
-    }
 }

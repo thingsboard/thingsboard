@@ -27,8 +27,6 @@ import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.locks.Lock;
-import java.util.concurrent.locks.ReentrantLock;
 
 /**
  * Information about the local websocket subscriptions.
@@ -41,8 +39,6 @@ public class TbEntityLocalSubsInfo {
     private final TenantId tenantId;
     @Getter
     private final EntityId entityId;
-    @Getter
-    private final Lock lock = new ReentrantLock();
     @Getter
     private final Set<TbSubscription<?>> subs = ConcurrentHashMap.newKeySet();
     private volatile TbSubscriptionsInfo state = new TbSubscriptionsInfo();
@@ -88,6 +84,7 @@ public class TbEntityLocalSubsInfo {
                 if (!newState.attrAllKeys) {
                     if (attrSub.isAllKeys()) {
                         newState.attrAllKeys = true;
+                        newState.attrKeys = null;
                         stateChanged = true;
                     } else {
                         if (newState.attrKeys == null) {
@@ -104,6 +101,7 @@ public class TbEntityLocalSubsInfo {
                 if (!newState.tsAllKeys) {
                     if (tsSub.isAllKeys()) {
                         newState.tsAllKeys = true;
+                        newState.tsKeys = null;
                         stateChanged = true;
                     } else {
                         if (newState.tsKeys == null) {
@@ -137,8 +135,30 @@ public class TbEntityLocalSubsInfo {
             return toEvent(ComponentLifecycleEvent.DELETED);
         }
         TbSubscriptionsInfo oldState = state.copy();
-        TbSubscriptionsInfo newState = new TbSubscriptionsInfo();
+
+        //copy unchanged state only
+        TbSubscriptionsInfo newState = state.copy();
+        switch (sub.getType()) {
+            case NOTIFICATIONS:
+            case NOTIFICATIONS_COUNT:
+                newState.notifications = false;
+                break;
+            case ALARMS:
+                newState.alarms = false;
+                break;
+            case ATTRIBUTES:
+                newState.attrAllKeys = false;
+                newState.attrKeys = null;
+                break;
+            case TIMESERIES:
+                newState.tsAllKeys = false;
+                newState.tsKeys = null;
+        }
+
         for (TbSubscription<?> subscription : subs) {
+            if (subscription.getType() != sub.getType()) {
+                continue; // skip unchanged types
+            }
             switch (subscription.getType()) {
                 case NOTIFICATIONS:
                 case NOTIFICATIONS_COUNT:
@@ -155,6 +175,7 @@ public class TbEntityLocalSubsInfo {
                     var attrSub = (TbAttributeSubscription) subscription;
                     if (!newState.attrAllKeys && attrSub.isAllKeys()) {
                         newState.attrAllKeys = true;
+                        newState.attrKeys = null;
                         continue;
                     }
                     if (newState.attrKeys == null) {
@@ -167,6 +188,7 @@ public class TbEntityLocalSubsInfo {
                     var tsSub = (TbTimeSeriesSubscription) subscription;
                     if (!newState.tsAllKeys && tsSub.isAllKeys()) {
                         newState.tsAllKeys = true;
+                        newState.tsKeys = null;
                         continue;
                     }
                     if (newState.tsKeys == null) {

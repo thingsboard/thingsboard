@@ -30,7 +30,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.UUID;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 import java.util.stream.Collectors;
 
@@ -46,6 +45,11 @@ public class NotificationsSubscription extends AbstractNotificationSubscription<
                                      int limit) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.NOTIFICATIONS, updateProcessor);
         this.limit = limit;
+    }
+
+    @Override
+    protected boolean canEqual(final Object other) {
+        return other instanceof NotificationsSubscription;
     }
 
     public UnreadNotificationsUpdate createFullUpdate() {
