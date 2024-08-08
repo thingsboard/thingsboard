@@ -15,13 +15,13 @@
     limitations under the License.
 
 -->
-<div class="tb-mapping-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-mapping-table-content">
+<div class="tb-device-table tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-device-table-content">
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start"
              class="title-container">
-          <span class="tb-mapping-table-title">{{ 'gateway.devices' | translate }}</span>
+          <span class="tb-device-table-title">{{ 'gateway.devices' | translate }}</span>
         </div>
         <span fxFlex></span>
         <button mat-icon-button
@@ -38,7 +38,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-device-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"

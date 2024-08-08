@@ -85,7 +85,8 @@ export class DevicesConfigComponent implements ControlValueAccessor, Validator, 
     return this.mappingTypeValue;
   }
 
-  @ViewChild('searchInput') searchInputField: ElementRef;
+  @ViewChild('searchInput')
+  searchInputField: ElementRef;
   displayedColumns = [];
   deviceConfigColumns = [];
   textSearchMode = false;

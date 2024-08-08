@@ -20,8 +20,8 @@
   height: 100%;
   display: block;
 
-  .tb-mapping-table {
-    .tb-mapping-table-content {
+  .tb-device-table {
+    .tb-device-table-content {
       width: 100%;
       height: 100%;
       background: #fff;
@@ -41,7 +41,7 @@
         overflow: hidden;
       }
 
-      .tb-mapping-table-title {
+      .tb-device-table-title {
         padding-right: 20px;
         white-space: nowrap;
         overflow: hidden;
@@ -82,7 +82,7 @@
       height: auto;
       min-height: 100px;
 
-      .tb-mapping-table-title {
+      .tb-device-table-title {
         padding-bottom: 5px;
         width: 100%;
       }

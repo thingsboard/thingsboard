@@ -1156,6 +1156,7 @@ message FromEdgeSyncResponseMsgProto {
   int64 edgeIdMSB = 5;
   int64 edgeIdLSB = 6;
   bool success = 7;
+  string error = 8;
 }
 
 message DeviceEdgeUpdateMsgProto {
