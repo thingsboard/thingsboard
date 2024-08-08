@@ -18,20 +18,21 @@ package org.thingsboard.rule.engine.delay;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
+import java.util.concurrent.TimeUnit;
+
 @Data
 public class TbMsgDelayNodeConfiguration implements NodeConfiguration<TbMsgDelayNodeConfiguration> {
 
-    private int periodInSeconds;
+    private String period;
+    private String timeUnit;
     private int maxPendingMsgs;
-    private String periodInSecondsPattern;
-    private boolean useMetadataPeriodInSecondsPatterns;
 
     @Override
     public TbMsgDelayNodeConfiguration defaultConfiguration() {
         TbMsgDelayNodeConfiguration configuration = new TbMsgDelayNodeConfiguration();
-        configuration.setPeriodInSeconds(60);
+        configuration.setPeriod("60");
+        configuration.setTimeUnit(TimeUnit.SECONDS.name());
         configuration.setMaxPendingMsgs(1000);
-        configuration.setUseMetadataPeriodInSecondsPatterns(false);
         return configuration;
     }
 }
