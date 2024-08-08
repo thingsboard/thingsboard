@@ -26,7 +26,7 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { IAliasController, IStateController } from '@core/api/widget-api.models';
 import { ILayoutController } from './layout/layout.models';
 import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/dashboard-component.models';
-import { Observable } from 'rxjs';
+import { BehaviorSubject, Observable } from 'rxjs';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
@@ -74,6 +74,7 @@ export interface IDashboardController {
 export interface DashboardPageLayoutContext {
   id: DashboardLayoutId;
   layoutData: DashboardLayoutInfo;
+  layoutDataChanged: BehaviorSubject<void>;
   breakpoint: string;
   widgets: LayoutWidgetsArray;
   widgetLayouts: WidgetLayouts;

@@ -18,6 +18,7 @@ import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
 import {
+  BreakpointInfo,
   BreakpointLayoutInfo,
   Dashboard,
   DashboardConfiguration,
@@ -51,11 +52,14 @@ import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models'
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
+import { MediaBreakpoints } from '@shared/models/constants';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardUtilsService {
+
+  private systemBreakpoints: BreakpointInfo[];
 
   constructor(private utils: UtilsService,
               private timeService: TimeService) {
@@ -996,4 +1000,21 @@ export class DashboardUtilsService {
     };
   }
 
+  private loadSystemBreakpoints() {
+    this.systemBreakpoints=[{id: 'default'}];
+    const dashboardMediaBreakpointIds = ['xs', 'sm', 'md', 'lg', 'xl'];
+    dashboardMediaBreakpointIds.forEach(breakpoint => {
+      const value = MediaBreakpoints[breakpoint];
+      const minWidth = value.match(/min-width:\s*(\d+)px/);
+      const maxWidth = value.match(/max-width:\s*(\d+)px/);
+      this.systemBreakpoints.push({id: breakpoint, minWidth: minWidth?.[1], maxWidth: maxWidth?.[1]});
+    });
+  }
+
+  getListBreakpoint(): BreakpointInfo[] {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return this.systemBreakpoints;
+  }
 }

@@ -16,10 +16,11 @@
 
 -->
 <mat-select
-  class="select-dashboard-layout"
-  [(ngModel)]="selectLayout"
+  [class.hidden]="breakpointIds.length < 2"
+  class="select-dashboard-breakpoint"
+  [(ngModel)]="selectedBreakpoint"
   (ngModelChange)="selectLayoutChanged()">
-  <mat-option *ngFor="let layout of layouts" [value]="layout">
-    {{ layout }}
+  <mat-option *ngFor="let breakpointId of breakpointIds" [value]="breakpointId">
+    {{ breakpointId }}
   </mat-option>
 </mat-select>

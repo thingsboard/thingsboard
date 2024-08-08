@@ -33,6 +33,7 @@ import { DialogComponent } from '@app/shared/components/dialog.component';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import {
+  BreakpointInfo,
   DashboardLayout,
   DashboardLayoutId,
   DashboardStateLayouts,
@@ -53,7 +54,6 @@ import {
 import { Subscription } from 'rxjs';
 import { MatTooltip } from '@angular/material/tooltip';
 import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
-import { MediaBreakpoints } from '@shared/models/constants';
 
 export interface ManageDashboardLayoutsDialogData {
   layouts: DashboardStateLayouts;
@@ -101,16 +101,10 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   private submitted = false;
 
-  private layoutBreakpoint = {
-    default: 'Default',
-    xs: 'xs',
-    sm: 'sm',
-    md: 'md',
-    lg: 'lg',
-    xl: 'xl'
-  };
+  breakpoints: BreakpointInfo[];
+  breakpointsData: {[breakpointId in string]: BreakpointInfo} = {};
 
-  allowBreakpointIds = Object.keys(this.layoutBreakpoint);
+  allowBreakpointIds = [];
   selectedBreakpointIds = ['default'];
 
   constructor(protected store: Store<AppState>,
@@ -127,6 +121,11 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
     this.layouts = this.data.layouts;
     this.dataSource = new DashboardLayoutDatasource();
+
+    this.breakpoints = this.dashboardUtils.getListBreakpoint();
+    this.breakpoints.forEach((breakpoint) => {
+      this.breakpointsData[breakpoint.id] = breakpoint;
+    });
 
     let layoutType = LayoutType.default;
     if (isDefined(this.layouts.right)) {
@@ -217,7 +216,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       }
     }
 
-    this.allowBreakpointIds = Object.keys(this.layoutBreakpoint)
+    this.allowBreakpointIds = Object.keys(this.breakpointsData)
       .filter((item) => !this.selectedBreakpointIds.includes(item));
 
     this.dataSource.loadData(this.layoutBreakpoints);
@@ -257,15 +256,6 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
             this.showTooltip(this.layoutsFormGroup.get('fixedWidth'), LayoutWidthType.FIXED,
               this.layoutsFormGroup.get('fixedLayout').value);
             this.layoutsFormGroup.get('sliderFixed').setValue(value, {emitEvent: false});
-          }
-        ));
-
-    this.subscriptions.push(
-      this.layoutsFormGroup.get('layoutType').valueChanges
-        .subscribe(
-          () => {
-            this.dataSource = new DashboardLayoutDatasource();
-            this.dataSource.loadData(this.layoutBreakpoints);
           }
         ));
   }
@@ -491,11 +481,13 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     this.dataSource.loadData(this.layoutBreakpoints);
 
     this.addBreakpointMode = false;
+
+    this.layoutsFormGroup.markAsDirty();
   }
 
   private addLayoutConfiguration(breakpointId: string) {
     const layout = breakpointId === 'default' ? this.layouts.main : this.layouts.main.breakpoints[breakpointId];
-    const size = breakpointId === 'default' ? '' : this.parseCssQuery(MediaBreakpoints[breakpointId]);
+    const size = breakpointId === 'default' ? '' : this.createDescriptionSize(breakpointId);
     this.layoutBreakpoints.push({
       icon: 'mdi:monitor',
       name: breakpointId,
@@ -505,14 +497,23 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     });
   }
 
-  private parseCssQuery(query: string): string {
-    const value = Array.from(query.matchAll(/\([^:]+:\s+([^()]+)\)/g));
-    return `min-width: ${value[0][1]} and max-width: ${value[1][1]}`;
+  private createDescriptionSize(breakpointId: string): string {
+    const currentData = this.breakpointsData[breakpointId];
+    const minStr = isDefined(currentData.minWidth) ? `min-width: ${currentData.minWidth}px` : '';
+    const maxStr = isDefined(currentData.maxWidth) ? `min-width: ${currentData.maxWidth}px` : '';
+    return minStr && maxStr ? `${minStr} and ${maxStr}` : `${minStr}${maxStr}`;
   }
 }
 
 export class DashboardLayoutDatasource extends TbTableDatasource<DashboardLayoutSettings> {
   constructor() {
     super();
+  }
+
+  connect() {
+    if (this.dataSubject.isStopped) {
+      this.dataSubject.isStopped = false;
+    }
+    return this.dataSubject.asObservable();
   }
 }

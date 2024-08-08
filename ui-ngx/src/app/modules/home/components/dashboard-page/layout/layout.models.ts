@@ -22,7 +22,6 @@ export interface ILayoutController {
   pasteWidget($event: MouseEvent);
   pasteWidgetReference($event: MouseEvent);
   updatedCurrentBreakpoint(breakpoint?: string, showLayout?: boolean);
-  createBreakpointConfig(breakpoint?: string);
 }
 
 export enum LayoutWidthType {

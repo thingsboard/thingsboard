@@ -83,7 +83,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityService } from '@core/http/entity.service';
 import { AliasController } from '@core/api/alias-controller';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, Subscription } from 'rxjs';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import {
@@ -295,7 +295,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         ctrl: null,
         dashboardCtrl: this,
         displayGrid: 'onDrag&Resize',
-        layoutData: null
+        layoutData: null,
+        layoutDataChanged: new BehaviorSubject(null),
       }
     },
     right: {
@@ -310,7 +311,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         ctrl: null,
         dashboardCtrl: this,
         displayGrid: 'onDrag&Resize',
-        layoutData: null
+        layoutData: null,
+        layoutDataChanged: new BehaviorSubject(null),
       }
     }
   };
@@ -612,6 +614,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     if (this.dashboardResize$) {
       this.dashboardResize$.disconnect();
     }
+    this.layouts.main.layoutCtx.layoutDataChanged.unsubscribe();
+    this.layouts.right.layoutCtx.layoutDataChanged.unsubscribe();
   }
 
   public runChangeDetection() {
@@ -1140,6 +1144,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   private updateLayout(layout: DashboardPageLayout, layoutInfo: DashboardLayoutInfo) {
     layout.layoutCtx.layoutData = layoutInfo;
+    layout.layoutCtx.layoutDataChanged.next();
     layout.layoutCtx.ctrl?.updatedCurrentBreakpoint(null, layout.show);
     this.updateLayoutSizes();
   }

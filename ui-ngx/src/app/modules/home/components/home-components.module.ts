@@ -176,8 +176,8 @@ import { BasicWidgetConfigModule } from '@home/components/widget/config/basic/ba
 import { DeleteTimeseriesPanelComponent } from '@home/components/attribute/delete-timeseries-panel.component';
 import { MoveWidgetsDialogComponent } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 import {
-  SelectDashboardLayoutComponent
-} from '@home/components/dashboard-page/layout/select-dashboard-layout.component';
+  SelectDashboardBreakpointComponent
+} from '@home/components/dashboard-page/layout/select-dashboard-breakpoint.component';
 
 @NgModule({
   declarations:
@@ -288,7 +288,7 @@ import {
       DashboardPageComponent,
       DashboardStateComponent,
       DashboardLayoutComponent,
-      SelectDashboardLayoutComponent,
+      SelectDashboardBreakpointComponent,
       EditWidgetComponent,
       DashboardWidgetSelectComponent,
       AddWidgetDialogComponent,
@@ -422,7 +422,7 @@ import {
     DashboardPageComponent,
     DashboardStateComponent,
     DashboardLayoutComponent,
-    SelectDashboardLayoutComponent,
+    SelectDashboardBreakpointComponent,
     EditWidgetComponent,
     DashboardWidgetSelectComponent,
     AddWidgetDialogComponent,

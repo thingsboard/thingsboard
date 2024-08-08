@@ -343,21 +343,4 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.layoutData.default;
   }
 
-  createBreakpointConfig(breakpoint: string) {
-    const currentDashboard = this.dashboardCtx.getDashboard();
-    const dashboardConfiguration = currentDashboard.configuration;
-    const states = dashboardConfiguration.states;
-    const state = states[this.dashboardCtx.state];
-    const layout = state.layouts[this.layoutCtx.id];
-    if (!layout.breakpoints) {
-      layout.breakpoints = {};
-    }
-    layout.breakpoints[breakpoint] = {
-      gridSettings: deepClone(layout.gridSettings),
-      widgets: deepClone(layout.widgets),
-    };
-    this.layoutCtx.layoutData =
-      this.dashboardUtils.getStateLayoutsData(currentDashboard, this.dashboardCtx.state)[this.layoutCtx.id];
-  }
-
 }

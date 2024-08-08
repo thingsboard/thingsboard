@@ -16,10 +16,14 @@
 :host {
   pointer-events: all;
   width: min-content; //for Safari
+
+  .hidden {
+    display: none;
+  }
 }
 
 :host ::ng-deep {
-  .mat-mdc-select.select-dashboard-layout {
+  .mat-mdc-select.select-dashboard-breakpoint {
     .mat-mdc-select-value {
       max-width: 200px;
     }
