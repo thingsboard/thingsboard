@@ -23,4 +23,14 @@
     margin-right: 16px;
     color: rgba(0, 0, 0, 0.87);
   }
+
+  .fixed-title-width-260 {
+    min-width: 260px;
+  }
+
+  ::ng-deep.security-config {
+    .fixed-title-width {
+      min-width: 230px;
+    }
+  }
 }
