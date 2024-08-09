@@ -154,15 +154,15 @@
   <section [formGroup]="connectorForm" class="tb-form-panel section-container flex">
     <div class="tb-form-panel-title tb-flex no-flex space-between align-center">
       <div class="tb-form-panel-title">
-        {{ initialConnector?.type ? gatewayConnectorDefaultTypes.get(initialConnector.type) : '' }}
+        {{ initialConnector?.type ? GatewayConnectorTypesTranslatesMap.get(initialConnector.type) : '' }}
         {{ 'gateway.configuration' | translate }}
       </div>
       <tb-toggle-select *ngIf="initialConnector && allowBasicConfig.has(initialConnector.type)"
                         formControlName="mode" appearance="fill">
-        <tb-toggle-option [value]="connectorConfigurationModes.BASIC">
+        <tb-toggle-option [value]="ConnectorConfigurationModes.BASIC">
           {{ 'gateway.basic' | translate }}
         </tb-toggle-option>
-        <tb-toggle-option [value]="connectorConfigurationModes.ADVANCED">
+        <tb-toggle-option [value]="ConnectorConfigurationModes.ADVANCED">
           {{ 'gateway.advanced' | translate }}
         </tb-toggle-option>
       </tb-toggle-select>
@@ -173,17 +173,17 @@
       gateway.select-connector
     </span>
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">
-      <ng-container *ngIf="connectorForm.get('mode')?.value === connectorConfigurationModes.BASIC else defaultConfig">
+      <ng-container *ngIf="connectorForm.get('mode')?.value === ConnectorConfigurationModes.BASIC else defaultConfig">
         <ng-container [ngSwitch]="initialConnector.type">
-          <tb-mqtt-basic-config *ngSwitchCase="connectorType.MQTT"
+          <tb-mqtt-basic-config *ngSwitchCase="ConnectorType.MQTT"
                                 formControlName="basicConfig"
                                 [generalTabContent]="generalTabContent">
           </tb-mqtt-basic-config>
-          <tb-opc-ua-basic-config *ngSwitchCase="connectorType.OPCUA"
+          <tb-opc-ua-basic-config *ngSwitchCase="ConnectorType.OPCUA"
                                   formControlName="basicConfig"
                                   [generalTabContent]="generalTabContent">
           </tb-opc-ua-basic-config>
-          <tb-modbus-basic-config *ngSwitchCase="connectorType.MODBUS"
+          <tb-modbus-basic-config *ngSwitchCase="ConnectorType.MODBUS"
                                   formControlName="basicConfig"
                                   [generalTabContent]="generalTabContent">
           </tb-modbus-basic-config>
@@ -237,7 +237,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === connectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -245,7 +245,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === connectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -273,7 +273,7 @@
         </div>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
         <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
           {{ 'gateway.send-change-data' | translate }}
