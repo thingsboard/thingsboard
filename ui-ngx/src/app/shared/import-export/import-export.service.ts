@@ -55,7 +55,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
+import { EntityInfoData, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -378,6 +378,35 @@ export class ImportExportService {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
       }
     });
+  }
+
+  public exportEntity(entityData: EntityInfoData): void {
+    let preparedData;
+    switch (entityData.id.entityType) {
+      case EntityType.DEVICE_PROFILE:
+      case EntityType.ASSET_PROFILE:
+        preparedData = this.prepareProfileExport(entityData as DeviceProfile | AssetProfile);
+        break;
+      case EntityType.RULE_CHAIN:
+        this.ruleChainService.getRuleChainMetadata(entityData.id.id)
+          .pipe(
+            take(1),
+            map((ruleChainMetaData) => {
+              const ruleChainExport: RuleChainImport = {
+                ruleChain: this.prepareRuleChain(entityData as RuleChain),
+                metadata: this.prepareRuleChainMetaData(ruleChainMetaData)
+              };
+              return ruleChainExport;
+            }))
+          .subscribe(ruleChainData => this.exportToPc(ruleChainData, entityData.name));
+        return;
+      case EntityType.DASHBOARD:
+        preparedData = this.prepareDashboardExport(entityData as Dashboard);
+        break;
+      default:
+        preparedData = this.prepareExport(entityData);
+    }
+    this.exportToPc(preparedData, entityData.name);
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
@@ -1107,6 +1136,9 @@ export class ImportExportService {
     }
     if (isDefined(exportedData.externalId)) {
       delete exportedData.externalId;
+    }
+    if (isDefined(exportedData.version)) {
+      delete exportedData.version;
     }
     return exportedData;
   }
