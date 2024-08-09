@@ -72,9 +72,10 @@ public abstract class RedisTbTransactionalCache<K extends Serializable, V extend
         this.evictExpiration = Expiration.from(configuration.getEvictTtlInMs(), TimeUnit.MILLISECONDS);
         this.cacheTtl = Optional.ofNullable(cacheSpecsMap)
                 .map(CacheSpecsMap::getSpecs)
-                .map(x -> x.get(cacheName))
+                .map(specs -> specs.get(cacheName))
                 .map(CacheSpecs::getTimeToLiveInMinutes)
-                .map(t -> Expiration.from(t, TimeUnit.MINUTES))
+                .filter(ttl -> !ttl.equals(0))
+                .map(ttl -> Expiration.from(ttl, TimeUnit.MINUTES))
                 .orElseGet(Expiration::persistent);
         this.cacheEnabled = Optional.ofNullable(cacheSpecsMap)
                 .map(CacheSpecsMap::getSpecs)

@@ -124,7 +124,7 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
     protected abstract TbQueueConsumer<TbProtoQueueMsg<N>> createNotificationsConsumer();
 
     protected void processNotifications(List<TbProtoQueueMsg<N>> msgs, TbQueueConsumer<TbProtoQueueMsg<N>> consumer) throws Exception {
-        List<IdMsgPair<N>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).collect(Collectors.toList());
+        List<IdMsgPair<N>> orderedMsgList = msgs.stream().map(msg -> new IdMsgPair<>(UUID.randomUUID(), msg)).toList();
         ConcurrentMap<UUID, TbProtoQueueMsg<N>> pendingMap = orderedMsgList.stream().collect(
                 Collectors.toConcurrentMap(IdMsgPair::getUuid, IdMsgPair::getMsg));
         CountDownLatch processingTimeoutLatch = new CountDownLatch(1);
@@ -211,4 +211,5 @@ public abstract class AbstractConsumerService<N extends com.google.protobuf.Gene
             scheduler.shutdownNow();
         }
     }
+
 }

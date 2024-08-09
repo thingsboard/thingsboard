@@ -30,4 +30,5 @@ public class EdgeSessionState {
     private final Map<Integer, DownlinkMsg> pendingMsgsMap = Collections.synchronizedMap(new LinkedHashMap<>());
     private SettableFuture<Boolean> sendDownlinkMsgsFuture;
     private ScheduledFuture<?> scheduledSendDownlinkTask;
+
 }

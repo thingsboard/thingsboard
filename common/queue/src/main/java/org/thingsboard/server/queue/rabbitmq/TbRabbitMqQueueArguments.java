@@ -41,6 +41,8 @@ public class TbRabbitMqQueueArguments {
     private String jsExecutorProperties;
     @Value("${queue.rabbitmq.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.rabbitmq.queue-properties.edge:}")
+    private String edgeProperties;
 
     @Getter
     private Map<String, Object> coreArgs;
@@ -54,6 +56,8 @@ public class TbRabbitMqQueueArguments {
     private Map<String, Object> jsExecutorArgs;
     @Getter
     private Map<String, Object> vcArgs;
+    @Getter
+    private Map<String, Object> edgeArgs;
 
     @PostConstruct
     private void init() {
@@ -63,6 +67,7 @@ public class TbRabbitMqQueueArguments {
         notificationsArgs = getArgs(notificationsProperties);
         jsExecutorArgs = getArgs(jsExecutorProperties);
         vcArgs = getArgs(vcProperties);
+        edgeArgs = getArgs(edgeProperties);
     }
 
     public static Map<String, Object> getArgs(String properties) {

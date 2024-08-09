@@ -32,7 +32,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.edge.rpc.constructor.rule.RuleChainMsgConstructor;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import static org.thingsboard.server.service.edge.DefaultEdgeNotificationService.EDGE_IS_ROOT_BODY_KEY;
+import static org.thingsboard.server.service.queue.DefaultTbEdgeConsumerService.EDGE_IS_ROOT_BODY_KEY;
 
 @Slf4j
 @Component

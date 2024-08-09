@@ -31,4 +31,5 @@ public interface EdgeUpgradeInstructionsService {
     void setAppVersion(String version);
 
     boolean isUpgradeAvailable(TenantId tenantId, EdgeId edgeId) throws Exception;
+
 }

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.rule.RuleChain;
 
 public interface TbEdgeService {
+
     Edge save(Edge edge, RuleChain edgeTemplateRootRuleChain, User user) throws Exception;
 
     void delete(Edge edge, User user);
@@ -36,4 +37,5 @@ public interface TbEdgeService {
     Edge assignEdgeToPublicCustomer(TenantId tenantId, EdgeId edgeId, User user) throws ThingsboardException;
 
     Edge setEdgeRootRuleChain(Edge edge, RuleChainId ruleChainId, User user) throws Exception;
+
 }
