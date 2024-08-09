@@ -408,8 +408,12 @@ public class AuditLogServiceImpl implements AuditLogService {
         }
 
         return executor.submit(() -> {
-            AuditLog auditLog = auditLogDao.save(tenantId, auditLogEntry);
-            auditLogSink.logAction(auditLog);
+            try {
+                AuditLog auditLog = auditLogDao.save(tenantId, auditLogEntry);
+                auditLogSink.logAction(auditLog);
+            } catch (Throwable e) {
+                log.error("[{}] Failed to save audit log: {}", tenantId, auditLogEntry, e);
+            }
             return null;
         });
     }

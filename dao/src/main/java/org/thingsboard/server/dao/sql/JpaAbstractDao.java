@@ -47,10 +47,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
-    protected abstract Class<E> getEntityClass();
-
-    protected abstract JpaRepository<E, UUID> getRepository();
-
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
@@ -141,11 +137,19 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         query += " ORDER BY id LIMIT ?";
 
-        return jdbcTemplate.queryForList(query, UUID.class, params);
+        return getJdbcTemplate().queryForList(query, UUID.class, params);
     }
 
     protected String getTenantIdColumn() {
         return ModelConstants.TENANT_ID_COLUMN;
     }
+
+    protected JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
+    }
+
+    protected abstract Class<E> getEntityClass();
+
+    protected abstract JpaRepository<E, UUID> getRepository();
 
 }

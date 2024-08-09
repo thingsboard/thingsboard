@@ -13,24 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao;
+package org.thingsboard.server.dao.config;
 
-import org.springframework.boot.autoconfigure.domain.EntityScan;
 import org.springframework.context.annotation.ComponentScan;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.data.jpa.repository.config.EnableJpaRepositories;
 import org.springframework.data.repository.config.BootstrapMode;
 import org.springframework.transaction.annotation.EnableTransactionManagement;
-import org.thingsboard.server.dao.util.SqlTsDao;
 import org.thingsboard.server.dao.util.TbAutoConfiguration;
+import org.thingsboard.server.dao.util.TimescaleDBTsLatestDao;
 
 @Configuration
 @TbAutoConfiguration
-@ComponentScan({"org.thingsboard.server.dao.sqlts.sql", "org.thingsboard.server.dao.sqlts.insert.sql"})
-@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sqlts.ts", "org.thingsboard.server.dao.sqlts.insert.sql"}, bootstrapMode = BootstrapMode.LAZY)
-@EntityScan({"org.thingsboard.server.dao.model.sqlts.ts"})
+@ComponentScan({"org.thingsboard.server.dao.sqlts.timescale"})
+@EnableJpaRepositories(value = {"org.thingsboard.server.dao.sqlts.insert.latest.sql", "org.thingsboard.server.dao.sqlts.latest"}, bootstrapMode = BootstrapMode.LAZY)
 @EnableTransactionManagement
-@SqlTsDao
-public class SqlTsDaoConfig {
+@TimescaleDBTsLatestDao
+public class TimescaleTsLatestDaoConfig {
 
 }
