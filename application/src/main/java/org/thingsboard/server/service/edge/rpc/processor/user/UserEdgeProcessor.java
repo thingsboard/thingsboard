@@ -43,10 +43,16 @@ public class UserEdgeProcessor extends BaseEdgeProcessor {
                 User user = userService.findUserById(edgeEvent.getTenantId(), userId);
                 if (user != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    downlinkMsg = DownlinkMsg.newBuilder()
+                    DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addUserUpdateMsg(((UserMsgConstructor) userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructUserUpdatedMsg(msgType, user))
-                            .build();
+                            .addUserUpdateMsg(((UserMsgConstructor) userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructUserUpdatedMsg(msgType, user));
+                    UserCredentials userCredentialsByUserId = userService.findUserCredentialsByUserId(edgeEvent.getTenantId(), userId);
+                    if (userCredentialsByUserId != null && userCredentialsByUserId.isEnabled()) {
+                        UserCredentialsUpdateMsg userCredentialsUpdateMsg =
+                                ((UserMsgConstructor) userMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructUserCredentialsUpdatedMsg(userCredentialsByUserId);
+                        builder.addUserCredentialsUpdateMsg(userCredentialsUpdateMsg);
+                    }
+                    downlinkMsg = builder.build();
                 }
             }
             case DELETED -> downlinkMsg = DownlinkMsg.newBuilder()
