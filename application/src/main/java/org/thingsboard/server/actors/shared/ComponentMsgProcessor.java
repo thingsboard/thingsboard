@@ -78,7 +78,7 @@ public abstract class ComponentMsgProcessor<T extends EntityId> extends Abstract
     }
 
     public void scheduleStatsPersistTick(TbActorCtx context, long statsPersistFrequency) {
-        schedulePeriodicMsgWithDelay(context, new StatsPersistTick(), statsPersistFrequency, statsPersistFrequency);
+        schedulePeriodicMsgWithDelay(context, StatsPersistTick.INSTANCE, statsPersistFrequency, statsPersistFrequency);
     }
 
     protected boolean checkMsgValid(TbMsg tbMsg) {
