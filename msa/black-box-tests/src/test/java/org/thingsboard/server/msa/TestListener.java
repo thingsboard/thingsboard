@@ -19,15 +19,21 @@ import lombok.extern.slf4j.Slf4j;
 import org.openqa.selenium.WebDriver;
 import org.testng.ITestListener;
 import org.testng.ITestResult;
+import org.testng.SkipException;
+import org.testng.internal.ConstructorOrMethod;
+import org.thingsboard.server.msa.ui.base.AbstractDriverBaseTest;
+
+import java.util.Optional;
 
 @Slf4j
 public class TestListener implements ITestListener {
 
-    WebDriver driver;
+    private int failedTestsCount = 0;
+    private static final int DEFAULT_COUNT_FOR_SKIP = 20;
 
     @Override
     public void onTestStart(ITestResult result) {
-        log.info("===>>> Test started: " + result.getName());
+        log.info("===>>> Test started: {}", result.getName());
     }
 
     /**
@@ -35,8 +41,7 @@ public class TestListener implements ITestListener {
      */
     @Override
     public void onTestSuccess(ITestResult result) {
-        log.info("<<<=== Test completed successfully: " + result.getName());
-
+        log.info("<<<=== Test completed successfully: {}", result.getName());
     }
 
     /**
@@ -44,7 +49,18 @@ public class TestListener implements ITestListener {
      */
     @Override
     public void onTestFailure(ITestResult result) {
-        log.info("<<<=== Test failed: " + result.getName());
+        log.info("<<<=== Test failed: {}", result.getName());
+        ConstructorOrMethod consOrMethod = result.getMethod().getConstructorOrMethod();
+        DisableUIListeners disable = consOrMethod.getMethod().getDeclaringClass().getAnnotation(DisableUIListeners.class);
+        if (disable != null) {
+            return;
+        }
+        failedTestsCount++;
+        int countForSkip = getCountForSkip();
+        if (failedTestsCount >= countForSkip) {
+            closeWebDriver(result);
+            throw new SkipException(String.format("Too many test failures (%d). Skipping remaining tests.", countForSkip));
+        }
     }
 
     /**
@@ -52,6 +68,24 @@ public class TestListener implements ITestListener {
      */
     @Override
     public void onTestSkipped(ITestResult result) {
-        log.info("<<<=== Test skipped: " + result.getName());
+        log.info("<<<=== Test skipped: {}", result.getName());
+    }
+
+    private int getCountForSkip() {
+        try {
+            return Integer.parseInt(System.getProperty("countForSkip", String.valueOf(DEFAULT_COUNT_FOR_SKIP)));
+        } catch (NumberFormatException e) {
+            log.warn("Invalid value for countForSkip property. Using default value.");
+        }
+        return DEFAULT_COUNT_FOR_SKIP;
+    }
+
+    private void closeWebDriver(ITestResult result) {
+        Object instance = result.getInstance();
+        if (instance instanceof AbstractDriverBaseTest) {
+            Optional.ofNullable(((AbstractDriverBaseTest) instance).getDriver()).ifPresent(WebDriver::close);
+        } else {
+            log.warn("Unable to close WebDriver. AbstractDriverBaseTest instance not found.");
+        }
     }
 }
