@@ -67,13 +67,33 @@
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.running}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "running"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "warning",
@@ -82,13 +102,33 @@
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.warning}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "critical",
@@ -97,13 +137,33 @@
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.critical}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "criticalAnimation",
@@ -112,13 +172,33 @@
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.animation}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "rotationAnimationSpeed",
@@ -127,13 +207,32 @@
       "group": null,
       "type": "value",
       "valueType": "DOUBLE",
-      "defaultValue": 1,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": null,
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": 1,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "click",
@@ -142,13 +241,16 @@
       "group": null,
       "type": "widgetAction",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": null,
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": {
+        "type": "doNothing",
+        "openInSeparateDialog": false,
+        "openInPopover": false
+      }
     }
   ],
   "properties": [
