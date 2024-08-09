@@ -34,6 +34,8 @@ CREATE TABLE IF NOT EXISTS key_dictionary (
     CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
+CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1;
+
 CREATE TABLE IF NOT EXISTS ts_kv_latest (
     entity_id uuid NOT NULL,
     key int NOT NULL,
@@ -43,6 +45,7 @@ CREATE TABLE IF NOT EXISTS ts_kv_latest (
     long_v bigint,
     dbl_v double precision,
     json_v json,
+    version bigint default 0,
     CONSTRAINT ts_kv_latest_pkey PRIMARY KEY (entity_id, key)
 );
 

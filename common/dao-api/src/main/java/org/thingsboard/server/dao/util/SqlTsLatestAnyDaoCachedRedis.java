@@ -13,15 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$server-config-header-height: 132px;
+package org.thingsboard.server.dao.util;
 
-:host {
-  .slave-content {
-    height: calc(100% - #{$server-config-header-height});
-    overflow: auto;
-  }
+import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 
-  .slave-container {
-    display: inherit;
-  }
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnExpression("('${database.ts_latest.type}'=='sql' || '${database.ts_latest.type}'=='timescale') && '${cache.ts_latest.enabled:false}'=='true' && '${cache.type:caffeine}'=='redis' ")
+public @interface SqlTsLatestAnyDaoCachedRedis {
 }

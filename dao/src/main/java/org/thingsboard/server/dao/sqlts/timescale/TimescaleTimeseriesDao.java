@@ -75,7 +75,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     @Autowired
     protected KeyDictionaryDao keyDictionaryDao;
 
-    protected TbSqlBlockingQueueWrapper<TimescaleTsKvEntity> tsQueue;
+    protected TbSqlBlockingQueueWrapper<TimescaleTsKvEntity, Void> tsQueue;
 
     @PostConstruct
     protected void init() {

@@ -109,12 +109,13 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(brokerConfig: BrokerConfig): void {
-    const brokerConfigState = {
-      ...brokerConfig,
-      version: brokerConfig.version || 5,
-      clientId: brokerConfig.clientId || 'tb_gw_' + generateSecret(5),
-    };
-    this.brokerConfigFormGroup.reset(brokerConfigState, {emitEvent: false});
+    const {
+      version = 5,
+      clientId = `tb_gw_${generateSecret(5)}`,
+      security = {},
+    } = brokerConfig;
+
+    this.brokerConfigFormGroup.reset({ ...brokerConfig, version, clientId, security }, { emitEvent: false });
     this.cdr.markForCheck();
   }
 

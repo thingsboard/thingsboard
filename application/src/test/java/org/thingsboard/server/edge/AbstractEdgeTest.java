@@ -83,6 +83,7 @@ import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
@@ -96,6 +97,7 @@ import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
 import java.util.ArrayList;
@@ -140,7 +142,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
         edgeImitator.ignoreType(OAuth2UpdateMsg.class);
-        edgeImitator.expectMessageAmount(21);
+        edgeImitator.expectMessageAmount(24);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -247,7 +249,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         UUID ruleChainUUID = validateRuleChains();
 
         // 1 from request message
-        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
+        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 2);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
         // 4 messages ('general', 'mail', 'connectivity', 'jwt')
@@ -272,6 +274,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(DeviceUpdateMsg.class, 1);
         validateDevices();
 
+        validateMsgsCnt(DeviceCredentialsUpdateMsg.class, 1);
+
         // 1 from asset fetcher
         validateMsgsCnt(AssetUpdateMsg.class, 1);
         validateAssets();
@@ -283,6 +287,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // 1 message from user fetcher
         validateMsgsCnt(UserUpdateMsg.class, 1);
         validateUsers();
+
+        validateMsgsCnt(UserCredentialsUpdateMsg.class, 1);
 
         // 1 from tenant fetcher
         validateMsgsCnt(TenantUpdateMsg.class, 1);

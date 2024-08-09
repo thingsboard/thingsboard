@@ -55,7 +55,9 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -63,7 +65,9 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
+import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.model.JwtSettings;
 import org.thingsboard.server.dao.edge.EdgeDao;
 import org.thingsboard.server.dao.exception.DataValidationException;
@@ -74,11 +78,13 @@ import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.SyncCompletedMsg;
 import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
@@ -94,6 +100,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
 import static org.hamcrest.Matchers.containsString;
@@ -888,23 +895,24 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(UserCredentialsUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2UpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(23);
+        edgeImitator.expectMessageAmount(26);
         edgeImitator.connect();
         waitForMessages(edgeImitator);
 
-        verifyFetchersMsgs(edgeImitator);
+        verifyFetchersMsgs(edgeImitator, savedDevice);
         // verify queue msgs
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
+        Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgs(), savedDevice.getId()));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
-        edgeImitator.expectMessageAmount(19);
+        edgeImitator.expectMessageAmount(21);
         doPost("/api/edge/sync/" + edge.getId()).andExpect(status().isOk());
         waitForMessages(edgeImitator);
 
-        verifyFetchersMsgs(edgeImitator);
+        verifyFetchersMsgs(edgeImitator, savedDevice);
         Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
 
         edgeImitator.allowIgnoredTypes();
@@ -919,6 +927,23 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         doDelete("/api/edge/" + edge.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    private RuleChainId getEdgeRootRuleChainId(EdgeImitator edgeImitator) {
+        try {
+            EdgeId edgeId = new EdgeId(new UUID(edgeImitator.getConfiguration().getEdgeIdMSB(), edgeImitator.getConfiguration().getEdgeIdLSB()));
+            List<RuleChain> edgeRuleChains = doGetTypedWithPageLink("/api/edge/" + edgeId.getId() + "/ruleChains?",
+                    new TypeReference<PageData<RuleChain>>() {
+                    }, new PageLink(100)).getData();
+            for (RuleChain edgeRuleChain : edgeRuleChains) {
+                if (edgeRuleChain.isRoot()) {
+                    return edgeRuleChain.getId();
+                }
+            }
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+        throw new RuntimeException("Root rule chain not found");
     }
 
     private void simulateEdgeActivation(Edge edge) throws Exception {
@@ -951,9 +976,10 @@ public class EdgeControllerTest extends AbstractControllerTest {
         }
     }
 
-    private void verifyFetchersMsgs(EdgeImitator edgeImitator) {
+    private void verifyFetchersMsgs(EdgeImitator edgeImitator, Device savedDevice) {
         Assert.assertTrue(popQueueMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Main"));
         Assert.assertTrue(popRuleChainMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Edge Root Rule Chain"));
+        Assert.assertTrue(popRuleChainMetadataMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, getEdgeRootRuleChainId(edgeImitator)));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "general"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "mail"));
         Assert.assertTrue(popAdminSettingsMsg(edgeImitator.getDownlinkMsgs(), "connectivity"));
@@ -966,6 +992,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
+        Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgs(), savedDevice.getId()));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         Assert.assertTrue(popTenantMsg(edgeImitator.getDownlinkMsgs(), tenantId));
@@ -995,6 +1022,21 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 if (msgType.equals(ruleChainUpdateMsg.getMsgType())
                         && name.equals(ruleChain.getName())
                         && ruleChain.isRoot()) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean popRuleChainMetadataMsg(List<AbstractMessage> messages, UpdateMsgType msgType, RuleChainId ruleChainId) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof RuleChainMetadataUpdateMsg ruleChainMetadataUpdateMsg) {
+                RuleChainMetaData ruleChainMetaData = JacksonUtil.fromString(ruleChainMetadataUpdateMsg.getEntity(), RuleChainMetaData.class, true);
+                Assert.assertNotNull(ruleChainMetaData);
+                if (msgType.equals(ruleChainMetadataUpdateMsg.getMsgType())
+                        && ruleChainId.equals(ruleChainMetaData.getRuleChainId())) {
                     messages.remove(message);
                     return true;
                 }
@@ -1039,6 +1081,20 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 Assert.assertNotNull(device);
                 if (msgType.equals(deviceUpdateMsg.getMsgType())
                         && name.equals(device.getName())) {
+                    messages.remove(message);
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
+    private boolean popDeviceCredentialsMsg(List<AbstractMessage> messages, DeviceId deviceId) {
+        for (AbstractMessage message : messages) {
+            if (message instanceof DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg) {
+                DeviceCredentials deviceCredentials = JacksonUtil.fromString(deviceCredentialsUpdateMsg.getEntity(), DeviceCredentials.class, true);
+                Assert.assertNotNull(deviceCredentials);
+                if (deviceId.equals(deviceCredentials.getDeviceId())) {
                     messages.remove(message);
                     return true;
                 }

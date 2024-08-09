@@ -48,29 +48,27 @@ public interface RelationDao {
 
     EntityRelation getRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    boolean saveRelation(TenantId tenantId, EntityRelation relation);
+    EntityRelation saveRelation(TenantId tenantId, EntityRelation relation);
 
-    void saveRelations(TenantId tenantId, Collection<EntityRelation> relations);
+    List<EntityRelation> saveRelations(TenantId tenantId, List<EntityRelation> relations);
 
-    ListenableFuture<Boolean> saveRelationAsync(TenantId tenantId, EntityRelation relation);
+    ListenableFuture<EntityRelation> saveRelationAsync(TenantId tenantId, EntityRelation relation);
 
-    boolean deleteRelation(TenantId tenantId, EntityRelation relation);
+    EntityRelation deleteRelation(TenantId tenantId, EntityRelation relation);
 
-    ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityRelation relation);
+    ListenableFuture<EntityRelation> deleteRelationAsync(TenantId tenantId, EntityRelation relation);
 
-    boolean deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+    EntityRelation deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    ListenableFuture<Boolean> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
+    ListenableFuture<EntityRelation> deleteRelationAsync(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup);
 
-    void deleteOutboundRelations(TenantId tenantId, EntityId entity);
+    List<EntityRelation> deleteOutboundRelations(TenantId tenantId, EntityId entity);
 
-    void deleteOutboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup);
+    List<EntityRelation> deleteOutboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup);
 
-    void deleteInboundRelations(TenantId tenantId, EntityId entity);
+    List<EntityRelation> deleteInboundRelations(TenantId tenantId, EntityId entity);
 
-    void deleteInboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup);
-
-    ListenableFuture<Boolean> deleteOutboundRelationsAsync(TenantId tenantId, EntityId entity);
+    List<EntityRelation> deleteInboundRelations(TenantId tenantId, EntityId entity, RelationTypeGroup relationTypeGroup);
 
     List<EntityRelation> findRuleNodeToRuleChainRelations(RuleChainType ruleChainType, int limit);
 }

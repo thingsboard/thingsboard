@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceRpcCallMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EntityDataProto;
@@ -214,7 +215,7 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(true);
         // imitator will generate failure in 100% of timeseries cases
         edgeImitator.setFailureProbability(100);
-        edgeImitator.expectMessageAmount(numberOfMsgsToSend);
+        edgeImitator.expectMessageAmount(numberOfMsgsToSend * 2);
         for (int idx = 1; idx <= numberOfMsgsToSend; idx++) {
             String timeseriesData = "{\"data\":{\"idx\":" + idx + "},\"ts\":" + System.currentTimeMillis() + "}";
             JsonNode timeseriesEntityData = JacksonUtil.toJsonNode(timeseriesData);
@@ -234,6 +235,9 @@ public class TelemetryEdgeTest extends AbstractEdgeTest {
 
         List<DeviceUpdateMsg> deviceUpdateMsgs = edgeImitator.findAllMessagesByType(DeviceUpdateMsg.class);
         Assert.assertEquals(numberOfMsgsToSend, deviceUpdateMsgs.size());
+
+        List<DeviceCredentialsUpdateMsg> deviceCredentialsUpdateMsgs = edgeImitator.findAllMessagesByType(DeviceCredentialsUpdateMsg.class);
+        Assert.assertEquals(numberOfMsgsToSend, deviceCredentialsUpdateMsgs.size());
 
         edgeImitator.setRandomFailuresOnTimeseriesDownlink(false);
     }

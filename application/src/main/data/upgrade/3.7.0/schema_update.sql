@@ -14,3 +14,19 @@
 -- limitations under the License.
 --
 
+-- KV VERSIONING UPDATE START
+
+CREATE SEQUENCE IF NOT EXISTS attribute_kv_version_seq cache 1;
+CREATE SEQUENCE IF NOT EXISTS ts_kv_latest_version_seq cache 1;
+
+ALTER TABLE attribute_kv ADD COLUMN version bigint default 0;
+ALTER TABLE ts_kv_latest ADD COLUMN version bigint default 0;
+
+-- KV VERSIONING UPDATE END
+
+-- RELATION VERSIONING UPDATE START
+
+CREATE SEQUENCE IF NOT EXISTS relation_version_seq cache 1;
+ALTER TABLE relation ADD COLUMN version bigint default 0;
+
+-- RELATION VERSIONING UPDATE END

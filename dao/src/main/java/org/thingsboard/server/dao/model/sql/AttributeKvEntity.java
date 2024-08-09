@@ -39,6 +39,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.JSON_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LAST_UPDATE_TS_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.LONG_VALUE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.STRING_VALUE_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
 @Data
 @Entity
@@ -66,6 +67,9 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
     @Column(name = LAST_UPDATE_TS_COLUMN)
     private Long lastUpdateTs;
 
+    @Column(name = VERSION_COLUMN)
+    private Long version;
+
     @Transient
     protected String strKey;
 
@@ -84,6 +88,6 @@ public class AttributeKvEntity implements ToData<AttributeKvEntry>, Serializable
             kvEntry = new JsonDataEntry(strKey, jsonValue);
         }
 
-        return new BaseAttributeKvEntry(kvEntry, lastUpdateTs);
+        return new BaseAttributeKvEntry(kvEntry, lastUpdateTs, version);
     }
 }
