@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.action;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.ScriptEngine;
@@ -42,63 +43,97 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
 
     protected C config;
     private ScriptEngine scriptEngine;
+    private boolean isUsingDefaultScriptFunction;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        this.config = loadAlarmNodeConfig(configuration);
-        scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
-                ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildTbel() : config.getAlarmDetailsBuildJs());
+        if (configuration == null || configuration.getData() == null || configuration.getData().isNull()) {
+            throw new TbNodeException("Node configuration cannot be null", true);
+        }
+        config = loadAlarmNodeConfig(configuration);
+        isUsingDefaultScriptFunction = isUsingDefaultScriptFunction(config);
+        if (isUsingDefaultScriptFunction) {
+            scriptEngine = null;
+        } else {
+            scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
+                    ScriptLanguage.TBEL.equals(config.getScriptLang()) ? config.getAlarmDetailsBuildTbel() : config.getAlarmDetailsBuildJs());
+        }
     }
 
     protected abstract C loadAlarmNodeConfig(TbNodeConfiguration configuration) throws TbNodeException;
+
+    protected abstract boolean isUsingDefaultScriptFunction(TbAbstractAlarmNodeConfiguration configuration);
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         withCallback(processAlarm(ctx, msg),
                 alarmResult -> {
-                    if (alarmResult.alarm == null) {
+                    if (alarmResult.getAlarm() == null) {
                         ctx.tellNext(msg, TbNodeConnectionType.FALSE);
-                    } else if (alarmResult.isCreated) {
+                    } else if (alarmResult.isCreated()) {
                         tellNext(ctx, msg, alarmResult, TbMsgType.ENTITY_CREATED, "Created");
-                    } else if (alarmResult.isUpdated || alarmResult.isSeverityUpdated) {
+                    } else if (alarmResult.isUpdated() || alarmResult.isSeverityUpdated()) {
                         tellNext(ctx, msg, alarmResult, TbMsgType.ENTITY_UPDATED, "Updated");
-                    } else if (alarmResult.isCleared) {
+                    } else if (alarmResult.isCleared()) {
                         tellNext(ctx, msg, alarmResult, TbMsgType.ALARM_CLEAR, "Cleared");
                     } else {
                         ctx.tellSuccess(msg);
                     }
                 },
-                t -> ctx.tellFailure(msg, t), ctx.getDbCallbackExecutor());
+                t -> ctx.tellFailure(msg, t), MoreExecutors.directExecutor());
     }
 
     protected abstract ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg);
 
-    protected ListenableFuture<JsonNode> buildAlarmDetails(TbMsg msg, JsonNode previousDetails) {
+    protected ListenableFuture<JsonNode> buildAlarmDetails(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
         try {
-            TbMsg dummyMsg = msg;
-            if (previousDetails != null) {
-                TbMsgMetaData metaData = msg.getMetaData().copy();
-                metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
-                dummyMsg = TbMsg.transformMsgMetadata(msg, metaData);
+            ListenableFuture<JsonNode> alarmDetailsFuture;
+            if (isUsingDefaultScriptFunction) {
+                alarmDetailsFuture = Futures.immediateFuture(executeDefaultScriptUsingJava(previousDetails));
+            } else {
+                alarmDetailsFuture = executeCustomScriptUsingScriptEngine(ctx, msg, previousDetails);
             }
-            return scriptEngine.executeJsonAsync(dummyMsg);
+            return alarmDetailsFuture;
         } catch (Exception e) {
             return Futures.immediateFailedFuture(e);
         }
     }
 
+    private JsonNode executeDefaultScriptUsingJava(JsonNode previousDetails) {
+        if (previousDetails != null) {
+            return previousDetails;
+        }
+        return JacksonUtil.newObjectNode();
+    }
+
+    private ListenableFuture<JsonNode> executeCustomScriptUsingScriptEngine(TbContext ctx, TbMsg msg, JsonNode previousDetails) {
+        TbMsg dummyMsg = prepareDummyMsg(msg, previousDetails);
+        ctx.logJsEvalRequest();
+        ListenableFuture<JsonNode> alarmDetailsFuture = scriptEngine.executeJsonAsync(dummyMsg);
+        withCallback(alarmDetailsFuture, alarmDetails -> ctx.logJsEvalResponse(), t -> ctx.logJsEvalFailure());
+        return alarmDetailsFuture;
+    }
+
+    private TbMsg prepareDummyMsg(TbMsg msg, JsonNode previousDetails) {
+        TbMsg dummyMsg = msg;
+        if (previousDetails != null) {
+            TbMsgMetaData metaData = msg.getMetaData().copy();
+            metaData.putValue(PREV_ALARM_DETAILS, JacksonUtil.toString(previousDetails));
+            dummyMsg = TbMsg.transformMsgMetadata(msg, metaData);
+        }
+        return dummyMsg;
+    }
+
     public static TbMsg toAlarmMsg(TbContext ctx, TbAlarmResult alarmResult, TbMsg originalMsg) {
-        JsonNode jsonNodes = JacksonUtil.valueToTree(alarmResult.alarm);
-        String data = jsonNodes.toString();
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
-        if (alarmResult.isCreated) {
+        if (alarmResult.isCreated()) {
             metaData.putValue(DataConstants.IS_NEW_ALARM, Boolean.TRUE.toString());
-        } else if (alarmResult.isUpdated || alarmResult.isSeverityUpdated) {
+        } else if (alarmResult.isUpdated() || alarmResult.isSeverityUpdated()) {
             metaData.putValue(DataConstants.IS_EXISTING_ALARM, Boolean.TRUE.toString());
-        } else if (alarmResult.isCleared) {
+        } else if (alarmResult.isCleared()) {
             metaData.putValue(DataConstants.IS_CLEARED_ALARM, Boolean.TRUE.toString());
         }
-        return ctx.transformMsg(originalMsg, TbMsgType.ALARM, originalMsg.getOriginator(), metaData, data);
+        return ctx.transformMsg(originalMsg, TbMsgType.ALARM, originalMsg.getOriginator(), metaData, JacksonUtil.toString(alarmResult.getAlarm()));
     }
 
     @Override
@@ -109,7 +144,7 @@ public abstract class TbAbstractAlarmNode<C extends TbAbstractAlarmNodeConfigura
     }
 
     private void tellNext(TbContext ctx, TbMsg msg, TbAlarmResult alarmResult, TbMsgType actionMsgType, String alarmAction) {
-        ctx.enqueue(ctx.alarmActionMsg(alarmResult.alarm, ctx.getSelfId(), actionMsgType),
+        ctx.enqueue(ctx.alarmActionMsg(alarmResult.getAlarm(), ctx.getSelfId(), actionMsgType),
                 () -> ctx.tellNext(toAlarmMsg(ctx, alarmResult, msg), alarmAction),
                 throwable -> ctx.tellFailure(toAlarmMsg(ctx, alarmResult, msg), throwable));
     }

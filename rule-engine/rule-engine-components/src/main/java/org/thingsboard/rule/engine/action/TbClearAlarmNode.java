@@ -29,7 +29,10 @@ import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.script.ScriptLanguage;
 import org.thingsboard.server.common.msg.TbMsg;
+
+import java.util.Objects;
 
 @Slf4j
 @RuleNode(
@@ -55,6 +58,19 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     }
 
     @Override
+    protected boolean isUsingDefaultScriptFunction(TbAbstractAlarmNodeConfiguration config) {
+        var defaultConfig = new TbClearAlarmNodeConfiguration().defaultConfiguration();
+        var scriptLang = Objects.requireNonNullElse(config.getScriptLang(), ScriptLanguage.JS);
+        if (scriptLang == ScriptLanguage.JS && config.getAlarmDetailsBuildJs().equals(defaultConfig.getAlarmDetailsBuildJs())) {
+            return true;
+        }
+        if (scriptLang == ScriptLanguage.TBEL && config.getAlarmDetailsBuildTbel().equals(defaultConfig.getAlarmDetailsBuildTbel())) {
+            return true;
+        }
+        return false;
+    }
+
+    @Override
     protected ListenableFuture<TbAlarmResult> processAlarm(TbContext ctx, TbMsg msg) {
         String alarmType = TbNodeUtils.processPattern(this.config.getAlarmType(), msg);
         Alarm alarm;
@@ -70,10 +86,8 @@ public class TbClearAlarmNode extends TbAbstractAlarmNode<TbClearAlarmNodeConfig
     }
 
     private ListenableFuture<TbAlarmResult> clearAlarm(TbContext ctx, TbMsg msg, Alarm alarm) {
-        ctx.logJsEvalRequest();
-        ListenableFuture<JsonNode> asyncDetails = buildAlarmDetails(msg, alarm.getDetails());
+        ListenableFuture<JsonNode> asyncDetails = buildAlarmDetails(ctx, msg, alarm.getDetails());
         return Futures.transform(asyncDetails, details -> {
-            ctx.logJsEvalResponse();
             AlarmApiCallResult result = ctx.getAlarmService().clearAlarm(ctx.getTenantId(), alarm.getId(), System.currentTimeMillis(), details);
             if (result.isSuccessful()) {
                 return new TbAlarmResult(false, false, result.isCleared(), result.getAlarm());
