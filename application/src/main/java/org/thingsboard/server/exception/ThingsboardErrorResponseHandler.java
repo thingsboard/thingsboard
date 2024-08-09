@@ -92,7 +92,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_UPDATES, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.SUBSCRIPTION_VIOLATION, HttpStatus.FORBIDDEN);
-        errorCodeToStatusMap.put(ThingsboardErrorCode.CONFLICT, HttpStatus.CONFLICT);
+        errorCodeToStatusMap.put(ThingsboardErrorCode.VERSION_CONFLICT, HttpStatus.CONFLICT);
     }
 
     private static ThingsboardErrorCode statusToErrorCode(HttpStatus status) {

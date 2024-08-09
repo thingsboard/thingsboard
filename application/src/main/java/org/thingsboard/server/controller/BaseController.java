@@ -392,7 +392,7 @@ public abstract class BaseController {
                 return new ThingsboardException("Database error", ThingsboardErrorCode.GENERAL);
             }
         } else if (exception instanceof EntityVersionMismatchException) {
-            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.CONFLICT);
+            return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.VERSION_CONFLICT);
         }
         return new ThingsboardException(exception.getMessage(), exception, ThingsboardErrorCode.GENERAL);
     }

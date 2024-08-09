@@ -46,20 +46,11 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
                 redis.call('SET', key, newValueWithVersion, 'EX', expiration)
             end
 
-            local function bytes_to_number(bytes)
-                local n = 0
-                for i = 1, 8 do
-                    n = n * 256 + string.byte(bytes, i)
-                end
-                return n
-            end
-
             -- Get the current version (first 8 bytes) of the current value
             local currentVersionBytes = redis.call('GETRANGE', key, 0, 7)
 
             if currentVersionBytes and #currentVersionBytes == 8 then
-                local currentVersion = bytes_to_number(currentVersionBytes)
-
+                local currentVersion = struct.unpack(">I8", currentVersionBytes)
                 if newVersion > currentVersion then
                     setNewValue()
                 end
@@ -68,7 +59,7 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
                 setNewValue()
             end
             """);
-    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("80e56cbbbb4bd9cb150d6537f1e7d8df4fddb252");
+    static final byte[] SET_VERSIONED_VALUE_SHA = StringRedisSerializer.UTF_8.serialize("0453cb1814135b706b4198b09a09f43c9f67bbfe");
 
     public VersionedRedisTbCache(String cacheName, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory, TBRedisCacheConfiguration configuration, TbRedisSerializer<K, V> valueSerializer) {
         super(cacheName, cacheSpecsMap, connectionFactory, configuration, valueSerializer);
