@@ -236,7 +236,7 @@ public class DeviceProvisionServiceTest {
     private ProvisionRequest createProvisionRequest(String certificateValue) {
         return new ProvisionRequest(null, DeviceCredentialsType.X509_CERTIFICATE,
                 new ProvisionDeviceCredentialsData(null, null, null, null, certificateValue),
-                null);
+                null, null);
     }
 
     public static String certTrimNewLinesForChainInDeviceProfile(String input) {

@@ -23,6 +23,7 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.CoapDeviceType;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.TransportPayloadType;
@@ -65,6 +66,11 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
     @Test
     public void testProvisioningCreateNewDeviceWithoutCredentials() throws Exception {
         processTestProvisioningCreateNewDeviceWithoutCredentials();
+    }
+
+    @Test
+    public void testProvisioningCreateNewGatewayDevice() throws Exception {
+        processTestProvisioningCreateNewGatewayDevice();
     }
 
     @Test
@@ -115,6 +121,37 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
         Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
 
         Assert.assertNotNull(createdDevice);
+
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
+
+        Assert.assertEquals(deviceCredentials.getCredentialsType().name(), response.get("credentialsType").asText());
+        Assert.assertEquals(ProvisionResponseStatus.SUCCESS.name(), response.get("status").asText());
+    }
+
+
+    private void processTestProvisioningCreateNewGatewayDevice() throws Exception {
+        CoapTestConfigProperties configProperties = CoapTestConfigProperties.builder()
+                .deviceName("Test Provision device3")
+                .coapDeviceType(CoapDeviceType.DEFAULT)
+                .transportPayloadType(TransportPayloadType.JSON)
+                .provisionType(DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES)
+                .provisionKey("testProvisionKey")
+                .provisionSecret("testProvisionSecret")
+                .build();
+        processBeforeTest(configProperties);
+        JsonNode response = JacksonUtil.fromBytes(createCoapClientAndPublish(true));
+        Assert.assertTrue(response.hasNonNull("credentialsType"));
+        Assert.assertTrue(response.hasNonNull("status"));
+
+        Device createdDevice = deviceService.findDeviceByTenantIdAndName(tenantId, "Test Provision device");
+
+        Assert.assertNotNull(createdDevice);
+
+        JsonNode additionalInfo = createdDevice.getAdditionalInfo();
+        Assert.assertNotNull(additionalInfo);
+        Assert.assertTrue(additionalInfo.has(DataConstants.GATEWAY_PARAMETER)
+                && additionalInfo.get(DataConstants.GATEWAY_PARAMETER).isBoolean());
+        Assert.assertTrue(additionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean());
 
         DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, createdDevice.getId());
 
@@ -222,16 +259,30 @@ public class CoapProvisionJsonDeviceTest extends AbstractCoapIntegrationTest {
     }
 
     private byte[] createCoapClientAndPublish() throws Exception {
-        return createCoapClientAndPublish("");
+        return createCoapClientAndPublish(false);
+    }
+
+    private byte[] createCoapClientAndPublish(boolean isGateway) throws Exception {
+        return createCoapClientAndPublish("", isGateway);
     }
 
     private byte[] createCoapClientAndPublish(String deviceCredentials) throws Exception {
-        String provisionRequestMsg = createTestProvisionMessage(deviceCredentials);
+        return createCoapClientAndPublish(deviceCredentials, false);
+    }
+
+    private byte[] createCoapClientAndPublish(String deviceCredentials, boolean isGateway) throws Exception {
+        String provisionRequestMsg = createTestProvisionMessage(deviceCredentials, isGateway);
         client = new CoapTestClient(accessToken, FeatureType.PROVISION);
         return client.postMethod(provisionRequestMsg.getBytes()).getPayload();
     }
 
-    private String createTestProvisionMessage(String deviceCredentials) {
-        return "{\"deviceName\":\"Test Provision device\",\"provisionDeviceKey\":\"testProvisionKey\", \"provisionDeviceSecret\":\"testProvisionSecret\"" + deviceCredentials + "}";
+    protected String createTestProvisionMessage(String deviceCredentials, boolean isGateway) {
+        String request = "{\"deviceName\":\"Test Provision device\",\"provisionDeviceKey\":\"testProvisionKey\", \"provisionDeviceSecret\":\"testProvisionSecret\""
+                + deviceCredentials;
+        if (isGateway) {
+            request += ",\"gateway\":true";
+        }
+        request += "}";
+        return request;
     }
 }
