@@ -45,6 +45,7 @@ import { MatAutocomplete } from '@angular/material/autocomplete';
 import { MatChipGrid } from '@angular/material/chips';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { SubscriptSizing } from '@angular/material/form-field';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-list',
@@ -53,11 +54,6 @@ import { SubscriptSizing } from '@angular/material/form-field';
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => EntityListComponent),
-      multi: true
-    },
-    {
-      provide: NG_VALIDATORS,
       useExisting: forwardRef(() => EntityListComponent),
       multi: true
     }
@@ -105,6 +101,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @Input()
   hint: string;
+
+  @Input()
+  @coerceBoolean()
+  syncedIdListPropagator = false;
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
@@ -189,6 +189,10 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
         (entities) => {
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
+          if (this.syncedIdListPropagator && this.modelValue.length !== entities.length) {
+            this.modelValue = entities.map(entity => entity.id.id);
+            this.propagateChange(this.modelValue);
+          }
         }
       );
     } else {
@@ -197,12 +201,6 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.modelValue = null;
     }
     this.dirty = true;
-  }
-
-  validate(): ValidationErrors | null {
-    return this.entityListFormGroup.valid ? null : {
-      entities: {valid: false}
-    };
   }
 
   private reset() {
