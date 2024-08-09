@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<div class="tb-mapping-table tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-mapping-table-content">
+<div class="tb-device-table tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-device-table-content">
     <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
-      <div class="mat-toolbar-tools" *ngIf="(dataSource.isEmpty() | async) === false">
+      <div class="mat-toolbar-tools">
         <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start"
              class="title-container">
-          <span class="tb-mapping-table-title">{{ mappingTypeTranslationsMap.get(mappingType) | translate }}</span>
+          <span class="tb-device-table-title">{{ 'gateway.devices' | translate }}</span>
         </div>
         <span fxFlex></span>
         <button mat-icon-button
-                (click)="manageMapping($event)"
+                (click)="manageDevices($event)"
                 matTooltip="{{ 'action.add' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>add</mat-icon>
@@ -38,7 +38,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-device-toolbar" [fxShow]="textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
@@ -60,13 +60,11 @@
     </mat-toolbar>
     <div class="table-container">
       <table mat-table [dataSource]="dataSource">
-        <ng-container [matColumnDef]="column.def" *ngFor="let column of mappingColumns; let i = index">
-          <mat-header-cell *matHeaderCellDef class="table-value-column"
-                           [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of deviceConfigColumns; let i = index">
+          <mat-header-cell *matHeaderCellDef class="table-value-column">
             {{ column.title | translate }}
           </mat-header-cell>
-          <mat-cell tbTruncateWithTooltip *matCellDef="let mapping" class="table-value-column"
-                    [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+          <mat-cell *matCellDef="let mapping" class="table-value-column">
             {{ mapping[column.def] }}
           </mat-cell>
         </ng-container>
@@ -76,22 +74,15 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let mapping; let i = index"
                     [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px'}">
-            <ng-template #rowActions>
+            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-icon-button
-                      matTooltip="{{ 'action.edit' | translate }}"
-                      matTooltipPosition="above"
-                      (click)="manageMapping($event, i)">
+                      (click)="manageDevices($event, i)">
                 <tb-icon>edit</tb-icon>
               </button>
               <button mat-icon-button
-                      matTooltip="{{ 'action.delete' | translate }}"
-                      matTooltipPosition="above"
-                      (click)="deleteMapping($event, i)">
+                      (click)="deleteDevices($event, i)">
                 <tb-icon>delete</tb-icon>
               </button>
-            </ng-template>
-            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
-              <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
             </div>
             <div fxHide fxShow.lt-lg fxFlex fxLayout="row" fxLayoutAlign="end">
               <button mat-icon-button
@@ -100,7 +91,14 @@
                 <mat-icon class="material-icons">more_vert</mat-icon>
               </button>
               <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
+                <button mat-icon-button
+                        (click)="manageDevices($event, i)">
+                  <tb-icon>edit</tb-icon>
+                </button>
+                <button mat-icon-button
+                        (click)="deleteDevices($event, i)">
+                  <tb-icon>delete</tb-icon>
+                </button>
               </mat-menu>
             </div>
           </mat-cell>
@@ -112,9 +110,9 @@
       <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">
         <button mat-button class="connector"
-                (click)="manageMapping($event)">
+                (click)="manageDevices($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
-          <span>{{ 'gateway.add-mapping' | translate }}</span>
+          <span>{{ 'gateway.add-device' | translate }}</span>
         </button>
       </section>
     </div>
