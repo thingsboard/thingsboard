@@ -17,20 +17,26 @@ package org.thingsboard.server.common.data.security;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
-public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements DeviceCredentialsFilter {
+public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements DeviceCredentialsFilter, HasVersion {
 
     private static final long serialVersionUID = -7869261127032877765L;
     private DeviceId deviceId;
     private DeviceCredentialsType credentialsType;
     private String credentialsId;
     private String credentialsValue;
-    
+
+    @Getter @Setter
+    private Long version;
+
     public DeviceCredentials() {
         super();
     }
@@ -45,6 +51,7 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
         this.credentialsType = deviceCredentials.getCredentialsType();
         this.credentialsId = deviceCredentials.getCredentialsId();
         this.credentialsValue = deviceCredentials.getCredentialsValue();
+        this.version = deviceCredentials.getVersion();
     }
 
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, accessMode = Schema.AccessMode.READ_ONLY, description = "The Id is automatically generated during device creation. " +
@@ -111,4 +118,5 @@ public class DeviceCredentials extends BaseData<DeviceCredentialsId> implements 
                 + credentialsId + ", credentialsValue=" + credentialsValue + ", createdTime=" + createdTime + ", id="
                 + id + "]";
     }
+
 }

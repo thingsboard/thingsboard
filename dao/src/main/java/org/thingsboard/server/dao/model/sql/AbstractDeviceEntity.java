@@ -32,7 +32,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -41,7 +41,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEntity<T> {
+public abstract class AbstractDeviceEntity<T extends Device> extends BaseVersionedEntity<T> {
 
     @Column(name = ModelConstants.DEVICE_TENANT_ID_PROPERTY, columnDefinition = "uuid")
     private UUID tenantId;
@@ -83,11 +83,8 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         super();
     }
 
-    public AbstractDeviceEntity(Device device) {
-        if (device.getId() != null) {
-            this.setUuid(device.getUuidId());
-        }
-        this.setCreatedTime(device.getCreatedTime());
+    public AbstractDeviceEntity(T device) {
+        super(device);
         if (device.getTenantId() != null) {
             this.tenantId = device.getTenantId().getId();
         }
@@ -113,9 +110,8 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
         }
     }
 
-    public AbstractDeviceEntity(DeviceEntity deviceEntity) {
-        this.setId(deviceEntity.getId());
-        this.setCreatedTime(deviceEntity.getCreatedTime());
+    public AbstractDeviceEntity(AbstractDeviceEntity<T> deviceEntity) {
+        super(deviceEntity);
         this.tenantId = deviceEntity.getTenantId();
         this.customerId = deviceEntity.getCustomerId();
         this.deviceProfileId = deviceEntity.getDeviceProfileId();
@@ -132,6 +128,7 @@ public abstract class AbstractDeviceEntity<T extends Device> extends BaseSqlEnti
     protected Device toDevice() {
         Device device = new Device(new DeviceId(getUuid()));
         device.setCreatedTime(createdTime);
+        device.setVersion(version);
         if (tenantId != null) {
             device.setTenantId(TenantId.fromUUID(tenantId));
         }

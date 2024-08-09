@@ -24,7 +24,7 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -33,7 +33,7 @@ import java.util.UUID;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEntity<T> {
+public abstract class AbstractTenantEntity<T extends Tenant> extends BaseVersionedEntity<T> {
 
     @Column(name = ModelConstants.TENANT_TITLE_PROPERTY)
     private String title;
@@ -76,11 +76,8 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
         super();
     }
 
-    public AbstractTenantEntity(Tenant tenant) {
-        if (tenant.getId() != null) {
-            this.setUuid(tenant.getId().getId());
-        }
-        this.setCreatedTime(tenant.getCreatedTime());
+    public AbstractTenantEntity(T tenant) {
+        super(tenant);
         this.title = tenant.getTitle();
         this.region = tenant.getRegion();
         this.country = tenant.getCountry();
@@ -98,8 +95,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
     }
 
     public AbstractTenantEntity(TenantEntity tenantEntity) {
-        this.setId(tenantEntity.getId());
-        this.setCreatedTime(tenantEntity.getCreatedTime());
+        super(tenantEntity);
         this.title = tenantEntity.getTitle();
         this.region = tenantEntity.getRegion();
         this.country = tenantEntity.getCountry();
@@ -117,6 +113,7 @@ public abstract class AbstractTenantEntity<T extends Tenant> extends BaseSqlEnti
     protected Tenant toTenant() {
         Tenant tenant = new Tenant(TenantId.fromUUID(this.getUuid()));
         tenant.setCreatedTime(createdTime);
+        tenant.setVersion(version);
         tenant.setTitle(title);
         tenant.setRegion(region);
         tenant.setCountry(country);

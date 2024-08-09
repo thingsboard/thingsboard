@@ -50,4 +50,14 @@ public interface VersionedTbCache<K extends Serializable, V extends Serializable
 
     void evict(K key, Long version);
 
+    default Long getVersion(V value) {
+        if (value == null) {
+            return 0L;
+        } else if (value.getVersion() != null) {
+            return value.getVersion();
+        } else {
+            return null;
+        }
+    }
+
 }

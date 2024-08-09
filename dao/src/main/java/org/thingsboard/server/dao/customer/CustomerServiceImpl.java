@@ -201,9 +201,9 @@ public class CustomerServiceImpl extends AbstractCachedEntityService<CustomerCac
         userService.deleteCustomerUsers(customer.getTenantId(), customerId);
         apiUsageStateService.deleteApiUsageStateByEntityId(customerId);
         customerDao.removeById(tenantId, customerId.getId());
+        publishEvictEvent(new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), null));
         countService.publishCountEntityEvictEvent(tenantId, EntityType.CUSTOMER);
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(customerId).build());
-        publishEvictEvent(new CustomerCacheEvictEvent(customer.getTenantId(), customer.getTitle(), null));
     }
 
     @Override

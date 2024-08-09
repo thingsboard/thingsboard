@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.HasTitle;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.validation.Length;
@@ -33,7 +34,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
-public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage {
+public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName, HasTenantId, ExportableEntity<WidgetsBundleId>, HasTitle, HasImage, HasVersion {
 
     private static final long serialVersionUID = -7627368878362410489L;
 
@@ -76,6 +77,9 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @Getter
     @Setter
     private WidgetsBundleId externalId;
+    @Getter
+    @Setter
+    private Long version;
 
     public WidgetsBundle() {
         super();
@@ -94,6 +98,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
         this.description = widgetsBundle.getDescription();
         this.order = widgetsBundle.getOrder();
         this.externalId = widgetsBundle.getExternalId();
+        this.version = widgetsBundle.getVersion();
     }
 
     @Schema(description = "JSON object with the Widget Bundle Id. " +

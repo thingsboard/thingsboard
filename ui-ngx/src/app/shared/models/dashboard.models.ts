@@ -23,9 +23,9 @@ import { Timewindow } from '@shared/models/time/time.models';
 import { EntityAliases } from './alias.models';
 import { Filters } from '@shared/models/query/query.models';
 import { MatDialogRef } from '@angular/material/dialog';
-import { HasTenantId } from '@shared/models/entity.models';
+import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 
-export interface DashboardInfo extends BaseData<DashboardId>, HasTenantId, ExportableEntity<DashboardId> {
+export interface DashboardInfo extends BaseData<DashboardId>, HasTenantId, HasVersion, ExportableEntity<DashboardId> {
   tenantId?: TenantId;
   title?: string;
   image?: string;

@@ -25,7 +25,7 @@ import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
 import java.util.UUID;
@@ -34,7 +34,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.ASSET_PROFILE_TABLE_NAME)
-public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> {
+public final class AssetProfileEntity extends BaseVersionedEntity<AssetProfile> {
 
     @Column(name = ModelConstants.ASSET_PROFILE_TENANT_ID_PROPERTY)
     private UUID tenantId;
@@ -71,13 +71,10 @@ public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> {
     }
 
     public AssetProfileEntity(AssetProfile assetProfile) {
-        if (assetProfile.getId() != null) {
-            this.setUuid(assetProfile.getId().getId());
-        }
+        super(assetProfile);
         if (assetProfile.getTenantId() != null) {
             this.tenantId = assetProfile.getTenantId().getId();
         }
-        this.setCreatedTime(assetProfile.getCreatedTime());
         this.name = assetProfile.getName();
         this.image = assetProfile.getImage();
         this.description = assetProfile.getDescription();
@@ -101,6 +98,7 @@ public final class AssetProfileEntity extends BaseSqlEntity<AssetProfile> {
     public AssetProfile toData() {
         AssetProfile assetProfile = new AssetProfile(new AssetProfileId(this.getUuid()));
         assetProfile.setCreatedTime(createdTime);
+        assetProfile.setVersion(version);
         if (tenantId != null) {
             assetProfile.setTenantId(TenantId.fromUUID(tenantId));
         }

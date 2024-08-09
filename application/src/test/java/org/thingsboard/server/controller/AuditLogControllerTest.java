@@ -161,7 +161,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
         for (int i = 0; i < 11; i++) {
             savedDevice.setName("Device name" + i);
-            doPost("/api/device", savedDevice, Device.class);
+            savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();

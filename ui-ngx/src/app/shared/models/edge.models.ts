@@ -22,9 +22,9 @@ import { EntitySearchQuery } from '@shared/models/relation.models';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
 import { BaseEventBody } from '@shared/models/event.models';
 import { EventId } from '@shared/models/id/event-id';
-import { HasTenantId } from '@shared/models/entity.models';
+import { HasTenantId, HasVersion } from '@shared/models/entity.models';
 
-export interface Edge extends BaseData<EdgeId>, HasTenantId {
+export interface Edge extends BaseData<EdgeId>, HasTenantId, HasVersion {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;

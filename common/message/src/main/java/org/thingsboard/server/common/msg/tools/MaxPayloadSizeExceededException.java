@@ -20,4 +20,5 @@ public class MaxPayloadSizeExceededException extends RuntimeException {
     public MaxPayloadSizeExceededException() {
         super("Payload size exceeds the limit");
     }
+
 }

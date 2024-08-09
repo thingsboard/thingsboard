@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasAdditionalInfo;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -147,6 +148,9 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         if (entity.getId() != null) {
             importedEntityInfo.setOldEntity((E) entity.getClass().getConstructor(entity.getClass()).newInstance(entity));
             importedEntityInfo.setUpdated(true);
+            if (entity instanceof HasVersion versionedEntity) {
+                versionedEntity.setVersion(null); // to overwrite the entity regardless of concurrent changes
+            }
         } else {
             setOwners(entity, user);
         }

@@ -38,15 +38,15 @@ public class AssetProfileCacheKey implements Serializable {
         this.defaultProfile = defaultProfile;
     }
 
-    public static AssetProfileCacheKey fromName(TenantId tenantId, String name) {
+    public static AssetProfileCacheKey forName(TenantId tenantId, String name) {
         return new AssetProfileCacheKey(tenantId, name, null, false);
     }
 
-    public static AssetProfileCacheKey fromId(AssetProfileId id) {
+    public static AssetProfileCacheKey forId(AssetProfileId id) {
         return new AssetProfileCacheKey(null, null, id, false);
     }
 
-    public static AssetProfileCacheKey defaultProfile(TenantId tenantId) {
+    public static AssetProfileCacheKey forDefaultProfile(TenantId tenantId) {
         return new AssetProfileCacheKey(tenantId, null, null, true);
     }
 

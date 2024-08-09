@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasRuleEngineProfile;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -39,7 +40,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @ToString(exclude = {"image"})
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
-public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId>, HasImage, HasDefaultOption {
+public class AssetProfile extends BaseData<AssetProfileId> implements HasName, HasTenantId, HasRuleEngineProfile, ExportableEntity<AssetProfileId>, HasImage, HasDefaultOption, HasVersion {
 
     private static final long serialVersionUID = 6998485460273302018L;
 
@@ -74,6 +75,7 @@ public class AssetProfile extends BaseData<AssetProfileId> implements HasName, H
     private RuleChainId defaultEdgeRuleChainId;
 
     private AssetProfileId externalId;
+    private Long version;
 
     public AssetProfile() {
         super();
@@ -95,6 +97,7 @@ public class AssetProfile extends BaseData<AssetProfileId> implements HasName, H
         this.defaultQueueName = assetProfile.getDefaultQueueName();
         this.defaultEdgeRuleChainId = assetProfile.getDefaultEdgeRuleChainId();
         this.externalId = assetProfile.getExternalId();
+        this.version = assetProfile.getVersion();
     }
 
     @Schema(description = "JSON object with the asset profile Id. " +
