@@ -46,6 +46,7 @@ import java.util.Objects;
 public class DedicatedEventsJpaDaoConfig {
 
     public static final String EVENTS_PERSISTENCE_UNIT = "events";
+    public static final String EVENTS_DATA_SOURCE = EVENTS_PERSISTENCE_UNIT + "DataSource";
     public static final String EVENTS_TRANSACTION_MANAGER = EVENTS_PERSISTENCE_UNIT + "TransactionManager";
     public static final String EVENTS_TRANSACTION_TEMPLATE = EVENTS_PERSISTENCE_UNIT + "TransactionTemplate";
     public static final String EVENTS_JDBC_TEMPLATE = EVENTS_PERSISTENCE_UNIT + "JdbcTemplate";
@@ -57,14 +58,14 @@ public class DedicatedEventsJpaDaoConfig {
     }
 
     @ConfigurationProperties(prefix = "spring.datasource.events.hikari")
-    @Bean
+    @Bean(EVENTS_DATA_SOURCE)
     public DataSource eventsDataSource(@Qualifier("eventsDataSourceProperties") DataSourceProperties eventsDataSourceProperties) {
         return eventsDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean eventsEntityManagerFactory(@Qualifier("eventsDataSource") DataSource eventsDataSource,
-                                                                                EntityManagerFactoryBuilder builder) {
+    public LocalContainerEntityManagerFactoryBean eventsEntityManagerFactory(@Qualifier(EVENTS_DATA_SOURCE) DataSource eventsDataSource,
+                                                                             EntityManagerFactoryBuilder builder) {
         return builder
                 .dataSource(eventsDataSource)
                 .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class)
@@ -83,7 +84,7 @@ public class DedicatedEventsJpaDaoConfig {
     }
 
     @Bean(EVENTS_JDBC_TEMPLATE)
-    public JdbcTemplate eventsJdbcTemplate(@Qualifier("eventsDataSource") DataSource eventsDataSource) {
+    public JdbcTemplate eventsJdbcTemplate(@Qualifier(EVENTS_DATA_SOURCE) DataSource eventsDataSource) {
         return new JdbcTemplate(eventsDataSource);
     }
 
