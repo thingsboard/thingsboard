@@ -25,13 +25,13 @@
                 [flowConfig]="{allowDuplicateUploads: true}">
     <div class="tb-file-select-container">
       <div class="tb-file-clear-container">
-        <button mat-icon-button color="primary"
+        <button mat-icon-button
                 type="button"
                 (click)="clearFile()"
                 class="tb-file-clear-btn"
                 matTooltip="{{ 'action.remove' | translate }}"
                 matTooltipPosition="above">
-          <mat-icon>close</mat-icon>
+          <mat-icon>delete</mat-icon>
         </button>
       </div>
       <div class="drop-area tb-flow-drop"
@@ -42,7 +42,7 @@
           <span>{{ dropLabel }}</span>
           <button type="button" mat-button color="primary" class="browse-file">
             <label
-              for="{{inputId}}">{{ (multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate}}</label>
+              for="{{inputId}}">{{ (multipleFile ? 'file-input.browse-files' : 'file-input.browse-file') | translate }}</label>
           </button>
           <input class="file-input" flowButton #flowInput type="file" [flow]="flow.flowJs"
                  [flowAttributes]="{accept: accept}" id="{{inputId}}">
@@ -51,9 +51,12 @@
     </div>
   </ng-container>
   <div class="tb-file-info-container">
-    <tb-error *ngIf="!fileName && required && requiredAsError" class="tb-file-name" error="{{ noFileText | translate }}"></tb-error>
+    <tb-error *ngIf="!fileName && required && requiredAsError" class="tb-file-name"
+              error="{{ noFileText | translate }}"></tb-error>
     <div *ngIf="!fileName && !requiredAsError" class="tb-file-name" translate>{{ noFileText }}</div>
     <div *ngIf="fileName" class="tb-file-name" [title]="fileName">{{ fileName }}</div>
-    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" translate [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size</div>
+    <div *ngIf="maxSizeByte && !disabled" class="tb-file-hint" translate
+         [translateParams]="{ size: maxSizeByte | fileSize }">dashboard.maximum-upload-file-size
+    </div>
   </div>
 </div>
