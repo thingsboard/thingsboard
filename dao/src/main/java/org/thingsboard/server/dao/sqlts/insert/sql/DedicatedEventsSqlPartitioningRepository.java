@@ -21,27 +21,27 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.config.DedicatedDataSource;
+import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
 import org.thingsboard.server.dao.timeseries.SqlPartition;
 
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_JDBC_TEMPLATE;
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_TRANSACTION_MANAGER;
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_JDBC_TEMPLATE;
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_TRANSACTION_MANAGER;
 
-@DedicatedDataSource
+@DedicatedEventsDataSource
 @Repository
-public class DedicatedSqlPartitioningRepository extends SqlPartitioningRepository {
+public class DedicatedEventsSqlPartitioningRepository extends SqlPartitioningRepository {
 
     @Autowired
-    @Qualifier(DEDICATED_JDBC_TEMPLATE)
+    @Qualifier(EVENTS_JDBC_TEMPLATE)
     private JdbcTemplate jdbcTemplate;
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED, transactionManager = DEDICATED_TRANSACTION_MANAGER)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
     public void save(SqlPartition partition) {
         super.save(partition);
     }
 
-    @Transactional(propagation = Propagation.NOT_SUPPORTED, transactionManager = DEDICATED_TRANSACTION_MANAGER)
+    @Transactional(propagation = Propagation.NOT_SUPPORTED, transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
     public void createPartitionIfNotExists(String table, long entityTs, long partitionDurationMs) {
         super.createPartitionIfNotExists(table, entityTs, partitionDurationMs);

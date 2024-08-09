@@ -20,9 +20,9 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "spring.datasource.dedicated.enabled=true",
-        "spring.datasource.dedicated.url=${spring.datasource.url}",
-        "spring.datasource.dedicated.driverClassName=${spring.datasource.driverClassName}"
+        "spring.datasource.events.enabled=true",
+        "spring.datasource.events.url=${spring.datasource.url}",
+        "spring.datasource.events.driverClassName=${spring.datasource.driverClassName}"
 })
-public class EventServiceSqlTest_DedicatedDataSource extends EventServiceSqlTest {
+public class EventServiceSqlTest_DedicatedEventsDataSource extends EventServiceSqlTest {
 }

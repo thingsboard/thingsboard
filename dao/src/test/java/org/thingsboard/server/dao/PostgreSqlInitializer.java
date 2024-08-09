@@ -52,17 +52,6 @@ public class PostgreSqlInitializer {
         }
         log.info("Postgres DB is initialized!");
     }
-    public static void initDedicatedDb(Connection conn) {
-        log.info("initialize Postgres DB...");
-        try {
-                URL sqlFileUrl = Resources.getResource("sql/dedicated.sql");
-                String sql = Resources.toString(sqlFileUrl, Charsets.UTF_8);
-                conn.createStatement().execute(sql);
-        } catch (IOException | SQLException e) {
-            throw new RuntimeException("Unable to init the Postgres database. Reason: " + e.getMessage(), e);
-        }
-        log.info("Postgres DB is initialized!");
-    }
 
     private static void cleanUpDb(Connection conn) {
         log.info("clean up Postgres DB...");
@@ -74,4 +63,5 @@ public class PostgreSqlInitializer {
             throw new RuntimeException("Unable to clean up the Postgres database. Reason: " + e.getMessage(), e);
         }
     }
+
 }

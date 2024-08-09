@@ -24,51 +24,51 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.config.DedicatedDataSource;
-import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
+import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedEventsSqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_JDBC_TEMPLATE;
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_PERSISTENCE_UNIT;
-import static org.thingsboard.server.dao.config.DedicatedJpaDaoConfig.DEDICATED_TRANSACTION_MANAGER;
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_JDBC_TEMPLATE;
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_PERSISTENCE_UNIT;
+import static org.thingsboard.server.dao.config.DedicatedEventsJpaDaoConfig.EVENTS_TRANSACTION_MANAGER;
 
-@DedicatedDataSource
+@DedicatedEventsDataSource
 @Component
 @SqlDao
 public class DedicatedJpaAuditLogDao extends JpaAuditLogDao {
 
     @Autowired
-    @Qualifier(DEDICATED_JDBC_TEMPLATE)
+    @Qualifier(EVENTS_JDBC_TEMPLATE)
     private JdbcTemplate jdbcTemplate;
-    @PersistenceContext(unitName = DEDICATED_PERSISTENCE_UNIT)
+    @PersistenceContext(unitName = EVENTS_PERSISTENCE_UNIT)
     private EntityManager entityManager;
 
-    public DedicatedJpaAuditLogDao(AuditLogRepository auditLogRepository, DedicatedSqlPartitioningRepository partitioningRepository) {
+    public DedicatedJpaAuditLogDao(AuditLogRepository auditLogRepository, DedicatedEventsSqlPartitioningRepository partitioningRepository) {
         super(auditLogRepository, partitioningRepository);
     }
 
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
+    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
     public AuditLog save(TenantId tenantId, AuditLog domain) {
         return super.save(tenantId, domain);
     }
 
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
+    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
     public AuditLog saveAndFlush(TenantId tenantId, AuditLog domain) {
         return super.saveAndFlush(tenantId, domain);
     }
 
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
+    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
     public boolean removeById(TenantId tenantId, UUID id) {
         return super.removeById(tenantId, id);
     }
 
-    @Transactional(transactionManager = DEDICATED_TRANSACTION_MANAGER)
+    @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
     public void removeAllByIds(Collection<UUID> ids) {
         super.removeAllByIds(ids);

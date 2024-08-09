@@ -17,18 +17,18 @@ package org.thingsboard.server.dao.sql.event;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.stats.StatsFactory;
-import org.thingsboard.server.dao.config.DedicatedDataSource;
+import org.thingsboard.server.dao.config.DedicatedEventsDataSource;
 import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
-import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedEventsSqlPartitioningRepository;
 import org.thingsboard.server.dao.util.SqlDao;
 
-@DedicatedDataSource
+@DedicatedEventsDataSource
 @Component
 @SqlDao
 public class DedicatedJpaEventDao extends JpaBaseEventDao {
 
     public DedicatedJpaEventDao(EventPartitionConfiguration partitionConfiguration,
-                                DedicatedSqlPartitioningRepository partitioningRepository,
+                                DedicatedEventsSqlPartitioningRepository partitioningRepository,
                                 LifecycleEventRepository lcEventRepository,
                                 StatisticsEventRepository statsEventRepository,
                                 ErrorEventRepository errorEventRepository,

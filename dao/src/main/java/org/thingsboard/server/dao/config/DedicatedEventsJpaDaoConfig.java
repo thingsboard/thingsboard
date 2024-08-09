@@ -38,60 +38,53 @@ import org.thingsboard.server.dao.model.sql.StatisticsEventEntity;
 import javax.sql.DataSource;
 import java.util.Objects;
 
-/*
- * To make entity use a dedicated datasource:
- * - add its JpaRepository to exclusions list in @EnableJpaRepositories in JpaDaoConfig
- * - add the package of this JpaRepository to @EnableJpaRepositories in DefaultDedicatedJpaDaoConfig
- * - add the package of this JpaRepository to @EnableJpaRepositories in DedicatedJpaDaoConfig
- * - add the entity class to packages list in dedicatedEntityManagerFactory in DedicatedJpaDaoConfig
- * */
-@DedicatedDataSource
+@DedicatedEventsDataSource
 @Configuration
 @EnableJpaRepositories(value = {"org.thingsboard.server.dao.sql.event", "org.thingsboard.server.dao.sql.audit"},
         bootstrapMode = BootstrapMode.LAZY,
-        entityManagerFactoryRef = "dedicatedEntityManagerFactory", transactionManagerRef = "dedicatedTransactionManager")
-public class DedicatedJpaDaoConfig {
+        entityManagerFactoryRef = "eventsEntityManagerFactory", transactionManagerRef = "eventsTransactionManager")
+public class DedicatedEventsJpaDaoConfig {
 
-    public static final String DEDICATED_PERSISTENCE_UNIT = "dedicated";
-    public static final String DEDICATED_TRANSACTION_MANAGER = DEDICATED_PERSISTENCE_UNIT + "TransactionManager";
-    public static final String DEDICATED_TRANSACTION_TEMPLATE = DEDICATED_PERSISTENCE_UNIT + "TransactionTemplate";
-    public static final String DEDICATED_JDBC_TEMPLATE = DEDICATED_PERSISTENCE_UNIT + "JdbcTemplate";
+    public static final String EVENTS_PERSISTENCE_UNIT = "events";
+    public static final String EVENTS_TRANSACTION_MANAGER = EVENTS_PERSISTENCE_UNIT + "TransactionManager";
+    public static final String EVENTS_TRANSACTION_TEMPLATE = EVENTS_PERSISTENCE_UNIT + "TransactionTemplate";
+    public static final String EVENTS_JDBC_TEMPLATE = EVENTS_PERSISTENCE_UNIT + "JdbcTemplate";
 
     @Bean
-    @ConfigurationProperties("spring.datasource.dedicated")
-    public DataSourceProperties dedicatedDataSourceProperties() {
+    @ConfigurationProperties("spring.datasource.events")
+    public DataSourceProperties eventsDataSourceProperties() {
         return new DataSourceProperties();
     }
 
-    @ConfigurationProperties(prefix = "spring.datasource.dedicated.hikari")
+    @ConfigurationProperties(prefix = "spring.datasource.events.hikari")
     @Bean
-    public DataSource dedicatedDataSource(@Qualifier("dedicatedDataSourceProperties") DataSourceProperties dedicatedDataSourceProperties) {
-        return dedicatedDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
+    public DataSource eventsDataSource(@Qualifier("eventsDataSourceProperties") DataSourceProperties eventsDataSourceProperties) {
+        return eventsDataSourceProperties.initializeDataSourceBuilder().type(HikariDataSource.class).build();
     }
 
     @Bean
-    public LocalContainerEntityManagerFactoryBean dedicatedEntityManagerFactory(@Qualifier("dedicatedDataSource") DataSource dedicatedDataSource,
+    public LocalContainerEntityManagerFactoryBean eventsEntityManagerFactory(@Qualifier("eventsDataSource") DataSource eventsDataSource,
                                                                                 EntityManagerFactoryBuilder builder) {
         return builder
-                .dataSource(dedicatedDataSource)
+                .dataSource(eventsDataSource)
                 .packages(LifecycleEventEntity.class, StatisticsEventEntity.class, ErrorEventEntity.class, RuleNodeDebugEventEntity.class, RuleChainDebugEventEntity.class, AuditLogEntity.class)
-                .persistenceUnit(DEDICATED_PERSISTENCE_UNIT)
+                .persistenceUnit(EVENTS_PERSISTENCE_UNIT)
                 .build();
     }
 
-    @Bean(DEDICATED_TRANSACTION_MANAGER)
-    public JpaTransactionManager dedicatedTransactionManager(@Qualifier("dedicatedEntityManagerFactory") LocalContainerEntityManagerFactoryBean dedicatedEntityManagerFactory) {
-        return new JpaTransactionManager(Objects.requireNonNull(dedicatedEntityManagerFactory.getObject()));
+    @Bean(EVENTS_TRANSACTION_MANAGER)
+    public JpaTransactionManager eventsTransactionManager(@Qualifier("eventsEntityManagerFactory") LocalContainerEntityManagerFactoryBean eventsEntityManagerFactory) {
+        return new JpaTransactionManager(Objects.requireNonNull(eventsEntityManagerFactory.getObject()));
     }
 
-    @Bean(DEDICATED_TRANSACTION_TEMPLATE)
-    public TransactionTemplate dedicatedTransactionTemplate(@Qualifier(DEDICATED_TRANSACTION_MANAGER) JpaTransactionManager dedicatedTransactionManager) {
-        return new TransactionTemplate(dedicatedTransactionManager);
+    @Bean(EVENTS_TRANSACTION_TEMPLATE)
+    public TransactionTemplate eventsTransactionTemplate(@Qualifier(EVENTS_TRANSACTION_MANAGER) JpaTransactionManager eventsTransactionManager) {
+        return new TransactionTemplate(eventsTransactionManager);
     }
 
-    @Bean(DEDICATED_JDBC_TEMPLATE)
-    public JdbcTemplate dedicatedJdbcTemplate(@Qualifier("dedicatedDataSource") DataSource dedicatedDataSource) {
-        return new JdbcTemplate(dedicatedDataSource);
+    @Bean(EVENTS_JDBC_TEMPLATE)
+    public JdbcTemplate eventsJdbcTemplate(@Qualifier("eventsDataSource") DataSource eventsDataSource) {
+        return new JdbcTemplate(eventsDataSource);
     }
 
 }

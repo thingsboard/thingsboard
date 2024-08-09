@@ -19,18 +19,18 @@ import lombok.Getter;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedSqlPartitioningRepository;
+import org.thingsboard.server.dao.sqlts.insert.sql.DedicatedEventsSqlPartitioningRepository;
 
 @DaoSqlTest
 @TestPropertySource(properties = {
-        "spring.datasource.dedicated.enabled=true",
-        "spring.datasource.dedicated.url=${spring.datasource.url}",
-        "spring.datasource.dedicated.driverClassName=${spring.datasource.driverClassName}",
+        "spring.datasource.events.enabled=true",
+        "spring.datasource.events.url=${spring.datasource.url}",
+        "spring.datasource.events.driverClassName=${spring.datasource.driverClassName}",
 })
-public class AuditLogControllerTest_DedicatedDataSource extends AuditLogControllerTest {
+public class AuditLogControllerTest_DedicatedEventsDataSource extends AuditLogControllerTest {
 
     @Getter
     @SpyBean
-    private DedicatedSqlPartitioningRepository partitioningRepository;
+    private DedicatedEventsSqlPartitioningRepository partitioningRepository;
 
 }
