@@ -180,6 +180,8 @@
         <module>msa</module>
         <module>rest-client</module>
         <module>monitoring</module>
+        <module>api-gateway</module>
+
     </modules>
 
     <profiles>
