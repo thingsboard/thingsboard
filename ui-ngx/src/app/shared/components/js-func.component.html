@@ -24,6 +24,7 @@
       {{ functionLabel }}
     </label>
     <span fxFlex></span>
+    <ng-content select="[toolbarPrefixButton]"></ng-content>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyJs()">
       {{'js-func.tidy' | translate }}
     </button>
