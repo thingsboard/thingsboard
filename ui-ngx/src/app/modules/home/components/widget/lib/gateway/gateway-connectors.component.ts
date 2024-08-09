@@ -452,38 +452,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     return (connector && this.activeConnectors.includes(connectorName)) ? (connector.data[0][1] || 0) : 'Inactive';
   }
 
-  // addConnector($event: Event) {
-  //   if ($event) {
-  //     $event.stopPropagation();
-  //   }
-  //   this.confirmConnectorChange().subscribe((changeConfirmed) => {
-  //     if (changeConfirmed) {
-  //       return this.dialog.open<AddConnectorDialogComponent,
-  //         AddConnectorConfigData>(AddConnectorDialogComponent, {
-  //         disableClose: true,
-  //         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-  //         data: {
-  //           dataSourceData: this.dataSource.data
-  //         }
-  //       }).afterClosed().subscribe((value) => {
-  //         if (value && changeConfirmed) {
-  //           this.initialConnector = null;
-  //           if (this.connectorForm.disabled) {
-  //             this.connectorForm.enable();
-  //           }
-  //           if (!value.configurationJson) {
-  //             value.configurationJson = {};
-  //           }
-  //           value.basicConfig = value.configurationJson;
-  //           this.updateConnector(value);
-  //           this.generate('basicConfig.broker.clientId');
-  //           setTimeout(() => this.saveConnector());
-  //         }
-  //       });
-  //     }
-  //   });
-  // }
-
   addConnector(event?: Event): void {
     event?.stopPropagation();
 
