@@ -92,6 +92,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   shapeResize$: ResizeObserver;
 
@@ -142,6 +143,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
 
     this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
   }

@@ -15,41 +15,41 @@
     limitations under the License.
 
 -->
-<div #valueCardPanel class="tb-value-card-panel" [class]="this.layout" [style]="backgroundStyle$ | async">
+<div #valueCardPanel class="tb-value-card-panel" [class]="this.layout" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-value-card-overlay" [style]="overlayStyle"></div>
   <div class="tb-value-card-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   </div>
   <div #valueCardContent class="tb-value-card-content" [class]="this.layout">
     <ng-container [ngSwitch]="layout">
-    <ng-template [ngSwitchCase]="valueCardLayout.square">
-      <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
-      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
-    </ng-template>
-    <ng-template [ngSwitchCase]="valueCardLayout.vertical">
-      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
-      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
-      <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
-    </ng-template>
-    <ng-template [ngSwitchCase]="valueCardLayout.centered">
-      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
-      <div class="tb-value-card-icon-row">
-        <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
+      <ng-template [ngSwitchCase]="valueCardLayout.square">
+        <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
         <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
-      </div>
-      <ng-container *ngTemplateOutlet="dateTpl"></ng-container>
-    </ng-template>
-    <ng-template [ngSwitchCase]="valueCardLayout.simplified">
-      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
-      <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
-    </ng-template>
-    <ng-template [ngSwitchCase]="layout === valueCardLayout.horizontal ||
-                                 layout === valueCardLayout.horizontal_reversed ? layout : ''">
-      <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
-      <div fxFlex></div>
-      <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
-    </ng-template>
-  </ng-container>
+      </ng-template>
+      <ng-template [ngSwitchCase]="valueCardLayout.vertical">
+        <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
+      </ng-template>
+      <ng-template [ngSwitchCase]="valueCardLayout.centered">
+        <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+        <div class="tb-value-card-icon-row">
+          <ng-container *ngTemplateOutlet="iconTpl"></ng-container>
+          <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+        </div>
+        <ng-container *ngTemplateOutlet="dateTpl"></ng-container>
+      </ng-template>
+      <ng-template [ngSwitchCase]="valueCardLayout.simplified">
+        <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+        <ng-container *ngTemplateOutlet="labelTpl"></ng-container>
+      </ng-template>
+      <ng-template [ngSwitchCase]="layout === valueCardLayout.horizontal ||
+                                   layout === valueCardLayout.horizontal_reversed ? layout : ''">
+        <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
+        <div fxFlex></div>
+        <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
+      </ng-template>
+    </ng-container>
   </div>
 </div>
 <ng-template #iconWithLabelTpl>

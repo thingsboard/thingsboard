@@ -73,7 +73,8 @@ export class StatusWidgetSettingsComponent extends WidgetSettingsComponent {
       disabledState: [settings.disabledState, []],
       layout: [settings.layout, []],
       onState: [settings.onState, []],
-      offState: [settings.offState, []]
+      offState: [settings.offState, []],
+      padding: [settings.padding, []]
     });
   }
 }

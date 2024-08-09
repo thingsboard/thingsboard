@@ -80,6 +80,7 @@ export interface ValueCardWidgetSettings {
   dateFont: Font;
   dateColor: ColorSettings;
   background: BackgroundSettings;
+  padding: string;
 }
 
 export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSettings => ({
@@ -128,5 +129,6 @@ export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSe
       color: 'rgba(255,255,255,0.72)',
       blur: 3
     }
-  }
+  },
+  padding: '12px'
 });
