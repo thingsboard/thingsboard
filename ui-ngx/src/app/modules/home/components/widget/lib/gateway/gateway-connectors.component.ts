@@ -61,7 +61,7 @@ import {
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
-import { debounceTime, filter, take, takeUntil, tap } from 'rxjs/operators';
+import { debounceTime, filter, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
 
@@ -201,10 +201,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
 
     if (isNewConnector || shouldAddToConnectorsList) {
-      tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, [{
-        key: scope === AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
-        value: scope === AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
-      }]));
+      tasks.push(this.getSaveEntityAttributesTask(scope));
     }
 
     tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, attributesToSave));
@@ -214,6 +211,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
 
     return tasks;
+  }
+
+  private getSaveEntityAttributesTask(scope: AttributeScope): Observable<any> {
+    const key = scope === AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors';
+    const value = scope === AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors;
+
+    return this.attributeService.saveEntityAttributes(this.device, scope, [{ key, value }]);
   }
 
   private removeConnectorFromList(connectorName: string, isActive: boolean): void {
@@ -383,39 +387,32 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   deleteConnector(attribute: AttributeData, $event: Event): void {
-    if ($event) {
-      $event.stopPropagation();
-    }
+    $event?.stopPropagation();
+
     const title = `Delete connector \"${attribute.key}\"?`;
     const content = `All connector data will be deleted.`;
-    this.dialogService.confirm(title, content, 'Cancel', 'Delete').subscribe(result => {
-      if (result) {
-        const tasks: Array<Observable<any>> = [];
-        const scope = this.activeConnectors.includes(attribute.value?.name) ?
-                      AttributeScope.SHARED_SCOPE :
-                      AttributeScope.SERVER_SCOPE;
-        tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, [attribute]));
-        const activeIndex = this.activeConnectors.indexOf(attribute.key);
-        const inactiveIndex = this.inactiveConnectors.indexOf(attribute.key);
-        if (activeIndex !== -1) {
-          this.activeConnectors.splice(activeIndex, 1);
-        }
-        if (inactiveIndex !== -1) {
-          this.inactiveConnectors.splice(inactiveIndex, 1);
-        }
-        tasks.push(this.attributeService.saveEntityAttributes(this.device, scope, [{
-          key: scope === AttributeScope.SHARED_SCOPE ? 'active_connectors' : 'inactive_connectors',
-          value: scope === AttributeScope.SHARED_SCOPE ? this.activeConnectors : this.inactiveConnectors
-        }]));
-        forkJoin(tasks).subscribe(() => {
-          if (this.initialConnector ? this.initialConnector.name === attribute.key : true) {
-            this.clearOutConnectorForm();
-            this.cd.detectChanges();
-            this.connectorForm.disable();
-          }
-          this.updateData(true);
-        });
+
+    this.dialogService.confirm(title, content, 'Cancel', 'Delete').pipe(take(1)).subscribe(result => {
+      if (!result) {
+        return;
       }
+      const tasks: Array<Observable<any>> = [];
+      const scope = this.activeConnectors.includes(attribute.value?.name) ?
+        AttributeScope.SHARED_SCOPE :
+        AttributeScope.SERVER_SCOPE;
+      tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, [attribute]));
+      this.removeConnectorFromList(attribute.key, true);
+      this.removeConnectorFromList(attribute.key, false);
+      tasks.push(this.getSaveEntityAttributesTask(scope));
+
+      forkJoin(tasks).pipe(take(1)).subscribe(() => {
+        if (this.initialConnector ? this.initialConnector.name === attribute.key : true) {
+          this.clearOutConnectorForm();
+          this.cd.detectChanges();
+          this.connectorForm.disable();
+        }
+        this.updateData(true);
+      });
     });
   }
 
@@ -455,36 +452,69 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     return (connector && this.activeConnectors.includes(connectorName)) ? (connector.data[0][1] || 0) : 'Inactive';
   }
 
-  addConnector($event: Event) {
-    if ($event) {
-      $event.stopPropagation();
-    }
-    this.confirmConnectorChange().subscribe((changeConfirmed) => {
-      if (changeConfirmed) {
-        return this.dialog.open<AddConnectorDialogComponent,
-          AddConnectorConfigData>(AddConnectorDialogComponent, {
-          disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-          data: {
-            dataSourceData: this.dataSource.data
-          }
-        }).afterClosed().subscribe((value) => {
-          if (value && changeConfirmed) {
-            this.initialConnector = null;
-            if (this.connectorForm.disabled) {
-              this.connectorForm.enable();
-            }
-            if (!value.configurationJson) {
-              value.configurationJson = {};
-            }
-            value.basicConfig = value.configurationJson;
-            this.updateConnector(value);
-            this.generate('basicConfig.broker.clientId');
-            setTimeout(() => this.saveConnector());
-          }
-        });
-      }
+  // addConnector($event: Event) {
+  //   if ($event) {
+  //     $event.stopPropagation();
+  //   }
+  //   this.confirmConnectorChange().subscribe((changeConfirmed) => {
+  //     if (changeConfirmed) {
+  //       return this.dialog.open<AddConnectorDialogComponent,
+  //         AddConnectorConfigData>(AddConnectorDialogComponent, {
+  //         disableClose: true,
+  //         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+  //         data: {
+  //           dataSourceData: this.dataSource.data
+  //         }
+  //       }).afterClosed().subscribe((value) => {
+  //         if (value && changeConfirmed) {
+  //           this.initialConnector = null;
+  //           if (this.connectorForm.disabled) {
+  //             this.connectorForm.enable();
+  //           }
+  //           if (!value.configurationJson) {
+  //             value.configurationJson = {};
+  //           }
+  //           value.basicConfig = value.configurationJson;
+  //           this.updateConnector(value);
+  //           this.generate('basicConfig.broker.clientId');
+  //           setTimeout(() => this.saveConnector());
+  //         }
+  //       });
+  //     }
+  //   });
+  // }
+
+  addConnector(event?: Event): void {
+    event?.stopPropagation();
+
+    this.confirmConnectorChange()
+      .pipe(
+        take(1),
+        filter(Boolean),
+        switchMap(() => this.openAddConnectorDialog()),
+        filter(Boolean),
+      )
+      .subscribe(value => {
+        this.initialConnector = null;
+        if (this.connectorForm.disabled) {
+          this.connectorForm.enable();
+        }
+        if (!value.configurationJson) {
+          value.configurationJson = {} as ConnectorBaseConfig;
+        }
+        value.basicConfig = value.configurationJson;
+        this.updateConnector(value);
+        this.generate('basicConfig.broker.clientId');
+        setTimeout(() => this.saveConnector());
     });
+  }
+
+  private openAddConnectorDialog(): Observable<GatewayConnector> {
+    return this.dialog.open<AddConnectorDialogComponent, AddConnectorConfigData>(AddConnectorDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: { dataSourceData: this.dataSource.data }
+    }).afterClosed();
   }
 
   generate(formControlName: string): void {
