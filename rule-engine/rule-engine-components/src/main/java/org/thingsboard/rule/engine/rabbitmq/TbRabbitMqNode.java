@@ -156,8 +156,8 @@ public class TbRabbitMqNode extends TbAbstractExternalNode {
             case "PERSISTENT_TEXT_PLAIN":
                 return MessageProperties.PERSISTENT_TEXT_PLAIN;
             default:
-                throw new TbNodeException("Undefined message properties '" + name +
-                        "'! Only " + supportedPropertiesStr + " message properties are supported!");
+                throw new TbNodeException("Undefined message properties type '" + name +
+                        "'! Only " + supportedPropertiesStr + " message properties types are supported!");
         }
     }
 }

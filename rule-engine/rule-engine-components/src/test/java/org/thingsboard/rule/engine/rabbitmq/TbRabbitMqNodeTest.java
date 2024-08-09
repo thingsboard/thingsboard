@@ -241,7 +241,7 @@ public class TbRabbitMqNodeTest {
         assertThatThrownBy(() -> TbRabbitMqNode.convert(name))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Undefined message properties type '" + name +
-                        "'! Only " + supportedPropertiesStr + " message properties are supported!");
+                        "'! Only " + supportedPropertiesStr + " message properties types are supported!");
     }
 
     @Test
