@@ -19,11 +19,13 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
 public class AssetProfileCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8220455917177676472L;
 
     private final TenantId tenantId;
@@ -60,4 +62,5 @@ public class AssetProfileCacheKey implements Serializable {
             return tenantId + "_" + name;
         }
     }
+
 }

@@ -153,7 +153,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         log.trace("Executing unassignCustomerEntityViews, tenantId [{}], customerId [{}]", tenantId, customerId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(customerId, id -> INCORRECT_CUSTOMER_ID + id);
-        customerEntityViewsUnAssigner.removeEntities(tenantId, customerId);
+        customerEntityViewsRemover.removeEntities(tenantId, customerId);
     }
 
     @Override
@@ -444,7 +444,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         return entityViewDao.findEntityViewsByTenantIdAndEdgeIdAndType(tenantId.getId(), edgeId.getId(), type, pageLink);
     }
 
-    private PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<TenantId, EntityView>() {
+    private final PaginatedRemover<TenantId, EntityView> tenantEntityViewRemover = new PaginatedRemover<>() {
         @Override
         protected PageData<EntityView> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
             return entityViewDao.findEntityViewsByTenantId(id.getId(), pageLink);
@@ -456,7 +456,7 @@ public class EntityViewServiceImpl extends AbstractCachedEntityService<EntityVie
         }
     };
 
-    private PaginatedRemover<CustomerId, EntityView> customerEntityViewsUnAssigner = new PaginatedRemover<CustomerId, EntityView>() {
+    private final PaginatedRemover<CustomerId, EntityView> customerEntityViewsRemover = new PaginatedRemover<>() {
         @Override
         protected PageData<EntityView> findEntities(TenantId tenantId, CustomerId id, PageLink pageLink) {
             return entityViewDao.findEntityViewsByTenantIdAndCustomerId(tenantId.getId(), id.getId(), pageLink);

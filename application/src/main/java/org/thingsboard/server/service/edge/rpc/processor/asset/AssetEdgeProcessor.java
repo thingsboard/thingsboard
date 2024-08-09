@@ -107,6 +107,7 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
     public DownlinkMsg convertAssetEventToDownlink(EdgeEvent edgeEvent, EdgeId edgeId, EdgeVersion edgeVersion) {
         AssetId assetId = new AssetId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
+        var msgConstructor = (AssetMsgConstructor) assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion);
         switch (edgeEvent.getAction()) {
             case ADDED, UPDATED, ASSIGNED_TO_EDGE, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Asset asset = assetService.findAssetById(edgeEvent.getTenantId(), assetId);
@@ -120,20 +121,15 @@ public abstract class AssetEdgeProcessor extends BaseAssetProcessor implements A
                     if (UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE.equals(msgType)) {
                         AssetProfile assetProfile = assetProfileService.findAssetProfileById(edgeEvent.getTenantId(), asset.getAssetProfileId());
                         assetProfile = checkIfAssetProfileDefaultFieldsAssignedToEdge(edgeEvent.getTenantId(), edgeId, assetProfile, edgeVersion);
-                        builder.addAssetProfileUpdateMsg(((AssetMsgConstructor) assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                                .constructAssetProfileUpdatedMsg(msgType, assetProfile));
+                        builder.addAssetProfileUpdateMsg(msgConstructor.constructAssetProfileUpdatedMsg(msgType, assetProfile));
                     }
                     downlinkMsg = builder.build();
                 }
             }
-            case DELETED, UNASSIGNED_FROM_EDGE -> {
-                AssetUpdateMsg assetUpdateMsg = ((AssetMsgConstructor)
-                        assetMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructAssetDeleteMsg(assetId);
-                downlinkMsg = DownlinkMsg.newBuilder()
-                        .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addAssetUpdateMsg(assetUpdateMsg)
-                        .build();
-            }
+            case DELETED, UNASSIGNED_FROM_EDGE -> downlinkMsg = DownlinkMsg.newBuilder()
+                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+                    .addAssetUpdateMsg(msgConstructor.constructAssetDeleteMsg(assetId))
+                    .build();
         }
         return downlinkMsg;
     }

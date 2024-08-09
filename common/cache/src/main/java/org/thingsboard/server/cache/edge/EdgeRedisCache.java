@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.edge;
+package org.thingsboard.server.cache.edge;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
@@ -32,4 +32,5 @@ public class EdgeRedisCache extends RedisTbTransactionalCache<EdgeCacheKey, Edge
     public EdgeRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
         super(CacheConstants.EDGE_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(Edge.class));
     }
+
 }

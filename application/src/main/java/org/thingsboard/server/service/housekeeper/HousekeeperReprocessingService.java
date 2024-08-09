@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.housekeeper;
 
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.context.annotation.Lazy;
@@ -33,7 +34,6 @@ import org.thingsboard.server.queue.provider.TbCoreQueueFactory;
 import org.thingsboard.server.queue.util.AfterStartUp;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import javax.annotation.PreDestroy;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Set;

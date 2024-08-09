@@ -31,8 +31,6 @@ import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @DaoSqlTest
 public class RelationEdgeTest extends AbstractEdgeTest {
 

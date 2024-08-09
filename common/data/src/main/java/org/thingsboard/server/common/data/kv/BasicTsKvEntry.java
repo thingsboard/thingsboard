@@ -18,7 +18,6 @@ package org.thingsboard.server.common.data.kv;
 import jakarta.validation.Valid;
 import lombok.Data;
 
-import java.util.Objects;
 import java.util.Optional;
 
 @Data

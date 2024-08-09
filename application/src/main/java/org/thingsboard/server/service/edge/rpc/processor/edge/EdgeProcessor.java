@@ -79,7 +79,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     List<ListenableFuture<Void>> futures = new ArrayList<>();
                     futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customerId, null));
                     futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.EDGE, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, edgeId, null));
-                    PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                    PageLink pageLink = new PageLink(1000);
                     PageData<User> pageData;
                     do {
                         pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);

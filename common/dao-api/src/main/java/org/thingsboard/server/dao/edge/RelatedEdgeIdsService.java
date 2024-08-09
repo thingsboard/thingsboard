@@ -15,16 +15,16 @@
  */
 package org.thingsboard.server.dao.edge;
 
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
-@Data
-@RequiredArgsConstructor
-class EdgeCacheEvictEvent {
+public interface RelatedEdgeIdsService {
 
-    private final TenantId tenantId;
-    private final String newName;
-    private final String oldName;
+    PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
+
+    void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId);
 
 }

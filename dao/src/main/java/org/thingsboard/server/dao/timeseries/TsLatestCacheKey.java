@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.timeseries;
 import lombok.AllArgsConstructor;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 
 import java.io.Serial;
@@ -28,6 +27,8 @@ import java.io.Serializable;
 @Getter
 @AllArgsConstructor
 public class TsLatestCacheKey implements Serializable {
+
+    @Serial
     private static final long serialVersionUID = 2024369077925351881L;
 
     private final EntityId entityId;
@@ -37,4 +38,5 @@ public class TsLatestCacheKey implements Serializable {
     public String toString() {
         return "{" + entityId + "}" + key;
     }
+
 }

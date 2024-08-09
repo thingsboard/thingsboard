@@ -29,7 +29,6 @@ public class PageDataIterableByTenantIdEntityId<T> extends BasePageDataIterable<
         this.function = function;
         this.tenantId = tenantId;
         this.entityId = entityId;
-
     }
 
     @Override
@@ -40,4 +39,5 @@ public class PageDataIterableByTenantIdEntityId<T> extends BasePageDataIterable<
     public interface FetchFunction<T> {
         PageData<T> fetch(TenantId tenantId, EntityId entityId, PageLink link);
     }
+
 }

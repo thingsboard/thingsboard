@@ -55,7 +55,7 @@ public class DataConstants {
     public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
-    public static final String[] allScopes() {
+    public static String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
     }
 
