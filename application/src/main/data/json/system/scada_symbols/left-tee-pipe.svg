@@ -41,6 +41,11 @@
       "actions": null
     },
     {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
       "tag": "top-fluid",
       "stateRenderFunction": "var fluid = ctx.values.topFluid && !ctx.values.leak;\n\nif (fluid) {\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
@@ -553,13 +558,29 @@
       "min": null,
       "max": null,
       "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
     }
   ]
 }]]></tb:metadata><g clip-path="url(#clip0_1245_66573)">
-  <path d="m64 186v-172h72v172z" fill="#fff"/>
+  <path d="m64 186v-172h72v172z" fill="#fff" tb:tag="pipe-background"/>
   <path d="m64 186v-172h72v172z" fill="url(#paint0_linear_1245_66573)" style="fill:url(#paint0_linear_1245_66442)"/>
   <path d="m65.5 184.5v-169h69v169z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
-  <path d="m14 64h51l35 36-35 36h-51z" fill="#fff"/>
+  <path d="m14 64h51l35 36-35 36h-51z" fill="#fff" tb:tag="pipe-background"/>
   <path d="m14 64h51l35 36-35 36h-51z" fill="url(#paint1_linear_1245_66573)" style="fill:url(#paint1_linear_1245_66442)"/>
   <path d="m15.5 65.5h48.866l33.542 34.5-33.542 34.5h-48.866z" stroke="#000" stroke-opacity=".12" stroke-width="3"/>
   <rect x="1.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/>

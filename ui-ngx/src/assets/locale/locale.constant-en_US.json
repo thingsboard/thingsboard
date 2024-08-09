@@ -3676,6 +3676,7 @@
             "leak-hint": "Indicates whether is leak present in pipe.",
             "leak-present": "Leak present",
             "fluid-color": "Fluid color",
+            "pipe-color": "Pipe color",
             "horizontal-pipe": "Horizontal pipe",
             "vertical-pipe": "Vertical pipe",
             "horizontal-fluid-color": "Horizontal fluid color",

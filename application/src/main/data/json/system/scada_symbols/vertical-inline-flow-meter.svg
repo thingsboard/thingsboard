@@ -52,6 +52,11 @@
       "actions": null
     },
     {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
       "tag": "value",
       "stateRenderFunction": "var value = ctx.values.value;\nctx.api.text(element, value.toFixed(0));\n",
       "actions": {
@@ -710,9 +715,26 @@
       "min": null,
       "max": null,
       "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
     }
   ]
-}]]></tb:metadata><rect transform="rotate(-90)" x="-386" y="64" width="372" height="72" fill="#fff"/><rect transform="rotate(-90)" x="-386" y="64" width="372" height="72" fill="url(#paint0_linear_1595_101503)" style="fill:url(#paint0_linear_1595_101503)"/><rect transform="rotate(-90)" x="-384.5" y="65.5" width="369" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(-90)" x="-12.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><rect transform="rotate(-90)" x="-398.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><rect transform="rotate(90)" x="14" y="-136" width="372" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="fluid-background"/><rect transform="rotate(90)" x="14" y="-136" width="372" height="72" fill="url(#liquid)" stroke-width="0" style="display: none;" tb:tag="fluid"/><defs>
+}]]></tb:metadata>
+<rect transform="rotate(-90)" x="-386" y="64" width="372" height="72" fill="#fff" tb:tag="pipe-background"/><rect transform="rotate(-90)" x="-386" y="64" width="372" height="72" fill="url(#paint0_linear_1595_101503)" style="fill:url(#paint0_linear_1595_101503)"/><rect transform="rotate(-90)" x="-384.5" y="65.5" width="369" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect transform="rotate(-90)" x="-12.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><rect transform="rotate(-90)" x="-398.5" y="51.5" width="11" height="97" rx="5.5" fill="#d9d9d9" stroke="#727171" stroke-width="3"/><rect transform="rotate(90)" x="14" y="-136" width="372" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="fluid-background"/><rect transform="rotate(90)" x="14" y="-136" width="372" height="72" fill="url(#liquid)" stroke-width="0" style="display: none;" tb:tag="fluid"/><defs>
   <mask id="path-5-inside-1_1595_102361" fill="#ffffff">
    <path d="m300 100c0 55.228-44.772 100-100 100s-100-44.772-100-100 44.772-100 100-100 100 44.772 100 100zm-188 0c0 48.603 39.401 88.004 88.004 88.004s88.004-39.401 88.004-88.004c0-48.604-39.401-88.004-88.004-88.004s-88.004 39.401-88.004 88.004z"/>
   </mask>
