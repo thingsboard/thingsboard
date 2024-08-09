@@ -3778,7 +3778,14 @@
         "left-width-percentage-required": "Left percentage is required",
         "divider": "Divider",
         "right-side": "Right side layout",
-        "left-side": "Left side layout"
+        "left-side": "Left side layout",
+        "add-new-breakpoint": "Add new breakpoint",
+        "breakpoint": "Breakpoint",
+        "breakpoints": "Breakpoints",
+        "copy-from": "Copy from",
+        "size": "Size",
+        "delete-breakpoint-title": "Are you sure you want to delete the breakpoint '{{name}}'?",
+        "delete-breakpoint-text": "Please note, after confirmation, the breakpoint will become unrecoverable, and the settings will revert to the default breakpoint."
     },
     "legend": {
         "direction": "Direction",

@@ -36,155 +36,58 @@
         </mat-select>
       </mat-form-field>
     </div>
-<!--    <div fxLayout="row" fxLayoutAlign="start center">-->
-<!--        <mat-slide-toggle formControlName="right" color="accent">-->
-<!--          {{ 'layout.divider' | translate }}-->
-<!--        </mat-slide-toggle>-->
-<!--    </div>-->
-    <div *ngIf="!isDividerLayout; else dividerLayout" class="tb-form-panel no-padding no-border">
-<!--      <div class="tb-form-table tb-layout-breakpoints">-->
-<!--        <div class="tb-form-table-header">-->
-<!--          <div class="tb-form-table-header-cell tb-icon-breakpoint"></div>-->
-<!--          <div class="tb-form-table-header-cell tb-devices-header">Devices</div>-->
-<!--          <div class="tb-form-table-header-cell tb-size-header">Size</div>-->
-<!--          <div class="tb-form-table-header-cell tb-actions-header"></div>-->
-<!--        </div>-->
-<!--        <div class="tb-form-table-body">-->
-<!--          <div class="tb-form-table-row">-->
-<!--            <div class="tb-form-table-row-cell tb-icon-breakpoint"></div>-->
-<!--            <div class="tb-form-table-row-cell tb-devices-header">Default</div>-->
-<!--            <div class="tb-form-table-row-cell tb-size-header"></div>-->
-<!--            <div class="tb-form-table-row-cell tb-actions-header">-->
-<!--              <button mat-icon-button class="tb-mat-20"-->
-<!--                      (click)="openLayoutSettings('main')"-->
-<!--                      type="button" >-->
-<!--                <mat-icon>settings</mat-icon>-->
-<!--              </button>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--          <div class="tb-form-table-row">-->
-<!--            <div class="tb-form-table-row-cell tb-icon-breakpoint"></div>-->
-<!--            <div class="tb-form-table-row-cell tb-devices-header">Md</div>-->
-<!--            <div class="tb-form-table-row-cell tb-size-header"></div>-->
-<!--            <div class="tb-form-table-row-cell tb-actions-header">-->
-<!--              <button mat-icon-button class="tb-mat-20"-->
-<!--                      (click)="openLayoutSettings('main')"-->
-<!--                      type="button" >-->
-<!--                <mat-icon>settings</mat-icon>-->
-<!--              </button>-->
-<!--            </div>-->
-<!--          </div>-->
-<!--        </div>-->
-<!--      </div>-->
-      <div class="table-container" style="width: 600px">
-        <table mat-table [dataSource]="dataSource">
-          <ng-container [matColumnDef]="'icon'">
-            <mat-header-cell *matHeaderCellDef [style]="{ minWidth: '48px', maxWidth: '48px', width: '48px', textAlign: 'center'}">
-            </mat-header-cell>
-            <mat-cell *matCellDef="let breakpoint" [style]="{ minWidth: '48px', maxWidth: '48px', width: '48px', textAlign: 'center'}">
-              <tb-icon>{{ breakpoint.icon }}</tb-icon>
-            </mat-cell>
-          </ng-container>
-          <ng-container [matColumnDef]="'name'">
-            <mat-header-cell *matHeaderCellDef style="width: 15%;min-width: 15%;max-width: 15%;padding-left:0">
-              Breakpoints
-            </mat-header-cell>
-            <mat-cell *matCellDef="let breakpoint" style="width: 15%;min-width: 15%;max-width: 15%;">
-              {{ breakpoint.name }}
-            </mat-cell>
-          </ng-container>
-          <ng-container [matColumnDef]="'descriptionSize'" style="width: 85%;min-width: 85%;max-width: 85%;">
-            <mat-header-cell *matHeaderCellDef>
-              Size
-            </mat-header-cell>
-            <mat-cell *matCellDef="let breakpoint" style="width: 85%;min-width: 85%;max-width: 85%;">
-              {{ breakpoint.descriptionSize }}
-            </mat-cell>
-          </ng-container>
-          <ng-container matColumnDef="actions" stickyEnd>
-            <mat-header-cell *matHeaderCellDef
-                             [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px', textAlign: 'center'}">
-            </mat-header-cell>
-            <mat-cell *matCellDef="let breakpoint"
-                      [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px'}">
-              <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+    <div *ngIf="!isDividerLayout; else dividerLayout" class="tb-form-panel stroked" style="width: 500px">
+      <div class="tb-form-table tb-layout-breakpoints">
+        <div class="tb-form-table-header no-padding-right">
+          <div class="tb-form-table-header-cell tb-icon"></div>
+          <div class="tb-form-table-header-cell tb-breakpoint" translate>layout.breakpoints</div>
+          <div class="tb-form-table-header-cell tb-size" translate>layout.size</div>
+          <div class="tb-form-table-header-cell tb-actions"></div>
+        </div>
+        <div class="tb-form-table-body no-gap">
+          <ng-container *ngFor="let breakpoint of layoutBreakpoints; let last = last">
+            <div class="tb-form-table-row no-padding-right">
+              <div class="tb-form-table-row-cell tb-icon">
+                <tb-icon>{{ breakpoint.icon }}</tb-icon>
+              </div>
+              <div class="tb-form-table-row-cell tb-breakpoint">
+                {{ breakpoint.name }}
+              </div>
+              <div class="tb-form-table-row-cell tb-size">
+                {{ breakpoint.descriptionSize }}
+              </div>
+              <div class="tb-form-table-row-cell-buttons tb-actions">
                 <button mat-icon-button
+                        matTooltip="{{ 'dashboard.layout-settings' | translate }}"
+                        matTooltipPosition="above"
                         (click)="openLayoutSettings('main', breakpoint.breakpoint)"
                         type="button" >
                   <mat-icon>settings</mat-icon>
                 </button>
                 <button mat-icon-button
+                        matTooltip="{{ 'action.delete' | translate }}"
+                        matTooltipPosition="above"
                         [disabled]="breakpoint.breakpoint === 'default'"
-                        (click)="deleteBreakpoint(breakpoint.breakpoint)"
+                        [class.tb-hidden]="breakpoint.breakpoint === 'default'"
+                        (click)="deleteBreakpoint($event, breakpoint.breakpoint)"
                         type="button" >
                   <tb-icon>delete</tb-icon>
                 </button>
               </div>
-              <div fxHide fxShow.lt-lg fxFlex fxLayout="row" fxLayoutAlign="end">
-                <button mat-icon-button
-                        (click)="$event.stopPropagation()"
-                        [matMenuTriggerFor]="cellActionsMenu">
-                  <mat-icon class="material-icons">more_vert</mat-icon>
-                </button>
-                <mat-menu #cellActionsMenu="matMenu" xPosition="before">
-                  <button mat-icon-button
-                          (click)="openLayoutSettings('main', breakpoint.breakpoint)"
-                          type="button" >
-                    <mat-icon>settings</mat-icon>
-                  </button>
-                  <button mat-icon-button
-                          (click)="openLayoutSettings('main')"
-                          type="button" >
-                    <tb-icon>delete</tb-icon>-->
-                  </button>
-                </mat-menu>
-              </div>
-            </mat-cell>
+            </div>
+            <mat-divider *ngIf="!last"></mat-divider>
           </ng-container>
-          <mat-header-row class="mat-row-select" *matHeaderRowDef="['icon', 'name', 'descriptionSize', 'actions']; sticky: true"></mat-header-row>
-          <mat-row *matRowDef="let breakpoint; columns: ['icon', 'name', 'descriptionSize', 'actions']"></mat-row>
-        </table>
+        </div>
       </div>
       <button mat-button fxFlex class="tb-add-breakpoint-button"
-              matTooltip="Add breakpoint"
+              matTooltip="{{ 'layout.add-new-breakpoint' | translate }}"
               matTooltipPosition="above"
+              color="primary"
               type="button"
-              *ngIf="!addBreakpointMode"
+              [disabled]="!allowBreakpointIds.length"
               (click)="addBreakpoint()">
         <mat-icon>add</mat-icon>
       </button>
-      <div *ngIf="addBreakpointMode" class="tb-form-row space-between column-lt-md" [formGroup]="addBreakpointFormGroup">
-        <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
-          <div>Add breakpoint</div>
-          <mat-form-field fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="new">
-              <mat-option *ngFor="let breakpoint of allowBreakpointIds" [value]="breakpoint">
-                {{ breakpoint }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
-          <div>Copy from</div>
-          <mat-form-field fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
-            <mat-select formControlName="copyFrom">
-              <mat-option *ngFor="let breakpoint of selectedBreakpointIds" [value]="breakpoint">
-                {{ breakpoint }}
-              </mat-option>
-            </mat-select>
-          </mat-form-field>
-        </div>
-        <div fxLayoutGap="8px">
-          <button mat-icon-button class="tb-mat-20"
-                  type="button" (click)="createdBreakPoint()">
-            <tb-icon>check</tb-icon>
-          </button>
-          <button mat-icon-button class="tb-mat-20"
-                  type="button" (click)="addBreakpoint()">
-            <tb-icon>close</tb-icon>
-          </button>
-        </div>
-      </div>
     </div>
     <ng-template #dividerLayout>
     <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="20px">

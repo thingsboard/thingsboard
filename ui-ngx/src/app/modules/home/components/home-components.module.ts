@@ -114,6 +114,9 @@ import { EditWidgetComponent } from '@home/components/dashboard-page/edit-widget
 import { DashboardWidgetSelectComponent } from '@home/components/dashboard-page/dashboard-widget-select.component';
 import { AddWidgetDialogComponent } from '@home/components/dashboard-page/add-widget-dialog.component';
 import { ManageDashboardLayoutsDialogComponent } from '@home/components/dashboard-page/layout/manage-dashboard-layouts-dialog.component';
+import {
+  AddNewBreakpointDialogComponent
+} from '@home/components/dashboard-page/layout/add-new-breakpoint-dialog.component';
 import { DashboardSettingsDialogComponent } from '@home/components/dashboard-page/dashboard-settings-dialog.component';
 import { ManageDashboardStatesDialogComponent } from '@home/components/dashboard-page/states/manage-dashboard-states-dialog.component';
 import { DashboardStateDialogComponent } from '@home/components/dashboard-page/states/dashboard-state-dialog.component';
@@ -294,6 +297,7 @@ import {
       AddWidgetDialogComponent,
       MoveWidgetsDialogComponent,
       ManageDashboardLayoutsDialogComponent,
+      AddNewBreakpointDialogComponent,
       DashboardSettingsDialogComponent,
       ManageDashboardStatesDialogComponent,
       DashboardStateDialogComponent,
@@ -428,6 +432,7 @@ import {
     AddWidgetDialogComponent,
     MoveWidgetsDialogComponent,
     ManageDashboardLayoutsDialogComponent,
+    AddNewBreakpointDialogComponent,
     DashboardSettingsDialogComponent,
     ManageDashboardStatesDialogComponent,
     DashboardStateDialogComponent,

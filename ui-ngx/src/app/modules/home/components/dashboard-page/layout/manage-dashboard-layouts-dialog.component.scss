@@ -125,27 +125,42 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
 
   .tb-layout-breakpoints {
     .tb-form-table-header-cell, .tb-form-table-row-cell {
-      &.tb-icon-breakpoint {
-        width: 48px;
-        min-width: 48px;
+      &.tb-icon {
+        width: 29px;
+        min-width: 29px;
+        max-width: 29px;
+        display: flex;
+        place-content: center;
       }
 
-      &.tb-devices-header, &.tb-size-header {
-        flex: 1;
-        min-width: 120px;
+      &.tb-breakpoint {
+        flex: 1 1 15%;
+        width: 15%;
+        min-width: 100px;
       }
 
-      &.tb-actions-header {
-        width: 80px;
-        min-width: 80px;
+      &.tb-size {
+        flex: 1 1 85%;
+        width: 85%;
+        min-width: 150px;
+      }
+
+      &.tb-actions {
+        width: 96pxpx;
+        min-width: 96px;
+        max-width: 96px;
         display: flex;
         justify-content: end;
       }
     }
+
+    .mat-divider {
+      margin-top: 6px;
+      margin-bottom: 6px;
+    }
   }
 
   .tb-add-breakpoint-button {
-    cursor: pointer;
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -154,7 +169,6 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
     padding: 8px;
     border: 2px dashed rgba(0, 0, 0, 0.08);
     border-radius: 10px;
-    min-height: 56px;
   }
 }
 

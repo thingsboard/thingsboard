@@ -1145,7 +1145,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private updateLayout(layout: DashboardPageLayout, layoutInfo: DashboardLayoutInfo) {
     layout.layoutCtx.layoutData = layoutInfo;
     layout.layoutCtx.layoutDataChanged.next();
-    layout.layoutCtx.ctrl?.updatedCurrentBreakpoint(null, layout.show);
+    layout.layoutCtx.ctrl?.updatedCurrentBreakpoint(this.isEdit ? layout.layoutCtx.breakpoint : null, layout.show);
     this.updateLayoutSizes();
   }
 
