@@ -23,6 +23,11 @@
       "tag": "leak",
       "stateRenderFunction": "var leak = ctx.values.leak;\nif (leak) {\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
+    },
+    {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
     }
   ],
   "behavior": [
@@ -217,9 +222,26 @@
       "min": null,
       "max": null,
       "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
     }
   ]
-}]]></tb:metadata><path d="m64 186v-172h72v172h-72z" fill="#fff"/><path d="m64 186v-172h72v172h-72z" fill="url(#paint0_linear_1245_55957)"/><g stroke-width="3">
+}]]></tb:metadata>
+ <path d="m64 186v-172h72v172h-72z" fill="#fff" tb:tag="pipe-background"/><path d="m64 186v-172h72v172h-72z" fill="url(#paint0_linear_1245_55957)"/><g stroke-width="3">
   <path d="m65.5 184.5v-169h69v169h-69z" stroke="#000" stroke-opacity=".12"/>
   <rect transform="rotate(-90 51.5 198.5)" x="51.5" y="198.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171"/>
   <rect transform="rotate(-90 51.5 12.5)" x="51.5" y="12.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171"/>
