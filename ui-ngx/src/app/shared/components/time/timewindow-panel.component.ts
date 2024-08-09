@@ -32,9 +32,13 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { TimeService } from '@core/services/time.service';
 import { isDefined } from '@core/utils';
 import { OverlayRef } from '@angular/cdk/overlay';
-import { WidgetConfigMode } from '@shared/models/widget.models';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
+import { MatDialog } from '@angular/material/dialog';
+import {
+  TimewindowConfigDialogComponent,
+  TimewindowConfigDialogData
+} from '@shared/components/time/timewindow-config-dialog.component';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
@@ -113,7 +117,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
               public fb: UntypedFormBuilder,
               private timeService: TimeService,
               private translate: TranslateService,
-              public viewContainerRef: ViewContainerRef) {
+              public viewContainerRef: ViewContainerRef,
+              private dialog: MatDialog) {
     super(store);
     this.historyOnly = data.historyOnly;
     this.forAllTimeEnabled = data.forAllTimeEnabled;
@@ -277,6 +282,12 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   }
 
   update() {
+    this.prepareTimewindowConfig();
+    this.result = this.timewindow;
+    this.overlayRef.dispose();
+  }
+
+  private prepareTimewindowConfig() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow.realtime = {
       realtimeType: timewindowFormValue.realtime.realtimeType,
@@ -300,8 +311,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     if (this.timezone) {
       this.timewindow.timezone = timewindowFormValue.timezone;
     }
-    this.result = this.timewindow;
-    this.overlayRef.dispose();
   }
 
   cancel() {
@@ -314,11 +323,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   maxDatapointsLimit() {
     return this.timeService.getMaxDatapointsLimit();
-  }
-
-  // TODO: find more accurate step size for slider
-  datapointsLimitSliderStep() {
-    return Math.round(this.maxDatapointsLimit() / 10);
   }
 
   minRealtimeAggInterval() {
@@ -447,5 +451,26 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.timewindowForm.markAsDirty();
   }
 
-  protected readonly WidgetConfigMode = WidgetConfigMode;
+  openTimewindowConfig() {
+    this.prepareTimewindowConfig();
+    console.log(this.timewindow);
+    this.dialog.open<TimewindowConfigDialogComponent, TimewindowConfigDialogData, Timewindow>(
+      TimewindowConfigDialogComponent, {
+        autoFocus: false,
+        disableClose: false,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          quickIntervalOnly: this.quickIntervalOnly,
+          timewindow: this.timewindow
+        }
+      }).afterClosed()
+      .subscribe((res) => {
+        if (res) {
+          // update timewindow
+          console.log(res);
+          // TODO: propagate changes to form
+          this.timewindow = res;
+        }
+      });
+  }
 }

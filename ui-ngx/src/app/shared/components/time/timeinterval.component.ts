@@ -190,9 +190,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
 
   private setInterval(interval: Interval) {
     if (!this.advanced) {
-      this.timeintervalFormGroup.get('interval').patchValue(interval);
+      this.timeintervalFormGroup.get('interval').patchValue(interval, {emitEvent: false});
     } else {
-      this.timeintervalFormGroup.get('interval').patchValue(IntervalType.CUSTOM);
+      this.timeintervalFormGroup.get('interval').patchValue(IntervalType.CUSTOM, {emitEvent: false});
       this.setCustomInterval(interval);
     }
   }
@@ -204,7 +204,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
       hours: Math.floor((intervalSeconds % 86400) / 3600),
       mins: Math.floor(((intervalSeconds % 86400) % 3600) / 60),
       secs: intervalSeconds % 60
-    });
+    }, {emitEvent: false});
   }
 
   private boundInterval(updateToPreferred = false) {

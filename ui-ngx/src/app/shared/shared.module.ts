@@ -221,6 +221,7 @@ import { WidgetButtonComponent } from '@shared/components/button/widget-button.c
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
 import { TimezoneComponent } from '@shared/components/time/timezone.component';
 import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
+import { TimewindowConfigDialogComponent } from '@shared/components/time/timewindow-config-dialog.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -303,6 +304,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UserMenuComponent,
     TimewindowComponent,
     TimewindowPanelComponent,
+    TimewindowConfigDialogComponent,
     TimeintervalComponent,
     TimezoneComponent,
     TimezonePanelComponent,
@@ -509,6 +511,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     UserMenuComponent,
     TimewindowComponent,
     TimewindowPanelComponent,
+    TimewindowConfigDialogComponent,
     TimeintervalComponent,
     TimezoneComponent,
     TimezonePanelComponent,

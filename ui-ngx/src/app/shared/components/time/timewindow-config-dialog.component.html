@@ -15,12 +15,21 @@
     limitations under the License.
 
 -->
+<mat-toolbar color="primary">
+  <h2>{{ 'timewindow.timewindow-settings' | translate }}</h2>
+  <span fxFlex></span>
+<!--  <div tb-help="#"></div>-->
+  <button mat-icon-button
+          (click)="cancel()"
+          type="button">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+</mat-toolbar>
 <form [formGroup]="timewindowForm" class="mat-content">
-  <mat-tab-group [class.tb-headless]="historyOnly"
-                 (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
+  <mat-tab-group (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
+        <section class="tb-form-panel stroked">
           <div class="tb-flex space-between"
                [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
             <div class="tb-flex column no-flex flex-xs">
@@ -65,12 +74,11 @@
     </mat-tab>
     <mat-tab label="{{ 'timewindow.history' | translate }}">
       <div class="tb-flex column">
-        <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
-          <div class="tb-flex space-between"
-               [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
+        <section class="tb-form-panel stroked">
+          <div class="tb-flex space-between align-end">
             <div class="tb-flex column no-flex flex-xs">
               <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-              <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
+              <ng-container formGroupName="history">
                 <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType">
                 </tb-toggle-select>
               </ng-container>
@@ -80,8 +88,7 @@
             </ng-container>
           </div>
 
-          <ng-container formGroupName="history" *ngIf="historyIntervalSelectionAvailable &&
-                                  timewindowForm.get('history.historyType').value !== historyTypes.FOR_ALL_TIME">
+          <ng-container formGroupName="history">
             <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
               <tb-timeinterval
                 formControlName="timewindowMs"
@@ -119,19 +126,11 @@
         </ng-container>
       </div>
     </mat-tab>
-    <mat-tab disabled labelClass="timewindow-config-btn">
-<!--    <mat-tab *ngIf="isEdit" disabled>-->
-      <ng-template mat-tab-label>
-        <button mat-icon-button (click)="openTimewindowConfig()">
-          <mat-icon>settings</mat-icon>
-        </button>
-      </ng-template>
-    </mat-tab>
   </mat-tab-group>
   <ng-template #aggregationConfig>
-    <div *ngIf="aggregation" class="tb-flex column">
+    <div class="tb-flex column">
       <ng-container formGroupName="aggregation">
-        <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideAggregation">
+        <section class="tb-form-panel stroked">
           <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
           <mat-form-field subscriptSizing="dynamic" appearance="outline">
             <mat-select formControlName="type">
@@ -143,7 +142,7 @@
         </section>
 
         <section class="tb-form-panel stroked"
-                 *ngIf="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE && (isEdit || !timewindow.hideAggInterval)">
+                 *ngIf="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
           <div class="tb-form-panel-title">{{ 'aggregation.limit' | translate }}</div>
           <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
                fxLayout.xs="column" fxLayoutAlign.xs="stretch">
@@ -164,8 +163,7 @@
         </section>
       </ng-container>
 
-      <section class="tb-form-panel stroked" [fxShow]="(isEdit || !timewindow.hideAggInterval)
-       && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
+      <section class="tb-form-panel stroked" [fxShow]="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
         <div class="tb-form-panel-title">{{ 'aggregation.group-interval' | translate }}</div>
         <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
           <tb-timeinterval
@@ -188,24 +186,15 @@
       </section>
     </div>
   </ng-template>
-  <ng-template #timezoneSelectionPanel>
-    <section class="tb-form-panel stroked tb-flex row align-center space-between">
-      <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
-      <ng-container *ngTemplateOutlet="timezoneSelection">
-      </ng-container>
-    </section>
-  </ng-template>
   <ng-template #timezoneSelection>
-    <ng-container *ngIf="timezone && (isEdit || !timewindow.hideTimezone)">
-      <tb-timezone asButton strokedButton noMargin
-                   localBrowserTimezonePlaceholderOnEmpty="true"
-                   formControlName="timezone">
-      </tb-timezone>
-    </ng-container>
+    <tb-timezone asButton strokedButton noMargin
+                 localBrowserTimezonePlaceholderOnEmpty="true"
+                 formControlName="timezone">
+    </tb-timezone>
   </ng-template>
 </form>
 <mat-divider></mat-divider>
-<div class="tb-panel-actions tb-flex flex-end no-gap">
+<div mat-dialog-actions class="tb-dialog-actions tb-flex flex-end no-gap">
   <button type="button"
           mat-button
           [disabled]="(isLoading$ | async)"
@@ -217,6 +206,6 @@
           color="primary"
           (click)="update()"
           [disabled]="(isLoading$ | async) || timewindowForm.invalid || !timewindowForm.dirty">
-    {{ 'action.update' | translate }}
+    {{ 'action.apply' | translate }}
   </button>
 </div>

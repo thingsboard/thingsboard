@@ -4652,6 +4652,7 @@
     },
     "timewindow": {
         "timewindow": "Timewindow",
+        "timewindow-settings": "Timewindow settings",
         "years": "{ years, plural, =1 { year } other {# years } }",
         "years-short": "{{ years }}y",
         "months": "{ months, plural, =1 { month } other {# months } }",
@@ -4700,7 +4701,14 @@
         "preview": "Preview",
         "time-range": "Time range",
         "relative": "Relative",
-        "fixed": "Fixed"
+        "fixed": "Fixed",
+        "hide-time-range": "Hide time range from end-users",
+        "hide-last-interval": "Hide last interval from end-users",
+        "hide-relative-interval": "Hide relative interval from end-users",
+        "hide-aggregation": "Hide aggregation from end-users",
+        "hide-group-interval": "Hide grouping interval from end-users",
+        "hide-timezone": "Hide timezone from end-users",
+        "disable-custom-interval": "Disable custom interval selection"
     },
     "tooltip": {
         "trigger": "Trigger",
