@@ -58,7 +58,6 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 import java.util.NoSuchElementException;
 import java.util.UUID;
@@ -70,6 +69,11 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
+import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.ALARM_ORIGINATOR;
+import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.CUSTOMER;
+import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.ENTITY;
+import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.RELATED;
+import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.TENANT;
 
 @ExtendWith(MockitoExtension.class)
 public class TbChangeOriginatorNodeTest {
@@ -80,16 +84,6 @@ public class TbChangeOriginatorNodeTest {
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("55de3f10-1b55-4950-b711-ed132896b260"));
 
     private final ListeningExecutor dbExecutor = new TestDbCallbackExecutor();
-
-    private final String CUSTOMER_SOURCE = "CUSTOMER";
-    private final String TENANT_SOURCE = "TENANT";
-    private final String RELATED_SOURCE = "RELATED";
-    private final String ALARM_ORIGINATOR_SOURCE = "ALARM_ORIGINATOR";
-    private final String ENTITY_SOURCE = "ENTITY";
-
-    private final String supportedOriginatorSourcesStr = String.join(", ", List.of(
-            CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, ENTITY_SOURCE)
-    );
 
     private TbChangeOriginatorNode node;
     private TbChangeOriginatorNodeConfiguration config;
@@ -114,7 +108,7 @@ public class TbChangeOriginatorNodeTest {
     @Test
     public void verifyDefaultConfig() {
         var config = new TbChangeOriginatorNodeConfiguration().defaultConfiguration();
-        assertThat(config.getOriginatorSource()).isEqualTo(CUSTOMER_SOURCE);
+        assertThat(config.getOriginatorSource()).isEqualTo(CUSTOMER);
         RelationsQuery relationsQuery = new RelationsQuery();
         relationsQuery.setDirection(EntitySearchDirection.FROM);
         relationsQuery.setMaxLevel(1);
@@ -126,17 +120,8 @@ public class TbChangeOriginatorNodeTest {
     }
 
     @Test
-    public void givenUnsupportedSource_whenInit_thenThrowsException() {
-        config.setOriginatorSource("UNSUPPORTED_SOURCE");
-
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(IllegalArgumentException.class)
-                .hasMessage("Unsupported source type 'UNSUPPORTED_SOURCE'! Only " + supportedOriginatorSourcesStr + " types are allowed.");
-    }
-
-    @Test
     public void givenRelatedSourceAndRelatedQueryIsNull_whenInit_thenThrowsException() {
-        config.setOriginatorSource(RELATED_SOURCE);
+        config.setOriginatorSource(RELATED);
         config.setRelationsQuery(null);
 
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
@@ -146,7 +131,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void givenEntitySourceAndEntityTypeIsNull_whenInit_thenThrowsException() {
-        config.setOriginatorSource(ENTITY_SOURCE);
+        config.setOriginatorSource(ENTITY);
         config.setEntityType(null);
 
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
@@ -157,7 +142,7 @@ public class TbChangeOriginatorNodeTest {
     @ParameterizedTest
     @NullAndEmptySource
     public void givenEntitySourceAndEntityNamePatternIsEmpty_whenInit_thenThrowsException(String entityName) {
-        config.setOriginatorSource(ENTITY_SOURCE);
+        config.setOriginatorSource(ENTITY);
         config.setEntityType(EntityType.DEVICE.name());
         config.setEntityNamePattern(entityName);
 
@@ -168,7 +153,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void givenEntitySourceAndUnexpectedEntityType_whenInit_thenThrowsException() {
-        config.setOriginatorSource(ENTITY_SOURCE);
+        config.setOriginatorSource(ENTITY);
         config.setEntityType(EntityType.TENANT.name());
         config.setEntityNamePattern("tenant-A");
 
@@ -203,7 +188,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void givenOriginatorSourceIsTenant_whenOnMsg_thenTellSuccess() throws TbNodeException {
-        config.setOriginatorSource(TENANT_SOURCE);
+        config.setOriginatorSource(TENANT);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, TENANT_ID);
@@ -223,7 +208,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void givenOriginatorSourceIsRelatedAndNewOriginatorIsNull_whenOnMsg_thenTellFailure() throws TbNodeException {
-        config.setOriginatorSource(RELATED_SOURCE);
+        config.setOriginatorSource(RELATED);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
 
@@ -253,7 +238,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void givenOriginatorSourceIsAlarmOriginator_whenOnMsg_thenTellSuccess() throws TbNodeException {
-        config.setOriginatorSource(ALARM_ORIGINATOR_SOURCE);
+        config.setOriginatorSource(ALARM_ORIGINATOR);
 
         AlarmId alarmId = new AlarmId(UUID.fromString("6b43f694-cb5f-4199-9023-e9e40eeb82dd"));
         Alarm alarm = new Alarm(alarmId);
@@ -281,7 +266,7 @@ public class TbChangeOriginatorNodeTest {
     @ParameterizedTest
     @MethodSource
     public void givenOriginatorSourceIsEntity_whenOnMsg_thenTellSuccess(String entityNamePattern, TbMsgMetaData metaData, String data) throws TbNodeException {
-        config.setOriginatorSource(ENTITY_SOURCE);
+        config.setOriginatorSource(ENTITY);
         config.setEntityType(EntityType.ASSET.name());
         config.setEntityNamePattern(entityNamePattern);
 
@@ -315,7 +300,7 @@ public class TbChangeOriginatorNodeTest {
 
     @Test
     public void givenOriginatorSourceIsEntityAndEntityCouldNotFound_whenOnMsg_thenTellFailure() throws TbNodeException {
-        config.setOriginatorSource(ENTITY_SOURCE);
+        config.setOriginatorSource(ENTITY);
         config.setEntityType(EntityType.ASSET.name());
         config.setEntityNamePattern("${md-name-pattern}");
 
@@ -333,7 +318,7 @@ public class TbChangeOriginatorNodeTest {
 
         ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
         then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
-        assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to found asset with name 'test-asset'!");
+        assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to find asset with name 'test-asset'!");
     }
 
 }
