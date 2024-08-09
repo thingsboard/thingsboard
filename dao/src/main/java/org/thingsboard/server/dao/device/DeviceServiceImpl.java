@@ -236,13 +236,13 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
             device.setType(deviceProfile.getName());
             device.setDeviceData(syncDeviceData(deviceProfile, device.getDeviceData()));
             Device savedDevice = deviceDao.saveAndFlush(device.getTenantId(), device);
+            deviceCacheEvictEvent.setSavedDevice(savedDevice);
+            publishEvictEvent(deviceCacheEvictEvent);
             if (device.getId() == null) {
                 countService.publishCountEntityEvictEvent(savedDevice.getTenantId(), EntityType.DEVICE);
             }
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedDevice.getTenantId()).entityId(savedDevice.getId())
                     .entity(savedDevice).oldEntity(oldDevice).created(device.getId() == null).build());
-            deviceCacheEvictEvent.setSavedDevice(savedDevice);
-            publishEvictEvent(deviceCacheEvictEvent);
             return savedDevice;
         } catch (Exception t) {
             handleEvictEvent(deviceCacheEvictEvent);
