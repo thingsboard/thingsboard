@@ -61,6 +61,11 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
     @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.", accessMode = Schema.AccessMode.READ_ONLY)
     private String image;
 
+    @Getter
+    @Setter
+    @Schema(description = "Whether widgets bundle contains SCADA symbol widget types.", accessMode = Schema.AccessMode.READ_ONLY)
+    private boolean scada;
+
     @NoXss
     @Length(fieldName = "description", max = 1024)
     @Getter
@@ -91,6 +96,7 @@ public class WidgetsBundle extends BaseData<WidgetsBundleId> implements HasName,
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
+        this.scada = widgetsBundle.isScada();
         this.description = widgetsBundle.getDescription();
         this.order = widgetsBundle.getOrder();
         this.externalId = widgetsBundle.getExternalId();

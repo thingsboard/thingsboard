@@ -33,6 +33,7 @@ public class ImageExportData {
     private String mediaType;
     private String fileName;
     private String title;
+    private String subType;
     private String resourceKey;
     private boolean isPublic;
     private String publicResourceKey;

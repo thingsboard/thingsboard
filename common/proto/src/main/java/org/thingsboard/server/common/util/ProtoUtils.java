@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
@@ -849,6 +850,9 @@ public class ProtoUtils {
         if (isNotNull(resource.getPreview())) {
             builder.setPreview(ByteString.copyFrom(resource.getPreview()));
         }
+        if (isNotNull(resource.getResourceSubType())) {
+            builder.setResourceSubType(resource.getResourceSubType().name());
+        }
         return builder.build();
     }
 
@@ -879,6 +883,9 @@ public class ProtoUtils {
         }
         if (proto.hasPreview()) {
             resource.setPreview(proto.getPreview().toByteArray());
+        }
+        if (proto.hasResourceSubType()) {
+            resource.setResourceSubType(ResourceSubType.valueOf(proto.getResourceSubType()));
         }
         return resource;
     }

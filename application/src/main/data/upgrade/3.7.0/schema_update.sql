@@ -14,6 +14,55 @@
 -- limitations under the License.
 --
 
+-- UPDATE RESOURCE SUB TYPE START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'resource' AND column_name = 'resource_sub_type'
+        ) THEN
+            ALTER TABLE resource ADD COLUMN resource_sub_type varchar(32);
+            UPDATE resource SET resource_sub_type = 'IMAGE' WHERE resource_type = 'IMAGE';
+        END IF;
+    END;
+$$;
+
+-- UPDATE RESOURCE SUB TYPE END
+
+-- UPDATE WIDGETS BUNDLE START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'widgets_bundle' AND column_name = 'scada'
+        ) THEN
+            ALTER TABLE widgets_bundle ADD COLUMN scada boolean NOT NULL DEFAULT false;
+        END IF;
+    END;
+$$;
+
+-- UPDATE WIDGETS BUNDLE END
+
+-- UPDATE WIDGET TYPE START
+
+DO
+$$
+    BEGIN
+        IF NOT EXISTS (
+            SELECT FROM information_schema.columns
+            WHERE table_name = 'widget_type' AND column_name = 'scada'
+        ) THEN
+            ALTER TABLE widget_type ADD COLUMN scada boolean NOT NULL DEFAULT false;
+        END IF;
+    END;
+$$;
+
+-- UPDATE WIDGET TYPE END
+
 -- KV VERSIONING UPDATE START
 
 CREATE SEQUENCE IF NOT EXISTS attribute_kv_version_seq cache 1;

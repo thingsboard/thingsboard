@@ -1,0 +1,24 @@
+{
+  "fqn": "scada_symbol",
+  "name": "SCADA symbol",
+  "deprecated": false,
+  "scada": true,
+  "image": null,
+  "description": "",
+  "descriptor": {
+    "type": "rpc",
+    "sizeX": 3,
+    "sizeY": 3,
+    "resources": [],
+    "templateHtml": "<tb-scada-symbol-widget\n    [ctx]='ctx'\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-scada-symbol-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.actionWidget.onInit();\n}\n\nself.typeParameters = function() {\n    return {\n        previewWidth: '300px',\n        previewHeight: '320px',\n        embedTitlePanel: true,\n        targetDeviceOptional: true,\n        displayRpcMessageToast: false\n    };\n};\n\nself.onDestroy = function() {\n}\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "{}\n",
+    "settingsDirective": "tb-scada-symbol-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-scada-symbol-basic-config",
+    "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"background\":{\"type\":\"color\",\"imageUrl\":null,\"color\":\"rgb(255, 255, 255)\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"padding\":\"12px\",\"scadaSymbolUrl\":\"\",\"scadaSymbolObjectSettings\":{\"behavior\":{},\"properties\":{}}},\"title\":\"SCADA symbol\",\"dropShadow\":true,\"enableFullscreen\":false,\"widgetStyle\":{},\"actions\":{},\"widgetCss\":\"\",\"noDataDisplayMessage\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":null,\"lineHeight\":\"1.6\"},\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleStyle\":null,\"pageSize\":1024,\"titleIcon\":\"mdi:lightbulb-outline\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"24px\",\"configMode\":\"basic\",\"targetDevice\":null,\"titleColor\":null,\"borderRadius\":\"0px\",\"margin\":\"0px\"}"
+  },
+  "tags": null
+}

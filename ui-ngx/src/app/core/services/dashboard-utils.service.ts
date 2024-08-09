@@ -50,6 +50,7 @@ import { EntityId } from '@app/shared/models/id/entity-id';
 import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models';
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
+import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
 
 @Injectable({
   providedIn: 'root'
@@ -330,6 +331,27 @@ export class DashboardUtilsService {
       }
     }
     return widgetConfig;
+  }
+
+  public prepareWidgetForScadaLayout(widget: Widget): Widget {
+    const config = widget.config;
+    config.showTitle = false;
+    config.dropShadow = false;
+    config.padding = '0';
+    config.margin = '0';
+    config.backgroundColor = 'rgba(0,0,0,0)';
+    const settings = config.settings || {};
+    settings.padding = '0';
+    const background = settings.background;
+    if (isBackgroundSettings(background)) {
+      background.type = BackgroundType.color;
+      background.color = 'rgba(0,0,0,0)';
+      background.overlay.enabled = false;
+    } else {
+      settings.background = colorBackground('rgba(0,0,0,0)');
+    }
+    config.settings = settings;
+    return widget;
   }
 
   public validateAndUpdateDatasources(datasources?: Datasource[]): Datasource[] {
@@ -662,7 +684,6 @@ export class DashboardUtilsService {
     const columns = gridSettings.columns || 24;
     const ratio = columns / prevColumns;
     layout.gridSettings = gridSettings;
-    let maxRow = 0;
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
       if (!widget.sizeX) {
@@ -671,23 +692,23 @@ export class DashboardUtilsService {
       if (!widget.sizeY) {
         widget.sizeY = 1;
       }
-      maxRow = Math.max(maxRow, widget.row + widget.sizeY);
     }
-    const newMaxRow = Math.round(maxRow * ratio);
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
-      if (widget.row + widget.sizeY === maxRow) {
-        widget.row = Math.round(widget.row * ratio);
-        widget.sizeY = newMaxRow - widget.row;
-      } else {
-        widget.row = Math.round(widget.row * ratio);
-        widget.sizeY = Math.round(widget.sizeY * ratio);
-      }
-      widget.sizeX = Math.round(widget.sizeX * ratio);
+      widget.row = Math.round(widget.row * ratio);
       widget.col = Math.round(widget.col * ratio);
-      if (widget.col + widget.sizeX > columns) {
-        widget.sizeX = columns - widget.col;
-      }
+      widget.sizeX = Math.round(widget.sizeX * ratio);
+      widget.sizeY = Math.round(widget.sizeY * ratio);
+    }
+  }
+
+  public moveWidgets(layout: DashboardLayout, cols: number, rows: number) {
+    cols = isDefinedAndNotNull(cols) ? Math.round(cols) : 0;
+    rows = isDefinedAndNotNull(rows) ? Math.round(rows) : 0;
+    for (const w of Object.keys(layout.widgets)) {
+      const widget = layout.widgets[w];
+      widget.col = Math.max(0, widget.col + cols);
+      widget.row = Math.max(0, widget.row + rows);
     }
   }
 

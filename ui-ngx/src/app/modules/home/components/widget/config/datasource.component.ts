@@ -42,6 +42,7 @@ import { FilterSelectCallbacks } from '@home/components/filter/filter-select.com
 import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DatasourcesComponent } from '@home/components/widget/config/datasources.component';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 
 @Component({
   selector: 'tb-datasource',
@@ -79,6 +80,10 @@ export class DatasourceComponent implements ControlValueAccessor, OnInit, Valida
   }
 
   public get filterSelectCallbacks(): FilterSelectCallbacks {
+    return this.widgetConfigComponent.widgetConfigCallbacks;
+  }
+
+  public get callbacks(): WidgetConfigCallbacks {
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 

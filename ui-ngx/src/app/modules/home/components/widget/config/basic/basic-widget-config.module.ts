@@ -142,6 +142,7 @@ import {
 import {
   UnreadNotificationBasicConfigComponent
 } from '@home/components/widget/config/basic/cards/unread-notification-basic-config.component';
+import { ScadaSymbolBasicConfigComponent } from '@home/components/widget/config/basic/scada/scada-symbol-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -189,7 +190,8 @@ import {
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
     LabelValueCardBasicConfigComponent,
-    UnreadNotificationBasicConfigComponent
+    UnreadNotificationBasicConfigComponent,
+    ScadaSymbolBasicConfigComponent
   ],
   imports: [
     CommonModule,
@@ -235,6 +237,7 @@ import {
     BarChartBasicConfigComponent,
     PolarAreaChartBasicConfigComponent,
     RadarChartBasicConfigComponent,
+    ScadaSymbolBasicConfigComponent,
     DigitalSimpleGaugeBasicConfigComponent,
     MobileAppQrCodeBasicConfigComponent,
     LabelCardBasicConfigComponent,
@@ -283,5 +286,6 @@ export const basicWidgetConfigComponentsMap: {[key: string]: Type<IBasicWidgetCo
   'tb-mobile-app-qr-code-basic-config': MobileAppQrCodeBasicConfigComponent,
   'tb-label-card-basic-config': LabelCardBasicConfigComponent,
   'tb-label-value-card-basic-config': LabelValueCardBasicConfigComponent,
-  'tb-unread-notification-basic-config': UnreadNotificationBasicConfigComponent
+  'tb-unread-notification-basic-config': UnreadNotificationBasicConfigComponent,
+  'tb-scada-symbol-basic-config': ScadaSymbolBasicConfigComponent
 };

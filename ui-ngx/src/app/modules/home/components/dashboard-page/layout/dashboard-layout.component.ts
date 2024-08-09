@@ -36,6 +36,8 @@ import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
+import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
+import { LayoutType } from '@shared/models/dashboard.models';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -64,6 +66,42 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
   get layoutCtx(): DashboardPageLayoutContext {
     return this.layoutCtxValue;
+  }
+
+  get isScada(): boolean {
+    return this.layoutCtx.gridSettings.layoutType === LayoutType.scada;
+  }
+
+  get outerMargin(): boolean {
+    return this.isScada ? false : this.layoutCtx.gridSettings.outerMargin;
+  }
+
+  get margin(): number {
+    return this.isScada ? 0 : this.layoutCtx.gridSettings.margin;
+  }
+
+  get autoFillHeight(): boolean {
+    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.autoFillHeight;
+  }
+
+  get mobileAutoFillHeight(): boolean {
+    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.mobileAutoFillHeight;
+  }
+
+  get isMobileDisabled(): boolean {
+    return this.widgetEditMode || this.isScada;
+  }
+
+  get colWidthInteger(): boolean {
+    return this.isScada;
+  }
+
+  get columns(): number {
+    return this.layoutCtx.gridSettings.minColumns || this.layoutCtx.gridSettings.columns || 24;
+  }
+
+  get displayGrid(): displayGrids {
+    return this.layoutCtx.displayGrid || 'onDrag&Resize';
   }
 
   @Input()
@@ -236,6 +274,10 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
 
   onWidgetMouseDown($event: Event, widget: Widget): void {
     this.layoutCtx.dashboardCtrl.widgetMouseDown($event, this.layoutCtx, widget);
+  }
+
+  onDashboardMouseDown($event: Event): void {
+    this.layoutCtx.dashboardCtrl.dashboardMouseDown($event, this.layoutCtx);
   }
 
   onWidgetClicked($event: Event, widget: Widget): void {

@@ -962,7 +962,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!this.widgetEditMode && !targetDeviceValid(config.targetDevice)) {
+        if ((!this.widgetEditMode && !this.modelValue?.typeParameters.targetDeviceOptional) && !targetDeviceValid(config.targetDevice)) {
           return {
             targetDevice: {
               valid: false

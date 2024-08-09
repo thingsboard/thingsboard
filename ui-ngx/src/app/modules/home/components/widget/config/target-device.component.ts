@@ -60,6 +60,10 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
+  public get targetDeviceOptional(): boolean {
+    return this.widgetConfigComponent.modelValue?.typeParameters?.targetDeviceOptional;
+  }
+
   targetDeviceType = TargetDeviceType;
 
   entityType = EntityType;
@@ -103,9 +107,9 @@ export class TargetDeviceComponent implements ControlValueAccessor, OnInit, Vali
 
   ngOnInit() {
     this.targetDeviceFormGroup = this.fb.group({
-      type: [null, !this.widgetEditMode ? [Validators.required] : []],
-      deviceId: [null, !this.widgetEditMode ? [Validators.required] : []],
-      entityAliasId: [null, !this.widgetEditMode ? [Validators.required] : []]
+      type: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []],
+      deviceId: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []],
+      entityAliasId: [null, (!this.widgetEditMode && !this.targetDeviceOptional) ? [Validators.required] : []]
     });
     this.targetDeviceFormGroup.get('type').valueChanges.subscribe(() => {
       this.updateValidators();

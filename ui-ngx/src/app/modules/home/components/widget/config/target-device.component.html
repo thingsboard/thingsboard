@@ -24,13 +24,13 @@
     </tb-toggle-select>
   </div>
   <tb-entity-autocomplete *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.device"
-                          [required]="!widgetEditMode"
+                          [required]="(!widgetEditMode && !targetDeviceOptional)"
                           [entityType]="entityType.DEVICE"
                           formControlName="deviceId">
   </tb-entity-autocomplete>
   <tb-entity-alias-select
     *ngIf="targetDeviceFormGroup.get('type').value === targetDeviceType.entity"
-    [tbRequired]="!widgetEditMode"
+    [tbRequired]="(!widgetEditMode && !targetDeviceOptional)"
     [aliasController]="aliasController"
     [callbacks]="entityAliasSelectCallbacks"
     formControlName="entityAliasId">

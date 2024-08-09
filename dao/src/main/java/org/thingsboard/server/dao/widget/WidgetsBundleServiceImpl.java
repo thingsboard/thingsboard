@@ -27,6 +27,7 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -118,10 +119,10 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
-    public PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
-        log.trace("Executing findSystemWidgetsBundles, fullSearch [{}], pageLink [{}]", fullSearch, pageLink);
+    public PageData<WidgetsBundle> findSystemWidgetsBundlesByPageLink(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        log.trace("Executing findSystemWidgetsBundles, widgetsBundleFilter [{}], pageLink [{}]", widgetsBundleFilter, pageLink);
         Validator.validatePageLink(pageLink);
-        return widgetsBundleDao.findSystemWidgetsBundles(tenantId, fullSearch, pageLink);
+        return widgetsBundleDao.findSystemWidgetsBundles(widgetsBundleFilter, pageLink);
     }
 
     @Override
@@ -131,7 +132,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         PageLink pageLink = new PageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
         PageData<WidgetsBundle> pageData;
         do {
-            pageData = findSystemWidgetsBundlesByPageLink(tenantId, false, pageLink);
+            pageData = findSystemWidgetsBundlesByPageLink(WidgetsBundleFilter.fromTenantId(tenantId), pageLink);
             widgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();
@@ -149,19 +150,21 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
     }
 
     @Override
-    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
-        log.trace("Executing findAllTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], pageLink [{}]", tenantId, fullSearch, pageLink);
+    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantIdAndPageLink(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        TenantId tenantId = widgetsBundleFilter.getTenantId();
+        log.trace("Executing findAllTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
-        return widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId.getId(), fullSearch, pageLink);
+        return widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(widgetsBundleFilter, pageLink);
     }
 
     @Override
-    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIdAndPageLink(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
-        log.trace("Executing findTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], fullSearch [{}], pageLink [{}]", tenantId, fullSearch, pageLink);
+    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIdAndPageLink(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        TenantId tenantId = widgetsBundleFilter.getTenantId();
+        log.trace("Executing findTenantWidgetsBundlesByTenantIdAndPageLink, tenantId [{}], pageLink [{}]", tenantId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         Validator.validatePageLink(pageLink);
-        return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(tenantId.getId(), fullSearch, pageLink);
+        return widgetsBundleDao.findTenantWidgetsBundlesByTenantId(widgetsBundleFilter, pageLink);
     }
 
     @Override
@@ -172,7 +175,7 @@ public class WidgetsBundleServiceImpl implements WidgetsBundleService {
         PageLink pageLink = new PageLink(DEFAULT_WIDGETS_BUNDLE_LIMIT);
         PageData<WidgetsBundle> pageData;
         do {
-            pageData = findAllTenantWidgetsBundlesByTenantIdAndPageLink(tenantId, false, pageLink);
+            pageData = findAllTenantWidgetsBundlesByTenantIdAndPageLink(WidgetsBundleFilter.fromTenantId(tenantId), pageLink);
             widgetsBundles.addAll(pageData.getData());
             if (pageData.hasNext()) {
                 pageLink = pageLink.nextPageLink();

@@ -33,6 +33,7 @@ import { PageLink } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
 import { GridEntitiesFetchFunction, ScrollGridColumns } from '@shared/components/grid/scroll-grid-datasource';
 import { ItemSizeStrategy } from '@shared/components/grid/scroll-grid.component';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 type selectWidgetMode = 'bundles' | 'allWidgets';
 
@@ -68,6 +69,10 @@ export class DashboardWidgetSelectComponent implements OnInit {
 
   @Input()
   aliasController: IAliasController;
+
+  @Input()
+  @coerceBoolean()
+  scadaFirst = false;
 
   @Input()
   set search(search: string) {
@@ -170,7 +175,7 @@ export class DashboardWidgetSelectComponent implements OnInit {
         property: 'title',
         direction: Direction.ASC
       });
-      return this.widgetsService.getWidgetBundles(pageLink, true);
+      return this.widgetsService.getWidgetBundles(pageLink, true, false, this.scadaFirst);
     };
 
     this.allWidgetsFetchFunction = (pageSize, page, filter) => {
@@ -178,7 +183,8 @@ export class DashboardWidgetSelectComponent implements OnInit {
         property: 'name',
         direction: Direction.ASC
       });
-      return this.widgetsService.getWidgetTypes(pageLink, false, true, filter.deprecatedFilter, filter.filter);
+      return this.widgetsService.getWidgetTypes(pageLink, false, true, this.scadaFirst,
+        filter.deprecatedFilter, filter.filter);
     };
 
     this.widgetsFetchFunction = (pageSize, page, filter) => {

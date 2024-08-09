@@ -1,0 +1,14 @@
+{
+  "widgetsBundle": {
+    "alias": "scada_symbols",
+    "title": "SCADA symbols",
+    "scada": true,
+    "image": null,
+    "description": "Bundle with SCADA symbols",
+    "order": 9200,
+    "name": "SCADA symbols"
+  },
+  "widgetTypeFqns": [
+    "scada_symbol"
+  ]
+}

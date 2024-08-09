@@ -40,7 +40,7 @@
         <mat-icon class="material-icons">search</mat-icon>
       </button>
       <ng-content select=".details-buttons"></ng-content>
-      <button mat-icon-button (click)="onCloseDetails()">
+      <button *ngIf="showCloseDetails" mat-icon-button (click)="onCloseDetails()">
         <mat-icon class="material-icons">close</mat-icon>
       </button>
     </div>

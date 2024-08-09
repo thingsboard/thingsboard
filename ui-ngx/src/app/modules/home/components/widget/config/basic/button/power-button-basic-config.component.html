@@ -22,11 +22,11 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.initial-state"
+                                    panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    trueLabel="widgets.rpc-state.on"
-                                    falseLabel="widgets.rpc-state.off"
-                                    stateLabel="widgets.rpc-state.on"
+                                    trueLabel="{{ 'widgets.rpc-state.on' | translate }}"
+                                    falseLabel="{{ 'widgets.rpc-state.off' | translate }}"
+                                    stateLabel="{{ 'widgets.rpc-state.on' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -35,7 +35,7 @@
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-on-hint' | translate}}" translate>widgets.power-button.power-on</div>
       <tb-set-value-action-settings fxFlex
-                                    panelTitle="widgets.power-button.power-on"
+                                    panelTitle="{{ 'widgets.power-button.power-on' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -44,7 +44,7 @@
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-off-hint' | translate}}" translate>widgets.power-button.power-off</div>
       <tb-set-value-action-settings fxFlex
-                                    panelTitle="widgets.power-button.power-off"
+                                    panelTitle="{{ 'widgets.power-button.power-off' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -53,9 +53,9 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.disabled-state"
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    stateLabel="widgets.rpc-state.disabled"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
