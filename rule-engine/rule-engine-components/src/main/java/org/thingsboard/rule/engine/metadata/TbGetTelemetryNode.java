@@ -176,7 +176,7 @@ public class TbGetTelemetryNode implements TbNode {
             return getIntervalFromPatterns(msg);
         } else {
             Interval interval = new Interval();
-            long ts = System.currentTimeMillis();
+            long ts = getCurrentTimeMillis();
             interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
             interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
             return interval;
@@ -218,6 +218,10 @@ public class TbGetTelemetryNode implements TbNode {
             throw new TbNodeException("Limit should be in a range from 2 to 1000.", true);
         }
         return limit;
+    }
+
+    long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     @Data
