@@ -34,18 +34,17 @@ import {
   ControlValueAccessor,
   FormArray,
   FormBuilder,
-  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   UntypedFormGroup,
-  ValidationErrors,
-  Validator,
 } from '@angular/forms';
 import {
   ModbusMasterConfig,
   ModbusProtocolLabelsMap,
+  ModbusSlaveInfo,
+  ModbusValues,
   SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
+import { isDefinedAndNotNull } from '@core/utils';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
@@ -62,16 +61,11 @@ import { TbTableDatasource } from '@shared/components/table/table-datasource.abs
       useExisting: forwardRef(() => ModbusMasterTableComponent),
       multi: true
     },
-    {
-      provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ModbusMasterTableComponent),
-      multi: true
-    }
   ],
   standalone: true,
   imports: [CommonModule, SharedModule]
 })
-export class ModbusMasterTableComponent implements ControlValueAccessor, Validator, AfterViewInit, OnInit, OnDestroy {
+export class ModbusMasterTableComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
 
   @ViewChild('searchInput') searchInputField: ElementRef;
 
@@ -138,12 +132,6 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     this.pushDataAsFormArrays(master.slaves);
   }
 
-  validate(): ValidationErrors | null {
-    return this.slaves.controls.length ? null : {
-      slavesFormGroup: {valid: false}
-    };
-  }
-
   enterFilterMode(): void {
     this.textSearchMode = true;
     this.cdr.detectChanges();
@@ -164,12 +152,12 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     }
     const withIndex = isDefinedAndNotNull(index);
     const value = withIndex ? this.slaves.at(index).value : {};
-    this.dialog.open<ModbusSlaveDialogComponent, any, any>(ModbusSlaveDialogComponent, {
+    this.dialog.open<ModbusSlaveDialogComponent, ModbusSlaveInfo, ModbusValues>(ModbusSlaveDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
         value,
-        buttonTitle: withIndex ? 'action.add' : 'action.apply'
+        buttonTitle: withIndex ? 'action.apply' : 'action.add'
       }
     }).afterClosed()
       .pipe(take(1), takeUntil(this.destroy$))
@@ -185,7 +173,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, Validat
     });
   }
 
-  deleteMapping($event: Event, index: number): void {
+  deleteSlave($event: Event, index: number): void {
     if ($event) {
       $event.stopPropagation();
     }
