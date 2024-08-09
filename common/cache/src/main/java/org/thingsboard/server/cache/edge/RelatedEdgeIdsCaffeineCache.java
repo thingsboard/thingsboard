@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.PageData;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("EdgeIdsCache")
+@Service("RelatedEdgeIdsCache")
 public class RelatedEdgeIdsCaffeineCache extends CaffeineTbTransactionalCache<RelatedEdgeIdsCacheKey, PageData<EdgeId>> {
 
     public RelatedEdgeIdsCaffeineCache(CacheManager cacheManager) {

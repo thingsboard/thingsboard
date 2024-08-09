@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.page.PageData;
 
 @ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
-@Service("EdgeIdsCache")
+@Service("RelatedEdgeIdsCache")
 public class RelatedEdgeIdsRedisCache extends RedisTbTransactionalCache<RelatedEdgeIdsCacheKey, PageData<EdgeId>> {
 
     public RelatedEdgeIdsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
