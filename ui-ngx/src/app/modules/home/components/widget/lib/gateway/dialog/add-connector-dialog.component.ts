@@ -34,6 +34,7 @@ import {
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 import { takeUntil, tap } from 'rxjs/operators';
+import { helpBaseUrl } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-add-connector-dialog',
@@ -83,7 +84,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   helpLinkId(): string {
-    return 'https://thingsboard.io/docs/iot-gateway/configuration/';
+    return helpBaseUrl + '/docs/iot-gateway/configuration/';
   }
 
   cancel(): void {
