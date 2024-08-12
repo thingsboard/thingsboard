@@ -16,6 +16,7 @@
 package org.thingsboard.server.controller;
 
 import io.swagger.v3.oas.annotations.Parameter;
+import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -48,6 +49,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.utils.MiscUtils;
 
+import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 import java.util.UUID;
@@ -130,6 +132,21 @@ public class OAuth2Controller extends BaseController {
                                                                   @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
+    }
+
+    @ApiOperation(value = "Get OAuth2 Client Registration infos By Ids (findTenantOAuth2ClientInfosByIds)",
+            notes = "Fetch OAuth2 Client Registration info objects based on the provided ids. ")
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
+    public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
+            @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+            @RequestParam("clientIds") String[] strClientIds) throws ThingsboardException {
+        checkArrayParameter("clientIds", strClientIds);
+        List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
+        for (String oauth2ClientId : strClientIds) {
+            oAuth2ClientIds.add(new OAuth2ClientId(toUUID(oauth2ClientId)));
+        }
+        return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
     }
 
     @ApiOperation(value = "Get OAuth2 Client Registration by id (getOAuth2ClientById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.oauth2;
 
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
@@ -40,4 +41,6 @@ public interface OAuth2ClientDao extends Dao<OAuth2Client> {
     String findAppSecret(UUID id, String pkgName);
 
     void deleteByTenantId(TenantId tenantId);
+
+    List<OAuth2Client> findByIds(TenantId tenantId, List<OAuth2ClientId> oAuth2ClientIds);
 }

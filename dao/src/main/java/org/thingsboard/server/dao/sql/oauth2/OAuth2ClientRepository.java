@@ -79,4 +79,6 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
     @Query("DELETE FROM OAuth2ClientEntity t WHERE t.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
+    List<OAuth2ClientEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> queueStatsIds);
+
 }

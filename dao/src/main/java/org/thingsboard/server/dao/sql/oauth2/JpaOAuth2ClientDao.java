@@ -19,6 +19,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
@@ -32,6 +33,8 @@ import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.List;
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
 
 @Component
 @RequiredArgsConstructor
@@ -84,6 +87,11 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         repository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public List<OAuth2Client> findByIds(TenantId tenantId, List<OAuth2ClientId> oAuth2ClientIds) {
+        return DaoUtil.convertDataList(repository.findByTenantIdAndIdIn(tenantId.getId(), toUUIDs(oAuth2ClientIds)));
     }
 
     @Override

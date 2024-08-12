@@ -24,9 +24,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -42,6 +42,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validateString;
 
 @Slf4j
@@ -136,6 +137,17 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
                 .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList());
         return new PageData<>(oAuth2ClientInfos, clientInfos.getTotalPages(), clientInfos.getTotalPages(), clientInfos.hasNext());
+    }
+
+    @Override
+    public List<OAuth2ClientInfo> findOAuth2ClientInfosByIds(TenantId tenantId, List<OAuth2ClientId> oAuth2ClientIds) {
+        log.trace("Executing findQueueStatsByIds, tenantId [{}], queueStatsIds [{}]", tenantId, oAuth2ClientIds);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateIds(oAuth2ClientIds, ids -> "Incorrect clientIds " + ids);
+        return oauth2ClientDao.findByIds(tenantId, oAuth2ClientIds)
+                .stream()
+                .map(OAuth2ClientInfo::new)
+                .collect(Collectors.toList());
     }
 
     @Override
