@@ -65,7 +65,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
 
     @Override
     public AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
-        log.debug("Deleting Alarm Comment: {}", alarmComment);
+        log.debug("Saving Alarm Comment: {}", alarmComment);
         alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
         AlarmComment result = alarmCommentDao.save(tenantId, alarmComment);
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(result)
