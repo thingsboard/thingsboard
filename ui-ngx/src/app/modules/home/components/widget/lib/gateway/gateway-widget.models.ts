@@ -17,6 +17,7 @@
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { helpBaseUrl, ValueTypeData } from '@shared/models/constants';
+import { AttributeData } from '@shared/models/telemetry/telemetry.models';
 
 export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
 export const integerRegex = /^[-+]?\d+$/;
@@ -108,6 +109,10 @@ export const GecurityTypesTranslationsMap = new Map<SecurityTypes, string>(
     [SecurityTypes.TLS_ACCESS_TOKEN, 'gateway.security-types.tls-access-token']
   ]
 );
+
+export interface GatewayAttributeData extends AttributeData {
+  skipSync?: boolean;
+}
 
 export interface GatewayConnector {
   name: string;
