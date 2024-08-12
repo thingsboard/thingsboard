@@ -92,6 +92,8 @@ import org.thingsboard.server.common.data.edge.EdgeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.edge.EdgeSearchQuery;
 import org.thingsboard.server.common.data.entityview.EntityViewSearchQuery;
+import org.thingsboard.server.common.data.gateway.ConnectorType;
+import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationResult;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
@@ -3708,6 +3710,19 @@ public class RestClient implements Closeable {
                 "key", key,
                 "force", force
         )).getBody();
+    }
+
+    public GatewayConnectorValidationResult validateGatewayConnectorConfiguration(DeviceId deviceId, ConnectorType connectorType, JsonNode configuration) {
+        Map<String, String> params = new HashMap<>();
+        params.put("deviceId", deviceId.getId().toString());
+        params.put("connectorType", connectorType.name());
+        return restTemplate.exchange(
+                baseURL + "/api/gateway/{deviceId}/configuration/{connectorType}/validate",
+                HttpMethod.POST,
+                new HttpEntity<>(configuration),
+                GatewayConnectorValidationResult.class,
+                params
+        ).getBody();
     }
 
     public ResponseEntity<Resource> downloadOtaPackage(OtaPackageId otaPackageId) {
