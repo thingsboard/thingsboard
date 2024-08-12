@@ -16,13 +16,13 @@
 
 -->
 <section class="tb-form-row column-xs no-border no-padding tb-standard-fields">
-    <mat-form-field class="medium-width flex-xs" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+    <mat-form-field class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
       <mat-label translate>datetime.from</mat-label>
       <mat-datetimepicker-toggle [for]="startDatePicker" matSuffix></mat-datetimepicker-toggle>
       <mat-datetimepicker #startDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>
       <input matInput [disabled]="disabled" [(ngModel)]="startDate" [matDatetimepicker]="startDatePicker" (ngModelChange)="onStartDateChange()">
     </mat-form-field>
-    <mat-form-field class="medium-width flex-xs" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+    <mat-form-field class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
       <mat-label translate>datetime.to</mat-label>
       <mat-datetimepicker-toggle [for]="endDatePicker" matSuffix></mat-datetimepicker-toggle>
       <mat-datetimepicker #endDatePicker type="datetime" openOnFocus="true"></mat-datetimepicker>

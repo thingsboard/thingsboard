@@ -313,6 +313,16 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     }
   }
 
+  private updateTimewindowForm() {
+    this.timewindowForm.patchValue(this.timewindow);
+    this.onHideIntervalChanged();
+    this.onHideLastIntervalChanged();
+    this.onHideQuickIntervalChanged();
+    this.onHideAggregationChanged();
+    this.onHideAggIntervalChanged();
+    this.onHideTimezoneChanged();
+  }
+
   cancel() {
     this.overlayRef.dispose();
   }
@@ -453,23 +463,21 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   openTimewindowConfig() {
     this.prepareTimewindowConfig();
-    console.log(this.timewindow);
     this.dialog.open<TimewindowConfigDialogComponent, TimewindowConfigDialogData, Timewindow>(
       TimewindowConfigDialogComponent, {
         autoFocus: false,
-        disableClose: false,
+        disableClose: true,
         panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
         data: {
           quickIntervalOnly: this.quickIntervalOnly,
+          aggregation: this.aggregation,
           timewindow: this.timewindow
         }
       }).afterClosed()
       .subscribe((res) => {
         if (res) {
-          // update timewindow
-          console.log(res);
-          // TODO: propagate changes to form
           this.timewindow = res;
+          this.updateTimewindowForm();
         }
       });
   }

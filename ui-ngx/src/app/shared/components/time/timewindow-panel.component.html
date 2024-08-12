@@ -41,6 +41,7 @@
                 formControlName="timewindowMs"
                 subscriptSizing="dynamic"
                 appearance="outline"
+                [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
                 [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
                                 timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
               </tb-timeinterval>
@@ -87,6 +88,7 @@
                 formControlName="timewindowMs"
                 subscriptSizing="dynamic"
                 appearance="outline"
+                [disabledAdvanced]="timewindow.history.disableCustomInterval"
                 [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                               timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
               </tb-timeinterval>
@@ -173,7 +175,8 @@
             [min]="minRealtimeAggInterval()" [max]="maxRealtimeAggInterval()"
             useCalendarIntervals
             subscriptSizing="dynamic"
-            appearance="outline">
+            appearance="outline"
+            [disabledAdvanced]="timewindow.realtime.disableCustomGroupInterval">
           </tb-timeinterval>
         </ng-container>
         <ng-container formGroupName="history" *ngIf="timewindow.selectedTab === timewindowTypes.HISTORY">
@@ -182,7 +185,8 @@
             [min]="minHistoryAggInterval()" [max]="maxHistoryAggInterval()"
             useCalendarIntervals
             subscriptSizing="dynamic"
-            appearance="outline">
+            appearance="outline"
+            [disabledAdvanced]="timewindow.history.disableCustomGroupInterval">
           </tb-timeinterval>
         </ng-container>
       </section>

@@ -43,6 +43,8 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
   minValue: number;
   maxValue: number;
 
+  disabledAdvancedState = false;
+
   @Input()
   set min(min: number) {
     const minValueData = coerceNumberProperty(min);
@@ -71,7 +73,13 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
 
   @Input()
   @coerceBoolean()
-  disabledAdvanced = false;
+  set disabledAdvanced(disabledAdvanced: boolean) {
+    if (this.disabledAdvancedState !== disabledAdvanced) {
+      this.disabledAdvancedState = disabledAdvanced;
+      this.updateIntervalValue();
+      this.boundInterval();
+    }
+  }
 
   @Input()
   @coerceBoolean()
@@ -170,13 +178,18 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
   writeValue(interval: Interval): void {
     this.modelValue = interval;
     this.rendered = true;
+    this.updateIntervalValue();
+  }
+
+  private updateIntervalValue() {
     if (typeof this.modelValue !== 'undefined') {
       const min = this.timeService.boundMinInterval(this.minValue);
       const max = this.timeService.boundMaxInterval(this.maxValue);
       if (IntervalMath.numberValue(this.modelValue) >= min && IntervalMath.numberValue(this.modelValue) <= max) {
         const advanced = !this.timeService.matchesExistingInterval(this.minValue, this.maxValue, this.modelValue,
           this.useCalendarIntervals);
-        if (advanced && this.disabledAdvanced) {
+        if (advanced && this.disabledAdvancedState) {
+          this.advanced = false;
           this.boundInterval();
         } else {
           this.advanced = advanced;
@@ -211,7 +224,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
     const min = this.timeService.boundMinInterval(this.minValue);
     const max = this.timeService.boundMaxInterval(this.maxValue);
     this.intervals = this.timeService.getIntervals(this.minValue, this.maxValue, this.useCalendarIntervals);
-    if (!this.disabledAdvanced) {
+    if (!this.disabledAdvancedState) {
       this.intervals.push(this.customTimeInterval);
     }
     if (this.rendered) {

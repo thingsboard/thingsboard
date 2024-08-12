@@ -81,6 +81,8 @@ export interface IntervalWindow {
 
 export interface RealtimeWindow extends IntervalWindow{
   realtimeType?: RealtimeWindowType;
+  disableCustomInterval?: boolean;
+  disableCustomGroupInterval?: boolean;
 }
 
 export interface FixedWindow {
@@ -91,6 +93,8 @@ export interface FixedWindow {
 export interface HistoryWindow extends IntervalWindow {
   historyType?: HistoryWindowType;
   fixedTimewindow?: FixedWindow;
+  disableCustomInterval?: boolean;
+  disableCustomGroupInterval?: boolean;
 }
 
 export enum AggregationType {

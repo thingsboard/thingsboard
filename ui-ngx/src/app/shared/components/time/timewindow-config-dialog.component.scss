@@ -22,16 +22,16 @@
   max-width: 100%;
   background-color: #fff;
 
-  .tb-form-panel {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .mat-content {
-    overflow: hidden;
+  .timewindow-settings-form {
+    width: 600px;
 
     .tb-flex {
       gap: 16px;
+    }
+
+    &.mat-mdc-dialog-content {
+      overflow: hidden;
+      padding: 0;
     }
   }
 
@@ -59,7 +59,8 @@
 }
 
 :host ::ng-deep {
-  .mat-mdc-tab-group:not(.tb-headless) {
+  .mat-mdc-tab-group {
+    min-height: 100%;
     height: 100%;
   }
 

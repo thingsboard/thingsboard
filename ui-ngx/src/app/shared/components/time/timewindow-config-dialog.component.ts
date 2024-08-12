@@ -28,15 +28,16 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-import { isDefined, isDefinedAndNotNull } from '@core/utils';
+import { isDefined, isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 
 export interface TimewindowConfigDialogData {
   quickIntervalOnly: boolean;
+  aggregation: boolean;
   timewindow: Timewindow;
 }
 
@@ -49,9 +50,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   quickIntervalOnly = false;
 
+  aggregation = false;
+
   timewindow: Timewindow;
 
-  timewindowForm: UntypedFormGroup;
+  timewindowForm: FormGroup;
 
   historyTypes = HistoryWindowType;
 
@@ -94,11 +97,12 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   constructor(@Inject(MAT_DIALOG_DATA) public data: TimewindowConfigDialogData,
               public dialogRef: MatDialogRef<TimewindowConfigDialogComponent, Timewindow>,
               protected store: Store<AppState>,
-              public fb: UntypedFormBuilder,
+              public fb: FormBuilder,
               private timeService: TimeService,
               private translate: TranslateService) {
     super(store);
     this.quickIntervalOnly = data.quickIntervalOnly;
+    this.aggregation = data.aggregation;
     this.timewindow = data.timewindow;
 
     if (!this.quickIntervalOnly) {
@@ -112,13 +116,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   }
 
   ngOnInit(): void {
-    const hideInterval = this.timewindow.hideInterval || false;
-    const hideLastInterval = this.timewindow.hideLastInterval || false;
-    const hideQuickInterval = this.timewindow.hideQuickInterval || false;
-    const hideAggregation = this.timewindow.hideAggregation || false;
-    const hideAggInterval = this.timewindow.hideAggInterval || false;
-    const hideTimezone = this.timewindow.hideTimezone || false;
-
     const realtime = this.timewindow.realtime;
     const history = this.timewindow.history;
     const aggregation = this.timewindow.aggregation;
@@ -128,14 +125,22 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         realtimeType: [ isDefined(realtime?.realtimeType) ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL ],
         timewindowMs: [ isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null ],
         interval: [ isDefined(realtime?.interval) ? this.timewindow.realtime.interval : null ],
-        quickInterval: [ isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null ]
+        quickInterval: [ isDefined(realtime?.quickInterval) ? this.timewindow.realtime.quickInterval : null ],
+        disableCustomInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomInterval)
+          ? this.timewindow.realtime?.disableCustomInterval : false ],
+        disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomGroupInterval)
+          ? this.timewindow.realtime?.disableCustomGroupInterval : false ],
       }),
       history: this.fb.group({
         historyType: [ isDefined(history?.historyType) ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL ],
         timewindowMs: [ isDefined(history?.timewindowMs) ? this.timewindow.history.timewindowMs : null ],
         interval: [ isDefined(history?.interval) ? this.timewindow.history.interval : null ],
         fixedTimewindow: [ isDefined(history?.fixedTimewindow) ? this.timewindow.history.fixedTimewindow : null ],
-        quickInterval: [ isDefined(history?.quickInterval) ? this.timewindow.history.quickInterval : null ]
+        quickInterval: [ isDefined(history?.quickInterval) ? this.timewindow.history.quickInterval : null ],
+        disableCustomInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomInterval)
+          ? this.timewindow.history?.disableCustomInterval : false ],
+        disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomGroupInterval)
+          ? this.timewindow.history?.disableCustomGroupInterval : false ],
       }),
       aggregation: this.fb.group({
         type: [ isDefined(aggregation?.type) ? this.timewindow.aggregation.type : null ],
@@ -224,32 +229,21 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         type: timewindowFormValue.aggregation.type,
         limit: timewindowFormValue.aggregation.limit
       },
-      timezone: timewindowFormValue.timezone
+      timezone: timewindowFormValue.timezone,
+      hideInterval: timewindowFormValue.hideInterval,
+      hideAggregation: timewindowFormValue.hideAggregation,
+      hideAggInterval: timewindowFormValue.hideAggInterval,
+      hideTimezone: timewindowFormValue.hideTimezone
     });
   }
 
   update() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    this.timewindow.realtime = {
-      realtimeType: timewindowFormValue.realtime.realtimeType,
-      timewindowMs: timewindowFormValue.realtime.timewindowMs,
-      quickInterval: timewindowFormValue.realtime.quickInterval,
-      interval: timewindowFormValue.realtime.interval
-    };
-    this.timewindow.history = {
-      historyType: timewindowFormValue.history.historyType,
-      timewindowMs: timewindowFormValue.history.timewindowMs,
-      interval: timewindowFormValue.history.interval,
-      fixedTimewindow: timewindowFormValue.history.fixedTimewindow,
-      quickInterval: timewindowFormValue.history.quickInterval,
-    };
-    this.timewindow.aggregation = {
-      type: timewindowFormValue.aggregation.type,
-      limit: timewindowFormValue.aggregation.limit
-    };
-    this.timewindow.timezone = timewindowFormValue.timezone;
-    this.result = this.timewindow;
-    this.dialogRef.close(this.result);
+    this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
+    if (!this.aggregation) {
+      delete this.timewindow.aggregation;
+    }
+    this.dialogRef.close(this.timewindow);
   }
 
   cancel() {
