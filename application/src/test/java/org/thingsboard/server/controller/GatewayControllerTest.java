@@ -44,6 +44,7 @@ import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.tuple;
+import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @ContextConfiguration(classes = {GatewayControllerTest.Config.class})
 @DaoSqlTest
@@ -255,10 +256,9 @@ public class GatewayControllerTest extends AbstractControllerTest {
 
     private GatewayConnectorValidationResult validateConfiguration(ObjectNode configuration, String version, ConnectorType connectorType) throws Exception {
         saveGatewayVersion(version);
-        return doPost("/api/gateway/" + gatewayDevice.getId().getId() + "/configuration/" + connectorType.name() + "/validate",
-                JacksonUtil.toString(configuration), GatewayConnectorValidationResult.class);
+        return readResponse(doPost("/api/gateway/" + gatewayDevice.getId().getId() + "/configuration/" + connectorType.name() + "/validate", configuration),
+                GatewayConnectorValidationResult.class);
     }
-
 
     private void saveGatewayVersion(String version) throws Exception {
         AttributeKvEntry versionAttribute = new BaseAttributeKvEntry(new StringDataEntry("Version", version), System.currentTimeMillis());
