@@ -19,6 +19,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cache.edge.RelatedEdgesCacheKey;
+import org.thingsboard.server.cache.edge.RelatedEdgesCacheValue;
 import org.thingsboard.server.cache.edge.RelatedEdgesEvictEvent;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -34,7 +35,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, PageData<EdgeId>, RelatedEdgesEvictEvent> implements RelatedEdgesService {
+public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, RelatedEdgesCacheValue, RelatedEdgesEvictEvent> implements RelatedEdgesService {
 
     public static final int RELATED_EDGES_CACHE_ITEMS = 1000;
 
@@ -53,7 +54,7 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
             return findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink);
         }
         return cache.getAndPutInTransaction(new RelatedEdgesCacheKey(tenantId, entityId),
-                () -> findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink), false);
+                () -> new RelatedEdgesCacheValue(findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink)), false).getPageData();
     }
 
     @Override

@@ -34,20 +34,19 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class RelatedEdgesSourcingListener {
 
-    private final RelatedEdgesService edgesService;
+    private final RelatedEdgesService relatedEdgesService;
 
     private ExecutorService executorService;
 
     @PostConstruct
     public void init() {
-        log.info("RelatedEdgeIdsSourcingListener initiated");
-        executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("related-edge-ids-listener"));
+        log.info("RelatedEdgesSourcingListener initiated");
+        executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("related-edges-listener"));
     }
-
 
     @PreDestroy
     public void destroy() {
-        log.info("RelatedEdgeIdsSourcingListener destroy");
+        log.info("RelatedEdgesSourcingListener destroy");
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
         }
@@ -59,7 +58,7 @@ public class RelatedEdgesSourcingListener {
             try {
                 switch (event.getActionType()) {
                     case ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE ->
-                            edgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
+                            relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
                 }
             } catch (Exception e) {
                 log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
@@ -71,7 +70,7 @@ public class RelatedEdgesSourcingListener {
     public void handleEvent(DeleteEntityEvent<?> event) {
         executorService.submit(() -> {
             try {
-                edgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
+                relatedEdgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
             } catch (Exception e) {
                 log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event, e);
             }
