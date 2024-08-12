@@ -32,7 +32,7 @@ import java.util.concurrent.Executors;
 @Component
 @RequiredArgsConstructor
 @Slf4j
-public class RelatedEdgeIdsSourcingListener {
+public class RelatedEdgesSourcingListener {
 
     private final RelatedEdgesService edgesService;
 
