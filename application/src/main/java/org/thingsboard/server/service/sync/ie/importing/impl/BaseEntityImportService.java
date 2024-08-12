@@ -28,6 +28,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasDefaultOption;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
@@ -161,6 +162,9 @@ public abstract class BaseEntityImportService<I extends EntityId, E extends Expo
     protected void cleanupForComparison(E e) {
         e.setTenantId(null);
         e.setCreatedTime(0);
+        if (e instanceof HasVersion hasVersion) {
+            hasVersion.setVersion(null);
+        }
     }
 
     protected abstract E saveOrUpdate(EntitiesImportCtx ctx, E entity, D exportData, IdProvider idProvider);

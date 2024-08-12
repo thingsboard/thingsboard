@@ -13,20 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.device;
+package org.thingsboard.server.dao.entity;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.cache.VersionedTbCache;
+import org.thingsboard.server.common.data.HasVersion;
 
-@Data
-public class DeviceCacheEvictEvent {
+import java.io.Serializable;
 
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final String newName;
-    private final String oldName;
-    private Device savedDevice;
+public abstract class CachedVersionedEntityService<K extends Serializable, V extends Serializable & HasVersion, E> extends AbstractCachedEntityService<K, V, E> {
+
+    @Autowired
+    protected VersionedTbCache<K, V> cache;
 
 }

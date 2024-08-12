@@ -13,20 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.cache.device;
+$conflict-dialog-width: 700px;
 
-import lombok.Data;
-import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.TenantId;
+:host {
+  .main-label {
+    padding-left: 8px;
+  }
 
-@Data
-public class DeviceCacheEvictEvent {
-
-    private final TenantId tenantId;
-    private final DeviceId deviceId;
-    private final String newName;
-    private final String oldName;
-    private Device savedDevice;
-
+  .message-container {
+    max-width: #{$conflict-dialog-width};
+  }
 }
