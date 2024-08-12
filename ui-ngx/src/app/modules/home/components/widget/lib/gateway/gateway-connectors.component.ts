@@ -392,27 +392,30 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     const title = `Delete connector \"${attribute.key}\"?`;
     const content = `All connector data will be deleted.`;
 
-    this.dialogService.confirm(title, content, 'Cancel', 'Delete').pipe(take(1)).subscribe(result => {
-      if (!result) {
-        return;
-      }
-      const tasks: Array<Observable<any>> = [];
-      const scope = this.activeConnectors.includes(attribute.value?.name) ?
-        AttributeScope.SHARED_SCOPE :
-        AttributeScope.SERVER_SCOPE;
-      tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, [attribute]));
-      this.removeConnectorFromList(attribute.key, true);
-      this.removeConnectorFromList(attribute.key, false);
-      tasks.push(this.getSaveEntityAttributesTask(scope));
-
-      forkJoin(tasks).pipe(take(1)).subscribe(() => {
-        if (this.initialConnector ? this.initialConnector.name === attribute.key : true) {
-          this.clearOutConnectorForm();
-          this.cd.detectChanges();
-          this.connectorForm.disable();
+    this.dialogService.confirm(title, content, 'Cancel', 'Delete').pipe(
+      take(1),
+      switchMap((result) => {
+        if (!result) {
+          return;
         }
-        this.updateData(true);
-      });
+        const tasks: Array<Observable<any>> = [];
+        const scope = this.activeConnectors.includes(attribute.value?.name) ?
+          AttributeScope.SHARED_SCOPE :
+          AttributeScope.SERVER_SCOPE;
+        tasks.push(this.attributeService.deleteEntityAttributes(this.device, scope, [attribute]));
+        this.removeConnectorFromList(attribute.key, true);
+        this.removeConnectorFromList(attribute.key, false);
+        tasks.push(this.getSaveEntityAttributesTask(scope));
+
+        return forkJoin(tasks);
+      })
+    ).subscribe(() => {
+      if (this.initialConnector ? this.initialConnector.name === attribute.key : true) {
+        this.clearOutConnectorForm();
+        this.cd.detectChanges();
+        this.connectorForm.disable();
+      }
+      this.updateData(true);
     });
   }
 
