@@ -490,7 +490,7 @@ actors:
 
 # Cache settings parameters
 cache:
-  # caffeine or redis
+  # caffeine or redis(7.2 - latest compatible version)
   type: "${CACHE_TYPE:caffeine}"
   maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that call the external cache
   attributes:
@@ -572,9 +572,9 @@ cache:
     edges:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}" # Edges cache TTL
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled
-    relatedEdgeIds:
-      timeToLiveInMinutes: "${CACHE_SPECS_RELATED_EDGE_IDS_TTL:1440}" # Edge ids cache TTL
-      maxSize: "${CACHE_SPECS_RELATED_EDGE_IDS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    relatedEdges:
+      timeToLiveInMinutes: "${CACHE_SPECS_RELATED_EDGES_TTL:1440}" # Related Edges cache TTL
+      maxSize: "${CACHE_SPECS_RELATED_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled
     repositorySettings:
       timeToLiveInMinutes: "${CACHE_SPECS_REPOSITORY_SETTINGS_TTL:1440}" # Repository settings cache TTL
       maxSize: "${CACHE_SPECS_REPOSITORY_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled

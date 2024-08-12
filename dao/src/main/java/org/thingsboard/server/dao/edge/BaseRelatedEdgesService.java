@@ -18,8 +18,8 @@ package org.thingsboard.server.dao.edge;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.edge.RelatedEdgeIdsCacheKey;
-import org.thingsboard.server.cache.edge.RelatedEdgeIdsEvictEvent;
+import org.thingsboard.server.cache.edge.RelatedEdgesCacheKey;
+import org.thingsboard.server.cache.edge.RelatedEdgesEvictEvent;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -34,31 +34,31 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 @Service
-public class BaseRelatedEdgeIdsService extends AbstractCachedEntityService<RelatedEdgeIdsCacheKey, PageData<EdgeId>, RelatedEdgeIdsEvictEvent> implements RelatedEdgeIdsService {
+public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, PageData<EdgeId>, RelatedEdgesEvictEvent> implements RelatedEdgesService {
 
-    public static final int EDGE_IDS_CACHE_ITEMS = 1000;
+    public static final int RELATED_EDGES_CACHE_ITEMS = 1000;
 
     @Autowired
     @Lazy
     private EdgeService edgeService;
 
     @Override
-    public void handleEvictEvent(RelatedEdgeIdsEvictEvent event) {
-        cache.evict(new RelatedEdgeIdsCacheKey(event.getTenantId(), event.getEntityId()));
+    public void handleEvictEvent(RelatedEdgesEvictEvent event) {
+        cache.evict(new RelatedEdgesCacheKey(event.getTenantId(), event.getEntityId()));
     }
 
     @Override
     public PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        if (pageLink.getPageSize() != EDGE_IDS_CACHE_ITEMS) {
+        if (pageLink.getPageSize() != RELATED_EDGES_CACHE_ITEMS) {
             return findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink);
         }
-        return cache.getAndPutInTransaction(new RelatedEdgeIdsCacheKey(tenantId, entityId),
+        return cache.getAndPutInTransaction(new RelatedEdgesCacheKey(tenantId, entityId),
                 () -> findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink), false);
     }
 
     @Override
     public void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId) {
-        publishEvictEvent(new RelatedEdgeIdsEvictEvent(tenantId, entityId));
+        publishEvictEvent(new RelatedEdgesEvictEvent(tenantId, entityId));
     }
 
     private PageData<EdgeId> findEdgesByEntityIdAndConvertToEdgeId(TenantId tenantId, EntityId entityId, PageLink pageLink) {

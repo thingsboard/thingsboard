@@ -82,7 +82,7 @@ public class TbLwM2MDtlsBootstrapCertificateVerifier implements NewAdvancedCerti
                 staticCertificateVerifier = new StaticNewAdvancedCertificateVerifier(trustedCertificates, new RawPublicKeyIdentity[0], null);
             }
         } catch (Exception e) {
-            log.warn("ailed to initialize the LwM2M certificate verifier", e);
+            log.warn("Failed to initialize the LwM2M certificate verifier", e);
         }
     }
 

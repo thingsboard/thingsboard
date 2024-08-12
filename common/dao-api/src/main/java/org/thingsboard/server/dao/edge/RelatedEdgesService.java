@@ -13,16 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.actors.stats;
+package org.thingsboard.server.dao.edge;
 
-import org.thingsboard.server.common.msg.MsgType;
-import org.thingsboard.server.common.msg.TbActorMsg;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
 
-public enum StatsPersistTick implements TbActorMsg {
-    INSTANCE;
+public interface RelatedEdgesService {
 
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.STATS_PERSIST_TICK_MSG;
-    }
+    PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
+
+    void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId);
+
 }

@@ -40,7 +40,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
-import static org.thingsboard.server.dao.edge.BaseRelatedEdgeIdsService.EDGE_IDS_CACHE_ITEMS;
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @Slf4j
 @RuleNode(
@@ -122,7 +122,7 @@ public class TbMsgPushToEdgeNode extends AbstractTbMsgPushNode<TbMsgPushToEdgeNo
             } else {
                 List<ListenableFuture<Void>> futures = new ArrayList<>();
                 PageDataIterableByTenantIdEntityId<EdgeId> edgeIds = new PageDataIterableByTenantIdEntityId<>(
-                        ctx.getEdgeService()::findRelatedEdgeIdsByEntityId, ctx.getTenantId(), msg.getOriginator(), EDGE_IDS_CACHE_ITEMS);
+                        ctx.getEdgeService()::findRelatedEdgeIdsByEntityId, ctx.getTenantId(), msg.getOriginator(), RELATED_EDGES_CACHE_ITEMS);
                 for (EdgeId edgeId : edgeIds) {
                     EdgeEvent edgeEvent = buildEvent(msg, ctx);
                     futures.add(notifyEdge(ctx, edgeEvent, edgeId));

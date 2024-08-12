@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.edge;
+package org.thingsboard.server.cache.edge;
 
-import org.thingsboard.server.common.data.id.EdgeId;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 
-public interface RelatedEdgeIdsService {
+@Data
+@RequiredArgsConstructor
+public class RelatedEdgesEvictEvent {
 
-    PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink);
-
-    void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId);
+    private final TenantId tenantId;
+    private final EntityId entityId;
 
 }

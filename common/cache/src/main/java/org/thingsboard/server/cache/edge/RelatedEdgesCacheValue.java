@@ -15,31 +15,23 @@
  */
 package org.thingsboard.server.cache.edge;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.TenantId;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.page.PageData;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-@Getter
-@EqualsAndHashCode
-@RequiredArgsConstructor
-@Builder
-public class RelatedEdgeIdsCacheKey implements Serializable {
+@Data
+public class RelatedEdgesCacheValue implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 5118170671697650121L;
+    private static final long serialVersionUID = -2765080094748518572L;
 
-    private final TenantId tenantId;
-    private final EntityId entityId;
+    private final PageData<EdgeId> pageData;
 
-    @Override
-    public String toString() {
-        return tenantId + "_" + entityId;
+    public RelatedEdgesCacheValue(PageData<EdgeId> pageData) {
+        this.pageData = pageData;
     }
 
 }

@@ -132,7 +132,7 @@ import java.util.UUID;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static org.thingsboard.server.dao.edge.BaseRelatedEdgeIdsService.EDGE_IDS_CACHE_ITEMS;
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @Slf4j
 public abstract class BaseEdgeProcessor {
@@ -503,7 +503,7 @@ public abstract class BaseEdgeProcessor {
                                                                      EdgeEventActionType actionType, EdgeId sourceEdgeId) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
-                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, EDGE_IDS_CACHE_ITEMS);
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, RELATED_EDGES_CACHE_ITEMS);
         for (EdgeId relatedEdgeId : edgeIds) {
             if (!relatedEdgeId.equals(sourceEdgeId)) {
                 futures.add(saveEdgeEvent(tenantId, relatedEdgeId, type, actionType, entityId, null));
@@ -649,7 +649,7 @@ public abstract class BaseEdgeProcessor {
 
     private boolean isEntityNotAssignedToEdge(TenantId tenantId, EntityId entityId, EdgeId edgeId) {
         PageDataIterableByTenantIdEntityId<EdgeId> edgeIds =
-                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, EDGE_IDS_CACHE_ITEMS);
+                new PageDataIterableByTenantIdEntityId<>(edgeService::findRelatedEdgeIdsByEntityId, tenantId, entityId, RELATED_EDGES_CACHE_ITEMS);
         for (EdgeId edgeId1 : edgeIds) {
             if (edgeId1.equals(edgeId)) {
                 return false;

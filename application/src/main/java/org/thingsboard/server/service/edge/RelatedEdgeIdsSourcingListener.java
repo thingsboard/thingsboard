@@ -22,7 +22,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.dao.edge.RelatedEdgeIdsService;
+import org.thingsboard.server.dao.edge.RelatedEdgesService;
 import org.thingsboard.server.dao.eventsourcing.ActionEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 
@@ -34,7 +34,7 @@ import java.util.concurrent.Executors;
 @Slf4j
 public class RelatedEdgeIdsSourcingListener {
 
-    private final RelatedEdgeIdsService edgeIdsService;
+    private final RelatedEdgesService edgesService;
 
     private ExecutorService executorService;
 
@@ -59,7 +59,7 @@ public class RelatedEdgeIdsSourcingListener {
             try {
                 switch (event.getActionType()) {
                     case ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE ->
-                            edgeIdsService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
+                            edgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
                 }
             } catch (Exception e) {
                 log.error("[{}] failed to process ActionEntityEvent: {}", event.getTenantId(), event, e);
@@ -71,7 +71,7 @@ public class RelatedEdgeIdsSourcingListener {
     public void handleEvent(DeleteEntityEvent<?> event) {
         executorService.submit(() -> {
             try {
-                edgeIdsService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
+                edgesService.publishRelatedEdgeIdsEvictEvent(event.getTenantId(), event.getEntityId());
             } catch (Exception e) {
                 log.error("[{}] failed to process DeleteEntityEvent: {}", event.getTenantId(), event, e);
             }

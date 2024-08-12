@@ -84,7 +84,7 @@ import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.DaoUtil.toUUIDs;
-import static org.thingsboard.server.dao.edge.BaseRelatedEdgeIdsService.EDGE_IDS_CACHE_ITEMS;
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 import static org.thingsboard.server.dao.service.Validator.validatePageLink;
@@ -127,7 +127,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
 
     @Autowired
     @Lazy
-    private RelatedEdgeIdsService edgeIdsService;
+    private RelatedEdgesService relatedEdgesService;
 
     @Value("${edges.enabled}")
     @Getter
@@ -484,7 +484,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             return Collections.singletonList(new EdgeId(entityId.getId()));
         }
         PageDataIterableByTenantIdEntityId<EdgeId> relatedEdgeIdsIterator =
-                new PageDataIterableByTenantIdEntityId<>(this::findRelatedEdgeIdsByEntityId, tenantId, entityId, EDGE_IDS_CACHE_ITEMS);
+                new PageDataIterableByTenantIdEntityId<>(this::findRelatedEdgeIdsByEntityId, tenantId, entityId, RELATED_EDGES_CACHE_ITEMS);
         List<EdgeId> result = new ArrayList<>();
         for (EdgeId edgeId : relatedEdgeIdsIterator) {
             result.add(edgeId);
@@ -510,7 +510,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             case ENTITY_VIEW:
             case DASHBOARD:
             case RULE_CHAIN:
-                return edgeIdsService.findEdgeIdsByEntityId(tenantId, entityId, pageLink);
+                return relatedEdgesService.findEdgeIdsByEntityId(tenantId, entityId, pageLink);
             case USER:
                 User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
                 if (userById == null) {

@@ -49,7 +49,7 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
-import static org.thingsboard.server.dao.edge.BaseRelatedEdgeIdsService.EDGE_IDS_CACHE_ITEMS;
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
 @ExtendWith(MockitoExtension.class)
 public class TbMsgPushToEdgeNodeTest {
@@ -83,7 +83,7 @@ public class TbMsgPushToEdgeNodeTest {
     public void ackMsgInCaseNoEdgeRelated() {
         Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
-        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(EDGE_IDS_CACHE_ITEMS))).thenReturn(new PageData<>());
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(new PageData<>());
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
@@ -104,7 +104,7 @@ public class TbMsgPushToEdgeNodeTest {
         UserId userId = new UserId(UUID.randomUUID());
         EdgeId edgeId = new EdgeId(UUID.randomUUID());
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
-        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(EDGE_IDS_CACHE_ITEMS))).thenReturn(edgePageData);
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(edgePageData);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.ATTRIBUTES_UPDATED, userId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
