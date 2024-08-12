@@ -41,8 +41,8 @@
     "vertical_wheel_valve",
     "horizontal_ball_valve",
     "vertical_ball_valve",
+    "vertical_tank",
     "horizontal_tank_with_screen",
-    "vertical_tank_with_level",
     "level_and_fan"
   ]
 }

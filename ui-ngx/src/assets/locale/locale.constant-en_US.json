@@ -3736,7 +3736,22 @@
             "opened-color": "Opened color",
             "closed-color": "Closed color",
             "opened-rotation-angle": "Opened rotation angle",
-            "closed-rotation-angle": "Closed rotation angle"
+            "closed-rotation-angle": "Closed rotation angle",
+            "tank-capacity": "Tank capacity",
+            "tank-capacity-hint": "Double value indicating total tank capacity.",
+            "current-volume": "Current volume",
+            "current-volume-hint": "Double value indicating the current occupied volume.",
+            "tank-color": "Tank color",
+            "value-box": "Value box",
+            "value-text": "Value text",
+            "scale": "Scale",
+            "transparent-mode": "Transparent mode",
+            "major-ticks": "Major ticks",
+            "intervals": "Intervals",
+            "major-ticks-color": "Major ticks color",
+            "normal": "Normal",
+            "minor-ticks": "Minor ticks",
+            "minor-ticks-color": "Minor ticks color"
         }
     },
     "item": {
