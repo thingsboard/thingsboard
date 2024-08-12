@@ -52,6 +52,11 @@
       "actions": null
     },
     {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
+    },
+    {
       "tag": "value",
       "stateRenderFunction": "var value = ctx.values.value;\nctx.api.text(element, value.toFixed(0));\n",
       "actions": {
@@ -710,9 +715,26 @@
       "min": null,
       "max": null,
       "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
     }
   ]
-}]]></tb:metadata><rect x="14" y="264" width="372" height="72" fill="#fff"/><rect x="14" y="264" width="372" height="72" fill="url(#paint0_linear_1253_89545)"/><rect x="15.5" y="265.5" width="369" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="14" y="264" width="372" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="fluid-background"/><rect x="14" y="264" width="372" height="72" fill="url(#liquid)" stroke-width="0" style="display: none;" tb:tag="fluid"/><path d="M236 236V264.421L200 296L164 264.421V236H236Z" fill="#fff"/><path d="M236 236V264.421L200 296L164 264.421V236H236Z" fill="url(#paint1_linear_1253_89545)"/><path d="m234.5 237.5v26.242l-34.5 30.263-34.5-30.263v-26.242h69z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="387.5" y="251.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><rect x="1.5" y="251.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><mask id="path-7-inside-1_1253_89545" fill="white">
+}]]></tb:metadata>
+<rect x="14" y="264" width="372" height="72" fill="#fff" tb:tag="pipe-background"/><rect x="14" y="264" width="372" height="72" fill="url(#paint0_linear_1253_89545)"/><rect x="15.5" y="265.5" width="369" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="14" y="264" width="372" height="72" fill="#1ec1f4" stroke-width="0" style="display: none;" tb:tag="fluid-background"/><rect x="14" y="264" width="372" height="72" fill="url(#liquid)" stroke-width="0" style="display: none;" tb:tag="fluid"/><path d="M236 236V264.421L200 296L164 264.421V236H236Z" fill="#fff" tb:tag="pipe-background"/><path d="M236 236V264.421L200 296L164 264.421V236H236Z" fill="url(#paint1_linear_1253_89545)"/><path d="m234.5 237.5v26.242l-34.5 30.263-34.5-30.263v-26.242h69z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><rect x="387.5" y="251.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><rect x="1.5" y="251.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171" stroke-width="3"/><mask id="path-7-inside-1_1253_89545" fill="white">
   <path d="m325 125c0 69.036-55.964 125-125 125s-125-55.964-125-125 55.964-125 125-125 125 55.964 125 125zm-236.01 0c0 61.306 49.699 111 111.01 111s111-49.699 111-111c0-61.306-49.699-111.01-111-111.01s-111.01 49.699-111.01 111.01z"/>
  </mask><path d="m325 125c0 69.036-55.964 125-125 125s-125-55.964-125-125 55.964-125 125-125 125 55.964 125 125zm-236.01 0c0 61.306 49.699 111 111.01 111s111-49.699 111-111c0-61.306-49.699-111.01-111-111.01s-111.01 49.699-111.01 111.01z" fill="#4A4848" mask="url(#path-7-inside-1_1253_89545)" stroke="#727171" stroke-width="6" tb:tag="border"/><circle cx="200" cy="125" r="111" fill="#fff" tb:tag="background"/><rect x="119.5" y="105.5" width="161" height="39" rx="3.8571" fill="#4A4848" fill-opacity=".06" tb:tag="border"/><path d="m123.36 104c-2.9419 0-5.3574 2.4155-5.3574 5.3574v31.285c0 2.9419 2.4155 5.3574 5.3574 5.3574h153.29c2.9419 0 5.3574-2.4155 5.3574-5.3574v-31.285c0-2.9419-2.4155-5.3574-5.3574-5.3574zm0 3h153.29c1.3318 0 2.3574 1.0256 2.3574 2.3574v31.285c0 1.3318-1.0256 2.3574-2.3574 2.3574h-153.29c-1.3318 0-2.3574-1.0256-2.3574-2.3574v-31.285c0-1.3318 1.0256-2.3574 2.3574-2.3574z" fill="#4A4848" tb:tag="border"/><circle cx="166" cy="73" r="16" fill="url(#paint2_linear_1253_89545)"/><circle cx="166" cy="73" r="15.5" stroke="#000" stroke-opacity=".12"/><circle cx="234" cy="73" r="16" fill="url(#paint3_linear_1253_89545)"/><circle cx="234" cy="73" r="15.5" stroke="#000" stroke-opacity=".12"/><defs>
   <linearGradient id="paint0_linear_1253_89545" x1="110.72" x2="110.63" y1="264" y2="336.01" gradientUnits="userSpaceOnUse">
