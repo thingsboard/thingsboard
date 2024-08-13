@@ -15,15 +15,7 @@
  */
 package org.thingsboard.server.common.data.gateway.connector.validators;
 
-
-import lombok.Getter;
-
-@Getter
-public class GatewayConnectorValidationWarningRecord extends GatewayConnectorValidationRecord {
-    private final String warning;
-
-    public GatewayConnectorValidationWarningRecord(String path, String warning) {
-        super(path);
-        this.warning = warning;
-    }
+public enum GatewayConnectorValidationRecordType {
+    ERROR,
+    WARNING
 }

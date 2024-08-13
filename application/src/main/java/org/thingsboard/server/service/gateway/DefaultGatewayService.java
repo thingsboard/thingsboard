@@ -23,15 +23,15 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.gateway.ConnectorType;
+import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecord;
 import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationResult;
-import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationWarningRecord;
+import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecordType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.service.gateway.validator.ConnectorConfigurationValidator;
 
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
@@ -56,7 +56,7 @@ public class DefaultGatewayService implements GatewayService {
     }
 
     @Override
-    public GatewayConnectorValidationResult checkConnectorConfiguration(TenantId tenantId, DeviceId deviceId, String connectorType, Map<String, Object> connectorConfiguration) throws ThingsboardException {
+    public GatewayConnectorValidationResult checkConnectorConfiguration(TenantId tenantId, DeviceId deviceId, String connectorType, String connectorConfiguration) throws ThingsboardException {
         ConnectorType type = ConnectorType.valueOf(connectorType.toUpperCase());
         String version = null;
         try {
@@ -68,8 +68,8 @@ public class DefaultGatewayService implements GatewayService {
             throw new ThingsboardException("Failed to get gateway version", e, ThingsboardErrorCode.GENERAL);
         }
         if (!validators.containsKey(type)) {
-            return new GatewayConnectorValidationResult(true, new ArrayList<>(),
-                    Collections.singletonList(new GatewayConnectorValidationWarningRecord("", "No validator found for the connector type: " + type)));
+            return new GatewayConnectorValidationResult(true, Collections.singletonList(
+                    new GatewayConnectorValidationRecord("No validator found for the connector type: " + type, 1, 1, GatewayConnectorValidationRecordType.WARNING)));
         }
         return validators.get(type).validate(connectorConfiguration, version);
     }

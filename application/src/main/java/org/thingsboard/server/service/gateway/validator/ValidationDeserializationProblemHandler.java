@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.gateway.validator;
 
+import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -24,8 +25,8 @@ import com.fasterxml.jackson.databind.deser.DeserializationProblemHandler;
 import com.fasterxml.jackson.databind.deser.ValueInstantiator;
 import com.fasterxml.jackson.databind.jsontype.TypeIdResolver;
 import lombok.Getter;
-import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationErrorRecord;
-import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationWarningRecord;
+import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecord;
+import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecordType;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -33,12 +34,14 @@ import java.util.List;
 @Getter
 public class ValidationDeserializationProblemHandler extends DeserializationProblemHandler {
 
-    private final List<GatewayConnectorValidationErrorRecord> errors = new ArrayList<>();
-    private final List<GatewayConnectorValidationWarningRecord> warnings = new ArrayList<>();
+    private final List<GatewayConnectorValidationRecord> errors = new ArrayList<>();
+    private final List<GatewayConnectorValidationRecord> warnings = new ArrayList<>();
 
     @Override
     public boolean handleUnknownProperty(DeserializationContext ctxt, JsonParser p, JsonDeserializer<?> deserializer, Object beanOrClass, String propertyName) {
-        warnings.add(new GatewayConnectorValidationWarningRecord(getCurrentPath(p), propertyName + " is unknown"));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        warnings.add(new GatewayConnectorValidationRecord("'" + propertyName + "' is unknown",
+                currentLocation.getLineNr(), currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.WARNING));
         return false;
     }
 
@@ -49,63 +52,90 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
 
     @Override
     public Object handleUnexpectedToken(DeserializationContext ctxt, JavaType targetType, JsonToken t, JsonParser p, String failureMsg) {
-        String errorMessage = "Invalid value for field. Expected " + targetType.getRawClass().getSimpleName() + " but got " + t;
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(p), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Invalid value for field '" + ctxt.getParser().getParsingContext().getCurrentName()
+                + "'. Expected " + targetType.getRawClass().getSimpleName() + " but got " + t;
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
     @Override
     public Object handleWeirdKey(DeserializationContext ctxt, Class<?> rawKeyType, String keyValue, String failureMsg) {
-        String errorMessage = "Invalid key value '" + keyValue + "' for field. Expected " + rawKeyType.getSimpleName();
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Invalid key value '" + keyValue + "' for field '"
+                + ctxt.getParser().getParsingContext().getCurrentName() + "'. Expected " + rawKeyType.getSimpleName();
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
     @Override
     public Object handleWeirdNumberValue(DeserializationContext ctxt, Class<?> targetType, Number valueToConvert, String failureMsg) {
-        String errorMessage = "Invalid value '" + valueToConvert + "' for field. Expected " + targetType.getSimpleName();
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Invalid value '" + valueToConvert + "' for field '"
+                + ctxt.getParser().getParsingContext().getCurrentName() + "'. Expected " + targetType.getSimpleName();
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
     @Override
     public Object handleWeirdNativeValue(DeserializationContext ctxt, JavaType targetType, Object valueToConvert, JsonParser p) {
-        String errorMessage = "Invalid value '" + valueToConvert + "' for field. Expected " + targetType.getRawClass().getSimpleName();
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(p), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Invalid value '" + valueToConvert + "' for field '"
+                + ctxt.getParser().getParsingContext().getCurrentName() + "'. Expected " + targetType.getRawClass().getSimpleName();
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
     @Override
     public Object handleWeirdStringValue(DeserializationContext ctxt, Class<?> targetType, String valueToConvert, String failureMsg) {
-        if (failureMsg.contains("not a valid")) {
-            String errorMessage = "Invalid value '" + valueToConvert + "' for field. Expected type: " + targetType.getSimpleName();
-            errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        if (failureMsg.contains("not a valid") || "only \"true\" or \"false\" recognized".equals(failureMsg)) {
+            String errorMessage = "Invalid value '" + valueToConvert + "' for field '"
+                    + ctxt.getParser().getParsingContext().getCurrentName()
+                    + "'. Expected type: " + targetType.getSimpleName();
+            errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                    currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         } else {
-            String errorMessage = "Unexpected value '" + valueToConvert + "' for field. Expected one of: " + extractPossibleValues(failureMsg);
-            errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+            String errorMessage = "Unexpected value '" + valueToConvert + "' for field '"
+                    + ctxt.getParser().getParsingContext().getCurrentName() + "'. Expected one of: " + extractPossibleValues(failureMsg);
+            errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                    currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         }
         return null;
     }
 
     @Override
     public Object handleInstantiationProblem(DeserializationContext ctxt, Class<?> instClass, Object argument, Throwable t) {
-        String errorMessage = "Field contains unknown value. Expected one of: " + extractPossibleValues(t.getMessage());
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Field '" + ctxt.getParser().getParsingContext().getCurrentName()
+                + "' contains unknown value. Expected one of: " + extractPossibleValues(t.getMessage());
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
     @Override
     public JavaType handleMissingTypeId(DeserializationContext ctxt, JavaType baseType, TypeIdResolver idResolver, String failureMsg) {
-        String errorMessage = "Field " + extractMissingField(failureMsg) + " is missing";
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Field '" + extractMissingField(failureMsg) + "' is missing";
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return baseType;
     }
 
 
     @Override
     public JavaType handleUnknownTypeId(DeserializationContext ctxt, JavaType baseType, String subTypeId, TypeIdResolver idResolver, String failureMsg) {
-        String errorMessage = "Field contains unknown value, possible values: " + extractPossibleValues(failureMsg, baseType.getRawClass().getName());
-        errors.add(new GatewayConnectorValidationErrorRecord(getCurrentPath(ctxt.getParser()), errorMessage));
+        JsonLocation currentLocation = ctxt.getParser().currentLocation();
+        String errorMessage = "Field '" + ctxt.getParser().getParsingContext().getCurrentName()
+                + "' contains unknown value, possible values: "
+                + extractPossibleValues(failureMsg, baseType.getRawClass().getName());
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr(),
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return baseType;
     }
 
@@ -134,10 +164,6 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
         int startIndex = failureMsg.indexOf("property '") + 10;
         int endIndex = failureMsg.indexOf("'", startIndex);
         return failureMsg.substring(startIndex, endIndex);
-    }
-
-    private String getCurrentPath(JsonParser p) {
-        return p.getParsingContext().pathAsPointer().toString().replace("/", ".");
     }
 
 }

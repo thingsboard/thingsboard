@@ -20,11 +20,9 @@ import org.thingsboard.server.common.data.gateway.connector.validators.GatewayCo
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.util.Map;
-
 public interface GatewayService {
     GatewayConnectorValidationResult checkConnectorConfiguration(TenantId tenantId,
                                                                  DeviceId deviceId,
                                                                  String connectorType,
-                                                                 Map<String, Object> connectorConfiguration) throws ThingsboardException;
+                                                                 String connectorConfiguration) throws ThingsboardException;
 }

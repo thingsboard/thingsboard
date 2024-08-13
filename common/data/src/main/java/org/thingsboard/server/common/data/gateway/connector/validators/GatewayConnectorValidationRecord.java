@@ -21,5 +21,8 @@ import lombok.Data;
 @Data
 @AllArgsConstructor
 public class GatewayConnectorValidationRecord {
-    protected final String path;
+    private final String text;
+    private final Integer row;
+    private final Integer column;
+    private final GatewayConnectorValidationRecordType type;
 }

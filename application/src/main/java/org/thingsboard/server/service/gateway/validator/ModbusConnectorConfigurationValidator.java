@@ -17,8 +17,8 @@ package org.thingsboard.server.service.gateway.validator;
 
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.gateway.ConnectorType;
-import org.thingsboard.server.common.data.gateway.connector.mqtt.LatestMqttConnectorConfiguration;
-import org.thingsboard.server.common.data.gateway.connector.mqtt.Version350OrBelowMqttConnectorConfiguration;
+import org.thingsboard.server.common.data.gateway.connector.modbus.LatestModbusConnectorConfiguration;
+import org.thingsboard.server.common.data.gateway.connector.modbus.Version352OrBelowModbusConnectorConfiguration;
 import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationResult;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
@@ -26,9 +26,9 @@ import java.util.regex.Pattern;
 
 @Component
 @TbCoreComponent
-public class MqttConnectorConfigurationValidator extends ConnectorConfigurationValidator {
+public class ModbusConnectorConfigurationValidator extends ConnectorConfigurationValidator {
 
-    private static final Pattern latestVersionPattern = Pattern.compile("^3\\.[5-9]\\.[0-9].*$|^3\\.[5-9].*$|^[4-9]\\..*$|^[1-9][0-9]+\\..*");
+    private static final Pattern latestVersionPattern = Pattern.compile("^3\\.[5-9]\\.[2-9].*$|^[4-9]\\..*$|^[1-9][0-9]+\\..*");
 
     @Override
     public GatewayConnectorValidationResult validate(String connectorConfiguration, String version) {
@@ -40,15 +40,15 @@ public class MqttConnectorConfigurationValidator extends ConnectorConfigurationV
     }
 
     private GatewayConnectorValidationResult validateLatestConfiguration(String connectorConfiguration) {
-        return validateConfiguration(connectorConfiguration, LatestMqttConnectorConfiguration.class);
+        return validateConfiguration(connectorConfiguration, LatestModbusConnectorConfiguration.class);
     }
 
     private GatewayConnectorValidationResult validateOldConfiguration(String connectorConfiguration) {
-        return validateConfiguration(connectorConfiguration, Version350OrBelowMqttConnectorConfiguration.class);
+        return validateConfiguration(connectorConfiguration, Version352OrBelowModbusConnectorConfiguration.class);
     }
 
     @Override
     public ConnectorType getType() {
-        return ConnectorType.MQTT;
+        return ConnectorType.MODBUS;
     }
 }

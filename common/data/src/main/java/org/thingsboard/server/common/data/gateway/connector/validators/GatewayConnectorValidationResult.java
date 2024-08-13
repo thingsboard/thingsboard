@@ -24,6 +24,5 @@ import java.util.List;
 @AllArgsConstructor
 public class GatewayConnectorValidationResult {
     private final boolean valid;
-    private final List<GatewayConnectorValidationErrorRecord> errors;
-    private final List<GatewayConnectorValidationWarningRecord> warnings;
+    private final List<GatewayConnectorValidationRecord> annotations;
 }

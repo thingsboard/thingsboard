@@ -156,8 +156,7 @@ public class LatestMqttConnectorConfiguration {
                 visible = true,
                 property = "type")
         @JsonSubTypes({
-                @JsonSubTypes.Type(value = BasicConverter.class, name = "json"),
-                @JsonSubTypes.Type(value = BasicConverter.class, name = "bytes"),
+                @JsonSubTypes.Type(value = BasicConverter.class, names = {"json", "bytes"}),
                 @JsonSubTypes.Type(value = CustomConverter.class, name = "custom")
         })
 

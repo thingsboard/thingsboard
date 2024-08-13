@@ -34,8 +34,6 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.gateway.GatewayService;
 import org.thingsboard.server.service.security.permission.Operation;
 
-import java.util.Map;
-
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID;
 import static org.thingsboard.server.controller.ControllerConstants.DEVICE_ID_PARAM_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH;
@@ -54,7 +52,7 @@ public class GatewayController extends BaseController {
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/gateway/{deviceId}/configuration/{connectorType}/validate", method = RequestMethod.POST)
     @ResponseBody
-    public ResponseEntity<GatewayConnectorValidationResult> checkConnectorConfiguration(@RequestBody Map<String, Object> connectorConfiguration,
+    public ResponseEntity<GatewayConnectorValidationResult> checkConnectorConfiguration(@RequestBody String connectorConfiguration,
                                                                                         @Parameter(description = DEVICE_ID_PARAM_DESCRIPTION, required = true)
                                                                                         @PathVariable(DEVICE_ID) String strDeviceId,
                                                                                         @Parameter(description = "A string value representing connector type: [MQTT, MODBUS, OPCUA, BACNET, BLE, CAN,FTP, OCPP, ODBC, REQUEST, REST, SNMP, SOCKET, XMPP]", required = true)
