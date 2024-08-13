@@ -43,6 +43,12 @@
     "vertical_ball_valve",
     "horizontal_tank_with_screen",
     "vertical_tank_with_level",
-    "level_and_fan"
+    "level_and_fan",
+    "right_elbow_drain_pipe",
+    "left_elbow_drain_pipe",
+    "left_drain_pipe",
+    "right_drain_pipe",
+    "short_left_drain_pipe",
+    "short_right_drain_pipe"
   ]
 }
