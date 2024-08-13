@@ -29,6 +29,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-dialog.component';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-domain',
@@ -38,6 +39,8 @@ import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-d
 export class DomainComponent extends EntityComponent<DomainInfo> {
 
   private loginProcessingUrl: string = '';
+
+  entityType = EntityType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -59,8 +62,8 @@ export class DomainComponent extends EntityComponent<DomainInfo> {
     return this.fb.group({
       name: [entity?.name ? entity.name : '', [
         Validators.required, Validators.maxLength(255), Validators.pattern('^(?:\\w+(?::\\w+)?@)?[^\\s/]+(?::\\d+)?$')]],
-      oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : false,
-      oauth2ClientInfos: entity?.oauth2ClientInfos ? entity.oauth2ClientInfos : [],
+      oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : true,
+      oauth2ClientInfos: entity?.oauth2ClientInfos ? entity.oauth2ClientInfos.map(info => info.id.id) : [],
       propagateToEdge: isDefinedAndNotNull(entity?.propagateToEdge) ? entity.propagateToEdge : false
     });
   }
@@ -69,7 +72,7 @@ export class DomainComponent extends EntityComponent<DomainInfo> {
     this.entityForm.patchValue({
       name: entity.name,
       oauth2Enabled: entity.oauth2Enabled,
-      oauth2ClientInfos: entity.oauth2ClientInfos,
+      oauth2ClientInfos: entity.oauth2ClientInfos?.map(info => info.id.id),
       propagateToEdge: entity.propagateToEdge
     })
   }
@@ -84,20 +87,18 @@ export class DomainComponent extends EntityComponent<DomainInfo> {
       $event.stopPropagation();
       $event.preventDefault();
     }
-    button._elementRef.nativeElement.blur();
     this.dialog.open<ClientDialogComponent>(ClientDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {}
     }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
+      .subscribe((client) => {
+        if (client) {
           const formValue = this.entityForm.get('oauth2ClientInfos').value ?
             [...this.entityForm.get('oauth2ClientInfos').value] : [];
-          formValue.push({id: res.id, title: res.title});
+          formValue.push(client.id.id);
           this.entityForm.get('oauth2ClientInfos').patchValue(formValue);
           this.entityForm.get('oauth2ClientInfos').markAsDirty();
-          this.entityForm.updateValueAndValidity();
         }
       });
   }

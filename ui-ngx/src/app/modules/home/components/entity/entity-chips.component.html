@@ -16,7 +16,7 @@
 
 -->
 
-<a *ngFor="let client of clientsEntity?.oauth2ClientInfos" class="tb-client-chip"
-   routerLink="{{clientPrefixUrl}}/{{client.id.id}}" (click)="$event.stopPropagation();">
-  {{ client.title }}
+<a *ngFor="let subEntity of subEntities" class="tb-entity-chip"
+   routerLink="{{entityDetailsPrefixUrl}}/{{subEntity.id.id}}" (click)="$event.stopPropagation();">
+  {{ subEntity.name }}
 </a>

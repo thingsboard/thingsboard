@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject, Optional } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import {
   ClientAuthenticationMethod,
@@ -47,6 +47,7 @@ import { Subscription } from 'rxjs';
 import { MatChipInputEvent } from '@angular/material/chips';
 import { COMMA, ENTER } from '@angular/cdk/keycodes';
 import { PageLink } from '@shared/models/page/page-link';
+import { coerceBoolean } from '@app/shared/decorators/coercion';
 
 @Component({
   selector: 'tb-client',
@@ -54,6 +55,10 @@ import { PageLink } from '@shared/models/page/page-link';
   styleUrls: ['./client.component.scss']
 })
 export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAuth2ClientInfo> {
+
+  @Input()
+  @coerceBoolean()
+  readonly createNewDialog = false;
 
   templateProvider = ['Custom'];
   private templates = new Map<string, OAuth2ClientRegistrationTemplate>();
@@ -98,8 +103,6 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
   platformTypes = Object.values(PlatformType);
   platformTypeTranslations = platformTypeTranslations;
   generalSettingsMode = true;
-
-  readonly isDialog = false;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -173,28 +176,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
         activateUser: entity.mapperConfig.activateUser,
         type: entity.mapperConfig.type
       }
-    }, {emitEvent: false});
-
-    const mapperConfig = this.entityForm.get('mapperConfig') as UntypedFormGroup;
-    if (entity.mapperConfig.basic) {
-      mapperConfig.removeControl('custom', {emitEvent: false});
-      if (mapperConfig.get('basic')) {
-        this.entityForm.get('mapperConfig').patchValue({
-          basic: entity.mapperConfig.basic
-        });
-      } else {
-        mapperConfig.addControl('basic', this.formBasicGroup(entity.mapperConfig.basic));
-      }
-    } else {
-      mapperConfig.removeControl('basic', {emitEvent: false});
-      if (mapperConfig.get('custom')) {
-        this.entityForm.get('mapperConfig').patchValue({
-          custom: entity.mapperConfig.custom
-        });
-      } else {
-        mapperConfig.addControl('custom', this.formCustomGroup(entity.mapperConfig.custom));
-      }
-    }
+    });
 
     const scopeControls = this.entityForm.get('scope') as UntypedFormArray;
     if (entity.scope.length === scopeControls.length) {
@@ -290,7 +272,6 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
   private changeMapperConfigType(control: AbstractControl, type: MapperType, predefinedValue?: OAuth2MapperConfig) {
     const mapperConfig = control.get('mapperConfig') as UntypedFormGroup;
     if (type === MapperType.CUSTOM) {
-      mapperConfig.removeControl('basic');
       mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
     } else {
       mapperConfig.removeControl('custom');
@@ -301,7 +282,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
         mapperConfig.get('basic.emailAttributeKey').disable();
         mapperConfig.get('basic.emailAttributeKey').patchValue(null, {emitEvent: false});
       } else {
-        if (this.isEdit) {
+        if (this.createNewDialog || this.isEdit || this.isAdd) {
           mapperConfig.get('basic.emailAttributeKey').enable();
         }
       }
@@ -316,7 +297,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
       password: [mapperConfigCustom?.password ? mapperConfigCustom.password : null, Validators.maxLength(255)],
       sendToken: [isDefinedAndNotNull(mapperConfigCustom?.sendToken) ? mapperConfigCustom.sendToken : false]
     });
-    if (!this.isEdit) {
+    if (!this.createNewDialog && !(this.isEdit || this.isAdd)) {
       customGroup.disable();
     }
     return customGroup;
@@ -345,7 +326,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
       alwaysFullScreen: [isDefinedAndNotNull(mapperConfigBasic?.alwaysFullScreen) ? mapperConfigBasic.alwaysFullScreen : false]
     });
 
-    if (!this.isEdit) {
+    if (!this.createNewDialog && !(this.isEdit || this.isAdd)) {
       basicGroup.disable();
     }
 

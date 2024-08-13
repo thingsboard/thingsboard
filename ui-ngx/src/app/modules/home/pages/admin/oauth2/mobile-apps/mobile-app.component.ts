@@ -25,10 +25,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { Store } from '@ngrx/store';
 import { UntypedFormBuilder, UntypedFormControl, UntypedFormGroup, Validators } from '@angular/forms';
 import { WINDOW } from '@core/services/window.service';
-import { isDefinedAndNotNull } from '@core/utils';
+import { isDefinedAndNotNull, randomAlphanumeric } from '@core/utils';
 import { MatButton } from '@angular/material/button';
 import { MatDialog } from '@angular/material/dialog';
 import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-dialog.component';
+import { EntityType } from '@shared/models/entity-type.models';
 
 @Component({
   selector: 'tb-mobile-app',
@@ -36,6 +37,8 @@ import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-d
   styleUrls: []
 })
 export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
+
+  entityType = EntityType;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
@@ -52,9 +55,10 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
   buildForm(entity: MobileAppInfo): UntypedFormGroup {
     return this.fb.group({
       pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required]],
-      appSecret: [entity?.appSecret ? entity.appSecret : '', [Validators.required, this.base64Format]],
+      appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)),
+        [Validators.required, this.base64Format]],
       oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : false,
-      oauth2ClientInfos: entity?.oauth2ClientInfos ? entity.oauth2ClientInfos : []
+      oauth2ClientInfos: entity?.oauth2ClientInfos ? entity.oauth2ClientInfos.map(info => info.id.id) : []
     });
   }
 
@@ -63,7 +67,7 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
       pkgName: entity.pkgName,
       appSecret: entity.appSecret,
       oauth2Enabled: entity.oauth2Enabled,
-      oauth2ClientInfos: entity.oauth2ClientInfos
+      oauth2ClientInfos: entity.oauth2ClientInfos?.map(info => info.id.id)
     })
   }
 
@@ -72,20 +76,18 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
       $event.stopPropagation();
       $event.preventDefault();
     }
-    button._elementRef.nativeElement.blur();
     this.dialog.open<ClientDialogComponent>(ClientDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {}
     }).afterClosed()
-      .subscribe((res) => {
-        if (res) {
+      .subscribe((client) => {
+        if (client) {
           const formValue = this.entityForm.get('oauth2ClientInfos').value ?
             [...this.entityForm.get('oauth2ClientInfos').value] : [];
-          formValue.push({id: res.id, title: res.title});
+          formValue.push(client.id.id);
           this.entityForm.get('oauth2ClientInfos').patchValue(formValue);
           this.entityForm.get('oauth2ClientInfos').markAsDirty();
-          this.entityForm.updateValueAndValidity();
         }
       });
   }

@@ -57,13 +57,13 @@
       {{ 'admin.oauth2.enable' | translate }}
     </mat-slide-toggle>
   </div>
-  <tb-client-list formControlName="oauth2ClientInfos">
+  <tb-entity-list [entityType]="entityType.OAUTH2_CLIENT" formControlName="oauth2ClientInfos">
     <button #createTargetButton
             mat-button color="primary" matSuffix
             [disabled]="!isEdit"
             (click)="createClient($event, createTargetButton)">
-      <span style="white-space: nowrap">{{ 'notification.create-new' | translate }}</span>
+      <span style="white-space: nowrap">{{ 'admin.oauth2.create-new' | translate }}</span>
     </button>
-  </tb-client-list>
+  </tb-entity-list>
 </section>
 

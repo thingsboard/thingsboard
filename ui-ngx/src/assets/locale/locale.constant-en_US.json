@@ -243,6 +243,7 @@
           "no-mobile-apps": "Search mobile applications",
           "search-mobile-apps": "No mobile applications found",
           "send-token": "Send token",
+          "create-new": "Create new",
           "client-authentication-method": "Client authentication method",
           "client-id": "Client ID",
           "client-id-required": "Client ID is required.",

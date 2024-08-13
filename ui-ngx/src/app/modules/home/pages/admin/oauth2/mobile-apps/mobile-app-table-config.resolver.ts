@@ -18,9 +18,9 @@ import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import {
   CellActionDescriptorType,
-  ClientChipsEntityTableColumn,
   DateEntityTableColumn,
   EntityActionTableColumn,
+  EntityChipsEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -45,7 +45,6 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
               private utilsService: UtilsService,
               private mobileAppService: MobileAppService) {
     this.config.tableTitle = this.translate.instant('admin.oauth2.mobile-apps');
-    this.config.hideTableTitle = true;
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.MOBILE_APP;
     this.config.rowPointer = true;
@@ -53,8 +52,7 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
     this.config.entityResources = entityTypeResources.get(EntityType.MOBILE_APP);
     this.config.entityComponent = MobileAppComponent;
     this.config.headerComponent = MobileAppTableHeaderComponent;
-    this.config.hideDetailsTabs = true;
-    this.config.addDialogStyle = {width: '850px', height: '688px'};
+    this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
     this.config.displayPagination = false;
     this.config.pageMode = false;
@@ -77,7 +75,7 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
           onAction: ($event, entity) => entity.appSecret,
           type: CellActionDescriptorType.COPY_BUTTON
         }),
-      new ClientChipsEntityTableColumn<MobileAppInfo>('oauth2ClientInfos', 'admin.oauth2.clients', '20%'),
+      new EntityChipsEntityTableColumn<MobileAppInfo>('oauth2ClientInfos', 'admin.oauth2.clients', '20%'),
       new EntityActionTableColumn('oauth2Enabled', 'admin.oauth2.enable',
         {
           name: '',
@@ -94,9 +92,9 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
     this.config.deleteEntityContent = () => this.translate.instant('admin.oauth2.delete-mobile-app-text');
     this.config.entitiesFetchFunction = pageLink => this.mobileAppService.getTenantMobileAppInfos(pageLink);
     this.config.loadEntity = id => this.mobileAppService.getMobileAppInfoById(id.id);
-    this.config.saveEntity = (mobileApp, originalEntity) => {
-      const clientsIds = mobileApp.oauth2ClientInfos ? mobileApp.oauth2ClientInfos.map(clientInfo => clientInfo.id.id) : [];
-      if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos, originalEntity.oauth2ClientInfos)) {
+    this.config.saveEntity = (mobileApp, originalMobileApp) => {
+      const clientsIds = mobileApp.oauth2ClientInfos as Array<string>;
+      if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos.sort(), originalMobileApp.oauth2ClientInfos.map(info => info.id.id).sort())) {
         this.mobileAppService.updateOauth2Clients(mobileApp.id.id, clientsIds).subscribe();
       }
       delete mobileApp.oauth2ClientInfos;

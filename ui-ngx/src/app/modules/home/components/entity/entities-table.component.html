@@ -38,9 +38,7 @@
         <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode && dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
             <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
-              <span *ngIf="!entitiesTableConfig.hideTableTitle && entitiesTableConfig.tableTitle" class="tb-entity-table-title">
-                {{ entitiesTableConfig.tableTitle }}
-              </span>
+              <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
               <tb-anchor #entityTableHeader></tb-anchor>
               <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
                               (ngModelChange)="onTimewindowChange()"
@@ -173,8 +171,8 @@
                        [routerLink]="detailsPageURL" [innerHTML]="cellContent(entity, column, row)"
                        (click)="$event.stopPropagation();"></a>
                   </ng-template>
-                  <ng-template [ngSwitchCase]="'clients'">
-                    <tb-client-chips [clientsEntity]="entity"></tb-client-chips>
+                  <ng-template [ngSwitchCase]="'entityChips'">
+                    <tb-entity-chips [entity]="entity"></tb-entity-chips>
                   </ng-template>
                   <ng-template #defaultContent ngSwitchDefault>
                     <span [innerHTML]="cellContent(entity, column, row)"></span>

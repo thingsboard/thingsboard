@@ -609,7 +609,9 @@ export const baseDetailsPageByEntityType = new Map<EntityType, string>([
   [EntityType.QUEUE, '/settings/queues'],
   [EntityType.WIDGETS_BUNDLE, '/resources/widgets-library/widgets-bundles/details'],
   [EntityType.WIDGET_TYPE, '/resources/widgets-library/widget-types/details'],
-  [EntityType.OAUTH2_CLIENT, '/security-settings/oauth2/clients/details']
+  [EntityType.OAUTH2_CLIENT, '/security-settings/oauth2/clients/details'],
+  [EntityType.DOMAIN, '/security-settings/oauth2/clients/details'],
+  [EntityType.MOBILE_APP, '/security-settings/oauth2/clients/details']
 ]);
 
 export interface EntitySubtype {

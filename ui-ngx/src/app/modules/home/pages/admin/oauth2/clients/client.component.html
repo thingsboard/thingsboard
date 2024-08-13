@@ -162,7 +162,7 @@
           <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
             <mat-form-field class="flex">
               <mat-label translate>admin.oauth2.scope</mat-label>
-              <mat-chip-grid #scopeList [disabled]="!isEdit">
+              <mat-chip-grid #scopeList [disabled]="!this.createNewDialog && !(this.isEdit || this.isAdd)">
                 <mat-chip-row *ngFor="let scope of entityForm.get('scope').value; let k = index; trackBy: trackByParams"
                               removable (removed)="removeScope(k, entityForm)">
                   {{scope}}
@@ -239,7 +239,7 @@
               </div>
               <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
                 <mat-form-field class="flex">
-                  <mat-label translate>admin.oauth2.first-name-attribute-key</mat-label>
+                  <mat-label translate>admin.oauth2.tenant-name-strategy</mat-label>
                   <mat-select formControlName="tenantNameStrategy">
                     <mat-option *ngFor="let tenantNameStrategy of tenantNameStrategies"
                                 [value]="tenantNameStrategy">

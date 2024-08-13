@@ -81,11 +81,11 @@ export interface Domain extends BaseData<DomainId>, HasTenantId {
 }
 
 export interface HasOauth2Clients {
-  oauth2ClientInfos?: Array<OAuth2ClientInfo>;
+  oauth2ClientInfos?: Array<OAuth2ClientInfo> | Array<string>;
 }
 
 export interface DomainInfo extends Domain, HasOauth2Clients {
-  oauth2ClientInfos?: Array<OAuth2ClientInfo>;
+  oauth2ClientInfos?: Array<OAuth2ClientInfo> | Array<string>;
 }
 
 export interface MobileApp extends BaseData<MobileAppId>, HasTenantId {
@@ -96,7 +96,7 @@ export interface MobileApp extends BaseData<MobileAppId>, HasTenantId {
 }
 
 export interface MobileAppInfo extends MobileApp, HasOauth2Clients {
-  oauth2ClientInfos?: Array<OAuth2ClientInfo>;
+  oauth2ClientInfos?: Array<OAuth2ClientInfo> | Array<string>;
 }
 
 export interface OAuth2Client extends BaseData<OAuth2ClientId>, HasTenantId {
@@ -167,6 +167,7 @@ export const platformTypeTranslations = new Map<PlatformType, string>(
 
 export interface OAuth2ClientInfo extends BaseData<OAuth2ClientId> {
   title: string;
+  providerName: string;
   platforms?: Array<PlatformType>;
 }
 

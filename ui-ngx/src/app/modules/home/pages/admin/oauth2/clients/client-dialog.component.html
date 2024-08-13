@@ -30,7 +30,7 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content style="padding: 0">
-    <tb-client #clientComponent></tb-client>
+    <tb-client createNewDialog #clientComponent></tb-client>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"

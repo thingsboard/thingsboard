@@ -22,7 +22,6 @@ import { HomeComponentsModule } from '@home/components/home-components.module';
 import { CommonModule } from '@angular/common';
 import { ClientTableHeaderComponent } from '@home/pages/admin/oauth2/clients/client-table-header.component';
 import { DomainComponent } from '@home/pages/admin/oauth2/domains/domain.component';
-import { ClientListComponent } from '@home/pages/admin/oauth2/clients/client-list.component';
 import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-dialog.component';
 import { DomainTableHeaderComponent } from '@home/pages/admin/oauth2/domains/domain-table-header.component';
 import { MobileAppComponent } from '@home/pages/admin/oauth2/mobile-apps/mobile-app.component';
@@ -32,7 +31,6 @@ import { MobileAppTableHeaderComponent } from '@home/pages/admin/oauth2/mobile-a
   declarations: [
     ClientComponent,
     ClientDialogComponent,
-    ClientListComponent,
     ClientTableHeaderComponent,
     DomainComponent,
     DomainTableHeaderComponent,

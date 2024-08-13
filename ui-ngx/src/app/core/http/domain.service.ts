@@ -37,8 +37,8 @@ export class DomainService {
       domain, defaultHttpOptionsFromConfig(config));
   }
 
-  public updateOauth2Clients(id: string, oauth2ClientRegistrationIds: Array<string>, config?: RequestConfig): Observable<void> {
-    return this.http.put<void>(`/api/domain/${id}/oauth2Clients`, oauth2ClientRegistrationIds, defaultHttpOptionsFromConfig(config));
+  public updateOauth2Clients(id: string, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<void> {
+    return this.http.put<void>(`/api/domain/${id}/oauth2Clients`, oauth2ClientIds, defaultHttpOptionsFromConfig(config));
   }
 
   public getTenantDomainInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<DomainInfo>> {

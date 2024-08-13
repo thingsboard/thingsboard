@@ -17,9 +17,9 @@
 import { Injectable } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
 import {
-  ClientChipsEntityTableColumn,
   DateEntityTableColumn,
   EntityActionTableColumn,
+  EntityChipsEntityTableColumn,
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
@@ -44,7 +44,6 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
               private utilsService: UtilsService,
               private domainService: DomainService) {
     this.config.tableTitle = this.translate.instant('admin.oauth2.domains');
-    this.config.hideTableTitle = true;
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.DOMAIN;
     this.config.rowPointer = true;
@@ -52,8 +51,7 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.entityResources = entityTypeResources.get(EntityType.DOMAIN);
     this.config.entityComponent = DomainComponent;
     this.config.headerComponent = DomainTableHeaderComponent;
-    this.config.hideDetailsTabs = true;
-    this.config.addDialogStyle = {width: '850px', height: '688px'};
+    this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
     this.config.displayPagination = false;
     this.config.pageMode = false;
@@ -61,14 +59,14 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.columns.push(
       new DateEntityTableColumn<DomainInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
       new EntityTableColumn<DomainInfo>('name', 'admin.oauth2.domain-name', '170px'),
-      new ClientChipsEntityTableColumn<DomainInfo>('oauth2ClientInfos', 'admin.oauth2.clients', '40%'),
+      new EntityChipsEntityTableColumn<DomainInfo>('oauth2ClientInfos', 'admin.oauth2.clients', '40%'),
       new EntityActionTableColumn('oauth2Enabled', 'admin.oauth2.enable',
         {
           name: '',
           nameFunction: (domain) =>
             this.translate.instant(domain.oauth2Enabled ? 'admin.oauth2.disable' : 'admin.oauth2.enable'),
           icon: 'mdi:toggle-switch',
-          iconFunction: (entity) => entity.oauth2Enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
+          iconFunction: (domain) => domain.oauth2Enabled ? 'mdi:toggle-switch' : 'mdi:toggle-switch-off-outline',
           isEnabled: () => true,
           onAction: ($event, entity) => this.toggleEnableOAuth($event, entity)
         }),
@@ -88,9 +86,9 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.deleteEntityContent = () => this.translate.instant('admin.oauth2.delete-domain-text');
     this.config.entitiesFetchFunction = pageLink => this.domainService.getTenantDomainInfos(pageLink);
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
-    this.config.saveEntity = (domain, originalEntity) => {
-      const clientsIds = domain.oauth2ClientInfos ? domain.oauth2ClientInfos.map(clientInfo => clientInfo.id.id) : [];
-      if (domain.id && !isEqual(domain.oauth2ClientInfos, originalEntity.oauth2ClientInfos)) {
+    this.config.saveEntity = (domain, originalDomain) => {
+      const clientsIds = domain.oauth2ClientInfos as Array<string>;
+      if (domain.id && !isEqual(domain.oauth2ClientInfos.sort(), originalDomain.oauth2ClientInfos.map(info => info.id.id).sort())) {
         this.domainService.updateOauth2Clients(domain.id.id, clientsIds).subscribe();
       }
       delete domain.oauth2ClientInfos;

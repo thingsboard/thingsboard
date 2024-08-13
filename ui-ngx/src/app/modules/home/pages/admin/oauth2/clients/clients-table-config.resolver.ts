@@ -47,7 +47,6 @@ export class ClientsTableConfigResolver implements Resolve<EntityTableConfig<OAu
               private utilsService: UtilsService,
               private oauth2Service: OAuth2Service) {
     this.config.tableTitle = this.translate.instant('admin.oauth2.clients');
-    this.config.hideTableTitle = true;
     this.config.selectionEnabled = false;
     this.config.entityType = EntityType.OAUTH2_CLIENT;
     this.config.rowPointer = true;
@@ -60,7 +59,6 @@ export class ClientsTableConfigResolver implements Resolve<EntityTableConfig<OAu
     };
     this.config.entityComponent = ClientComponent;
     this.config.headerComponent = ClientTableHeaderComponent;
-    this.config.hideDetailsTabs = true;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
     this.config.displayPagination = false;
@@ -68,7 +66,8 @@ export class ClientsTableConfigResolver implements Resolve<EntityTableConfig<OAu
 
     this.config.columns.push(
       new DateEntityTableColumn<OAuth2ClientInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
-      new EntityTableColumn<OAuth2ClientInfo>('title', 'admin.oauth2.provider', '170px'),
+      new EntityTableColumn<OAuth2ClientInfo>('title', 'admin.oauth2.title', '170px'),
+      new EntityTableColumn<OAuth2ClientInfo>('providerName', 'admin.oauth2.provider', '170px'),
       new EntityTableColumn<OAuth2ClientInfo>('platforms', 'admin.oauth2.allowed-platforms', '100%',
         (clientInfo) => {
           return clientInfo.platforms && clientInfo.platforms.length ?
