@@ -28,8 +28,10 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -42,6 +44,7 @@ import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvQuery;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.page.SortOrder.Direction;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -64,7 +67,7 @@ import static org.mockito.BDDMockito.then;
 import static org.mockito.BDDMockito.willReturn;
 
 @ExtendWith(MockitoExtension.class)
-public class TbGetTelemetryNodeTest {
+public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("5738401b-9dba-422b-b656-a62fe7431917"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("8a8fd749-b2ec-488b-a6c6-fc66614d8686"));
@@ -88,7 +91,7 @@ public class TbGetTelemetryNodeTest {
 
     @Test
     public void givenAggregationAsString_whenParseAggregation_thenReturnEnum() throws TbNodeException {
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
+        config.setFetchMode(FetchMode.ALL);
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         //compatibility with old configs without "aggregation" parameter
@@ -112,7 +115,7 @@ public class TbGetTelemetryNodeTest {
     @Test
     public void givenAggregationWhiteSpace_whenParseAggregation_thenException() throws TbNodeException {
         // GIVEN
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
+        config.setFetchMode(FetchMode.ALL);
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         // WHEN-THEN
@@ -122,7 +125,7 @@ public class TbGetTelemetryNodeTest {
     @Test
     public void givenAggregationIncorrect_whenParseAggregation_thenException() throws TbNodeException {
         // GIVEN
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
+        config.setFetchMode(FetchMode.ALL);
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
         // WHEN-THEN
@@ -139,8 +142,8 @@ public class TbGetTelemetryNodeTest {
         assertThat(config.isUseMetadataIntervalPatterns()).isFalse();
         assertThat(config.getStartIntervalTimeUnit()).isEqualTo(TimeUnit.MINUTES.name());
         assertThat(config.getEndIntervalTimeUnit()).isEqualTo(TimeUnit.MINUTES.name());
-        assertThat(config.getFetchMode()).isEqualTo(TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST);
-        assertThat(config.getOrderBy()).isEqualTo("ASC");
+        assertThat(config.getFetchMode()).isEqualTo(FetchMode.FIRST);
+        assertThat(config.getOrderBy()).isEqualTo(Direction.ASC);
         assertThat(config.getAggregation()).isEqualTo(Aggregation.NONE.name());
         assertThat(config.getLimit()).isEqualTo(1000);
         assertThat(config.getLatestTsKeyNames()).isEmpty();
@@ -159,33 +162,44 @@ public class TbGetTelemetryNodeTest {
                 .isEqualTo(true);
     }
 
+    @Test
+    public void givenFetchModeIsNull_whenInit_thenThrowsException() {
+        // GIVEN
+        config.setFetchMode(null);
+
+        // WHEN-THEN
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("FetchMode should be specified!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
+    public void givenFetchModeAllAndOrderByIsNull_whenInit_thenThrowsException() {
+        // GIVEN
+        config.setFetchMode(FetchMode.ALL);
+        config.setOrderBy(null);
+
+        // THEN
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("OrderBy should be specified!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
     @ParameterizedTest
     @ValueSource(ints = {-1, 0, 1, 1001, 2000})
     public void givenFetchModeAllAndLimitIsOutOfRange_whenInit_thenThrowsException(int limit) {
         // GIVEN
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
+        config.setFetchMode(FetchMode.ALL);
         config.setLimit(limit);
 
         // THEN
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Limit should be in a range from 2 to 1000.")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
-    }
-
-    @ParameterizedTest
-    @ValueSource(strings = {".ASC", "ascending", "DESCENDING"})
-    public void givenFetchModeAllAndInvalidOrderBy_whenInit_thenThrowsException(String orderBy) {
-        // GIVEN
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
-        config.setLimit(2);
-        config.setOrderBy(orderBy);
-
-        // WHEN-THEN
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Invalid fetch order selected.")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
                 .isEqualTo(true);
     }
@@ -269,7 +283,7 @@ public class TbGetTelemetryNodeTest {
         // GIVEN
         config.setStartInterval(5);
         config.setEndInterval(1);
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
+        config.setFetchMode(FetchMode.ALL);
         config.setAggregation(aggregation);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -297,7 +311,7 @@ public class TbGetTelemetryNodeTest {
 
     @ParameterizedTest
     @MethodSource
-    public void givenFetchModeAndLimit_whenOnMsg_thenVerifyLimitInQuery(String fetchMode, int limit, Consumer<ReadTsKvQuery> verifyLimitInQuery) throws TbNodeException {
+    public void givenFetchModeAndLimit_whenOnMsg_thenVerifyLimitInQuery(FetchMode fetchMode, int limit, Consumer<ReadTsKvQuery> verifyLimitInQuery) throws TbNodeException {
         // GIVEN
         config.setFetchMode(fetchMode);
         config.setLimit(limit);
@@ -321,15 +335,15 @@ public class TbGetTelemetryNodeTest {
     private static Stream<Arguments> givenFetchModeAndLimit_whenOnMsg_thenVerifyLimitInQuery() {
         return Stream.of(
                 Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL,
+                        FetchMode.ALL,
                         5,
                         (Consumer<ReadTsKvQuery>) query -> assertThat(query.getLimit()).isEqualTo(5)),
                 Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST,
+                        FetchMode.FIRST,
                         TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE,
                         (Consumer<ReadTsKvQuery>) query -> assertThat(query.getLimit()).isEqualTo(1)),
                 Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_LAST,
+                        FetchMode.LAST,
                         10,
                         (Consumer<ReadTsKvQuery>) query -> assertThat(query.getLimit()).isEqualTo(1))
         );
@@ -337,7 +351,7 @@ public class TbGetTelemetryNodeTest {
 
     @ParameterizedTest
     @MethodSource
-    public void givenFetchModeAndOrder_whenOnMsg_thenVerifyOrderInQuery(String fetchMode, String orderBy, Consumer<ReadTsKvQuery> verifyOrderInQuery) throws TbNodeException {
+    public void givenFetchModeAndOrder_whenOnMsg_thenVerifyOrderInQuery(FetchMode fetchMode, Direction orderBy, Consumer<ReadTsKvQuery> verifyOrderInQuery) throws TbNodeException {
         // GIVEN
         config.setFetchMode(fetchMode);
         config.setOrderBy(orderBy);
@@ -361,20 +375,16 @@ public class TbGetTelemetryNodeTest {
     private static Stream<Arguments> givenFetchModeAndOrder_whenOnMsg_thenVerifyOrderInQuery() {
         return Stream.of(
                 Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL,
-                        "",
-                        (Consumer<ReadTsKvQuery>) query -> assertThat(query.getOrder()).isEqualTo("ASC")),
-                Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL,
-                        "DESC",
+                        FetchMode.ALL,
+                        Direction.DESC,
                         (Consumer<ReadTsKvQuery>) query -> assertThat(query.getOrder()).isEqualTo("DESC")),
                 Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST,
-                        "ASC",
+                        FetchMode.FIRST,
+                        Direction.ASC,
                         (Consumer<ReadTsKvQuery>) query -> assertThat(query.getOrder()).isEqualTo("ASC")),
                 Arguments.of(
-                        TbGetTelemetryNodeConfiguration.FETCH_MODE_LAST,
-                        "ASC",
+                        FetchMode.LAST,
+                        Direction.ASC,
                         (Consumer<ReadTsKvQuery>) query -> assertThat(query.getOrder()).isEqualTo("DESC"))
         );
     }
@@ -403,7 +413,7 @@ public class TbGetTelemetryNodeTest {
     public void givenFetchModeAll_whenOnMsg_thenTellSuccessAndVerifyMsg() throws TbNodeException {
         // GIVEN
         config.setLatestTsKeyNames(List.of("temperature", "humidity"));
-        config.setFetchMode(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL);
+        config.setFetchMode(FetchMode.ALL);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -434,7 +444,7 @@ public class TbGetTelemetryNodeTest {
     @ValueSource(strings = {"FIRST", "LAST"})
     public void givenFetchMode_whenOnMsg_thenTellSuccessAndVerifyMsg(String fetchMode) throws TbNodeException {
         // GIVEN
-        config.setFetchMode(fetchMode);
+        config.setFetchMode(FetchMode.valueOf(fetchMode));
         config.setLatestTsKeyNames(List.of("temperature", "humidity"));
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
@@ -467,4 +477,87 @@ public class TbGetTelemetryNodeTest {
         given(ctxMock.getDbCallbackExecutor()).willReturn(executor);
     }
 
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // config for version 0 (orderBy id null)
+                Arguments.of(0,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [
+                                                  ],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "ALL",
+                                                  "orderBy": null,
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """,
+                        true,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [
+                                                  ],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "ALL",
+                                                  "orderBy": "ASC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """),
+                // config for version 0 (orderBy is specified)
+                Arguments.of(0,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [
+                                                  ],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "ALL",
+                                                  "orderBy": "DESC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """,
+                        false,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [
+                                                  ],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "ALL",
+                                                  "orderBy": "DESC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """)
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
+    }
 }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -35,7 +36,9 @@ import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.SortOrder.Direction;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -50,6 +53,7 @@ import java.util.stream.Collectors;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
         nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
                 "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
@@ -59,14 +63,11 @@ import java.util.stream.Collectors;
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
 
-    private static final String DESC_ORDER = "DESC";
-    private static final String ASC_ORDER = "ASC";
-
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
-    private String fetchMode;
-    private String orderBy;
+    private FetchMode fetchMode;
+    private Direction orderBy;
     private Aggregation aggregation;
 
     @Override
@@ -76,14 +77,17 @@ public class TbGetTelemetryNode implements TbNode {
         if (tsKeyNames.isEmpty()) {
             throw new TbNodeException("Telemetry is not selected!", true);
         }
-        limit = config.getFetchMode().equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
+        if (config.getFetchMode() == null) {
+            throw new TbNodeException("FetchMode should be specified!", true);
+        }
+        limit = FetchMode.ALL.equals(config.getFetchMode()) ? validateLimit(config.getLimit()) : 1;
         fetchMode = config.getFetchMode();
         orderBy = getOrderBy();
         aggregation = parseAggregationConfig(config.getAggregation());
     }
 
     Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL)) {
+        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FetchMode.ALL)) {
             return Aggregation.NONE;
         }
         return Aggregation.valueOf(aggName);
@@ -107,35 +111,29 @@ public class TbGetTelemetryNode implements TbNode {
                 interval.getEndTs() - interval.getStartTs();
 
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, orderBy))
+                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, orderBy.name()))
                 .collect(Collectors.toList());
     }
 
-    private String getOrderBy() throws TbNodeException {
+    private Direction getOrderBy() throws TbNodeException {
         switch (fetchMode) {
-            case TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL:
-                return getOrderByFetchAll();
-            case TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST:
-                return ASC_ORDER;
+            case ALL:
+                if (config.getOrderBy() == null) {
+                    throw new TbNodeException("OrderBy should be specified!", true);
+                }
+                return config.getOrderBy();
+            case FIRST:
+                return Direction.ASC;
+            case LAST:
+                return Direction.DESC;
             default:
-                return DESC_ORDER;
+                throw new TbNodeException("FetchMode '" + fetchMode + "' is not supported.", true);
         }
-    }
-
-    private String getOrderByFetchAll() throws TbNodeException {
-        String orderBy = config.getOrderBy();
-        if (ASC_ORDER.equals(orderBy) || DESC_ORDER.equals(orderBy)) {
-            return orderBy;
-        }
-        if (StringUtils.isBlank(orderBy)) {
-            return ASC_ORDER;
-        }
-        throw new TbNodeException("Invalid fetch order selected.", true);
     }
 
     private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
         ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
-        if (TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL.equals(fetchMode)) {
+        if (FetchMode.ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
@@ -229,6 +227,20 @@ public class TbGetTelemetryNode implements TbNode {
     private static class Interval {
         private Long startTs;
         private Long endTs;
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0 -> {
+                if (oldConfiguration.has("orderBy") && oldConfiguration.get("orderBy").isNull()) {
+                    ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
+                    hasChanges = true;
+                }
+            }
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }
