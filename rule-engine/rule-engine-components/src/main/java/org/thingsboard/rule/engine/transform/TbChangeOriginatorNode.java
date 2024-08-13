@@ -103,11 +103,13 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     }
 
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {
-        if (conf.getOriginatorSource().equals(RELATED)) {
-            if (conf.getRelationsQuery() == null) {
-                log.debug("Relations query should be specified if 'Related entity' source is selected.");
-                throw new IllegalArgumentException("Relations query should be specified if 'Related entity' source is selected.");
-            }
+        if (conf.getOriginatorSource() == null) {
+            log.debug("Originator source should be specified.");
+            throw new IllegalArgumentException("Originator source should be specified.");
+        }
+        if (conf.getOriginatorSource().equals(RELATED) && conf.getRelationsQuery() == null) {
+            log.debug("Relations query should be specified if 'Related entity' source is selected.");
+            throw new IllegalArgumentException("Relations query should be specified if 'Related entity' source is selected.");
         }
         if (conf.getOriginatorSource().equals(ENTITY)) {
             if (conf.getEntityType() == null) {
