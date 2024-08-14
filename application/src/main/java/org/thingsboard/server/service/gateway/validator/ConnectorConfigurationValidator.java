@@ -26,8 +26,8 @@ import jakarta.validation.Validator;
 import jakarta.validation.ValidatorFactory;
 import org.thingsboard.server.common.data.gateway.ConnectorType;
 import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecord;
-import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationResult;
 import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecordType;
+import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationResult;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -48,11 +48,10 @@ public abstract class ConnectorConfigurationValidator {
 
         T configuration = null;
         List<GatewayConnectorValidationRecord> errors = new ArrayList<>();
-        TrackingDeserializer<T> deserializer = null;
+        FieldLocationTrackingParser trackingParser = null;
         try {
-            FieldLocationTrackingParser trackingParser = new FieldLocationTrackingParser(mapper.createParser(connectorConfiguration));
-            deserializer = new TrackingDeserializer<>(configClass, trackingParser);
-            configuration = deserializer.deserialize(trackingParser, mapper.getDeserializationContext());
+            trackingParser = new FieldLocationTrackingParser(mapper.createParser(connectorConfiguration));
+            configuration = mapper.readValue(trackingParser, configClass);
         } catch (IllegalArgumentException e) {
             Throwable cause = e.getCause();
             if (cause instanceof InvalidFormatException) {
@@ -72,15 +71,16 @@ public abstract class ConnectorConfigurationValidator {
             Set<ConstraintViolation<T>> violations = validator.validate(configuration);
 
             if (!violations.isEmpty()) {
-                Map<String, JsonLocation> finalFieldLocations = deserializer.getFieldLocations();
+                Map<String, JsonLocation> finalFieldLocations = trackingParser.getFieldLocations();
                 errors.addAll(violations.stream()
                         .map(violation -> {
                             String path = "." + violation.getPropertyPath().toString()
                                     .replace("[", "/")
                                     .replace("]", "")
                                     .replace("/", ".");
-                            int lineNumber = 0;
-                            int columnNumber = 0;
+                            String message = "\"" + path.substring(path.lastIndexOf(".") + 1) + "\" " + violation.getMessage();
+                            int lineNumber = 1;
+                            int columnNumber = 1;
                             if (finalFieldLocations != null) {
                                 JsonLocation location = finalFieldLocations.getOrDefault(path,
                                         finalFieldLocations.get(path.substring(0, path.lastIndexOf('.'))));
@@ -89,7 +89,7 @@ public abstract class ConnectorConfigurationValidator {
                                     columnNumber = location.getColumnNr();
                                 }
                             }
-                            return new GatewayConnectorValidationRecord(violation.getMessage(),
+                            return new GatewayConnectorValidationRecord(message,
                                     lineNumber, columnNumber, GatewayConnectorValidationRecordType.ERROR);
                         })
                         .toList());

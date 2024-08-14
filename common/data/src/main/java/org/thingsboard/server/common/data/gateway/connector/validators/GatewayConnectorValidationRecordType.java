@@ -15,7 +15,14 @@
  */
 package org.thingsboard.server.common.data.gateway.connector.validators;
 
+import com.fasterxml.jackson.annotation.JsonValue;
+
 public enum GatewayConnectorValidationRecordType {
     ERROR,
-    WARNING
+    WARNING;
+
+    @JsonValue
+    public String getValue() {
+        return this.name().toLowerCase();
+    }
 }
