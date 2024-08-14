@@ -53,6 +53,7 @@ export class DomainComponent extends EntityComponent<DomainInfo> {
               private dialog: MatDialog) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
     this.entityForm.get('name').setValue(this.window.location.hostname);
+    this.entityForm.markAsDirty();
     this.oauth2Service.getLoginProcessingUrl().subscribe(url => {
       this.loginProcessingUrl = url;
     });

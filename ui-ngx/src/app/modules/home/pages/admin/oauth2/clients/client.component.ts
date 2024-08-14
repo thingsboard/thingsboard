@@ -176,7 +176,9 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
         activateUser: entity.mapperConfig.activateUser,
         type: entity.mapperConfig.type
       }
-    });
+    }, {emitEvent: false});
+
+    this.changeMapperConfigType(this.entityForm, this.entityValue.mapperConfig.type, this.entityValue.mapperConfig);
 
     const scopeControls = this.entityForm.get('scope') as UntypedFormArray;
     if (entity.scope.length === scopeControls.length) {
@@ -252,12 +254,8 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
     this.entityForm.get('additionalInfo.providerName').setValue(additionalInfo?.providerName ?
       additionalInfo?.providerName : defaultProviderName);
 
-    if (this.entityValue?.mapperConfig) {
-      this.changeMapperConfigType(this.entityForm, this.entityValue.mapperConfig.type, this.entityValue.mapperConfig);
-    } else {
-      this.changeMapperConfigType(this.entityForm, MapperType.BASIC);
-      this.setProviderDefaultValue(defaultProviderName, this.entityForm);
-    }
+    this.changeMapperConfigType(this.entityForm, MapperType.BASIC);
+    this.setProviderDefaultValue(defaultProviderName, this.entityForm);
 
     this.subscriptions.push(this.entityForm.get('mapperConfig.type').valueChanges.subscribe((value) => {
       this.changeMapperConfigType(this.entityForm, value);
@@ -272,11 +270,14 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
   private changeMapperConfigType(control: AbstractControl, type: MapperType, predefinedValue?: OAuth2MapperConfig) {
     const mapperConfig = control.get('mapperConfig') as UntypedFormGroup;
     if (type === MapperType.CUSTOM) {
+      mapperConfig.removeControl('basic');
       mapperConfig.addControl('custom', this.formCustomGroup(predefinedValue?.custom));
     } else {
       mapperConfig.removeControl('custom');
       if (!mapperConfig.get('basic')) {
         mapperConfig.addControl('basic', this.formBasicGroup(predefinedValue?.basic));
+      } else if (predefinedValue?.basic) {
+        mapperConfig.get('basic').patchValue(predefinedValue.basic, {emitEvent: false});
       }
       if (type === MapperType.GITHUB) {
         mapperConfig.get('basic.emailAttributeKey').disable();
