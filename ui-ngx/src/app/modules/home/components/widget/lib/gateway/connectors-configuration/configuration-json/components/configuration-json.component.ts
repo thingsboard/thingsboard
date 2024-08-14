@@ -67,8 +67,8 @@ export class ConfigurationJsonComponent extends JsonObjectEditComponent implemen
   @Input() connectorType: ConnectorType;
   @Input() deviceId: string;
 
-  annotations: CustomAnnotation[] = [];
-  annotationChanged = false;
+  private annotations: CustomAnnotation[] = [];
+  private annotationChanged = false;
 
   constructor(
     injector: Injector,
@@ -94,11 +94,7 @@ export class ConfigurationJsonComponent extends JsonObjectEditComponent implemen
   }
 
   override validate(): Observable<ValidationErrors | null> {
-    const value = JSON.parse(this.contentValue);
-    if (isEqual(value, {})) {
-      return of(null);
-    }
-    return this.configurationValidateService.validateConfiguration(this.deviceId, this.connectorType, value)
+    return this.configurationValidateService.validateConfiguration(this.deviceId, this.connectorType, this.contentValue)
       .pipe(
         take(1),
         map(() => this.objectValid ? null : {jsonParseError: {valid: false}}),
@@ -106,10 +102,9 @@ export class ConfigurationJsonComponent extends JsonObjectEditComponent implemen
           this.annotations = [];
           this.annotationChanged = true;
         }),
-        catchError((error) => {
+        catchError(validationWithErrors => {
           this.annotations =
-            error.error.annotations?.map((annotation: CustomAnnotation) =>
-              ({ ...annotation, type: annotation.type.toLowerCase(), custom: true })) ?? [];
+            validationWithErrors.error.annotations?.map((annotation: CustomAnnotation) => ({ ...annotation, custom: true })) ?? [];
           this.annotationChanged = true;
 
           return of({jsonParseError: {valid: false}});

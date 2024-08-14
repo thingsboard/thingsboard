@@ -15,7 +15,7 @@ export class ConfigurationValidateService {
   validateConfiguration(
     gatewayDeviceId: string,
     connectorType: string,
-    connectorConfig: ConnectorBaseConfig
+    connectorConfig: string
   ): Observable<ConnectorConfigValidation> {
     const url = `/api/gateway/${gatewayDeviceId}/configuration/${connectorType}/validate`;
     return this.http.post(
