@@ -178,10 +178,8 @@ export interface OAuth2ClientLoginInfo {
 }
 
 export function getProviderHelpLink(provider: Provider): string {
-  if (provider) {
-    if (providerHelpLinkMap.has(provider)) {
-      return providerHelpLinkMap.get(provider);
-    }
+  if (providerHelpLinkMap.has(provider)) {
+    return providerHelpLinkMap.get(provider);
   }
   return 'oauth2Settings';
 }
