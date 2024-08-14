@@ -243,8 +243,8 @@ public class TelemetryController extends BaseController {
                 (result, tenantId, entityId) -> getAttributeValuesCallback(result, user, entityId, scope, keysStr));
     }
 
-    @ApiOperation(value = "Get time-series keys (getTimeseriesKeys)",
-            notes = "Returns a set of unique time-series key names for the selected entity. " +
+    @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
+            notes = "Returns a set of unique time series key names for the selected entity. " +
                     "\n\n" + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/keys/timeseries", method = RequestMethod.GET)
@@ -256,10 +256,10 @@ public class TelemetryController extends BaseController {
                 (result, tenantId, entityId) -> Futures.addCallback(tsService.findAllLatest(tenantId, entityId), getTsKeysToResponseCallback(result), MoreExecutors.directExecutor()));
     }
 
-    @ApiOperation(value = "Get latest time-series value (getLatestTimeseries)",
-            notes = "Returns all time-series that belong to specified entity. Use optional 'keys' parameter to return specific time-series." +
+    @ApiOperation(value = "Get latest time series value (getLatestTimeseries)",
+            notes = "Returns all time series that belong to specified entity. Use optional 'keys' parameter to return specific time series." +
                     " The result is a JSON object. The format of the values depends on the 'useStrictDataTypes' parameter." +
-                    " By default, all time-series values are converted to strings: \n\n"
+                    " By default, all time series values are converted to strings: \n\n"
                     + MARKDOWN_CODE_BLOCK_START
                     + LATEST_TS_NON_STRICT_DATA_EXAMPLE
                     + MARKDOWN_CODE_BLOCK_END
@@ -282,8 +282,8 @@ public class TelemetryController extends BaseController {
                 (result, tenantId, entityId) -> getLatestTimeseriesValuesCallback(result, user, entityId, keysStr, useStrictDataTypes));
     }
 
-    @ApiOperation(value = "Get time-series data (getTimeseries)",
-            notes = "Returns a range of time-series values for specified entity. " +
+    @ApiOperation(value = "Get time series data (getTimeseries)",
+            notes = "Returns a range of time series values for specified entity. " +
                     "Returns not aggregated data by default. " +
                     "Use aggregation function ('agg') and aggregation interval ('interval') to enable aggregation of the results on the database / server side. " +
                     "The aggregation is generally more efficient then fetching all records. \n\n"
@@ -308,7 +308,7 @@ public class TelemetryController extends BaseController {
             @RequestParam(name = "interval", defaultValue = "0") Long interval,
             @Parameter(description = "A string value representing the timezone that will be used to calculate exact timestamps for 'WEEK', 'WEEK_ISO', 'MONTH' and 'QUARTER' interval types.")
             @RequestParam(name = "timeZone", required = false) String timeZone,
-            @Parameter(description = "An integer value that represents a max number of timeseries data points to fetch." +
+            @Parameter(description = "An integer value that represents a max number of time series data points to fetch." +
                     " This parameter is used only in the case if 'agg' parameter is set to 'NONE'.", schema = @Schema(defaultValue = "100"))
             @RequestParam(name = "limit", defaultValue = "100") Integer limit,
             @Parameter(description = "A string value representing the aggregation function. " +
@@ -406,8 +406,8 @@ public class TelemetryController extends BaseController {
     }
 
 
-    @ApiOperation(value = "Save or update time-series data (saveEntityTelemetry)",
-            notes = "Creates or updates the entity time-series data based on the Entity Id and request payload." +
+    @ApiOperation(value = "Save or update time series data (saveEntityTelemetry)",
+            notes = "Creates or updates the entity time series data based on the Entity Id and request payload." +
                     SAVE_TIMESERIES_REQUEST_PAYLOAD +
                     "\n\n The scope parameter is not used in the API call implementation but should be specified whatever value because it is used as a path variable. "
                     + INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
@@ -429,8 +429,8 @@ public class TelemetryController extends BaseController {
         return saveTelemetry(getTenantId(), entityId, requestBody, 0L);
     }
 
-    @ApiOperation(value = "Save or update time-series data with TTL (saveEntityTelemetryWithTTL)",
-            notes = "Creates or updates the entity time-series data based on the Entity Id and request payload." +
+    @ApiOperation(value = "Save or update time series data with TTL (saveEntityTelemetryWithTTL)",
+            notes = "Creates or updates the entity time series data based on the Entity Id and request payload." +
                     SAVE_TIMESERIES_REQUEST_PAYLOAD +
                     "\n\n The scope parameter is not used in the API call implementation but should be specified whatever value because it is used as a path variable. "
                     + "\n\nThe ttl parameter takes affect only in case of Cassandra DB."
@@ -454,21 +454,21 @@ public class TelemetryController extends BaseController {
         return saveTelemetry(getTenantId(), entityId, requestBody, ttl);
     }
 
-    @ApiOperation(value = "Delete entity time-series data (deleteEntityTimeseries)",
-            notes = "Delete time-series for selected entity based on entity id, entity type and keys." +
-                    " Use 'deleteAllDataForKeys' to delete all time-series data." +
+    @ApiOperation(value = "Delete entity time series data (deleteEntityTimeseries)",
+            notes = "Delete time series for selected entity based on entity id, entity type and keys." +
+                    " Use 'deleteAllDataForKeys' to delete all time series data." +
                     " Use 'startTs' and 'endTs' to specify time-range instead. " +
                     " Use 'deleteLatest' to delete latest value (stored in separate table for performance) if the value's timestamp matches the time-range. " +
                     " Use 'rewriteLatestIfDeleted' to rewrite latest value (stored in separate table for performance) if the value's timestamp matches the time-range and 'deleteLatest' param is true." +
-                    " The replacement value will be fetched from the 'time-series' table, and its timestamp will be the most recent one before the defined time-range. " +
+                    " The replacement value will be fetched from the 'time series' table, and its timestamp will be the most recent one before the defined time-range. " +
                     TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH)
     @ApiResponses(value = {
-            @ApiResponse(responseCode = "200", description = "Timeseries for the selected keys in the request was removed. " +
-                    "Platform creates an audit log event about entity timeseries removal with action type 'TIMESERIES_DELETED'."),
+            @ApiResponse(responseCode = "200", description = "Time series for the selected keys in the request was removed. " +
+                    "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED'."),
             @ApiResponse(responseCode = "400", description = "Platform returns a bad request in case if keys list is empty or start and end timestamp values is empty when deleteAllDataForKeys is set to false."),
-            @ApiResponse(responseCode = "401", description = "User is not authorized to delete entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant."),
+            @ApiResponse(responseCode = "401", description = "User is not authorized to delete entity time series for selected entity. Most likely, User belongs to different Customer or Tenant."),
             @ApiResponse(responseCode = "500", description = "The exception was thrown during processing the request. " +
-                    "Platform creates an audit log event about entity timeseries removal with action type 'TIMESERIES_DELETED' that includes an error stacktrace."),
+                    "Platform creates an audit log event about entity time series removal with action type 'TIMESERIES_DELETED' that includes an error stacktrace."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/{entityType}/{entityId}/timeseries/delete", method = RequestMethod.DELETE)
@@ -649,12 +649,12 @@ public class TelemetryController extends BaseController {
         try {
             telemetryJson = JsonParser.parseString(requestBody);
         } catch (Exception e) {
-            return getImmediateDeferredResult("Unable to parse timeseries payload: Invalid JSON body!", HttpStatus.BAD_REQUEST);
+            return getImmediateDeferredResult("Unable to parse time series payload: Invalid JSON body!", HttpStatus.BAD_REQUEST);
         }
         try {
             telemetryRequest = JsonConverter.convertToTelemetry(telemetryJson, System.currentTimeMillis());
         } catch (Exception e) {
-            return getImmediateDeferredResult("Unable to parse timeseries payload. Invalid JSON body: " + e.getMessage(), HttpStatus.BAD_REQUEST);
+            return getImmediateDeferredResult("Unable to parse time series payload. Invalid JSON body: " + e.getMessage(), HttpStatus.BAD_REQUEST);
         }
         List<TsKvEntry> entries = new ArrayList<>();
         for (Map.Entry<Long, List<KvEntry>> entry : telemetryRequest.entrySet()) {
@@ -663,7 +663,7 @@ public class TelemetryController extends BaseController {
             }
         }
         if (entries.isEmpty()) {
-            return getImmediateDeferredResult("No timeseries data found in request body!", HttpStatus.BAD_REQUEST);
+            return getImmediateDeferredResult("No time series data found in request body!", HttpStatus.BAD_REQUEST);
         }
         SecurityUser user = getCurrentUser();
         return accessValidator.validateEntityAndCallback(getCurrentUser(), Operation.WRITE_TELEMETRY, entityIdSrc, (result, tenantId, entityId) -> {

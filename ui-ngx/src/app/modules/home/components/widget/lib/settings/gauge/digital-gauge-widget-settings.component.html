@@ -65,6 +65,14 @@
         <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widgets.gauge.min-max-validation-text' | translate"
+                    *ngIf="digitalGaugeWidgetSettingsForm.get('maxValue').hasError('maxValue')"
+                    class="material-icons tb-suffix-show-always tb-error">
+            warning
+          </mat-icon>
         </mat-form-field>
       </div>
     </div>

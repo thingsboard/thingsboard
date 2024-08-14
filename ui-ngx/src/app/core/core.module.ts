@@ -41,6 +41,7 @@ import { WINDOW_PROVIDERS } from '@core/services/window.service';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { TranslateDefaultParser } from '@core/translate/translate-default-parser';
 import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
+import { EntityConflictInterceptor } from '@core/interceptors/entity-conflict.interceptor';
 
 @NgModule({
   imports: [
@@ -93,6 +94,11 @@ import { TranslateDefaultLoader } from '@core/translate/translate-default-loader
     {
       provide: HTTP_INTERCEPTORS,
       useClass: GlobalHttpInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: EntityConflictInterceptor,
       multi: true
     },
     {

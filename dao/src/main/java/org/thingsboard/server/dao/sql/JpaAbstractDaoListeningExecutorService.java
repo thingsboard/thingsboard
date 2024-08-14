@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import javax.sql.DataSource;
 import java.sql.SQLException;
@@ -35,6 +36,9 @@ public abstract class JpaAbstractDaoListeningExecutorService {
 
     @Autowired
     protected JdbcTemplate jdbcTemplate;
+
+    @Autowired
+    protected TransactionTemplate transactionTemplate;
 
     protected void printWarnings(Statement statement) throws SQLException {
         SQLWarning warnings = statement.getWarnings();

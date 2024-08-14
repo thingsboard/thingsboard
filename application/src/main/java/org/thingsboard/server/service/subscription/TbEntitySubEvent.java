@@ -21,8 +21,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
-import java.util.Set;
-
 /**
  * Information about the local websocket subscriptions.
  */

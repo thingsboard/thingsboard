@@ -15,28 +15,27 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.EnumType;
+import jakarta.persistence.Enumerated;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.id.DeviceCredentialsId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
-import org.thingsboard.server.dao.model.BaseEntity;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.DEVICE_CREDENTIALS_TABLE_NAME)
-public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentials> implements BaseEntity<DeviceCredentials> {
+public final class DeviceCredentialsEntity extends BaseVersionedEntity<DeviceCredentials> {
 
     @Column(name = ModelConstants.DEVICE_CREDENTIALS_DEVICE_ID_PROPERTY)
     private UUID deviceId;
@@ -56,10 +55,7 @@ public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentia
     }
 
     public DeviceCredentialsEntity(DeviceCredentials deviceCredentials) {
-        if (deviceCredentials.getId() != null) {
-            this.setUuid(deviceCredentials.getId().getId());
-        }
-        this.setCreatedTime(deviceCredentials.getCreatedTime());
+        super(deviceCredentials);
         if (deviceCredentials.getDeviceId() != null) {
             this.deviceId = deviceCredentials.getDeviceId().getId();
         }
@@ -72,6 +68,7 @@ public final class DeviceCredentialsEntity extends BaseSqlEntity<DeviceCredentia
     public DeviceCredentials toData() {
         DeviceCredentials deviceCredentials = new DeviceCredentials(new DeviceCredentialsId(this.getUuid()));
         deviceCredentials.setCreatedTime(createdTime);
+        deviceCredentials.setVersion(version);
         if (deviceId != null) {
             deviceCredentials.setDeviceId(new DeviceId(deviceId));
         }

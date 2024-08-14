@@ -619,6 +619,9 @@ export class GatewayConfigurationComponent implements OnInit {
         updateCredentials = true;
       } else {
         updateCredentials = this.initialCredentials.credentialsId !== securityConfig.accessToken;
+        if (updateCredentials) {
+          this.initialCredentials.credentialsId = securityConfig.accessToken;
+        }
       }
       if (updateCredentials) {
         newCredentials = {

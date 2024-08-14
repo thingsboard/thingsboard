@@ -327,7 +327,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   }
 
   createAssetProfile($event: Event, profileName: string) {
-    $event.preventDefault();
+    $event.stopPropagation();
     const assetProfile: AssetProfile = {
       name: profileName
     } as AssetProfile;
@@ -337,7 +337,7 @@ export class AssetProfileAutocompleteComponent implements ControlValueAccessor, 
   }
 
   editAssetProfile($event: Event) {
-    $event.preventDefault();
+    $event.stopPropagation();
     this.assetProfileService.getAssetProfile(this.modelValue.id).subscribe(
       (assetProfile) => {
         this.openAssetProfileDialog(assetProfile, false);

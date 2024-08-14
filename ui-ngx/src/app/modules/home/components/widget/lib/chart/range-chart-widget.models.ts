@@ -38,7 +38,6 @@ import {
   TimeSeriesChartSettings,
   TimeSeriesChartThreshold,
   timeSeriesChartThresholdDefaultSettings,
-  TimeSeriesChartTooltipWidgetSettings,
   TimeSeriesChartVisualMapPiece,
   TimeSeriesChartXAxisSettings,
   TimeSeriesChartYAxisSettings
@@ -54,6 +53,9 @@ import {
   ChartLineType,
   ChartShape
 } from '@home/components/widget/lib/chart/chart.models';
+import {
+  TimeSeriesChartTooltipWidgetSettings
+} from '@home/components/widget/lib/chart/time-series-chart-tooltip.models';
 
 export interface RangeItem {
   index: number;

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.model.sqlts.latest;
 
+import jakarta.persistence.Column;
 import jakarta.persistence.ColumnResult;
 import jakarta.persistence.ConstructorResult;
 import jakarta.persistence.Entity;
@@ -29,6 +30,8 @@ import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
 import org.thingsboard.server.dao.sqlts.latest.SearchTsKvLatestRepository;
 
 import java.util.UUID;
+
+import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
 @Data
 @Entity
@@ -50,7 +53,7 @@ import java.util.UUID;
                                         @ColumnResult(name = "doubleValue", type = Double.class),
                                         @ColumnResult(name = "jsonValue", type = String.class),
                                         @ColumnResult(name = "ts", type = Long.class),
-
+                                        @ColumnResult(name = "version", type = Long.class)
                                 }
                         ),
                 })
@@ -65,6 +68,9 @@ import java.util.UUID;
 })
 public final class TsKvLatestEntity extends AbstractTsKvEntity {
 
+    @Column(name = VERSION_COLUMN)
+    private Long version;
+
     @Override
     public boolean isNotEmpty() {
         return strValue != null || longValue != null || doubleValue != null || booleanValue != null || jsonValue != null;
@@ -73,7 +79,7 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
     public TsKvLatestEntity() {
     }
 
-    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts) {
+    public TsKvLatestEntity(UUID entityId, Integer key, String strKey, String strValue, Boolean boolValue, Long longValue, Double doubleValue, String jsonValue, Long ts, Long version) {
         this.entityId = entityId;
         this.key = key;
         this.ts = ts;
@@ -83,5 +89,6 @@ public final class TsKvLatestEntity extends AbstractTsKvEntity {
         this.booleanValue = boolValue;
         this.jsonValue = jsonValue;
         this.strKey = strKey;
+        this.version = version;
     }
 }

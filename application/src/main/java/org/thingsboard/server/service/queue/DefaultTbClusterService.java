@@ -170,7 +170,7 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToVersionControl(TenantId tenantId, TransportProtos.ToVersionControlServiceMsg msg, TbQueueCallback callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, tenantId, tenantId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_VC_EXECUTOR, TenantId.SYS_TENANT_ID, tenantId);
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getTbVersionControlMsgProducer().send(tpi, new TbProtoQueueMsg<>(tenantId.getId(), msg), callback);
         //TODO: ashvayka
@@ -192,6 +192,14 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     @Override
+    public void pushNotificationToCore(String targetServiceId, TransportProtos.RestApiCallResponseMsgProto responseMsgProto, TbQueueCallback callback) {
+        TopicPartitionInfo tpi = topicService.getNotificationsTopic(ServiceType.TB_CORE, targetServiceId);
+        ToCoreNotificationMsg msg = ToCoreNotificationMsg.newBuilder().setRestApiCallResponseMsg(responseMsgProto).build();
+        producerProvider.getTbCoreNotificationsMsgProducer().send(tpi, new TbProtoQueueMsg<>(UUID.randomUUID(), msg), callback);
+        toCoreNfs.incrementAndGet();
+    }
+
+    @Override
     public void pushMsgToRuleEngine(TopicPartitionInfo tpi, UUID msgId, ToRuleEngineMsg msg, TbQueueCallback callback) {
         log.trace("PUSHING msg: {} to:{}", msg, tpi);
         producerProvider.getRuleEngineMsgProducer().send(tpi, new TbProtoQueueMsg<>(msgId, msg), callback);
@@ -200,6 +208,11 @@ public class DefaultTbClusterService implements TbClusterService {
 
     @Override
     public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, TbQueueCallback callback) {
+        pushMsgToRuleEngine(tenantId, entityId, tbMsg, false, callback);
+    }
+
+    @Override
+    public void pushMsgToRuleEngine(TenantId tenantId, EntityId entityId, TbMsg tbMsg, boolean useQueueFromTbMsg, TbQueueCallback callback) {
         if (tenantId == null || tenantId.isNullUid()) {
             if (entityId.getEntityType().equals(EntityType.TENANT)) {
                 tenantId = TenantId.fromUUID(entityId.getId());
@@ -209,9 +222,8 @@ public class DefaultTbClusterService implements TbClusterService {
             }
         } else {
             HasRuleEngineProfile ruleEngineProfile = getRuleEngineProfileForEntityOrElseNull(tenantId, entityId, tbMsg);
-            tbMsg = transformMsg(tbMsg, ruleEngineProfile);
+            tbMsg = transformMsg(tbMsg, ruleEngineProfile, useQueueFromTbMsg);
         }
-
         ruleEngineProducerService.sendToRuleEngine(producerProvider.getRuleEngineMsgProducer(), tenantId, tbMsg, callback);
         toRuleEngineMsgs.incrementAndGet();
     }
@@ -255,10 +267,10 @@ public class DefaultTbClusterService implements TbClusterService {
         return null;
     }
 
-    private TbMsg transformMsg(TbMsg tbMsg, HasRuleEngineProfile ruleEngineProfile) {
+    private TbMsg transformMsg(TbMsg tbMsg, HasRuleEngineProfile ruleEngineProfile, boolean useQueueFromTbMsg) {
         if (ruleEngineProfile != null) {
             RuleChainId targetRuleChainId = ruleEngineProfile.getDefaultRuleChainId();
-            String targetQueueName = ruleEngineProfile.getDefaultQueueName();
+            String targetQueueName = useQueueFromTbMsg ? tbMsg.getQueueName() : ruleEngineProfile.getDefaultQueueName();
 
             boolean isRuleChainTransform = targetRuleChainId != null && !targetRuleChainId.equals(tbMsg.getRuleChainId());
             boolean isQueueTransform = targetQueueName != null && !targetQueueName.equals(tbMsg.getQueueName());

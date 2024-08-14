@@ -31,6 +31,7 @@ import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.Aggregation;
@@ -156,7 +157,28 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
              * Even if we cache locally the list of active subscriptions by entity id, it is still time-consuming operation to get them from cache
              * Since number of subscriptions is usually much less than number of devices that are pushing data.
              */
-            subscriptionsByEntityId.values().forEach(sub -> pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED)));
+            Set<UUID> staleSubs = new HashSet<>();
+            subscriptionsByEntityId.forEach((id, sub) -> {
+                try {
+                    pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED));
+                } catch (TenantNotFoundException e) {
+                    staleSubs.add(id);
+                    log.warn("Cleaning up stale subscription {} for tenant {} due to TenantNotFoundException", id, sub.getTenantId());
+                } catch (Exception e) {
+                    log.error("Failed to push subscription {} to manager service", sub, e);
+                }
+            });
+            if (!staleSubs.isEmpty()) {
+                subsLock.lock();
+                try {
+                    staleSubs.forEach(entityId -> {
+                        subscriptionsByEntityId.remove(entityId);
+                        entityUpdates.remove(entityId);
+                    });
+                } finally {
+                    subsLock.unlock();
+                }
+            }
         }
     }
 

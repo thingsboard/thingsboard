@@ -45,9 +45,16 @@
       </div>
     </mat-option>
     <mat-option *ngIf="!(filteredWidgetTypes | async)?.length" [value]="null">
-      <span>
+      <div (click)="$event.stopPropagation()">
+        <div *ngIf="!textIsNotEmpty(searchText); else searchNotEmpty">
+          <span>{{ 'widget.no-widgets-text' | translate }}</span>
+        </div>
+        <ng-template #searchNotEmpty>
+          <span>
           {{ translate.get('widget.no-widgets-matching', {entity: searchText}) | async }}
-      </span>
+          </span>
+        </ng-template>
+      </div>
     </mat-option>
   </mat-autocomplete>
   <mat-error>

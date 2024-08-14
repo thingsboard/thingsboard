@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
+import { AbstractControl, UntypedFormBuilder, UntypedFormGroup, ValidationErrors, ValidatorFn } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
@@ -109,7 +109,7 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
 
       showMinMax: [settings.showMinMax, []],
       minValue: [settings.minValue, []],
-      maxValue: [settings.maxValue, []],
+      maxValue: [settings.maxValue, [this.maxValueValidation()]],
       minMaxFont: [settings.minMaxFont, []],
       minMaxColor: [settings.minMaxFont?.color, []],
 
@@ -182,11 +182,29 @@ export class DigitalSimpleGaugeBasicConfigComponent extends BasicWidgetConfigCom
     return this.widgetConfig;
   }
 
+  private maxValueValidation(): ValidatorFn {
+    return (control: AbstractControl): ValidationErrors | null => {
+      const value: string = control.value;
+      if (value) {
+        if (value < control.parent?.get('minValue').value) {
+          return {maxValue: true};
+        }
+      }
+      return null;
+    };
+  }
+
   protected validatorTriggers(): string[] {
-    return ['gaugeType', 'showValue', 'showTitle', 'showMinMax'];
+    return ['gaugeType', 'showValue', 'showTitle', 'showMinMax', 'minValue'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
+    if (trigger === 'minValue') {
+      this.simpleGaugeWidgetConfigForm.get('maxValue').updateValueAndValidity({emitEvent: true});
+      this.simpleGaugeWidgetConfigForm.get('maxValue').markAsTouched({onlySelf: true});
+      return;
+    }
+
     const isDonut = this.simpleGaugeWidgetConfigForm.get('gaugeType').value === this.digitalGaugeType.donut;
 
     if (isDonut) {

@@ -1693,6 +1693,10 @@ public class RestClient implements Closeable {
         restTemplate.postForLocation(baseURL + "/api/relation", relation);
     }
 
+    public EntityRelation saveRelationV2(EntityRelation relation) {
+        return restTemplate.postForEntity(baseURL + "/api/v2/relation", relation, EntityRelation.class).getBody();
+    }
+
     public void deleteRelation(EntityId fromId, String relationType, RelationTypeGroup relationTypeGroup, EntityId toId) {
         Map<String, String> params = new HashMap<>();
         params.put("fromId", fromId.getId().toString());
@@ -1702,6 +1706,26 @@ public class RestClient implements Closeable {
         params.put("toId", toId.getId().toString());
         params.put("toType", toId.getEntityType().name());
         restTemplate.delete(baseURL + "/api/relation?fromId={fromId}&fromType={fromType}&relationType={relationType}&relationTypeGroup={relationTypeGroup}&toId={toId}&toType={toType}", params);
+    }
+
+    public Optional<EntityRelation> deleteRelationV2(EntityId fromId, String relationType, RelationTypeGroup relationTypeGroup, EntityId toId) {
+        Map<String, String> params = new HashMap<>();
+        params.put("fromId", fromId.getId().toString());
+        params.put("fromType", fromId.getEntityType().name());
+        params.put("relationType", relationType);
+        params.put("relationTypeGroup", relationTypeGroup.name());
+        params.put("toId", toId.getId().toString());
+        params.put("toType", toId.getEntityType().name());
+        try {
+            var relation = restTemplate.exchange(baseURL + "/api/relation?fromId={fromId}&fromType={fromType}&relationType={relationType}&relationTypeGroup={relationTypeGroup}&toId={toId}&toType={toType}", HttpMethod.DELETE, HttpEntity.EMPTY, EntityRelation.class, params);
+            return Optional.ofNullable(relation.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
     }
 
     public void deleteRelations(EntityId entityId) {
@@ -3838,6 +3862,51 @@ public class RestClient implements Closeable {
                 throw exception;
             }
         }
+    }
+
+    public JsonNode handleRuleEngineRequest(JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                }).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequest(EntityId entityId, JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/{entityType}/{entityId}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                },
+                entityId.getEntityType(),
+                entityId.getId()).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequest(EntityId entityId, int timeout, JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/{entityType}/{entityId}/{timeout}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                },
+                entityId.getEntityType(),
+                entityId.getId(),
+                timeout).getBody();
+    }
+
+    public JsonNode handleRuleEngineRequest(EntityId entityId, String queueName, int timeout, JsonNode requestBody) {
+        return restTemplate.exchange(
+                baseURL + "/api/rule-engine/{entityType}/{entityId}/{queueName}/{timeout}",
+                HttpMethod.POST,
+                new HttpEntity<>(requestBody),
+                new ParameterizedTypeReference<JsonNode>() {
+                },
+                entityId.getEntityType(),
+                entityId.getId(),
+                queueName,
+                timeout).getBody();
     }
 
     private String getTimeUrlParams(TimePageLink pageLink) {

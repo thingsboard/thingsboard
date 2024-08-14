@@ -49,6 +49,7 @@ public class ModelConstants {
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String VERSION_PROPERTY = "version";
 
     public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
     public static final String TENANT_ID_COLUMN = "tenant_id";
@@ -56,6 +57,7 @@ public class ModelConstants {
     public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
     public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";
     public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
+    public static final String VERSION_COLUMN = "version";
 
     /**
      * User constants.

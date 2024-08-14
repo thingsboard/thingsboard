@@ -101,6 +101,12 @@ message SessionInfoProto {
   bool isGateway = 18;
 }
 
+message RestApiCallResponseMsgProto {
+  int64 requestIdMSB = 1;
+  int64 requestIdLSB = 2;
+  bytes response = 5;
+}
+
 enum SessionEvent {
   OPEN = 0;
   CLOSED = 1;
@@ -157,11 +163,13 @@ message AttributeValueProto {
   string string_v = 7;
   string json_v = 8;
   optional string key = 9;
+  optional int64 version = 10;
 }
 
 message TsKvProto {
   int64 ts = 1;
   KeyValueProto kv = 2;
+  optional int64 version = 3;
 }
 
 message TsKvListProto {
@@ -209,6 +217,7 @@ message DeviceProto {
   optional int64 softwareIdLSB = 18;
   optional int64 externalIdMSB = 19;
   optional int64 externalIdLSB = 20;
+  optional int64 version = 21;
 }
 
 message DeviceProfileProto {
@@ -239,6 +248,7 @@ message DeviceProfileProto {
   optional int64 defaultEdgeRuleChainIdLSB = 25;
   optional int64 externalIdMSB = 26;
   optional int64 externalIdLSB = 27;
+  optional int64 version = 28;
 }
 
 message TenantProto {
@@ -258,6 +268,7 @@ message TenantProto {
   optional string phone = 14;
   optional string email = 15;
   optional string additionalInfo = 16;
+  optional int64 version = 17;
 }
 
 message TenantProfileProto {
@@ -322,6 +333,7 @@ message RepositorySettingsProto {
   optional string defaultBranch = 8;
   bool readOnly = 9;
   bool showMergeCommits = 10;
+  bool localOnly = 11;
 }
 
 /**
@@ -667,6 +679,7 @@ message DeviceCredentialsProto {
   CredentialsType credentialsType = 6;
   string credentialsId = 7;
   optional string credentialsValue = 8;
+  optional int64 version = 9;
 }
 
 message CredentialsDataProto {
@@ -1147,6 +1160,7 @@ message FromEdgeSyncResponseMsgProto {
   int64 edgeIdMSB = 5;
   int64 edgeIdLSB = 6;
   bool success = 7;
+  string error = 8;
 }
 
 message DeviceEdgeUpdateMsgProto {
@@ -1484,6 +1498,7 @@ message ToCoreNotificationMsg {
   ToEdgeSyncRequestMsgProto toEdgeSyncRequest = 11;
   FromEdgeSyncResponseMsgProto fromEdgeSyncResponse = 12;
   ResourceCacheInvalidateMsg resourceCacheInvalidateMsg = 13;
+  RestApiCallResponseMsgProto restApiCallResponseMsg = 50;
 }
 
 /* Messages that are handled by ThingsBoard RuleEngine Service */
