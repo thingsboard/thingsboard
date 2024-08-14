@@ -279,7 +279,7 @@ public class GatewayControllerTest extends AbstractControllerTest {
                         tuple(GatewayConnectorValidationRecordType.ERROR, "\"topicExpression\" must not be blank")
                 );
         validationResult.getAnnotations().forEach(error -> {
-            assertThat(error.getRow()).isGreaterThan(0);
+            assertThat(error.getRow()).isGreaterThanOrEqualTo(0);
             assertThat(error.getColumn()).isGreaterThan(0);
         });
     }
@@ -330,7 +330,7 @@ public class GatewayControllerTest extends AbstractControllerTest {
                         tuple(GatewayConnectorValidationRecordType.WARNING, "\"timeseries\" is unknown")
                 );
         validationResult.getAnnotations().forEach(error -> {
-            assertThat(error.getRow()).isGreaterThan(0);
+            assertThat(error.getRow()).isGreaterThanOrEqualTo(0);
             assertThat(error.getColumn()).isGreaterThan(0);
         });
     }
@@ -424,7 +424,7 @@ public class GatewayControllerTest extends AbstractControllerTest {
                         tuple(GatewayConnectorValidationRecordType.WARNING, "\"port\" is unknown")
                 );
         validationResult.getAnnotations().forEach(error -> {
-            assertThat(error.getRow()).isGreaterThan(0);
+            assertThat(error.getRow()).isGreaterThanOrEqualTo(0);
             assertThat(error.getColumn()).isGreaterThan(0);
         });
     }
@@ -570,7 +570,7 @@ public class GatewayControllerTest extends AbstractControllerTest {
                         tuple(GatewayConnectorValidationRecordType.WARNING, "\"port\" is unknown")
                 );
         validationResult.getAnnotations().forEach(error -> {
-            assertThat(error.getRow()).isGreaterThan(0);
+            assertThat(error.getRow()).isGreaterThanOrEqualTo(0);
             assertThat(error.getColumn()).isGreaterThan(0);
         });
     }

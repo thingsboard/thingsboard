@@ -59,10 +59,10 @@ public abstract class ConnectorConfigurationValidator {
             } else if (cause instanceof JsonMappingException) {
                 handleJsonMappingException((JsonMappingException) cause, errors);
             } else {
-                errors.add(new GatewayConnectorValidationRecord("Invalid configuration format: " + e.getMessage(), 1, 1, GatewayConnectorValidationRecordType.ERROR));
+                errors.add(new GatewayConnectorValidationRecord("Invalid configuration format: " + e.getMessage(), 0, 1, GatewayConnectorValidationRecordType.ERROR));
             }
         } catch (Exception e) {
-            errors.add(new GatewayConnectorValidationRecord("Invalid configuration format: " + e.getMessage(), 1, 1, GatewayConnectorValidationRecordType.ERROR));
+            errors.add(new GatewayConnectorValidationRecord("Invalid configuration format: " + e.getMessage(), 0, 1, GatewayConnectorValidationRecordType.ERROR));
         }
 
         errors.addAll(handler.getErrors());
@@ -79,13 +79,13 @@ public abstract class ConnectorConfigurationValidator {
                                     .replace("]", "")
                                     .replace("/", ".");
                             String message = "\"" + path.substring(path.lastIndexOf(".") + 1) + "\" " + violation.getMessage();
-                            int lineNumber = 1;
+                            int lineNumber = 0;
                             int columnNumber = 1;
                             if (finalFieldLocations != null) {
                                 JsonLocation location = finalFieldLocations.getOrDefault(path,
                                         finalFieldLocations.get(path.substring(0, path.lastIndexOf('.'))));
                                 if (location != null) {
-                                    lineNumber = location.getLineNr();
+                                    lineNumber = location.getLineNr() - 1;
                                     columnNumber = location.getColumnNr();
                                 }
                             }
@@ -109,14 +109,14 @@ public abstract class ConnectorConfigurationValidator {
         String path = e.getPathReference();
         JsonLocation location = e.getLocation();
         String errorMessage = "Invalid value '" + e.getValue() + "' for field '" + path + "'. Expected type: " + e.getTargetType().getSimpleName();
-        errors.add(new GatewayConnectorValidationRecord(errorMessage, location.getLineNr(), location.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, location.getLineNr() - 1, location.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
     }
 
     private void handleJsonMappingException(JsonMappingException e, List<GatewayConnectorValidationRecord> errors) {
         String path = getPathFromException(e);
         JsonLocation location = e.getLocation();
         String errorMessage = "Error in field '" + path + "': " + e.getOriginalMessage();
-        errors.add(new GatewayConnectorValidationRecord(errorMessage, location.getLineNr(), location.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, location.getLineNr() - 1, location.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
     }
 
     private String getPathFromException(JsonMappingException e) {

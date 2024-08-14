@@ -69,7 +69,7 @@ public class DefaultGatewayService implements GatewayService {
         }
         if (!validators.containsKey(type)) {
             return new GatewayConnectorValidationResult(true, Collections.singletonList(
-                    new GatewayConnectorValidationRecord("No validator found for the connector type: " + type, 1, 1, GatewayConnectorValidationRecordType.WARNING)));
+                    new GatewayConnectorValidationRecord("No validator found for the connector type: " + type, 0, 1, GatewayConnectorValidationRecordType.WARNING)));
         }
         return validators.get(type).validate(connectorConfiguration, version);
     }
