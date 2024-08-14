@@ -85,6 +85,9 @@ export class ConfigurationJsonComponent extends JsonObjectEditComponent implemen
   protected onGetAce(ace: AceBase): void {
     super.onGetAce(ace);
     this.jsonEditor.renderer.on('afterRender', () => {
+      if (!this.jsonEditor.session.getAnnotations().length && this.annotations.length) {
+        this.annotationChanged = true;
+      }
       if (this.annotationChanged) {
         const syntaxAnnotation = this.jsonEditor.session.getAnnotations().find((annotation: CustomAnnotation) => !annotation?.custom);
         this.annotationChanged = false;
