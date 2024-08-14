@@ -192,6 +192,10 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.set("comment", comment.getComment());
                 break;
             case ALARM_DELETE:
+                actionData.put("entityId", entityId.toString());
+                EntityId originatorId = extractParameter(EntityId.class, additionalInfo);
+                actionData.put("originatorId", originatorId != null ? originatorId.toString() : null);
+                break;
             case DELETED:
             case ACTIVATED:
             case SUSPENDED:
