@@ -141,6 +141,7 @@ import {
 import {
   TypeValuePanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
+import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import {
     ModbusRpcParametersComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-rpc-parameters/modbus-rpc-parameters.component';
@@ -230,6 +231,7 @@ import {
     KeyValueIsNotEmptyPipe,
     ModbusBasicConfigComponent,
     EllipsisChipListDirective,
+    TruncateWithTooltipDirective,
     ModbusRpcParametersComponent,
   ],
   exports: [

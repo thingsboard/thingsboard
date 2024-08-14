@@ -39,14 +39,14 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
 
     @Override
     public void put(K key, V value) {
-        Long version = value != null ? value.getVersion() : 0;
+        Long version = getVersion(value);
+        if (version == null) {
+            return;
+        }
         doPut(key, value, version);
     }
 
     private void doPut(K key, V value, Long version) {
-        if (version == null) {
-            return;
-        }
         lock.lock();
         try {
             TbPair<Long, V> versionValuePair = doGet(key);
@@ -85,7 +85,7 @@ public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends
 
     @Override
     void doPutIfAbsent(K key, V value) {
-        cache.putIfAbsent(key, wrapValue(value, value != null ? value.getVersion() : 0));
+        cache.putIfAbsent(key, wrapValue(value, getVersion(value)));
     }
 
     private TbPair<Long, V> wrapValue(V value, Long version) {

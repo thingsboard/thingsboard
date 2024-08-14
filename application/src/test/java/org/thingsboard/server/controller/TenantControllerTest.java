@@ -149,7 +149,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         testBroadcastEntityStateChangeEventTimeManyTimeTenant(savedTenant, ComponentLifecycleEvent.CREATED, 1);
 
         savedTenant.setTitle("My new tenant");
-        saveTenant(savedTenant);
+        savedTenant = saveTenant(savedTenant);
         Tenant foundTenant = doGet("/api/tenant/" + savedTenant.getId().getId().toString(), Tenant.class);
         Assert.assertEquals(foundTenant.getTitle(), savedTenant.getTitle());
 
@@ -470,7 +470,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         tenantProfile = doPost("/api/tenantProfile", tenantProfile, TenantProfile.class);
 
         tenant.setTenantProfileId(tenantProfile.getId());
-        saveTenant(tenant);
+        tenant = saveTenant(tenant);
 
         login(username, password);
 
@@ -500,7 +500,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         tenantProfile2 = doPost("/api/tenantProfile", tenantProfile2, TenantProfile.class);
 
         tenant.setTenantProfileId(tenantProfile2.getId());
-        saveTenant(tenant);
+        tenant = saveTenant(tenant);
 
         login(username, password);
 
@@ -542,7 +542,7 @@ public class TenantControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         tenant.setTenantProfileId(null);
-        saveTenant(tenant);
+        tenant = saveTenant(tenant);
 
         login(username, password);
         for (Queue queue : foundTenantQueues) {

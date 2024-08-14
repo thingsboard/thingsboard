@@ -15,26 +15,16 @@
  */
 package org.thingsboard.server.dao.sql;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
 import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.util.SqlDao;
 
 @SqlDao
 public abstract class JpaPartitionedAbstractDao<E extends BaseEntity<D>, D> extends JpaAbstractDao<E, D> {
 
-    @PersistenceContext
-    private EntityManager entityManager;
-
     @Override
     protected E doSave(E entity, boolean isNew) {
         createPartition(entity);
-        if (isNew) {
-            entityManager.persist(entity);
-        } else {
-            entity = entityManager.merge(entity);
-        }
-        return entity;
+        return super.doSave(entity, isNew);
     }
 
     public abstract void createPartition(E entity);
