@@ -203,7 +203,7 @@ database:
   ts:
     type: "${DATABASE_TS_TYPE:sql}" # cassandra, sql, or timescale (for hybrid mode, DATABASE_TS_TYPE value should be cassandra, or timescale)
   ts_latest:
-    type: "${DATABASE_TS_LATEST_TYPE:sql}" # Left for backward compatibility with older versions of ThingsBoard that can be installed with only a Cassandra database
+    type: "${DATABASE_TS_LATEST_TYPE:sql}" # Left for backward compatibility with older versions of ThingsBoard that can be installed with only a Cassandra database.
 
 # Cassandra driver configuration parameters
 cassandra:
