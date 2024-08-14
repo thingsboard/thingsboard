@@ -33,15 +33,16 @@ import {
   AbstractControl, ValidationErrors
 } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { getAce } from '@shared/models/ace/ace.models';
+import { AceBase, getAce } from '@shared/models/ace/ace.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { take } from 'rxjs/operators';
+import { Observable } from 'rxjs';
 
 export const jsonRequired = (control: AbstractControl): ValidationErrors | null => !control.value ? {required: true} : null;
 
@@ -67,7 +68,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   @ViewChild('jsonEditor', {static: true})
   jsonEditorElmRef: ElementRef;
 
-  private jsonEditor: Ace.Editor;
+  protected jsonEditor: Ace.Editor;
   private editorsResizeCaf: CancelAnimationFrame;
   private editorResize$: ResizeObserver;
 
@@ -114,8 +115,41 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   ngOnInit(): void {
+    getAce().pipe(take(1)).subscribe(ace => this.onGetAce(ace));
+  }
+
+  ngOnDestroy(): void {
+    if (this.editorResize$) {
+      this.editorResize$.disconnect();
+    }
+    if (this.jsonEditor) {
+      this.jsonEditor.destroy();
+    }
+  }
+
+  protected onGetAce(ace: AceBase): void {
     const editorElement = this.jsonEditorElmRef.nativeElement;
-    let editorOptions: Partial<Ace.EditorOptions> = {
+
+    this.jsonEditor = ace.edit(editorElement, this.getAceOptions());
+    this.jsonEditor.session.setUseWrapMode(false);
+    this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
+    this.jsonEditor.setReadOnly(this.disabled || this.readonly);
+    this.jsonEditor.on('change', () => this.onAceChanged());
+    this.editorResize$ = new ResizeObserver(() => {
+      this.onAceEditorResize();
+    });
+    this.editorResize$.observe(editorElement);
+  }
+
+  protected onAceChanged(): void {
+    if (!this.ignoreChange) {
+      this.cleanupJsonErrors();
+      this.updateView();
+    }
+  }
+
+  private getAceOptions(): Partial<Ace.EditorOptions> {
+    const editorOptions: Partial<Ace.EditorOptions> = {
       mode: 'ace/mode/json',
       showGutter: true,
       showPrintMargin: false,
@@ -128,34 +162,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
       enableLiveAutocompletion: true
     };
 
-    editorOptions = {...editorOptions, ...advancedOptions};
-    getAce().subscribe(
-      (ace) => {
-        this.jsonEditor = ace.edit(editorElement, editorOptions);
-        this.jsonEditor.session.setUseWrapMode(false);
-        this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
-        this.jsonEditor.setReadOnly(this.disabled || this.readonly);
-        this.jsonEditor.on('change', () => {
-          if (!this.ignoreChange) {
-            this.cleanupJsonErrors();
-            this.updateView();
-          }
-        });
-        this.editorResize$ = new ResizeObserver(() => {
-          this.onAceEditorResize();
-        });
-        this.editorResize$.observe(editorElement);
-      }
-    );
-  }
-
-  ngOnDestroy(): void {
-    if (this.editorResize$) {
-      this.editorResize$.disconnect();
-    }
-    if (this.jsonEditor) {
-      this.jsonEditor.destroy();
-    }
+    return {...editorOptions, ...advancedOptions};
   }
 
   private onAceEditorResize() {
@@ -183,7 +190,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     }
   }
 
-  public validate(c: UntypedFormControl) {
+  public validate(_: UntypedFormControl): Observable<ValidationErrors | null> | ValidationErrors | null {
     return (this.objectValid) ? null : {
       jsonParseError: {
         valid: false,

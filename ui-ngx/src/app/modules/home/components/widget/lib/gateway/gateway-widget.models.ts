@@ -18,6 +18,7 @@ import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { helpBaseUrl, ValueTypeData } from '@shared/models/constants';
 import { AttributeData } from '@shared/models/telemetry/telemetry.models';
+import { CustomAnnotation } from '@shared/models/ace/ace.models';
 
 export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
 export const integerRegex = /^[-+]?\d+$/;
@@ -1010,6 +1011,11 @@ export interface ModbusIdentity {
   vendorUrl?: string;
   productName?: string;
   modelName?: string;
+}
+
+export interface ConnectorConfigValidation {
+  valid: boolean;
+  annotations: CustomAnnotation[];
 }
 
 export const ModbusBaudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];
