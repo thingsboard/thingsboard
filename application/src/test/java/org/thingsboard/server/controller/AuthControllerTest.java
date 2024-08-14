@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
+import org.thingsboard.server.controller.UserController.ActivationLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.dao.user.UserCredentialsDao;
 import org.thingsboard.server.service.security.auth.rest.LoginRequest;
@@ -38,6 +39,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.within;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.anyString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.header;
@@ -217,8 +219,11 @@ public class AuthControllerTest extends AbstractControllerTest {
 
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         assertThat(userCredentials.getActivateTokenExpTime()).isCloseTo(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(ttl), Offset.offset(120000L));
-        String initialActivationLink = doGet("/api/user/" + user.getId() + "/activationLink", String.class);
+        String initialActivationLink = getActivationLink(user);
         String initialActivationToken = StringUtils.substringAfterLast(initialActivationLink, "activateToken=");
+        ActivationLink activationLinkInfo = getActivationLinkInfo(user);
+        assertThat(TimeUnit.MILLISECONDS.toHours(activationLinkInfo.ttlMs())).isCloseTo(ttl, within(1L));
+        assertThat(activationLinkInfo.value()).isEqualTo(initialActivationLink);
 
         // expiring activation token
         userCredentials.setActivateTokenExpTime(System.currentTimeMillis() - 1);
@@ -231,19 +236,24 @@ public class AuthControllerTest extends AbstractControllerTest {
                 .andExpect(jsonPath("$.message", is("Activation token expired")));
 
         // checking that activation link is regenerated when requested
-        String regeneratedActivationLink = doGet("/api/user/" + user.getId() + "/activationLink", String.class);
-        assertThat(regeneratedActivationLink).isNotEqualTo(initialActivationLink);
+        ActivationLink regeneratedActivationLink = getActivationLinkInfo(user);
+        assertThat(regeneratedActivationLink.value()).isNotEqualTo(initialActivationLink);
+        assertThat(TimeUnit.MILLISECONDS.toHours(regeneratedActivationLink.ttlMs())).isCloseTo(ttl, within(1L));
 
         // checking link renewal if less than 15 minutes before expiration
         userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         userCredentials.setActivateTokenExpTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(30));
         userCredentialsDao.save(tenantId, userCredentials);
-        assertThat(doGet("/api/user/" + user.getId() + "/activationLink", String.class)).isEqualTo(regeneratedActivationLink);
+        activationLinkInfo = getActivationLinkInfo(user);
+        assertThat(activationLinkInfo.value()).isEqualTo(regeneratedActivationLink.value());
+        assertThat(TimeUnit.MILLISECONDS.toMinutes(activationLinkInfo.ttlMs())).isCloseTo(30, within(1L));
+
         userCredentials.setActivateTokenExpTime(System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10));
         userCredentialsDao.save(tenantId, userCredentials);
-        String newActivationLink = doGet("/api/user/" + user.getId() + "/activationLink", String.class);
-        assertThat(newActivationLink).isNotEqualTo(regeneratedActivationLink);
-        String newActivationToken = StringUtils.substringAfterLast(newActivationLink, "activateToken=");
+        ActivationLink newActivationLink = getActivationLinkInfo(user);
+        assertThat(newActivationLink.value()).isNotEqualTo(regeneratedActivationLink.value());
+        assertThat(TimeUnit.MILLISECONDS.toHours(newActivationLink.ttlMs())).isCloseTo(ttl, within(1L));
+        String newActivationToken = StringUtils.substringAfterLast(newActivationLink.value(), "activateToken=");
 
         userCredentials = userCredentialsDao.findByUserId(tenantId, user.getUuidId());
         assertThat(userCredentials.getActivateTokenExpTime()).isCloseTo(System.currentTimeMillis() + TimeUnit.HOURS.toMillis(ttl), Offset.offset(120000L));
@@ -263,6 +273,14 @@ public class AuthControllerTest extends AbstractControllerTest {
         SecuritySettings securitySettings = doGet("/api/admin/securitySettings", SecuritySettings.class);
         updater.accept(securitySettings);
         doPost("/api/admin/securitySettings", securitySettings).andExpect(status().isOk());
+    }
+
+    private String getActivationLink(User user) throws Exception {
+        return doGet("/api/user/" + user.getId() + "/activationLink", String.class);
+    }
+
+    private ActivationLink getActivationLinkInfo(User user) throws Exception {
+        return doGet("/api/user/" + user.getId() + "/activationLinkInfo", ActivationLink.class);
     }
 
 }

@@ -229,19 +229,30 @@ public class UserController extends BaseController {
         User user = checkNotNull(userService.findUserByEmail(getCurrentUser().getTenantId(), email));
         accessControlService.checkPermission(getCurrentUser(), Resource.USER, Operation.READ, user.getId(), user);
 
-        String activationLink = getActivationLink(user.getId(), request);
-        mailService.sendActivationEmail(activationLink, email);
+        ActivationLink activationLink = getActivationLink(user.getId(), request);
+        mailService.sendActivationEmail(activationLink.value(), email);
     }
 
-    @ApiOperation(value = "Get the activation link (getActivationLink)",
+    @ApiOperation(value = "Get activation link (getActivationLink)",
             notes = "Get the activation link for the user. " +
                     "The base url for activation link is configurable in the general settings of system administrator. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/user/{userId}/activationLink", method = RequestMethod.GET, produces = "text/plain")
+    @GetMapping(value = "/user/{userId}/activationLink", produces = "text/plain")
     @ResponseBody
     public String getActivationLink(@Parameter(description = USER_ID_PARAM_DESCRIPTION)
                                     @PathVariable(USER_ID) String strUserId,
                                     HttpServletRequest request) throws ThingsboardException {
+        return getActivationLinkInfo(strUserId, request).value();
+    }
+
+    @ApiOperation(value = "Get activation link info (getActivationLinkInfo)",
+            notes = "Get the activation link info for the user. " +
+                    "The base url for activation link is configurable in the general settings of system administrator. " + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/user/{userId}/activationLinkInfo")
+    public ActivationLink getActivationLinkInfo(@Parameter(description = USER_ID_PARAM_DESCRIPTION)
+                                                @PathVariable(USER_ID) String strUserId,
+                                                HttpServletRequest request) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         UserId userId = new UserId(toUUID(strUserId));
         checkUserId(userId, Operation.READ);
@@ -587,17 +598,20 @@ public class UserController extends BaseController {
         userService.removeMobileSession(user.getTenantId(), mobileToken);
     }
 
-    private String getActivationLink(UserId userId, HttpServletRequest request) throws ThingsboardException {
+    private ActivationLink getActivationLink(UserId userId, HttpServletRequest request) throws ThingsboardException {
         TenantId tenantId = getTenantId();
         UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, userId);
         if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
-            if (System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(15) > userCredentials.getActivateTokenExpTime()) { // renew link if less than 15 minutes before expiration
+            long ttl = userCredentials.getActivationTokenTtl();
+            if (ttl < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
                 userCredentials = userService.generateUserActivationToken(userCredentials);
                 userCredentials = userService.saveUserCredentials(tenantId, userCredentials);
+                ttl = userCredentials.getActivationTokenTtl();
                 log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userId);
             }
             String baseUrl = systemSecurityService.getBaseUrl(tenantId, getCurrentUser().getCustomerId(), request);
-            return String.format(ACTIVATE_URL_PATTERN, baseUrl, userCredentials.getActivateToken());
+            String link = String.format(ACTIVATE_URL_PATTERN, baseUrl, userCredentials.getActivateToken());
+            return new ActivationLink(link, ttl);
         } else {
             throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
@@ -608,5 +622,7 @@ public class UserController extends BaseController {
             throw new ThingsboardException("Settings with type: " + strType + " are reserved for internal use!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
         }
     }
+
+    record ActivationLink(String value, long ttlMs) {}
 
 }
