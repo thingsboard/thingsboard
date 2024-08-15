@@ -385,6 +385,7 @@
                           [widgetEditMode]="widgetEditMode"
                           [widget]="editingWidget"
                           [widgetLayout]="editingWidgetLayout"
+                          [scada]="editingLayoutCtx?.gridSettings?.layoutType === LayoutType.scada"
                           (revertWidgetConfig)="onRevertWidgetEdit()"
                           (applyWidgetConfig)="saveWidget()">
           </tb-edit-widget>

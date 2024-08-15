@@ -19,7 +19,6 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
@@ -30,7 +29,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.audit.AuditLogDao;
-import org.thingsboard.server.dao.model.ModelConstants;
+import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.model.sql.AuditLogEntity;
 import org.thingsboard.server.dao.sql.JpaPartitionedAbstractDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -40,6 +39,9 @@ import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.dao.model.ModelConstants.AUDIT_LOG_TABLE_NAME;
+
+@DefaultDataSource
 @Component
 @SqlDao
 @RequiredArgsConstructor
@@ -48,24 +50,9 @@ public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, Au
 
     private final AuditLogRepository auditLogRepository;
     private final SqlPartitioningRepository partitioningRepository;
-    private final JdbcTemplate jdbcTemplate;
 
     @Value("${sql.audit_logs.partition_size:168}")
     private int partitionSizeInHours;
-    @Value("${sql.ttl.audit_logs.ttl:0}")
-    private long ttlInSec;
-
-    private static final String TABLE_NAME = ModelConstants.AUDIT_LOG_TABLE_NAME;
-
-    @Override
-    protected Class<AuditLogEntity> getEntityClass() {
-        return AuditLogEntity.class;
-    }
-
-    @Override
-    protected JpaRepository<AuditLogEntity, UUID> getRepository() {
-        return auditLogRepository;
-    }
 
     @Override
     public PageData<AuditLog> findAuditLogsByTenantIdAndEntityId(UUID tenantId, EntityId entityId, List<ActionType> actionTypes, TimePageLink pageLink) {
@@ -124,12 +111,22 @@ public class JpaAuditLogDao extends JpaPartitionedAbstractDao<AuditLogEntity, Au
 
     @Override
     public void cleanUpAuditLogs(long expTime) {
-        partitioningRepository.dropPartitionsBefore(TABLE_NAME, expTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        partitioningRepository.dropPartitionsBefore(AUDIT_LOG_TABLE_NAME, expTime, TimeUnit.HOURS.toMillis(partitionSizeInHours));
     }
 
     @Override
     public void createPartition(AuditLogEntity entity) {
-        partitioningRepository.createPartitionIfNotExists(TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+        partitioningRepository.createPartitionIfNotExists(AUDIT_LOG_TABLE_NAME, entity.getCreatedTime(), TimeUnit.HOURS.toMillis(partitionSizeInHours));
+    }
+
+    @Override
+    protected Class<AuditLogEntity> getEntityClass() {
+        return AuditLogEntity.class;
+    }
+
+    @Override
+    protected JpaRepository<AuditLogEntity, UUID> getRepository() {
+        return auditLogRepository;
     }
 
 }

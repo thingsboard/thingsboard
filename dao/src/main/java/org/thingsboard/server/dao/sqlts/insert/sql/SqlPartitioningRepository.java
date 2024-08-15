@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.StringUtils;
 import org.apache.commons.lang3.exception.ExceptionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Primary;
 import org.springframework.dao.DataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -32,6 +33,7 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.locks.ReentrantLock;
 
+@Primary
 @Repository
 @Slf4j
 public class SqlPartitioningRepository {
@@ -49,7 +51,7 @@ public class SqlPartitioningRepository {
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED)
     public void save(SqlPartition partition) {
-        jdbcTemplate.execute(partition.getQuery());
+        getJdbcTemplate().execute(partition.getQuery());
     }
 
     @Transactional(propagation = Propagation.NOT_SUPPORTED) // executing non-transactionally, so that parent transaction is not aborted on partition save error
@@ -119,8 +121,8 @@ public class SqlPartitioningRepository {
 
         String dropStmtStr = "DROP TABLE " + tablePartition;
         try {
-            jdbcTemplate.execute(detachPsqlStmtStr);
-            jdbcTemplate.execute(dropStmtStr);
+            getJdbcTemplate().execute(detachPsqlStmtStr);
+            getJdbcTemplate().execute(dropStmtStr);
             return true;
         } catch (DataAccessException e) {
             log.error("[{}] Error occurred trying to detach and drop the partition {} ", table, partitionTs, e);
@@ -134,7 +136,7 @@ public class SqlPartitioningRepository {
 
     public List<Long> fetchPartitions(String table) {
         List<Long> partitions = new ArrayList<>();
-        List<String> partitionsTables = jdbcTemplate.queryForList(SELECT_PARTITIONS_STMT, String.class, table);
+        List<String> partitionsTables = getJdbcTemplate().queryForList(SELECT_PARTITIONS_STMT, String.class, table);
         for (String partitionTableName : partitionsTables) {
             String partitionTsStr = partitionTableName.substring(table.length() + 1);
             try {
@@ -153,7 +155,7 @@ public class SqlPartitioningRepository {
     private synchronized int getCurrentServerVersion() {
         if (currentServerVersion == null) {
             try {
-                currentServerVersion = jdbcTemplate.queryForObject("SELECT current_setting('server_version_num')", Integer.class);
+                currentServerVersion = getJdbcTemplate().queryForObject("SELECT current_setting('server_version_num')", Integer.class);
             } catch (Exception e) {
                 log.warn("Error occurred during fetch of the server version", e);
             }
@@ -162,6 +164,10 @@ public class SqlPartitioningRepository {
             }
         }
         return currentServerVersion;
+    }
+
+    protected JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
     }
 
 }

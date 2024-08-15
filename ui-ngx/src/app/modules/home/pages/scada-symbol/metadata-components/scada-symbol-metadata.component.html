@@ -83,7 +83,7 @@
                           [objectHighlightRules]="scadaSymbolGeneralStateRenderHighlightRules"
                           [propertyHighlightRules]="scadaSymbolGeneralStateRenderPropertiesHighlightRules"
                           [functionArgs]="['ctx', 'svg']"
-                          helpId="widget/lib/timeseries/cell_style_fn">
+                          helpId="scada/symbol_state_render_fn">
               </tb-js-func>
             </ng-template>
           </mat-expansion-panel>
@@ -101,7 +101,9 @@
     </div>
     <div [fxShow]="selectedOption === 'behavior'" class="mat-content overflow-hidden">
       <tb-scada-symbol-metadata-behaviors
-        formControlName="behavior">
+        formControlName="behavior"
+        [aliasController]="aliasController"
+        [callbacks]="callbacks">
       </tb-scada-symbol-metadata-behaviors>
     </div>
     <div [fxShow]="selectedOption === 'properties'" class="mat-content overflow-hidden">

@@ -125,8 +125,8 @@ public class DeviceProfileController extends BaseController {
         return checkNotNull(deviceProfileService.findDefaultDeviceProfileInfo(getTenantId()));
     }
 
-    @ApiOperation(value = "Get time-series keys (getTimeseriesKeys)",
-            notes = "Get a set of unique time-series keys used by devices that belong to specified profile. " +
+    @ApiOperation(value = "Get time series keys (getTimeseriesKeys)",
+            notes = "Get a set of unique time series keys used by devices that belong to specified profile. " +
                     "If profile is not set returns a list of unique keys among all profiles. " +
                     "The call is used for auto-complete in the UI forms. " +
                     "The implementation limits the number of devices that participate in search to 100 as a trade of between accurate results and time-consuming queries. " +

@@ -23,6 +23,11 @@
       "tag": "leak",
       "stateRenderFunction": "var leak = ctx.values.leak;\nif (leak) {\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
+    },
+    {
+      "tag": "pipe-background",
+      "stateRenderFunction": "var color = ctx.properties.pipeColor;\nelement.attr({fill: color});",
+      "actions": null
     }
   ],
   "behavior": [
@@ -30,71 +35,175 @@
       "id": "fluid",
       "name": "{i18n:scada.symbol.fluid-presence}",
       "hint": "{i18n:scada.symbol.fluid-presence-hint}",
+      "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": "{i18n:scada.symbol.present}",
       "falseLabel": "{i18n:scada.symbol.absent}",
       "stateLabel": "{i18n:scada.symbol.fluid-present}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "flow",
       "name": "{i18n:scada.symbol.flow-presence}",
       "hint": "{i18n:scada.symbol.flow-presence-hint}",
+      "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": "{i18n:scada.symbol.present}",
       "falseLabel": "{i18n:scada.symbol.absent}",
       "stateLabel": "{i18n:scada.symbol.flow-present}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "flowDirection",
       "name": "{i18n:scada.symbol.flow-direction}",
       "hint": "{i18n:scada.symbol.flow-direction-hint}",
+      "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": true,
       "trueLabel": "{i18n:scada.symbol.forward}",
       "falseLabel": "{i18n:scada.symbol.reverse}",
       "stateLabel": "{i18n:scada.symbol.forward}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": true,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "flowAnimationSpeed",
       "name": "{i18n:scada.symbol.flow-animation-speed}",
       "hint": "{i18n:scada.symbol.flow-animation-speed-hint}",
+      "group": null,
       "type": "value",
       "valueType": "DOUBLE",
-      "defaultValue": 1,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": null,
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": 1,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;"
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "leak",
       "name": "{i18n:scada.symbol.leak}",
       "hint": "{i18n:scada.symbol.leak-hint}",
+      "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.leak-present}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "DO_NOTHING",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": null,
+          "key": "state"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     }
   ],
   "properties": [
@@ -113,9 +222,25 @@
       "min": null,
       "max": null,
       "step": null
+    },
+    {
+      "id": "pipeColor",
+      "name": "{i18n:scada.symbol.pipe-color}",
+      "type": "color",
+      "default": "#FFFFFF",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": null,
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
     }
   ]
-}]]></tb:metadata><path d="m64 386v-372h72v372h-72z" fill="#fff"/><path d="m64 386v-372h72v372h-72z" fill="url(#paint0_linear_1242_51682)"/><g stroke-width="3">
+}]]></tb:metadata><path d="m64 386v-372h72v372h-72z" fill="#fff" tb:tag="pipe-background"/><path d="m64 386v-372h72v372h-72z" fill="url(#paint0_linear_1242_51682)"/><g stroke-width="3">
   <path d="m65.5 384.5v-369h69v369h-69z" stroke="#000" stroke-opacity=".12"/>
   <rect transform="rotate(-90 51.5 398.5)" x="51.5" y="398.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171"/>
   <rect transform="rotate(-90 51.5 12.5)" x="51.5" y="12.5" width="11" height="97" rx="5.5" fill="#D9D9D9" stroke="#727171"/>

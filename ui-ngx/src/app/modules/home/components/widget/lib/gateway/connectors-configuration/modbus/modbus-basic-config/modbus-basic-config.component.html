@@ -19,10 +19,20 @@
   <mat-tab label="{{ 'gateway.general' | translate }}">
     <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
   </mat-tab>
-  <mat-tab label="{{ 'gateway.master-connections' | translate }}*">
+  <mat-tab label="{{ 'gateway.master-connections' | translate }}">
     <tb-modbus-master-table formControlName="master"></tb-modbus-master-table>
   </mat-tab>
   <mat-tab label="{{ 'gateway.server-config' | translate }}">
+    <div class="tb-form-panel no-border no-padding padding-top">
+      <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
+      <div class="tb-form-row" fxLayoutAlign="space-between center">
+        <mat-slide-toggle class="mat-slide" [formControl]="enableSlaveControl">
+          <mat-label>
+            {{ 'gateway.enable' | translate }}
+          </mat-label>
+        </mat-slide-toggle>
+      </div>
+    </div>
     <tb-modbus-slave-config formControlName="slave"></tb-modbus-slave-config>
   </mat-tab>
 </mat-tab-group>

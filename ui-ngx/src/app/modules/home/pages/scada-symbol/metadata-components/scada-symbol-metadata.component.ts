@@ -53,6 +53,8 @@ import {
   scadaSymbolGeneralStateRenderPropertiesHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 
 @Component({
   selector: 'tb-scada-symbol-metadata',
@@ -76,6 +78,12 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
 
   @ViewChild('symbolMetadataTags')
   symbolMetadataTags: ScadaSymbolMetadataTagsComponent;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetActionCallbacks;
 
   @Input()
   disabled: boolean;

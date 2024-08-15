@@ -16,10 +16,9 @@
 
 import { HttpErrorResponse, HttpEvent, HttpHandler, HttpInterceptor, HttpRequest } from '@angular/common/http';
 import { Observable } from 'rxjs/internal/Observable';
-import { Inject, Injectable } from '@angular/core';
+import { Injectable } from '@angular/core';
 import { AuthService } from '@core/auth/auth.service';
 import { Constants } from '@shared/models/constants';
-import { InterceptorHttpParams } from './interceptor-http-params';
 import { catchError, delay, finalize, mergeMap, switchMap } from 'rxjs/operators';
 import { of, throwError } from 'rxjs';
 import { InterceptorConfig } from './interceptor-config';
@@ -30,6 +29,7 @@ import { ActionNotificationShow } from '@app/core/notification/notification.acti
 import { DialogService } from '@core/services/dialog.service';
 import { TranslateService } from '@ngx-translate/core';
 import { parseHttpErrorMessage } from '@core/utils';
+import { getInterceptorConfig } from './interceptor.util';
 
 const tmpHeaders = {};
 
@@ -39,22 +39,18 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   private AUTH_SCHEME = 'Bearer ';
   private AUTH_HEADER_NAME = 'X-Authorization';
 
-  private internalUrlPrefixes = [
-    '/api/auth/token',
-    '/api/rpc'
-  ];
-
   private activeRequests = 0;
 
-  constructor(@Inject(Store) private store: Store<AppState>,
-              @Inject(DialogService) private dialogService: DialogService,
-              @Inject(TranslateService) private translate: TranslateService,
-              @Inject(AuthService) private authService: AuthService) {
-  }
+  constructor(
+    private store: Store<AppState>,
+    private dialogService: DialogService,
+    private translate: TranslateService,
+    private authService: AuthService,
+  ) {}
 
   intercept(req: HttpRequest<any>, next: HttpHandler): Observable<HttpEvent<any>> {
     if (req.url.startsWith('/api/')) {
-      const config = this.getInterceptorConfig(req);
+      const config = getInterceptorConfig(req);
       this.updateLoadingState(config, true);
       let observable$: Observable<HttpEvent<any>>;
       if (this.isTokenBasedAuthEntryPoint(req.url)) {
@@ -98,7 +94,7 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
   }
 
   private handleResponseError(req: HttpRequest<any>, next: HttpHandler, errorResponse: HttpErrorResponse): Observable<HttpEvent<any>> {
-    const config = this.getInterceptorConfig(req);
+    const config = getInterceptorConfig(req);
     let unhandled = false;
     const ignoreErrors = config.ignoreErrors;
     const resendRequest = config.resendRequest;
@@ -171,15 +167,6 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
     }
   }
 
-  private isInternalUrlPrefix(url: string): boolean {
-    for (const index in this.internalUrlPrefixes) {
-      if (url.startsWith(this.internalUrlPrefixes[index])) {
-        return true;
-      }
-    }
-    return false;
-  }
-
   private isTokenBasedAuthEntryPoint(url: string): boolean {
     return  url.startsWith('/api/') &&
       !url.startsWith(Constants.entryPoints.login) &&
@@ -200,19 +187,6 @@ export class GlobalHttpInterceptor implements HttpInterceptor {
         this.store.dispatch(new ActionLoadFinish());
       }
     }
-  }
-
-  private getInterceptorConfig(req: HttpRequest<any>): InterceptorConfig {
-    let config: InterceptorConfig;
-    if (req.params && req.params instanceof InterceptorHttpParams) {
-      config = (req.params as InterceptorHttpParams).interceptorConfig;
-    } else {
-      config = new InterceptorConfig(false, false);
-    }
-    if (this.isInternalUrlPrefix(req.url)) {
-      config.ignoreLoading = true;
-    }
-    return config;
   }
 
   private showError(error: string, timeout: number = 0) {

@@ -19,14 +19,19 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { merge } from 'rxjs';
 import {
+  defaultGetValueSettings, defaultSetValueSettings, defaultWidgetActionSettings,
   ScadaSymbolBehavior,
   ScadaSymbolBehaviorType,
   scadaSymbolBehaviorTypes,
   scadaSymbolBehaviorTypeTranslations
 } from '@app/modules/home/components/widget/lib/scada/scada-symbol.models';
 import { ValueType, valueTypesMap } from '@shared/models/constants';
-import { ValueToDataType } from '@shared/models/action-widget-settings.models';
+import { GetValueSettings, SetValueSettings, ValueToDataType } from '@shared/models/action-widget-settings.models';
 import { WidgetService } from '@core/http/widget.service';
+import { mergeDeep } from '@core/utils';
+import { WidgetAction, widgetType } from '@shared/models/widget.models';
+import { IAliasController } from '@core/api/widget-api.models';
+import { WidgetActionCallbacks } from '@home/components/widget/action/manage-widget-actions.component.models';
 
 @Component({
   selector: 'tb-scada-symbol-behavior-panel',
@@ -35,6 +40,8 @@ import { WidgetService } from '@core/http/widget.service';
   encapsulation: ViewEncapsulation.None
 })
 export class ScadaSymbolBehaviorPanelComponent implements OnInit {
+
+  widgetType = widgetType;
 
   ScadaSymbolBehaviorType = ScadaSymbolBehaviorType;
 
@@ -54,6 +61,12 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
 
   @Input()
   behavior: ScadaSymbolBehavior;
+
+  @Input()
+  aliasController: IAliasController;
+
+  @Input()
+  callbacks: WidgetActionCallbacks;
 
   @Input()
   disabled: boolean;
@@ -84,21 +97,19 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
         group: [this.behavior.group, []],
         type: [this.behavior.type, [Validators.required]],
         valueType: [this.behavior.valueType, [Validators.required]],
-        defaultValue: [this.behavior.defaultValue, [Validators.required]],
         trueLabel: [this.behavior.trueLabel, []],
         falseLabel: [this.behavior.falseLabel, []],
         stateLabel: [this.behavior.stateLabel, []],
-        valueToDataType: [this.behavior.valueToDataType, [Validators.required]],
-        constantValue: [this.behavior.constantValue, [Validators.required]],
-        valueToDataFunction: [this.behavior.valueToDataFunction, [Validators.required]]
+        defaultGetValueSettings: [this.behavior.defaultGetValueSettings, [Validators.required]],
+        defaultSetValueSettings: [this.behavior.defaultSetValueSettings, [Validators.required]],
+        defaultWidgetActionSettings: [this.behavior.defaultWidgetActionSettings, [Validators.required]]
       }
     );
     if (this.disabled) {
       this.behaviorFormGroup.disable({emitEvent: false});
     } else {
       merge(this.behaviorFormGroup.get('type').valueChanges,
-        this.behaviorFormGroup.get('valueType').valueChanges,
-        this.behaviorFormGroup.get('valueToDataType').valueChanges).subscribe(() => {
+        this.behaviorFormGroup.get('valueType').valueChanges).subscribe(() => {
         this.updateValidators();
       });
       this.updateValidators();
@@ -117,7 +128,9 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
   private updateValidators() {
     const type: ScadaSymbolBehaviorType = this.behaviorFormGroup.get('type').value;
     const valueType: ValueType = this.behaviorFormGroup.get('valueType').value;
-    let valueToDataType: ValueToDataType = this.behaviorFormGroup.get('valueToDataType').value;
+    let defaultGetValueSettingsValue = this.behaviorFormGroup.get('defaultGetValueSettings').value;
+    let defaultSetValueSettingsValue = this.behaviorFormGroup.get('defaultSetValueSettings').value;
+    let defaultWidgetActionSettingsValue = this.behaviorFormGroup.get('defaultWidgetActionSettings').value;
     this.behaviorFormGroup.disable({emitEvent: false});
     this.behaviorFormGroup.get('id').enable({emitEvent: false});
     this.behaviorFormGroup.get('name').enable({emitEvent: false});
@@ -127,30 +140,49 @@ export class ScadaSymbolBehaviorPanelComponent implements OnInit {
     switch (type) {
       case ScadaSymbolBehaviorType.value:
         this.behaviorFormGroup.get('valueType').enable({emitEvent: false});
-        this.behaviorFormGroup.get('defaultValue').enable({emitEvent: false});
+        this.behaviorFormGroup.get('defaultGetValueSettings').enable({emitEvent: false});
         if (valueType === ValueType.BOOLEAN) {
           this.behaviorFormGroup.get('trueLabel').enable({emitEvent: false});
           this.behaviorFormGroup.get('falseLabel').enable({emitEvent: false});
           this.behaviorFormGroup.get('stateLabel').enable({emitEvent: false});
         }
+        if (!defaultGetValueSettingsValue) {
+          defaultGetValueSettingsValue = mergeDeep({} as GetValueSettings<any>, defaultGetValueSettings(valueType));
+          this.behaviorFormGroup.get('defaultGetValueSettings').patchValue(defaultGetValueSettingsValue, {emitEvent: true});
+        }
+        if (defaultSetValueSettingsValue) {
+          this.behaviorFormGroup.get('defaultSetValueSettings').patchValue(null, {emitEvent: true});
+        }
+        if (defaultWidgetActionSettingsValue) {
+          this.behaviorFormGroup.get('defaultWidgetActionSettings').patchValue(null, {emitEvent: true});
+        }
         break;
       case ScadaSymbolBehaviorType.action:
-        if (valueType === ValueType.BOOLEAN && valueToDataType === ValueToDataType.VALUE) {
-          this.behaviorFormGroup.patchValue({valueToDataType: ValueToDataType.CONSTANT}, {emitEvent: false});
-          valueToDataType = ValueToDataType.CONSTANT;
-        } else if (valueType !== ValueType.BOOLEAN && valueToDataType === ValueToDataType.CONSTANT) {
-          this.behaviorFormGroup.patchValue({valueToDataType: ValueToDataType.VALUE}, {emitEvent: false});
-          valueToDataType = ValueToDataType.VALUE;
-        }
         this.behaviorFormGroup.get('valueType').enable({emitEvent: false});
-        this.behaviorFormGroup.get('valueToDataType').enable({emitEvent: false});
-        if (valueToDataType === ValueToDataType.CONSTANT) {
-          this.behaviorFormGroup.get('constantValue').enable({emitEvent: false});
-        } else if (valueToDataType === ValueToDataType.FUNCTION) {
-          this.behaviorFormGroup.get('valueToDataFunction').enable({emitEvent: false});
+        this.behaviorFormGroup.get('defaultSetValueSettings').enable({emitEvent: false});
+        if (!defaultSetValueSettingsValue) {
+          defaultSetValueSettingsValue = mergeDeep({} as SetValueSettings, defaultSetValueSettings(valueType));
+          this.behaviorFormGroup.get('defaultSetValueSettings').patchValue(defaultSetValueSettingsValue, {emitEvent: true});
+        }
+        if (defaultGetValueSettingsValue) {
+          this.behaviorFormGroup.get('defaultGetValueSettings').patchValue(null, {emitEvent: true});
+        }
+        if (defaultWidgetActionSettingsValue) {
+          this.behaviorFormGroup.get('defaultWidgetActionSettings').patchValue(null, {emitEvent: true});
         }
         break;
       case ScadaSymbolBehaviorType.widgetAction:
+        this.behaviorFormGroup.get('defaultWidgetActionSettings').enable({emitEvent: false});
+        if (!defaultWidgetActionSettingsValue) {
+          defaultWidgetActionSettingsValue = mergeDeep({} as WidgetAction, defaultWidgetActionSettings);
+          this.behaviorFormGroup.get('defaultWidgetActionSettings').patchValue(defaultWidgetActionSettingsValue, {emitEvent: true});
+        }
+        if (defaultGetValueSettingsValue) {
+          this.behaviorFormGroup.get('defaultGetValueSettings').patchValue(null, {emitEvent: true});
+        }
+        if (defaultSetValueSettingsValue) {
+          this.behaviorFormGroup.get('defaultSetValueSettings').patchValue(null, {emitEvent: true});
+        }
         break;
     }
   }

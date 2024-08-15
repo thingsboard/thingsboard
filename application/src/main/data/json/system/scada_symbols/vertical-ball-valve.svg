@@ -37,13 +37,33 @@
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": "{i18n:scada.symbol.opened}",
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": {
+        "action": "GET_ATTRIBUTE",
+        "defaultValue": false,
+        "executeRpc": {
+          "method": "getState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "getAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "getTimeSeries": {
+          "key": "state"
+        },
+        "dataToValue": {
+          "type": "NONE",
+          "dataToValueFunction": "/* Should return boolean value */\nreturn data;",
+          "compareToValue": true
+        }
+      },
+      "defaultSetValueSettings": null,
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "open",
@@ -52,13 +72,32 @@
       "group": null,
       "type": "action",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": null,
-      "valueToDataType": "CONSTANT",
-      "constantValue": true,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": false,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
     },
     {
       "id": "close",
@@ -67,13 +106,32 @@
       "group": null,
       "type": "action",
       "valueType": "BOOLEAN",
-      "defaultValue": false,
       "trueLabel": null,
       "falseLabel": null,
       "stateLabel": null,
-      "valueToDataType": "CONSTANT",
-      "constantValue": false,
-      "valueToDataFunction": ""
+      "defaultGetValueSettings": null,
+      "defaultSetValueSettings": {
+        "action": "SET_ATTRIBUTE",
+        "executeRpc": {
+          "method": "setState",
+          "requestTimeout": 5000,
+          "requestPersistent": false,
+          "persistentPollingInterval": 1000
+        },
+        "setAttribute": {
+          "scope": "SHARED_SCOPE",
+          "key": "open"
+        },
+        "putTimeSeries": {
+          "key": "state"
+        },
+        "valueToData": {
+          "type": "CONSTANT",
+          "constantValue": true,
+          "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
+        }
+      },
+      "defaultWidgetActionSettings": null
     }
   ],
   "properties": [

@@ -33,6 +33,8 @@
         <tb-scada-symbol-metadata-behavior-row fxFlex
           [index]="$index"
           [formControl]="behaviorControl"
+          [aliasController]="aliasController"
+          [callbacks]="callbacks"
           (behaviorRemoved)="removeBehavior($index)">
         </tb-scada-symbol-metadata-behavior-row>
         <div class="tb-form-table-row-cell-buttons">

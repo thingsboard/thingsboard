@@ -202,8 +202,8 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
-    @Operation(summary = "Post time-series data (postTelemetry)",
-            description = "Post time-series data on behalf of device. "
+    @Operation(summary = "Post time series data (postTelemetry)",
+            description = "Post time series data on behalf of device. "
                     + "\n Example of the request: "
                     + TS_PAYLOAD
                     + REQUIRE_ACCESS_TOKEN)

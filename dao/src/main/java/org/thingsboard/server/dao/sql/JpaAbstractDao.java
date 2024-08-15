@@ -18,11 +18,16 @@ package org.thingsboard.server.dao.sql;
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.ListenableFuture;
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.OptimisticLockException;
+import jakarta.persistence.PersistenceContext;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.HasVersion;
+import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.DaoUtil;
@@ -47,9 +52,8 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Autowired
     protected JdbcTemplate jdbcTemplate;
 
-    protected abstract Class<E> getEntityClass();
-
-    protected abstract JpaRepository<E, UUID> getRepository();
+    @PersistenceContext
+    private EntityManager entityManager;
 
     @Override
     @Transactional
@@ -68,12 +72,38 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             entity.setUuid(uuid);
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
-        entity = doSave(entity, isNew);
+        try {
+            entity = doSave(entity, isNew);
+        } catch (OptimisticLockException e) {
+            throw new EntityVersionMismatchException((getEntityType() != null ? getEntityType().getNormalName() : "Entity") + " was already changed by someone else", e);
+        }
         return DaoUtil.getData(entity);
     }
 
     protected E doSave(E entity, boolean isNew) {
-        return getRepository().save(entity);
+        EntityManager entityManager = getEntityManager();
+        if (isNew) {
+            if (entity instanceof HasVersion versionedEntity) {
+                versionedEntity.setVersion(1L);
+            }
+            entityManager.persist(entity);
+        } else {
+            if (entity instanceof HasVersion versionedEntity) {
+                if (versionedEntity.getVersion() == null) {
+                    HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
+                    if (existingEntity != null) {
+                        versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                    } else {
+                        return doSave(entity, true);
+                    }
+                }
+                entity = entityManager.merge(entity);
+                entityManager.flush();
+            } else {
+                entity = entityManager.merge(entity);
+            }
+        }
+        return entity;
     }
 
     @Override
@@ -111,16 +141,18 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
 
     @Override
     @Transactional
-    public boolean removeById(TenantId tenantId, UUID id) {
-        getRepository().deleteById(id);
+    public void removeById(TenantId tenantId, UUID id) {
+        JpaRepository<E, UUID> repository = getRepository();
+        repository.deleteById(id);
+        repository.flush();
         log.debug("Remove request: {}", id);
-        return !getRepository().existsById(id);
     }
 
     @Transactional
     public void removeAllByIds(Collection<UUID> ids) {
         JpaRepository<E, UUID> repository = getRepository();
         ids.forEach(repository::deleteById);
+        repository.flush();
     }
 
     @Override
@@ -141,11 +173,23 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         query += " ORDER BY id LIMIT ?";
 
-        return jdbcTemplate.queryForList(query, UUID.class, params);
+        return getJdbcTemplate().queryForList(query, UUID.class, params);
     }
 
     protected String getTenantIdColumn() {
         return ModelConstants.TENANT_ID_COLUMN;
     }
+
+    protected EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    protected JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
+    }
+
+    protected abstract Class<E> getEntityClass();
+
+    protected abstract JpaRepository<E, UUID> getRepository();
 
 }

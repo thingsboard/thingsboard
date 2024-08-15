@@ -13,15 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-$server-config-header-height: 132px;
+package org.thingsboard.server.dao.entity;
 
-:host {
-  .slave-content {
-    height: calc(100% - #{$server-config-header-height});
-    overflow: auto;
-  }
+import org.springframework.beans.factory.annotation.Autowired;
+import org.thingsboard.server.cache.VersionedTbCache;
+import org.thingsboard.server.common.data.HasVersion;
 
-  .slave-container {
-    display: inherit;
-  }
+import java.io.Serializable;
+
+public abstract class CachedVersionedEntityService<K extends Serializable, V extends Serializable & HasVersion, E> extends AbstractCachedEntityService<K, V, E> {
+
+    @Autowired
+    protected VersionedTbCache<K, V> cache;
+
 }

@@ -13,11 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.event;
+package org.thingsboard.server.common.data.exception;
 
-public interface EventCleanupRepository {
+public class EntityVersionMismatchException extends RuntimeException {
 
-    void cleanupEvents(long eventExpTime, boolean debug);
+    public EntityVersionMismatchException(String message, Throwable cause) {
+        super(message, cause);
+    }
 
-    void migrateEvents(long regularEventTs, long debugEventTs);
 }
