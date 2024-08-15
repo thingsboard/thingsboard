@@ -64,8 +64,8 @@ public class DedicatedJpaAuditLogDao extends JpaAuditLogDao {
 
     @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
     @Override
-    public boolean removeById(TenantId tenantId, UUID id) {
-        return super.removeById(tenantId, id);
+    public void removeById(TenantId tenantId, UUID id) {
+        super.removeById(tenantId, id);
     }
 
     @Transactional(transactionManager = EVENTS_TRANSACTION_MANAGER)
