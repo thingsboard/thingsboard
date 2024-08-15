@@ -490,7 +490,7 @@ actors:
 
 # Cache settings parameters
 cache:
-  # caffeine or redis
+  # caffeine or redis(7.2 - latest compatible version)
   type: "${CACHE_TYPE:caffeine}"
   maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that call the external cache
   attributes:

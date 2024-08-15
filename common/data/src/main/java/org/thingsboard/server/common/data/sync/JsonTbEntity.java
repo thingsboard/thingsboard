@@ -60,6 +60,6 @@ import java.lang.annotation.Target;
         @Type(name = "NOTIFICATION_RULE", value = NotificationRule.class),
         @Type(name = "TB_RESOURCE", value = TbResource.class)
 })
-@JsonIgnoreProperties(value = {"tenantId", "createdTime"}, ignoreUnknown = true)
+@JsonIgnoreProperties(value = {"tenantId", "createdTime", "version"}, ignoreUnknown = true)
 public @interface JsonTbEntity {
 }

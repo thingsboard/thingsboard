@@ -41,19 +41,19 @@ public class DeviceProfileCacheKey implements Serializable {
         this.provisionDeviceKey = provisionDeviceKey;
     }
 
-    public static DeviceProfileCacheKey fromName(TenantId tenantId, String name) {
+    public static DeviceProfileCacheKey forName(TenantId tenantId, String name) {
         return new DeviceProfileCacheKey(tenantId, name, null, false, null);
     }
 
-    public static DeviceProfileCacheKey fromId(DeviceProfileId id) {
+    public static DeviceProfileCacheKey forId(DeviceProfileId id) {
         return new DeviceProfileCacheKey(null, null, id, false, null);
     }
 
-    public static DeviceProfileCacheKey defaultProfile(TenantId tenantId) {
+    public static DeviceProfileCacheKey forDefaultProfile(TenantId tenantId) {
         return new DeviceProfileCacheKey(tenantId, null, null, true, null);
     }
 
-    public static DeviceProfileCacheKey fromProvisionDeviceKey(String provisionDeviceKey) {
+    public static DeviceProfileCacheKey forProvisionKey(String provisionDeviceKey) {
         return new DeviceProfileCacheKey(null, null, null, false, provisionDeviceKey);
     }
 
