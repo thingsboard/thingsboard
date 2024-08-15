@@ -31,7 +31,6 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
@@ -75,27 +74,43 @@ public class TbGetTelemetryNode implements TbNode {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
         if (tsKeyNames.isEmpty()) {
-            throw new TbNodeException("Telemetry is not selected!", true);
+            throw new TbNodeException("Telemetry should be specified!", true);
         }
-        if (config.getFetchMode() == null) {
+        fetchMode = config.getFetchMode();
+        if (fetchMode == null) {
             throw new TbNodeException("FetchMode should be specified!", true);
         }
-        limit = FetchMode.ALL.equals(config.getFetchMode()) ? validateLimit(config.getLimit()) : 1;
-        fetchMode = config.getFetchMode();
-        orderBy = getOrderBy();
-        aggregation = parseAggregationConfig(config.getAggregation());
-    }
-
-    Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(FetchMode.ALL)) {
-            return Aggregation.NONE;
+        switch (fetchMode) {
+            case ALL:
+                limit = validateLimit(config.getLimit());
+                if (config.getOrderBy() == null) {
+                    throw new TbNodeException("OrderBy should be specified!", true);
+                }
+                orderBy = config.getOrderBy();
+                if (config.getAggregation() == null) {
+                    throw new TbNodeException("Aggregation should be specified!", true);
+                }
+                aggregation = config.getAggregation();
+                break;
+            case FIRST:
+                limit = 1;
+                orderBy = Direction.ASC;
+                aggregation = Aggregation.NONE;
+                break;
+            case LAST:
+                limit = 1;
+                orderBy = Direction.DESC;
+                aggregation = Aggregation.NONE;
+                break;
         }
-        return Aggregation.valueOf(aggName);
     }
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
         Interval interval = getInterval(msg);
+        if (interval.getStartTs() > interval.getEndTs()) {
+            throw new RuntimeException("Interval start should be less than Interval end");
+        }
         List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
         ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
         DonAsynchron.withCallback(list, data -> {
@@ -113,22 +128,6 @@ public class TbGetTelemetryNode implements TbNode {
         return keys.stream()
                 .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, orderBy.name()))
                 .collect(Collectors.toList());
-    }
-
-    private Direction getOrderBy() throws TbNodeException {
-        switch (fetchMode) {
-            case ALL:
-                if (config.getOrderBy() == null) {
-                    throw new TbNodeException("OrderBy should be specified!", true);
-                }
-                return config.getOrderBy();
-            case FIRST:
-                return Direction.ASC;
-            case LAST:
-                return Direction.DESC;
-            default:
-                throw new TbNodeException("FetchMode '" + fetchMode + "' is not supported.", true);
-        }
     }
 
     private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
@@ -234,9 +233,38 @@ public class TbGetTelemetryNode implements TbNode {
         boolean hasChanges = false;
         switch (fromVersion) {
             case 0 -> {
-                if (oldConfiguration.has("orderBy") && oldConfiguration.get("orderBy").isNull()) {
-                    ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
-                    hasChanges = true;
+                if (oldConfiguration.hasNonNull("fetchMode")) {
+                    String fetchMode = oldConfiguration.get("fetchMode").asText();
+                    switch (fetchMode) {
+                        case "FIRST":
+                            ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
+                            ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                            hasChanges = true;
+                            break;
+                        case "LAST":
+                            ((ObjectNode) oldConfiguration).put("orderBy", Direction.DESC.name());
+                            ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                            hasChanges = true;
+                            break;
+                        case "ALL":
+                            if (oldConfiguration.has("orderBy") &&
+                                    (oldConfiguration.get("orderBy").isNull() || oldConfiguration.get("orderBy").asText().isEmpty())) {
+                                ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
+                                hasChanges = true;
+                            }
+                            if (oldConfiguration.has("aggregation") &&
+                                    (oldConfiguration.get("aggregation").isNull() || oldConfiguration.get("aggregation").asText().isEmpty())) {
+                                ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                                hasChanges = true;
+                            }
+                            break;
+                        default:
+                            ((ObjectNode) oldConfiguration).put("fetchMode", FetchMode.LAST.name());
+                            ((ObjectNode) oldConfiguration).put("orderBy", Direction.DESC.name());
+                            ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                            hasChanges = true;
+                            break;
+                    }
                 }
             }
         }

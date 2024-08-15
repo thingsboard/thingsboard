@@ -90,49 +90,6 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenAggregationAsString_whenParseAggregation_thenReturnEnum() throws TbNodeException {
-        config.setFetchMode(FetchMode.ALL);
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-
-        //compatibility with old configs without "aggregation" parameter
-        assertThat(node.parseAggregationConfig(null)).isEqualTo(Aggregation.NONE);
-        assertThat(node.parseAggregationConfig("")).isEqualTo(Aggregation.NONE);
-
-        //common values
-        assertThat(node.parseAggregationConfig("MIN")).isEqualTo(Aggregation.MIN);
-        assertThat(node.parseAggregationConfig("MAX")).isEqualTo(Aggregation.MAX);
-        assertThat(node.parseAggregationConfig("AVG")).isEqualTo(Aggregation.AVG);
-        assertThat(node.parseAggregationConfig("SUM")).isEqualTo(Aggregation.SUM);
-        assertThat(node.parseAggregationConfig("COUNT")).isEqualTo(Aggregation.COUNT);
-        assertThat(node.parseAggregationConfig("NONE")).isEqualTo(Aggregation.NONE);
-
-        //all possible values in future
-        for (Aggregation aggEnum : Aggregation.values()) {
-            assertThat(node.parseAggregationConfig(aggEnum.name())).isEqualTo(aggEnum);
-        }
-    }
-
-    @Test
-    public void givenAggregationWhiteSpace_whenParseAggregation_thenException() throws TbNodeException {
-        // GIVEN
-        config.setFetchMode(FetchMode.ALL);
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-
-        // WHEN-THEN
-        assertThatThrownBy(() -> node.parseAggregationConfig(" ")).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
-    public void givenAggregationIncorrect_whenParseAggregation_thenException() throws TbNodeException {
-        // GIVEN
-        config.setFetchMode(FetchMode.ALL);
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
-
-        // WHEN-THEN
-        assertThatThrownBy(() -> node.parseAggregationConfig("TOP")).isInstanceOf(IllegalArgumentException.class);
-    }
-
-    @Test
     public void verifyDefaultConfig() {
         config = new TbGetTelemetryNodeConfiguration().defaultConfiguration();
         assertThat(config.getStartInterval()).isEqualTo(2);
@@ -144,7 +101,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         assertThat(config.getEndIntervalTimeUnit()).isEqualTo(TimeUnit.MINUTES.name());
         assertThat(config.getFetchMode()).isEqualTo(FetchMode.FIRST);
         assertThat(config.getOrderBy()).isEqualTo(Direction.ASC);
-        assertThat(config.getAggregation()).isEqualTo(Aggregation.NONE.name());
+        assertThat(config.getAggregation()).isEqualTo(Aggregation.NONE);
         assertThat(config.getLimit()).isEqualTo(1000);
         assertThat(config.getLatestTsKeyNames()).isEmpty();
     }
@@ -157,7 +114,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         // WHEN-THEN
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("Telemetry is not selected!")
+                .hasMessage("Telemetry should be specified!")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
                 .isEqualTo(true);
     }
@@ -181,7 +138,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setFetchMode(FetchMode.ALL);
         config.setOrderBy(null);
 
-        // THEN
+        // WHEN-THEN
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("OrderBy should be specified!")
@@ -196,12 +153,39 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setFetchMode(FetchMode.ALL);
         config.setLimit(limit);
 
-        // THEN
+        // WHEN-THEN
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
                 .isInstanceOf(TbNodeException.class)
                 .hasMessage("Limit should be in a range from 2 to 1000.")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
                 .isEqualTo(true);
+    }
+
+    @Test
+    public void givenFetchModeIsAllAndAggregationIsNull_whenInit_thenThrowsException() {
+        // GIVEN
+        config.setFetchMode(FetchMode.ALL);
+        config.setAggregation(null);
+        // WHEN-THEN
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Aggregation should be specified!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
+    public void givenIntervalStartIsGreaterThanIntervalEnd_whenOnMsg_thenThrowsException() throws TbNodeException {
+        // GIVEN
+        config.setStartInterval(1);
+        config.setEndInterval(2);
+
+        // WHEN-THEN
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
+                .isInstanceOf(RuntimeException.class)
+                .hasMessage("Interval start should be less than Interval end");
     }
 
     @Test
@@ -279,7 +263,7 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @ParameterizedTest
     @MethodSource
-    public void givenAggregation_whenOnMsg_thenVerifyAggregationStepInQuery(String aggregation, Consumer<ReadTsKvQuery> verifyAggregationStepInQuery) throws TbNodeException {
+    public void givenAggregation_whenOnMsg_thenVerifyAggregationStepInQuery(Aggregation aggregation, Consumer<ReadTsKvQuery> verifyAggregationStepInQuery) throws TbNodeException {
         // GIVEN
         config.setStartInterval(5);
         config.setEndInterval(1);
@@ -304,8 +288,8 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static Stream<Arguments> givenAggregation_whenOnMsg_thenVerifyAggregationStepInQuery() {
         return Stream.of(
-                Arguments.of("", (Consumer<ReadTsKvQuery>) query -> assertThat(query.getInterval()).isEqualTo(1)),
-                Arguments.of("MIN", (Consumer<ReadTsKvQuery>) query -> assertThat(query.getInterval()).isEqualTo(query.getEndTs() - query.getStartTs()))
+                Arguments.of(Aggregation.NONE, (Consumer<ReadTsKvQuery>) query -> assertThat(query.getInterval()).isEqualTo(1)),
+                Arguments.of(Aggregation.AVG, (Consumer<ReadTsKvQuery>) query -> assertThat(query.getInterval()).isEqualTo(query.getEndTs() - query.getStartTs()))
         );
     }
 
@@ -479,15 +463,14 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
-                // config for version 0 (orderBy id null)
+                // config for version 0 (fetchMode is 'FIRST' and orderBy is 'INVALID_ORDER_BY' and aggregation is 'SUM')
                 Arguments.of(0,
                         """
                                         {
-                                                  "latestTsKeyNames": [
-                                                  ],
-                                                  "aggregation": "NONE",
-                                                  "fetchMode": "ALL",
-                                                  "orderBy": null,
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "SUM",
+                                                  "fetchMode": "FIRST",
+                                                  "orderBy": "INVALID_ORDER_BY",
                                                   "limit": 1000,
                                                   "useMetadataIntervalPatterns": false,
                                                   "startIntervalPattern": "",
@@ -501,8 +484,77 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
                         true,
                         """
                                         {
-                                                  "latestTsKeyNames": [
-                                                  ],
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "FIRST",
+                                                  "orderBy": "ASC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """),
+                // config for version 0 (fetchMode is 'LAST' and orderBy is 'ASC' and aggregation is 'AVG')
+                Arguments.of(0,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "AVG",
+                                                  "fetchMode": "LAST",
+                                                  "orderBy": "ASC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """,
+                        true,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "LAST",
+                                                  "orderBy": "DESC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """),
+                // config for version 0 (fetchMode is 'ALL' and orderBy is empty and aggregation is null)
+                Arguments.of(0,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": null,
+                                                  "fetchMode": "ALL",
+                                                  "orderBy": "",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """,
+                        true,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [],
                                                   "aggregation": "NONE",
                                                   "fetchMode": "ALL",
                                                   "orderBy": "ASC",
@@ -516,13 +568,12 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
                                                   "endIntervalTimeUnit": "MINUTES"
                                         }
                                 """),
-                // config for version 0 (orderBy is specified)
+                // config for version 0 (fetchMode is 'ALL' and orderBy is 'DESC' and aggregation is 'SUM')
                 Arguments.of(0,
                         """
                                         {
-                                                  "latestTsKeyNames": [
-                                                  ],
-                                                  "aggregation": "NONE",
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "SUM",
                                                   "fetchMode": "ALL",
                                                   "orderBy": "DESC",
                                                   "limit": 1000,
@@ -538,10 +589,44 @@ public class TbGetTelemetryNodeTest extends AbstractRuleNodeUpgradeTest {
                         false,
                         """
                                         {
-                                                  "latestTsKeyNames": [
-                                                  ],
-                                                  "aggregation": "NONE",
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "SUM",
                                                   "fetchMode": "ALL",
+                                                  "orderBy": "DESC",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """),
+                // config for version 0 (fetchMode is 'INVALID_MODE' and orderBy is 'INVALID_ORDER_BY' and aggregation is 'INVALID_AGGREGATION')
+                Arguments.of(0,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "INVALID_AGGREGATION",
+                                                  "fetchMode": "INVALID_MODE",
+                                                  "orderBy": "INVALID_ORDER_BY",
+                                                  "limit": 1000,
+                                                  "useMetadataIntervalPatterns": false,
+                                                  "startIntervalPattern": "",
+                                                  "endIntervalPattern": "",
+                                                  "startInterval": 2,
+                                                  "startIntervalTimeUnit": "MINUTES",
+                                                  "endInterval": 1,
+                                                  "endIntervalTimeUnit": "MINUTES"
+                                        }
+                                """,
+                        true,
+                        """
+                                        {
+                                                  "latestTsKeyNames": [],
+                                                  "aggregation": "NONE",
+                                                  "fetchMode": "LAST",
                                                   "orderBy": "DESC",
                                                   "limit": 1000,
                                                   "useMetadataIntervalPatterns": false,

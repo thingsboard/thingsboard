@@ -44,7 +44,7 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
     private String endIntervalTimeUnit;
     private FetchMode fetchMode; //FIRST, LAST, ALL
     private Direction orderBy; //ASC, DESC
-    private String aggregation; //MIN, MAX, AVG, SUM, COUNT, NONE;
+    private Aggregation aggregation; //MIN, MAX, AVG, SUM, COUNT, NONE;
     private int limit;
 
     private List<String> latestTsKeyNames;
@@ -62,7 +62,7 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
         configuration.setStartIntervalPattern("");
         configuration.setEndIntervalPattern("");
         configuration.setOrderBy(Direction.ASC);
-        configuration.setAggregation(Aggregation.NONE.name());
+        configuration.setAggregation(Aggregation.NONE);
         configuration.setLimit(MAX_FETCH_SIZE);
         return configuration;
     }
