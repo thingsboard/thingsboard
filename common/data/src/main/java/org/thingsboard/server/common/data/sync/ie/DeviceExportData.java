@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 public class DeviceExportData extends EntityExportData<Device> {
 
     @JsonProperty(index = 3)
-    @JsonIgnoreProperties({"id", "deviceId", "createdTime"})
+    @JsonIgnoreProperties({"id", "deviceId", "createdTime", "version"})
     private DeviceCredentials credentials;
 
     @JsonIgnore

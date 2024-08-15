@@ -18,8 +18,7 @@ package org.thingsboard.server.common.data.widget;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.ExportableEntity;
 import org.thingsboard.server.common.data.HasImage;
 import org.thingsboard.server.common.data.HasName;
@@ -29,7 +28,8 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
-@JsonPropertyOrder({ "fqn", "name", "deprecated", "image", "description", "descriptor", "externalId" })
+@EqualsAndHashCode(callSuper = true)
+@JsonPropertyOrder({"fqn", "name", "deprecated", "image", "description", "descriptor", "externalId"})
 public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantId, HasImage, ExportableEntity<WidgetTypeId> {
 
     @Schema(description = "Relative or external image URL. Replaced with image data URL (Base64) in case of relative URL and 'inlineImages' option enabled.")
@@ -42,8 +42,6 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
     @Schema(description = "Tags of the widget type")
     private String[] tags;
 
-    @Getter
-    @Setter
     private WidgetTypeId externalId;
 
     public WidgetTypeDetails() {
@@ -65,4 +63,5 @@ public class WidgetTypeDetails extends WidgetType implements HasName, HasTenantI
         this.tags = widgetTypeDetails.getTags();
         this.externalId = widgetTypeDetails.getExternalId();
     }
+
 }
