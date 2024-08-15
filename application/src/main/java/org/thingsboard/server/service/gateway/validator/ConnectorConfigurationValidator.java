@@ -18,8 +18,10 @@ package org.thingsboard.server.service.gateway.validator;
 import com.fasterxml.jackson.core.JsonLocation;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonMappingException;
+import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
+import com.fasterxml.jackson.databind.json.JsonMapper;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.Validation;
 import jakarta.validation.Validator;
@@ -40,11 +42,20 @@ public abstract class ConnectorConfigurationValidator {
     private final Validator validator = factory.getValidator();
 
     protected <T> GatewayConnectorValidationResult validateConfiguration(String connectorConfiguration, Class<T> configClass) {
-        ObjectMapper mapper = new ObjectMapper();
-        mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
 
-        ValidationDeserializationProblemHandler handler = new ValidationDeserializationProblemHandler();
-        mapper.addHandler(handler);
+        ValidationDeserializationProblemHandler errorHandler = new ValidationDeserializationProblemHandler();
+        ObjectMapper mapper = JsonMapper.builder()
+                .enable(MapperFeature.BLOCK_UNSAFE_POLYMORPHIC_BASE_TYPES)
+                .enable(MapperFeature.ACCEPT_CASE_INSENSITIVE_ENUMS)
+                .addHandler(errorHandler)
+                .configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false)
+                .configure(DeserializationFeature.FAIL_ON_NULL_FOR_PRIMITIVES, false)
+                .configure(DeserializationFeature.FAIL_ON_NUMBERS_FOR_ENUMS, false)
+                .configure(DeserializationFeature.FAIL_ON_INVALID_SUBTYPE, false)
+                .configure(DeserializationFeature.WRAP_EXCEPTIONS, false)
+                .configure(DeserializationFeature.ACCEPT_EMPTY_STRING_AS_NULL_OBJECT, true)
+                .configure(DeserializationFeature.ACCEPT_EMPTY_ARRAY_AS_NULL_OBJECT, true)
+                .build();
 
         T configuration = null;
         List<GatewayConnectorValidationRecord> errors = new ArrayList<>();
@@ -59,13 +70,13 @@ public abstract class ConnectorConfigurationValidator {
             } else if (cause instanceof JsonMappingException) {
                 handleJsonMappingException((JsonMappingException) cause, errors);
             } else {
-                errors.add(new GatewayConnectorValidationRecord("Invalid configuration format: " + e.getMessage(), 0, 1, GatewayConnectorValidationRecordType.ERROR));
+                errors.add(new GatewayConnectorValidationRecord("Cannot validate! - Invalid configuration format: " + e.getMessage(), 0, 1, GatewayConnectorValidationRecordType.ERROR));
             }
         } catch (Exception e) {
-            errors.add(new GatewayConnectorValidationRecord("Invalid configuration format: " + e.getMessage(), 0, 1, GatewayConnectorValidationRecordType.ERROR));
+            errors.add(new GatewayConnectorValidationRecord("Cannot validate! - Invalid configuration format: " + e.getMessage(), 0, 1, GatewayConnectorValidationRecordType.ERROR));
         }
 
-        errors.addAll(handler.getErrors());
+        errors.addAll(errorHandler.getErrors());
 
         if (configuration != null) {
             Set<ConstraintViolation<T>> violations = validator.validate(configuration);
@@ -82,8 +93,7 @@ public abstract class ConnectorConfigurationValidator {
                             int lineNumber = 0;
                             int columnNumber = 1;
                             if (finalFieldLocations != null) {
-                                JsonLocation location = finalFieldLocations.getOrDefault(path,
-                                        finalFieldLocations.get(path.substring(0, path.lastIndexOf('.'))));
+                                JsonLocation location = getJsonLocationFromPath(finalFieldLocations, path);
                                 if (location != null) {
                                     lineNumber = location.getLineNr() - 1;
                                     columnNumber = location.getColumnNr();
@@ -99,10 +109,28 @@ public abstract class ConnectorConfigurationValidator {
         List<GatewayConnectorValidationRecord> annotations = new ArrayList<>();
 
         annotations.addAll(errors);
-        annotations.addAll(handler.getWarnings());
+        annotations.addAll(errorHandler.getWarnings());
 
 
         return new GatewayConnectorValidationResult(errors.isEmpty(), annotations);
+    }
+
+    private static JsonLocation getJsonLocationFromPath(Map<String, JsonLocation> fieldLocations, String path) {
+        JsonLocation location = fieldLocations.get(path);
+        if (location == null) {
+            location = fieldLocations.get(path.substring(0, path.lastIndexOf('.')));
+        }
+        if (location == null) {
+            String pathToParent = path.substring(0, path.lastIndexOf('.'));
+            String previousElement = pathToParent.substring(pathToParent.lastIndexOf('.') + 1);
+            if (previousElement.chars().allMatch(Character::isDigit)) {
+                path = pathToParent.substring(0, pathToParent.lastIndexOf('.'));
+            } else {
+                path = pathToParent;
+            }
+            location = fieldLocations.get(path);
+        }
+        return location;
     }
 
     private void handleInvalidFormatException(InvalidFormatException e, List<GatewayConnectorValidationRecord> errors) {

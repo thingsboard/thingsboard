@@ -28,7 +28,9 @@ import lombok.Getter;
 import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecord;
 import org.thingsboard.server.common.data.gateway.connector.validators.GatewayConnectorValidationRecordType;
 
+import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 @Getter
@@ -51,10 +53,9 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
     }
 
     @Override
-    public Object handleUnexpectedToken(DeserializationContext ctxt, JavaType targetType, JsonToken t, JsonParser p, String failureMsg) {
+    public Object handleUnexpectedToken(DeserializationContext ctxt, JavaType targetType, JsonToken t, JsonParser p, String failureMsg) throws IOException {
         JsonLocation currentLocation = ctxt.getParser().currentLocation();
-        String errorMessage = "Invalid value for field '" + ctxt.getParser().getParsingContext().getCurrentName()
-                + "\". Expected " + targetType.getRawClass().getSimpleName() + " but got " + t;
+        String errorMessage = getErrorMessageForFieldsWithKnownVariants(targetType.getRawClass(), t, p);
         errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr() - 1,
                 currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
@@ -71,20 +72,18 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
     }
 
     @Override
-    public Object handleWeirdNumberValue(DeserializationContext ctxt, Class<?> targetType, Number valueToConvert, String failureMsg) {
+    public Object handleWeirdNumberValue(DeserializationContext ctxt, Class<?> targetType, Number valueToConvert, String failureMsg) throws IOException {
         JsonLocation currentLocation = ctxt.getParser().currentLocation();
-        String errorMessage = "Invalid value \"" + valueToConvert + "\" for field \""
-                + ctxt.getParser().getParsingContext().getCurrentName() + "\". Expected " + targetType.getSimpleName();
+        String errorMessage = getErrorMessageForFieldsWithKnownVariants(targetType, JsonToken.VALUE_NUMBER_INT, ctxt.getParser());
         errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr() - 1,
                 currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
     @Override
-    public Object handleWeirdNativeValue(DeserializationContext ctxt, JavaType targetType, Object valueToConvert, JsonParser p) {
+    public Object handleWeirdNativeValue(DeserializationContext ctxt, JavaType targetType, Object valueToConvert, JsonParser p) throws IOException {
         JsonLocation currentLocation = ctxt.getParser().currentLocation();
-        String errorMessage = "Invalid value \"" + valueToConvert + "\" for field \""
-                + ctxt.getParser().getParsingContext().getCurrentName() + "\". Expected " + targetType.getRawClass().getSimpleName();
+        String errorMessage = getErrorMessageForFieldsWithKnownVariants(targetType.getRawClass(), p.currentToken(), p);
         errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr() - 1,
                 currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
@@ -166,4 +165,16 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
         return failureMsg.substring(startIndex, endIndex);
     }
 
+
+    private static String getErrorMessageForFieldsWithKnownVariants(Class<?> targetTypeClass, JsonToken t, JsonParser p) throws IOException {
+        String errorMessage = "Invalid value for field '" + p.currentName()
+                + "\". Expected one of: ";
+        if (targetTypeClass.isEnum()) {
+            errorMessage += Arrays.toString(targetTypeClass.getEnumConstants()).toLowerCase();
+        } else {
+            errorMessage += targetTypeClass.getSimpleName();
+        }
+        errorMessage += " but got " + t;
+        return errorMessage;
+    }
 }

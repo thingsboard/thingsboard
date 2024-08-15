@@ -24,6 +24,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
+import org.checkerframework.checker.optional.qual.Present;
 
 import java.util.List;
 import java.util.Map;
@@ -84,7 +85,7 @@ public class LatestMqttConnectorConfiguration {
 
         private Boolean sendDataOnlyOnChange;
 
-        @NotNull
+        @NotNull(message = "Security configuration object is required")
         @Valid
         private Security security;
 
@@ -173,10 +174,10 @@ public class LatestMqttConnectorConfiguration {
             @Valid
             private FullDeviceInfo deviceInfo;
 
-            private boolean sendDataOnlyOnChange;
+            private Boolean sendDataOnlyOnChange;
 
             @Positive
-            private long timeout;
+            private Long timeout;
 
             @NotNull
             @Valid
@@ -356,8 +357,9 @@ public class LatestMqttConnectorConfiguration {
 
     @Data
     public static class PartDeviceInfo {
-        @NotBlank
-        protected String deviceNameExpressionSource;
+
+        @Present
+        protected SourceType deviceNameExpressionSource;
 
         @NotBlank
         protected String deviceNameExpression;
@@ -365,10 +367,17 @@ public class LatestMqttConnectorConfiguration {
 
     @Data
     public static class FullDeviceInfo extends PartDeviceInfo {
-        @NotBlank
-        private String deviceProfileExpressionSource;
+
+        @Present
+        private SourceType deviceProfileExpressionSource;
 
         @NotBlank
         private String deviceProfileExpression;
+    }
+
+    public enum SourceType {
+        CONSTANT,
+        TOPIC,
+        MESSAGE
     }
 }
