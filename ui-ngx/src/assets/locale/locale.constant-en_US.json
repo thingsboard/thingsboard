@@ -2285,11 +2285,10 @@
         "list-of-edges": "{ count, plural, =1 {One edge} other {List of # edges} }",
         "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
         "version-conflict": {
-            "label": "Version conflict",
-            "message": "Do you want to cancel your changes or overwrite existing version?",
+            "message": "Do you want to overwrite existing version or discard changes and load the latest version?",
             "link": "You can download your version of the {{entityType}} using this",
             "overwrite": "Overwrite version",
-            "cancel": "Cancel changes"
+            "discard": "Discard changes"
         },
         "type-tb-resource": "Resource",
         "type-tb-resources": "Resources",

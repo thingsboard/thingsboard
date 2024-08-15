@@ -40,11 +40,11 @@ import { UntypedFormGroup } from '@angular/forms';
 import { EntityComponent } from './entity.component';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { EntityAction } from '@home/models/entity/entity-component.models';
-import { Observable, ReplaySubject, Subscription } from 'rxjs';
+import { Observable, of, ReplaySubject, Subscription } from 'rxjs';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
 import { deepClone, mergeDeep } from '@core/utils';
-import { entityIdEquals } from '@shared/models/id/entity-id';
+import { catchError, take } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-entity-details-panel',
@@ -288,7 +288,12 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
         editingEntity.additionalInfo =
           mergeDeep((this.editingEntity as any).additionalInfo, this.entityComponent.entityFormValue()?.additionalInfo);
       }
-      this.entitiesTableConfig.saveEntity(editingEntity, this.editingEntity).subscribe(
+      this.entitiesTableConfig.saveEntity(editingEntity, this.editingEntity)
+        .pipe(
+          take(1),
+          catchError(() => of(this.entity))
+        )
+        .subscribe(
         (entity) => {
           this.entity = entity;
           this.entityComponent.entity = entity;
