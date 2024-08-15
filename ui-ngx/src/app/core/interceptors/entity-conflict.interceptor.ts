@@ -91,7 +91,7 @@ export class EntityConflictInterceptor implements HttpInterceptor {
     const dialogRef = this.dialog.open(EntityConflictDialogComponent, {
       disableClose: true,
       data: { message, entity },
-      panelClass: ['tb-fullscreen-dialog'],
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
     });
 
     return dialogRef.afterClosed();
