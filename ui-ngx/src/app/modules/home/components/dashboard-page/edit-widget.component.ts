@@ -28,6 +28,7 @@ import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -56,6 +57,10 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   @Input()
   widgetLayout: WidgetLayout;
+
+  @Input()
+  @coerceBoolean()
+  scada = false;
 
   @Output()
   applyWidgetConfig = new EventEmitter<void>();

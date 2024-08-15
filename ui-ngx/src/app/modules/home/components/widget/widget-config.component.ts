@@ -150,6 +150,10 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   @coerceBoolean()
   isAdd = false;
 
+  @Input()
+  @coerceBoolean()
+  scada = false;
+
   @Input() disabled: boolean;
 
   widgetConfigMode = WidgetConfigMode.advanced;
@@ -341,12 +345,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         value: 'actions'
       }
     );
-    this.headerOptions.push(
-      {
-        name: this.translate.instant('widget-config.mobile'),
-        value: 'mobile'
-      }
-    );
+    if (!this.scada) {
+      this.headerOptions.push(
+        {
+          name: this.translate.instant('widget-config.mobile'),
+          value: 'mobile'
+        }
+      );
+    }
     if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
       this.selectedOption = this.headerOptions[0].value;
     }
