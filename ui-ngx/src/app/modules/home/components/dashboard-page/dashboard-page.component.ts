@@ -51,6 +51,7 @@ import {
   DashboardStateLayouts,
   GridSettings,
   LayoutDimension,
+  LayoutType,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
@@ -150,6 +151,10 @@ import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-pag
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
+import {
+  MoveWidgetsDialogComponent,
+  MoveWidgetsDialogResult
+} from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
 
 // @dynamic
 @Component({
@@ -160,6 +165,8 @@ import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
   changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
+
+  LayoutType = LayoutType;
 
   private forcePristine = false;
 
@@ -285,7 +292,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         gridSettings: {},
         ignoreLoading: true,
         ctrl: null,
-        dashboardCtrl: this
+        dashboardCtrl: this,
+        displayGrid: 'onDrag&Resize'
       }
     },
     right: {
@@ -297,7 +305,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         gridSettings: {},
         ignoreLoading: true,
         ctrl: null,
-        dashboardCtrl: this
+        dashboardCtrl: this,
+        displayGrid: 'onDrag&Resize'
       }
     }
   };
@@ -913,6 +922,28 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     });
   }
 
+  private moveWidgets($event: Event, layoutId: DashboardLayoutId) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    this.layouts[layoutId].layoutCtx.displayGrid = 'always';
+    this.cd.markForCheck();
+    this.dialog.open<MoveWidgetsDialogComponent, any,
+      MoveWidgetsDialogResult>(MoveWidgetsDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog']
+    }).afterClosed().subscribe((result) => {
+      this.layouts[layoutId].layoutCtx.displayGrid = 'onDrag&Resize';
+      if (result) {
+        const targetLayout = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts[layoutId];
+        this.dashboardUtils.moveWidgets(targetLayout, result.cols, result.rows);
+        this.updateLayouts();
+      } else {
+        this.cd.markForCheck();
+      }
+    });
+  }
+
   private updateDashboardLayouts(newLayouts: DashboardStateLayouts) {
     this.dashboardUtils.setLayouts(this.dashboard, this.dashboardCtx.state, newLayouts);
     this.updateLayouts();
@@ -1163,6 +1194,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.runChangeDetection();
   }
 
+  private isAddingToScadaLayout(): boolean {
+    const layouts = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts;
+    let layoutIds: DashboardLayoutId[];
+    if (this.addingLayoutCtx?.id) {
+      layoutIds = [this.addingLayoutCtx?.id];
+    } else {
+      layoutIds = Object.keys(layouts) as DashboardLayoutId[];
+    }
+    return layoutIds.every(id => layouts[id].gridSettings.layoutType === LayoutType.scada);
+  }
+
   private selectTargetLayout(): Observable<DashboardLayoutId> {
     const layouts = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts;
     const layoutIds = Object.keys(layouts);
@@ -1208,6 +1250,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           col: 0
         };
         newWidget = this.dashboardUtils.validateAndUpdateWidget(newWidget);
+        const scada = this.isAddingToScadaLayout();
+        if (scada) {
+          newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget);
+        }
         if (widgetTypeInfo.typeParameters.useCustomDatasources) {
           this.addWidgetToDashboard(newWidget);
         } else {
@@ -1222,7 +1268,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               aliasController: this.dashboardCtx.aliasController,
               stateController: this.dashboardCtx.stateController,
               widget: newWidget,
-              widgetInfo: widgetTypeInfo
+              widgetInfo: widgetTypeInfo,
+              scada
             }
           }).afterClosed().subscribe((addedWidget) => {
             if (addedWidget) {
@@ -1355,6 +1402,12 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     this.importExport.exportWidget(this.dashboard, this.dashboardCtx.state, layoutCtx.id, widget, widgetTitle);
   }
 
+  dashboardMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext) {
+    if (this.isEdit && !this.isEditingWidget) {
+      layoutCtx.ctrl.resetHighlight();
+    }
+  }
+
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
     if (this.isEditingWidget) {
       this.editWidget($event, layoutCtx, widget);
@@ -1406,6 +1459,16 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           value: 'action.paste-reference',
           icon: 'content_paste',
           shortcut: 'M-I'
+        }
+      );
+      dashboardContextActions.push(
+        {
+          action: ($event) => {
+            this.moveWidgets($event, layoutCtx.id);
+          },
+          enabled: true,
+          value: 'dashboard.move-all-widgets',
+          icon: 'open_with'
         }
       );
     }

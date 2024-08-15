@@ -23,9 +23,16 @@ import { FormBuilder, FormControl, FormGroup, FormGroupDirective, NgForm, Valida
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { TranslateService } from '@ngx-translate/core';
-import { DashboardSettings, GridSettings, StateControllerId } from '@app/shared/models/dashboard.models';
+import {
+  DashboardSettings,
+  GridSettings,
+  LayoutType,
+  layoutTypes, layoutTypeTranslationMap,
+  StateControllerId
+} from '@app/shared/models/dashboard.models';
 import { isDefined, isUndefined } from '@core/utils';
 import { StatesControllerService } from './states/states-controller.service';
+import { merge } from 'rxjs';
 
 export interface DashboardSettingsDialogData {
   settings?: DashboardSettings;
@@ -42,6 +49,10 @@ export interface DashboardSettingsDialogData {
 export class DashboardSettingsDialogComponent extends DialogComponent<DashboardSettingsDialogComponent, DashboardSettingsDialogData>
   implements OnInit, ErrorStateMatcher {
 
+  layoutTypes = layoutTypes;
+
+  layoutTypeTranslations = layoutTypeTranslationMap;
+
   settings: DashboardSettings;
   gridSettings: GridSettings;
   isRightLayout = false;
@@ -52,6 +63,8 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
   stateControllerIds: string[];
 
   submitted = false;
+
+  scadaColumns: number[] = [];
 
   private stateControllerTranslationMap = new Map<string, string>([
     ['default', 'dashboard.state-controller-default'],
@@ -154,9 +167,17 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
     }
 
     if (this.gridSettings) {
+      let columns = 24;
+      while (columns <= 1008) {
+        this.scadaColumns.push(columns);
+        columns += 24;
+      }
       const mobileAutoFillHeight = isUndefined(this.gridSettings.mobileAutoFillHeight) ? false : this.gridSettings.mobileAutoFillHeight;
       this.gridSettingsFormGroup = this.fb.group({
-        columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1000)]],
+        layoutType: [this.gridSettings.layoutType || LayoutType.default, []],
+        columns: [this.gridSettings.columns || 24, [Validators.required, Validators.min(10), Validators.max(1008)]],
+        minColumns: [this.gridSettings.minColumns || this.gridSettings.columns || 24,
+          [Validators.required, Validators.min(10), Validators.max(1008)]],
         margin: [isDefined(this.gridSettings.margin) ? this.gridSettings.margin : 10,
           [Validators.required, Validators.min(0), Validators.max(50)]],
         outerMargin: [isUndefined(this.gridSettings.outerMargin) ? true : this.gridSettings.outerMargin, []],
@@ -169,24 +190,31 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
           disabled: mobileAutoFillHeight}, [Validators.required, Validators.min(5), Validators.max(200)]]
       });
       if (this.isRightLayout) {
-        const mobileDisplayLayoutFirst = isUndefined(this.gridSettings.mobileDisplayLayoutFirst) ? false : this.gridSettings.mobileDisplayLayoutFirst;
+        const mobileDisplayLayoutFirst =
+          isUndefined(this.gridSettings.mobileDisplayLayoutFirst) ? false : this.gridSettings.mobileDisplayLayoutFirst;
         this.gridSettingsFormGroup.addControl('mobileDisplayLayoutFirst', this.fb.control(mobileDisplayLayoutFirst, []));
       }
-      this.gridSettingsFormGroup.get('mobileAutoFillHeight').valueChanges.subscribe(
-        (mobileAutoFillHeightValue: boolean) => {
-          if (mobileAutoFillHeightValue) {
-            this.gridSettingsFormGroup.get('mobileRowHeight').disable();
-          } else {
-            this.gridSettingsFormGroup.get('mobileRowHeight').enable();
-          }
+      merge(this.gridSettingsFormGroup.get('layoutType').valueChanges,
+            this.gridSettingsFormGroup.get('mobileAutoFillHeight').valueChanges).subscribe(
+        () => {
+          this.updateGridSettingsFormState();
         }
       );
+      this.updateGridSettingsFormState();
     } else {
       this.gridSettingsFormGroup = this.fb.group({});
     }
   }
 
   ngOnInit(): void {
+  }
+
+  isScada() {
+    if (this.gridSettingsFormGroup) {
+      return this.gridSettingsFormGroup.get('layoutType').value === LayoutType.scada;
+    } else {
+      return false;
+    }
   }
 
   isErrorState(control: FormControl | null, form: FormGroupDirective | NgForm | null): boolean {
@@ -217,5 +245,32 @@ export class DashboardSettingsDialogComponent extends DialogComponent<DashboardS
       return this.translate.instant(this.stateControllerTranslationMap.get(stateControllerId));
     }
     return stateControllerId;
+  }
+
+  private updateGridSettingsFormState() {
+    const isScada: boolean = this.gridSettingsFormGroup.get('layoutType').value === LayoutType.scada;
+    if (isScada) {
+      this.gridSettingsFormGroup.get('margin').disable();
+      this.gridSettingsFormGroup.get('outerMargin').disable();
+      this.gridSettingsFormGroup.get('autoFillHeight').disable();
+      this.gridSettingsFormGroup.get('mobileAutoFillHeight').disable({emitEvent: false});
+      this.gridSettingsFormGroup.get('mobileRowHeight').disable();
+      const columns: number = this.gridSettingsFormGroup.get('columns').value;
+      if (columns % 24 !== 0) {
+        const newColumns = Math.min(1008, 24 * Math.ceil(columns / 24));
+        this.gridSettingsFormGroup.get('columns').patchValue(newColumns);
+      }
+    } else {
+      this.gridSettingsFormGroup.get('margin').enable();
+      this.gridSettingsFormGroup.get('outerMargin').enable();
+      this.gridSettingsFormGroup.get('autoFillHeight').enable();
+      this.gridSettingsFormGroup.get('mobileAutoFillHeight').enable({emitEvent: false});
+      const mobileAutoFillHeight: boolean = this.gridSettingsFormGroup.get('mobileAutoFillHeight').value;
+      if (mobileAutoFillHeight) {
+        this.gridSettingsFormGroup.get('mobileRowHeight').disable();
+      } else {
+        this.gridSettingsFormGroup.get('mobileRowHeight').enable();
+      }
+    }
   }
 }

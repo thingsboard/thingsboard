@@ -257,11 +257,18 @@
                       [(ngModel)]="widget.tags"
                       (ngModelChange)="isDirty = true">
                     </tb-string-items-list>
-                    <mat-slide-toggle class="mat-block" style="padding-bottom: 16px;"
-                                      [(ngModel)]="widget.deprecated"
-                                      (ngModelChange)="isDirty = true">
-                      {{ 'widget.deprecated' | translate }}
-                    </mat-slide-toggle>
+                    <div fxLayout="column" fxLayoutGap="16px" style="padding-bottom: 16px;">
+                      <mat-slide-toggle class="mat-block"
+                                        [(ngModel)]="widget.scada"
+                                        (ngModelChange)="isDirty = true">
+                        {{ 'widget.scada' | translate }}
+                      </mat-slide-toggle>
+                      <mat-slide-toggle class="mat-block"
+                                        [(ngModel)]="widget.deprecated"
+                                        (ngModelChange)="isDirty = true">
+                        {{ 'widget.deprecated' | translate }}
+                      </mat-slide-toggle>
+                    </div>
                     <mat-form-field class="mat-block">
                       <mat-label translate>widget.settings-form-selector</mat-label>
                       <input matInput

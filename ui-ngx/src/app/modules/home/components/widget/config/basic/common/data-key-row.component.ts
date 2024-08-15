@@ -19,9 +19,11 @@ import {
   Component,
   EventEmitter,
   forwardRef,
-  Input, OnChanges,
+  Input,
+  OnChanges,
   OnInit,
-  Output, SimpleChanges,
+  Output,
+  SimpleChanges,
   ViewEncapsulation
 } from '@angular/core';
 import {
@@ -45,7 +47,7 @@ import {
   widgetType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
-import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { merge } from 'rxjs';
 import {
   DataKeyConfigDialogComponent,
@@ -60,8 +62,10 @@ import {
   TimeSeriesChartSeriesType,
   timeSeriesChartSeriesTypeIcons,
   timeSeriesChartSeriesTypes,
-  timeSeriesChartSeriesTypeTranslations, TimeSeriesChartYAxisId
+  timeSeriesChartSeriesTypeTranslations,
+  TimeSeriesChartYAxisId
 } from '@home/components/widget/lib/chart/time-series-chart.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 
 export const dataKeyValid = (key: DataKey): boolean => !!key && !!key.type && !!key.name;
 
@@ -177,7 +181,7 @@ export class DataKeyRowComponent implements ControlValueAccessor, OnInit, OnChan
     return this.widgetConfigComponent.widgetType;
   }
 
-  get callbacks(): DataKeysCallbacks {
+  get callbacks(): WidgetConfigCallbacks {
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 

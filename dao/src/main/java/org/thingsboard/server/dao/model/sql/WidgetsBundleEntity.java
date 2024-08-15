@@ -47,6 +47,9 @@ public final class WidgetsBundleEntity extends BaseVersionedEntity<WidgetsBundle
     @Column(name = ModelConstants.WIDGETS_BUNDLE_IMAGE_PROPERTY)
     private String image;
 
+    @Column(name = ModelConstants.WIDGETS_BUNDLE_SCADA_PROPERTY)
+    private boolean scada;
+
     @Column(name = ModelConstants.WIDGETS_BUNDLE_DESCRIPTION)
     private String description;
 
@@ -68,6 +71,7 @@ public final class WidgetsBundleEntity extends BaseVersionedEntity<WidgetsBundle
         this.alias = widgetsBundle.getAlias();
         this.title = widgetsBundle.getTitle();
         this.image = widgetsBundle.getImage();
+        this.scada = widgetsBundle.isScada();
         this.description = widgetsBundle.getDescription();
         this.order = widgetsBundle.getOrder();
         if (widgetsBundle.getExternalId() != null) {
@@ -86,6 +90,7 @@ public final class WidgetsBundleEntity extends BaseVersionedEntity<WidgetsBundle
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
         widgetsBundle.setImage(image);
+        widgetsBundle.setScada(scada);
         widgetsBundle.setDescription(description);
         widgetsBundle.setOrder(order);
         if (externalId != null) {

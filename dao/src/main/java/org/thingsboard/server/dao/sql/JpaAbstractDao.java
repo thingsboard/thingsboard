@@ -55,10 +55,6 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @PersistenceContext
     private EntityManager entityManager;
 
-    protected abstract Class<E> getEntityClass();
-
-    protected abstract JpaRepository<E, UUID> getRepository();
-
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
@@ -85,6 +81,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     }
 
     protected E doSave(E entity, boolean isNew) {
+        EntityManager entityManager = getEntityManager();
         if (isNew) {
             if (entity instanceof HasVersion versionedEntity) {
                 versionedEntity.setVersion(1L);
@@ -176,11 +173,23 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         query += " ORDER BY id LIMIT ?";
 
-        return jdbcTemplate.queryForList(query, UUID.class, params);
+        return getJdbcTemplate().queryForList(query, UUID.class, params);
     }
 
     protected String getTenantIdColumn() {
         return ModelConstants.TENANT_ID_COLUMN;
     }
+
+    protected EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    protected JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
+    }
+
+    protected abstract Class<E> getEntityClass();
+
+    protected abstract JpaRepository<E, UUID> getRepository();
 
 }
