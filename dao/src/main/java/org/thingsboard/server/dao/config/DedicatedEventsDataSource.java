@@ -13,11 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.event;
+package org.thingsboard.server.dao.config;
 
-public interface EventCleanupRepository {
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 
-    void cleanupEvents(long eventExpTime, boolean debug);
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
 
-    void migrateEvents(long regularEventTs, long debugEventTs);
+@Retention(RetentionPolicy.RUNTIME)
+@ConditionalOnProperty(value = "spring.datasource.events.enabled", havingValue = "true")
+public @interface DedicatedEventsDataSource {
 }
