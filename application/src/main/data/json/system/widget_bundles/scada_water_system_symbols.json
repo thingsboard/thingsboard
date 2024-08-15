@@ -22,6 +22,12 @@
     "bottom_tee_pipe",
     "right_tee_pipe",
     "top_tee_pipe",
+    "right_elbow_drain_pipe",
+    "left_elbow_drain_pipe",
+    "left_drain_pipe",
+    "right_drain_pipe",
+    "short_left_drain_pipe",
+    "short_right_drain_pipe",    
     "top_flow_meter",
     "right_flow_meter",
     "bottom_flow_meter",
@@ -41,14 +47,8 @@
     "vertical_wheel_valve",
     "horizontal_ball_valve",
     "vertical_ball_valve",
+    "vertical_tank",
     "horizontal_tank_with_screen",
-    "vertical_tank_with_level",
-    "level_and_fan",
-    "right_elbow_drain_pipe",
-    "left_elbow_drain_pipe",
-    "left_drain_pipe",
-    "right_drain_pipe",
-    "short_left_drain_pipe",
-    "short_right_drain_pipe"
+    "level_and_fan"
   ]
 }
