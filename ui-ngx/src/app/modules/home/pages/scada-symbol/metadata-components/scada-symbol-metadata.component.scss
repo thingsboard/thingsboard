@@ -1,0 +1,116 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+@import '../../../../../../scss/constants';
+
+.tb-scada-symbol-metadata {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  .tb-scada-symbol-metadata-header {
+    padding: 24px 24px 0;
+    display: flex;
+    gap: 12px;
+    flex-direction: column-reverse;
+    align-items: flex-start;
+    @media #{$mat-gt-sm} {
+      gap: 0;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+    .tb-scada-symbol-metadata-header-components {
+      width: 100%;
+      flex: 1;
+      display: flex;
+      flex-direction: row;
+      align-items: center;
+      justify-content: space-between;
+    }
+  }
+  .tb-scada-symbol-metadata-content {
+    display: flex;
+    & > .mat-content {
+      padding-top: 8px;
+      @media #{$mat-xs} {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+    }
+    flex: 1;
+    overflow: auto;
+    & > div {
+      padding: 16px;
+    }
+    .mat-content {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      @media #{$mat-xs} {
+        gap: 8px;
+      }
+      &.overflow-hidden {
+        overflow: hidden;
+      }
+    }
+    .tb-form-panel {
+      .mat-expansion-panel.tb-settings {
+        & > .mat-expansion-panel-header {
+          font-weight: 400;
+        }
+      }
+    }
+  }
+}
+
+.tb-js-func {
+  .ace_tb {
+    &.ace_scada-symbol {
+      &-ctx {
+        color: #C52F00;
+        &-properties, &-property {
+          color: #185F2A;
+        }
+        &-values, &-value {
+          color: #2CAA00;
+        }
+        &-tags, &-tag {
+          color: #DF8600;
+        }
+        &-api, &-api-method {
+          color: #7214D0;
+        }
+        &-svg, &-svg-method {
+          color: #c24c1a;
+        }
+        &-properties, &-values, &-tags, &-api {
+          // font-style: italic;
+          // font-weight: bold;
+        }
+        &-property, &-value, &-tag, &-api-method {
+          font-weight: 700;
+        }
+      }
+      &-svg, &-element, &-event {
+        color: #C52F00;
+        // font-weight: bold;
+        &-properties {
+          color: #7214D0;
+          font-weight: 700;
+        }
+      }
+    }
+  }
+}

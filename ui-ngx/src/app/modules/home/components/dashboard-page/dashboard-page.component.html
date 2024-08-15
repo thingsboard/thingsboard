@@ -380,6 +380,7 @@
                           [widgetEditMode]="widgetEditMode"
                           [widget]="editingWidget"
                           [widgetLayout]="editingWidgetLayout"
+                          [scada]="editingLayoutCtx?.gridSettings?.layoutType === LayoutType.scada"
                           (revertWidgetConfig)="onRevertWidgetEdit()"
                           (applyWidgetConfig)="saveWidget()">
           </tb-edit-widget>
@@ -442,6 +443,7 @@
                                       *ngIf="isAddingWidget"
                                       [aliasController]="dashboardCtx.aliasController"
                                       [filterWidgetTypes]="filterWidgetTypes"
+                                      [scadaFirst]="layouts.main.layoutCtx.gridSettings.layoutType === LayoutType.scada"
                                       (widgetSelected)="addWidgetFromType($event)">
           </tb-dashboard-widget-select>
         </tb-details-panel>

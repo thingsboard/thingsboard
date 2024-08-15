@@ -24,6 +24,7 @@ export interface WidgetsBundle extends BaseData<WidgetsBundleId>, HasTenantId, H
   alias: string;
   title: string;
   image: string;
+  scada: boolean;
   description: string;
   order: number;
 }

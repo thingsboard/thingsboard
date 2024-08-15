@@ -21,6 +21,7 @@ import { IAliasController, IStateController } from '@core/api/widget-api.models'
 import { ILayoutController } from './layout/layout.models';
 import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/dashboard-component.models';
 import { Observable } from 'rxjs';
+import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -52,6 +53,7 @@ export interface IDashboardController {
   exportWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget, widgetTitle: string);
   removeWidget($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   widgetMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
+  dashboardMouseDown($event: Event, layoutCtx: DashboardPageLayoutContext);
   widgetClicked($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget);
   prepareDashboardContextMenu(layoutCtx: DashboardPageLayoutContext): Array<DashboardContextMenuItem>;
   prepareWidgetContextMenu(layoutCtx: DashboardPageLayoutContext, widget: Widget): Array<WidgetContextMenuItem>;
@@ -69,6 +71,7 @@ export interface DashboardPageLayoutContext {
   ctrl: ILayoutController;
   dashboardCtrl: IDashboardController;
   ignoreLoading: boolean;
+  displayGrid: displayGrids;
 }
 
 export interface DashboardPageLayout {

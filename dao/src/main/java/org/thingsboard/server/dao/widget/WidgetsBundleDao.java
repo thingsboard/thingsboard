@@ -20,6 +20,7 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.dao.Dao;
 import org.thingsboard.server.dao.ExportableEntityDao;
 import org.thingsboard.server.dao.ImageContainerDao;
@@ -55,7 +56,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDa
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, boolean fullSearch, PageLink pageLink);
+    PageData<WidgetsBundle> findSystemWidgetsBundles(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink);
 
     /**
      * Find tenant widgets bundles by tenantId and page link.
@@ -73,7 +74,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDa
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink);
+    PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink);
 
     /**
      * Find all tenant widgets bundles (does not include system) by tenantId and page link.
@@ -82,7 +83,7 @@ public interface WidgetsBundleDao extends Dao<WidgetsBundle>, ExportableEntityDa
      * @param pageLink the page link
      * @return the list of widgets bundles objects
      */
-    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink);
+    PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink);
 
     PageData<WidgetsBundle> findAllWidgetsBundles(PageLink pageLink);
 

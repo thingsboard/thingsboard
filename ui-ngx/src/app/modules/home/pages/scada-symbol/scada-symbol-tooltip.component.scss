@@ -1,0 +1,65 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-scada-symbol-tooltip-panel {
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
+  &.column {
+    flex-direction: column;
+  }
+  &.flex-start {
+    align-items: start;
+  }
+
+  .tb-confirm-text {
+    font-size: 14px;
+    line-height: 16px;
+    text-align: center;
+    font-weight: 400;
+  }
+
+  .mdc-button {
+    line-height: 20px;
+    font-size: 12px;
+    &.mat-mdc-button-base {
+      height: 20px;
+      .mat-mdc-button-touch-target {
+        height: 20px;
+      }
+    }
+  }
+
+  .mat-mdc-form-field.tb-inline-field {
+    font-size: 12px;
+    line-height: 12px;
+    .mat-mdc-text-field-wrapper {
+      padding: 0 8px;
+      .mat-mdc-form-field-flex {
+        .mat-mdc-form-field-infix {
+          padding-top: 4px;
+          padding-bottom: 4px;
+          min-height: 20px;
+          .mat-mdc-input-element {
+            font-size: 12px;
+            line-height: 12px;
+            height: 12px;
+          }
+        }
+      }
+    }
+  }
+}
