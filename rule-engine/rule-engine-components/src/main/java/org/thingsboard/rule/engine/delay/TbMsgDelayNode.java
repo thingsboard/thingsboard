@@ -31,10 +31,10 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
@@ -54,13 +54,17 @@ import java.util.concurrent.TimeUnit;
 )
 public class TbMsgDelayNode implements TbNode {
 
+    private final List<TimeUnit> supportedTimeUnits = List.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
+    private final String supportedTimeUnitsStr = String.join(",", TimeUnit.SECONDS.name(), TimeUnit.MINUTES.name(), TimeUnit.HOURS.name());
+
     private TbMsgDelayNodeConfiguration config;
-    private Map<UUID, TbMsg> pendingMsgs;
+    private ConcurrentMap<UUID, TbMsg> pendingMsgs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
-        this.pendingMsgs = new HashMap<>();
+        validateConfig();
+        this.pendingMsgs = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -71,7 +75,7 @@ public class TbMsgDelayNode implements TbNode {
                 ctx.enqueueForTellNext(
                         TbMsg.newMsg(
                                 pendingMsg.getQueueName(),
-                                pendingMsg.getType(),
+                                pendingMsg.getInternalType(),
                                 pendingMsg.getOriginator(),
                                 pendingMsg.getCustomerId(),
                                 pendingMsg.getMetaData(),
@@ -97,12 +101,28 @@ public class TbMsgDelayNode implements TbNode {
         String periodPattern = TbNodeUtils.processPattern(config.getPeriod(), msg);
         try {
             TimeUnit timeUnit = TimeUnit.valueOf(timeUnitPattern.toUpperCase());
+            if (!supportedTimeUnits.contains(timeUnit)) {
+                throw new RuntimeException("Time unit '" + timeUnit + "' is not supported! " +
+                        "Only " + supportedTimeUnitsStr + " are supported.");
+            }
             int period = Integer.parseInt(periodPattern);
             return timeUnit.toMillis(period);
         } catch (NumberFormatException e) {
-            throw new RuntimeException("Can't parse period value : " + periodPattern);
+            throw new NumberFormatException("Can't parse period value : " + periodPattern);
         } catch (IllegalArgumentException e) {
-            throw new RuntimeException("Invalid value for period time unit : " + timeUnitPattern);
+            throw new IllegalArgumentException("Invalid value for period time unit : " + timeUnitPattern);
+        }
+    }
+
+    private void validateConfig() throws TbNodeException {
+        if (config.getMaxPendingMsgs() < 1 || config.getMaxPendingMsgs() > 100000) {
+            throw new TbNodeException("Maximum pending messages should be in a range from 1 to 100000.", true);
+        }
+        if (config.getPeriod() == null) {
+            throw new TbNodeException("Period should be specified.", true);
+        }
+        if (config.getTimeUnit() == null) {
+            throw new TbNodeException("Time unit should be specified.", true);
         }
     }
 
@@ -121,26 +141,30 @@ public class TbMsgDelayNode implements TbNode {
                 var useMetadataPeriodInSecondsPatterns = "useMetadataPeriodInSecondsPatterns";
                 var period = "period";
                 if (oldConfiguration.has(useMetadataPeriodInSecondsPatterns)) {
-                     var isUsedPattern = oldConfiguration.get(useMetadataPeriodInSecondsPatterns).asBoolean();
-                     if (isUsedPattern) {
-                         if (!oldConfiguration.has(periodInSecondsPattern)) {
-                             throw new TbNodeException("Property to update: '" + periodInSecondsPattern + "' does not exist in configuration.");
-                         }
-                         ((ObjectNode) oldConfiguration).set(period, oldConfiguration.get(periodInSecondsPattern));
-                     } else {
-                         if (!oldConfiguration.has(periodInSeconds)) {
-                             throw new TbNodeException("Property to update: '" + periodInSeconds + "' does not exist in configuration.");
-                         }
-                         ((ObjectNode) oldConfiguration).set(period, oldConfiguration.get(periodInSeconds));
-                     }
-                     ((ObjectNode) oldConfiguration).remove(List.of(periodInSeconds, periodInSecondsPattern, useMetadataPeriodInSecondsPatterns));
-                     hasChanges = true;
+                    var isUsedPattern = oldConfiguration.get(useMetadataPeriodInSecondsPatterns).booleanValue();
+                    if (isUsedPattern) {
+                        if (!oldConfiguration.has(periodInSecondsPattern)) {
+                            throw new TbNodeException("Property to update: '" + periodInSecondsPattern + "' does not exist in configuration.");
+                        }
+                        ((ObjectNode) oldConfiguration).set(period, oldConfiguration.get(periodInSecondsPattern));
+                    } else {
+                        if (!oldConfiguration.has(periodInSeconds)) {
+                            throw new TbNodeException("Property to update: '" + periodInSeconds + "' does not exist in configuration.");
+                        }
+                        ((ObjectNode) oldConfiguration).put(period, oldConfiguration.get(periodInSeconds).asText());
+                    }
+                    hasChanges = true;
+                }
+                if (!oldConfiguration.has(period)) {
+                    ((ObjectNode) oldConfiguration).put(period, "60");
+                    hasChanges = true;
                 }
                 var timeUnit = "timeUnit";
                 if (!oldConfiguration.has(timeUnit)) {
                     ((ObjectNode) oldConfiguration).put(timeUnit, TimeUnit.SECONDS.name());
                     hasChanges = true;
                 }
+                ((ObjectNode) oldConfiguration).remove(List.of(periodInSeconds, periodInSecondsPattern, useMetadataPeriodInSecondsPatterns));
                 break;
             default:
                 break;
