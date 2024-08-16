@@ -166,6 +166,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   private onAceEditorResize() {
+    console.log(this.jsonEditorElmRef.nativeElement.getBoundingClientRect());
     if (this.editorsResizeCaf) {
       this.editorsResizeCaf();
       this.editorsResizeCaf = null;
