@@ -23,8 +23,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 
-import static org.thingsboard.server.common.data.DataConstants.EDGE_QUEUE_NAME;
-
 @Data
 @AllArgsConstructor
 public class QueueKey {
@@ -56,10 +54,6 @@ public class QueueKey {
         this.type = type;
         this.queueName = DataConstants.MAIN_QUEUE_NAME;
         this.tenantId = TenantId.SYS_TENANT_ID;
-    }
-
-    public boolean isEdgeQueue() {
-        return EDGE_QUEUE_NAME.equals(queueName);
     }
 
     @Override

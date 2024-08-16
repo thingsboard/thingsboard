@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery.event;
 
 import lombok.Getter;
 import lombok.ToString;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 import org.thingsboard.server.queue.discovery.QueueKey;
@@ -44,11 +45,18 @@ public class PartitionChangeEvent extends TbApplicationEvent {
     }
 
     public Set<TopicPartitionInfo> getCorePartitions() {
+        return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.MAIN_QUEUE_NAME);
+    }
+
+    public Set<TopicPartitionInfo> getEdgePartitions() {
+        return getPartitionsByServiceTypeAndQueueName(ServiceType.TB_CORE, DataConstants.EDGE_QUEUE_NAME);
+    }
+
+    private Set<TopicPartitionInfo> getPartitionsByServiceTypeAndQueueName(ServiceType serviceType, String queueName) {
         return partitionsMap.entrySet()
                 .stream()
-                .filter(entry -> !entry.getKey().isEdgeQueue())
+                .filter(entry -> serviceType.equals(entry.getKey().getType()) && queueName.equals(entry.getKey().getQueueName()))
                 .flatMap(entry -> entry.getValue().stream())
                 .collect(Collectors.toSet());
     }
-
 }

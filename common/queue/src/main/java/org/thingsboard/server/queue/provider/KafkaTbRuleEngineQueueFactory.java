@@ -23,6 +23,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.gen.js.JsInvokeProtos;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToCoreNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ToEdgeMsg;
@@ -173,9 +174,19 @@ public class KafkaTbRuleEngineQueueFactory implements TbRuleEngineQueueFactory {
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgProducer() {
         TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToEdgeMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-core-edge-producer-" + serviceInfoProvider.getServiceId());
+        requestBuilder.clientId("tb-rule-engine-to-edge-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(topicService.buildTopicName(edgeSettings.getTopic()));
         requestBuilder.admin(edgeAdmin);
+        return requestBuilder.build();
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToEdgeNotificationMsg>> createEdgeNotificationsMsgProducer() {
+        TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<TransportProtos.ToEdgeNotificationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
+        requestBuilder.settings(kafkaSettings);
+        requestBuilder.clientId("tb-rule-engine-to-edge-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.defaultTopic(topicService.getEdgeNotificationsTopic(serviceInfoProvider.getServiceId()).getFullTopicName());
+        requestBuilder.admin(notificationAdmin);
         return requestBuilder.build();
     }
 

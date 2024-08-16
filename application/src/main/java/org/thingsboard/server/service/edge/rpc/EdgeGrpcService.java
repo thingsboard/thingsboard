@@ -115,6 +115,9 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     @Value("${edges.send_scheduler_pool_size}")
     private int sendSchedulerPoolSize;
 
+    @Value("${edges.max_high_priority_queue_size_per_session:10000}")
+    private int maxHighPriorityQueueSizePerSession;
+
     @Autowired
     @Lazy
     private EdgeContextComponent ctx;
@@ -129,7 +132,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
     private TbServiceInfoProvider serviceInfoProvider;
 
     @Autowired
-    private TbTransactionalCache<EdgeId, String> cache;
+    private TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
 
     private Server server;
 
@@ -199,7 +202,13 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
 
     @Override
     public StreamObserver<RequestMsg> handleMsgs(StreamObserver<ResponseMsg> outputStream) {
-        return new EdgeGrpcSession(ctx, outputStream, this::onEdgeConnect, this::onEdgeDisconnect, sendDownlinkExecutorService, this.maxInboundMessageSize).getInputStream();
+        return new EdgeGrpcSession(ctx,
+                outputStream,
+                this::onEdgeConnect,
+                this::onEdgeDisconnect,
+                sendDownlinkExecutorService,
+                this.maxInboundMessageSize,
+                this.maxHighPriorityQueueSizePerSession).getInputStream();
     }
 
     @Override
@@ -305,7 +314,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         save(tenantId, edgeId, DefaultDeviceStateService.ACTIVITY_STATE, true);
         long lastConnectTs = System.currentTimeMillis();
         save(tenantId, edgeId, DefaultDeviceStateService.LAST_CONNECT_TIME, lastConnectTs);
-        cache.put(edgeId, serviceInfoProvider.getServiceId());
+        edgeIdServiceIdCache.put(edgeId, serviceInfoProvider.getServiceId());
         pushRuleEngineMessage(tenantId, edge, lastConnectTs, TbMsgType.CONNECT_EVENT);
         cancelScheduleEdgeEventsCheck(edgeId);
         scheduleEdgeEventsCheck(edgeGrpcSession);
@@ -444,7 +453,7 @@ public class EdgeGrpcService extends EdgeRpcServiceGrpc.EdgeRpcServiceImplBase i
         } else {
             log.debug("[{}] edge session [{}] is not available anymore, nothing to remove. most probably this session is already outdated!", edgeId, sessionId);
         }
-        cache.evict(edgeId);
+        edgeIdServiceIdCache.evict(edgeId);
     }
 
     private void save(TenantId tenantId, EdgeId edgeId, String key, long value) {

@@ -55,12 +55,12 @@ public class TopicService {
         return tbEdgeNotificationTopics.computeIfAbsent(serviceId, id -> buildEdgeNotificationsTopicPartitionInfo(serviceId));
     }
 
-    private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
-        return buildTopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
+    private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
+        return buildTopicPartitionInfo("tb_edge.notifications." + serviceId, null, null, false);
     }
 
-    private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
-        return buildTopicPartitionInfo("edge.notifications." + serviceId, null, null, false);
+    private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
+        return buildTopicPartitionInfo(serviceType.name().toLowerCase() + ".notifications." + serviceId, null, null, false);
     }
 
     public TopicPartitionInfo buildTopicPartitionInfo(String topic, TenantId tenantId, Integer partition, boolean myPartition) {

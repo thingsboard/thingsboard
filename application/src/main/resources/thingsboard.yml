@@ -1359,6 +1359,8 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+  # Max number of high priority edge events per edge session. No persistence - stored in memory
+  max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   # Number of threads that are used to send downlink messages to edge over gRPC

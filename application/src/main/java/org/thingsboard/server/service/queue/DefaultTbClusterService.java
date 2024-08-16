@@ -146,7 +146,7 @@ public class DefaultTbClusterService implements TbClusterService {
     private final TbAssetProfileCache assetProfileCache;
     private final GatewayNotificationsService gatewayNotificationsService;
     private final EdgeService edgeService;
-    private final TbTransactionalCache<EdgeId, String> cache;
+    private final TbTransactionalCache<EdgeId, String> edgeIdServiceIdCache;
 
     @Override
     public void pushMsgToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, TbQueueCallback callback) {
@@ -511,8 +511,8 @@ public class DefaultTbClusterService implements TbClusterService {
     }
 
     private void processEdgeNotification(EdgeId edgeId, ToEdgeNotificationMsg toEdgeNotificationMsg) {
-        var cacheValueWrapperOpt = Optional.ofNullable(cache.get(edgeId));
-        cacheValueWrapperOpt.ifPresentOrElse(
+        var serviceIdOpt = Optional.ofNullable(edgeIdServiceIdCache.get(edgeId));
+        serviceIdOpt.ifPresentOrElse(
                 serviceId -> pushMsgToEdgeNotification(toEdgeNotificationMsg, serviceId.get()),
                 () -> broadcastEdgeNotification(edgeId, toEdgeNotificationMsg)
         );

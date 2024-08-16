@@ -29,6 +29,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.EdgeId;
@@ -71,8 +72,6 @@ import java.util.stream.Collectors;
 @TbCoreComponent
 public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdgeNotificationMsg> implements TbEdgeConsumerService {
 
-    public static final String EDGE_IS_ROOT_BODY_KEY = "isRoot";
-
     @Value("${queue.edge.pool-interval:25}")
     private int pollInterval;
     @Value("${queue.edge.pack-processing-timeout:10000}")
@@ -104,7 +103,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
         super.init("tb-edge");
 
         this.mainConsumer = MainQueueConsumerManager.<TbProtoQueueMsg<ToEdgeMsg>, EdgeQueueConfig>builder()
-                .queueKey(new QueueKey(ServiceType.TB_CORE))
+                .queueKey(new QueueKey(ServiceType.TB_CORE).withQueueName(DataConstants.EDGE_QUEUE_NAME))
                 .config(EdgeQueueConfig.of(consumerPerPartition, (int) pollInterval))
                 .msgPackProcessor(this::processMsgs)
                 .consumerCreator((config, partitionId) -> queueFactory.createEdgeMsgConsumer())
@@ -127,11 +126,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
         if (ServiceType.TB_CORE.equals(event.getServiceType())) {
-            var partitions = event.getPartitionsMap().entrySet()
-                    .stream()
-                    .filter(entry -> entry.getKey().isEdgeQueue())
-                    .flatMap(entry -> entry.getValue().stream())
-                    .collect(Collectors.toSet());
+            var partitions = event.getEdgePartitions();
             log.info("Subscribing to partitions: {}", partitions);
             mainConsumer.update(partitions);
         }

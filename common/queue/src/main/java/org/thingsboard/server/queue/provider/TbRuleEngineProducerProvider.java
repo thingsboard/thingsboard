@@ -44,6 +44,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
     private TbQueueProducer<TbProtoQueueMsg<ToUsageStatsServiceMsg>> toUsageStats;
     private TbQueueProducer<TbProtoQueueMsg<ToHousekeeperServiceMsg>> toHousekeeper;
     private TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> toEdge;
+    private TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> toEdgeNotifications;
 
     public TbRuleEngineProducerProvider(TbRuleEngineQueueFactory tbQueueProvider) {
         this.tbQueueProvider = tbQueueProvider;
@@ -59,6 +60,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
         this.toUsageStats = tbQueueProvider.createToUsageStatsServiceMsgProducer();
         this.toHousekeeper = tbQueueProvider.createHousekeeperMsgProducer();
         this.toEdge = tbQueueProvider.createEdgeMsgProducer();
+        this.toEdgeNotifications = tbQueueProvider.createEdgeNotificationsMsgProducer();
     }
 
     @Override
@@ -93,7 +95,7 @@ public class TbRuleEngineProducerProvider implements TbQueueProducerProvider {
 
     @Override
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> getTbEdgeNotificationsMsgProducer() {
-        throw new RuntimeException("Not Implemented! Should not be used by Rule Engine!");
+        return toEdgeNotifications;
     }
 
     @Override

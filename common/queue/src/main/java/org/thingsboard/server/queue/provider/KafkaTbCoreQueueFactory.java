@@ -382,7 +382,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeMsg>> createEdgeMsgProducer() {
         TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToEdgeMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-core-edge-producer-" + serviceInfoProvider.getServiceId());
+        requestBuilder.clientId("tb-core-to-edge-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(topicService.buildTopicName(edgeSettings.getTopic()));
         requestBuilder.admin(edgeAdmin);
         return requestBuilder.build();
@@ -405,7 +405,7 @@ public class KafkaTbCoreQueueFactory implements TbCoreQueueFactory {
     public TbQueueProducer<TbProtoQueueMsg<ToEdgeNotificationMsg>> createEdgeNotificationsMsgProducer() {
         TbKafkaProducerTemplate.TbKafkaProducerTemplateBuilder<TbProtoQueueMsg<ToEdgeNotificationMsg>> requestBuilder = TbKafkaProducerTemplate.builder();
         requestBuilder.settings(kafkaSettings);
-        requestBuilder.clientId("tb-edge-to-edge-notifications-" + serviceInfoProvider.getServiceId());
+        requestBuilder.clientId("tb-core-to-edge-notifications-" + serviceInfoProvider.getServiceId());
         requestBuilder.defaultTopic(topicService.getEdgeNotificationsTopic(serviceInfoProvider.getServiceId()).getFullTopicName());
         requestBuilder.admin(notificationAdmin);
         return requestBuilder.build();

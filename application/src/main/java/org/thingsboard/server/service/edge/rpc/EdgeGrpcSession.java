@@ -140,11 +140,12 @@ public final class EdgeGrpcSession implements Closeable {
 
     private int maxInboundMessageSize;
     private int clientMaxInboundMessageSize;
+    private int maxHighPriorityQueueSizePerSession;
 
     private ScheduledExecutorService sendDownlinkExecutorService;
 
     EdgeGrpcSession(EdgeContextComponent ctx, StreamObserver<ResponseMsg> outputStream, BiConsumer<EdgeId, EdgeGrpcSession> sessionOpenListener,
-                    BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize) {
+                    BiConsumer<Edge, UUID> sessionCloseListener, ScheduledExecutorService sendDownlinkExecutorService, int maxInboundMessageSize, int maxHighPriorityQueueSizePerSession) {
         this.sessionId = UUID.randomUUID();
         this.ctx = ctx;
         this.outputStream = outputStream;
@@ -152,6 +153,7 @@ public final class EdgeGrpcSession implements Closeable {
         this.sessionCloseListener = sessionCloseListener;
         this.sendDownlinkExecutorService = sendDownlinkExecutorService;
         this.maxInboundMessageSize = maxInboundMessageSize;
+        this.maxHighPriorityQueueSizePerSession = maxHighPriorityQueueSizePerSession;
         initInputStream();
     }
 
@@ -940,6 +942,13 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     public void addEventToHighPriorityQueue(EdgeEvent edgeEvent) {
+        while (highPriorityQueue.size() > maxHighPriorityQueueSizePerSession) {
+            EdgeEvent oldestHighPriority = highPriorityQueue.poll();
+            if (oldestHighPriority != null) {
+                log.warn("[{}][{}][{}] High priority queue is full. Removing oldest high priority event from queue {}",
+                        this.tenantId, edge.getId(), this.sessionId, oldestHighPriority);
+            }
+        }
         highPriorityQueue.add(edgeEvent);
     }
 
