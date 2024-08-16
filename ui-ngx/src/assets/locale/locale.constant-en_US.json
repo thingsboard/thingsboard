@@ -5968,7 +5968,7 @@
         "color": "Color",
         "tooltip": "Tooltip",
         "units-required": "Unit is required.",
-        "list-option": "List option"
+        "layout-option": "Layout option"
     },
     "widget-type": {
         "import": "Import widget type",

@@ -208,6 +208,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       .filter((item) => !this.selectedBreakpointIds.includes(item.id))
       .map(item => item.id);
 
+    this.sortLayoutBreakpoints();
+
     this.subscriptions.push(
       this.layoutsFormGroup.get('sliderPercentage').valueChanges
         .subscribe(
@@ -456,6 +458,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
           this.layoutBreakpoints = this.layoutBreakpoints.filter((item) => item.breakpoint !== breakpointId);
           this.allowBreakpointIds.push(breakpointId);
           this.selectedBreakpointIds = this.selectedBreakpointIds.filter((item) => item !== breakpointId);
+          this.sortLayoutBreakpoints();
           this.layoutsFormGroup.markAsDirty();
         }
       }
@@ -495,6 +498,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     this.selectedBreakpointIds.push(newBreakpointId);
     this.allowBreakpointIds = this.allowBreakpointIds.filter((item) => item !== newBreakpointId);
     this.addLayoutConfiguration(newBreakpointId);
+    this.sortLayoutBreakpoints();
   }
 
   private addLayoutConfiguration(breakpointId: BreakpointId) {
@@ -506,6 +510,24 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
       layout,
       descriptionSize: size,
       breakpoint: breakpointId
+    });
+  }
+
+  private sortLayoutBreakpoints() {
+    this.layoutBreakpoints.sort((a, b) => {
+      const aMaxWidth = this.dashboardUtils.getBreakpointInfoById(a.breakpoint)?.maxWidth || Infinity;
+      const bMaxWidth = this.dashboardUtils.getBreakpointInfoById(b.breakpoint)?.maxWidth || Infinity;
+      return bMaxWidth - aMaxWidth;
+    });
+    this.selectedBreakpointIds.sort((a, b) => {
+      const aMaxWidth = this.dashboardUtils.getBreakpointInfoById(a)?.maxWidth || Infinity;
+      const bMaxWidth = this.dashboardUtils.getBreakpointInfoById(b)?.maxWidth || Infinity;
+      return bMaxWidth - aMaxWidth;
+    });
+    this.allowBreakpointIds.sort((a, b) => {
+      const aMaxWidth = this.dashboardUtils.getBreakpointInfoById(a)?.maxWidth || Infinity;
+      const bMaxWidth = this.dashboardUtils.getBreakpointInfoById(b)?.maxWidth || Infinity;
+      return bMaxWidth - aMaxWidth;
     });
   }
 }

@@ -43,6 +43,11 @@ export class SelectDashboardBreakpointComponent implements OnInit, OnDestroy {
     this.layoutDataChanged$ = this.dashboardCtrl.layouts.main.layoutCtx.layoutDataChanged.subscribe(() => {
       if (this.dashboardCtrl.layouts.main.layoutCtx.layoutData) {
         this.breakpointIds = Object.keys(this.dashboardCtrl.layouts.main.layoutCtx?.layoutData);
+        this.breakpointIds.sort((a, b) => {
+          const aMaxWidth = this.dashboardUtils.getBreakpointInfoById(a)?.maxWidth || Infinity;
+          const bMaxWidth = this.dashboardUtils.getBreakpointInfoById(b)?.maxWidth || Infinity;
+          return bMaxWidth - aMaxWidth;
+        });
         if (this.breakpointIds.indexOf(this.dashboardCtrl.layouts.main.layoutCtx.breakpoint) > -1) {
           this.selectedBreakpoint = this.dashboardCtrl.layouts.main.layoutCtx.breakpoint;
         } else {
