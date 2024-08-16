@@ -39,7 +39,7 @@ public class DomainEntity extends BaseSqlEntity<Domain> {
     @Column(name = TENANT_ID_COLUMN)
     private UUID tenantId;
 
-    @Column(name = ModelConstants.DOMAIN_DOMAIN_NAME_PROPERTY)
+    @Column(name = ModelConstants.DOMAIN_NAME_PROPERTY)
     private String name;
 
     @Column(name = ModelConstants.DOMAIN_OAUTH2_ENABLED_PROPERTY)

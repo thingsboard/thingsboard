@@ -149,7 +149,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private final DeviceConnectivityConfiguration connectivityConfiguration;
     private final QueueService queueService;
     private final JwtSettingsService jwtSettingsService;
-    private final MobileAppDao oAuth2MobileDao;
+    private final MobileAppDao mobileAppDao;
     private final NotificationSettingsService notificationSettingsService;
     private final NotificationTargetService notificationTargetService;
 
@@ -308,7 +308,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
             jwtSettingsService.saveJwtSettings(jwtSettings);
         }
 
-        List<MobileApp> mobiles = oAuth2MobileDao.findByTenantId(TenantId.SYS_TENANT_ID, new PageLink(Integer.MAX_VALUE,0)).getData();
+        List<MobileApp> mobiles = mobileAppDao.findByTenantId(TenantId.SYS_TENANT_ID, new PageLink(Integer.MAX_VALUE,0)).getData();
         if (CollectionUtils.isNotEmpty(mobiles)) {
             mobiles.stream()
                     .filter(config -> !validateKeyLength(config.getAppSecret()))
@@ -318,7 +318,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                                 "You can change the Application Secret using the Web UI: " +
                                 "Navigate to \"Security settings -> OAuth2 -> Mobile applications\" while logged in as a System Administrator.", config.getPkgName());
                         config.setAppSecret(generateRandomKey());
-                        oAuth2MobileDao.save(TenantId.SYS_TENANT_ID, config);
+                        mobileAppDao.save(TenantId.SYS_TENANT_ID, config);
                     });
         }
     }

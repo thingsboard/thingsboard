@@ -71,13 +71,14 @@ public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implement
     }
 
     @Override
-    public void saveOauth2Clients(DomainOauth2Client domainOauth2Client) {
+    public void addOauth2Client(DomainOauth2Client domainOauth2Client) {
         domainOauth2ClientRepository.save(new DomainOauth2ClientEntity(domainOauth2Client));
     }
 
     @Override
-    public void removeOauth2Clients(DomainId domainId, OAuth2ClientId oAuth2ClientId) {
-        domainOauth2ClientRepository.deleteById(new DomainOauth2ClientCompositeKey(domainId.getId(), oAuth2ClientId.getId()));
+    public void removeOauth2Client(DomainOauth2Client domainOauth2Client) {
+        domainOauth2ClientRepository.deleteById(new DomainOauth2ClientCompositeKey(domainOauth2Client.getDomainId().getId(),
+                domainOauth2Client.getOAuth2ClientId().getId()));
     }
 
     @Override

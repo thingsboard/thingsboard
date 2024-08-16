@@ -597,7 +597,7 @@ CREATE TABLE IF NOT EXISTS domain (
     id uuid NOT NULL CONSTRAINT domain_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
-    domain_name varchar(255) UNIQUE,
+    name varchar(255) UNIQUE,
     oauth2_enabled boolean,
     edge_enabled boolean
 );

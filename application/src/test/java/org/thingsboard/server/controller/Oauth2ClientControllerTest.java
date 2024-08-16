@@ -57,7 +57,7 @@ public class Oauth2ClientControllerTest extends AbstractControllerTest {
         PageData<OAuth2ClientInfo> pageData = doGetTypedWithPageLink("/api/oauth2/client/infos?", PAGE_DATA_OAUTH2_CLIENT_TYPE_REF, new PageLink(10, 0));
         assertThat(pageData.getData()).isEmpty();
 
-        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "test google client");
+        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
         OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
 
         PageData<OAuth2ClientInfo> pageData2 = doGetTypedWithPageLink("/api/oauth2/client/infos?", PAGE_DATA_OAUTH2_CLIENT_TYPE_REF, new PageLink(10, 0));

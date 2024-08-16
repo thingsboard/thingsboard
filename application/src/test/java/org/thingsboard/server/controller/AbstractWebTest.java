@@ -1114,11 +1114,11 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         tbTenantProfileService.save(TenantId.SYS_TENANT_ID, tenantProfile, oldTenantProfile);
     }
 
-    protected OAuth2Client validClientInfo(TenantId tenantId, String title) {
-        return validClientInfo(tenantId, title, null);
+    protected OAuth2Client createOauth2Client(TenantId tenantId, String title) {
+        return createOauth2Client(tenantId, title, null);
     }
 
-    protected OAuth2Client validClientInfo(TenantId tenantId, String title, List<PlatformType> platforms) {
+    protected OAuth2Client createOauth2Client(TenantId tenantId, String title, List<PlatformType> platforms) {
         OAuth2Client oAuth2Client = new OAuth2Client();
         oAuth2Client.setTenantId(tenantId);
         oAuth2Client.setTitle(title);

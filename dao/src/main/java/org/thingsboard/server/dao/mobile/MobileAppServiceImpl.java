@@ -39,20 +39,16 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
 import org.thingsboard.server.dao.service.Validator;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
-
-import static org.thingsboard.server.dao.service.Validator.validateIds;
 
 @Slf4j
 @Service
 public class MobileAppServiceImpl extends AbstractEntityService implements MobileAppService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String INCORRECT_MOBILE_APP_ID = "Incorrect mobileApppId ";
 
     @Autowired
     private OAuth2ClientDao oauth2ClientDao;
@@ -92,14 +88,8 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     @Override
     public PageData<MobileAppInfo> findMobileAppInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findMobileAppInfosByTenantId [{}]", tenantId);
-        PageData<MobileApp> pageData = mobileAppDao.findByTenantId(tenantId, pageLink);
-        List<MobileAppInfo> mobileAppInfos = new ArrayList<>();
-        for (MobileApp mobileApp : pageData.getData()) {
-            mobileAppInfos.add(new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
-                    .map(OAuth2ClientInfo::new)
-                    .collect(Collectors.toList())));
-        }
-        return new PageData<>(mobileAppInfos, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+        PageData<MobileApp> mobiles = mobileAppDao.findByTenantId(tenantId, pageLink);
+        return mobiles.mapData(this::getMobileAppInfo);
     }
 
     @Override
@@ -109,34 +99,27 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
         if (mobileApp == null) {
             return null;
         }
-        return new MobileAppInfo(mobileApp, oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
-                .map(OAuth2ClientInfo::new)
-                .collect(Collectors.toList()));
+        return getMobileAppInfo(mobileApp);
     }
 
     @Override
     public void updateOauth2Clients(TenantId tenantId, MobileAppId mobileAppId, List<OAuth2ClientId> oAuth2ClientIds) {
         log.trace("Executing updateOauth2Clients, mobileAppId [{}], oAuth2ClientIds [{}]", mobileAppId, oAuth2ClientIds);
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        Validator.validateId(mobileAppId, id -> INCORRECT_MOBILE_APP_ID + id);
-        Validator.checkNotNull(oAuth2ClientIds, "Incorrect oAuth2ClientIds " + oAuth2ClientIds);
-        if (!oAuth2ClientIds.isEmpty()) {
-            validateIds(oAuth2ClientIds, ids -> "Incorrect oAuth2ClientIds " + ids);
-        }
-        List<MobileAppOauth2Client> oauth2Clients = new ArrayList<>();
-        for (OAuth2ClientId oAuth2ClientId : oAuth2ClientIds) {
-            oauth2Clients.add(new MobileAppOauth2Client(mobileAppId, oAuth2ClientId));
-        }
+        Set<MobileAppOauth2Client> newClientList = oAuth2ClientIds.stream()
+                .map(clientId -> new MobileAppOauth2Client(mobileAppId, clientId))
+                .collect(Collectors.toSet());
+
         List<MobileAppOauth2Client> existingClients = mobileAppDao.findOauth2ClientsByMobileAppId(tenantId, mobileAppId);
-        List<OAuth2ClientId> toRemove = existingClients.stream()
-                .map(MobileAppOauth2Client::getOAuth2ClientId)
-                .filter(clientId -> oAuth2ClientIds.stream().noneMatch(oauth2ClientId ->
-                        oauth2ClientId.equals(clientId))).toList();
-        for (OAuth2ClientId clientId : toRemove) {
-            mobileAppDao.removeOauth2Clients(mobileAppId, clientId);
+        List<MobileAppOauth2Client> toRemoveList = existingClients.stream()
+                .filter(client -> !newClientList.contains(client))
+                .toList();
+        newClientList.removeIf(existingClients::contains);
+
+        for (MobileAppOauth2Client client : toRemoveList) {
+            mobileAppDao.removeOauth2Client(client);
         }
-        for (MobileAppOauth2Client mobileAppOauth2Client : oauth2Clients) {
-            mobileAppDao.saveOauth2Clients(mobileAppOauth2Client);
+        for (MobileAppOauth2Client client : newClientList) {
+            mobileAppDao.addOauth2Client(client);
         }
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                 .entityId(mobileAppId).created(false).build());
@@ -148,18 +131,9 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     }
 
     @Override
-    public EntityType getEntityType() {
-        return EntityType.MOBILE_APP;
-    }
-
-    @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        MobileApp mobileApp = mobileAppDao.findById(tenantId, id.getId());
-        if (mobileApp == null) {
-            return;
-        }
-        deleteMobileAppById(tenantId, mobileApp.getId());
+        deleteMobileAppById(tenantId, (MobileAppId) id);
     }
 
     @Override
@@ -172,5 +146,17 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         deleteMobileAppsByTenantId(tenantId);
+    }
+
+    private MobileAppInfo getMobileAppInfo(MobileApp mobileApp) {
+        List<OAuth2ClientInfo> clients = oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
+                .map(OAuth2ClientInfo::new)
+                .collect(Collectors.toList());
+        return new MobileAppInfo(mobileApp, clients);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP;
     }
 }

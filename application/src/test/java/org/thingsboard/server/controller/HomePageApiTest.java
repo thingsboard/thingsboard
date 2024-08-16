@@ -360,7 +360,7 @@ public class HomePageApiTest extends AbstractControllerTest {
         Assert.assertTrue(featuresInfo.isNotificationEnabled());
         Assert.assertFalse(featuresInfo.isOauthEnabled());
 
-        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "test google client");
+        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
         OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
 
         Domain domain = createDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);

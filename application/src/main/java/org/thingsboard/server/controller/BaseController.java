@@ -901,9 +901,11 @@ public abstract class BaseController {
     }
 
     protected List<OAuth2ClientId> getOAuth2ClientIds(UUID[] ids) throws ThingsboardException {
-        List<UUID> oauth2ClientIds = ids != null ? Arrays.asList(ids) : Collections.emptyList();
+        if (ids == null) {
+            return Collections.emptyList();
+        }
         List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
-        for (UUID id : oauth2ClientIds) {
+        for (UUID id : ids) {
             OAuth2ClientId oauth2ClientId = new OAuth2ClientId(id);
             checkOauth2ClientId(oauth2ClientId, Operation.READ);
             oAuth2ClientIds.add(oauth2ClientId);

@@ -16,11 +16,9 @@
 package org.thingsboard.server.dao.domain;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainInfo;
@@ -36,24 +34,21 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
-import org.thingsboard.server.dao.service.Validator;
 
-import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.service.Validator.validateIds;
+import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Slf4j
 @Service
 public class DomainServiceImpl extends AbstractEntityService implements DomainService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-    public static final String INCORRECT_DOMAIN_ID = "Incorrect domainId ";
 
     @Autowired
     private OAuth2ClientDao oauth2ClientDao;
@@ -67,39 +62,31 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
             Domain savedDomain = domainDao.save(tenantId, domain);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedDomain).build());
             return savedDomain;
-        } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("domain_unq_key")) {
-                throw new DataValidationException("Domain with such name and scheme already exists!");
-            } else {
-                throw t;
-            }
+        } catch (Exception e) {
+            checkConstraintViolation(e,
+                    Map.of("domain_unq_key", "Domain with such name and scheme already exists!"));
+            throw e;
         }
     }
 
     @Override
     public void updateOauth2Clients(TenantId tenantId, DomainId domainId, List<OAuth2ClientId> oAuth2ClientIds) {
         log.trace("Executing updateOauth2Clients, domainId [{}], oAuth2ClientIds [{}]", domainId, oAuth2ClientIds);
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        Validator.validateId(domainId, id -> INCORRECT_DOMAIN_ID + id);
-        Validator.checkNotNull(oAuth2ClientIds, "Incorrect oAuth2ClientIds " + oAuth2ClientIds);
-        if (!oAuth2ClientIds.isEmpty()) {
-            validateIds(oAuth2ClientIds, ids -> "Incorrect oAuth2ClientIds " + ids);
-        }
-        List<DomainOauth2Client> oauth2Clients = new ArrayList<>();
-        for (OAuth2ClientId oAuth2ClientId : oAuth2ClientIds) {
-            oauth2Clients.add(new DomainOauth2Client(domainId, oAuth2ClientId));
-        }
+        Set<DomainOauth2Client> newClientList = oAuth2ClientIds.stream()
+                .map(clientId -> new DomainOauth2Client(domainId, clientId))
+                .collect(Collectors.toSet());
+
         List<DomainOauth2Client> existingClients = domainDao.findOauth2ClientsByDomainId(tenantId, domainId);
-        List<OAuth2ClientId> toRemove = existingClients.stream()
-                .map(DomainOauth2Client::getOAuth2ClientId)
-                .filter(clientId -> oAuth2ClientIds.stream().noneMatch(oauth2ClientId ->
-                        oauth2ClientId.equals(clientId))).toList();
-        for (OAuth2ClientId clientId : toRemove) {
-            domainDao.removeOauth2Clients(domainId, clientId);
+        List<DomainOauth2Client> toRemoveList = existingClients.stream()
+                .filter(client -> !newClientList.contains(client))
+                .toList();
+        newClientList.removeIf(existingClients::contains);
+
+        for (DomainOauth2Client client : toRemoveList) {
+            domainDao.removeOauth2Client(client);
         }
-        for (DomainOauth2Client domainOauth2Client : oauth2Clients) {
-            domainDao.saveOauth2Clients(domainOauth2Client);
+        for (DomainOauth2Client client : newClientList) {
+            domainDao.addOauth2Client(client);
         }
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                 .entityId(domainId).created(false).build());
@@ -121,26 +108,15 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     @Override
     public PageData<DomainInfo> findDomainInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findDomainInfosByTenantId [{}]", tenantId);
-        PageData<Domain> pageData = domainDao.findByTenantId(tenantId, pageLink);
-        List<DomainInfo> domainInfos = new ArrayList<>();
-        for (Domain domain : pageData.getData()) {
-            domainInfos.add(new DomainInfo(domain, oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
-                    .map(OAuth2ClientInfo::new)
-                    .collect(Collectors.toList())));
-        }
-        return new PageData<>(domainInfos, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
+        PageData<Domain> domains = domainDao.findByTenantId(tenantId, pageLink);
+        return domains.mapData(this::getDomainInfo);
     }
 
     @Override
     public DomainInfo findDomainInfoById(TenantId tenantId, DomainId domainId) {
         log.trace("Executing findDomainInfoById [{}] [{}]", tenantId, domainId);
         Domain domain = domainDao.findById(tenantId, domainId.getId());
-        if (domain == null) {
-            return null;
-        }
-        return new DomainInfo(domain, oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
-                .map(OAuth2ClientInfo::new)
-                .collect(Collectors.toList()));
+        return getDomainInfo(domain);
     }
 
     @Override
@@ -152,7 +128,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     @Override
     public void deleteDomainsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDomainsByTenantId, tenantId [{}]", tenantId);
-        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         domainDao.deleteByTenantId(tenantId);
     }
 
@@ -167,17 +143,23 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     }
 
     @Override
-    public EntityType getEntityType() {
-        return EntityType.DOMAIN;
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteDomainById(tenantId, (DomainId) id);
+    }
+
+    private DomainInfo getDomainInfo(Domain domain) {
+        if (domain == null) {
+            return null;
+        }
+        List<OAuth2ClientInfo> clients = oauth2ClientDao.findByDomainId(domain.getUuidId()).stream()
+                .map(OAuth2ClientInfo::new)
+                .collect(Collectors.toList());
+        return new DomainInfo(domain, clients);
     }
 
     @Override
-    @Transactional
-    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        Domain domain = domainDao.findById(tenantId, id.getId());
-        if (domain == null) {
-            return;
-        }
-        deleteDomainById(tenantId, domain.getId());
+    public EntityType getEntityType() {
+        return EntityType.DOMAIN;
     }
 }

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.sql.mobile;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
 import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientEntity;
 
@@ -25,6 +24,6 @@ import java.util.UUID;
 
 public interface MobileAppOauth2ClientRepository extends JpaRepository<MobileAppOauth2ClientEntity, MobileAppOauth2ClientCompositeKey> {
 
-    List<MobileAppOauth2ClientEntity> findAllByMobileAppId(@Param("mobileAppId") UUID mobileAppId);
+    List<MobileAppOauth2ClientEntity> findAllByMobileAppId(UUID mobileAppId);
 
 }

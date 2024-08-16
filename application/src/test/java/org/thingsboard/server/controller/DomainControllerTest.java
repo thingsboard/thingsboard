@@ -98,10 +98,10 @@ public class DomainControllerTest extends AbstractControllerTest {
         Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);
         Domain savedDomain = doPost("/api/domain", domain, Domain.class);
 
-        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "test google client");
+        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
         OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
 
-        OAuth2Client oAuth2Client2 = validClientInfo(TenantId.SYS_TENANT_ID, "test facebook client");
+        OAuth2Client oAuth2Client2 = createOauth2Client(TenantId.SYS_TENANT_ID, "test facebook client");
         OAuth2Client savedOAuth2Client2 = doPost("/api/oauth2/client", oAuth2Client2, OAuth2Client.class);
 
         doPut("/api/domain/" + savedDomain.getId() + "/oauth2Clients", List.of(savedOAuth2Client.getId().getId(), savedOAuth2Client2.getId().getId()));
@@ -117,7 +117,7 @@ public class DomainControllerTest extends AbstractControllerTest {
 
     @Test
     public void testCreateDomainWithOauth2Clients() throws Exception {
-        OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "test google client");
+        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
         OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
 
         Domain domain = constructDomain(TenantId.SYS_TENANT_ID, "my.test.domain", true, true);

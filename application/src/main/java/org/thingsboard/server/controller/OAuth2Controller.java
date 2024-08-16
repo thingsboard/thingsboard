@@ -84,7 +84,7 @@ public class OAuth2Controller extends BaseController {
                                                                 "the usage with this platform type is allowed in the settings. " +
                                                                 "If platform type is not one of allowable values - it will just be ignored",
                                                                 schema = @Schema(allowableValues = {"WEB", "ANDROID", "IOS"}))
-                                                        @RequestParam(required = false) String platform) throws ThingsboardException {
+                                                        @RequestParam(required = false) String platform) {
         if (log.isDebugEnabled()) {
             log.debug("Executing getOAuth2Clients: [{}][{}][{}]", request.getScheme(), request.getServerName(), request.getServerPort());
             Enumeration<String> headerNames = request.getHeaderNames();
@@ -95,10 +95,7 @@ public class OAuth2Controller extends BaseController {
         }
         PlatformType platformType = null;
         if (StringUtils.isNotEmpty(platform)) {
-            try {
-                platformType = PlatformType.valueOf(platform);
-            } catch (Exception e) {
-            }
+            platformType = PlatformType.valueOf(platform);
         }
         if (StringUtils.isNotEmpty(pkgName)) {
             return oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(pkgName, platformType);
@@ -117,14 +114,14 @@ public class OAuth2Controller extends BaseController {
         return tbOauth2ClientService.save(oAuth2Client, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get OAuth2 Client Registration infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get OAuth2 Client infos (findTenantOAuth2ClientInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos")
     public PageData<OAuth2ClientInfo> findTenantOAuth2ClientInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                                   @RequestParam int pageSize,
                                                                   @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                                   @RequestParam int page,
-                                                                  @Parameter(description = "Case-insensitive 'substring' filter based on rule's name")
+                                                                  @Parameter(description = "Case-insensitive 'substring' filter based on client's title")
                                                                   @RequestParam(required = false) String textSearch,
                                                                   @Parameter(description = SORT_PROPERTY_DESCRIPTION)
                                                                   @RequestParam(required = false) String sortProperty,
@@ -134,22 +131,21 @@ public class OAuth2Controller extends BaseController {
         return oAuth2ClientService.findOAuth2ClientInfosByTenantId(getTenantId(), pageLink);
     }
 
-    @ApiOperation(value = "Get OAuth2 Client Registration infos By Ids (findTenantOAuth2ClientInfosByIds)",
-            notes = "Fetch OAuth2 Client Registration info objects based on the provided ids. ")
+    @ApiOperation(value = "Get OAuth2 Client infos By Ids (findTenantOAuth2ClientInfosByIds)",
+            notes = "Fetch OAuth2 Client info objects based on the provided ids. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/oauth2/client/infos", params = {"clientIds"})
     public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
             @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
-            @RequestParam("clientIds") String[] strClientIds) throws ThingsboardException {
-        checkArrayParameter("clientIds", strClientIds);
+            @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
         List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
-        for (String oauth2ClientId : strClientIds) {
-            oAuth2ClientIds.add(new OAuth2ClientId(toUUID(oauth2ClientId)));
+        for (UUID oauth2ClientId : clientIds) {
+            oAuth2ClientIds.add(new OAuth2ClientId(oauth2ClientId));
         }
         return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
     }
 
-    @ApiOperation(value = "Get OAuth2 Client Registration by id (getOAuth2ClientById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Get OAuth2 Client by id (getOAuth2ClientById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/oauth2/client/{id}")
     public OAuth2Client getOAuth2ClientById(@PathVariable UUID id) throws ThingsboardException {
@@ -157,8 +153,8 @@ public class OAuth2Controller extends BaseController {
         return checkEntityId(oAuth2ClientId, oAuth2ClientService::findOAuth2ClientById, Operation.READ);
     }
 
-    @ApiOperation(value = "Delete oauth2 client (deleteAsset)",
-            notes = "Deletes the asset and all the relations (from and to the asset). Referencing non-existing asset Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
+    @ApiOperation(value = "Delete oauth2 client (deleteOauth2Client)",
+            notes = "Deletes the oauth2 client. Referencing non-existing oauth2 client Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @DeleteMapping(value = "/oauth2/client/{id}")
     public void deleteOauth2Client(@PathVariable UUID id) throws Exception {

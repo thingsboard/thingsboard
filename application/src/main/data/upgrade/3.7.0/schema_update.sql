@@ -18,6 +18,7 @@
 
 ALTER TABLE IF EXISTS oauth2_mobile RENAME TO mobile_app;
 ALTER TABLE IF EXISTS oauth2_domain RENAME TO domain;
+ALTER TABLE IF EXISTS oauth2_domain RENAME domain_name TO name;
 ALTER TABLE IF EXISTS oauth2_registration RENAME TO oauth2_client;
 
 ALTER TABLE domain ADD COLUMN IF NOT EXISTS oauth2_enabled boolean,
@@ -26,13 +27,21 @@ ALTER TABLE domain ADD COLUMN IF NOT EXISTS oauth2_enabled boolean,
     DROP COLUMN IF EXISTS domain_scheme;
 
 -- delete duplicated domains
-DELETE FROM domain d1 USING domain d2 WHERE d1.created_time < d2.created_time AND d1.domain_name = d2.domain_name;
+DELETE FROM domain d1 USING (
+    SELECT MIN(ctid) as ctid, name
+    FROM domain
+    GROUP BY name HAVING COUNT(*) > 1
+) d2 WHERE d1.name = d2.name AND d1.ctid <> d2.ctid;
 
 ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS oauth2_enabled boolean,
     ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080';
 
 -- delete duplicated apps
-DELETE FROM mobile_app m1 USING mobile_app m2 WHERE m1.created_time < m2.created_time AND m1.pkg_name = m2.pkg_name;
+DELETE FROM mobile_app m1 USING (
+    SELECT MIN(ctid) as ctid, pkg_name
+    FROM mobile_app
+    GROUP BY pkg_name HAVING COUNT(*) > 1
+) m2 WHERE m1.pkg_name = m2.pkg_name AND m1.ctid <> m2.ctid;
 
 ALTER TABLE oauth2_client ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080',
     ADD COLUMN IF NOT EXISTS title varchar(100);
@@ -81,9 +90,12 @@ $$
             ALTER TABLE oauth2_client DROP COLUMN oauth2_params_id;
 
             ALTER TABLE mobile_app ADD CONSTRAINT mobile_app_unq_key UNIQUE (pkg_name);
-            ALTER TABLE domain ADD CONSTRAINT domain_unq_key UNIQUE (domain_name);
+            ALTER TABLE domain ADD CONSTRAINT domain_unq_key UNIQUE (name);
 
             DROP TABLE IF EXISTS oauth2_params;
+            -- drop deprecated tables
+            DROP TABLE IF EXISTS oauth2_client_registration_info;
+            DROP TABLE IF EXISTS oauth2_client_registration;
         END IF;
     END
 $$;

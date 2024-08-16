@@ -427,7 +427,7 @@ public class ModelConstants {
      * Domain constants.
      */
     public static final String DOMAIN_TABLE_NAME = "domain";
-    public static final String DOMAIN_DOMAIN_NAME_PROPERTY = "domain_name";
+    public static final String DOMAIN_NAME_PROPERTY = "name";
     public static final String DOMAIN_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
     public static final String DOMAIN_PROPAGATE_TO_EDGE_PROPERTY = "edge_enabled";
 
@@ -449,7 +449,7 @@ public class ModelConstants {
 
 
     /**
-     * OAuth2 client registration constants.
+     * OAuth2 client constants.
      */
     public static final String OAUTH2_CLIENT_TABLE_NAME = "oauth2_client";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_TABLE_NAME = "oauth2_client_registration_template";

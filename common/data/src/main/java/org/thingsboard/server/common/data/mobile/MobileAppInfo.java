@@ -28,7 +28,7 @@ import java.util.List;
 @Schema
 public class MobileAppInfo extends MobileApp {
 
-    @Schema(description = "List of available oauth2 client registrations")
+    @Schema(description = "List of available oauth2 clients")
     private List<OAuth2ClientInfo> oauth2ClientInfos;
 
     public MobileAppInfo(MobileApp mobileApp, List<OAuth2ClientInfo> oauth2ClientInfos) {

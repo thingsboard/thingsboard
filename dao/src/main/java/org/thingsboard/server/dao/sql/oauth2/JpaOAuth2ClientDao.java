@@ -66,7 +66,7 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     @Override
     public List<OAuth2Client> findEnabledByPckNameAndPlatformType(String pkgName, PlatformType platformType) {
         return DaoUtil.convertDataList(repository.findEnabledByPkgNameAndPlatformType(pkgName,
-                platformType != null ? "%" + platformType.name() + "%" : null));
+                platformType != null ? platformType.name() : null));
     }
 
     @Override
@@ -85,8 +85,8 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
-    public void deleteByTenantId(TenantId tenantId) {
-        repository.deleteByTenantId(tenantId.getId());
+    public void deleteByTenantId(UUID tenantId) {
+        repository.deleteByTenantId(tenantId);
     }
 
     @Override

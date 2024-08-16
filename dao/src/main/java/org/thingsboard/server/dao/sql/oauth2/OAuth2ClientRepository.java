@@ -39,7 +39,7 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN DomainOauth2ClientEntity dc on c.id = dc.oauth2ClientId " +
             "LEFT JOIN DomainEntity domain on dc.domainId = domain.id " +
-            "WHERE domain.name = :domainName " +
+            "WHERE domain.name = :domainName AND domain.oauth2Enabled = true " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR c.platforms LIKE :platformFilter)")
     List<OAuth2ClientEntity> findEnabledByDomainNameAndPlatformType(@Param("domainName") String domainName,
                                                                     @Param("platformFilter") String platformFilter);
@@ -48,8 +48,8 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN MobileAppOauth2ClientEntity mc on c.id = mc.oauth2ClientId " +
             "LEFT JOIN MobileAppEntity app on mc.mobileAppId = app.id " +
-            "WHERE app.pkgName = :pkgName " +
-            "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR c.platforms LIKE :platformFilter)")
+            "WHERE app.pkgName = :pkgName AND app.oauth2Enabled = true " +
+            "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
     List<OAuth2ClientEntity> findEnabledByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
                                                                  @Param("platformFilter") String platformFilter);
 
@@ -79,6 +79,6 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
     @Query("DELETE FROM OAuth2ClientEntity t WHERE t.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
-    List<OAuth2ClientEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> queueStatsIds);
+    List<OAuth2ClientEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> uuids);
 
 }

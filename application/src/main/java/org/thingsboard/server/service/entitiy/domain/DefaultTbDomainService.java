@@ -16,9 +16,8 @@
 package org.thingsboard.server.service.entitiy.domain;
 
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -46,7 +45,7 @@ public class DefaultTbDomainService extends AbstractTbEntityService implements T
             if (!CollectionUtils.isEmpty(oAuth2Clients)) {
                 domainService.updateOauth2Clients(domain.getTenantId(), savedDomain.getId(), oAuth2Clients);
             }
-            logEntityActionService.logEntityAction(tenantId, savedDomain.getId(), domain, actionType, user, oAuth2Clients);
+            logEntityActionService.logEntityAction(tenantId, savedDomain.getId(), savedDomain, actionType, user, oAuth2Clients);
             return savedDomain;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DOMAIN), domain, actionType, user, e, oAuth2Clients);
@@ -61,15 +60,14 @@ public class DefaultTbDomainService extends AbstractTbEntityService implements T
         DomainId domainId = domain.getId();
         try {
             domainService.updateOauth2Clients(tenantId, domainId, oAuth2ClientIds);
-            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, oAuth2ClientIds.toString());
+            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, oAuth2ClientIds);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, e, oAuth2ClientIds.toString());
+            logEntityActionService.logEntityAction(tenantId, domainId, domain, actionType, user, e, oAuth2ClientIds);
             throw e;
         }
     }
 
     @Override
-    @Transactional
     public void delete(Domain domain, User user) {
         ActionType actionType = ActionType.DELETED;
         TenantId tenantId = domain.getTenantId();

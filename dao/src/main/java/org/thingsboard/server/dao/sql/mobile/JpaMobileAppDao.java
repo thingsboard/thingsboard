@@ -20,7 +20,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppOauth2Client;
@@ -62,17 +61,18 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
 
     @Override
     public List<MobileAppOauth2Client> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId) {
-        return  DaoUtil.convertDataList(mobileOauth2ProviderRepository.findAllByMobileAppId(mobileAppId.getId()));
+        return DaoUtil.convertDataList(mobileOauth2ProviderRepository.findAllByMobileAppId(mobileAppId.getId()));
     }
 
     @Override
-    public void saveOauth2Clients(MobileAppOauth2Client mobileAppOauth2Client) {
+    public void addOauth2Client(MobileAppOauth2Client mobileAppOauth2Client) {
         mobileOauth2ProviderRepository.save(new MobileAppOauth2ClientEntity(mobileAppOauth2Client));
     }
 
     @Override
-    public void removeOauth2Clients(MobileAppId mobileAppId, OAuth2ClientId oAuth2ClientId) {
-        mobileOauth2ProviderRepository.deleteById(new MobileAppOauth2ClientCompositeKey(mobileAppId.getId(), oAuth2ClientId.getId()));
+    public void removeOauth2Client(MobileAppOauth2Client mobileAppOauth2Client) {
+        mobileOauth2ProviderRepository.deleteById(new MobileAppOauth2ClientCompositeKey(mobileAppOauth2Client.getMobileAppId().getId(),
+                mobileAppOauth2Client.getOAuth2ClientId().getId()));
     }
 
     @Override

@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.domain;
 import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.domain.DomainOauth2Client;
 import org.thingsboard.server.common.data.id.DomainId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -34,9 +33,9 @@ public interface DomainDao extends Dao<Domain> {
 
     List<DomainOauth2Client> findOauth2ClientsByDomainId(TenantId tenantId, DomainId domainId);
 
-    void saveOauth2Clients(DomainOauth2Client domainOauth2Client);
+    void addOauth2Client(DomainOauth2Client domainOauth2Client);
 
-    void removeOauth2Clients(DomainId domainId, OAuth2ClientId oAuth2ClientId);
+    void removeOauth2Client(DomainOauth2Client domainOauth2Client);
 
     void deleteByTenantId(TenantId tenantId);
 }

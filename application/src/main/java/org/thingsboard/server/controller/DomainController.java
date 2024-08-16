@@ -76,7 +76,7 @@ public class DomainController extends BaseController {
             @RequestBody @Valid Domain domain,
             @Parameter(description = "A list of oauth2 client registration ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam(name = "oauth2ClientIds", required = false) UUID[] ids) throws Exception {
-        domain.setTenantId(getCurrentUser().getTenantId());
+        domain.setTenantId(getTenantId());
         checkEntity(domain.getId(), domain, Resource.DOMAIN);
         return tbDomainService.save(domain, getOAuth2ClientIds(ids), getCurrentUser());
     }
@@ -100,7 +100,7 @@ public class DomainController extends BaseController {
                                                      @RequestParam int pageSize,
                                                      @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                      @RequestParam int page,
-                                                     @Parameter(description = "Case-insensitive 'substring' filter based on rule's name")
+                                                     @Parameter(description = "Case-insensitive 'substring' filter based on domain's name")
                                                      @RequestParam(required = false) String textSearch,
                                                      @Parameter(description = SORT_PROPERTY_DESCRIPTION)
                                                      @RequestParam(required = false) String sortProperty,
@@ -119,7 +119,7 @@ public class DomainController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Domain by ID (deleteDomain)",
-            notes = "Deletes Domain by ID. Referencing non-existing asset Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
+            notes = "Deletes Domain by ID. Referencing non-existing domain Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @DeleteMapping(value = "/domain/{id}")
     public void deleteDomain(@PathVariable UUID id) throws Exception {

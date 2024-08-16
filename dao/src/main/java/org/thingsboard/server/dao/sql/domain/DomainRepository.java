@@ -39,6 +39,6 @@ public interface DomainRepository extends JpaRepository<DomainEntity, UUID> {
     @Query("DELETE FROM DomainEntity r WHERE r.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
-    int countByTenantIdAndOauth2Enabled(@Param("tenantId") UUID tenantId, @Param("oauth2Enabled") boolean oauth2Enabled);
+    int countByTenantIdAndOauth2Enabled(UUID tenantId, boolean oauth2Enabled);
 
 }

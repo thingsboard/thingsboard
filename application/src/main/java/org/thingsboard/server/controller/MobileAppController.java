@@ -75,19 +75,19 @@ public class MobileAppController extends BaseController {
     public MobileApp saveMobileApp(
             @Parameter(description = "A JSON value representing the Mobile Application.", required = true)
             @RequestBody @Valid MobileApp mobileApp,
-            @Parameter(description = "A list of entity group ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
+            @Parameter(description = "A list of entity oauth2 client ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")))
             @RequestParam(name = "oauth2ClientIds", required = false) UUID[] ids) throws Exception {
-        mobileApp.setTenantId(getCurrentUser().getTenantId());
+        mobileApp.setTenantId(getTenantId());
         checkEntity(mobileApp.getId(), mobileApp, Resource.MOBILE_APP);
         return tbMobileAppService.save(mobileApp, getOAuth2ClientIds(ids), getCurrentUser());
     }
 
     @ApiOperation(value = "Update oauth2 clients (updateOauth2Clients)",
-            notes = "Update oauth2 clients to the specified mobile app. ")
+            notes = "Update oauth2 clients of the specified mobile app. ")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PutMapping(value = "/mobileApp/{id}/oauth2Clients")
     public void updateOauth2Clients(@PathVariable UUID id,
-                                         @RequestBody UUID[] clientIds) throws ThingsboardException {
+                                    @RequestBody UUID[] clientIds) throws ThingsboardException {
         MobileAppId mobileAppId = new MobileAppId(id);
         MobileApp mobileApp = checkMobileAppId(mobileAppId, Operation.WRITE);
         List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
@@ -101,15 +101,14 @@ public class MobileAppController extends BaseController {
                                                            @RequestParam int pageSize,
                                                            @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                            @RequestParam int page,
-                                                           @Parameter(description = "Case-insensitive 'substring' filter based on rule's name")
+                                                           @Parameter(description = "Case-insensitive 'substring' filter based on app's name")
                                                            @RequestParam(required = false) String textSearch,
                                                            @Parameter(description = SORT_PROPERTY_DESCRIPTION)
                                                            @RequestParam(required = false) String sortProperty,
                                                            @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                            @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        TenantId tenantId = getCurrentUser().getTenantId();
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return mobileAppService.findMobileAppInfosByTenantId(tenantId, pageLink);
+        return mobileAppService.findMobileAppInfosByTenantId(getTenantId(), pageLink);
     }
 
     @ApiOperation(value = "Get mobile info by id (getMobileAppInfoById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
@@ -121,7 +120,7 @@ public class MobileAppController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Mobile App by ID (deleteMobileApp)",
-            notes = "Deletes Mobile App by ID. Referencing non-existing asset Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
+            notes = "Deletes Mobile App by ID. Referencing non-existing mobile app Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @DeleteMapping(value = "/mobileApp/{id}")
     public void deleteMobileApp(@PathVariable UUID id) throws Exception {

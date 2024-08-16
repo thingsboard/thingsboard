@@ -32,9 +32,9 @@ public interface MobileAppDao extends Dao<MobileApp> {
 
     List<MobileAppOauth2Client> findOauth2ClientsByMobileAppId(TenantId tenantId, MobileAppId mobileAppId);
 
-    void saveOauth2Clients(MobileAppOauth2Client mobileAppOauth2Client);
+    void addOauth2Client(MobileAppOauth2Client mobileAppOauth2Client);
 
-    void removeOauth2Clients(MobileAppId mobileAppId, OAuth2ClientId oAuth2ClientId);
+    void removeOauth2Client(MobileAppOauth2Client mobileAppOauth2Client);
 
     void deleteByTenantId(TenantId tenantId);
 }

@@ -16,9 +16,8 @@
 package org.thingsboard.server.service.entitiy.mobile;
 
 import lombok.AllArgsConstructor;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -46,7 +45,7 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
             if (!CollectionUtils.isEmpty(oauth2Clients)) {
                 mobileAppService.updateOauth2Clients(tenantId, savedMobileApp.getId(), oauth2Clients);
             }
-            logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), mobileApp, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), savedMobileApp, actionType, user);
             return savedMobileApp;
         } catch (Exception e) {
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.MOBILE_APP), mobileApp, actionType, user, e);
@@ -69,7 +68,6 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
     }
 
     @Override
-    @Transactional
     public void delete(MobileApp mobileApp, User user) {
         ActionType actionType = ActionType.DELETED;
         TenantId tenantId = mobileApp.getTenantId();

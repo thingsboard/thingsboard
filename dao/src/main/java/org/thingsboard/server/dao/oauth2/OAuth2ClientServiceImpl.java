@@ -101,11 +101,11 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    public String findAppSecret(UUID id, String pkgName) {
-        log.trace("Executing findAppSecret [{}][{}]", id, pkgName);
-        validateId(id, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
+    public String findAppSecret(OAuth2ClientId oAuth2ClientId, String pkgName) {
+        log.trace("Executing findAppSecret [{}][{}]", oAuth2ClientId, pkgName);
+        validateId(oAuth2ClientId, uuid -> INCORRECT_CLIENT_REGISTRATION_ID + uuid);
         validateString(pkgName, "Incorrect package name");
-        return oauth2ClientDao.findAppSecret(id, pkgName);
+        return oauth2ClientDao.findAppSecret(oAuth2ClientId.getId(), pkgName);
     }
 
     @Override
@@ -124,19 +124,14 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     public void deleteOauth2ClientsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteOauth2ClientsByTenantId, tenantId [{}]", tenantId);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        oauth2ClientDao.deleteByTenantId(tenantId);
+        oauth2ClientDao.deleteByTenantId(tenantId.getId());
     }
 
     @Override
     public PageData<OAuth2ClientInfo> findOAuth2ClientInfosByTenantId(TenantId tenantId, PageLink pageLink) {
         log.trace("Executing findOAuth2ClientInfosByTenantId tenantId=[{}]", tenantId);
-        PageData<OAuth2Client> clientInfos = oauth2ClientDao.findByTenantId(tenantId.getId(), pageLink);
-        List<OAuth2ClientInfo> oAuth2ClientInfos = clientInfos
-                .getData()
-                .stream()
-                .map(OAuth2ClientInfo::new)
-                .collect(Collectors.toList());
-        return new PageData<>(oAuth2ClientInfos, clientInfos.getTotalPages(), clientInfos.getTotalPages(), clientInfos.hasNext());
+        PageData<OAuth2Client> clients = oauth2ClientDao.findByTenantId(tenantId.getId(), pageLink);
+        return clients.mapData(OAuth2ClientInfo::new);
     }
 
     @Override
@@ -163,11 +158,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     @Override
     @Transactional
     public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
-        OAuth2Client oAuth2Client = oauth2ClientDao.findById(tenantId, id.getId());
-        if (oAuth2Client == null) {
-            return;
-        }
-        deleteOAuth2ClientById(tenantId, oAuth2Client.getId());
+        deleteOAuth2ClientById(tenantId, (OAuth2ClientId) id);
     }
 
     @Override

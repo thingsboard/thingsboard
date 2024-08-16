@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.oauth2;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
@@ -49,9 +50,7 @@ public class OAuth2ClientInfo extends BaseData<OAuth2ClientId> implements HasNam
     public OAuth2ClientInfo(OAuth2Client oAuth2Client) {
         super(oAuth2Client);
         this.title = oAuth2Client.getTitle();
-        if (oAuth2Client.getAdditionalInfo() != null && oAuth2Client.getAdditionalInfo().has("providerName")) {
-            this.providerName = oAuth2Client.getAdditionalInfo().get("providerName").asText();
-        }
+        this.providerName =  oAuth2Client.getAdditionalInfoField("providerName", JsonNode::asText,"");
         this.platforms = oAuth2Client.getPlatforms();
     }
 

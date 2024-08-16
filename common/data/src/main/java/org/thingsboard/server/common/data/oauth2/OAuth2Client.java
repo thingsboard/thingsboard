@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 
 import java.util.List;
 
@@ -41,6 +42,7 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
     private TenantId tenantId;
     @Schema(description = "Oauth2 client title")
     @NotBlank
+    @Length(max = 100, message = "cannot be longer than 100 chars")
     private String title;
     @Schema(description = "Config for mapping OAuth2 log in response to platform entities", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotNull
@@ -110,6 +112,6 @@ public class OAuth2Client extends BaseDataWithAdditionalInfo<OAuth2ClientId> imp
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     public String getName() {
-        return loginButtonLabel;
+        return title;
     }
 }
