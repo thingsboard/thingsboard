@@ -130,6 +130,18 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           ? this.timewindow.realtime?.disableCustomInterval : false ],
         disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.realtime?.disableCustomGroupInterval)
           ? this.timewindow.realtime?.disableCustomGroupInterval : false ],
+        hideInterval: [ isDefinedAndNotNull(this.timewindow.realtime.hideInterval)
+          ? this.timewindow.realtime.hideInterval : false ],
+        hideLastInterval: [{
+          value: isDefinedAndNotNull(this.timewindow.realtime.hideLastInterval)
+            ? this.timewindow.realtime.hideLastInterval : false,
+          disabled: this.timewindow.realtime.hideInterval
+        }],
+        hideQuickInterval: [{
+          value: isDefinedAndNotNull(this.timewindow.realtime.hideQuickInterval)
+            ? this.timewindow.realtime.hideQuickInterval : false,
+          disabled: this.timewindow.realtime.hideInterval
+        }]
       }),
       history: this.fb.group({
         historyType: [ isDefined(history?.historyType) ? this.timewindow.history.historyType : HistoryWindowType.LAST_INTERVAL ],
@@ -141,6 +153,23 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           ? this.timewindow.history?.disableCustomInterval : false ],
         disableCustomGroupInterval: [ isDefinedAndNotNull(this.timewindow.history?.disableCustomGroupInterval)
           ? this.timewindow.history?.disableCustomGroupInterval : false ],
+        hideInterval: [ isDefinedAndNotNull(this.timewindow.history.hideInterval)
+          ? this.timewindow.history.hideInterval : false ],
+        hideLastInterval: [{
+          value: isDefinedAndNotNull(this.timewindow.history.hideLastInterval)
+            ? this.timewindow.history.hideLastInterval : false,
+          disabled: this.timewindow.history.hideInterval
+        }],
+        hideQuickInterval: [{
+          value: isDefinedAndNotNull(this.timewindow.history.hideQuickInterval)
+            ? this.timewindow.history.hideQuickInterval : false,
+          disabled: this.timewindow.history.hideInterval
+        }],
+        hideFixedInterval: [{
+          value: isDefinedAndNotNull(this.timewindow.history.hideFixedInterval)
+            ? this.timewindow.history.hideFixedInterval : false,
+          disabled: this.timewindow.history.hideInterval
+        }]
       }),
       aggregation: this.fb.group({
         type: [ isDefined(aggregation?.type) ? this.timewindow.aggregation.type : null ],
@@ -171,13 +200,24 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.timewindowForm.get('aggregation.type').valueChanges.subscribe((aggregationType: AggregationType) => {
       this.updateValidators(aggregationType);
     });
-    this.timewindowForm.get('hideInterval').valueChanges.subscribe((value: boolean) => {
+    this.timewindowForm.get('realtime.hideInterval').valueChanges.subscribe((value: boolean) => {
       if (value) {
-        this.timewindowForm.get('hideLastInterval').disable();
-        this.timewindowForm.get('hideQuickInterval').disable();
+        this.timewindowForm.get('realtime.hideLastInterval').disable();
+        this.timewindowForm.get('realtime.hideQuickInterval').disable();
       } else {
-        this.timewindowForm.get('hideLastInterval').enable();
-        this.timewindowForm.get('hideQuickInterval').enable();
+        this.timewindowForm.get('realtime.hideLastInterval').enable();
+        this.timewindowForm.get('realtime.hideQuickInterval').enable();
+      }
+    });
+    this.timewindowForm.get('history.hideInterval').valueChanges.subscribe((value: boolean) => {
+      if (value) {
+        this.timewindowForm.get('history.hideLastInterval').disable();
+        this.timewindowForm.get('history.hideQuickInterval').disable();
+        this.timewindowForm.get('history.hideFixedInterval').disable();
+      } else {
+        this.timewindowForm.get('history.hideLastInterval').enable();
+        this.timewindowForm.get('history.hideQuickInterval').enable();
+        this.timewindowForm.get('history.hideFixedInterval').enable();
       }
     });
   }
@@ -204,33 +244,12 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   onTimewindowTypeChange() {
     this.timewindowForm.markAsDirty();
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
-      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
-        this.timewindowForm.get('realtime').patchValue({
-          realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
-            RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
-            timewindowFormValue.realtime.realtimeType,
-          timewindowMs: timewindowFormValue.history.timewindowMs,
-          quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
-            timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
-        });
-        setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
-      }
-    } else {
-      this.timewindowForm.get('history').patchValue({
-        historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
-        timewindowMs: timewindowFormValue.realtime.timewindowMs,
-        quickInterval: timewindowFormValue.realtime.quickInterval
-      });
-      setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
-    }
     this.timewindowForm.patchValue({
       aggregation: {
         type: timewindowFormValue.aggregation.type,
         limit: timewindowFormValue.aggregation.limit
       },
       timezone: timewindowFormValue.timezone,
-      hideInterval: timewindowFormValue.hideInterval,
       hideAggregation: timewindowFormValue.hideAggregation,
       hideAggInterval: timewindowFormValue.hideAggInterval,
       hideTimezone: timewindowFormValue.hideTimezone
