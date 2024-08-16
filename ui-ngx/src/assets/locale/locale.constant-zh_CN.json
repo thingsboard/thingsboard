@@ -1097,7 +1097,6 @@
         "maximum-upload-file-size": "最大上传文件大小: {{ size }}",
         "cannot-upload-file": "无法上传文件",
         "settings": "设置",
-        "layout-settings": "布局设置",
         "columns-count": "列数",
         "columns-count-required": "需要列数。",
         "min-columns-count-message": "只允许最少10列",

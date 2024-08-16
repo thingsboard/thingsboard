@@ -748,7 +748,6 @@
     "maximum-upload-file-size": "Maksimum yükleme dosyası boyutu: {{ size }}",
     "cannot-upload-file": "Dosya yüklenemiyor",
     "settings": "Ayarlar",
-    "layout-settings": "Görünüm ayarları",
     "columns-count": "Sütun sayısı",
     "columns-count-required": "Sütun sayısı gerekli.",
     "min-columns-count-message": "Yalnızca 10 minimum sütun sayısına izin verilir.",
