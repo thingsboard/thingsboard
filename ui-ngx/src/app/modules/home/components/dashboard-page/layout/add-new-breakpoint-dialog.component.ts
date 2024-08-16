@@ -21,6 +21,8 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Router } from '@angular/router';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { BreakpointId } from '@shared/models/dashboard.models';
 
 export interface AddNewBreakpointDialogData {
   allowBreakpointIds: string[];
@@ -28,8 +30,8 @@ export interface AddNewBreakpointDialogData {
 }
 
 export interface AddNewBreakpointDialogResult {
-  newBreakpointId: string;
-  copyFrom: string;
+  newBreakpointId: BreakpointId;
+  copyFrom: BreakpointId;
 }
 
 @Component({
@@ -47,12 +49,13 @@ export class AddNewBreakpointDialogComponent extends DialogComponent<AddNewBreak
               protected router: Router,
               private fb: FormBuilder,
               @Inject(MAT_DIALOG_DATA) private data: AddNewBreakpointDialogData,
-              protected dialogRef: MatDialogRef<AddNewBreakpointDialogComponent, AddNewBreakpointDialogResult>,) {
+              protected dialogRef: MatDialogRef<AddNewBreakpointDialogComponent, AddNewBreakpointDialogResult>,
+              private dashboardUtils: DashboardUtilsService,) {
 
     super(store, router, dialogRef);
 
-    this.allowBreakpointIds = data.allowBreakpointIds;
-    this.selectedBreakpointIds = data.selectedBreakpointIds;
+    this.allowBreakpointIds = this.data.allowBreakpointIds;
+    this.selectedBreakpointIds = this.data.selectedBreakpointIds;
 
     this.addBreakpointFormGroup = this.fb.group({
       newBreakpointId: [{value: this.allowBreakpointIds[0], disabled: this.allowBreakpointIds.length === 1}],
@@ -66,5 +69,17 @@ export class AddNewBreakpointDialogComponent extends DialogComponent<AddNewBreak
 
   save(): void {
     this.dialogRef.close(this.addBreakpointFormGroup.getRawValue());
+  }
+
+  getName(breakpointId: BreakpointId): string {
+    return this.dashboardUtils.getBreakpointName(breakpointId);
+  }
+
+  getIcon(breakpointId: BreakpointId): string {
+    return this.dashboardUtils.getBreakpointIcon(breakpointId);
+  }
+
+  getSizeDescription(breakpointId: BreakpointId): string {
+    return this.dashboardUtils.getBreakpointSizeDescription(breakpointId);
   }
 }

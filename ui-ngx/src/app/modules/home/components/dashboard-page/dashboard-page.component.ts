@@ -41,6 +41,8 @@ import { AppState } from '@core/core.state';
 import { ActivatedRoute, Router } from '@angular/router';
 import { UtilsService } from '@core/services/utils.service';
 import {
+  BreakpointId,
+  BreakpointInfo,
   Dashboard,
   DashboardConfiguration,
   DashboardLayoutId,
@@ -51,6 +53,7 @@ import {
   GridSettings,
   LayoutDimension,
   LayoutType,
+  ViewFormatType,
   WidgetLayout
 } from '@app/shared/models/dashboard.models';
 import { WINDOW } from '@core/services/window.service';
@@ -92,7 +95,6 @@ import {
   WidgetContextMenuItem
 } from '../../models/dashboard-component.models';
 import { WidgetComponentService } from '../../components/widget/widget-component.service';
-import { UntypedFormBuilder } from '@angular/forms';
 import { ItemBufferService } from '@core/services/item-buffer.service';
 import { MatDialog } from '@angular/material/dialog';
 import {
@@ -261,7 +263,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   addingLayoutCtx: DashboardPageLayoutContext;
 
-  mainLayoutSize: {width: string; height: string; maxWidth: string} = {width: '100%', height: '100%', maxWidth: '100%'};
+  mainLayoutSize: {width: string; height: string; maxWidth: string; minWidth: string} =
+    {width: '100%', height: '100%', maxWidth: '100%', minWidth: '100%'};
   rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
 
   private dashboardLogoCache: SafeUrl;
@@ -363,7 +366,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               private itembuffer: ItemBufferService,
               private importExport: ImportExportService,
               private mobileService: MobileService,
-              private fb: UntypedFormBuilder,
               private dialog: MatDialog,
               public translate: TranslateService,
               private popoverService: TbPopoverService,
@@ -376,8 +378,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               public elRef: ElementRef,
               private injector: Injector) {
     super(store);
-    if (isDefinedAndNotNull(embeddedValue)) {
-      this.embedded = embeddedValue;
+    if (isDefinedAndNotNull(this.embeddedValue)) {
+      this.embedded = this.embeddedValue;
     }
   }
 
@@ -427,40 +429,26 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     );
 
     this.rxSubscriptions.push(
-      this.breakpointObserver.observe([
-        MediaBreakpoints.xs,
-        MediaBreakpoints.sm,
-        MediaBreakpoints.md,
-        MediaBreakpoints.lg,
-        MediaBreakpoints.xl
-      ]).pipe(
-        map(value => {
-          if (value.breakpoints[MediaBreakpoints.xs]) {
-            return 'xs';
-          } else if (value.breakpoints[MediaBreakpoints.sm]) {
-            return 'sm';
-          } else if (value.breakpoints[MediaBreakpoints.md]) {
-            return 'md';
-          } else if (value.breakpoints[MediaBreakpoints.lg]) {
-            return 'lg';
-          } else {
-            return 'xl';
-          }
-        }),
+      this.breakpointObserver.observe(
+        this.dashboardUtils.getBreakpoints()
+      ).pipe(
+        map(value => this.parseBreakpointsResponse(value.breakpoints)),
         tap((value) => {
-          this.dashboardCtx.breakpoint = value;
-          this.changeMobileSize.next(value === 'xs' || value === 'sm');
+          this.dashboardCtx.breakpoint = value.id;
+          this.changeMobileSize.next(this.isMobileSize(value));
         }),
-        distinctUntilChanged((prev, next) => {
+        distinctUntilChanged((_, next) => {
           if (this.layouts.right.show || this.isEdit) {
             return true;
           }
-          const allowAdditionalPrevLayout = !!this.layouts.main.layoutCtx.layoutData?.[prev];
-          const allowAdditionalNextLayout = !!this.layouts.main.layoutCtx?.layoutData?.[next];
-          return !(allowAdditionalNextLayout || allowAdditionalPrevLayout !== allowAdditionalNextLayout);
+          let nextBreakpointConfiguration: BreakpointId = 'default';
+          if (!!this.layouts.main.layoutCtx.layoutData?.[next.id]) {
+            nextBreakpointConfiguration = next.id;
+          }
+          return this.layouts.main.layoutCtx.breakpoint === nextBreakpointConfiguration;
         }),
         skip(1)
-      ).subscribe((value) => {
+      ).subscribe(() => {
           this.layouts.main.layoutCtx.ctrl.updatedCurrentBreakpoint();
           this.updateLayoutSizes();
         }
@@ -639,7 +627,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public hideFullscreenButton(): boolean {
-    return (this.widgetEditMode || this.iframeMode || this.forceFullscreen || this.singlePageMode || this.isEdit);
+    return (this.widgetEditMode || this.iframeMode || this.forceFullscreen || this.singlePageMode);
   }
 
   public toolbarAlwaysOpen(): boolean {
@@ -780,33 +768,28 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     } else {
       this.mainLayoutSize.height = '0px';
     }
-    if (this.isEdit) {
+    if (this.isEdit && !this.isEditingWidget) {
       const xOffset = this.dashboardContainer.nativeElement.getBoundingClientRect().x;
-      let width;
+      const breakpoint = this.dashboardUtils.getBreakpointInfoById(this.layouts.main.layoutCtx.breakpoint);
 
-      switch (this.layouts.main.layoutCtx.breakpoint) {
-        case 'xl':
-          width = `${5000 - xOffset}px`;
-          break;
-        case 'lg':
-          width = `${1919 - xOffset}px`;
-          break;
-        case 'md':
-          width = `${1279 - xOffset}px`;
-          break;
-        case 'sm':
-          width = '959px';
-          break;
-        case 'xs':
-          width = '599px';
-          break;
-        default:
-          width = '100%';
+      let maxWidth: string;
+      if (breakpoint?.maxWidth) {
+        if (this.isMobileSize(breakpoint)) {
+          maxWidth = `${breakpoint.maxWidth}px`;
+        } else {
+          maxWidth = `${breakpoint.maxWidth - xOffset}px`;
+        }
+      } else {
+        maxWidth = '100%';
       }
 
-      this.mainLayoutSize.maxWidth = width;
+      const minWidth = breakpoint?.minWidth ? `${breakpoint.minWidth}px` : undefined;
+
+      this.mainLayoutSize.maxWidth = maxWidth;
+      this.mainLayoutSize.minWidth = minWidth;
     } else {
       this.mainLayoutSize.maxWidth = '100%';
+      this.mainLayoutSize.minWidth = undefined;
     }
     return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height ||
       prevMainLayoutMaxWidth !== this.mainLayoutSize.maxWidth;
@@ -945,6 +928,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       data: {
         settings: deepClone(this.dashboard.configuration.settings),
         gridSettings,
+        breakpointId: this.layouts.main.layoutCtx.breakpoint
       }
     }).afterClosed().subscribe((data) => {
       if (data) {
@@ -1327,9 +1311,19 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           col: 0
         };
         newWidget = this.dashboardUtils.validateAndUpdateWidget(newWidget);
+        let isDefaultBreakpoint = true;
+        if (this.addingLayoutCtx?.breakpoint) {
+          isDefaultBreakpoint = this.addingLayoutCtx.breakpoint === 'default';
+        } else if (!this.layouts.right.show) {
+          isDefaultBreakpoint = this.layouts.main.layoutCtx.breakpoint === 'default';
+        }
         const scada = this.isAddingToScadaLayout();
         if (scada) {
           newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget);
+        }
+        let showLayoutConfig = true;
+        if (scada || this.layouts.right.show || !this.showLayoutConfigInEdit(this.layouts.main.layoutCtx)) {
+          showLayoutConfig = false;
         }
         if (widgetTypeInfo.typeParameters.useCustomDatasources) {
           this.addWidgetToDashboard(newWidget);
@@ -1346,7 +1340,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
               stateController: this.dashboardCtx.stateController,
               widget: newWidget,
               widgetInfo: widgetTypeInfo,
-              scada
+              showLayoutConfig,
+              isDefaultBreakpoint
             }
           }).afterClosed().subscribe((addedWidget) => {
             if (addedWidget) {
@@ -1423,6 +1418,13 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         }, delayOffset);
       }
     }
+  }
+
+  showLayoutConfigInEdit(layoutCtx: DashboardPageLayoutContext): boolean {
+    return layoutCtx?.gridSettings?.layoutType === LayoutType.divider ||
+      layoutCtx?.gridSettings?.layoutType === LayoutType.default &&
+      (layoutCtx?.breakpoint === 'default' ||
+        layoutCtx?.breakpoint !== 'default' && layoutCtx?.gridSettings?.viewFormat === ViewFormatType.list);
   }
 
   replaceReferenceWithWidgetCopy($event: Event, layoutCtx: DashboardPageLayoutContext, widget: Widget) {
@@ -1748,5 +1750,32 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         });
       });
     }
+  }
+
+  get showMainLayoutFiller(): boolean {
+    const layoutMaxWidth = this.dashboardUtils.getBreakpointInfoById(this.layouts.main.layoutCtx.breakpoint)?.maxWidth || Infinity;
+    const dashboardMaxWidth = this.dashboardUtils.getBreakpointInfoById(this.dashboardCtx.breakpoint)?.maxWidth || Infinity;
+    return !this.layouts.right.show && layoutMaxWidth < dashboardMaxWidth  && !this.isEditingWidget;
+  }
+
+  get currentBreakpointValue(): string {
+    return this.dashboardUtils.getBreakpointSizeDescription(this.layouts.main.layoutCtx.breakpoint);
+  }
+
+  private parseBreakpointsResponse(breakpoints: {[key: string]: boolean}): BreakpointInfo {
+    const activeBreakpoints: BreakpointInfo[] = [];
+    Object.keys(breakpoints).map((key) => {
+      if (breakpoints[key]) {
+        activeBreakpoints.push(this.dashboardUtils.getBreakpointInfoByValue(key));
+      }
+    });
+    return activeBreakpoints.pop();
+  }
+
+  private isMobileSize(breakpoint: BreakpointInfo): boolean {
+    if (breakpoint?.maxWidth) {
+      return breakpoint.maxWidth < 960;
+    }
+    return false;
   }
 }

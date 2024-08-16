@@ -17,7 +17,7 @@
 import { Component, Input, OnDestroy, OnInit } from '@angular/core';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { Subscription } from 'rxjs';
-import { BreakpointInfo } from '@shared/models/dashboard.models';
+import { BreakpointId } from '@shared/models/dashboard.models';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 @Component({
@@ -30,18 +30,13 @@ export class SelectDashboardBreakpointComponent implements OnInit, OnDestroy {
   @Input()
   dashboardCtrl: DashboardPageComponent;
 
-  selectedBreakpoint = 'default';
-
-  breakpointsData: {[breakpointId in string]: BreakpointInfo} = {};
+  selectedBreakpoint: BreakpointId = 'default';
 
   breakpointIds: Array<string> = ['default'];
 
   private layoutDataChanged$: Subscription;
 
   constructor(private dashboardUtils: DashboardUtilsService) {
-    this.dashboardUtils.getListBreakpoint().forEach((breakpoint) => {
-      this.breakpointsData[breakpoint.id] = breakpoint;
-    });
   }
 
   ngOnInit() {
@@ -65,5 +60,17 @@ export class SelectDashboardBreakpointComponent implements OnInit, OnDestroy {
   selectLayoutChanged() {
     this.dashboardCtrl.layouts.main.layoutCtx.ctrl.updatedCurrentBreakpoint(this.selectedBreakpoint);
     this.dashboardCtrl.updateLayoutSizes();
+  }
+
+  getName(breakpointId: BreakpointId): string {
+    return this.dashboardUtils.getBreakpointName(breakpointId);
+  }
+
+  getIcon(breakpointId: BreakpointId): string {
+    return this.dashboardUtils.getBreakpointIcon(breakpointId);
+  }
+
+  getSizeDescription(breakpointId: BreakpointId): string {
+    return this.dashboardUtils.getBreakpointSizeDescription(breakpointId);
   }
 }

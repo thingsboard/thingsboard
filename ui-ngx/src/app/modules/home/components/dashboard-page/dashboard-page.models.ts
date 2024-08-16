@@ -15,6 +15,7 @@
 ///
 
 import {
+  BreakpointId,
   Dashboard,
   DashboardLayoutId,
   DashboardLayoutInfo,
@@ -41,7 +42,7 @@ export interface DashboardPageInitData {
 export interface DashboardContext {
   instanceId: string;
   state: string;
-  breakpoint: string;
+  breakpoint: BreakpointId;
   getDashboard: () => Dashboard;
   dashboardTimewindow: Timewindow;
   aliasController: IAliasController;
@@ -75,7 +76,7 @@ export interface DashboardPageLayoutContext {
   id: DashboardLayoutId;
   layoutData: DashboardLayoutInfo;
   layoutDataChanged: BehaviorSubject<void>;
-  breakpoint: string;
+  breakpoint: BreakpointId;
   widgets: LayoutWidgetsArray;
   widgetLayouts: WidgetLayouts;
   gridSettings: GridSettings;

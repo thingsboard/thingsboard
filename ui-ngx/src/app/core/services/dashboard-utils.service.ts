@@ -18,8 +18,11 @@ import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
 import {
+  BreakpointId, breakpointIdIconMap,
+  breakpointIdTranslationMap,
   BreakpointInfo,
   BreakpointLayoutInfo,
+  BreakpointSystemId,
   Dashboard,
   DashboardConfiguration,
   DashboardLayout,
@@ -41,7 +44,8 @@ import {
   TargetDeviceType,
   Widget,
   WidgetConfig,
-  WidgetConfigMode, WidgetSize,
+  WidgetConfigMode,
+  WidgetSize,
   widgetType,
   WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
@@ -53,16 +57,18 @@ import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
 import { MediaBreakpoints } from '@shared/models/constants';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardUtilsService {
 
-  private systemBreakpoints: BreakpointInfo[];
+  private systemBreakpoints: {[key in BreakpointSystemId]?: BreakpointInfo};
 
   constructor(private utils: UtilsService,
-              private timeService: TimeService) {
+              private timeService: TimeService,
+              private translate: TranslateService) {
   }
 
   public validateAndUpdateDashboard(dashboard: Dashboard): Dashboard {
@@ -1001,13 +1007,18 @@ export class DashboardUtilsService {
   }
 
   private loadSystemBreakpoints() {
-    this.systemBreakpoints=[{id: 'default'}];
-    const dashboardMediaBreakpointIds = ['xs', 'sm', 'md', 'lg', 'xl'];
+    this.systemBreakpoints = {};
+    const dashboardMediaBreakpointIds: BreakpointSystemId[] = ['xs', 'sm', 'md', 'lg', 'xl'];
     dashboardMediaBreakpointIds.forEach(breakpoint => {
       const value = MediaBreakpoints[breakpoint];
-      const minWidth = value.match(/min-width:\s*(\d+)px/);
-      const maxWidth = value.match(/max-width:\s*(\d+)px/);
-      this.systemBreakpoints.push({id: breakpoint, minWidth: minWidth?.[1], maxWidth: maxWidth?.[1]});
+      const minWidth = value.match(/min-width:\s*(\d+)px/)?.[1];
+      const maxWidth = value.match(/max-width:\s*(\d+)px/)?.[1];
+      this.systemBreakpoints[breakpoint] = ({
+        id: breakpoint,
+        minWidth: minWidth ? Number(minWidth) : undefined,
+        maxWidth: maxWidth ? Number(maxWidth) : undefined,
+        value
+      });
     });
   }
 
@@ -1015,6 +1026,50 @@ export class DashboardUtilsService {
     if(!this.systemBreakpoints) {
       this.loadSystemBreakpoints();
     }
-    return this.systemBreakpoints;
+    const breakpointsList = Object.values(this.systemBreakpoints);
+    breakpointsList.unshift({id: 'default'});
+    return breakpointsList;
+  }
+
+  getBreakpoints(): string[] {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return Object.values(this.systemBreakpoints).map(item => item.value);
+  }
+
+  getBreakpointInfoByValue(breakpointValue: string): BreakpointInfo {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return Object.values(this.systemBreakpoints).find(item => item.value === breakpointValue);
+  }
+
+  getBreakpointInfoById(breakpointId: BreakpointId): BreakpointInfo {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return this.systemBreakpoints[breakpointId];
+  }
+
+  getBreakpointName(breakpointId: BreakpointId): string {
+    if (breakpointIdTranslationMap.has(breakpointId)) {
+      return this.translate.instant(breakpointIdTranslationMap.get(breakpointId));
+    }
+    return breakpointId;
+  }
+
+  getBreakpointIcon(breakpointId: BreakpointId): string {
+    if (breakpointIdIconMap.has(breakpointId)) {
+      return breakpointIdIconMap.get(breakpointId);
+    }
+    return 'desktop_windows';
+  }
+
+  getBreakpointSizeDescription(breakpointId: BreakpointId): string {
+    const currentData = this.getBreakpointInfoById(breakpointId);
+    const minStr = isDefined(currentData?.minWidth) ? `min ${currentData.minWidth}px` : '';
+    const maxStr = isDefined(currentData?.maxWidth) ? `max ${currentData.maxWidth}px` : '';
+    return minStr && maxStr ? `${minStr} - ${maxStr}` : `${minStr}${maxStr}`;
   }
 }

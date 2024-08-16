@@ -17,7 +17,6 @@
 import {
   AfterViewInit,
   ChangeDetectionStrategy,
-  ChangeDetectorRef,
   Component,
   DoCheck,
   Input,
@@ -46,7 +45,6 @@ import {
 } from '../../models/dashboard-component.models';
 import { ReplaySubject, Subject, Subscription } from 'rxjs';
 import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
-import { DialogService } from '@core/services/dialog.service';
 import { animatedScroll, deepClone, isDefined } from '@app/core/utils';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
@@ -203,9 +201,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   widgetContextMenuEvent: MouseEvent;
 
   dashboardWidgets = new DashboardWidgets(this,
-    this.differs.find([]).create<Widget>((index, item) => {
-      return item;
-    }),
+    this.differs.find([]).create<Widget>((_, item) => item),
     this.kvDiffers.find([]).create<string, WidgetLayout>()
   );
 
@@ -218,11 +214,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   constructor(protected store: Store<AppState>,
               public utils: UtilsService,
               private timeService: TimeService,
-              private dialogService: DialogService,
               private breakpointObserver: BreakpointObserver,
               private differs: IterableDiffers,
               private kvDiffers: KeyValueDiffers,
-              private cd: ChangeDetectorRef,
               private ngZone: NgZone) {
     super(store);
     this.authUser = getCurrentAuthUser(store);
@@ -257,8 +251,8 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       displayGrid: this.displayGrid,
       resizable: {enabled: this.isEdit && !this.isEditingWidget, delayStart: 50},
       draggable: {enabled: this.isEdit && !this.isEditingWidget},
-      itemChangeCallback: item => this.dashboardWidgets.sortWidgets(),
-      itemInitCallback: (item, itemComponent) => {
+      itemChangeCallback: () => this.dashboardWidgets.sortWidgets(),
+      itemInitCallback: (_, itemComponent) => {
         (itemComponent.item as DashboardWidget).gridsterItemComponent = itemComponent;
       },
       colWidthUpdateCallback: (colWidth) => {
@@ -570,7 +564,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     widget.gridsterItemComponent$().subscribe((gridsterItem) => {
       const gridsterItemElement = gridsterItem.el as HTMLElement;
       const offset = (parentElement.clientHeight - gridsterItemElement.clientHeight) / 2;
-      let scrollTop;
+      let scrollTop: number;
       if (this.isMobileSize) {
         scrollTop = gridsterItemElement.offsetTop;
       } else {
@@ -604,8 +598,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     } else {
       this.gridsterOpts.gridType = this.isMobileSize ? GridType.Fixed : this.gridType || GridType.ScrollVertical;
     }
-    const mobileBreakPoint = this.isMobileSize ? 20000 : 0;
-    this.gridsterOpts.mobileBreakpoint = mobileBreakPoint;
+    this.gridsterOpts.mobileBreakpoint = this.isMobileSize ? 20000 : 0;
     const rowSize = this.detectRowSize(this.isMobileSize, autofillHeight, parentHeight);
     if (this.gridsterOpts.fixedRowHeight !== rowSize) {
       this.gridsterOpts.fixedRowHeight = rowSize;

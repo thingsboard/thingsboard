@@ -60,7 +60,11 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   @Input()
   @coerceBoolean()
-  scada = false;
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint= true;
 
   @Output()
   applyWidgetConfig = new EventEmitter<void>();

@@ -105,18 +105,18 @@
       </mat-expansion-panel>
     </div>
     <div *ngIf="gridSettings" class="tb-form-panel no-border no-padding" [formGroup]="gridSettingsFormGroup">
-      <div class="tb-form-row space-between">
-        <div class="fixed-title-width" translate>dashboard.layout</div>
-        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
-          <mat-select formControlName="layoutType">
-            <mat-option *ngFor="let type of layoutTypes" [value]="type">
-              {{ layoutTypeTranslations.get(type) | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
       <div class="tb-form-panel stroked">
-        <div class="tb-form-panel-title" translate>dashboard.layout-settings</div>
+        <div class="tb-form-panel-title" translate [translateParams]="{type: layoutSettingsType}">dashboard.layout-settings-type</div>
+        <div *ngIf="isDefaultLayout && !isDefaultBreakpoint" class="tb-form-row space-between">
+          <div class="fixed-title-width" translate>dashboard.view-format</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="viewFormat">
+              <mat-option *ngFor="let type of viewFormatTypes" [value]="type">
+                {{ viewFormatTypeTranslationMap.get(type) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
         <div class="tb-form-row space-between">
           <div translate>dashboard.columns-count</div>
           <mat-form-field *ngIf="!isScada()"
@@ -188,6 +188,25 @@
             {{ 'dashboard.autofill-height' | translate }}
           </mat-slide-toggle>
         </div>
+        <div *ngIf="isDefaultLayout && !isDefaultBreakpoint" class="tb-form-row space-between">
+          <div translate>dashboard.row-height</div>
+          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
+            <input matInput formControlName="rowHeight" type="number" min="5" max="200" step="any"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="(gridSettingsFormGroup.get('rowHeight').hasError('required') ? 'dashboard.row-height-required' :
+                                     (gridSettingsFormGroup.get('rowHeight').hasError('min') ?
+                                       'dashboard.min-row-height-message' : 'dashboard.max-row-height-message')) | translate"
+                      *ngIf="gridSettingsFormGroup.get('rowHeight').invalid && gridSettingsFormGroup.get('rowHeight').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+            <span matSuffix>px</span>
+          </mat-form-field>
+        </div>
         <div class="tb-form-row space-between">
           <div translate>dashboard.background-color</div>
           <tb-color-input asBoxInput
@@ -212,7 +231,7 @@
           </mat-form-field>
         </div>
       </div>
-      <div *ngIf="!isScada() || isRightLayout" class="tb-form-panel stroked">
+      <div *ngIf="!isScada() && isDefaultBreakpoint" class="tb-form-panel stroked">
         <div class="tb-form-panel-title" translate>dashboard.mobile-layout</div>
         <div *ngIf="isRightLayout" class="tb-form-row">
           <mat-slide-toggle class="mat-slide" formControlName="mobileDisplayLayoutFirst">

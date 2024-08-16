@@ -37,9 +37,8 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { map } from 'rxjs/operators';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
-import { LayoutType } from '@shared/models/dashboard.models';
-import { deepClone, isNotEmptyStr } from '@core/utils';
-import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { BreakpointId, LayoutType, ViewFormatType } from '@shared/models/dashboard.models';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-dashboard-layout',
@@ -87,11 +86,27 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
   }
 
   get mobileAutoFillHeight(): boolean {
-    return (this.isEdit || this.isScada) ? false : this.layoutCtx.gridSettings.mobileAutoFillHeight;
+    if (this.isEdit || this.isScada) {
+      return false;
+    } else if (this.layoutCtx.breakpoint !== 'default' && this.layoutCtx.gridSettings.viewFormat === ViewFormatType.list) {
+      return this.layoutCtx.gridSettings.autoFillHeight;
+    }
+    return this.layoutCtx.gridSettings.mobileAutoFillHeight;
+  }
+
+  get isMobileValue(): boolean {
+    return this.isMobile || (this.layoutCtx.breakpoint !== 'default' && this.layoutCtx.gridSettings.viewFormat === ViewFormatType.list);
   }
 
   get isMobileDisabled(): boolean {
-    return this.widgetEditMode || this.isScada;
+    return this.widgetEditMode || this.isScada || (this.layoutCtx.breakpoint !== 'default' && !this.isMobileValue);
+  }
+
+  get mobielRowHeigth(): number {
+    if (this.layoutCtx.breakpoint !== 'default' && this.layoutCtx.gridSettings.viewFormat === ViewFormatType.list) {
+      return this.layoutCtx.gridSettings.rowHeight;
+    }
+    return this.layoutCtx.gridSettings.mobileRowHeight;
   }
 
   get colWidthInteger(): boolean {
@@ -137,7 +152,6 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     private itembuffer: ItemBufferService,
     private imagePipe: ImagePipe,
     private sanitizer: DomSanitizer,
-    private dashboardUtils: DashboardUtilsService,
   ) {
     super(store);
     this.initHotKeys();
@@ -293,11 +307,11 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.layoutCtx.dashboardCtrl.widgetClicked($event, this.layoutCtx, widget);
   }
 
-  prepareDashboardContextMenu($event: Event): Array<DashboardContextMenuItem> {
+  prepareDashboardContextMenu(_: Event): Array<DashboardContextMenuItem> {
     return this.layoutCtx.dashboardCtrl.prepareDashboardContextMenu(this.layoutCtx);
   }
 
-  prepareWidgetContextMenu($event: Event, widget: Widget, isReference: boolean): Array<WidgetContextMenuItem> {
+  prepareWidgetContextMenu(_: Event, widget: Widget, isReference: boolean): Array<WidgetContextMenuItem> {
     return this.layoutCtx.dashboardCtrl.prepareWidgetContextMenu(this.layoutCtx, widget, isReference);
   }
 
@@ -319,12 +333,16 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
   }
 
-  updatedCurrentBreakpoint(breakpoint?: string, showLayout = true) {
-    if (!isNotEmptyStr(breakpoint)) {
-      breakpoint = this.dashboardCtx.breakpoint;
+  updatedCurrentBreakpoint(breakpointId?: BreakpointId, showLayout = true) {
+    if (!isNotEmptyStr(breakpointId)) {
+      breakpointId = this.dashboardCtx.breakpoint;
     }
-    this.layoutCtx.breakpoint = breakpoint;
-    const layoutInfo = this.getLayoutDataForBreakpoint(breakpoint);
+    if (this.layoutCtx.layoutData[breakpointId]) {
+      this.layoutCtx.breakpoint = breakpointId;
+    } else {
+      this.layoutCtx.breakpoint = 'default';
+    }
+    const layoutInfo = this.layoutCtx.layoutData[this.layoutCtx.breakpoint];
     if (layoutInfo.gridSettings) {
       this.layoutCtx.gridSettings = layoutInfo.gridSettings;
     }
@@ -335,12 +353,4 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     }
     this.layoutCtx.ignoreLoading = true;
   }
-
-  private getLayoutDataForBreakpoint(breakpoint: string) {
-    if (this.layoutCtx.layoutData[breakpoint]) {
-      return this.layoutCtx.layoutData[breakpoint];
-    }
-    return this.layoutCtx.layoutData.default;
-  }
-
 }

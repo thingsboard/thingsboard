@@ -20,7 +20,10 @@
   class="select-dashboard-breakpoint"
   [(ngModel)]="selectedBreakpoint"
   (ngModelChange)="selectLayoutChanged()">
+  <mat-select-trigger>{{ getName(selectedBreakpoint) }}</mat-select-trigger>
   <mat-option *ngFor="let breakpointId of breakpointIds" [value]="breakpointId">
-    {{ breakpointId }}
+    <mat-icon><tb-icon>{{ getIcon(breakpointId) }}</tb-icon></mat-icon>
+    <div>{{ getName(breakpointId) }}</div>
+    <div style="font-size: 12px;letter-spacing: 0.4px;color: #9e9e9e;">{{ getSizeDescription(breakpointId) }}</div>
   </mat-option>
 </mat-select>

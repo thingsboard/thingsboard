@@ -1172,7 +1172,7 @@
         "layout-type-default": "Default",
         "layout-type-scada": "SCADA",
         "layout-type-divider": "Divider",
-        "layout-settings": "Layout settings",
+        "layout-settings-type": "Layout settings: {{ type }}",
         "columns-count": "Columns count",
         "columns-count-required": "Columns count is required.",
         "min-columns-count-message": "Only 10 minimum column count is allowed.",
@@ -1198,6 +1198,10 @@
         "mobile-row-height-required": "Mobile row height value is required.",
         "min-mobile-row-height-message": "Only 5 pixels is allowed as minimum mobile row height value.",
         "max-mobile-row-height-message": "Only 200 pixels is allowed as maximum mobile row height value.",
+        "row-height": "Row height",
+        "row-height-required": "Row height value is required.",
+        "min-row-height-message": "Only 5 pixels is allowed as minimum row height value.",
+        "max-row-height-message": "Only 200 pixels is allowed as maximum row height value.",
         "display-first-in-mobile-view": "Display first in mobile view",
         "title-settings": "Title settings",
         "display-title": "Display dashboard title",
@@ -1276,7 +1280,19 @@
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
         "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
         "edit-mode": "Edit mode",
-        "duplicate-state-action": "Duplicate state"
+        "duplicate-state-action": "Duplicate state",
+        "breakpoint-value": "Breakpoint ({{ value }})",
+        "breakpoints-id": {
+            "default": "Default",
+            "xs": "Mobile (xs)",
+            "sm": "Tablet (sm)",
+            "md": "Laptop (md)",
+            "lg": "Desktop (lg)",
+            "xl": "Desktop (xl)"
+        },
+        "view-format-type-grid": "Grid",
+        "view-format-type-list": "List",
+        "view-format": "View format"
     },
     "datakey": {
         "settings": "Settings",
@@ -5951,7 +5967,8 @@
         "card-appearance": "Card appearance",
         "color": "Color",
         "tooltip": "Tooltip",
-        "units-required": "Unit is required."
+        "units-required": "Unit is required.",
+        "list-option": "List option"
     },
     "widget-type": {
         "import": "Import widget type",
