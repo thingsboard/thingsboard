@@ -146,7 +146,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { MatButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { map, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -1027,7 +1027,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public saveDashboard() {
     this.translatedDashboardTitle = this.getTranslatedDashboardTitle();
-    this.setEditMode(false, false);
     this.notifyDashboardUpdated();
   }
 
@@ -1146,7 +1145,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
     } else {
-      this.dashboardService.saveDashboard(this.dashboard).subscribe();
+      this.dashboardService.saveDashboard(this.dashboard).pipe(
+        catchError(() => {
+          this.setEditMode(false, true);
+          return of(null);
+        })
+      ).subscribe(() => {
+        this.dashboard.version = this.dashboard.version + 1;
+        this.setEditMode(false, false);
+      });
     }
   }
 

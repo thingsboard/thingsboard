@@ -665,7 +665,7 @@ export const detailsToWidgetInfo = (widgetTypeDetailsEntity: WidgetTypeDetails):
 };
 
 export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                             createdTime: number): WidgetType => {
+                             createdTime: number, version: number): WidgetType => {
   const descriptor: WidgetTypeDescriptor = {
     type: widgetInfo.type,
     sizeX: widgetInfo.sizeX,
@@ -688,6 +688,7 @@ export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     id,
     tenantId,
     createdTime,
+    version,
     fqn: widgetTypeFqn(widgetInfo.fullFqn),
     name: widgetInfo.widgetName,
     deprecated: widgetInfo.deprecated,
@@ -697,8 +698,8 @@ export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
 };
 
 export const toWidgetTypeDetails = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                                    createdTime: number): WidgetTypeDetails => {
-  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, createdTime);
+                                    createdTime: number, version: number): WidgetTypeDetails => {
+  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, createdTime, version);
   return {
     ...widgetTypeEntity,
     description: widgetInfo.description,

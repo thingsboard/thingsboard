@@ -63,7 +63,7 @@ import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
-import { map, tap } from 'rxjs/operators';
+import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
 import Timeout = NodeJS.Timeout;
 
@@ -569,9 +569,12 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
 
   private commitSaveWidget() {
     const id = (this.widgetTypeDetails && this.widgetTypeDetails.id) ? this.widgetTypeDetails.id : undefined;
+    const version = this.widgetTypeDetails?.version ?? null;
     const createdTime = (this.widgetTypeDetails && this.widgetTypeDetails.createdTime) ? this.widgetTypeDetails.createdTime : undefined;
-    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime).pipe(
+    this.saveWidgetPending = false;
+    this.widgetService.saveWidgetTypeDetails(this.widget, id, createdTime, version).pipe(
       mergeMap((widgetTypeDetails) => {
+        this.saveWidgetPending = true;
         const widgetsBundleId = this.route.snapshot.params.widgetsBundleId as string;
         if (widgetsBundleId && !id) {
           return this.widgetService.addWidgetFqnToWidgetBundle(widgetsBundleId, widgetTypeDetails.fqn).pipe(
@@ -579,7 +582,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           );
         }
         return of(widgetTypeDetails);
-      })
+      }),
+      catchError(() => {
+        this.undoWidget();
+        return of(null);
+      }),
     ).subscribe({
       next: (widgetTypeDetails) => {
         this.saveWidgetPending = false;
@@ -612,7 +619,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined).pipe(
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined, null).pipe(
             mergeMap((widget) => {
               if (saveWidgetAsData.widgetBundleId) {
                 return this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, widget.fqn).pipe(

@@ -44,7 +44,7 @@ import { Observable, of, ReplaySubject, Subscription } from 'rxjs';
 import { MatTab, MatTabGroup } from '@angular/material/tabs';
 import { EntityTabsComponent } from '@home/components/entity/entity-tabs.component';
 import { deepClone, mergeDeep } from '@core/utils';
-import { catchError, take } from 'rxjs/operators';
+import { catchError } from 'rxjs/operators';
 
 @Component({
   selector: 'tb-entity-details-panel',
@@ -290,7 +290,6 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
       }
       this.entitiesTableConfig.saveEntity(editingEntity, this.editingEntity)
         .pipe(
-          take(1),
           catchError(() => of(this.entity))
         )
         .subscribe(
