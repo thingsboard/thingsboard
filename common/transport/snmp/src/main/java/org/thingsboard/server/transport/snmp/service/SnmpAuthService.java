@@ -72,11 +72,18 @@ public class SnmpAuthService {
                 OctetString engineId = new OctetString(deviceTransportConfig.getEngineId());
 
                 OID authenticationProtocol = new OID(deviceTransportConfig.getAuthenticationProtocol().getOid());
+                byte[] authenticationPassphrase = SecurityProtocols.getInstance().passwordToKey(authenticationProtocol,
+                        new OctetString(deviceTransportConfig.getAuthenticationPassphrase()), engineId.getValue());
+                if (authenticationPassphrase == null) {
+                    throw new UnsupportedOperationException("Authentication protocol " + deviceTransportConfig.getAuthenticationProtocol() + " is not supported");
+                }
+
                 OID privacyProtocol = new OID(deviceTransportConfig.getPrivacyProtocol().getOid());
-                OctetString authenticationPassphrase = new OctetString(deviceTransportConfig.getAuthenticationPassphrase());
-                authenticationPassphrase = new OctetString(SecurityProtocols.getInstance().passwordToKey(authenticationProtocol, authenticationPassphrase, engineId.getValue()));
-                OctetString privacyPassphrase = new OctetString(deviceTransportConfig.getPrivacyPassphrase());
-                privacyPassphrase = new OctetString(SecurityProtocols.getInstance().passwordToKey(privacyProtocol, authenticationProtocol, privacyPassphrase, engineId.getValue()));
+                byte[] privacyPassphrase = SecurityProtocols.getInstance().passwordToKey(privacyProtocol,
+                        authenticationProtocol, new OctetString(deviceTransportConfig.getPrivacyPassphrase()), engineId.getValue());
+                if (privacyPassphrase == null) {
+                    throw new UnsupportedOperationException("Privacy protocol " + deviceTransportConfig.getPrivacyProtocol() + " is not supported");
+                }
 
                 USM usm = snmpTransportService.getSnmp().getUSM();
                 if (usm.hasUser(engineId, securityName)) {
@@ -84,8 +91,8 @@ public class SnmpAuthService {
                 }
                 usm.addLocalizedUser(
                         engineId.getValue(), username,
-                        authenticationProtocol, authenticationPassphrase.getValue(),
-                        privacyProtocol, privacyPassphrase.getValue()
+                        authenticationProtocol, authenticationPassphrase,
+                        privacyProtocol, privacyPassphrase
                 );
 
                 UserTarget userTarget = new UserTarget();

@@ -127,7 +127,7 @@ public class SnmpTransportContext extends TransportContext {
                     .build();
             registerSessionMsgListener(sessionContext);
         } catch (Exception e) {
-            log.error("Failed to establish session for SNMP device {}: {}", device.getId(), e.toString());
+            log.error("Failed to establish session for SNMP device {}", device.getId(), e);
             transportService.errorEvent(device.getTenantId(), device.getId(), "sessionEstablishing", e);
             return;
         }
@@ -166,7 +166,7 @@ public class SnmpTransportContext extends TransportContext {
                 log.trace("Configuration of the device {} was not updated", device);
             }
         } catch (Exception e) {
-            log.error("Failed to update session for SNMP device {}: {}", sessionContext.getDeviceId(), e.getMessage());
+            log.error("Failed to update session for SNMP device {}", sessionContext.getDeviceId(), e);
             transportService.lifecycleEvent(sessionContext.getTenantId(), sessionContext.getDeviceId(), ComponentLifecycleEvent.UPDATED, false, e);
             destroyDeviceSession(sessionContext);
         }
