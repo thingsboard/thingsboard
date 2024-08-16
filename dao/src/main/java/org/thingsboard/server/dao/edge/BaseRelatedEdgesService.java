@@ -50,7 +50,7 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
 
     @Override
     public PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        if (pageLink.getPageSize() != RELATED_EDGES_CACHE_ITEMS) {
+        if (!pageLink.equals(new PageLink(RELATED_EDGES_CACHE_ITEMS))) {
             return findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink);
         }
         return cache.getAndPutInTransaction(new RelatedEdgesCacheKey(tenantId, entityId),
