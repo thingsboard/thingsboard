@@ -69,15 +69,36 @@
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="1000" name="value"
-               formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <input matInput type="number" min="1" name="value"
+               formControlName="scanPeriodInSec" placeholder="{{ 'gateway.set' | translate }}"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="'gateway.scan-period-error' | translate: {min: 1000}"
-                  *ngIf="(serverConfigFormGroup.get('scanPeriodInMillis').hasError('required') ||
-                         serverConfigFormGroup.get('scanPeriodInMillis').hasError('min')) &&
-                         serverConfigFormGroup.get('scanPeriodInMillis').touched"
+                  [matTooltip]="'gateway.scan-period-error' | translate: {min: 1}"
+                  *ngIf="(serverConfigFormGroup.get('scanPeriodInSec').hasError('required') ||
+                         serverConfigFormGroup.get('scanPeriodInSec').hasError('min')) &&
+                         serverConfigFormGroup.get('scanPeriodInSec').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.poll-period' | translate }}">
+      <div tbTruncateWithTooltip>{{ 'gateway.poll-period' | translate }}</div>
+    </div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="50" name="value"
+               formControlName="pollPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.poll-period-error' | translate: {min: 50}"
+                  *ngIf="(serverConfigFormGroup.get('pollPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('pollPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('pollPeriodInMillis').touched"
                   class="tb-error">
           warning
         </mat-icon>

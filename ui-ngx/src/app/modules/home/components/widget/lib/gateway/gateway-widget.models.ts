@@ -150,7 +150,8 @@ export interface ServerConfig {
   name: string;
   url: string;
   timeoutInMillis: number;
-  scanPeriodInMillis: number;
+  scanPeriodInSec: number;
+  pollPeriodInMillis: number;
   enableSubscriptions: boolean;
   subCheckPeriodInMillis: number;
   showMap: boolean;
