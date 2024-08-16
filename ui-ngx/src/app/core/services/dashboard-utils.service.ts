@@ -18,7 +18,8 @@ import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
 import {
-  BreakpointId, breakpointIdIconMap,
+  BreakpointId,
+  breakpointIdIconMap,
   breakpointIdTranslationMap,
   BreakpointInfo,
   BreakpointLayoutInfo,
