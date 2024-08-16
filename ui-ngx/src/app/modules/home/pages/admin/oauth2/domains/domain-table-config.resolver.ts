@@ -87,8 +87,8 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.entitiesFetchFunction = pageLink => this.domainService.getTenantDomainInfos(pageLink);
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
     this.config.saveEntity = (domain, originalDomain) => {
-      const clientsIds = domain.oauth2ClientInfos as Array<string>;
-      if (domain.id && !isEqual(domain.oauth2ClientInfos.sort(), originalDomain.oauth2ClientInfos.map(info => info.id.id).sort())) {
+      const clientsIds = domain.oauth2ClientInfos as Array<string> || [];
+      if (domain.id && !isEqual(domain.oauth2ClientInfos?.sort(), originalDomain.oauth2ClientInfos?.map(info => info.id.id).sort())) {
         this.domainService.updateOauth2Clients(domain.id.id, clientsIds).subscribe();
       }
       delete domain.oauth2ClientInfos;

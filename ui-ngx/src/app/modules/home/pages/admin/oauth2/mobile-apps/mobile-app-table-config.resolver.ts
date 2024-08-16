@@ -93,8 +93,8 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
     this.config.entitiesFetchFunction = pageLink => this.mobileAppService.getTenantMobileAppInfos(pageLink);
     this.config.loadEntity = id => this.mobileAppService.getMobileAppInfoById(id.id);
     this.config.saveEntity = (mobileApp, originalMobileApp) => {
-      const clientsIds = mobileApp.oauth2ClientInfos as Array<string>;
-      if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos.sort(), originalMobileApp.oauth2ClientInfos.map(info => info.id.id).sort())) {
+      const clientsIds = mobileApp.oauth2ClientInfos as Array<string> || [];
+      if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos?.sort(), originalMobileApp.oauth2ClientInfos?.map(info => info.id.id).sort())) {
         this.mobileAppService.updateOauth2Clients(mobileApp.id.id, clientsIds).subscribe();
       }
       delete mobileApp.oauth2ClientInfos;
