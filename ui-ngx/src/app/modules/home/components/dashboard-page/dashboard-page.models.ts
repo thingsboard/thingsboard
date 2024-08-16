@@ -29,6 +29,7 @@ import { ILayoutController } from './layout/layout.models';
 import { DashboardContextMenuItem, WidgetContextMenuItem } from '@home/models/dashboard-component.models';
 import { BehaviorSubject, Observable } from 'rxjs';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
+import { ElementRef } from '@angular/core';
 
 export declare type DashboardPageScope = 'tenant' | 'customer';
 
@@ -54,6 +55,8 @@ export interface DashboardContext {
 
 export interface IDashboardController {
   dashboardCtx: DashboardContext;
+  dashboardContainer: ElementRef;
+  elRef: ElementRef;
   openRightLayout();
   openDashboardState(stateId: string, openRightLayout: boolean);
   addWidget($event: Event, layoutCtx: DashboardPageLayoutContext);

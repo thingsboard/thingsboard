@@ -253,10 +253,12 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
 
   private initEditWidgetActionTooltip() {
     from(import('tooltipster')).subscribe(() => {
+      const dashboardElement = this.widget.widgetContext.dashboard.stateController.dashboardCtrl.elRef.nativeElement;
       $(this.gridsterItem.el).tooltipster({
+        parent: $(dashboardElement),
         delay: this.widget.selected ? [0, 10000000] : [0, 100],
         distance: 2,
-        zIndex: 1000,
+        zIndex: 151,
         arrow: false,
         theme: ['tb-widget-edit-actions-tooltip'],
         interactive: true,
@@ -273,7 +275,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         content: '',
         functionPosition: (instance, helper, position) => {
           const clientRect = helper.origin.getBoundingClientRect();
-          position.coord.left = clientRect.right - position.size.width;
+          const container = dashboardElement.getBoundingClientRect();
+          position.coord.left = clientRect.right - position.size.width - container.left;
+          position.coord.top = position.coord.top - container.top;
           position.target = clientRect.right;
           return position;
         },
