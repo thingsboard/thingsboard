@@ -354,7 +354,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         {
           name: this.isDefaultBreakpoint
             ? this.translate.instant('widget-config.mobile')
-            : this.translate.instant('widget-config.layout-option'),
+            : this.translate.instant('widget-config.list-layout'),
           value: 'mobile'
         }
       );
