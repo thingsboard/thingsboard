@@ -148,7 +148,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
     $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
-    this.initEditWidgetActionTooltip();
+    const dashboardElement = this.widget.widgetContext.dashboardPageElement;
+    if (dashboardElement) {
+      this.initEditWidgetActionTooltip(dashboardElement);
+    }
   }
 
   ngAfterViewInit(): void {
@@ -251,11 +254,10 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     }
   }
 
-  private initEditWidgetActionTooltip() {
+  private initEditWidgetActionTooltip(parent: HTMLElement) {
     from(import('tooltipster')).subscribe(() => {
-      const dashboardElement = this.widget.widgetContext.dashboard.stateController.dashboardCtrl.elRef.nativeElement;
       $(this.gridsterItem.el).tooltipster({
-        parent: $(dashboardElement),
+        parent: $(parent),
         delay: this.widget.selected ? [0, 10000000] : [0, 100],
         distance: 2,
         zIndex: 151,
@@ -275,7 +277,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         content: '',
         functionPosition: (instance, helper, position) => {
           const clientRect = helper.origin.getBoundingClientRect();
-          const container = dashboardElement.getBoundingClientRect();
+          const container = parent.getBoundingClientRect();
           position.coord.left = clientRect.right - position.size.width - container.left;
           position.coord.top = position.coord.top - container.top;
           position.target = clientRect.right;
