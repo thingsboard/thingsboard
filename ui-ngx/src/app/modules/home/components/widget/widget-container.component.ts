@@ -256,7 +256,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
       $(this.gridsterItem.el).tooltipster({
         delay: this.widget.selected ? [0, 10000000] : [0, 100],
         distance: 2,
-        zIndex: 151,
+        zIndex: 1000,
         arrow: false,
         theme: ['tb-widget-edit-actions-tooltip'],
         interactive: true,
