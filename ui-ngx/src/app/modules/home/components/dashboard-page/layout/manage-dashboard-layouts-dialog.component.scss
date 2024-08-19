@@ -34,7 +34,7 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
   }
 
   .tb-layout-preview {
-    width: 120%;
+    width: 100%;
     background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.6);
     padding: 35px;
 
@@ -182,6 +182,14 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
     .mat-button-toggle {
       border: none !important;
     }
+  }
+}
+
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    width: 550px;
+    max-width: 100%;
+    padding: 16px;
   }
 }
 
