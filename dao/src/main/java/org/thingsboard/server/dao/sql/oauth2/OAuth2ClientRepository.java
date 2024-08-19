@@ -40,7 +40,7 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "LEFT JOIN DomainOauth2ClientEntity dc on c.id = dc.oauth2ClientId " +
             "LEFT JOIN DomainEntity domain on dc.domainId = domain.id " +
             "WHERE domain.name = :domainName AND domain.oauth2Enabled = true " +
-            "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR c.platforms LIKE :platformFilter)")
+            "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
     List<OAuth2ClientEntity> findEnabledByDomainNameAndPlatformType(@Param("domainName") String domainName,
                                                                     @Param("platformFilter") String platformFilter);
 

@@ -16,7 +16,6 @@
 package org.thingsboard.server.dao.mobile;
 
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,11 +34,11 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
-import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
 import org.thingsboard.server.dao.service.Validator;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
@@ -62,13 +61,10 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
             MobileApp savedMobileApp = mobileAppDao.save(tenantId, mobileApp);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedMobileApp).build());
             return savedMobileApp;
-        } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("mobile_app_unq_key")) {
-                throw new DataValidationException("Mobile app with such package already exists!");
-            } else {
-                throw t;
-            }
+        } catch (Exception e) {
+            checkConstraintViolation(e,
+                    Map.of("mobile_app_unq_key", "Mobile app with such package already exists!"));
+            throw e;
         }
     }
 
