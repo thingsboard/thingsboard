@@ -86,7 +86,7 @@ import { Authority } from '@shared/models/authority.enum';
 import { DialogService } from '@core/services/dialog.service';
 import { EntityService } from '@core/http/entity.service';
 import { AliasController } from '@core/api/alias-controller';
-import { BehaviorSubject, Observable, of, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Observable, of, Subject, Subscription, throwError } from 'rxjs';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import { DashboardService } from '@core/http/dashboard.service';
 import {
@@ -147,7 +147,7 @@ import { IAliasController } from '@core/api/widget-api.models';
 import { MatButton } from '@angular/material/button';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
 import { TbPopoverService } from '@shared/components/popover.service';
-import { distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
+import { catchError, distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -156,6 +156,7 @@ import {
   MoveWidgetsDialogComponent,
   MoveWidgetsDialogResult
 } from '@home/components/dashboard-page/layout/move-widgets-dialog.component';
+import { HttpStatusCode } from '@angular/common/http';
 
 // @dynamic
 @Component({
@@ -1092,7 +1093,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   public saveDashboard() {
     this.translatedDashboardTitle = this.getTranslatedDashboardTitle();
-    this.setEditMode(false, false);
     this.notifyDashboardUpdated();
   }
 
@@ -1204,8 +1204,33 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         data: widget
       };
       this.window.parent.postMessage(JSON.stringify(message), '*');
+      this.setEditMode(false, false);
     } else {
-      this.dashboardService.saveDashboard(this.dashboard).subscribe();
+      let reInitDashboard = false;
+      this.dashboardService.saveDashboard(this.dashboard).pipe(
+        catchError((err) => {
+          if (err.status === HttpStatusCode.Conflict) {
+            reInitDashboard = true;
+            return this.dashboardService.getDashboard(this.dashboard.id.id).pipe(
+              map(dashboard => this.dashboardUtils.validateAndUpdateDashboard(dashboard))
+            );
+          }
+          return throwError(() => err);
+        })
+      ).subscribe((dashboard) => {
+        if (reInitDashboard) {
+          const dashboardPageInitData: DashboardPageInitData = {
+            dashboard,
+            currentDashboardId: dashboard.id ? dashboard.id.id : null,
+            widgetEditMode: this.widgetEditMode,
+            singlePageMode: this.singlePageMode
+          };
+          this.init(dashboardPageInitData);
+        } else {
+          this.dashboard = dashboard;
+          this.setEditMode(false, false);
+        }
+      });
     }
   }
 

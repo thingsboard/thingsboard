@@ -113,7 +113,7 @@ export class WidgetComponentService {
             hasBasicMode: this.utils.editWidgetInfo.hasBasicMode,
             basicModeDirective: this.utils.editWidgetInfo.basicModeDirective,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
-          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), undefined
+          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), undefined, undefined
         );
       }
       const initSubject = new ReplaySubject<void>();

@@ -185,8 +185,9 @@ export class WidgetService {
   public saveWidgetTypeDetails(widgetInfo: WidgetInfo,
                                id: WidgetTypeId,
                                createdTime: number,
+                               version: number,
                                config?: RequestConfig): Observable<WidgetTypeDetails> {
-    const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, createdTime);
+    const widgetTypeDetails = toWidgetTypeDetails(widgetInfo, id, undefined, createdTime, version);
     return this.http.post<WidgetTypeDetails>('/api/widgetType', widgetTypeDetails,
       defaultHttpOptionsFromConfig(config)).pipe(
       tap((savedWidgetType) => {

@@ -16,7 +16,9 @@
 
 -->
 <mat-toolbar color="primary">
-  <h2 class="main-label">{{ 'entity.version-conflict.label' | translate }}</h2>
+  <h2 class="main-label">
+    {{ data.message }}
+  </h2>
   <span fxFlex></span>
   <button mat-icon-button
           (click)="onCancel()"
@@ -26,23 +28,23 @@
 </mat-toolbar>
 <div mat-dialog-content>
   <div class="message-container">
-    <span>{{ data.message }}.</span>
     <span>
       {{ 'entity.version-conflict.link' | translate:
     { entityType: (entityTypeTranslations.get(data.entity.id.entityType).type | translate) }
       }}
       <a class="cursor-pointer" (click)="onLinkClick($event)">{{ 'entity.link' | translate }}</a>.
     </span>
+    <br/>
     <span>{{ 'entity.version-conflict.message' | translate }}</span>
   </div>
 </div>
 <div mat-dialog-actions fxLayout="row" fxLayoutAlign="end center">
   <button mat-button color="primary"
           type="button"
-          (click)="onCancel()"
+          (click)="onDiscard()"
           cdkFocusInitial
   >
-    {{ 'entity.version-conflict.cancel' | translate }}
+    {{ 'entity.version-conflict.discard' | translate }}
   </button>
   <button mat-raised-button color="primary"
           type="submit"

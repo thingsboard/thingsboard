@@ -352,28 +352,7 @@ export class ImportExportService {
 
     forkJoin(tasks).subscribe({
       next: ({includeBundleWidgetsInExport, widgetsBundle}) => {
-        this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
-          ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
-          disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-          data: {
-            widgetsBundle,
-            includeBundleWidgetsInExport
-          }
-        }).afterClosed().subscribe(
-          (result) => {
-            if (result) {
-              if (includeBundleWidgetsInExport !== result.exportWidgets) {
-                this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
-              }
-              if (result.exportWidgets) {
-                this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
-              } else {
-                this.exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle);
-              }
-            }
-          }
-        );
+        this.handleExportWidgetsBundle(widgetsBundle, includeBundleWidgetsInExport);
       },
       error: (e) => {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
@@ -401,6 +380,9 @@ export class ImportExportService {
             }))
           .subscribe(ruleChainData => this.exportToPc(ruleChainData, entityData.name));
         return;
+      case EntityType.WIDGETS_BUNDLE:
+        this.exportSelectedWidgetsBundle(entityData as WidgetsBundle);
+        return;
       case EntityType.DASHBOARD:
         preparedData = this.prepareDashboardExport(entityData as Dashboard);
         break;
@@ -408,6 +390,43 @@ export class ImportExportService {
         preparedData = this.prepareExport(entityData);
     }
     this.exportToPc(preparedData, entityData.name);
+  }
+
+  private exportSelectedWidgetsBundle(widgetsBundle: WidgetsBundle): void {
+    this.store.pipe(select(selectUserSettingsProperty( 'includeBundleWidgetsInExport'))).pipe(take(1)).subscribe({
+      next: (includeBundleWidgetsInExport) => {
+        this.handleExportWidgetsBundle(widgetsBundle, includeBundleWidgetsInExport, true);
+      },
+      error: (e) => {
+        this.handleExportError(e, 'widgets-bundle.export-failed-error');
+      }
+    });
+  }
+
+  private handleExportWidgetsBundle(widgetsBundle: WidgetsBundle, includeBundleWidgetsInExport: boolean, ignoreLoading?: boolean): void {
+    this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
+      ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        widgetsBundle,
+        includeBundleWidgetsInExport,
+        ignoreLoading
+      }
+    }).afterClosed().subscribe(
+      (result) => {
+        if (result) {
+          if (includeBundleWidgetsInExport !== result.exportWidgets) {
+            this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
+          }
+          if (result.exportWidgets) {
+            this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
+          } else {
+            this.exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle);
+          }
+        }
+      }
+    );
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
