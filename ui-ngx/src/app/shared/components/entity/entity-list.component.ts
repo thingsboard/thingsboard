@@ -109,7 +109,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
 
   @Input()
   @coerceBoolean()
-  syncedIdListPropagator = false;
+  syncIdsWithDB = false;
 
   @ViewChild('entityInput') entityInput: ElementRef<HTMLInputElement>;
   @ViewChild('entityAutocomplete') matAutocomplete: MatAutocomplete;
@@ -194,7 +194,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
         (entities) => {
           this.entities = entities;
           this.entityListFormGroup.get('entities').setValue(this.entities);
-          if (this.syncedIdListPropagator && this.modelValue.length !== entities.length) {
+          if (this.syncIdsWithDB && this.modelValue.length !== entities.length) {
             this.modelValue = entities.map(entity => entity.id.id);
             this.propagateChange(this.modelValue);
           }
