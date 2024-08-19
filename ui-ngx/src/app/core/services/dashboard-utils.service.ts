@@ -18,11 +18,16 @@ import { Injectable } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
 import { TimeService } from '@core/services/time.service';
 import {
+  BreakpointId,
+  breakpointIdIconMap,
+  breakpointIdTranslationMap,
+  BreakpointInfo,
+  BreakpointLayoutInfo,
+  BreakpointSystemId,
   Dashboard,
   DashboardConfiguration,
   DashboardLayout,
   DashboardLayoutId,
-  DashboardLayoutInfo,
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
@@ -41,6 +46,7 @@ import {
   Widget,
   WidgetConfig,
   WidgetConfigMode,
+  WidgetSize,
   widgetType,
   WidgetTypeDescriptor
 } from '@app/shared/models/widget.models';
@@ -51,14 +57,19 @@ import { initModelFromDefaultTimewindow } from '@shared/models/time/time.models'
 import { AlarmSearchStatus } from '@shared/models/alarm.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
+import { MediaBreakpoints } from '@shared/models/constants';
+import { TranslateService } from '@ngx-translate/core';
 
 @Injectable({
   providedIn: 'root'
 })
 export class DashboardUtilsService {
 
+  private systemBreakpoints: {[key in BreakpointSystemId]?: BreakpointInfo};
+
   constructor(private utils: UtilsService,
-              private timeService: TimeService) {
+              private timeService: TimeService,
+              private translate: TranslateService) {
   }
 
   public validateAndUpdateDashboard(dashboard: Dashboard): Dashboard {
@@ -523,6 +534,28 @@ export class DashboardUtilsService {
     this.removeUnusedWidgets(dashboard);
   }
 
+  public isReferenceWidget(dashboard: Dashboard, widgetId: string): boolean {
+    const states = dashboard.configuration.states;
+    let foundWidgetRefs = 0;
+
+    for (const state of Object.values(states)) {
+      for (const layout of Object.values(state.layouts)) {
+        if (layout.widgets[widgetId]) {
+          foundWidgetRefs++;
+        }
+        if (layout.breakpoints) {
+          for (const breakpoint of Object.values(layout.breakpoints)) {
+            if (breakpoint.widgets[widgetId]) {
+              foundWidgetRefs++;
+            }
+          }
+        }
+      }
+    }
+
+    return foundWidgetRefs > 1;
+  }
+
   public getRootStateId(states: {[id: string]: DashboardState }): string {
     for (const stateId of Object.keys(states)) {
       const state = states[stateId];
@@ -542,22 +575,34 @@ export class DashboardUtilsService {
       for (const l of Object.keys(state.layouts)) {
         const layout: DashboardLayout = state.layouts[l];
         if (layout) {
-          result[l] = {
-            widgetIds: [],
-            widgetLayouts: {},
-            gridSettings: {}
-          } as DashboardLayoutInfo;
-          for (const id of Object.keys(layout.widgets)) {
-            result[l].widgetIds.push(id);
+          result[l]= {
+            default: this.getBreakpointLayoutData(layout)
+          };
+          if (layout.breakpoints) {
+            for (const breakpoint of Object.keys(layout.breakpoints)) {
+              result[l][breakpoint] = this.getBreakpointLayoutData(layout.breakpoints[breakpoint]);
+            }
           }
-          result[l].widgetLayouts = layout.widgets;
-          result[l].gridSettings = layout.gridSettings;
         }
       }
       return result;
     } else {
       return null;
     }
+  }
+
+  private getBreakpointLayoutData(layout: DashboardLayout): BreakpointLayoutInfo {
+    const result: BreakpointLayoutInfo = {
+      widgetIds: [],
+      widgetLayouts: {},
+      gridSettings: {}
+    };
+    for (const id of Object.keys(layout.widgets)) {
+      result.widgetIds.push(id);
+    }
+    result.widgetLayouts = layout.widgets;
+    result.gridSettings = layout.gridSettings;
+    return result;
   }
 
   public getWidgetsArray(dashboard: Dashboard): Array<Widget> {
@@ -586,11 +631,15 @@ export class DashboardUtilsService {
                            originalColumns?: number,
                            originalSize?: {sizeX: number; sizeY: number},
                            row?: number,
-                           column?: number): void {
+                           column?: number,
+                           breakpoint = 'default'): void {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const state = states[targetState];
-    const layout = state.layouts[targetLayout];
+    let layout = state.layouts[targetLayout];
+    if (breakpoint !== 'default' && layout.breakpoints?.[breakpoint]) {
+      layout = layout.breakpoints[breakpoint];
+    }
     const layoutCount = Object.keys(state.layouts).length;
     if (!widget.id) {
       widget.id = this.utils.guid();
@@ -648,12 +697,17 @@ export class DashboardUtilsService {
   public removeWidgetFromLayout(dashboard: Dashboard,
                                 targetState: string,
                                 targetLayout: DashboardLayoutId,
-                                widgetId: string) {
+                                widgetId: string,
+                                breakpoint: string) {
     const dashboardConfiguration = dashboard.configuration;
     const states = dashboardConfiguration.states;
     const state = states[targetState];
     const layout = state.layouts[targetLayout];
-    delete layout.widgets[widgetId];
+    if (layout.breakpoints[breakpoint]) {
+      delete layout.breakpoints[breakpoint].widgets[widgetId];
+    } else {
+      delete layout.widgets[widgetId];
+    }
     this.removeUnusedWidgets(dashboard);
   }
 
@@ -721,10 +775,18 @@ export class DashboardUtilsService {
       for (const s of Object.keys(states)) {
         const state = states[s];
         for (const l of Object.keys(state.layouts)) {
-          const layout = state.layouts[l];
+          const layout: DashboardLayout = state.layouts[l];
           if (layout.widgets[widgetId]) {
             found = true;
             break;
+          }
+          if (layout.breakpoints) {
+            for (const breakpoint of Object.keys(layout.breakpoints)) {
+              if (layout.breakpoints[breakpoint].widgets[widgetId]) {
+                found = true;
+                break;
+              }
+            }
           }
         }
       }
@@ -882,4 +944,133 @@ export class DashboardUtilsService {
     }
   }
 
+  replaceReferenceWithWidgetCopy(widget: Widget,
+                                 dashboard: Dashboard,
+                                 targetState: string,
+                                 targetLayout: DashboardLayoutId,
+                                 breakpointId: string,
+                                 isRemoveWidget: boolean): Widget {
+
+    const newWidget = deepClone(widget);
+    newWidget.id = this.utils.guid();
+
+    const originalColumns = this.getOriginalColumns(dashboard, targetState, targetLayout, breakpointId);
+    const originalSize = this.getOriginalSize(dashboard, targetState, targetLayout, widget, breakpointId);
+
+    const layout = this.getDashboardLayoutConfig(dashboard.configuration.states[targetState].layouts[targetLayout], breakpointId);
+    const widgetLayout = layout.widgets[widget.id];
+    const targetRow = widgetLayout.row;
+    const targetColumn = widgetLayout.col;
+
+    if (isRemoveWidget) {
+      this.removeWidgetFromLayout(dashboard, targetState, targetLayout, widget.id, breakpointId);
+    }
+
+    this.addWidgetToLayout(dashboard, targetState, targetLayout, newWidget, originalColumns, originalSize,
+      targetRow, targetColumn, breakpointId);
+
+    return newWidget;
+  }
+
+  getDashboardLayoutConfig(layout: DashboardLayout, breakpointId: string): DashboardLayout {
+    if (breakpointId !== 'default') {
+      return layout.breakpoints[breakpointId];
+    }
+    return layout;
+  }
+
+  getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, breakpointId: string): number {
+    let originalColumns = 24;
+    let gridSettings = null;
+    const state = dashboard.configuration.states[sourceState];
+    const layoutCount = Object.keys(state.layouts).length;
+    if (state) {
+      const layout = this.getDashboardLayoutConfig(state.layouts[sourceLayout], breakpointId);
+      if (layout) {
+        gridSettings = layout.gridSettings;
+      }
+    }
+    if (gridSettings && gridSettings.columns) {
+      originalColumns = gridSettings.columns;
+    }
+    originalColumns = originalColumns * layoutCount;
+    return originalColumns;
+  }
+
+  getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
+                  widget: Widget, breakpointId: string): WidgetSize {
+    const layout = this.getDashboardLayoutConfig(dashboard.configuration.states[sourceState].layouts[sourceLayout], breakpointId);
+    const widgetLayout = layout.widgets[widget.id];
+    return {
+      sizeX: widgetLayout.sizeX,
+      sizeY: widgetLayout.sizeY
+    };
+  }
+
+  private loadSystemBreakpoints() {
+    this.systemBreakpoints = {};
+    const dashboardMediaBreakpointIds: BreakpointSystemId[] = ['xs', 'sm', 'md', 'lg', 'xl'];
+    dashboardMediaBreakpointIds.forEach(breakpoint => {
+      const value = MediaBreakpoints[breakpoint];
+      const minWidth = value.match(/min-width:\s*(\d+)px/)?.[1];
+      const maxWidth = value.match(/max-width:\s*(\d+)px/)?.[1];
+      this.systemBreakpoints[breakpoint] = ({
+        id: breakpoint,
+        minWidth: minWidth ? Number(minWidth) : undefined,
+        maxWidth: maxWidth ? Number(maxWidth) : undefined,
+        value
+      });
+    });
+  }
+
+  getListBreakpoint(): BreakpointInfo[] {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    const breakpointsList = Object.values(this.systemBreakpoints);
+    breakpointsList.unshift({id: 'default'});
+    return breakpointsList;
+  }
+
+  getBreakpoints(): string[] {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return Object.values(this.systemBreakpoints).map(item => item.value);
+  }
+
+  getBreakpointInfoByValue(breakpointValue: string): BreakpointInfo {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return Object.values(this.systemBreakpoints).find(item => item.value === breakpointValue);
+  }
+
+  getBreakpointInfoById(breakpointId: BreakpointId): BreakpointInfo {
+    if(!this.systemBreakpoints) {
+      this.loadSystemBreakpoints();
+    }
+    return this.systemBreakpoints[breakpointId];
+  }
+
+  getBreakpointName(breakpointId: BreakpointId): string {
+    if (breakpointIdTranslationMap.has(breakpointId)) {
+      return this.translate.instant(breakpointIdTranslationMap.get(breakpointId));
+    }
+    return breakpointId;
+  }
+
+  getBreakpointIcon(breakpointId: BreakpointId): string {
+    if (breakpointIdIconMap.has(breakpointId)) {
+      return breakpointIdIconMap.get(breakpointId);
+    }
+    return 'desktop_windows';
+  }
+
+  getBreakpointSizeDescription(breakpointId: BreakpointId): string {
+    const currentData = this.getBreakpointInfoById(breakpointId);
+    const minStr = isDefined(currentData?.minWidth) ? `min ${currentData.minWidth}px` : '';
+    const maxStr = isDefined(currentData?.maxWidth) ? `max ${currentData.maxWidth}px` : '';
+    return minStr && maxStr ? `${minStr} - ${maxStr}` : `${minStr}${maxStr}`;
+  }
 }

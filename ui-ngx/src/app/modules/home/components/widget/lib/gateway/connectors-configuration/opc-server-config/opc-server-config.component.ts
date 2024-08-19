@@ -35,7 +35,6 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import {
   SecurityConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
@@ -62,7 +61,6 @@ import {
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
-    TruncateWithTooltipDirective,
   ]
 })
 export class OpcServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
