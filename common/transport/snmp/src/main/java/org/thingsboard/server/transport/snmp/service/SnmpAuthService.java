@@ -69,7 +69,7 @@ public class SnmpAuthService {
             case V3:
                 OctetString username = new OctetString(deviceTransportConfig.getUsername());
                 OctetString securityName = new OctetString(deviceTransportConfig.getSecurityName());
-                OctetString engineId = new OctetString(deviceTransportConfig.getEngineId());
+                OctetString engineId = OctetString.fromString(deviceTransportConfig.getEngineId(), 16);
 
                 OID authenticationProtocol = new OID(deviceTransportConfig.getAuthenticationProtocol().getOid());
                 byte[] authenticationPassphrase = SecurityProtocols.getInstance().passwordToKey(authenticationProtocol,
