@@ -57,7 +57,7 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
       pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required]],
       appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)),
         [Validators.required, this.base64Format]],
-      oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : false,
+      oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : true,
       oauth2ClientInfos: entity?.oauth2ClientInfos ? entity.oauth2ClientInfos.map(info => info.id.id) : []
     });
   }

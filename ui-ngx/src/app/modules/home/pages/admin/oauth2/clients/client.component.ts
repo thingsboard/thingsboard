@@ -278,6 +278,7 @@ export class ClientComponent extends EntityComponent<OAuth2Client, PageLink, OAu
         mapperConfig.addControl('basic', this.formBasicGroup(predefinedValue?.basic));
       } else if (predefinedValue?.basic) {
         mapperConfig.get('basic').patchValue(predefinedValue.basic, {emitEvent: false});
+        mapperConfig.get('basic.tenantNameStrategy').updateValueAndValidity({onlySelf: true});
       }
       if (type === MapperType.GITHUB) {
         mapperConfig.get('basic.emailAttributeKey').disable();
