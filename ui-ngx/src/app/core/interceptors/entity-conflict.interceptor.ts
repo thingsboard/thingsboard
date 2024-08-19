@@ -75,7 +75,7 @@ export class EntityConflictInterceptor implements HttpInterceptor {
             return next.handle(this.updateRequestVersion(request));
           }
           (request.params as HttpParams & { interceptorConfig: InterceptorConfig }).interceptorConfig.ignoreErrors = true;
-          return next.handle(request);
+          return throwError(() => new Error(error.error.message));
         }
         return of(null);
       })
