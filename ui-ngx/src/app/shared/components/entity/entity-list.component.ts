@@ -56,6 +56,11 @@ import { coerceBoolean } from '@shared/decorators/coercion';
       provide: NG_VALUE_ACCESSOR,
       useExisting: forwardRef(() => EntityListComponent),
       multi: true
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => EntityListComponent),
+      multi: true
     }
   ]
 })
@@ -201,6 +206,12 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
       this.modelValue = null;
     }
     this.dirty = true;
+  }
+
+  validate(): ValidationErrors | null {
+    return this.entityListFormGroup.valid ? null : {
+      entities: {valid: false}
+    };
   }
 
   private reset() {
