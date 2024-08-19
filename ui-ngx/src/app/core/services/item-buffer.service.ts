@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
+import { BreakpointId, Dashboard, DashboardLayoutId } from '@app/shared/models/dashboard.models';
 import { AliasesInfo, EntityAlias, EntityAliases, EntityAliasInfo } from '@shared/models/alias.models';
 import {
   Datasource,
@@ -87,7 +87,7 @@ export class ItemBufferService {
               private utils: UtilsService) {}
 
   public prepareWidgetItem(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
-                           widget: Widget, breakpoint: string): WidgetItem {
+                           widget: Widget, breakpoint: BreakpointId): WidgetItem {
     const aliasesInfo: AliasesInfo = {
       datasourceAliases: {},
       targetDeviceAlias: null
@@ -148,13 +148,13 @@ export class ItemBufferService {
     };
   }
 
-  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: string): void {
+  public copyWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: BreakpointId) {
     const widgetItem = this.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_ITEM, widgetItem);
   }
 
   public copyWidgetReference(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
-                             widget: Widget, breakpoint: string): void {
+                             widget: Widget, breakpoint: BreakpointId): void {
     const widgetReference = this.prepareWidgetReference(dashboard, sourceState, sourceLayout, widget, breakpoint);
     this.storeSet(WIDGET_REFERENCE, widgetReference);
   }
@@ -412,7 +412,7 @@ export class ItemBufferService {
   }
 
   private prepareWidgetReference(dashboard: Dashboard, sourceState: string,
-                                 sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: string): WidgetReference {
+                                 sourceLayout: DashboardLayoutId, widget: Widget, breakpoint: BreakpointId): WidgetReference {
     const originalColumns = this.dashboardUtils.getOriginalColumns(dashboard, sourceState, sourceLayout, breakpoint);
     const originalSize = this.dashboardUtils.getOriginalSize(dashboard, sourceState, sourceLayout, widget, breakpoint);
     return {
