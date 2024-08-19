@@ -99,7 +99,7 @@ public class DomainServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void tesGetDomainInfo() {
+    public void testGetDomainInfo() {
         OAuth2Client oAuth2Client = validClientInfo(TenantId.SYS_TENANT_ID, "Test google client");
         OAuth2Client savedOauth2Client = oAuth2ClientService.saveOAuth2Client(SYSTEM_TENANT_ID, oAuth2Client);
         PageData<OAuth2ClientInfo> infos = oAuth2ClientService.findOAuth2ClientInfosByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10));
@@ -115,7 +115,7 @@ public class DomainServiceTest extends AbstractServiceTest {
 
         //find clients by domain name
         List<OAuth2ClientLoginInfo> oauth2LoginInfo = oAuth2ClientService.findOAuth2ClientLoginInfosByDomainName(savedDomain.getName());
-        assertThat(oauth2LoginInfo).containsOnly(new OAuth2ClientLoginInfo(savedOauth2Client.getName(), savedOauth2Client.getLoginButtonIcon(), String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, savedOauth2Client.getUuidId().toString())));
+        assertThat(oauth2LoginInfo).containsOnly(new OAuth2ClientLoginInfo(savedOauth2Client.getLoginButtonLabel(), savedOauth2Client.getLoginButtonIcon(), String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, savedOauth2Client.getUuidId().toString())));
     }
 
     private Domain constructDomain(TenantId tenantId, String domainName, boolean oauth2Enabled, boolean propagateToEdge) {

@@ -25,6 +25,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.validation.Length;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -35,6 +36,7 @@ public class Domain extends BaseData<DomainId> implements HasTenantId, HasName {
     private TenantId tenantId;
     @Schema(description = "Domain name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
+    @Length(fieldName = "name")
     private String name;
     @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean oauth2Enabled;

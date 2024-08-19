@@ -57,13 +57,13 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN DomainOauth2ClientEntity dc on dc.oauth2ClientId = c.id " +
             "WHERE dc.domainId = :domainId ")
-    List<OAuth2ClientEntity> findByDomainId(UUID domainId);
+    List<OAuth2ClientEntity> findByDomainId(@Param("domainId") UUID domainId);
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
             "LEFT JOIN MobileAppOauth2ClientEntity mc on mc.oauth2ClientId = c.id " +
             "WHERE mc.mobileAppId = :mobileAppId ")
-    List<OAuth2ClientEntity> findByMobileAppId(UUID mobileAppId);
+    List<OAuth2ClientEntity> findByMobileAppId(@Param("mobileAppId") UUID mobileAppId);
 
     @Query("SELECT m.appSecret " +
             "FROM MobileAppEntity m " +

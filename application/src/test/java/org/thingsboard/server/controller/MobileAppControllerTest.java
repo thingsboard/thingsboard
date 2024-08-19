@@ -92,7 +92,7 @@ public class MobileAppControllerTest extends AbstractControllerTest {
         mobileApp.setAppSecret("short");
         doPost("/api/mobileApp", mobileApp)
                 .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("appSecret must be at least 16 characters")));
+                .andExpect(statusReason(containsString("appSecret must be at least 16 and max 2048 characters")));
     }
 
     @Test

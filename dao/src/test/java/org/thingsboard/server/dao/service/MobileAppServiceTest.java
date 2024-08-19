@@ -101,7 +101,7 @@ public class MobileAppServiceTest extends AbstractServiceTest {
 
         //find clients by MobileApp name
         List<OAuth2ClientLoginInfo> oauth2LoginInfo = oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(savedMobileApp.getName(), null);
-        assertThat(oauth2LoginInfo).containsOnly(new OAuth2ClientLoginInfo(savedOauth2Client.getName(), savedOauth2Client.getLoginButtonIcon(), String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, savedOauth2Client.getUuidId().toString())));
+        assertThat(oauth2LoginInfo).containsOnly(new OAuth2ClientLoginInfo(savedOauth2Client.getLoginButtonLabel(), savedOauth2Client.getLoginButtonIcon(), String.format(OAUTH2_AUTHORIZATION_PATH_TEMPLATE, savedOauth2Client.getUuidId().toString())));
     }
 
     private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, boolean oauth2Enabled) {

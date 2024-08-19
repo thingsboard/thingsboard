@@ -38,10 +38,11 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     private TenantId tenantId;
     @Schema(description = "Application package name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
+    @Length(fieldName = "pkgName")
     private String pkgName;
     @Schema(description = "Application secret. The length must be at least 16 characters", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotEmpty
-    @Length(min = 16, message = "must be at least 16 characters")
+    @Length(fieldName = "appSecret", min = 16, max = 2048, message = "must be at least 16 and max 2048 characters")
     private String appSecret;
     @Schema(description = "Whether OAuth2 settings are enabled or not")
     private boolean oauth2Enabled;

@@ -586,7 +586,7 @@ CREATE TABLE IF NOT EXISTS oauth2_client (
     id uuid NOT NULL CONSTRAINT oauth2_client_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
-    title  varchar(100) NOT NULL,
+    title varchar(100) NOT NULL,
     additional_info varchar,
     client_id varchar(255),
     client_secret varchar(2048),
