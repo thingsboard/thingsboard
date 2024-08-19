@@ -293,8 +293,10 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     this.layouts.main.gridSettings.layoutType = layoutType;
     if (!this.isDividerLayout) {
       delete this.layouts.right;
-      for (const breakpoint of Object.values(this.layouts.main.breakpoints)) {
-        breakpoint.gridSettings.layoutType = layoutType;
+      if (this.layouts.main.breakpoints) {
+        for (const breakpoint of Object.values(this.layouts.main.breakpoints)) {
+          breakpoint.gridSettings.layoutType = layoutType;
+        }
       }
     } else {
       delete this.layouts.main.breakpoints;
