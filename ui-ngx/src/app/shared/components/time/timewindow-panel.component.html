@@ -131,7 +131,7 @@
     </mat-tab>
   </mat-tab-group>
   <ng-template #aggregationConfig>
-    <div *ngIf="aggregation" class="tb-flex column">
+    <div *ngIf="aggregationOptionsAvailable" class="tb-flex column">
       <ng-container formGroupName="aggregation">
         <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideAggregation">
           <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>

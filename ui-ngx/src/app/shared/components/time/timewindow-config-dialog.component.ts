@@ -20,8 +20,10 @@ import {
   AggregationType,
   DAY,
   HistoryWindowType,
+  historyWindowTypeTranslations,
   quickTimeIntervalPeriod,
   RealtimeWindowType,
+  realtimeWindowTypeTranslations,
   Timewindow,
   TimewindowType
 } from '@shared/models/time/time.models';
@@ -72,22 +74,22 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   realtimeTimewindowOptions: ToggleHeaderOption[] = [
     {
-      name: this.translate.instant('timewindow.relative'),
+      name: this.translate.instant(realtimeWindowTypeTranslations.get(RealtimeWindowType.INTERVAL)),
       value: this.realtimeTypes.INTERVAL
     }
   ];
 
   historyTimewindowOptions: ToggleHeaderOption[] = [
     {
-      name: this.translate.instant('timewindow.last'),
+      name: this.translate.instant(historyWindowTypeTranslations.get(HistoryWindowType.LAST_INTERVAL)),
       value: this.historyTypes.LAST_INTERVAL
     },
     {
-      name: this.translate.instant('timewindow.fixed'),
+      name: this.translate.instant(historyWindowTypeTranslations.get(HistoryWindowType.FIXED)),
       value: this.historyTypes.FIXED
     },
     {
-      name: this.translate.instant('timewindow.relative'),
+      name: this.translate.instant(historyWindowTypeTranslations.get(HistoryWindowType.INTERVAL)),
       value: this.historyTypes.INTERVAL
     }
   ];
@@ -107,7 +109,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
     if (!this.quickIntervalOnly) {
       this.realtimeTimewindowOptions.unshift({
-        name: this.translate.instant('timewindow.last'),
+        name: this.translate.instant(realtimeWindowTypeTranslations.get(RealtimeWindowType.LAST_INTERVAL)),
         value: this.realtimeTypes.LAST_INTERVAL
       });
     }
@@ -176,18 +178,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         limit: [ isDefined(aggregation?.limit) ? this.checkLimit(this.timewindow.aggregation.limit) : null ]
       }),
       timezone: [ isDefined(this.timewindow.timezone) ? this.timewindow.timezone : null ],
-      hideInterval: [ isDefinedAndNotNull(this.timewindow.hideInterval)
-                      ? this.timewindow.hideInterval : false ],
-      hideLastInterval: [{
-        value: isDefinedAndNotNull(this.timewindow.hideLastInterval)
-                      ? this.timewindow.hideLastInterval : false,
-        disabled: this.timewindow.hideInterval
-      }],
-      hideQuickInterval: [{
-        value: isDefinedAndNotNull(this.timewindow.hideQuickInterval)
-                      ? this.timewindow.hideQuickInterval : false,
-        disabled: this.timewindow.hideInterval
-      }],
       hideAggregation: [ isDefinedAndNotNull(this.timewindow.hideAggregation)
                       ? this.timewindow.hideAggregation : false ],
       hideAggInterval: [ isDefinedAndNotNull(this.timewindow.hideAggInterval)
