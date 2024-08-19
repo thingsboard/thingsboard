@@ -71,7 +71,7 @@ export interface DashboardLayoutSettings {
   name: string;
   descriptionSize?: string;
   layout: DashboardLayout;
-  breakpoint: string;
+  breakpoint: BreakpointId;
 }
 
 @Component({
@@ -103,8 +103,8 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
 
   private submitted = false;
 
-  allowBreakpointIds = [];
-  selectedBreakpointIds = ['default'];
+  allowBreakpointIds: BreakpointId[] = [];
+  selectedBreakpointIds: BreakpointId[] = ['default'];
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -442,7 +442,7 @@ export class ManageDashboardLayoutsDialogComponent extends DialogComponent<Manag
     });
   }
 
-  deleteBreakpoint($event: Event, breakpointId: string): void {
+  deleteBreakpoint($event: Event, breakpointId: BreakpointId): void {
     if ($event) {
       $event.stopPropagation();
     }

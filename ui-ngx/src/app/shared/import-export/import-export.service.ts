@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
+import { BreakpointId, Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
 import { deepClone, guid, isDefined, isNotEmptyStr, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
@@ -199,7 +199,7 @@ export class ImportExportService {
   }
 
   public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget,
-                      widgetTitle: string, breakpoint: string) {
+                      widgetTitle: string, breakpoint: BreakpointId) {
     const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget, breakpoint);
     const widgetDefaultName = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn).widgetName;
     let fileName = widgetDefaultName + (isNotEmptyStr(widgetTitle) ? `_${widgetTitle}` : '');

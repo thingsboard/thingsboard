@@ -698,16 +698,9 @@ export class DashboardUtilsService {
                                 targetState: string,
                                 targetLayout: DashboardLayoutId,
                                 widgetId: string,
-                                breakpoint: string) {
-    const dashboardConfiguration = dashboard.configuration;
-    const states = dashboardConfiguration.states;
-    const state = states[targetState];
-    const layout = state.layouts[targetLayout];
-    if (layout.breakpoints[breakpoint]) {
-      delete layout.breakpoints[breakpoint].widgets[widgetId];
-    } else {
-      delete layout.widgets[widgetId];
-    }
+                                breakpoint: BreakpointId) {
+    const layout = this.getDashboardLayoutConfig(dashboard.configuration.states[targetState].layouts[targetLayout], breakpoint);
+    delete layout.widgets[widgetId];
     this.removeUnusedWidgets(dashboard);
   }
 
@@ -948,7 +941,7 @@ export class DashboardUtilsService {
                                  dashboard: Dashboard,
                                  targetState: string,
                                  targetLayout: DashboardLayoutId,
-                                 breakpointId: string,
+                                 breakpointId: BreakpointId,
                                  isRemoveWidget: boolean): Widget {
 
     const newWidget = deepClone(widget);
@@ -972,14 +965,14 @@ export class DashboardUtilsService {
     return newWidget;
   }
 
-  getDashboardLayoutConfig(layout: DashboardLayout, breakpointId: string): DashboardLayout {
-    if (breakpointId !== 'default') {
+  getDashboardLayoutConfig(layout: DashboardLayout, breakpointId: BreakpointId): DashboardLayout {
+    if (breakpointId !== 'default' && layout.breakpoints) {
       return layout.breakpoints[breakpointId];
     }
     return layout;
   }
 
-  getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, breakpointId: string): number {
+  getOriginalColumns(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, breakpointId: BreakpointId): number {
     let originalColumns = 24;
     let gridSettings = null;
     const state = dashboard.configuration.states[sourceState];
@@ -998,7 +991,7 @@ export class DashboardUtilsService {
   }
 
   getOriginalSize(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId,
-                  widget: Widget, breakpointId: string): WidgetSize {
+                  widget: Widget, breakpointId: BreakpointId): WidgetSize {
     const layout = this.getDashboardLayoutConfig(dashboard.configuration.states[sourceState].layouts[sourceLayout], breakpointId);
     const widgetLayout = layout.widgets[widget.id];
     return {

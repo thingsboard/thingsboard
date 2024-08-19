@@ -32,7 +32,7 @@ export class SelectDashboardBreakpointComponent implements OnInit, OnDestroy {
 
   selectedBreakpoint: BreakpointId = 'default';
 
-  breakpointIds: Array<string> = ['default'];
+  breakpointIds: Array<BreakpointId> = ['default'];
 
   private layoutDataChanged$: Subscription;
 
@@ -42,7 +42,7 @@ export class SelectDashboardBreakpointComponent implements OnInit, OnDestroy {
   ngOnInit() {
     this.layoutDataChanged$ = this.dashboardCtrl.layouts.main.layoutCtx.layoutDataChanged.subscribe(() => {
       if (this.dashboardCtrl.layouts.main.layoutCtx.layoutData) {
-        this.breakpointIds = Object.keys(this.dashboardCtrl.layouts.main.layoutCtx?.layoutData);
+        this.breakpointIds = Object.keys(this.dashboardCtrl.layouts.main.layoutCtx?.layoutData) as BreakpointId[];
         this.breakpointIds.sort((a, b) => {
           const aMaxWidth = this.dashboardUtils.getBreakpointInfoById(a)?.maxWidth || Infinity;
           const bMaxWidth = this.dashboardUtils.getBreakpointInfoById(b)?.maxWidth || Infinity;
