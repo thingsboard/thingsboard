@@ -34,7 +34,7 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
   }
 
   .tb-layout-preview {
-    width: 120%;
+    width: 100%;
     background-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.6);
     padding: 35px;
 
