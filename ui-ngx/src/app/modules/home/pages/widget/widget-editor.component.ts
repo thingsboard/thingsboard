@@ -59,12 +59,13 @@ import {
   SaveWidgetTypeAsDialogComponent,
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
-import { forkJoin, mergeMap, of, Subscription } from 'rxjs';
+import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';
 import { beautifyCss, beautifyHtml, beautifyJs } from '@shared/models/beautify.models';
+import { HttpStatusCode } from '@angular/common/http';
 import Timeout = NodeJS.Timeout;
 
 // @dynamic
@@ -583,9 +584,11 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
         }
         return of(widgetTypeDetails);
       }),
-      catchError(() => {
-        this.undoWidget();
-        return of(null);
+      catchError((err) => {
+        if (id && err.status === HttpStatusCode.Conflict) {
+          return this.widgetService.getWidgetTypeById(id.id);
+        }
+        return throwError(() => err);
       }),
     ).subscribe({
       next: (widgetTypeDetails) => {
@@ -619,7 +622,7 @@ export class WidgetEditorComponent extends PageComponent implements OnInit, OnDe
           config.title = this.widget.widgetName;
           this.widget.defaultConfig = JSON.stringify(config);
           this.isDirty = false;
-          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined, null).pipe(
+          this.widgetService.saveWidgetTypeDetails(this.widget, undefined, undefined, undefined).pipe(
             mergeMap((widget) => {
               if (saveWidgetAsData.widgetBundleId) {
                 return this.widgetService.addWidgetFqnToWidgetBundle(saveWidgetAsData.widgetBundleId, widget.fqn).pipe(
