@@ -1218,16 +1218,17 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           return throwError(() => err);
         })
       ).subscribe((dashboard) => {
-        this.setEditMode(false, false);
-        this.dashboard = dashboard;
         if (reInitDashboard) {
           const dashboardPageInitData: DashboardPageInitData = {
             dashboard,
             currentDashboardId: dashboard.id ? dashboard.id.id : null,
-            widgetEditMode: false,
-            singlePageMode: false
+            widgetEditMode: this.widgetEditMode,
+            singlePageMode: this.singlePageMode
           };
           this.init(dashboardPageInitData);
+        } else {
+          this.dashboard = dashboard;
+          this.setEditMode(false, false);
         }
       });
     }
