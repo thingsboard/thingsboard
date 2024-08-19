@@ -69,15 +69,15 @@
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="1" name="value"
-               formControlName="scanPeriodInSec" placeholder="{{ 'gateway.set' | translate }}"/>
+        <input matInput type="number" min="1000" name="value"
+               formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="'gateway.scan-period-error' | translate: {min: 1}"
-                  *ngIf="(serverConfigFormGroup.get('scanPeriodInSec').hasError('required') ||
-                         serverConfigFormGroup.get('scanPeriodInSec').hasError('min')) &&
-                         serverConfigFormGroup.get('scanPeriodInSec').touched"
+                  [matTooltip]="'gateway.scan-period-error' | translate: {min: 1000}"
+                  *ngIf="(serverConfigFormGroup.get('scanPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('scanPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('scanPeriodInMillis').touched"
                   class="tb-error">
           warning
         </mat-icon>

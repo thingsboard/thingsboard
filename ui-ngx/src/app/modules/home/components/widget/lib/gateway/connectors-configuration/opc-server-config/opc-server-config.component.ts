@@ -39,6 +39,7 @@ import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-t
 import {
   SecurityConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import { HOUR } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-opc-server-config',
@@ -80,7 +81,7 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
       name: ['', []],
       url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
-      scanPeriodInSec: [3600, [Validators.required, Validators.min(1)]],
+      scanPeriodInMillis: [HOUR, [Validators.required, Validators.min(1000)]],
       pollPeriodInMillis: [5000, [Validators.required, Validators.min(50)]],
       enableSubscriptions: [true, []],
       subCheckPeriodInMillis: [100, [Validators.required, Validators.min(100)]],
@@ -119,7 +120,7 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
   writeValue(serverConfig: ServerConfig): void {
     const {
       timeoutInMillis = 1000,
-      scanPeriodInSec = 3600,
+      scanPeriodInMillis = HOUR,
       pollPeriodInMillis = 5000,
       enableSubscriptions = true,
       subCheckPeriodInMillis = 100,
@@ -131,7 +132,7 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
     this.serverConfigFormGroup.reset({
       ...serverConfig,
       timeoutInMillis,
-      scanPeriodInSec,
+      scanPeriodInMillis,
       pollPeriodInMillis,
       enableSubscriptions,
       subCheckPeriodInMillis,
