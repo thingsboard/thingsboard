@@ -48,7 +48,6 @@ import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipe
 import { ModbusSecurityConfigComponent } from '../modbus-security-config/modbus-security-config.component';
 import { ModbusValuesComponent, } from '../modbus-values/modbus-values.component';
 import { isEqual } from '@core/utils';
-import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 
 @Component({
   selector: 'tb-modbus-slave-config',
@@ -73,7 +72,6 @@ import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-t
     ModbusValuesComponent,
     ModbusSecurityConfigComponent,
     GatewayPortTooltipPipe,
-    TruncateWithTooltipDirective,
   ],
 })
 export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validator, OnDestroy {

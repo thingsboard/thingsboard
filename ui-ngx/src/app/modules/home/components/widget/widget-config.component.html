@@ -169,12 +169,12 @@
       </div>
     </div>
     <div [fxShow]="selectedOption === 'mobile'" [formGroup]="layoutSettings" class="mat-content">
-      <div class="tb-form-panel">
+      <div class="tb-form-panel" *ngIf="isDefaultBreakpoint">
         <mat-slide-toggle class="mat-slide" formControlName="mobileHide">
           {{ 'widget-config.mobile-hide' | translate }}
         </mat-slide-toggle>
       </div>
-      <div class="tb-form-panel">
+      <div class="tb-form-panel" *ngIf="isDefaultBreakpoint">
         <mat-slide-toggle class="mat-slide" formControlName="desktopHide">
           {{ 'widget-config.desktop-hide' | translate }}
         </mat-slide-toggle>

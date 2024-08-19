@@ -40,7 +40,7 @@
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div #appearanceProperties><ng-content select=".tb-scada-symbol-appearance-properties"></ng-content></div>
     <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between" [class]="propertyRow.rowClass">
-      <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width" formControlName="{{ propertyRow.switch.id }}">
+      <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
         {{ propertyRow.label | customTranslate }}
       </mat-slide-toggle>
       <div *ngIf="!propertyRow.switch" class="fixed-title-width">{{ propertyRow.label | customTranslate }}</div>
