@@ -185,6 +185,14 @@ $tb-warn: mat.get-color-from-palette(map-get($tb-theme, warn), text);
   }
 }
 
+:host-context(.tb-fullscreen-dialog .mat-mdc-dialog-container) {
+  .mat-mdc-dialog-content {
+    width: 550px;
+    max-width: 100%;
+    padding: 16px;
+  }
+}
+
 ::ng-deep {
   /* Alarm tooltip with side-to-side movement */
   .tb-layout-error-tooltip-right {
