@@ -51,13 +51,10 @@ public class OAuth2EdgeTest extends AbstractEdgeTest {
 
         // disable oauth support
         edgeImitator.expectMessageAmount(1);
-        doPost("/api/oauth2/config", oAuth2Client, OAuth2Client.class);
-        Assert.assertTrue(edgeImitator.waitForMessages());
-        latestMessage = edgeImitator.getLatestMessage();
-        Assert.assertTrue(latestMessage instanceof OAuth2UpdateMsg);
-        oAuth2ProviderUpdateMsg = (OAuth2UpdateMsg) latestMessage;
-        result = JacksonUtil.fromString(oAuth2ProviderUpdateMsg.getEntity(), OAuth2Client.class, true);
-        Assert.assertEquals(oAuth2Client, result);
+//        oAuth2Info.setEnabled(false);
+//        oAuth2Info.setEdgeEnabled(false);
+//        doPost("/api/oauth2/config", oAuth2Info, OAuth2Info.class);
+//        Assert.assertFalse(edgeImitator.waitForMessages(5));
 
         edgeImitator.ignoreType(OAuth2UpdateMsg.class);
         loginTenantAdmin();

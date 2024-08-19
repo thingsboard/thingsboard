@@ -27,5 +27,6 @@ public class TbResourceInfoFilter {
 
     private TenantId tenantId;
     private Set<ResourceType> resourceTypes;
+    private Set<ResourceSubType> resourceSubTypes;
 
 }

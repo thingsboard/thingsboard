@@ -151,6 +151,13 @@ export class MenuService {
             icon: 'filter'
           },
           {
+            id: 'scada_symbols',
+            name: 'scada.symbols',
+            type: 'link',
+            path: '/resources/scada-symbols',
+            icon: 'view_in_ar'
+          },
+          {
             id: 'resources_library',
             name: 'resource.resources-library',
             type: 'link',
@@ -571,6 +578,13 @@ export class MenuService {
             type: 'link',
             path: '/resources/images',
             icon: 'filter'
+          },
+          {
+            id: 'scada_symbols',
+            name: 'scada.symbols',
+            type: 'link',
+            path: '/resources/scada-symbols',
+            icon: 'view_in_ar'
           },
           {
             id: 'resources_library',

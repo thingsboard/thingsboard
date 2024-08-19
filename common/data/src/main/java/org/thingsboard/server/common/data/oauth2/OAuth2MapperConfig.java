@@ -17,12 +17,11 @@ package org.thingsboard.server.common.data.oauth2;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.Valid;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
-
-import jakarta.validation.Valid;
 
 @Builder(toBuilder = true)
 @EqualsAndHashCode

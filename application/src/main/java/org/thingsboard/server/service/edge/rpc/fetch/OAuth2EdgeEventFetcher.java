@@ -45,10 +45,13 @@ public class OAuth2EdgeEventFetcher implements EdgeEventFetcher {
 
     @Override
     public PageData<EdgeEvent> fetchEdgeEvents(TenantId tenantId, Edge edge, PageLink pageLink) {
+//        OAuth2Info oAuth2Info = oAuth2Service.findOAuth2Info();
+//        if (!oAuth2Info.isEdgeEnabled()) {
+//            return new PageData<>();
+//        }
         List<EdgeEvent> result = new ArrayList<>();
-        List<OAuth2Client> oauth2Clients = oAuth2ClientService.findOAuth2ClientsByTenantId(TenantId.SYS_TENANT_ID);
-        result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.OAUTH2_CLIENT,
-                EdgeEventActionType.ADDED, null, JacksonUtil.valueToTree(oauth2Clients)));
+//        result.add(EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.OAUTH2,
+//                EdgeEventActionType.ADDED, null, JacksonUtil.valueToTree(oAuth2Info)));
         // returns PageData object to be in sync with other fetchers
         return new PageData<>(result, 1, result.size(), false);
     }

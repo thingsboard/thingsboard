@@ -16,10 +16,15 @@
 package org.thingsboard.server.transport.coap.efento.utils;
 
 import com.google.gson.JsonObject;
+import org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType;
 
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.TimeZone;
+
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_FLOODING;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OK_ALARM;
+import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_OUTPUT_CONTROL;
 
 public class CoapEfentoUtils {
 
@@ -48,6 +53,14 @@ public class CoapEfentoUtils {
         values.addProperty("signal", signal);
         values.addProperty("measurement_interval", measurementPeriod);
         return values;
+    }
+
+    public static boolean isBinarySensor(MeasurementType type) {
+        return type == MEASUREMENT_TYPE_OK_ALARM || type == MEASUREMENT_TYPE_FLOODING || type == MEASUREMENT_TYPE_OUTPUT_CONTROL;
+    }
+
+    public static boolean isSensorError(int sampleOffset) {
+        return sampleOffset >= 8355840 && sampleOffset <= 8388607;
     }
 
 }

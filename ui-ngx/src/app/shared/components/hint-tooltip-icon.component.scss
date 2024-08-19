@@ -21,11 +21,19 @@
 }
 
 :host {
+  .tb-hint-tooltip-content {
+    flex: 1 1 auto;
+    min-width: 0;
+    max-width: fit-content;
+  }
+
   .tb-hint-tooltip-icon {
     color: #E0E0E0;
     overflow: visible;
     order: 3;
     margin-left: 4px;
+    flex-shrink: 0;
+
     &:hover {
       color: #9E9E9E;
     }

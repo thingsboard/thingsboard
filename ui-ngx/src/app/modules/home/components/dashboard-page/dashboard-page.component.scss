@@ -131,6 +131,26 @@ div.tb-dashboard-page {
           width: max(40%, calc(100% - 1192px));
         }
       }
+      #tb-main-layout {
+        display: flex;
+
+        tb-dashboard-layout {
+          width: 100%;
+        }
+
+        .layout-filler {
+          flex: 1;
+          background: repeating-linear-gradient(-16deg, #d3d3d3, #d3d3d3 3px, #e0e0e0 3px, #e0e0e0 11px);
+          border-bottom: 2px dashed #bdbdbd;
+          border-right: 2px dashed #bdbdbd;
+
+          writing-mode: vertical-rl;
+          text-align: center;
+          transform: rotate(180deg);
+          color: #616161;
+          letter-spacing: .25px;
+        }
+      }
     }
 
     mat-drawer.tb-details-drawer {

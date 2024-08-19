@@ -38,7 +38,7 @@ import {
   JsonSchema,
   JsonSettingsSchema,
   TargetDevice,
-  TargetDeviceType, targetDeviceValid,
+  targetDeviceValid,
   Widget,
   WidgetConfigMode,
   widgetType
@@ -84,8 +84,8 @@ import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
-import Timeout = NodeJS.Timeout;
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import Timeout = NodeJS.Timeout;
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -149,6 +149,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   @Input()
   @coerceBoolean()
   isAdd = false;
+
+  @Input()
+  @coerceBoolean()
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint = true;
 
   @Input() disabled: boolean;
 
@@ -341,12 +349,16 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         value: 'actions'
       }
     );
-    this.headerOptions.push(
-      {
-        name: this.translate.instant('widget-config.mobile'),
-        value: 'mobile'
-      }
-    );
+    if (this.showLayoutConfig) {
+      this.headerOptions.push(
+        {
+          name: this.isDefaultBreakpoint
+            ? this.translate.instant('widget-config.mobile')
+            : this.translate.instant('widget-config.list-layout'),
+          value: 'mobile'
+        }
+      );
+    }
     if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
       this.selectedOption = this.headerOptions[0].value;
     }
@@ -962,7 +974,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!this.widgetEditMode && !targetDeviceValid(config.targetDevice)) {
+        if ((!this.widgetEditMode && !this.modelValue?.typeParameters.targetDeviceOptional) && !targetDeviceValid(config.targetDevice)) {
           return {
             targetDevice: {
               valid: false

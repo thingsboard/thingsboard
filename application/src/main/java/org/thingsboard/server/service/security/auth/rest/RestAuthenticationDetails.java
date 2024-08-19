@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.Data;
 import ua_parser.Client;
 import ua_parser.Parser;
 
-import jakarta.servlet.http.HttpServletRequest;
 import java.io.Serializable;
 
 @Data

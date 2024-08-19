@@ -39,14 +39,14 @@ public class OAuth2EdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg convertOAuth2ProviderEventToDownlink(EdgeEvent edgeEvent) {
         DownlinkMsg downlinkMsg = null;
-        OAuth2Client oAuth2Client = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Client.class);
-        if (oAuth2Client != null) {
-            OAuth2UpdateMsg oAuth2ProviderUpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Client);
-            downlinkMsg = DownlinkMsg.newBuilder()
-                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                    .addOAuth2UpdateMsg(oAuth2ProviderUpdateMsg)
-                    .build();
-        }
+//        OAuth2Info oAuth2Info = JacksonUtil.convertValue(edgeEvent.getBody(), OAuth2Info.class);
+//        if (oAuth2Info != null && oAuth2Info.isEdgeEnabled()) {
+//            OAuth2UpdateMsg oAuth2UpdateMsg = oAuth2MsgConstructor.constructOAuth2UpdateMsg(oAuth2Info);
+//            downlinkMsg = DownlinkMsg.newBuilder()
+//                    .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
+//                    .addOAuth2UpdateMsg(oAuth2ProviderUpdateMsg)
+//                    .build();
+//        }
         return downlinkMsg;
     }
 

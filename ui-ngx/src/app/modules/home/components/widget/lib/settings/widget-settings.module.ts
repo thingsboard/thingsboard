@@ -362,6 +362,12 @@ import {
 import {
   LabelValueCardWidgetSettingsComponent
 } from '@home/components/widget/lib/settings/cards/label-value-card-widget-settings.component';
+import {
+  UnreadNotificationWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/cards/unread-notification-widget-settings.component';
+import {
+ScadaSymbolWidgetSettingsComponent
+} from '@home/components/widget/lib/settings/scada/scada-symbol-widget-settings.component';
 
 @NgModule({
   declarations: [
@@ -490,7 +496,9 @@ import {
     PolarAreaChartWidgetSettingsComponent,
     RadarChartWidgetSettingsComponent,
     LabelCardWidgetSettingsComponent,
-    LabelValueCardWidgetSettingsComponent
+    LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
+    ScadaSymbolWidgetSettingsComponent
   ],
   imports: [
     CommonModule,
@@ -624,7 +632,9 @@ import {
     PolarAreaChartWidgetSettingsComponent,
     RadarChartWidgetSettingsComponent,
     LabelCardWidgetSettingsComponent,
-    LabelValueCardWidgetSettingsComponent
+    LabelValueCardWidgetSettingsComponent,
+    UnreadNotificationWidgetSettingsComponent,
+    ScadaSymbolWidgetSettingsComponent
   ]
 })
 export class WidgetSettingsModule {
@@ -725,5 +735,7 @@ export const widgetSettingsComponentsMap: {[key: string]: Type<IWidgetSettingsCo
   'tb-polar-area-chart-widget-settings': PolarAreaChartWidgetSettingsComponent,
   'tb-radar-chart-widget-settings': RadarChartWidgetSettingsComponent,
   'tb-label-card-widget-settings': LabelCardWidgetSettingsComponent,
-  'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent
+  'tb-label-value-card-widget-settings': LabelValueCardWidgetSettingsComponent,
+  'tb-unread-notification-widget-settings': UnreadNotificationWidgetSettingsComponent,
+  'tb-scada-symbol-widget-settings': ScadaSymbolWidgetSettingsComponent
 };
