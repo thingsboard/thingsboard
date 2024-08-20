@@ -15,10 +15,10 @@
 ///
 
 import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
-import { BehaviorSubject, mergeMap, Subject, Subscription } from 'rxjs';
+import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { BreadCrumb, BreadCrumbConfig } from './breadcrumb';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
-import { distinctUntilChanged, filter, first, map } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { guid } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
@@ -58,7 +58,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   routerEventsSubscription = this.router.events.pipe(
     filter((event) => event instanceof NavigationEnd ),
     distinctUntilChanged(),
-    mergeMap(() => this.menuService.availableMenuSections().pipe(first())),
+    switchMap(() => this.menuService.availableMenuSections().pipe(first())),
     map( (sections) => this.buildBreadCrumbs(this.activatedRoute.snapshot, sections) )
   ).subscribe(breadcrumns => this.breadcrumbs$.next(breadcrumns) );
 

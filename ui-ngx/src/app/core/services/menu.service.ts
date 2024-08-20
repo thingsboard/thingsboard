@@ -31,7 +31,7 @@ import { NavigationEnd, Router } from '@angular/router';
 export class MenuService {
 
   currentMenuSections: Array<MenuSection>;
-  menuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>();
+  menuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
   homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
   availableMenuLinks$ = this.menuSections$.pipe(
     map((items) => this.allMenuLinks(items))
