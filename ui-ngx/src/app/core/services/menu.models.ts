@@ -860,7 +860,7 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
       },
       {
         name: 'edge.management',
-        places: [MenuId.edges]
+        places: [MenuId.edge_instances]
       },
       {
         name: 'dashboard.view-dashboards',
