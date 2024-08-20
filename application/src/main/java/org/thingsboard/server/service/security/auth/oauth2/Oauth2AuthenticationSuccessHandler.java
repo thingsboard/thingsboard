@@ -97,19 +97,19 @@ public class Oauth2AuthenticationSuccessHandler extends SimpleUrlAuthenticationS
         try {
             OAuth2AuthenticationToken token = (OAuth2AuthenticationToken) authentication;
 
-            OAuth2Client registration = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2ClientId(UUID.fromString(token.getAuthorizedClientRegistrationId())));
+            OAuth2Client oauth2Client = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2ClientId(UUID.fromString(token.getAuthorizedClientRegistrationId())));
             OAuth2AuthorizedClient oAuth2AuthorizedClient = oAuth2AuthorizedClientService.loadAuthorizedClient(
                     token.getAuthorizedClientRegistrationId(),
                     token.getPrincipal().getName());
-            OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(registration.getMapperConfig().getType());
+            OAuth2ClientMapper mapper = oauth2ClientMapperProvider.getOAuth2ClientMapperByType(oauth2Client.getMapperConfig().getType());
             SecurityUser securityUser = mapper.getOrCreateUserByClientPrincipal(request, token, oAuth2AuthorizedClient.getAccessToken().getTokenValue(),
-                    registration);
+                    oauth2Client);
 
             clearAuthenticationAttributes(request, response);
 
             JwtPair tokenPair = tokenFactory.createTokenPair(securityUser);
             getRedirectStrategy().sendRedirect(request, response, getRedirectUrl(baseUrl, tokenPair));
-            systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, registration.getName(), null);
+            systemSecurityService.logLoginAction(securityUser, new RestAuthenticationDetails(request), ActionType.LOGIN, oauth2Client.getName(), null);
         } catch (Exception e) {
             log.debug("Error occurred during processing authentication success result. " +
                     "request [{}], response [{}], authentication [{}]", request, response, authentication, e);

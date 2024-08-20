@@ -53,13 +53,10 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
     }
 
     public MobileAppEntity(MobileApp mobile) {
-        if (mobile.getId() != null) {
-            this.setUuid(mobile.getId().getId());
-        }
+        super(mobile);
         if (mobile.getTenantId() != null) {
             this.tenantId = mobile.getTenantId().getId();
         }
-        this.setCreatedTime(mobile.getCreatedTime());
         this.pkgName = mobile.getPkgName();
         this.appSecret = mobile.getAppSecret();
         this.oauth2Enabled = mobile.isOauth2Enabled();

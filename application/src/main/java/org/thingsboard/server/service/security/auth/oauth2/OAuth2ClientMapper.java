@@ -21,5 +21,5 @@ import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface OAuth2ClientMapper {
-    SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client registration);
+    SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client oAuth2Client);
 }

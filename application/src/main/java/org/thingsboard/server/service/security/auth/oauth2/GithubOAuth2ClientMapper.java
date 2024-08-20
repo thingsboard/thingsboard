@@ -49,13 +49,13 @@ public class GithubOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private OAuth2Configuration oAuth2Configuration;
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client registration) {
-        OAuth2MapperConfig config = registration.getMapperConfig();
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client oAuth2Client) {
+        OAuth2MapperConfig config = oAuth2Client.getMapperConfig();
         Map<String, String> githubMapperConfig = oAuth2Configuration.getGithubMapper();
         String email = getEmail(githubMapperConfig.get(EMAIL_URL_KEY), providerAccessToken);
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         OAuth2User oAuth2User = BasicMapperUtils.getOAuth2User(email, attributes, config);
-        return getOrCreateSecurityUserFromOAuth2User(oAuth2User, registration);
+        return getOrCreateSecurityUserFromOAuth2User(oAuth2User, oAuth2Client);
     }
 
     private synchronized String getEmail(String emailUrl, String oauth2Token) {

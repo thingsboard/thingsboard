@@ -118,29 +118,26 @@ public class OAuth2ClientEntity extends BaseSqlEntity<OAuth2Client> {
         super();
     }
 
-    public OAuth2ClientEntity(OAuth2Client registration) {
-        if (registration.getId() != null) {
-            this.setUuid(registration.getId().getId());
+    public OAuth2ClientEntity(OAuth2Client oAuth2Client) {
+        super(oAuth2Client);
+        if (oAuth2Client.getTenantId() != null) {
+            this.tenantId = oAuth2Client.getTenantId().getId();
         }
-        this.setCreatedTime(registration.getCreatedTime());
-        if (registration.getTenantId() != null) {
-            this.tenantId = registration.getTenantId().getId();
-        }
-        this.title = registration.getTitle();
-        this.clientId = registration.getClientId();
-        this.clientSecret = registration.getClientSecret();
-        this.authorizationUri = registration.getAuthorizationUri();
-        this.tokenUri = registration.getAccessTokenUri();
-        this.scope = registration.getScope().stream().reduce((result, element) -> result + "," + element).orElse("");
-        this.platforms = registration.getPlatforms() != null ? registration.getPlatforms().stream().map(Enum::name).reduce((result, element) -> result + "," + element).orElse("") : "";
-        this.userInfoUri = registration.getUserInfoUri();
-        this.userNameAttributeName = registration.getUserNameAttributeName();
-        this.jwkSetUri = registration.getJwkSetUri();
-        this.clientAuthenticationMethod = registration.getClientAuthenticationMethod();
-        this.loginButtonLabel = registration.getLoginButtonLabel();
-        this.loginButtonIcon = registration.getLoginButtonIcon();
-        this.additionalInfo = registration.getAdditionalInfo();
-        OAuth2MapperConfig mapperConfig = registration.getMapperConfig();
+        this.title = oAuth2Client.getTitle();
+        this.clientId = oAuth2Client.getClientId();
+        this.clientSecret = oAuth2Client.getClientSecret();
+        this.authorizationUri = oAuth2Client.getAuthorizationUri();
+        this.tokenUri = oAuth2Client.getAccessTokenUri();
+        this.scope = oAuth2Client.getScope().stream().reduce((result, element) -> result + "," + element).orElse("");
+        this.platforms = oAuth2Client.getPlatforms() != null ? oAuth2Client.getPlatforms().stream().map(Enum::name).reduce((result, element) -> result + "," + element).orElse("") : "";
+        this.userInfoUri = oAuth2Client.getUserInfoUri();
+        this.userNameAttributeName = oAuth2Client.getUserNameAttributeName();
+        this.jwkSetUri = oAuth2Client.getJwkSetUri();
+        this.clientAuthenticationMethod = oAuth2Client.getClientAuthenticationMethod();
+        this.loginButtonLabel = oAuth2Client.getLoginButtonLabel();
+        this.loginButtonIcon = oAuth2Client.getLoginButtonIcon();
+        this.additionalInfo = oAuth2Client.getAdditionalInfo();
+        OAuth2MapperConfig mapperConfig = oAuth2Client.getMapperConfig();
         if (mapperConfig != null) {
             this.allowUserCreation = mapperConfig.isAllowUserCreation();
             this.activateUser = mapperConfig.isActivateUser();

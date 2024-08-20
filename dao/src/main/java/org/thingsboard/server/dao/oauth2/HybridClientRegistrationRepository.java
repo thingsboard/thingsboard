@@ -41,20 +41,20 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
                 null : toSpringClientRegistration(registration);
     }
 
-    private ClientRegistration toSpringClientRegistration(OAuth2Client registration){
-        String registrationId = registration.getUuidId().toString();
+    private ClientRegistration toSpringClientRegistration(OAuth2Client oAuth2Client){
+        String registrationId = oAuth2Client.getUuidId().toString();
         return ClientRegistration.withRegistrationId(registrationId)
-                .clientName(registration.getName())
-                .clientId(registration.getClientId())
-                .authorizationUri(registration.getAuthorizationUri())
-                .clientSecret(registration.getClientSecret())
-                .tokenUri(registration.getAccessTokenUri())
-                .scope(registration.getScope())
+                .clientName(oAuth2Client.getName())
+                .clientId(oAuth2Client.getClientId())
+                .authorizationUri(oAuth2Client.getAuthorizationUri())
+                .clientSecret(oAuth2Client.getClientSecret())
+                .tokenUri(oAuth2Client.getAccessTokenUri())
+                .scope(oAuth2Client.getScope())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .userInfoUri(registration.getUserInfoUri())
-                .userNameAttributeName(registration.getUserNameAttributeName())
-                .jwkSetUri(registration.getJwkSetUri())
-                .clientAuthenticationMethod(registration.getClientAuthenticationMethod().equals("POST") ?
+                .userInfoUri(oAuth2Client.getUserInfoUri())
+                .userNameAttributeName(oAuth2Client.getUserNameAttributeName())
+                .jwkSetUri(oAuth2Client.getJwkSetUri())
+                .clientAuthenticationMethod(oAuth2Client.getClientAuthenticationMethod().equals("POST") ?
                         ClientAuthenticationMethod.CLIENT_SECRET_POST : ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .redirectUri(defaultRedirectUriTemplate)
                 .build();

@@ -28,7 +28,7 @@ import java.util.List;
 @Schema
 public class DomainInfo extends Domain {
 
-    @Schema(description = "List of available oauth2 client registration")
+    @Schema(description = "List of available oauth2 clients")
     private List<OAuth2ClientInfo> oauth2ClientInfos;
 
     public DomainInfo(Domain domain, List<OAuth2ClientInfo> oauth2ClientInfos) {

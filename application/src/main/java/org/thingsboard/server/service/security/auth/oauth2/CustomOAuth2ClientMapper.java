@@ -41,10 +41,10 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client registration) {
-        OAuth2MapperConfig config = registration.getMapperConfig();
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client auth2Client) {
+        OAuth2MapperConfig config = auth2Client.getMapperConfig();
         OAuth2User oauth2User = getOAuth2User(token, providerAccessToken, config.getCustom());
-        return getOrCreateSecurityUserFromOAuth2User(oauth2User, registration);
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, auth2Client);
     }
 
     private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2CustomMapperConfig custom) {

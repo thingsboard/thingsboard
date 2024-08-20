@@ -33,12 +33,12 @@ import java.util.Map;
 public class BasicOAuth2ClientMapper extends AbstractOAuth2ClientMapper implements OAuth2ClientMapper {
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client registration) {
-        OAuth2MapperConfig config = registration.getMapperConfig();
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client oAuth2Client) {
+        OAuth2MapperConfig config = oAuth2Client.getMapperConfig();
         Map<String, Object> attributes = token.getPrincipal().getAttributes();
         String email = BasicMapperUtils.getStringAttributeByKey(attributes, config.getBasic().getEmailAttributeKey());
         OAuth2User oauth2User = BasicMapperUtils.getOAuth2User(email, attributes, config);
 
-        return getOrCreateSecurityUserFromOAuth2User(oauth2User, registration);
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, oAuth2Client);
     }
 }

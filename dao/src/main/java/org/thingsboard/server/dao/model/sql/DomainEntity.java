@@ -49,13 +49,10 @@ public class DomainEntity extends BaseSqlEntity<Domain> {
     private Boolean propagateToEdge;
 
     public DomainEntity(Domain domain) {
-        if (domain.getId() != null) {
-            this.setUuid(domain.getId().getId());
-        }
+        super(domain);
         if (domain.getTenantId() != null) {
             this.tenantId = domain.getTenantId().getId();
         }
-        this.setCreatedTime(domain.getCreatedTime());
         this.name = domain.getName();
         this.oauth2Enabled = domain.isOauth2Enabled();
         this.propagateToEdge = domain.isPropagateToEdge();
