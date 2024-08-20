@@ -22,7 +22,6 @@ import { MenuId } from '@core/services/menu.models';
 export interface BreadCrumb extends HasUUID{
   label: string;
   labelFunction?: () => string;
-  ignoreTranslate: boolean;
   icon: string;
   link: any[];
   queryParams: Params;
