@@ -137,7 +137,8 @@ export class QuickLinkComponent extends PageComponent implements OnInit, Control
           this.updateView(modelValue);
         }),
         map(value => value ? (typeof value === 'string' ? value :
-          ((value as any).translated ? value.name : this.customTranslate.transform(value.name))) : ''),
+          ((value as any).translated ? value.name
+            : value.customTranslate ? this.customTranslate.transform(value.name) : this.translate.instant(value.name))) : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchLinks(name) ),
         share()
@@ -204,7 +205,8 @@ export class QuickLinkComponent extends PageComponent implements OnInit, Control
   }
 
   displayLinkFn = (link?: MenuSection): string | undefined =>
-    link ? ((link as any).translated ? link.name : this.customTranslate.transform(link.fullName || link.name)) : undefined;
+    link ? ((link as any).translated ? link.name : link.customTranslate ? this.customTranslate.transform(link.fullName || link.name)
+      : this.translate.instant(link.fullName || link.name)) : undefined;
 
   fetchLinks(searchText?: string): Observable<Array<MenuSection>> {
     this.searchText = searchText;
@@ -230,7 +232,8 @@ export class QuickLinkComponent extends PageComponent implements OnInit, Control
         map((links) => {
           const result = deepClone(links);
           for (const link of result) {
-            link.name = this.customTranslate.transform(link.fullName || link.name);
+            link.name = link.customTranslate ? this.customTranslate.transform(link.fullName || link.name)
+              : this.translate.instant(link.fullName || link.name);
             (link as any).translated = true;
           }
           return result;

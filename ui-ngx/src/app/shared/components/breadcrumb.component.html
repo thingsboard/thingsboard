@@ -17,7 +17,7 @@
 -->
 <div fxFlex class="tb-breadcrumb" fxLayout="row">
   <h1 fxFlex fxHide.gt-sm *ngIf="lastBreadcrumb$ | async; let breadcrumb">
-    {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.label | customTranslate) }}
+    {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.customTranslate ? (breadcrumb.label | customTranslate) : (breadcrumb.label | translate)) }}
   </h1>
   <span fxHide.lt-md fxLayout="row" *ngFor="let breadcrumb of breadcrumbs$ | async; trackBy: trackByBreadcrumbs; last as isLast;" [ngSwitch]="isLast">
 	    <a *ngSwitchCase="false" [routerLink]="breadcrumb.link" [queryParams]="breadcrumb.queryParams">
@@ -38,5 +38,5 @@
   <tb-icon *ngIf="!breadcrumb.iconUrl">
     {{ breadcrumb.icon }}
   </tb-icon>
-  {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.label | customTranslate) }}
+  {{ breadcrumb.labelFunction ? breadcrumb.labelFunction() : (breadcrumb.customTranslate ? (breadcrumb.label | customTranslate) : (breadcrumb.label | translate)) }}
 </ng-template>

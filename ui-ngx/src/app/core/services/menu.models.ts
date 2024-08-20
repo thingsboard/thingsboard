@@ -30,6 +30,7 @@ export interface MenuSection {
   pages?: Array<MenuSection>;
   opened?: boolean;
   rootOnly?: boolean;
+  customTranslate?: boolean;
 }
 
 export interface MenuReference {

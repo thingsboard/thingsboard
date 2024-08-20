@@ -116,6 +116,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
         const section: MenuSection = breadcrumbConfig.menuId ?
           availableMenuSections.find(menu => menu.id === breadcrumbConfig.menuId) : null;
         const label = section?.name || breadcrumbConfig.label || 'home.home';
+        const customTranslate = section?.customTranslate || false;
         if (breadcrumbConfig.labelFunction) {
           labelFunction = () => this.activeComponentValue ?
             breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data) : label;
@@ -125,6 +126,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
         const breadcrumb = {
           id: guid(),
           label,
+          customTranslate,
           labelFunction,
           icon,
           link,
