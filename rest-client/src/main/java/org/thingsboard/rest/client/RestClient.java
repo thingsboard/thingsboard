@@ -507,13 +507,16 @@ public class RestClient implements Closeable {
         return restTemplate.postForEntity(baseURL + "/api/alarm", alarm, Alarm.class).getBody();
     }
 
-    public List<EntitySubtype> getAlarmTypes(PageLink pageLink) {
+    public PageData<EntitySubtype> getAlarmTypes(PageLink pageLink) {
+        Map<String, String> params = new HashMap<>();
+        addPageLinkToParam(params, pageLink);
         return restTemplate.exchange(
                 baseURL + "/api/alarm/types?" + getUrlParams(pageLink),
                 HttpMethod.GET,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<EntitySubtype>>() {
-                }).getBody();
+                new ParameterizedTypeReference<PageData<EntitySubtype>>() {
+                },
+                params).getBody();
     }
 
     public AlarmComment saveAlarmComment(AlarmId alarmId, AlarmComment alarmComment) {
