@@ -30,13 +30,13 @@ import { NavigationEnd, Router } from '@angular/router';
 })
 export class MenuService {
 
-  currentMenuSections: Array<MenuSection>;
-  menuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
-  homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
-  availableMenuLinks$ = this.menuSections$.pipe(
+  private currentMenuSections: Array<MenuSection>;
+  private menuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
+  private homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
+  private availableMenuLinks$ = this.menuSections$.pipe(
     map((items) => this.allMenuLinks(items))
   );
-  availableMenuSections$ = this.menuSections$.pipe(
+  private availableMenuSections$ = this.menuSections$.pipe(
     map((items) => this.allMenuSections(items))
   );
 
