@@ -29,7 +29,6 @@ export interface MenuSection {
   icon: string;
   pages?: Array<MenuSection>;
   opened?: boolean;
-  disabled?: boolean;
   rootOnly?: boolean;
 }
 
