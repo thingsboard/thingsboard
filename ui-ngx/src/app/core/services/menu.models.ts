@@ -38,15 +38,14 @@ export interface MenuReference {
   pages?: Array<MenuReference>;
 }
 
-export interface HomeSection {
+export interface HomeSectionReference {
   name: string;
-  places: Array<HomeSectionPlace>;
+  places: Array<MenuId>;
 }
 
-export interface HomeSectionPlace {
+export interface HomeSection {
   name: string;
-  icon: string;
-  path: string;
+  places: Array<MenuSection>;
 }
 
 export enum MenuId {
@@ -768,9 +767,106 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
   ]
 ]);
 
+const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
+  [
+    Authority.SYS_ADMIN,
+    [
+      {
+        name: 'tenant.management',
+        places: [MenuId.tenants, MenuId.tenant_profiles]
+      },
+      {
+        name: 'widget.management',
+        places: [MenuId.widget_library]
+      },
+      {
+        name: 'admin.system-settings',
+        places: [MenuId.general, MenuId.mail_server,
+          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.two_fa, MenuId.resources_library, MenuId.queues]
+      }
+    ]
+  ],
+  [
+    Authority.TENANT_ADMIN,
+    [
+      {
+        name: 'rulechain.management',
+        places: [MenuId.rule_chains]
+      },
+      {
+        name: 'customer.management',
+        places: [MenuId.customers]
+      },
+      {
+        name: 'asset.management',
+        places: [MenuId.assets, MenuId.asset_profiles]
+      },
+      {
+        name: 'device.management',
+        places: [MenuId.devices, MenuId.device_profiles, MenuId.otaUpdates]
+      },
+      {
+        name: 'entity-view.management',
+        places: [MenuId.entity_views]
+      },
+      {
+        name: 'edge.management',
+        places: [MenuId.edges, MenuId.rulechain_templates]
+      },
+      {
+        name: 'dashboard.management',
+        places: [MenuId.widget_library, MenuId.dashboards]
+      },
+      {
+        name: 'version-control.management',
+        places: [MenuId.version_control]
+      },
+      {
+        name: 'audit-log.audit',
+        places: [MenuId.audit_log, MenuId.api_usage]
+      },
+      {
+        name: 'admin.system-settings',
+        places: [MenuId.home_settings, MenuId.resources_library, MenuId.repository_settings, MenuId.auto_commit_settings]
+      }
+    ]
+  ],
+  [
+    Authority.CUSTOMER_USER,
+    [
+      {
+        name: 'asset.view-assets',
+        places: [MenuId.assets]
+      },
+      {
+        name: 'device.view-devices',
+        places: [MenuId.devices]
+      },
+      {
+        name: 'entity-view.management',
+        places: [MenuId.entity_views]
+      },
+      {
+        name: 'edge.management',
+        places: [MenuId.edges]
+      },
+      {
+        name: 'dashboard.view-dashboards',
+        places: [MenuId.dashboards]
+      }
+    ]
+  ]
+]);
+
 export const buildUserMenu = (authState: AuthState): Array<MenuSection> => {
   const references = defaultUserMenuMap.get(authState.authUser.authority);
   return (references || []).map(ref => referenceToMenuSection(authState, ref)).filter(section => !!section);
+};
+
+export const buildUserHome = (authState: AuthState, availableMenuSections: MenuSection[]): Array<HomeSection> => {
+  const references = defaultHomeSectionMap.get(authState.authUser.authority);
+  return (references || []).map(ref =>
+    homeReferenceToHomeSection(availableMenuSections, ref)).filter(section => !!section);
 };
 
 const referenceToMenuSection = (authState: AuthState, reference: MenuReference): MenuSection | undefined => {
@@ -805,5 +901,17 @@ const filterMenuReference = (authState: AuthState, reference: MenuReference): bo
     return false;
   } else {
     return true;
+  }
+};
+
+const homeReferenceToHomeSection = (availableMenuSections: MenuSection[], reference: HomeSectionReference): HomeSection | undefined => {
+  const places = reference.places.map(id => availableMenuSections.find(m => m.id === id)).filter(p => !!p);
+  if (places.length) {
+    return {
+      name: reference.name,
+      places
+    };
+  } else {
+    return undefined;
   }
 };

@@ -19,9 +19,8 @@ import { select, Store } from '@ngrx/store';
 import { AppState } from '../core.state';
 import { getCurrentOpenedMenuSections, selectAuth, selectIsAuthenticated } from '../auth/auth.selectors';
 import { filter, map, take } from 'rxjs/operators';
-import { buildUserMenu, HomeSection, MenuId, MenuSection } from '@core/services/menu.models';
-import { BehaviorSubject, ReplaySubject, Observable, Subject } from 'rxjs';
-import { Authority } from '@shared/models/authority.enum';
+import { buildUserHome, buildUserMenu, HomeSection, MenuId, MenuSection } from '@core/services/menu.models';
+import { Observable, ReplaySubject, Subject } from 'rxjs';
 import { AuthState } from '@core/auth/auth.models';
 import { NavigationEnd, Router } from '@angular/router';
 
@@ -32,12 +31,10 @@ export class MenuService {
 
   private currentMenuSections: Array<MenuSection>;
   private menuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
-  private homeSections$: Subject<Array<HomeSection>> = new BehaviorSubject<Array<HomeSection>>([]);
+  private homeSections$: Subject<Array<HomeSection>> = new ReplaySubject<Array<HomeSection>>(1);
+  private availableMenuSections$: Subject<Array<MenuSection>> = new ReplaySubject<Array<MenuSection>>(1);
   private availableMenuLinks$ = this.menuSections$.pipe(
     map((items) => this.allMenuLinks(items))
-  );
-  private availableMenuSections$ = this.menuSections$.pipe(
-    map((items) => this.allMenuSections(items))
   );
 
   constructor(private store: Store<AppState>,
@@ -60,21 +57,12 @@ export class MenuService {
     this.store.pipe(select(selectAuth), take(1)).subscribe(
       (authState: AuthState) => {
         if (authState.authUser) {
-          let homeSections: Array<HomeSection>;
-          switch (authState.authUser.authority) {
-            case Authority.SYS_ADMIN:
-              homeSections = this.buildSysAdminHome();
-              break;
-            case Authority.TENANT_ADMIN:
-              homeSections = this.buildTenantAdminHome(authState);
-              break;
-            case Authority.CUSTOMER_USER:
-              homeSections = this.buildCustomerUserHome(authState);
-              break;
-          }
           this.currentMenuSections = buildUserMenu(authState);
           this.updateOpenedMenuSections();
           this.menuSections$.next(this.currentMenuSections);
+          const availableMenuSections = this.allMenuSections(this.currentMenuSections);
+          this.availableMenuSections$.next(availableMenuSections);
+          const homeSections = buildUserHome(authState, availableMenuSections);
           this.homeSections$.next(homeSections);
         }
       }
@@ -88,304 +76,6 @@ export class MenuService {
       (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
       section => section.opened = true
     );
-  }
-
-  private buildSysAdminHome(): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [];
-    homeSections.push(
-      {
-        name: 'tenant.management',
-        places: [
-          {
-            name: 'tenant.tenants',
-            icon: 'supervisor_account',
-            path: '/tenants'
-          },
-          {
-            name: 'tenant-profile.tenant-profiles',
-            icon: 'mdi:alpha-t-box',
-            path: '/tenantProfiles'
-          },
-        ]
-      },
-      {
-        name: 'widget.management',
-        places: [
-          {
-            name: 'widget.widget-library',
-            icon: 'now_widgets',
-            path: '/resources/widgets-library',
-          }
-        ]
-      },
-      {
-        name: 'admin.system-settings',
-        places: [
-          {
-            name: 'admin.general',
-            icon: 'settings_applications',
-            path: '/settings/general'
-          },
-          {
-            name: 'admin.outgoing-mail',
-            icon: 'mail',
-            path: '/settings/outgoing-mail'
-          },
-          {
-            name: 'admin.sms-provider',
-            icon: 'sms',
-            path: '/settings/sms-provider'
-          },
-          {
-            name: 'admin.security-settings',
-            icon: 'security',
-            path: '/settings/security-settings'
-          },
-          {
-            name: 'admin.oauth2.oauth2',
-            icon: 'security',
-            path: '/settings/oauth2'
-          },
-          {
-            name: 'admin.2fa.2fa',
-            icon: 'mdi:two-factor-authentication',
-            path: '/settings/2fa'
-          },
-          {
-            name: 'resource.resources-library',
-            icon: 'folder',
-            path: '/settings/resources-library'
-          },
-          {
-            name: 'admin.queues',
-            icon: 'swap_calls',
-            path: '/settings/queues'
-          },
-        ]
-      }
-    );
-    return homeSections;
-  }
-
-  private buildTenantAdminHome(authState: AuthState): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [];
-    homeSections.push(
-      {
-        name: 'rulechain.management',
-        places: [
-          {
-            name: 'rulechain.rulechains',
-            icon: 'settings_ethernet',
-            path: '/ruleChains'
-          }
-        ]
-      },
-      {
-        name: 'customer.management',
-        places: [
-          {
-            name: 'customer.customers',
-            icon: 'supervisor_account',
-            path: '/customers'
-          }
-        ]
-      },
-      {
-        name: 'asset.management',
-        places: [
-          {
-            name: 'asset.assets',
-            icon: 'domain',
-            path: '/assets'
-          },
-          {
-            name: 'asset-profile.asset-profiles',
-            icon: 'mdi:alpha-a-box',
-            path: '/profiles/assetProfiles'
-          }
-        ]
-      },
-      {
-        name: 'device.management',
-        places: [
-          {
-            name: 'device.devices',
-            icon: 'devices_other',
-            path: '/devices'
-          },
-          {
-            name: 'device-profile.device-profiles',
-            icon: 'mdi:alpha-d-box',
-            path: '/profiles/deviceProfiles'
-          },
-          {
-            name: 'ota-update.ota-updates',
-            icon: 'memory',
-            path: '/otaUpdates'
-          }
-        ]
-      },
-      {
-        name: 'entity-view.management',
-        places: [
-          {
-            name: 'entity-view.entity-views',
-            icon: 'view_quilt',
-            path: '/entityViews'
-          }
-        ]
-      }
-    );
-    if (authState.edgesSupportEnabled) {
-      homeSections.push(
-        {
-          name: 'edge.management',
-          places: [
-            {
-              name: 'edge.edge-instances',
-              icon: 'router',
-              path: '/edgeInstances'
-            },
-            {
-              name: 'edge.rulechain-templates',
-              icon: 'settings_ethernet',
-              path: '/edgeManagement/ruleChains'
-            }
-          ]
-        }
-      );
-    }
-    homeSections.push(
-      {
-        name: 'dashboard.management',
-        places: [
-          {
-            name: 'widget.widget-library',
-            icon: 'now_widgets',
-            path: '/widgets-bundles'
-          },
-          {
-            name: 'dashboard.dashboards',
-            icon: 'dashboard',
-            path: '/dashboards'
-          }
-        ]
-      },
-      {
-        name: 'version-control.management',
-        places: [
-          {
-            name: 'version-control.version-control',
-            icon: 'history',
-            path: '/vc'
-          }
-        ]
-      },
-      {
-        name: 'audit-log.audit',
-        places: [
-          {
-            name: 'audit-log.audit-logs',
-            icon: 'track_changes',
-            path: '/auditLogs'
-          },
-          {
-            name: 'api-usage.api-usage',
-            icon: 'insert_chart',
-            path: '/usage'
-          }
-        ]
-      },
-      {
-        name: 'admin.system-settings',
-        places: [
-          {
-            name: 'admin.home-settings',
-            icon: 'settings_applications',
-            path: '/settings/home'
-          },
-          {
-            name: 'resource.resources-library',
-            icon: 'folder',
-            path: '/settings/resources-library'
-          },
-          {
-            name: 'admin.repository-settings',
-            icon: 'manage_history',
-            path: '/settings/repository',
-          },
-          {
-            name: 'admin.auto-commit-settings',
-            icon: 'settings_backup_restore',
-            path: '/settings/auto-commit'
-          }
-        ]
-      }
-    );
-    return homeSections;
-  }
-
-  private buildCustomerUserHome(authState: AuthState): Array<HomeSection> {
-    const homeSections: Array<HomeSection> = [];
-    homeSections.push(
-      {
-        name: 'asset.view-assets',
-        places: [
-          {
-            name: 'asset.assets',
-            icon: 'domain',
-            path: '/assets'
-          }
-        ]
-      },
-      {
-        name: 'device.view-devices',
-        places: [
-          {
-            name: 'device.devices',
-            icon: 'devices_other',
-            path: '/devices'
-          }
-        ]
-      },
-      {
-        name: 'entity-view.management',
-        places: [
-          {
-            name: 'entity-view.entity-views',
-            icon: 'view_quilt',
-            path: '/entityViews'
-          }
-        ]
-      }
-    );
-    if (authState.edgesSupportEnabled) {
-      homeSections.push(
-        {
-          name: 'edge.management',
-          places: [
-            {
-              name: 'edge.edge-instances',
-              icon: 'settings_input_antenna',
-              path: '/edgeInstances'
-            }
-          ]
-        }
-      );
-    }
-    homeSections.push(
-      {
-        name: 'dashboard.view-dashboards',
-        places: [
-          {
-            name: 'dashboard.dashboards',
-            icon: 'dashboard',
-            path: '/dashboards'
-          }
-        ]
-      }
-    );
-    return homeSections;
   }
 
   private allMenuLinks(sections: Array<MenuSection>): Array<MenuSection> {
