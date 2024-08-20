@@ -78,6 +78,9 @@ export enum MenuId {
   security_settings_general = 'security_settings_general',
   two_fa = '2fa',
   oauth2 = 'oauth2',
+  domains = 'domains',
+  mobile_apps = 'mobile_apps',
+  clients = 'clients',
   audit_log = 'audit_log',
   alarms = 'alarms',
   dashboards = 'dashboards',
@@ -406,6 +409,36 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.domains,
+    {
+      id: MenuId.domains,
+      name: 'admin.oauth2.domains',
+      type: 'link',
+      path: '/security-settings/oauth2/domains',
+      icon: 'domain'
+    }
+  ],
+  [
+    MenuId.mobile_apps,
+    {
+      id: MenuId.mobile_apps,
+      name: 'admin.oauth2.mobile-apps',
+      type: 'link',
+      path: '/security-settings/oauth2/mobile-applications',
+      icon: 'smartphone'
+    }
+  ],
+  [
+    MenuId.clients,
+    {
+      id: MenuId.clients,
+      name: 'admin.oauth2.clients',
+      type: 'link',
+      path: '/security-settings/oauth2/clients',
+      icon: 'public'
+    }
+  ],
+  [
     MenuId.audit_log,
     {
       id: MenuId.audit_log,
@@ -669,7 +702,14 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         pages: [
           {id: MenuId.security_settings_general},
           {id: MenuId.two_fa},
-          {id: MenuId.oauth2}
+          {
+            id: MenuId.oauth2,
+            pages: [
+              {id: MenuId.domains},
+              {id: MenuId.mobile_apps},
+              {id: MenuId.clients}
+            ]
+          }
         ]
       }
     ]
@@ -794,7 +834,8 @@ const defaultHomeSectionMap = new Map<Authority, HomeSectionReference[]>([
       {
         name: 'admin.system-settings',
         places: [MenuId.general, MenuId.mail_server,
-          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.two_fa, MenuId.resources_library, MenuId.queues]
+          MenuId.notification_settings, MenuId.security_settings, MenuId.oauth2, MenuId.domains, MenuId.mobile_apps,
+          MenuId.clients, MenuId.two_fa, MenuId.resources_library, MenuId.queues]
       }
     ]
   ],
