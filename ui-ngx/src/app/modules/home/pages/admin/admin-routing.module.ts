@@ -44,6 +44,7 @@ import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/m
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
 import { ImageService } from '@core/http/image.service';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
+import { MenuId } from '@core/services/menu.models';
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -67,8 +68,7 @@ const routes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        label: 'admin.resources',
-        icon: 'folder'
+        menuId: MenuId.resources
       }
     },
     children: [
@@ -85,8 +85,7 @@ const routes: Routes = [
         path: 'images',
         data: {
           breadcrumb: {
-            label: 'image.gallery',
-            icon: 'filter'
+            menuId: MenuId.images
           }
         },
         children: [
@@ -105,8 +104,7 @@ const routes: Routes = [
         path: 'scada-symbols',
         data: {
           breadcrumb: {
-            label: 'scada.symbols',
-            icon: 'view_in_ar'
+            menuId: MenuId.scada_symbols
           }
         },
         children: [
@@ -141,8 +139,7 @@ const routes: Routes = [
         path: 'resources-library',
         data: {
           breadcrumb: {
-            label: 'resource.resources-library',
-            icon: 'mdi:rhombus-split'
+            menuId: MenuId.resources_library
           }
         },
         children: [
@@ -184,8 +181,7 @@ const routes: Routes = [
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       showMainLoadingBar: false,
       breadcrumb: {
-        label: 'admin.settings',
-        icon: 'settings'
+        menuId: MenuId.settings
       }
     },
     children: [
@@ -208,8 +204,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN],
           title: 'admin.general-settings',
           breadcrumb: {
-            label: 'admin.general',
-            icon: 'settings_applications'
+            menuId: MenuId.general
           }
         }
       },
@@ -221,8 +216,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN],
           title: 'admin.outgoing-mail-settings',
           breadcrumb: {
-            label: 'admin.outgoing-mail',
-            icon: 'mail'
+            menuId: MenuId.mail_server
           }
         }
       },
@@ -234,8 +228,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
           title: 'admin.notifications-settings',
           breadcrumb: {
-            label: 'admin.notifications',
-            icon: 'mdi:message-badge'
+            menuId: MenuId.notification_settings
           }
         }
       },
@@ -243,8 +236,7 @@ const routes: Routes = [
         path: 'queues',
         data: {
           breadcrumb: {
-            label: 'admin.queues',
-            icon: 'swap_calls'
+            menuId: MenuId.queues
           }
         },
         children: [
@@ -285,8 +277,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'admin.home-settings',
           breadcrumb: {
-            label: 'admin.home',
-            icon: 'settings_applications'
+            menuId: MenuId.home_settings
           }
         }
       },
@@ -298,8 +289,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'admin.repository-settings',
           breadcrumb: {
-            label: 'admin.repository',
-            icon: 'manage_history'
+            menuId: MenuId.repository_settings
           }
         }
       },
@@ -311,8 +301,7 @@ const routes: Routes = [
           auth: [Authority.TENANT_ADMIN],
           title: 'admin.auto-commit-settings',
           breadcrumb: {
-            label: 'admin.auto-commit',
-            icon: 'settings_backup_restore'
+            menuId: MenuId.auto_commit_settings
           }
         }
       },
@@ -324,8 +313,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN],
           title: 'admin.mobile-app.mobile-app',
           breadcrumb: {
-            label: 'admin.mobile-app.mobile-app',
-            icon: 'smartphone'
+            menuId: MenuId.mobile_app_settings
           }
         }
       },
@@ -361,8 +349,7 @@ const routes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        label: 'security.security',
-        icon: 'security'
+        menuId: MenuId.security_settings
       }
     },
     children: [
@@ -385,8 +372,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN],
           title: 'admin.general',
           breadcrumb: {
-            label: 'admin.general',
-            icon: 'settings_applications'
+            menuId: MenuId.security_settings_general
           }
         }
       },
@@ -398,8 +384,7 @@ const routes: Routes = [
           auth: [Authority.SYS_ADMIN],
           title: 'admin.2fa.2fa',
           breadcrumb: {
-            label: 'admin.2fa.2fa',
-            icon: 'mdi:two-factor-authentication'
+            menuId: MenuId.two_fa
           }
         }
       },

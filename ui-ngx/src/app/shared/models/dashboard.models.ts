@@ -104,7 +104,7 @@ export interface DashboardLayout {
   breakpoints?: {[breakpointId in BreakpointId]?: Omit<DashboardLayout, 'breakpoints'>};
 }
 
-export declare type DashboardLayoutInfo = {[breakpointId: string]: BreakpointLayoutInfo};
+export declare type DashboardLayoutInfo = {[breakpointId in BreakpointId]?: BreakpointLayoutInfo};
 
 export interface BreakpointLayoutInfo {
   widgetIds?: string[];
