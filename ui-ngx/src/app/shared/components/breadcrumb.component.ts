@@ -24,7 +24,7 @@ import { guid } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { UtilsService } from '@core/services/utils.service';
-import { MenuSection } from '@core/services/menu.models';
+import { MenuSection, menuSectionMap } from '@core/services/menu.models';
 import { MenuService } from '@core/services/menu.service';
 
 @Component({
@@ -113,8 +113,13 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig<any>;
       if (breadcrumbConfig && !breadcrumbConfig.skip) {
         let labelFunction: () => string;
-        const section: MenuSection = breadcrumbConfig.menuId ?
-          availableMenuSections.find(menu => menu.id === breadcrumbConfig.menuId) : null;
+        let section: MenuSection = null;
+        if (breadcrumbConfig.menuId) {
+          section = availableMenuSections.find(menu => menu.id === breadcrumbConfig.menuId);
+          if (!section) {
+            section = menuSectionMap.get(breadcrumbConfig.menuId);
+          }
+        }
         const label = section?.name || breadcrumbConfig.label || 'home.home';
         const customTranslate = section?.customTranslate || false;
         if (breadcrumbConfig.labelFunction) {

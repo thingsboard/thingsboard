@@ -92,6 +92,7 @@ export enum MenuId {
   rule_chains = 'rule_chains',
   edge_management = 'edge_management',
   edges = 'edges',
+  edge_instances = 'edge_instances',
   rulechain_templates = 'rulechain_templates',
   features = 'features',
   otaUpdates = 'otaUpdates',
@@ -101,7 +102,7 @@ export enum MenuId {
 
 declare type MenuFilter = (authState: AuthState) => boolean;
 
-const menuSectionMap = new Map<MenuId, MenuSection>([
+export const menuSectionMap = new Map<MenuId, MenuSection>([
   [
     MenuId.home,
     {
@@ -546,6 +547,17 @@ const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.edge_instances,
+    {
+      id: MenuId.edge_instances,
+      name: 'edge.edge-instances',
+      fullName: 'edge.edge-instances',
+      type: 'link',
+      path: '/edgeManagement/instances',
+      icon: 'router'
+    }
+  ],
+  [
     MenuId.rulechain_templates,
     {
       id: MenuId.rulechain_templates,
@@ -756,7 +768,7 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.entity_views}
         ]
       },
-      {id: MenuId.edges},
+      {id: MenuId.edge_instances},
       {
         id: MenuId.notifications_center,
         pages: [
