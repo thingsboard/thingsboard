@@ -42,8 +42,6 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.dao.service.Validator.validateId;
-
 @Slf4j
 @Service
 public class DomainServiceImpl extends AbstractEntityService implements DomainService {
@@ -128,7 +126,6 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
     @Override
     public void deleteDomainsByTenantId(TenantId tenantId) {
         log.trace("Executing deleteDomainsByTenantId, tenantId [{}]", tenantId);
-        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         domainDao.deleteByTenantId(tenantId);
     }
 
