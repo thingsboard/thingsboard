@@ -138,10 +138,7 @@ public class OAuth2Controller extends BaseController {
     public List<OAuth2ClientInfo> findTenantOAuth2ClientInfosByIds(
             @Parameter(description = "A list of oauth2 ids, separated by comma ','", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
             @RequestParam("clientIds") UUID[] clientIds) throws ThingsboardException {
-        List<OAuth2ClientId> oAuth2ClientIds = new ArrayList<>();
-        for (UUID oauth2ClientId : clientIds) {
-            oAuth2ClientIds.add(new OAuth2ClientId(oauth2ClientId));
-        }
+        List<OAuth2ClientId> oAuth2ClientIds = getOAuth2ClientIds(clientIds);
         return oAuth2ClientService.findOAuth2ClientInfosByIds(getTenantId(), oAuth2ClientIds);
     }
 
