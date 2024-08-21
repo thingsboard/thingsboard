@@ -73,9 +73,9 @@ export class DomainComponent extends EntityComponent<DomainInfo> {
     this.entityForm.patchValue({
       name: entity.name,
       oauth2Enabled: entity.oauth2Enabled,
-      oauth2ClientInfos: entity.oauth2ClientInfos?.map(info => info.id.id),
+      oauth2ClientInfos: entity.oauth2ClientInfos?.map(info => info.id ? info.id.id : info),
       propagateToEdge: entity.propagateToEdge
-    })
+    });
   }
 
   redirectURI(): string {

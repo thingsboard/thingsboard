@@ -23,7 +23,7 @@ import {
   EntityTableColumn,
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
-import { Domain, DomainInfo } from '@shared/models/oauth2.models';
+import { DomainInfo } from '@shared/models/oauth2.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
@@ -33,6 +33,7 @@ import { DomainComponent } from '@home/pages/admin/oauth2/domains/domain.compone
 import { isEqual } from '@core/utils';
 import { DomainTableHeaderComponent } from '@home/pages/admin/oauth2/domains/domain-table-header.component';
 import { Direction } from '@app/shared/models/page/sort-order';
+import { map } from 'rxjs';
 
 @Injectable()
 export class DomainTableConfigResolver implements Resolve<EntityTableConfig<DomainInfo>> {
@@ -88,11 +89,17 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.loadEntity = id => this.domainService.getDomainInfoById(id.id);
     this.config.saveEntity = (domain, originalDomain) => {
       const clientsIds = domain.oauth2ClientInfos as Array<string> || [];
-      if (domain.id && !isEqual(domain.oauth2ClientInfos?.sort(), originalDomain.oauth2ClientInfos?.map(info => info.id.id).sort())) {
+      if (domain.id && !isEqual(domain.oauth2ClientInfos?.sort(),
+        originalDomain.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort())) {
         this.domainService.updateOauth2Clients(domain.id.id, clientsIds).subscribe();
       }
       delete domain.oauth2ClientInfos;
-      return this.domainService.saveDomain(domain as Domain, domain.id ? [] : clientsIds);
+      return this.domainService.saveDomain(domain, domain.id ? [] : clientsIds).pipe(
+        map(domain => {
+          (domain as DomainInfo).oauth2ClientInfos = clientsIds;
+          return domain;
+        })
+      );
     }
     this.config.deleteEntity = id => this.domainService.deleteDomain(id.id);
   }

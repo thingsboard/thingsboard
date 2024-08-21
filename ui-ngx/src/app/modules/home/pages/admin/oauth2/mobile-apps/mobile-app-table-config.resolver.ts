@@ -34,6 +34,7 @@ import { Direction } from '@app/shared/models/page/sort-order';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { MobileAppComponent } from '@home/pages/admin/oauth2/mobile-apps/mobile-app.component';
 import { MobileAppTableHeaderComponent } from '@home/pages/admin/oauth2/mobile-apps/mobile-app-table-header.component';
+import { map } from 'rxjs';
 
 @Injectable()
 export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<MobileAppInfo>> {
@@ -94,11 +95,17 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
     this.config.loadEntity = id => this.mobileAppService.getMobileAppInfoById(id.id);
     this.config.saveEntity = (mobileApp, originalMobileApp) => {
       const clientsIds = mobileApp.oauth2ClientInfos as Array<string> || [];
-      if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos?.sort(), originalMobileApp.oauth2ClientInfos?.map(info => info.id.id).sort())) {
+      if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos?.sort(),
+        originalMobileApp.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort())) {
         this.mobileAppService.updateOauth2Clients(mobileApp.id.id, clientsIds).subscribe();
       }
       delete mobileApp.oauth2ClientInfos;
-      return this.mobileAppService.saveMobileApp(mobileApp as MobileApp, mobileApp.id ? [] : clientsIds);
+      return this.mobileAppService.saveMobileApp(mobileApp as MobileApp, mobileApp.id ? [] : clientsIds).pipe(
+        map(mobileApp => {
+          (mobileApp as MobileAppInfo).oauth2ClientInfos = clientsIds;
+          return mobileApp;
+        })
+      );
     }
     this.config.deleteEntity = id => this.mobileAppService.deleteMobileApp(id.id);
   }
