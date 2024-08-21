@@ -499,12 +499,11 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)) {
                 TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = payloadAdaptor.convertToServerRpcRequest(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC);
+                toServerRpcSubTopicType = TopicType.V1;
                 if (SERVICE_CONFIGURATION.equals(rpcRequestMsg.getMethodName())) {
-                    toServerRpcSubTopicType = TopicType.V1;
                     onGetServiceConfigurationRpc(deviceSessionCtx.getSessionInfo(), ctx, msgId, rpcRequestMsg);
                 } else {
                     transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
-                    toServerRpcSubTopicType = TopicType.V1;
                 }
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
                 TransportProtos.ClaimDeviceMsg claimDeviceMsg = payloadAdaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
@@ -1342,11 +1341,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     }
 
     private void onGetServiceConfigurationRpc( TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.ToServerRpcRequestMsg rpcRequestMsg) {
-        TenantId tenantId = TenantId.fromUUID(new UUID(sessionInfo.getTenantIdMSB(), sessionInfo.getTenantIdLSB()));
-
-        var tenantProfile = context.getTenantProfileCache().get(tenantId);
-        TenantProfileData profileData = tenantProfile.getProfileData();
-        DefaultTenantProfileConfiguration profile = (DefaultTenantProfileConfiguration) profileData.getConfiguration();
+        var tenantProfile = context.getTenantProfileCache().get(deviceSessionCtx.getTenantId());
+        DefaultTenantProfileConfiguration profile = tenantProfile.getDefaultProfileConfiguration();
         Map<String, Object> serviceConfiguration = new HashMap<>();
 
         if (sessionInfo.getIsGateway()) {

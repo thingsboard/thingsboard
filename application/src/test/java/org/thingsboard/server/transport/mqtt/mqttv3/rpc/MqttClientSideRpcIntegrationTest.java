@@ -17,8 +17,6 @@ package org.thingsboard.server.transport.mqtt.mqttv3.rpc;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.handler.codec.mqtt.MqttQoS;
-import org.junit.Assert;
-import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.common.util.JacksonUtil;
@@ -52,30 +50,11 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
     @Value("${transport.mqtt.msg_queue_size_per_device_limit}")
     private int maxInflightMessages;
 
-    @Before
-    public void beforeTest() throws Exception {
-        loginSysAdmin();
-
-        TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId, TenantProfile.class);
-        Assert.assertNotNull(tenantProfile);
-
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
-
-        profileConfiguration.setTransportGatewayMsgRateLimit(null);
-        profileConfiguration.setTransportGatewayTelemetryMsgRateLimit(null);
-        profileConfiguration.setTransportGatewayTelemetryDataPointsRateLimit(null);
-
-        profileConfiguration.setTransportGatewayDeviceMsgRateLimit(null);
-        profileConfiguration.setTransportGatewayDeviceTelemetryMsgRateLimit(null);
-        profileConfiguration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(null);
-
-        doPost("/api/tenantProfile", tenantProfile);
-    }
-
     @Test
     public void getServiceConfigurationRpcForDeviceTest() throws Exception {
+        loginSysAdmin();
         TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId, TenantProfile.class);
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+        DefaultTenantProfileConfiguration profileConfiguration = tenantProfile.getDefaultProfileConfiguration();
 
         profileConfiguration.setTransportDeviceMsgRateLimit("20:600");
         profileConfiguration.setTransportDeviceTelemetryMsgRateLimit("10:600");
@@ -102,7 +81,8 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
                 .as("await callback").isTrue();
 
         var payload = callback.getPayloadBytes();
-        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {});
+        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {
+        });
 
         assertNotNull(response);
         assertEquals(response.size(), 6);
@@ -118,8 +98,9 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
 
     @Test
     public void getServiceConfigurationRpcForGatewayTest() throws Exception {
+        loginSysAdmin();
         TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId, TenantProfile.class);
-        DefaultTenantProfileConfiguration profileConfiguration = (DefaultTenantProfileConfiguration) tenantProfile.getProfileData().getConfiguration();
+        DefaultTenantProfileConfiguration profileConfiguration = tenantProfile.getDefaultProfileConfiguration();
 
         profileConfiguration.setTransportGatewayMsgRateLimit("100:600");
         profileConfiguration.setTransportGatewayTelemetryMsgRateLimit("50:600");
@@ -149,7 +130,8 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         assertTrue(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
 
         var payload = callback.getPayloadBytes();
-        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {});
+        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {
+        });
 
         assertNotNull(response);
         assertEquals(response.size(), 9);
