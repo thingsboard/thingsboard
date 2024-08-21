@@ -104,13 +104,22 @@ ALTER TABLE tenant ADD COLUMN IF NOT EXISTS version BIGINT DEFAULT 1;
 
 ALTER TABLE IF EXISTS oauth2_mobile RENAME TO mobile_app;
 ALTER TABLE IF EXISTS oauth2_domain RENAME TO domain;
-ALTER TABLE IF EXISTS oauth2_domain RENAME domain_name TO name;
 ALTER TABLE IF EXISTS oauth2_registration RENAME TO oauth2_client;
 
 ALTER TABLE domain ADD COLUMN IF NOT EXISTS oauth2_enabled boolean,
                    ADD COLUMN IF NOT EXISTS edge_enabled boolean,
                    ADD COLUMN IF NOT EXISTS tenant_id uuid DEFAULT '13814000-1dd2-11b2-8080-808080808080',
                    DROP COLUMN IF EXISTS domain_scheme;
+
+-- rename column domain_name to name
+DO
+$$
+    BEGIN
+        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name='domain' and column_name='domain_name') THEN
+            ALTER TABLE domain RENAME COLUMN domain_name TO name;
+        END IF;
+    END
+$$;
 
 -- delete duplicated domains
 DELETE FROM domain d1 USING (
