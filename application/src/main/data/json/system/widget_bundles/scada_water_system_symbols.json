@@ -47,6 +47,21 @@
     "vertical_wheel_valve",
     "horizontal_ball_valve",
     "vertical_ball_valve",
-    "vertical_tank"
+    "vertical_tank",
+    "stand_vertical_tank",
+    "cylindrical_tank",
+    "stand_cylindrical_tank",
+    "vertical_short_tank",
+    "stand_vertical_short_tank",
+    "large_cylindrical_tank",
+    "large_stand_cylindrical_tank",
+    "large_vertical_tank",
+    "large_stand_vertical_tank",
+    "horizontal_tank",
+    "stand_horizontal_tank",
+    "spherical_tank",
+    "small_spherical_tank",
+    "elevated_tank",
+    "pool"
   ]
 }
