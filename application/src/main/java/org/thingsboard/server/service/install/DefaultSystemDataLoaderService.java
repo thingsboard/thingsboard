@@ -311,14 +311,14 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         List<MobileApp> mobiles = mobileAppDao.findByTenantId(TenantId.SYS_TENANT_ID, new PageLink(Integer.MAX_VALUE,0)).getData();
         if (CollectionUtils.isNotEmpty(mobiles)) {
             mobiles.stream()
-                    .filter(config -> !validateKeyLength(config.getAppSecret()))
-                    .forEach(config -> {
+                    .filter(mobileApp -> !validateKeyLength(mobileApp.getAppSecret()))
+                    .forEach(mobileApp -> {
                         log.warn("WARNING: The App secret is shorter than 512 bits, which is a security risk. " +
                                 "A new Application Secret has been added automatically for Mobile Application [{}]. " +
                                 "You can change the Application Secret using the Web UI: " +
-                                "Navigate to \"Security settings -> OAuth2 -> Mobile applications\" while logged in as a System Administrator.", config.getPkgName());
-                        config.setAppSecret(generateRandomKey());
-                        mobileAppDao.save(TenantId.SYS_TENANT_ID, config);
+                                "Navigate to \"Security settings -> OAuth2 -> Mobile applications\" while logged in as a System Administrator.", mobileApp.getPkgName());
+                        mobileApp.setAppSecret(generateRandomKey());
+                        mobileAppDao.save(TenantId.SYS_TENANT_ID, mobileApp);
                     });
         }
     }

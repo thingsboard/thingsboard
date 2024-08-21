@@ -91,7 +91,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
 
     @Override
     public String findAppSecret(OAuth2ClientId oAuth2ClientId, String pkgName) {
-        log.trace("Executing findAppSecret [{}][{}]", oAuth2ClientId, pkgName);
+        log.trace("Executing findAppSecret oAuth2ClientId = [{}] pkgName = [{}]", oAuth2ClientId, pkgName);
         return oauth2ClientDao.findAppSecret(oAuth2ClientId.getId(), pkgName);
     }
 
@@ -122,7 +122,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
 
     @Override
     public List<OAuth2ClientInfo> findOAuth2ClientInfosByIds(TenantId tenantId, List<OAuth2ClientId> oAuth2ClientIds) {
-        log.trace("Executing findQueueStatsByIds, tenantId [{}], queueStatsIds [{}]", tenantId, oAuth2ClientIds);
+        log.trace("Executing findQueueStatsByIds, tenantId [{}], oAuth2ClientIds [{}]", tenantId, oAuth2ClientIds);
         return oauth2ClientDao.findByIds(tenantId, oAuth2ClientIds)
                 .stream()
                 .map(OAuth2ClientInfo::new)

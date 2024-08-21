@@ -106,6 +106,7 @@ public class DomainController extends BaseController {
                                                      @RequestParam(required = false) String sortProperty,
                                                      @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                      @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+        accessControlService.checkPermission(getCurrentUser(), Resource.DOMAIN, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return domainService.findDomainInfosByTenantId(getTenantId(), pageLink);
     }

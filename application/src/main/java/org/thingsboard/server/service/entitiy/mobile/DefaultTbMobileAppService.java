@@ -60,9 +60,9 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
         MobileAppId mobileAppId = mobileApp.getId();
         try {
             mobileAppService.updateOauth2Clients(tenantId, mobileAppId, oAuth2ClientIds);
-            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, oAuth2ClientIds.toString());
+            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, oAuth2ClientIds);
         } catch (Exception e) {
-            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, e, oAuth2ClientIds.toString());
+            logEntityActionService.logEntityAction(tenantId, mobileAppId, mobileApp, actionType, user, e, oAuth2ClientIds);
             throw e;
         }
     }
