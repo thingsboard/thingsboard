@@ -27,6 +27,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 export interface ExportWidgetsBundleDialogData {
   widgetsBundle: WidgetsBundle;
   includeBundleWidgetsInExport: boolean;
+  ignoreLoading?: boolean;
 }
 
 export interface ExportWidgetsBundleDialogResult {
@@ -44,6 +45,8 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
 
   widgetsBundle: WidgetsBundle;
 
+  ignoreLoading = false;
+
   exportWidgetsFormControl = new FormControl(true);
 
   constructor(protected store: Store<AppState>,
@@ -52,6 +55,7 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
               public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
     super(store, router, dialogRef);
     this.widgetsBundle = data.widgetsBundle;
+    this.ignoreLoading = data.ignoreLoading;
     if (isDefinedAndNotNull(data.includeBundleWidgetsInExport)) {
       this.exportWidgetsFormControl.patchValue(data.includeBundleWidgetsInExport, {emitEvent: false});
     }

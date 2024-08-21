@@ -38,7 +38,7 @@ import {
   JsonSchema,
   JsonSettingsSchema,
   TargetDevice,
-  TargetDeviceType, targetDeviceValid,
+  targetDeviceValid,
   Widget,
   WidgetConfigMode,
   widgetType
@@ -84,8 +84,8 @@ import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
-import Timeout = NodeJS.Timeout;
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import Timeout = NodeJS.Timeout;
 
 const emptySettingsSchema: JsonSchema = {
   type: 'object',
@@ -152,7 +152,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
 
   @Input()
   @coerceBoolean()
-  scada = false;
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint = true;
 
   @Input() disabled: boolean;
 
@@ -345,10 +349,12 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         value: 'actions'
       }
     );
-    if (!this.scada) {
+    if (this.showLayoutConfig) {
       this.headerOptions.push(
         {
-          name: this.translate.instant('widget-config.mobile'),
+          name: this.isDefaultBreakpoint
+            ? this.translate.instant('widget-config.mobile')
+            : this.translate.instant('widget-config.list-layout'),
           value: 'mobile'
         }
       );

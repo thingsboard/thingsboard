@@ -1171,7 +1171,8 @@
         "layout": "Layout",
         "layout-type-default": "Default",
         "layout-type-scada": "SCADA",
-        "layout-settings": "Layout settings",
+        "layout-type-divider": "Divider",
+        "layout-settings-type": "Layout settings: {{ type }}",
         "columns-count": "Columns count",
         "columns-count-required": "Columns count is required.",
         "min-columns-count-message": "Only 10 minimum column count is allowed.",
@@ -1197,6 +1198,10 @@
         "mobile-row-height-required": "Mobile row height value is required.",
         "min-mobile-row-height-message": "Only 5 pixels is allowed as minimum mobile row height value.",
         "max-mobile-row-height-message": "Only 200 pixels is allowed as maximum mobile row height value.",
+        "row-height": "Row height",
+        "row-height-required": "Row height value is required.",
+        "min-row-height-message": "Only 5 pixels is allowed as minimum row height value.",
+        "max-row-height-message": "Only 200 pixels is allowed as maximum row height value.",
         "display-first-in-mobile-view": "Display first in mobile view",
         "title-settings": "Title settings",
         "display-title": "Display dashboard title",
@@ -1275,7 +1280,19 @@
         "assign-dashboard-to-edge-text": "Please select the dashboards to assign to the edge",
         "non-existent-dashboard-state-error": "Dashboard state with id \"{{ stateId }}\" is not found",
         "edit-mode": "Edit mode",
-        "duplicate-state-action": "Duplicate state"
+        "duplicate-state-action": "Duplicate state",
+        "breakpoint-value": "Breakpoint ({{ value }})",
+        "breakpoints-id": {
+            "default": "Default",
+            "xs": "Mobile (xs)",
+            "sm": "Tablet (sm)",
+            "md": "Laptop (md)",
+            "lg": "Desktop (lg)",
+            "xl": "Desktop (xl)"
+        },
+        "view-format-type-grid": "Grid",
+        "view-format-type-list": "List",
+        "view-format": "View format"
     },
     "datakey": {
         "settings": "Settings",
@@ -2294,11 +2311,10 @@
         "list-of-edges": "{ count, plural, =1 {One edge} other {List of # edges} }",
         "edge-name-starts-with": "Edges whose names start with '{{prefix}}'",
         "version-conflict": {
-            "label": "Version conflict",
-            "message": "Do you want to cancel your changes or overwrite existing version?",
+            "message": "Do you want to overwrite existing version or discard changes and load the latest version?",
             "link": "You can download your version of the {{entityType}} using this",
             "overwrite": "Overwrite version",
-            "cancel": "Cancel changes"
+            "discard": "Discard changes"
         },
         "type-tb-resource": "Resource",
         "type-tb-resources": "Resources",
@@ -3025,7 +3041,8 @@
         "method-required": "Method name is required.",
         "min-pack-send-delay": "Min pack send delay (in ms)",
         "min-pack-send-delay-required": "Min pack send delay is required",
-        "min-pack-send-delay-min": "Min pack send delay can not be less then 0",
+        "min-pack-send-delay-min": "Min pack send delay can not be less then 10",
+        "min-pack-send-delay-pattern": "Min pack send delay is not valid",
         "mode": "Mode",
         "model-name": "Model name",
         "mqtt-version": "MQTT version",
@@ -3049,6 +3066,7 @@
         "password-required": "Password is required.",
         "permit-without-calls": "Keep alive permit without calls",
         "poll-period": "Poll period (ms)",
+        "poll-period-error": "Poll period should be at least {{min}} (ms).",
         "port": "Port",
         "port-required": "Port is required.",
         "port-limits-error": "Port should be number from {{min}} to {{max}}.",
@@ -3228,6 +3246,14 @@
             "send-period-min": "Statistic send period can not be less then 60",
             "send-period-pattern": "Statistic send period is not valid",
             "check-connectors-configuration": "Check connectors configuration (in sec)",
+            "max-payload-size-bytes": "Max payload size in bytes",
+            "max-payload-size-bytes-required": "Max payload size in bytes is required",
+            "max-payload-size-bytes-min": "Max payload size in bytes can not be less then 100",
+            "max-payload-size-bytes-pattern": "Max payload size in bytes is not valid",
+            "min-pack-size-to-send": "Min packet size to send",
+            "min-pack-size-to-send-required": "Min packet size to send is required",
+            "min-pack-size-to-send-min": "Min packet size to send can not be less then 100",
+            "min-pack-size-to-send-pattern": "Min packet size to send is not valid",
             "check-connectors-configuration-required": "Check connectors configuration is required",
             "check-connectors-configuration-min": "Check connectors configuration can not be less then 1",
             "check-connectors-configuration-pattern": "Check connectors configuration is not valid",
@@ -3394,6 +3420,9 @@
             "show-map": "Show nodes on scanning.",
             "method-name": "Name of method on OPC-UA server.",
             "arguments": "Arguments for the method (will be overwritten by arguments from the RPC request).",
+            "min-pack-size-to-send": "Minimum package size for sending.",
+            "max-payload-size-bytes": "Maximum package size in bytes",
+            "poll-period": "Period in milliseconds to read data from nodes.",
             "modbus": {
                 "framer-type": "Type of a framer (Socket, RTU, or ASCII), if needed.",
                 "host": "Hostname or IP address of Modbus server.",
@@ -3828,7 +3857,14 @@
         "left-width-percentage-required": "Left percentage is required",
         "divider": "Divider",
         "right-side": "Right side layout",
-        "left-side": "Left side layout"
+        "left-side": "Left side layout",
+        "add-new-breakpoint": "Add new breakpoint",
+        "breakpoint": "Breakpoint",
+        "breakpoints": "Breakpoints",
+        "copy-from": "Copy from",
+        "size": "Size",
+        "delete-breakpoint-title": "Are you sure you want to delete the breakpoint '{{name}}'?",
+        "delete-breakpoint-text": "Please note, after confirmation, the breakpoint will become unrecoverable, and the settings will revert to the default breakpoint."
     },
     "legend": {
         "direction": "Direction",
@@ -5653,6 +5689,7 @@
         "edit": "Edit widget",
         "remove-widget-title": "Are you sure you want to remove the widget '{{widgetTitle}}'?",
         "remove-widget-text": "After the confirmation the widget and all related data will become unrecoverable.",
+        "replace-reference-with-widget-copy": "Replace reference with widget copy",
         "timeseries": "Time series",
         "search-data": "Search data",
         "no-data-found": "No data found",
@@ -5733,7 +5770,8 @@
         "search": "Search widget",
         "filter": "Widget filter type",
         "loading-widgets": "Loading widgets...",
-        "widget-template-error": "Invalid widget HTML template."
+        "widget-template-error": "Invalid widget HTML template.",
+        "reference": "Reference"
     },
     "widget-action": {
         "header-button": "Widget header button",
@@ -5941,7 +5979,8 @@
         "card-appearance": "Card appearance",
         "color": "Color",
         "tooltip": "Tooltip",
-        "units-required": "Unit is required."
+        "units-required": "Unit is required.",
+        "list-layout": "List layout"
     },
     "widget-type": {
         "import": "Import widget type",

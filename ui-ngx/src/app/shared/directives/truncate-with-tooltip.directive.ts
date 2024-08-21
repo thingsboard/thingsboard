@@ -29,7 +29,6 @@ import { MatTooltip, TooltipPosition } from '@angular/material/tooltip';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Directive({
-  standalone: true,
   selector: '[tbTruncateWithTooltip]',
   providers: [MatTooltip],
 })

@@ -65,13 +65,14 @@ export interface WidgetContextMenuItem extends ContextMenuItem {
 
 export interface DashboardCallbacks {
   onEditWidget?: ($event: Event, widget: Widget) => void;
+  replaceReferenceWithWidgetCopy?: ($event: Event, widget: Widget) => void;
   onExportWidget?: ($event: Event, widget: Widget, widgeTitle: string) => void;
   onRemoveWidget?: ($event: Event, widget: Widget) => void;
   onWidgetMouseDown?: ($event: Event, widget: Widget) => void;
   onDashboardMouseDown?: ($event: Event) => void;
   onWidgetClicked?: ($event: Event, widget: Widget) => void;
   prepareDashboardContextMenu?: ($event: Event) => Array<DashboardContextMenuItem>;
-  prepareWidgetContextMenu?: ($event: Event, widget: Widget) => Array<WidgetContextMenuItem>;
+  prepareWidgetContextMenu?: ($event: Event, widget: Widget, isReference: boolean) => Array<WidgetContextMenuItem>;
 }
 
 export interface IDashboardComponent {
@@ -343,6 +344,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   private selectedCallback: (selected: boolean) => void = () => {};
 
   isFullscreen = false;
+  isReference = false;
 
   color: string;
   backgroundColor: string;

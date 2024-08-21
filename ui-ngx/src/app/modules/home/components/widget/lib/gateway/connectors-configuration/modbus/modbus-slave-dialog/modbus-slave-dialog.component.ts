@@ -52,7 +52,6 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipes/gateway-port-tooltip.pipe';
 import { takeUntil } from 'rxjs/operators';
 import { isEqual } from '@core/utils';
-import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import { helpBaseUrl } from '@shared/models/constants';
 
 @Component({
@@ -78,7 +77,6 @@ import { helpBaseUrl } from '@shared/models/constants';
     ModbusValuesComponent,
     ModbusSecurityConfigComponent,
     GatewayPortTooltipPipe,
-    TruncateWithTooltipDirective,
   ],
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })
