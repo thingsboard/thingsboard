@@ -52,7 +52,7 @@ import {
   AddConnectorConfigData,
   ConnectorBaseConfig,
   ConnectorBaseInfo,
-  ConnectorConfigurationModes,
+  ConfigurationModes,
   ConnectorType,
   GatewayAttributeData,
   GatewayConnector,
@@ -97,13 +97,13 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   readonly gatewayLogLevel = Object.values(GatewayLogLevel);
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
   readonly GatewayConnectorTypesTranslatesMap = GatewayConnectorDefaultTypesTranslatesMap;
-  readonly ConnectorConfigurationModes = ConnectorConfigurationModes;
+  readonly ConnectorConfigurationModes = ConfigurationModes;
 
   pageLink: PageLink;
   dataSource: MatTableDataSource<GatewayAttributeData>;
   connectorForm: FormGroup;
   activeConnectors: Array<string>;
-  mode: ConnectorConfigurationModes = this.ConnectorConfigurationModes.BASIC;
+  mode: ConfigurationModes = this.ConnectorConfigurationModes.BASIC;
   initialConnector: GatewayConnector;
 
   private inactiveConnectors: Array<string>;
@@ -332,7 +332,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private clearOutConnectorForm(): void {
     this.initialConnector = null;
     this.connectorForm.setValue({
-      mode: ConnectorConfigurationModes.BASIC,
+      mode: ConfigurationModes.BASIC,
       name: '',
       type: ConnectorType.MQTT,
       sendDataOnlyOnChange: false,
@@ -518,7 +518,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
   private initConnectorForm(): void {
     this.connectorForm = this.fb.group({
-      mode: [ConnectorConfigurationModes.BASIC],
+      mode: [ConfigurationModes.BASIC],
       name: ['', [Validators.required, this.uniqNameRequired(), Validators.pattern(noLeadTrailSpacesRegex)]],
       type: ['', [Validators.required]],
       enableRemoteLogging: [false],
@@ -691,7 +691,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const configJson = this.connectorForm.get('configurationJson');
       const type = this.connectorForm.get('type').value;
       const mode = this.connectorForm.get('mode').value;
-      if (!isEqual(config, configJson?.value) && this.allowBasicConfig.has(type) && mode === ConnectorConfigurationModes.BASIC) {
+      if (!isEqual(config, configJson?.value) && this.allowBasicConfig.has(type) && mode === ConfigurationModes.BASIC) {
         const newConfig = {...configJson.value, ...config};
         this.connectorForm.get('configurationJson').patchValue(newConfig, {emitEvent: false});
       }
@@ -708,7 +708,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       const basicConfig = this.connectorForm.get('basicConfig');
       const type = this.connectorForm.get('type').value;
       const mode = this.connectorForm.get('mode').value;
-      if (!isEqual(config, basicConfig?.value) && this.allowBasicConfig.has(type) && mode === ConnectorConfigurationModes.ADVANCED) {
+      if (!isEqual(config, basicConfig?.value) && this.allowBasicConfig.has(type) && mode === ConfigurationModes.ADVANCED) {
         this.connectorForm.get('basicConfig').patchValue(config, {emitEvent: false});
       }
     });
@@ -749,7 +749,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       case ConnectorType.MQTT:
       case ConnectorType.OPCUA:
       case ConnectorType.MODBUS:
-        this.connectorForm.get('mode').setValue(connector.mode || ConnectorConfigurationModes.BASIC, {emitEvent: false});
+        this.connectorForm.get('mode').setValue(connector.mode || ConfigurationModes.BASIC, {emitEvent: false});
         setTimeout(() => {
           this.connectorForm.patchValue(connector, {emitEvent: false});
           this.connectorForm.markAsPristine();

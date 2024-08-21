@@ -123,7 +123,7 @@ export interface GatewayConnector {
   logLevel: string;
   key?: string;
   class?: string;
-  mode?: ConnectorConfigurationModes;
+  mode?: ConfigurationModes;
 }
 
 export interface DataMapping {
@@ -493,7 +493,7 @@ export interface ModbusSlaveInfo {
   buttonTitle: string;
 }
 
-export enum ConnectorConfigurationModes {
+export enum ConfigurationModes {
   BASIC = 'basic',
   ADVANCED = 'advanced'
 }
