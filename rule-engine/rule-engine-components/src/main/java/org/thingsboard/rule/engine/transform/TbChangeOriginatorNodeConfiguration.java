@@ -24,12 +24,12 @@ import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
 
 import java.util.Collections;
 
-import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.CUSTOMER;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.CUSTOMER;
 
 @Data
 public class TbChangeOriginatorNodeConfiguration implements NodeConfiguration<TbChangeOriginatorNodeConfiguration> {
 
-    private ChangeOriginatorSource originatorSource;
+    private OriginatorSource originatorSource;
     private RelationsQuery relationsQuery;
     private String entityType;
     private String entityNamePattern;

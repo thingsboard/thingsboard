@@ -36,8 +36,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import java.util.List;
 import java.util.NoSuchElementException;
 
-import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.ENTITY;
-import static org.thingsboard.rule.engine.transform.ChangeOriginatorSource.RELATED;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
 
 @Slf4j
 @RuleNode(
