@@ -82,7 +82,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
                 resultAlarm = unassign(alarm, alarm.getAssignTs(), user);
             }
             if (result.isModified()) {
-                logEntityActionService.logEntityAction(tenantId, resultAlarm.getId(), resultAlarm,
+                logEntityActionService.logEntityAction(tenantId, alarm.getOriginator(), resultAlarm,
                         resultAlarm.getCustomerId(), actionType, user);
             }
             return new Alarm(resultAlarm);
@@ -107,7 +107,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         if (result.isModified()) {
             String systemComment = String.format("Alarm was acknowledged by user %s", user.getTitle());
             addSystemAlarmComment(alarmInfo, user, "ACK", systemComment);
-            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ACK, user);
         } else {
             throw new ThingsboardException("Alarm was already acknowledged!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -130,7 +130,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         if (result.isCleared()) {
             String systemComment = String.format("Alarm was cleared by user %s", user.getTitle());
             addSystemAlarmComment(alarmInfo, user, "CLEAR", systemComment);
-            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_CLEAR, user);
         } else {
             throw new ThingsboardException("Alarm was already cleared!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -149,7 +149,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             AlarmAssignee assignee = alarmInfo.getAssignee();
             String systemComment = String.format("Alarm was assigned by user %s to user %s", user.getTitle(), assignee.getTitle());
             addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment, assignee.getId());
-            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_ASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already assigned to this user!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -167,7 +167,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
         if (result.isModified()) {
             String systemComment = String.format("Alarm was unassigned by user %s", user.getTitle());
             addSystemAlarmComment(alarmInfo, user, "ASSIGN", systemComment);
-            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getId(), alarmInfo,
+            logEntityActionService.logEntityAction(alarm.getTenantId(), alarm.getOriginator(), alarmInfo,
                     alarmInfo.getCustomerId(), ActionType.ALARM_UNASSIGNED, user);
         } else {
             throw new ThingsboardException("Alarm was already unassigned!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
@@ -195,8 +195,8 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     @Override
     public Boolean delete(Alarm alarm, User user) {
         TenantId tenantId = alarm.getTenantId();
-        logEntityActionService.logEntityAction(tenantId, alarm.getId(), alarm, alarm.getCustomerId(),
-                ActionType.ALARM_DELETE, user, alarm.getOriginator());
+        logEntityActionService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
+                ActionType.ALARM_DELETE, user, alarm.getId());
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 
@@ -215,7 +215,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             if (result.isModified()) {
                 String comment = String.format("Alarm was unassigned because user %s - was deleted", userTitle);
                 addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
-                logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getId(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
+                logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
             }
         }
     }

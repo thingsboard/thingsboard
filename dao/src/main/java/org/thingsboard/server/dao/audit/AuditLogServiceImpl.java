@@ -29,6 +29,7 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.audit.ActionStatus;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -123,7 +124,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
             String entityName = "N/A";
-            if (entity != null) {
+            if (entity != null && !(entity instanceof Alarm)) {
                 entityName = entity.getName();
             } else {
                 try {
@@ -192,9 +193,9 @@ public class AuditLogServiceImpl implements AuditLogService {
                 actionData.set("comment", comment.getComment());
                 break;
             case ALARM_DELETE:
-                actionData.put("entityId", entityId.toString());
-                EntityId originatorId = extractParameter(EntityId.class, additionalInfo);
-                actionData.put("originatorId", originatorId != null ? originatorId.toString() : null);
+                EntityId alarmId = extractParameter(EntityId.class, additionalInfo);
+                actionData.put("alarmId", alarmId != null ? alarmId.toString() : null);
+                actionData.put("originatorId", entityId.toString());
                 break;
             case DELETED:
             case ACTIVATED:
