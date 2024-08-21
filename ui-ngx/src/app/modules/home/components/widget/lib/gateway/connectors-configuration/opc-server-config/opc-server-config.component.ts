@@ -77,7 +77,6 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
 
   constructor(private fb: FormBuilder) {
     this.serverConfigFormGroup = this.fb.group({
-      name: ['', []],
       url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
       scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],

@@ -147,8 +147,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   ngAfterViewInit(): void {
-    this.observeName();
-
     this.dataSource.sort = this.sort;
     this.dataSource.sortingDataAccessor = this.getSortingDataAccessor();
 
@@ -531,15 +529,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       basicConfig: [{}]
     });
     this.connectorForm.disable();
-  }
-
-  private observeName(): void {
-    this.connectorForm.get('name').valueChanges
-      .pipe(
-        filter(() => this.connectorForm.get('type').value === ConnectorType.MQTT),
-        takeUntil(this.destroy$)
-      )
-      .subscribe(name => this.connectorForm.get('basicConfig').get('broker.name')?.setValue(name));
   }
 
   private getSortingDataAccessor(): (data: GatewayAttributeData, sortHeaderId: string) => string | number {

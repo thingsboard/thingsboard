@@ -1,6 +1,5 @@
 {
   "server": {
-    "name": "OPC-UA Default Server",
     "url": "localhost:4840/freeopcua/server/",
     "timeoutInMillis": 5000,
     "scanPeriodInMillis": 5000,
