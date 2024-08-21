@@ -1362,7 +1362,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             serviceConfiguration.put("deviceTelemetryDataPointsRateLimit", profile.getTransportDeviceTelemetryDataPointsRateLimit());
         }
         serviceConfiguration.put("maxPayloadSize", context.getMaxPayloadSize());
-        serviceConfiguration.put("maxQueueSize", context.getMessageQueueSizePerDeviceLimit());
+        serviceConfiguration.put("maxInflightMessages", context.getMessageQueueSizePerDeviceLimit());
         serviceConfiguration.put("payloadType", deviceSessionCtx.getPayloadType());
 
         ack(ctx, msgId, MqttReasonCodes.PubAck.SUCCESS);

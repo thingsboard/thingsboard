@@ -49,8 +49,8 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
     @Value("${transport.mqtt.netty.max_payload_size}")
     private Integer maxPayloadSize;
 
-    @Value("${transport.mqtt.msg_queue_size_per_device_limit:100}")
-    private int maxQueueSize;
+    @Value("${transport.mqtt.msg_queue_size_per_device_limit}")
+    private int maxInflightMessages;
 
     @Before
     public void beforeTest() throws Exception {
@@ -110,7 +110,7 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         assertEquals(response.get("deviceTelemetryMsgRateLimit"), profileConfiguration.getTransportDeviceTelemetryMsgRateLimit());
         assertEquals(response.get("deviceTelemetryDataPointsRateLimit"), profileConfiguration.getTransportDeviceTelemetryDataPointsRateLimit());
         assertEquals(response.get("maxPayloadSize"), maxPayloadSize);
-        assertEquals(response.get("maxQueueSize"), maxQueueSize);
+        assertEquals(response.get("maxInflightMessages"), maxInflightMessages);
         assertEquals(response.get("payloadType"), TransportPayloadType.JSON.name());
 
         client.disconnect();
@@ -160,7 +160,7 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         assertEquals(response.get("gatewayDeviceTelemetryMsgRateLimit"), profileConfiguration.getTransportGatewayDeviceTelemetryMsgRateLimit());
         assertEquals(response.get("gatewayDeviceTelemetryDataPointsRateLimit"), profileConfiguration.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
         assertEquals(response.get("maxPayloadSize"), maxPayloadSize);
-        assertEquals(response.get("maxQueueSize"), maxQueueSize);
+        assertEquals(response.get("maxInflightMessages"), maxInflightMessages);
         assertEquals(response.get("payloadType"), TransportPayloadType.JSON.name());
 
         client.disconnect();
