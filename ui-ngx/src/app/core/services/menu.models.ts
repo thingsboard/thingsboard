@@ -76,7 +76,7 @@ export enum MenuId {
   mobile_app_settings = 'mobile_app_settings',
   security_settings = 'security_settings',
   security_settings_general = 'security_settings_general',
-  two_fa = '2fa',
+  two_fa = 'two_fa',
   oauth2 = 'oauth2',
   audit_log = 'audit_log',
   alarms = 'alarms',
