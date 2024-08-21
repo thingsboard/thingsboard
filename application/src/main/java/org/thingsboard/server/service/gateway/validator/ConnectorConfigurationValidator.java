@@ -120,16 +120,6 @@ public abstract class ConnectorConfigurationValidator {
         if (location == null) {
             location = fieldLocations.get(path.substring(0, path.lastIndexOf('.')));
         }
-        if (location == null) {
-            String pathToParent = path.substring(0, path.lastIndexOf('.'));
-            String previousElement = pathToParent.substring(pathToParent.lastIndexOf('.') + 1);
-            if (previousElement.chars().allMatch(Character::isDigit)) {
-                path = pathToParent.substring(0, pathToParent.lastIndexOf('.'));
-            } else {
-                path = pathToParent;
-            }
-            location = fieldLocations.get(path);
-        }
         return location;
     }
 

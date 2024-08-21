@@ -49,6 +49,14 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
 
     @Override
     public Object handleMissingInstantiator(DeserializationContext ctxt, Class<?> instClass, ValueInstantiator valueInsta, JsonParser p, String msg) {
+        JsonLocation currentLocation = p.currentLocation();
+        String currentName = p.getParsingContext().getCurrentName();
+        if (currentName == null) {
+            currentName = ctxt.getParser().getParsingContext().getParent().getCurrentName();
+        }
+        String errorMessage = "Field \"" + currentName + "\" is missing or contains wrong value";
+        errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr() - 1,
+                currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         return null;
     }
 
@@ -92,7 +100,8 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
     @Override
     public Object handleWeirdStringValue(DeserializationContext ctxt, Class<?> targetType, String valueToConvert, String failureMsg) {
         JsonLocation currentLocation = ctxt.getParser().currentLocation();
-        if (failureMsg.contains("not a valid") || "only \"true\" or \"false\" recognized".equals(failureMsg)) {
+        if (failureMsg.contains("not a valid")
+                || (failureMsg.contains("only") && failureMsg.contains("recognized") && failureMsg.toLowerCase().contains("true"))) {
             String errorMessage = "Invalid value \"" + valueToConvert + "\" for field \""
                     + ctxt.getParser().getParsingContext().getCurrentName()
                     + "\". Expected type: " + targetType.getSimpleName();
@@ -167,14 +176,14 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
 
 
     private static String getErrorMessageForFieldsWithKnownVariants(Class<?> targetTypeClass, JsonToken t, JsonParser p) throws IOException {
-        String errorMessage = "Invalid value for field '" + p.currentName()
-                + "\". Expected one of: ";
+        String errorMessage = "Invalid value for field \"" + p.currentName()
+                + "\". Expected";
         if (targetTypeClass.isEnum()) {
-            errorMessage += Arrays.toString(targetTypeClass.getEnumConstants()).toLowerCase();
+            errorMessage += " one of: " + Arrays.toString(targetTypeClass.getEnumConstants()).toLowerCase() + " values,";
         } else {
-            errorMessage += targetTypeClass.getSimpleName();
+            errorMessage += ": " + targetTypeClass.getSimpleName() + " value,";
         }
-        errorMessage += " but got " + t;
+        errorMessage += " but got " + t.asString();
         return errorMessage;
     }
 }

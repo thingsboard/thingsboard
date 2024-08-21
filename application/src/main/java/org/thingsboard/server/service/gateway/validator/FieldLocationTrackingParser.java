@@ -35,6 +35,8 @@ public class FieldLocationTrackingParser extends JsonParser {
     private final JsonParser delegate;
     @Getter
     private final Map<String, JsonLocation> fieldLocations = new HashMap<>();
+    private JsonToken previousToken;
+    private boolean inObjectArray = false;
 
     public FieldLocationTrackingParser(JsonParser delegate) {
         this.delegate = delegate;
@@ -43,12 +45,22 @@ public class FieldLocationTrackingParser extends JsonParser {
     @Override
     public JsonToken nextToken() throws IOException {
         JsonToken token = delegate.nextToken();
-        if (token == JsonToken.FIELD_NAME) {
-            String fieldPath = delegate.getParsingContext().pathAsPointer().toString()
-                    .replace("/", ".");
-            fieldLocations.put(fieldPath, delegate.currentLocation());
+        if (token == JsonToken.FIELD_NAME
+                || (previousToken == JsonToken.START_ARRAY && token == JsonToken.START_OBJECT)
+                || (inObjectArray && token == JsonToken.START_OBJECT)) {
+            addFieldLocation();
+            inObjectArray = true;
+        } else if (previousToken == JsonToken.END_OBJECT && token == JsonToken.END_ARRAY) {
+            inObjectArray = false;
         }
+        previousToken = token;
         return token;
+    }
+
+    private void addFieldLocation() {
+        String fieldPath = delegate.getParsingContext().pathAsPointer().toString()
+                .replace("/", ".");
+        fieldLocations.put(fieldPath, delegate.currentLocation());
     }
 
     @Override

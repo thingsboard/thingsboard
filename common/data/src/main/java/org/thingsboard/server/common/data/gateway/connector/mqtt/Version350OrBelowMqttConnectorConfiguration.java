@@ -147,7 +147,8 @@ public class Version350OrBelowMqttConnectorConfiguration {
         @NotBlank
         private String topicFilter;
 
-        @NotNull
+        @NotNull(message = "configuration object with one of the following types " +
+                "[\"json\", \"bytes\", \"custom\"] is required")
         @Valid
         private Converter converter;
 

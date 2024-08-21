@@ -21,6 +21,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import lombok.Data;
@@ -40,7 +41,9 @@ public class LatestMqttConnectorConfiguration {
     @Valid
     private List<DataMapping> dataMapping;
 
-    @NotNull
+    @NotNull(message = "configuration object with the following fields " +
+            "[\"connectRequests\", \"disconnectRequests\", \"attributeRequests\", " +
+            "\"attributeUpdates\", \"serverSideRpc\"] is required")
     @Valid
     private RequestsMapping requestsMapping;
 
@@ -85,19 +88,18 @@ public class LatestMqttConnectorConfiguration {
 
         private Boolean sendDataOnlyOnChange;
 
-        @NotNull(message = "Security configuration object is required")
+        @NotNull(message = "configuration object with one of the following types " +
+                "[\"anonymous\", \"basic\", \"certificates\"] is required")
         @Valid
         private Security security;
 
         @JsonTypeInfo(
                 use = JsonTypeInfo.Id.NAME,
-                defaultImpl = AnonymousSecurity.class,
                 visible = true,
                 property = "type")
         @JsonSubTypes({
                 @JsonSubTypes.Type(value = AnonymousSecurity.class, name = "anonymous"),
                 @JsonSubTypes.Type(value = BasicSecurity.class, name = "basic"),
-                @JsonSubTypes.Type(value = AccessTokenSecurity.class, name = "accessToken"),
                 @JsonSubTypes.Type(value = CertificatesSecurity.class, name = "certificates")
         })
         @Data
@@ -117,12 +119,6 @@ public class LatestMqttConnectorConfiguration {
 
             @NotBlank
             private String password;
-        }
-
-        @Data
-        public static class AccessTokenSecurity extends Security {
-            @NotBlank
-            private String accessToken;
         }
 
         @Data
@@ -148,7 +144,8 @@ public class LatestMqttConnectorConfiguration {
         @NotNull
         private Integer subscriptionQos;
 
-        @NotNull
+        @NotNull(message = "configuration object with one of the following types " +
+                "[\"json\", \"bytes\", \"custom\"] is required")
         @Valid
         private Converter converter;
 
@@ -225,23 +222,23 @@ public class LatestMqttConnectorConfiguration {
 
     @Data
     public static class RequestsMapping {
-        @NotNull
+        @NotEmpty
         @Valid
         private List<ConnectRequest> connectRequests;
 
-        @NotNull
+        @NotEmpty
         @Valid
         private List<DisconnectRequest> disconnectRequests;
 
-        @NotNull
+        @NotEmpty
         @Valid
         private List<AttributeRequest> attributeRequests;
 
-        @NotNull
+        @NotEmpty
         @Valid
         private List<AttributeUpdate> attributeUpdates;
 
-        @NotNull
+        @NotEmpty
         @Valid
         private List<ServerSideRpc> serverSideRpc;
 
@@ -313,7 +310,7 @@ public class LatestMqttConnectorConfiguration {
                 property = "type")
         @JsonSubTypes({
                 @JsonSubTypes.Type(value = OneWayServerSideRpc.class, name = "oneWay"),
-                @JsonSubTypes.Type(value = TwoWayServerSideRpc.class, name = "twoWay"),
+                @JsonSubTypes.Type(value = TwoWayServerSideRpc.class, name = "twoWay")
         })
         @Data
         public static class ServerSideRpc {
