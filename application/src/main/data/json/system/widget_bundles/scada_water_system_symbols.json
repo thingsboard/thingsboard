@@ -39,6 +39,8 @@
     "small_left_motor_pump",
     "right_motor_pump",
     "left_motor_pump",
+    "right_heat_pump",
+    "left_heat_pump",
     "short_bottom_filter",
     "long_bottom_filter",
     "short_top_filter",
