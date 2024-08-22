@@ -467,6 +467,9 @@ public class GitRepository {
             if (RepositoryAuthMethod.USERNAME_PASSWORD.equals(settings.getAuthMethod())) {
                 credentialsProvider = newCredentialsProvider(settings.getUsername(), settings.getPassword());
             } else if (RepositoryAuthMethod.PRIVATE_KEY.equals(settings.getAuthMethod())) {
+                if (StringUtils.startsWith(settings.getRepositoryUri(), "https://")) {
+                    throw new IllegalArgumentException("Invalid URI format for private key authentication");
+                }
                 sshSessionFactory = newSshdSessionFactory(settings.getPrivateKey(), settings.getPrivateKeyPassword(), directory);
             }
             return new AuthHandler(credentialsProvider, sshSessionFactory);
