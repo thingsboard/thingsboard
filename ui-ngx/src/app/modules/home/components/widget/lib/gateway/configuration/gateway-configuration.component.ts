@@ -25,7 +25,7 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { DeviceService } from '@core/http/device.service';
 import { Observable, of, Subject } from 'rxjs';
-import { mergeMap, takeUntil } from 'rxjs/operators';
+import { mergeMap, switchMap, takeUntil } from 'rxjs/operators';
 import { DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import {
@@ -92,19 +92,20 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
 
   saveConfig(): void {
     const { mode, advancedConfig } = deepTrim(this.removeEmpty(this.gatewayConfigGroup.value));
-    const value = { mode, ...advancedConfig };
+    const value = { mode, ...advancedConfig as GatewayConfigValue };
     value.thingsboard.statistics.commands = Object.values(value.thingsboard.statistics.commands ?? []);
     const attributes = this.generateAttributes(value);
 
-    this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributes).subscribe(_ => {
-      this.updateCredentials(value.thingsboard.security).subscribe(() => {
-        if (this.dialogRef) {
-          this.dialogRef.close();
-        } else {
-          this.gatewayConfigGroup.markAsPristine();
-          this.cd.detectChanges();
-        }
-      });
+    this.attributeService.saveEntityAttributes(this.device, AttributeScope.SHARED_SCOPE, attributes).pipe(
+      switchMap(_ => this.updateCredentials(value.thingsboard.security)),
+      takeUntil(this.destroy$),
+    ).subscribe(() => {
+      if (this.dialogRef) {
+        this.dialogRef.close();
+      } else {
+        this.gatewayConfigGroup.markAsPristine();
+        this.cd.detectChanges();
+      }
     });
   }
 
@@ -216,11 +217,11 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
     }
   }
 
-  private removeEmpty(obj: unknown) {
+  private removeEmpty(obj: Record<string, unknown>): Record<string, unknown> {
     return Object.fromEntries(
       Object.entries(obj)
         .filter(([_, v]) => v != null)
-        .map(([k, v]) => [k, v === Object(v) ? this.removeEmpty(v) : v])
+        .map(([k, v]) => [k, v === Object(v) ? this.removeEmpty(v as Record<string, unknown>) : v])
     );
   }
 
