@@ -186,6 +186,7 @@
               <div fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
+                  *ngIf="attribute.value !== ''"
                   class="attribute-copy"
                   [disabled]="isLoading$ | async"
                   [copyText]="attribute.value | tbJson"

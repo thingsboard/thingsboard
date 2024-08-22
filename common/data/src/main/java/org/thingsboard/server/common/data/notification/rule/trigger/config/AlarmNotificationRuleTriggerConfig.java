@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import jakarta.validation.constraints.NotEmpty;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
@@ -22,7 +23,6 @@ import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.AlarmSearchStatus;
 import org.thingsboard.server.common.data.alarm.AlarmSeverity;
 
-import jakarta.validation.constraints.NotEmpty;
 import java.io.Serializable;
 import java.util.Set;
 

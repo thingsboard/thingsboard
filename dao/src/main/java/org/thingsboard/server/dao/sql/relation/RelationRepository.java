@@ -58,9 +58,6 @@ public interface RelationRepository
                                                                                    String relationType,
                                                                                    String relationTypeGroup);
 
-    List<RelationEntity> findAllByFromIdAndFromType(UUID fromId,
-                                                    String fromType);
-
     @Query("SELECT r FROM RelationEntity r WHERE " +
             "r.relationTypeGroup = 'RULE_NODE' AND r.toType = 'RULE_CHAIN' " +
             "AND r.toId in (SELECT id from RuleChainEntity where type = :ruleChainType )")

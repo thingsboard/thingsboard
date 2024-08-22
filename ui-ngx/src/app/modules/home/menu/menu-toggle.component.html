@@ -17,7 +17,7 @@
 -->
 <a mat-button class="tb-button-toggle" (click)="toggleSection($event)">
   <tb-icon matButtonIcon *ngIf="section.icon !== null">{{section.icon}}</tb-icon>
-  <span>{{section.name | translate}}</span>
+  <span>{{section.customTranslate ? (section.name | customTranslate) : (section.name | translate)}}</span>
   <span class=" pull-right fa fa-chevron-down tb-toggle-icon"
         [ngClass]="{'tb-toggled' : section.opened}"></span>
 </a>

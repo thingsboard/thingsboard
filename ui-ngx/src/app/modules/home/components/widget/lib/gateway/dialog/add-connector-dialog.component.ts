@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -33,6 +33,8 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
+import { takeUntil, tap } from 'rxjs/operators';
+import { helpBaseUrl } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-add-connector-dialog',
@@ -40,7 +42,7 @@ import { ResourcesService } from '@core/services/resources.service';
   styleUrls: ['./add-connector-dialog.component.scss'],
   providers: [],
 })
-export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnDestroy {
+export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
 
   connectorForm: UntypedFormGroup;
 
@@ -66,7 +68,13 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       logLevel: [GatewayLogLevel.INFO, []],
       useDefaults: [true, []],
       sendDataOnlyOnChange: [false, []],
+      class: ['', []],
+      key: ['auto', []],
     });
+  }
+
+  ngOnInit(): void {
+    this.observeTypeChange();
   }
 
   ngOnDestroy(): void {
@@ -76,7 +84,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   helpLinkId(): string {
-    return 'https://thingsboard.io/docs/iot-gateway/configuration/';
+    return helpBaseUrl + '/docs/iot-gateway/configuration/';
   }
 
   cancel(): void {
@@ -99,23 +107,27 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   private uniqNameRequired(): ValidatorFn {
-    return (c: UntypedFormControl) => {
-      const newName = c.value.trim().toLowerCase();
-      const found = this.data.dataSourceData.find((connectorAttr) => {
-        const connectorData = connectorAttr.value;
-        return connectorData.name.toLowerCase() === newName;
-      });
-      if (found) {
-        if (c.hasError('required')) {
-          return c.getError('required');
-        }
-        return {
-          duplicateName: {
-            valid: false
-          }
-        };
-      }
-      return null;
+    return (control: UntypedFormControl) => {
+      const newName = control.value.trim().toLowerCase();
+      const isDuplicate = this.data.dataSourceData.some(({ value: { name } }) =>
+        name.toLowerCase() === newName
+      );
+
+      return isDuplicate ? { duplicateName: { valid: false } } : null;
     };
+  }
+
+  private observeTypeChange(): void {
+    this.connectorForm.get('type').valueChanges.pipe(
+      tap((type: ConnectorType) => {
+        const useDefaultControl = this.connectorForm.get('useDefaults');
+        if (type === ConnectorType.GRPC || type === ConnectorType.CUSTOM) {
+          useDefaultControl.setValue(false);
+        } else if (!useDefaultControl.value) {
+          useDefaultControl.setValue(true);
+        }
+      }),
+      takeUntil(this.destroy$),
+    ).subscribe();
   }
 }

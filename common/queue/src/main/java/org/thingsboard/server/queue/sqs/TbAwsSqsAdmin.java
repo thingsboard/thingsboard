@@ -26,15 +26,12 @@ import com.amazonaws.services.sqs.model.CreateQueueRequest;
 import com.amazonaws.services.sqs.model.GetQueueUrlResult;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ThingsBoardExecutors;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
 import org.thingsboard.server.queue.TbQueueAdmin;
 import org.thingsboard.server.queue.util.PropertyUtils;
 
 import java.util.Map;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 

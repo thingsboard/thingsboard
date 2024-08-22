@@ -517,7 +517,7 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
         if (!this.executingRpcRequest || rejection.status === 504) {
           this.subscription.rpcRejection = rejection;
           if (rejection.status === 504) {
-            this.subscription.rpcErrorText = 'Request Timeout.';
+            this.subscription.rpcErrorText = 'Request timeout';
           } else {
             this.subscription.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
             const error = parseHttpErrorMessage(rejection, this.translate);

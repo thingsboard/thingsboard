@@ -1256,7 +1256,6 @@
         "maximum-upload-file-size": "Maksimalus įkeliamo failo dydis: {{ size }}",
         "cannot-upload-file": "Failo įkelti nepavyko",
         "settings": "Nustatymai",
-        "layout-settings": "Išdėstymo nustatymai",
         "columns-count": "Stulpelių skaičius",
         "columns-count-required": "Stulpelių skaičius būtinas.",
         "min-columns-count-message": "Minimalus stulpelių skaičius - 10.",
@@ -6785,7 +6784,6 @@
             "event-key-contains": "Event key contains...",
             "show-connector": "Show for the connector",
             "connector-state-param-key": "Connector state parameter key",
-            "status": "Status",
             "message": "Message",
             "created-time": "Created time"
         },

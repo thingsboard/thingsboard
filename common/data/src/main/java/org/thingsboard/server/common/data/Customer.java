@@ -20,7 +20,6 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonProperty.Access;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -30,7 +29,7 @@ import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
-public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId>, HasTitle {
+public class Customer extends ContactBased<CustomerId> implements HasTenantId, ExportableEntity<CustomerId>, HasTitle, HasVersion {
 
     private static final long serialVersionUID = -1599722990298929275L;
 
@@ -43,6 +42,8 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
 
     @Getter @Setter
     private CustomerId externalId;
+    @Getter @Setter
+    private Long version;
 
     public Customer() {
         super();
@@ -57,6 +58,7 @@ public class Customer extends ContactBased<CustomerId> implements HasTenantId, E
         this.tenantId = customer.getTenantId();
         this.title = customer.getTitle();
         this.externalId = customer.getExternalId();
+        this.version = customer.getVersion();
     }
 
     public TenantId getTenantId() {
