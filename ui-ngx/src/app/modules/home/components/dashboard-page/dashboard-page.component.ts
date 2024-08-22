@@ -1229,6 +1229,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         } else {
           this.dashboard = dashboard;
           this.setEditMode(false, false);
+          this.dashboardConfiguration = this.dashboard.configuration;
         }
       });
     }
