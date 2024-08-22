@@ -40,8 +40,9 @@ import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
-import java.util.List;
+import java.util.EnumSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -63,7 +64,7 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("20107cf0-1c5e-4ac4-8131-7c466c955a7c"));
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1be24225-b669-4b26-ab7e-083aaa82d0a0"));
 
-    private final List<TimeUnit> supportedTimeUnits = List.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
+    private final Set<TimeUnit> supportedTimeUnits = EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
     private final String supportedTimeUnitsStr = String.join(",", TimeUnit.SECONDS.name(), TimeUnit.MINUTES.name(), TimeUnit.HOURS.name());
 
     private TbMsgDelayNode node;
@@ -92,8 +93,8 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @ParameterizedTest
     @ValueSource(ints = {-1, 0, 5000000})
-    public void givenInvalidMaxPendingMsgsValue_whenInit_thenThrowsException() {
-        config.setMaxPendingMsgs(-1);
+    public void givenInvalidMaxPendingMsgsValue_whenInit_thenThrowsException(int maxPendingMsgs) {
+        config.setMaxPendingMsgs(maxPendingMsgs);
 
         assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
                 .isInstanceOf(TbNodeException.class)

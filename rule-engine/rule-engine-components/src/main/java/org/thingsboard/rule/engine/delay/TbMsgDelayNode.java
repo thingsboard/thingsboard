@@ -31,7 +31,9 @@ import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -54,8 +56,8 @@ import java.util.concurrent.TimeUnit;
 )
 public class TbMsgDelayNode implements TbNode {
 
-    private final List<TimeUnit> supportedTimeUnits = List.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
-    private final String supportedTimeUnitsStr = String.join(",", TimeUnit.SECONDS.name(), TimeUnit.MINUTES.name(), TimeUnit.HOURS.name());
+    private static final Set<TimeUnit> supportedTimeUnits = EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
+    private static final String supportedTimeUnitsStr = String.join(",", TimeUnit.SECONDS.name(), TimeUnit.MINUTES.name(), TimeUnit.HOURS.name());
 
     private TbMsgDelayNodeConfiguration config;
     private ConcurrentMap<UUID, TbMsg> pendingMsgs;
