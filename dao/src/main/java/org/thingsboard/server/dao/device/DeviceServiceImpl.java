@@ -407,7 +407,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
     }
 
     @Override
-    public Long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type) {
+    public long countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(TenantId tenantId, DeviceProfileId deviceProfileId, OtaPackageType type) {
         log.trace("Executing countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage, tenantId [{}], deviceProfileId [{}], type [{}]", tenantId, deviceProfileId, type);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validateId(deviceProfileId, id -> INCORRECT_DEVICE_PROFILE_ID + id);
