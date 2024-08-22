@@ -25,6 +25,7 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.hibernate.annotations.JdbcType;
 import org.hibernate.dialect.PostgreSQLJsonPGObjectJsonbType;
 import org.thingsboard.common.util.JacksonUtil;
@@ -48,6 +49,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.DEVICE_PROFILE_TABLE_NAME)
+@ToString(callSuper = true)
 public final class DeviceProfileEntity extends BaseVersionedEntity<DeviceProfile> {
 
     @Column(name = ModelConstants.DEVICE_PROFILE_TENANT_ID_PROPERTY)
