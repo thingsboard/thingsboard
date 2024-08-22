@@ -37,6 +37,7 @@ import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.service.validator.AuditLogDataValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
+import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
 
@@ -44,7 +45,6 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.BDDMockito.never;
 import static org.mockito.BDDMockito.then;
 
 @ExtendWith(MockitoExtension.class)
@@ -73,15 +73,17 @@ public class AuditLogServiceImplTest {
     private AuditLogSink auditLogSink;
 
     @Test
-    public void givenEntityIsNull_whenLogEntityAction_thenShouldFetchEntityName() {
+    public void givenEntityIsNull_whenLogEntityAction_thenShouldFetchEntityName() throws Exception {
         // GIVEN
         given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
+        given(entityService.fetchEntityName(any(), any())).willReturn(Optional.of("Test device"));
 
         // WHEN
         auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, DEVICE_ID, null, ActionType.ADDED, null);
 
         // THEN
         then(entityService).should().fetchEntityName(TENANT_ID, DEVICE_ID);
+        verifyEntityName("Test device");
     }
 
     @Test
@@ -89,7 +91,7 @@ public class AuditLogServiceImplTest {
         // GIVEN
         given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
         Alarm alarm = new Alarm(new AlarmId(UUID.fromString("55f577b3-6ef5-4b99-92dc-70eb78b2a970")));
-        alarm.setType("Test Alarm");
+        alarm.setType("Test alarm");
         AlarmComment comment = new AlarmComment();
         comment.setComment(JacksonUtil.toJsonNode("{\"comment\": \"test\"}"));
 
@@ -97,13 +99,7 @@ public class AuditLogServiceImplTest {
         auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, alarm.getId(), alarm, ActionType.ADDED_COMMENT, null, comment);
 
         // THEN
-        then(entityService).should(never()).fetchEntityName(any(), any());
-        ArgumentCaptor<Callable> submitTask = ArgumentCaptor.forClass(Callable.class);
-        then(executor).should().submit(submitTask.capture());
-        submitTask.getValue().call();
-        ArgumentCaptor<AuditLog> auditLogEntry = ArgumentCaptor.forClass(AuditLog.class);
-        then(auditLogDao).should().save(eq(TENANT_ID), auditLogEntry.capture());
-        assertThat(auditLogEntry.getValue().getEntityName()).isEqualTo("Test Alarm");
+        verifyEntityName("Test alarm");
     }
 
     @Test
@@ -111,31 +107,38 @@ public class AuditLogServiceImplTest {
         // GIVEN
         given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
         AlarmInfo alarmInfo = new AlarmInfo();
-        alarmInfo.setOriginatorName("Test Device");
+        alarmInfo.setOriginatorName("Test device");
 
         // WHEN
         auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, DEVICE_ID, alarmInfo, ActionType.ALARM_ASSIGNED, null);
 
         // THEN
-        then(entityService).should(never()).fetchEntityName(any(), any());
-        ArgumentCaptor<Callable> submitTask = ArgumentCaptor.forClass(Callable.class);
-        then(executor).should().submit(submitTask.capture());
-        submitTask.getValue().call();
-        ArgumentCaptor<AuditLog> auditLogEntry = ArgumentCaptor.forClass(AuditLog.class);
-        then(auditLogDao).should().save(eq(TENANT_ID), auditLogEntry.capture());
-        assertThat(auditLogEntry.getValue().getEntityName()).isEqualTo("Test Device");
+        verifyEntityName("Test device");
     }
 
     @Test
-    public void givenActionTypeIsAlarmActionAndEntityIsAlarm_whenLogEntityAction_thenShouldFetchEntityName() {
+    public void givenActionTypeIsAlarmActionAndEntityIsAlarm_whenLogEntityAction_thenShouldFetchEntityName() throws Exception {
         // GIVEN
         given(auditLogLevelFilter.logEnabled(any(), any())).willReturn(true);
+        given(entityService.fetchEntityName(any(), any())).willReturn(Optional.of("Test alarm"));
 
         // WHEN
         auditLogService.logEntityAction(TENANT_ID, CUSTOMER_ID, USER_ID, USER_NAME, DEVICE_ID, new Alarm(), ActionType.ALARM_DELETE, null);
 
         // THEN
         then(entityService).should().fetchEntityName(TENANT_ID, DEVICE_ID);
+        verifyEntityName("Test alarm");
+    }
+
+    private void verifyEntityName(String entityName) throws Exception {
+        then(auditLogDataValidator).should().validate(any(AuditLog.class), any());
+        ArgumentCaptor<Callable> submitTask = ArgumentCaptor.forClass(Callable.class);
+        then(executor).should().submit(submitTask.capture());
+        submitTask.getValue().call();
+        ArgumentCaptor<AuditLog> auditLogEntry = ArgumentCaptor.forClass(AuditLog.class);
+        then(auditLogDao).should().save(eq(TENANT_ID), auditLogEntry.capture());
+        assertThat(auditLogEntry.getValue().getEntityName()).isEqualTo(entityName);
+        then(auditLogSink).should().logAction(any());
     }
 
 }

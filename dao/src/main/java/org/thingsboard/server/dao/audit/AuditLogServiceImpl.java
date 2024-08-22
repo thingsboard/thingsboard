@@ -123,19 +123,7 @@ public class AuditLogServiceImpl implements AuditLogService {
             JsonNode actionData = constructActionData(entityId, entity, actionType, additionalInfo);
             ActionStatus actionStatus = ActionStatus.SUCCESS;
             String failureDetails = "";
-            String entityName = "N/A";
-            if (entity != null) {
-                if (actionType.isAlarmAction()) {
-                    entityName = (entity instanceof AlarmInfo alarmInfo)
-                            ? alarmInfo.getOriginatorName()
-                            : entityService.fetchEntityName(tenantId, entityId).orElse(entityName);
-                } else {
-                    entityName = entity.getName();
-                }
-            } else try {
-                entityName = entityService.fetchEntityName(tenantId, entityId).orElse(entityName);
-            } catch (Exception ignored) {
-            }
+            String entityName = getEntityName(tenantId, entityId, entity, actionType);
             if (e != null) {
                 actionStatus = ActionStatus.FAILURE;
                 failureDetails = getFailureStack(e);
@@ -159,6 +147,27 @@ public class AuditLogServiceImpl implements AuditLogService {
                     failureDetails);
         } else {
             return null;
+        }
+    }
+
+    private <E extends HasName, I extends EntityId> String getEntityName(TenantId tenantId, I entityId, E entity, ActionType actionType) {
+        if (entity == null) {
+            return fetchEntityName(tenantId, entityId);
+        }
+        if (!actionType.isAlarmAction()) {
+            return entity.getName();
+        }
+        if (entity instanceof AlarmInfo alarmInfo) {
+            return alarmInfo.getOriginatorName();
+        }
+        return fetchEntityName(tenantId, entityId);
+    }
+
+    private <I extends EntityId> String fetchEntityName(TenantId tenantId, I entityId) {
+        try {
+            return entityService.fetchEntityName(tenantId, entityId).orElse("N/A");
+        } catch (Exception ignored) {
+            return "N/A";
         }
     }
 

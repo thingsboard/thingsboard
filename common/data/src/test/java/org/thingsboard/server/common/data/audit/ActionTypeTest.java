@@ -17,7 +17,8 @@ package org.thingsboard.server.common.data.audit;
 
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import java.util.EnumSet;
+import java.util.Set;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.thingsboard.server.common.data.audit.ActionType.ACTIVATED;
@@ -40,7 +41,7 @@ import static org.thingsboard.server.common.data.audit.ActionType.SUSPENDED;
 
 class ActionTypeTest {
 
-    private final List<ActionType> typesWithNullRuleEngineMsgType = List.of(
+    private final Set<ActionType> typesWithNullRuleEngineMsgType = EnumSet.of(
             RPC_CALL,
             CREDENTIALS_UPDATED,
             ACTIVATED,
@@ -55,9 +56,11 @@ class ActionTypeTest {
             REST_API_RULE_ENGINE_CALL
     );
 
-    private final List<ActionType> alarmActionTypes = List.of(
+    private final Set<ActionType> alarmActionTypes = EnumSet.of(
             ALARM_ACK, ALARM_CLEAR, ALARM_DELETE, ALARM_ASSIGNED, ALARM_UNASSIGNED
     );
+
+    private final Set<ActionType> readActionTypes = EnumSet.of(CREDENTIALS_READ, ATTRIBUTES_READ);
 
     // backward-compatibility tests
 
@@ -81,6 +84,18 @@ class ActionTypeTest {
                 assertThat(type.isAlarmAction()).isTrue();
             } else {
                 assertThat(type.isAlarmAction()).isFalse();
+            }
+        }
+    }
+
+    @Test
+    void isReadActionTypeTest() {
+        var types = ActionType.values();
+        for (var type : types) {
+            if (readActionTypes.contains(type)) {
+                assertThat(type.isRead()).isTrue();
+            } else {
+                assertThat(type.isRead()).isFalse();
             }
         }
     }
