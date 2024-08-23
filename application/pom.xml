@@ -276,6 +276,12 @@
             <groupId>org.thingsboard</groupId>
             <artifactId>tools</artifactId>
             <scope>test</scope>
+            <exclusions>
+                <exclusion>
+                    <artifactId>libthrift</artifactId>
+                    <groupId>org.apache.thrift</groupId>
+                </exclusion>
+            </exclusions>
         </dependency>
         <dependency>
             <groupId>org.thingsboard</groupId>
