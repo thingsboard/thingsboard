@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.service.security.auth.jwt.extractor;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationServiceException;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.config.ThingsboardSecurityConfiguration;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 @Component(value="jwtQueryTokenExtractor")
 public class JwtQueryTokenExtractor implements TokenExtractor {

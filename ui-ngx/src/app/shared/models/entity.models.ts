@@ -187,3 +187,7 @@ export const entityFields: {[fieldName: string]: EntityField} = {
 export interface HasTenantId {
   tenantId?: TenantId;
 }
+
+export interface HasVersion {
+  version?: number;
+}

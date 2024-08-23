@@ -16,7 +16,7 @@
 
 -->
 <section fxLayout="row" fxLayoutAlign="space-between start" class="notification"
-         [ngStyle]="{borderColor: notificationColor()}">
+         [ngStyle]="{borderColor: notificationColor(), backgroundColor: notificationBackgroundColor()}">
   <div *ngIf="showIcon; else defaultIcon">
     <tb-icon class="icon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
       {{ notification.additionalConfig.icon.icon }}

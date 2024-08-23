@@ -35,8 +35,6 @@ import {
   ConnectorType,
   GatewayConnectorDefaultTypesTranslatesMap,
   HTTPMethods,
-  ModbusCodesTranslate,
-  ModbusCommandTypes,
   noLeadTrailSpacesRegex,
   RPCCommand,
   RPCTemplateConfig,
@@ -80,10 +78,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   saveTemplate: EventEmitter<RPCTemplateConfig> = new EventEmitter();
 
   commandForm: FormGroup;
-  isMQTTWithResponse: FormControl;
-  codesArray: Array<number> = [1, 2, 3, 4, 5, 6, 15, 16];
   ConnectorType = ConnectorType;
-  modbusCommandTypes = Object.values(ModbusCommandTypes) as ModbusCommandTypes[];
   bACnetRequestTypes = Object.values(BACnetRequestTypes) as BACnetRequestTypes[];
   bACnetObjectTypes = Object.values(BACnetObjectTypes) as BACnetObjectTypes[];
   bLEMethods = Object.values(BLEMethods) as BLEMethods[];
@@ -99,7 +94,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   SocketMethodProcessingsTranslates = SocketMethodProcessingsTranslates;
   SNMPMethodsTranslations = SNMPMethodsTranslations;
   gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslatesMap;
-  modbusCodesTranslate = ModbusCodesTranslate;
 
   urlPattern = /^[-a-zA-Zd_$:{}?~+=\/.0-9-]*$/;
   numbersOnlyPattern = /^[0-9]*$/;
@@ -135,7 +129,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
         this.propagateChange({...this.commandForm.value, ...value});
       }
     });
-    this.isMQTTWithResponse = this.fb.control(false);
     this.observeMQTTWithResponse();
   }
 
@@ -153,29 +146,10 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           requestTopicExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
           responseTopicExpression: [{ value: null, disabled: true }, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTimeout: [null, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
+          responseTimeout: [{ value: null, disabled: true }, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
           valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-        })
-        break;
-      case ConnectorType.MODBUS:
-        formGroup = this.fb.group({
-          tag: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          type: [null, [Validators.required]],
-          functionCode: [null, [Validators.required]],
-          value: [null, []],
-          address: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]],
-          objectsCount: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]]
-        })
-        const valueForm = formGroup.get('value');
-        formGroup.get('functionCode').valueChanges.subscribe(value => {
-          if (value > 4) {
-            valueForm.addValidators([Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]);
-          } else {
-            valueForm.clearValidators();
-            valueForm.setValue(null);
-          }
-          valueForm.updateValueAndValidity();
-        })
+          withResponse: [false, []],
+        });
         break;
       case ConnectorType.BACNET:
         formGroup = this.fb.group({
@@ -407,12 +381,21 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   }
 
   private observeMQTTWithResponse(): void {
-    this.isMQTTWithResponse.valueChanges.pipe(
-      tap((isActive: boolean) => {
-        const responseControl = this.commandForm.get('responseTopicExpression');
-        isActive ? responseControl.enable() : responseControl.disable();
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe();
+    if (this.connectorType === ConnectorType.MQTT) {
+      this.commandForm.get('withResponse').valueChanges.pipe(
+        tap((isActive: boolean) => {
+          const responseTopicControl = this.commandForm.get('responseTopicExpression');
+          const responseTimeoutControl = this.commandForm.get('responseTimeout');
+          if (isActive) {
+            responseTopicControl.enable();
+            responseTimeoutControl.enable();
+          } else {
+            responseTopicControl.disable();
+            responseTimeoutControl.disable();
+          }
+        }),
+        takeUntil(this.destroy$),
+      ).subscribe();
+    }
   }
 }

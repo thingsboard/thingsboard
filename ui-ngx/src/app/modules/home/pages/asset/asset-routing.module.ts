@@ -24,14 +24,14 @@ import { EntityDetailsPageComponent } from '@home/components/entity/entity-detai
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
+import { MenuId } from '@core/services/menu.models';
 
 export const assetRoutes: Routes = [
   {
     path: 'assets',
     data: {
       breadcrumb: {
-        label: 'asset.assets',
-        icon: 'domain'
+        menuId: MenuId.assets
       }
     },
     children: [

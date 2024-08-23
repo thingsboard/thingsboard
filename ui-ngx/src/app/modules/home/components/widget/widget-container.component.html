@@ -26,12 +26,10 @@
                 'mat-elevation-z4': widget.dropShadow,
                 'tb-overflow-visible': widgetComponent.widgetContext?.overflowVisible,
                 'tb-has-timewindow': widget.hasTimewindow,
-                'tb-edit': isEdit
+                'tb-edit': isEdit || isEditingWidget,
+                'tb-hover': hovered
              }"
-     [ngStyle]="widget.style"
-     (mousedown)="onMouseDown($event)"
-     (click)="onClicked($event)"
-     (contextmenu)="onContextMenu($event)">
+     [ngStyle]="widget.style">
   <div *ngIf="!!widgetComponent.widgetContext?.inited"
        class="tb-widget-header">
     <ng-container *ngIf="!widgetComponent.widgetContext?.embedTitlePanel">
@@ -57,31 +55,10 @@
       </button>
       <button mat-icon-button
               [fxShow]="!isEdit && widget.enableFullscreen"
-              (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen"
+              (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen; updateEditWidgetActionsTooltipState()"
               matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
               matTooltipPosition="above">
         <tb-icon>{{ widget.isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</tb-icon>
-      </button>
-      <button mat-icon-button
-              [fxShow]="isEditActionEnabled && !widget.isFullscreen"
-              (click)="onEdit($event)"
-              matTooltip="{{ 'widget.edit' | translate }}"
-              matTooltipPosition="above">
-        <tb-icon>edit</tb-icon>
-      </button>
-      <button mat-icon-button
-              [fxShow]="isExportActionEnabled && !widget.isFullscreen"
-              (click)="onExport($event)"
-              matTooltip="{{ 'widget.export' | translate }}"
-              matTooltipPosition="above">
-        <tb-icon>file_download</tb-icon>
-      </button>
-      <button mat-icon-button
-              [fxShow]="isRemoveActionEnabled && !widget.isFullscreen"
-              (click)="onRemove($event);"
-              matTooltip="{{ 'widget.remove' | translate }}"
-              matTooltipPosition="above">
-        <tb-icon>close</tb-icon>
       </button>
     </div>
   </div>
@@ -95,7 +72,7 @@
     </tb-widget>
   </div>
 </div>
-<ng-template #widgetTitlePanel>
+<ng-template #widgetTitlePanel let-titleSuffixTemplate="titleSuffixTemplate">
   <div *ngIf="widget.showWidgetTitlePanel"
        class="tb-widget-title">
               <div *ngIf="widget.showTitle"
@@ -107,6 +84,7 @@
                 <div class="mat-subtitle-1 title" [style]="widget.titleStyle">
                   {{widget.title$ | async}}
                 </div>
+                <ng-container *ngTemplateOutlet="titleSuffixTemplate"></ng-container>
               </div>
     <tb-timewindow *ngIf="widget.hasTimewindow"
                    aggregation="{{widget.hasAggregation}}"

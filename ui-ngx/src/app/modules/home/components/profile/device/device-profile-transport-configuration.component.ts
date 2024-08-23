@@ -23,12 +23,10 @@ import {
   UntypedFormControl,
   UntypedFormGroup,
   ValidationErrors,
-  Validator,
-  Validators
+  Validator
 } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileTransportConfiguration, DeviceTransportType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
 
@@ -55,15 +53,6 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   deviceProfileTransportConfigurationFormGroup: UntypedFormGroup;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
-
   @Input()
   disabled: boolean;
 
@@ -87,7 +76,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
 
   ngOnInit() {
     this.deviceProfileTransportConfigurationFormGroup = this.fb.group({
-      configuration: [null, Validators.required]
+      configuration: [null]
     });
     this.deviceProfileTransportConfigurationFormGroup.valueChanges.subscribe(() => {
       this.updateModel();
@@ -110,7 +99,7 @@ export class DeviceProfileTransportConfigurationComponent implements ControlValu
       delete configuration.type;
     }
     setTimeout(() => {
-      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration}, {emitEvent: false});
+      this.deviceProfileTransportConfigurationFormGroup.patchValue({configuration});
     }, 0);
   }
 

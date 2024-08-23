@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.queue.environment;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.zookeeper.Environment;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
-
-import jakarta.annotation.PostConstruct;
 
 /**
  * Created by igor on 11/24/16.

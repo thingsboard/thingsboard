@@ -62,4 +62,5 @@ public class CacheSpecsMapTest {
     public void givenCacheConfig_whenCacheManagerReady_thenVerifyNonExistedCaches() {
         assertThat(cacheManager.getCache("rainbows_and_unicorns")).isNull();
     }
+
 }

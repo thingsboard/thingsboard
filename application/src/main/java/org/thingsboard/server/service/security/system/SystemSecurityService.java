@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.security.system;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.core.AuthenticationException;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -26,8 +27,6 @@ import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.service.security.model.SecurityUser;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 public interface SystemSecurityService {
 

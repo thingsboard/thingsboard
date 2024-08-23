@@ -44,7 +44,11 @@
   </section>
 </ng-container>
 <ng-template #emptyNotification>
-  <img src="assets/notification-bell.svg" alt="empty notification" style="margin: 20px 24%">
+  <div class="tb-no-notification-svg-color" style="margin: 20px 24%">
+    <svg height="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 149 156" width="100%">
+      <use [attr.xlink:href]="'assets/notification-bell.svg#CHECK_ICON'"></use>
+    </svg>
+  </div>
   <span style="text-align: center; margin-bottom: 12px" translate>notification.no-notifications-yet</span>
 </ng-template>
 <ng-template #loadingNotification>

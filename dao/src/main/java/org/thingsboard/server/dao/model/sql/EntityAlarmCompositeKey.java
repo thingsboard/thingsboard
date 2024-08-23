@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 
-import jakarta.persistence.Transient;
 import java.io.Serializable;
 import java.util.UUID;
 

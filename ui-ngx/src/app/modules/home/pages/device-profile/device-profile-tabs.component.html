@@ -35,8 +35,7 @@
     <div formGroupName="profileData">
       <tb-device-profile-transport-configuration
         formControlName="transportConfiguration"
-        [isAdd] = "isTransportTypeChanged"
-        required>
+        [isAdd]="isTransportTypeChanged">
       </tb-device-profile-transport-configuration>
     </div>
   </div>
@@ -65,8 +64,7 @@
   <div class="mat-padding" [formGroup]="detailsForm">
     <div formGroupName="profileData">
       <tb-device-profile-configuration
-        formControlName="configuration"
-        required>
+        formControlName="configuration">
       </tb-device-profile-configuration>
     </div>
   </div>

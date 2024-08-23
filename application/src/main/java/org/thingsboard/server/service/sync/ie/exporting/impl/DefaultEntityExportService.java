@@ -22,6 +22,7 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -74,6 +75,9 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
+        if (entity instanceof HasVersion hasVersion) {
+            hasVersion.setVersion(null);
+        }
 
         var externalId = entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
         ctx.putExternalId(entityId, externalId);

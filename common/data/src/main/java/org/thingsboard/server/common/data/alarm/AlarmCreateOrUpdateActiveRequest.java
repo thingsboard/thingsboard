@@ -17,8 +17,11 @@ package org.thingsboard.server.common.data.alarm;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 import lombok.Data;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -26,9 +29,6 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
-
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotNull;
 
 @Data
 @Builder
@@ -53,9 +53,12 @@ public class AlarmCreateOrUpdateActiveRequest implements AlarmModificationReques
     private long startTs;
     @Schema(description = "Timestamp of the alarm end time(last time update), in milliseconds", example = "1634111163522")
     private long endTs;
+
+    @ToString.Exclude
     @NoXss
     @Schema(description = "JSON object with alarm details")
     private JsonNode details;
+
     @Valid
     @Schema(description = "JSON object with propagation details")
     private AlarmPropagationInfo propagation;

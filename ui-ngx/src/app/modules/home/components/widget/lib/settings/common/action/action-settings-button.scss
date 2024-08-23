@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-.mdc-button.tb-action-settings-button {
+.mdc-button.mat-mdc-outlined-button.mat-mdc-button-base.tb-action-settings-button {
   width: 100%;
+  height: 40px;
   .mdc-button__label {
     width: 100%;
     & > div {

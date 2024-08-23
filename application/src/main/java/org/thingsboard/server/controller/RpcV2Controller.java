@@ -46,10 +46,10 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.exception.ToErrorResponseEntity;
 import org.thingsboard.server.queue.util.TbCoreComponent;
-import org.thingsboard.server.common.msg.rpc.RemoveRpcActorMsg;
 import org.thingsboard.server.service.security.permission.Operation;
 
 import java.util.UUID;
@@ -118,6 +118,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @ApiResponse(responseCode = "200", description = "Persistent RPC request was saved to the database or lightweight RPC request was sent to the device."),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to send the RPC request. Most likely, User belongs to different Customer or Tenant."),
+            @ApiResponse(responseCode = "413", description = "Request payload is too large"),
             @ApiResponse(responseCode = "504", description = "Timeout to process the RPC call. Most likely, device is offline."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
@@ -136,6 +137,7 @@ public class RpcV2Controller extends AbstractRpcController {
             @ApiResponse(responseCode = "200", description = "Persistent RPC request was saved to the database or lightweight RPC response received."),
             @ApiResponse(responseCode = "400", description = "Invalid structure of the request."),
             @ApiResponse(responseCode = "401", description = "User is not authorized to send the RPC request. Most likely, User belongs to different Customer or Tenant."),
+            @ApiResponse(responseCode = "413", description = "Request payload is too large"),
             @ApiResponse(responseCode = "504", description = "Timeout to process the RPC call. Most likely, device is offline."),
     })
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
