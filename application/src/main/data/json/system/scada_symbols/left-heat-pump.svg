@@ -48,7 +48,7 @@
       "stateRenderFunction": null,
       "actions": {
         "click": {
-          "actionFunction": "if (ctx.values.running) {\n    var temperature = ctx.values.temperature; \n    var maxTemperature = ctx.properties.maxTemperature;\n    var step = ctx.properties.temperatureStep;\n    \n    var newTemperature = Math.min(maxTemperature, temperature + step);\n    ctx.api.setValue('temperature', newTemperature);\n    ctx.api.callAction(event, 'updateTemperatureState', newTemperature, {\n        error: () => {\n            ctx.api.setValue('temperature', temperature);\n        }\n    });\n}"
+          "actionFunction": "if (ctx.values.running) {\n    var temperature = ctx.values.temperature; \n    var maxTemperature = ctx.properties.maxTemperature;\n    var minTemperature = ctx.properties.minTemperature;\n    var step = ctx.properties.temperatureStep;\n    var newTemperature = temperature || minTemperature === 0 ? Math.min(maxTemperature, temperature + step) : minTemperature;\n    ctx.api.setValue('temperature', newTemperature);\n    ctx.api.callAction(event, 'updateTemperatureState', newTemperature, {\n        error: () => {\n            ctx.api.setValue('temperature', temperature);\n        }\n    });\n}"
         }
       }
     },
@@ -62,7 +62,7 @@
       "stateRenderFunction": null,
       "actions": {
         "click": {
-          "actionFunction": "var rinning = ctx.values.running;\nvar action = rinning ? 'stop' : 'run';\n\nif (!ctx.values.temperature) {\n    ctx.api.setValue('temperature', ctx.properties.minTemperature);\n    ctx.api.callAction(event, 'updateTemperatureState', ctx.properties.minTemperature, {\n        error: () => {\n            ctx.api.setValue('temperature', ctx.values.temperature);\n        }\n    });\n}\n\nctx.api.callAction(event, action, undefined, {\n  next: () => {\n     ctx.api.setValue('running', !rinning);\n  }\n});"
+          "actionFunction": "var rinning = ctx.values.running;\nvar action = rinning ? 'stop' : 'run';\n\nctx.api.callAction(event, action, undefined, {\n  next: () => {\n     ctx.api.setValue('running', !rinning);\n  }\n});"
         }
       }
     },
@@ -422,7 +422,7 @@
       "disableOnProperty": null,
       "rowClass": "column-xs",
       "fieldClass": "",
-      "min": null,
+      "min": 0,
       "max": null,
       "step": 1
     },
@@ -438,7 +438,7 @@
       "disableOnProperty": null,
       "rowClass": "",
       "fieldClass": "",
-      "min": null,
+      "min": 0,
       "max": null,
       "step": 1
     },
