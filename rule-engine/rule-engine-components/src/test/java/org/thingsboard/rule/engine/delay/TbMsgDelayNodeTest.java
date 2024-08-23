@@ -235,11 +235,28 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
         return Stream.of(
-                // config for version 1 with upgrade from version 0 (useMetadataPeriodInSecondsPatterns does not exist)
+                // config for version 1 with upgrade from version 0 (useMetadataPeriodInSecondsPatterns does not exist and periodInSeconds exists)
                 Arguments.of(0,
                         """
                                     {
                                         "periodInSeconds": 13,
+                                        "maxPendingMsgs": 1000,
+                                        "periodInSecondsPattern": "17"
+                                    }
+                                """,
+                        true,
+                        """
+                                    {
+                                        "period": "13",
+                                        "timeUnit": "SECONDS",
+                                        "maxPendingMsgs": 1000
+                                    }
+                                """
+                ),
+                // config for version 1 with upgrade from version 0 (useMetadataPeriodInSecondsPatterns and periodInSeconds do not exist)
+                Arguments.of(0,
+                        """
+                                    {
                                         "maxPendingMsgs": 1000,
                                         "periodInSecondsPattern": "17"
                                     }

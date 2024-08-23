@@ -156,6 +156,9 @@ public class TbMsgDelayNode implements TbNode {
                         ((ObjectNode) oldConfiguration).put(period, oldConfiguration.get(periodInSeconds).asText());
                     }
                     hasChanges = true;
+                } else if (oldConfiguration.has(periodInSeconds)) {
+                    ((ObjectNode) oldConfiguration).put(period, oldConfiguration.get(periodInSeconds).asText());
+                    hasChanges = true;
                 }
                 if (!oldConfiguration.has(period)) {
                     ((ObjectNode) oldConfiguration).put(period, "60");
