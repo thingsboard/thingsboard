@@ -204,6 +204,16 @@ const svgPartsRegex = /(<svg.*?>)(.*)<\/svg>/gms;
 
 const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gms;
 
+const generateElementId = () => {
+  const id = guid();
+  const firstChar = id.charAt(0);
+  if (firstChar >= '0' && firstChar <= '9') {
+    return 'a' + id;
+  } else {
+    return id;
+  }
+};
+
 export const applyTbNamespaceToSvgContent = (svgContent: string): string => {
   svgPartsRegex.lastIndex = 0;
   let svgRootNode: string;
@@ -536,7 +546,22 @@ export class ScadaSymbolObject {
     for (let i=0;i<elements.length;i++) {
       elements.item(i).remove();
     }
-    this.svgShape = SVG().svg(doc.documentElement.innerHTML);
+    let svgContent = doc.documentElement.innerHTML;
+    const regexp = /\sid="([^"]*)"\s/g;
+    const unique_id_suffix = '_' + generateElementId();
+    const ids: string[] = [];
+    let match = regexp.exec(svgContent);
+    while (match !== null) {
+      ids.push(match[1]);
+      match = regexp.exec(svgContent);
+    }
+    for (const id of ids) {
+      const newId = id + unique_id_suffix;
+      svgContent = svgContent.replace(new RegExp('id="'+id+'"', 'g'), 'id="'+newId+'"');
+      svgContent = svgContent.replace(new RegExp('#'+id, 'g'), '#'+newId);
+    }
+
+    this.svgShape = SVG().svg(svgContent);
     this.svgShape.node.style.overflow = 'hidden';
     this.svgShape.node.style.position = 'absolute';
     this.svgShape.node.style['user-select'] = 'none';
@@ -557,15 +582,7 @@ export class ScadaSymbolObject {
   private init() {
     this.context = {
       api: {
-        generateElementId: () => {
-          const id = guid();
-          const firstChar = id.charAt(0);
-          if (firstChar >= '0' && firstChar <= '9') {
-            return 'a' + id;
-          } else {
-            return id;
-          }
-        },
+        generateElementId: () => generateElementId(),
         formatValue,
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
