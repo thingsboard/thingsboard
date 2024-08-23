@@ -311,7 +311,7 @@
       "id": "valueBoxColor",
       "name": "{i18n:scada.symbol.value-box}",
       "type": "color",
-      "default": "##F3F3F3",
+      "default": "#F3F3F3",
       "required": null,
       "subLabel": null,
       "divider": null,
