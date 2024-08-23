@@ -3815,7 +3815,20 @@
             "major-ticks-color": "Major ticks color",
             "normal": "Normal",
             "minor-ticks": "Minor ticks",
-            "minor-ticks-color": "Minor ticks color"
+            "minor-ticks-color": "Minor ticks color",
+            "temperature": "Temperature",
+            "temperature-hint": "Double value indicating the current temperature.",
+            "update-temperature": "Update temperature",
+            "update-temperature-hint": "Action invoked when user clicks to change current temperature.",
+            "run": "Run",
+            "run-hint": "Action invoked when user clicks to run component.",
+            "stop": "Stop",
+            "stop-hint": "Action invoked when user clicks to stop component.",
+            "temperature-step": "Temperature step increment",
+            "heat-pump-color": "Heat pump color",
+            "power-button-background": "Power button background",
+            "value-box-background": "Value box background",
+            "value-units": "Value units"
         }
     },
     "item": {
