@@ -441,7 +441,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
-    public PageData<UUID> findEdgeIdsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+    public PageData<EdgeId> findEdgeIdsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         log.trace("Executing findEdgeIdsByTenantIdAndEntityId, tenantId [{}], entityId [{}], pageLink [{}]", tenantId, entityId, pageLink);
         Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         validatePageLink(pageLink);

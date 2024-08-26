@@ -31,8 +31,6 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.UUID;
-import java.util.stream.Collectors;
 
 @Service
 public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, RelatedEdgesCacheValue, RelatedEdgesEvictEvent> implements RelatedEdgesService {
@@ -65,13 +63,13 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
     }
 
     private PageData<EdgeId> findEdgesByEntityIdAndConvertToEdgeId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        PageData<UUID> pageData = edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink);
+        PageData<EdgeId> pageData = edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink);
         if (pageData == null) {
             return PageData.emptyPageData();
         }
         List<EdgeId> edgeIds = new ArrayList<>();
         if (pageData.getData() != null && !pageData.getData().isEmpty()) {
-            edgeIds = pageData.getData().stream().map(EdgeId::new).collect(Collectors.toList());
+            edgeIds = new ArrayList<>(pageData.getData());
         }
         return new PageData<>(edgeIds, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }
