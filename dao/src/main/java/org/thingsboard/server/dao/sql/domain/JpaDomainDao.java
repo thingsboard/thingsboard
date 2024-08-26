@@ -67,7 +67,7 @@ public class JpaDomainDao extends JpaAbstractDao<DomainEntity, Domain> implement
 
     @Override
     public List<DomainOauth2Client> findOauth2ClientsByDomainId(TenantId tenantId, DomainId domainId) {
-        return  DaoUtil.convertDataList(domainOauth2ClientRepository.findAllByDomainId(domainId.getId()));
+        return DaoUtil.convertDataList(domainOauth2ClientRepository.findAllByDomainId(domainId.getId()));
     }
 
     @Override

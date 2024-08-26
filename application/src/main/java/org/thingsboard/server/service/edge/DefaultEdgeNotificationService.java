@@ -201,7 +201,7 @@ public class DefaultEdgeNotificationService implements EdgeNotificationService {
                         case NOTIFICATION_RULE, NOTIFICATION_TARGET, NOTIFICATION_TEMPLATE ->
                                 notificationEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                         case TB_RESOURCE -> resourceEdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
-                        case OAUTH2_CLIENT -> oAuth2EdgeProcessor.processOAuth2Notification(tenantId, edgeNotificationMsg);
+                        case DOMAIN, OAUTH2_CLIENT -> oAuth2EdgeProcessor.processEntityNotification(tenantId, edgeNotificationMsg);
                         default -> log.warn("[{}] Edge event type [{}] is not designed to be pushed to edge", tenantId, type);
                     }
                 } catch (Exception e) {

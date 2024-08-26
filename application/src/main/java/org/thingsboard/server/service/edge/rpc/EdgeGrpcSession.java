@@ -699,7 +699,9 @@ public final class EdgeGrpcSession implements Closeable {
             case NOTIFICATION_TEMPLATE:
                 return ctx.getNotificationEdgeProcessor().convertNotificationTemplateToDownlink(edgeEvent);
             case OAUTH2_CLIENT:
-                return ctx.getOAuth2EdgeProcessor().convertOAuth2ProviderEventToDownlink(edgeEvent);
+                return ctx.getOAuth2EdgeProcessor().convertOAuth2ClientEventToDownlink(edgeEvent, this.edgeVersion);
+            case DOMAIN:
+                return ctx.getOAuth2EdgeProcessor().convertOAuth2DomainEventToDownlink(edgeEvent, this.edgeVersion);
             default:
                 log.warn("[{}] Unsupported edge event type [{}]", this.tenantId, edgeEvent);
                 return null;

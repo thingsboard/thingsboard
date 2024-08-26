@@ -95,6 +95,11 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
+    public boolean isPropagateToEdge(TenantId tenantId, UUID oAuth2ClientId) {
+        return repository.isPropagateToEdge(tenantId.getId(), oAuth2ClientId);
+    }
+
+    @Override
     public EntityType getEntityType() {
         return EntityType.OAUTH2_CLIENT;
     }

@@ -69,6 +69,7 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.edge.EdgeSynchronizationManager;
@@ -241,6 +242,9 @@ public abstract class BaseEdgeProcessor {
 
     @Autowired
     protected OAuth2ClientService oAuth2ClientService;
+
+    @Autowired
+    protected DomainService domainService;
 
     @Autowired
     @Lazy

@@ -81,4 +81,9 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
 
     List<OAuth2ClientEntity> findByTenantIdAndIdIn(UUID tenantId, List<UUID> uuids);
 
+    @Query("SELECT COUNT(d) > 0 FROM DomainEntity d " +
+            "JOIN DomainOauth2ClientEntity doc ON d.id = doc.domainId " +
+            "WHERE d.tenantId = :tenantId AND doc.oauth2ClientId = :oAuth2ClientId AND d.propagateToEdge = true")
+    boolean isPropagateToEdge(@Param("tenantId") UUID tenantId, @Param("oAuth2ClientId") UUID oAuth2ClientId);
+
 }

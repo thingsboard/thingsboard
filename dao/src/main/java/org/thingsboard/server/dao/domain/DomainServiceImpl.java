@@ -58,7 +58,7 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
         log.trace("Executing saveDomain [{}]", domain);
         try {
             Domain savedDomain = domainDao.save(tenantId, domain);
-            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedDomain).build());
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedDomain.getId()).entity(savedDomain).build());
             return savedDomain;
         } catch (Exception e) {
             checkConstraintViolation(e,
@@ -86,8 +86,6 @@ public class DomainServiceImpl extends AbstractEntityService implements DomainSe
         for (DomainOauth2Client client : newClientList) {
             domainDao.addOauth2Client(client);
         }
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
-                .entityId(domainId).created(false).build());
     }
 
     @Override

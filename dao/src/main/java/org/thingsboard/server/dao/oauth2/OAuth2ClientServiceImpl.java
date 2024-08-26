@@ -73,7 +73,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
         log.trace("Executing saveOAuth2Client [{}]", oAuth2Client);
         oAuth2ClientDataValidator.validate(oAuth2Client, OAuth2Client::getTenantId);
         OAuth2Client savedOauth2Client = oauth2ClientDao.save(tenantId, oAuth2Client);
-        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(TenantId.SYS_TENANT_ID).entity(oAuth2Client).build());
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entityId(savedOauth2Client.getId()).entity(savedOauth2Client).build());
         return savedOauth2Client;
     }
 
@@ -127,6 +127,12 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
                 .stream()
                 .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList());
+    }
+
+    @Override
+    public boolean isPropagateOAuth2ClientToEdge(TenantId tenantId, OAuth2ClientId oAuth2ClientId) {
+        log.trace("Executing isPropagateOAuth2ClientToEdge, tenantId [{}], oAuth2ClientId [{}]", tenantId, oAuth2ClientId);
+        return oauth2ClientDao.isPropagateToEdge(tenantId, oAuth2ClientId.getId());
     }
 
     @Override
