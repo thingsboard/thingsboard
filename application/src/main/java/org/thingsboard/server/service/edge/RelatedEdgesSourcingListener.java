@@ -40,13 +40,13 @@ public class RelatedEdgesSourcingListener {
 
     @PostConstruct
     public void init() {
-        log.info("RelatedEdgesSourcingListener initiated");
+        log.debug("RelatedEdgesSourcingListener initiated");
         executorService = Executors.newSingleThreadExecutor(ThingsBoardThreadFactory.forName("related-edges-listener"));
     }
 
     @PreDestroy
     public void destroy() {
-        log.info("RelatedEdgesSourcingListener destroy");
+        log.debug("RelatedEdgesSourcingListener destroy");
         if (executorService != null && !executorService.isShutdown()) {
             executorService.shutdown();
         }

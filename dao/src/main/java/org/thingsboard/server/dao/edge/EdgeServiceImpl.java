@@ -441,6 +441,14 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
     }
 
     @Override
+    public PageData<UUID> findEdgeIdsByTenantIdAndEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+        log.trace("Executing findEdgeIdsByTenantIdAndEntityId, tenantId [{}], entityId [{}], pageLink [{}]", tenantId, entityId, pageLink);
+        Validator.validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
+        validatePageLink(pageLink);
+        return edgeDao.findEdgeIdsByTenantIdAndEntityId(tenantId.getId(), entityId.getId(), entityId.getEntityType(), pageLink);
+    }
+
+    @Override
     public PageData<Edge> findEdgesByTenantProfileId(TenantProfileId tenantProfileId, PageLink pageLink) {
         log.trace("Executing findEdgesByTenantProfileId, tenantProfileId [{}], pageLink [{}]", tenantProfileId, pageLink);
         Validator.validateId(tenantProfileId, id -> "Incorrect tenantProfileId " + id);
@@ -514,7 +522,7 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
             case USER:
                 User userById = userService.findUserById(tenantId, new UserId(entityId.getId()));
                 if (userById == null) {
-                    return createEmptyEdgeIdPageData();
+                    return PageData.emptyPageData();
                 }
                 if (userById.getCustomerId() == null || userById.getCustomerId().isNullUid()) {
                     return convertToEdgeIds(findEdgesByTenantId(tenantId, pageLink));
@@ -525,17 +533,13 @@ public class EdgeServiceImpl extends AbstractCachedEntityService<EdgeCacheKey, E
                 return convertToEdgeIds(findEdgesByTenantProfileId(new TenantProfileId(entityId.getId()), pageLink));
             default:
                 log.warn("[{}] Unsupported entity type {}", tenantId, entityId.getEntityType());
-                return createEmptyEdgeIdPageData();
+                return PageData.emptyPageData();
         }
-    }
-
-    private PageData<EdgeId> createEmptyEdgeIdPageData() {
-        return new PageData<>(new ArrayList<>(), 0, 0, false);
     }
 
     private PageData<EdgeId> convertToEdgeIds(PageData<Edge> pageData) {
         if (pageData == null) {
-            return createEmptyEdgeIdPageData();
+            return PageData.emptyPageData();
         }
         List<EdgeId> edgeIds = new ArrayList<>();
         if (pageData.getData() != null && !pageData.getData().isEmpty()) {

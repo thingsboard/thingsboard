@@ -18,13 +18,12 @@ package org.thingsboard.server.dao.edge;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.cache.edge.RelatedEdgesCacheKey;
 import org.thingsboard.server.cache.edge.RelatedEdgesCacheValue;
 import org.thingsboard.server.cache.edge.RelatedEdgesEvictEvent;
-import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.IdBased;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -32,17 +31,20 @@ import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 @Service
 public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, RelatedEdgesCacheValue, RelatedEdgesEvictEvent> implements RelatedEdgesService {
 
     public static final int RELATED_EDGES_CACHE_ITEMS = 1000;
+    public static final PageLink FIRST_PAGE = new PageLink(RELATED_EDGES_CACHE_ITEMS);
 
     @Autowired
     @Lazy
     private EdgeService edgeService;
 
+    @TransactionalEventListener(classes = RelatedEdgesEvictEvent.class)
     @Override
     public void handleEvictEvent(RelatedEdgesEvictEvent event) {
         cache.evict(new RelatedEdgesCacheKey(event.getTenantId(), event.getEntityId()));
@@ -50,7 +52,7 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
 
     @Override
     public PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        if (!pageLink.equals(new PageLink(RELATED_EDGES_CACHE_ITEMS))) {
+        if (!pageLink.equals(FIRST_PAGE)) {
             return findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink);
         }
         return cache.getAndPutInTransaction(new RelatedEdgesCacheKey(tenantId, entityId),
@@ -63,13 +65,13 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
     }
 
     private PageData<EdgeId> findEdgesByEntityIdAndConvertToEdgeId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        PageData<Edge> pageData = edgeService.findEdgesByTenantIdAndEntityId(tenantId, entityId, pageLink);
+        PageData<UUID> pageData = edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink);
         if (pageData == null) {
-            return new PageData<>(new ArrayList<>(), 0, 0, false);
+            return PageData.emptyPageData();
         }
         List<EdgeId> edgeIds = new ArrayList<>();
         if (pageData.getData() != null && !pageData.getData().isEmpty()) {
-            edgeIds = pageData.getData().stream().map(IdBased::getId).collect(Collectors.toList());
+            edgeIds = pageData.getData().stream().map(EdgeId::new).collect(Collectors.toList());
         }
         return new PageData<>(edgeIds, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }

@@ -66,7 +66,7 @@ public class EntityStateSourcingListener {
 
     @PostConstruct
     public void init() {
-        log.info("EntityStateSourcingListener initiated");
+        log.debug("EntityStateSourcingListener initiated");
     }
 
     @TransactionalEventListener(fallbackExecution = true)

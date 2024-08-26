@@ -75,7 +75,7 @@ public class EdgeEventSourcingListener {
 
     @PostConstruct
     public void init() {
-        log.info("EdgeEventSourcingListener initiated");
+        log.debug("EdgeEventSourcingListener initiated");
     }
 
     @TransactionalEventListener(fallbackExecution = true)
