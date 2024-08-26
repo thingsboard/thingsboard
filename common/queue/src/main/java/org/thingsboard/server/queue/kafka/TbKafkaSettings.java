@@ -151,6 +151,7 @@ public class TbKafkaSettings {
         Properties props = toProps();
         props.put(ConsumerConfig.BOOTSTRAP_SERVERS_CONFIG, servers);
         props.put(ConsumerConfig.MAX_POLL_RECORDS_CONFIG, maxPollRecords);
+        props.put(ConsumerConfig.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
         props.put(ConsumerConfig.MAX_PARTITION_FETCH_BYTES_CONFIG, maxPartitionFetchBytes);
         props.put(ConsumerConfig.FETCH_MAX_BYTES_CONFIG, fetchMaxBytes);
         props.put(ConsumerConfig.MAX_POLL_INTERVAL_MS_CONFIG, maxPollIntervalMs);
@@ -193,8 +194,6 @@ public class TbKafkaSettings {
         }
 
         props.put(CommonClientConfigs.REQUEST_TIMEOUT_MS_CONFIG, requestTimeoutMs);
-        props.put(CommonClientConfigs.SESSION_TIMEOUT_MS_CONFIG, sessionTimeoutMs);
-
         props.putAll(PropertyUtils.getProps(otherInline));
 
         if (other != null) {

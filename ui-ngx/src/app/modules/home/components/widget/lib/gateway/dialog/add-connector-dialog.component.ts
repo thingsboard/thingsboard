@@ -33,7 +33,8 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
-import { takeUntil, tap } from "rxjs/operators";
+import { takeUntil, tap } from 'rxjs/operators';
+import { helpBaseUrl } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-add-connector-dialog',
@@ -83,7 +84,7 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   helpLinkId(): string {
-    return 'https://thingsboard.io/docs/iot-gateway/configuration/';
+    return helpBaseUrl + '/docs/iot-gateway/configuration/';
   }
 
   cancel(): void {
@@ -106,23 +107,13 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
   }
 
   private uniqNameRequired(): ValidatorFn {
-    return (c: UntypedFormControl) => {
-      const newName = c.value.trim().toLowerCase();
-      const found = this.data.dataSourceData.find((connectorAttr) => {
-        const connectorData = connectorAttr.value;
-        return connectorData.name.toLowerCase() === newName;
-      });
-      if (found) {
-        if (c.hasError('required')) {
-          return c.getError('required');
-        }
-        return {
-          duplicateName: {
-            valid: false
-          }
-        };
-      }
-      return null;
+    return (control: UntypedFormControl) => {
+      const newName = control.value.trim().toLowerCase();
+      const isDuplicate = this.data.dataSourceData.some(({ value: { name } }) =>
+        name.toLowerCase() === newName
+      );
+
+      return isDuplicate ? { duplicateName: { valid: false } } : null;
     };
   }
 
@@ -137,6 +128,6 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
         }
       }),
       takeUntil(this.destroy$),
-    ).subscribe()
+    ).subscribe();
   }
 }

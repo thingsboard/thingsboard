@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, forwardRef, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -35,8 +35,9 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { TranslateService } from '@ngx-translate/core';
 import { generateSecret } from '@core/utils';
-import { SecurityConfigComponent } from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { Subject } from 'rxjs';
+import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipes/gateway-port-tooltip.pipe';
+import { SecurityConfigComponent } from '../security-config/security-config.component';
 
 @Component({
   selector: 'tb-broker-config-control',
@@ -47,6 +48,7 @@ import { Subject } from 'rxjs';
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
+    GatewayPortTooltipPipe,
   ],
   providers: [
     {
@@ -72,13 +74,14 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder,
+              private cdr: ChangeDetectorRef,
               private translate: TranslateService) {
     this.brokerConfigFormGroup = this.fb.group({
       name: ['', []],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       version: [5, []],
-      clientId: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
+      clientId: ['tb_gw_' + generateSecret(5), [Validators.pattern(noLeadTrailSpacesRegex)]],
       security: []
     });
 
@@ -86,19 +89,6 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
       this.onChange(value);
       this.onTouched();
     });
-  }
-
-  get portErrorTooltip(): string {
-    if (this.brokerConfigFormGroup.get('port').hasError('required')) {
-      return this.translate.instant('gateway.port-required');
-    } else if (
-      this.brokerConfigFormGroup.get('port').hasError('min') ||
-      this.brokerConfigFormGroup.get('port').hasError('max')
-    ) {
-      return this.translate.instant('gateway.port-limits-error',
-        {min: PortLimits.MIN, max: PortLimits.MAX});
-    }
-    return '';
   }
 
   ngOnDestroy(): void {
@@ -119,7 +109,14 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(brokerConfig: BrokerConfig): void {
-    this.brokerConfigFormGroup.patchValue(brokerConfig, {emitEvent: false});
+    const {
+      version = 5,
+      clientId = `tb_gw_${generateSecret(5)}`,
+      security = {},
+    } = brokerConfig;
+
+    this.brokerConfigFormGroup.reset({ ...brokerConfig, version, clientId, security }, { emitEvent: false });
+    this.cdr.markForCheck();
   }
 
   validate(): ValidationErrors | null {

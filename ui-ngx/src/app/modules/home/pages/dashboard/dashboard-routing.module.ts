@@ -33,6 +33,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
+import { MenuId } from '@core/services/menu.models';
 
 @Injectable()
 export class DashboardResolver implements Resolve<Dashboard> {
@@ -66,8 +67,7 @@ const routes: Routes = [
     path: 'dashboards',
     data: {
       breadcrumb: {
-        label: 'dashboard.dashboards',
-        icon: 'dashboard'
+        menuId: MenuId.dashboards
       }
     },
     children: [

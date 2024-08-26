@@ -25,22 +25,29 @@ import {
   Validator,
 } from '@angular/forms';
 import {
-  ConnectorBaseConfig,
   MappingType,
+  MQTTBasicConfig,
   RequestMappingData,
   RequestType,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import {
-  BrokerConfigControlComponent,
-  MappingTableComponent,
-  SecurityConfigComponent,
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
 import { isObject } from 'lodash';
+import {
+  SecurityConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+import {
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Component({
   selector: 'tb-mqtt-basic-config',
@@ -78,7 +85,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
   mappingTypes = MappingType;
   basicFormGroup: FormGroup;
 
-  private onChange: (value: string) => void;
+  private onChange: (value: MQTTBasicConfig) => void;
   private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
@@ -94,7 +101,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.basicFormGroup.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
-        this.onChange(value);
+        this.onChange(this.getMappedMQTTConfig(value));
         this.onTouched();
       });
   }
@@ -104,7 +111,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: string) => void): void {
+  registerOnChange(fn: (value: MQTTBasicConfig) => void): void {
     this.onChange = fn;
   }
 
@@ -112,20 +119,38 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: ConnectorBaseConfig): void {
+  writeValue(basicConfig: MQTTBasicConfig): void {
+    const { broker, dataMapping = [], requestsMapping } = basicConfig;
     const editedBase = {
-      workers: {
-        maxNumberOfWorkers: basicConfig.broker?.maxNumberOfWorkers,
-        maxMessageNumberPerWorker: basicConfig.broker?.maxMessageNumberPerWorker,
-      },
-      dataMapping: basicConfig.dataMapping || [],
-      broker: basicConfig.broker || {},
-      requestsMapping: Array.isArray(basicConfig.requestsMapping)
-        ? basicConfig.requestsMapping
-        : this.getRequestDataArray(basicConfig.requestsMapping),
+      workers: broker && (broker.maxNumberOfWorkers || broker.maxMessageNumberPerWorker) ? {
+        maxNumberOfWorkers: broker.maxNumberOfWorkers,
+        maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
+      } : {},
+      dataMapping: dataMapping || [],
+      broker: broker || {},
+      requestsMapping: Array.isArray(requestsMapping)
+        ? requestsMapping
+        : this.getRequestDataArray(requestsMapping),
     };
 
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
+  }
+
+  private getMappedMQTTConfig(basicConfig: MQTTBasicConfig): MQTTBasicConfig {
+    let { broker, workers, dataMapping, requestsMapping  } = basicConfig || {};
+
+    if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {
+      broker = {
+        ...broker,
+        ...workers,
+      };
+    }
+
+    if ((requestsMapping as RequestMappingData[])?.length) {
+      requestsMapping = this.getRequestDataObject(requestsMapping as RequestMappingData[]);
+    }
+
+    return { broker, workers, dataMapping, requestsMapping };
   }
 
   validate(): ValidationErrors | null {
@@ -134,7 +159,7 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     };
   }
 
-  private getRequestDataArray(value: Record<RequestType, RequestMappingData>): RequestMappingData[] {
+  private getRequestDataArray(value: Record<RequestType, RequestMappingData[]>): RequestMappingData[] {
     const mappingConfigs = [];
 
     if (isObject(value)) {
@@ -149,5 +174,18 @@ export class MqttBasicConfigComponent implements ControlValueAccessor, Validator
     }
 
     return mappingConfigs;
+  }
+
+  private getRequestDataObject(array: RequestMappingData[]): Record<RequestType, RequestMappingData[]> {
+    return array.reduce((result, { requestType, requestValue }) => {
+      result[requestType].push(requestValue);
+      return result;
+    }, {
+      connectRequests: [],
+      disconnectRequests: [],
+      attributeRequests: [],
+      attributeUpdates: [],
+      serverSideRpc: [],
+    });
   }
 }

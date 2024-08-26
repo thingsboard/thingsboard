@@ -39,8 +39,8 @@
                     <div class="tb-form-panel-title" translate>gateway.platform-side</div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                       <div class="fixed-title-width tb-required"
-                           tb-hint-tooltip-icon="{{ 'gateway.JSONPath-hint' | translate }}" translate>
-                        gateway.key
+                           tb-hint-tooltip-icon="{{ 'gateway.JSONPath-hint' | translate }}">
+                        {{ 'gateway.key' | translate }}
                       </div>
                       <div class="tb-flex no-gap">
                         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -97,8 +97,8 @@
                     </div>
                     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
                       <div class="fixed-title-width tb-required"
-                           tb-hint-tooltip-icon="{{ 'gateway.JSONPath-hint' | translate }}" translate>
-                        gateway.value
+                           tb-hint-tooltip-icon="{{ 'gateway.JSONPath-hint' | translate }}">
+                        {{ 'gateway.value' | translate }}
                       </div>
                       <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-flex no-gap">
                         <input matInput required formControlName="value"
@@ -158,8 +158,8 @@
                 </div>
                 <div class="tb-form-panel no-border no-padding" *ngIf="keysType === MappingKeysType.RPC_METHODS">
                   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method-name' | translate }}" translate>
-                      gateway.method-name
+                    <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method-name' | translate }}">
+                      {{ 'gateway.method-name' | translate }}
                     </div>
                     <div class="tb-flex no-gap">
                       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">

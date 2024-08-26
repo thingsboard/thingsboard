@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.common.data.notification.template;
 
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import org.thingsboard.server.common.data.notification.NotificationDeliveryMethod;
 
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.NotEmpty;
 import java.util.HashMap;
 import java.util.Map;
 

@@ -624,6 +624,7 @@ export class AuthService {
   private userForceFullscreen(authPayload: AuthPayload): boolean {
     return (authPayload.authUser && authPayload.authUser.isPublic) ||
       (authPayload.userDetails && authPayload.userDetails.additionalInfo &&
+        authPayload.userDetails.additionalInfo.defaultDashboardId &&
         authPayload.userDetails.additionalInfo.defaultDashboardFullscreen &&
         authPayload.userDetails.additionalInfo.defaultDashboardFullscreen === true);
   }

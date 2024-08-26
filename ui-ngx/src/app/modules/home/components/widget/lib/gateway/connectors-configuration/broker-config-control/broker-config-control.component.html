@@ -42,7 +42,7 @@
         <mat-icon matSuffix
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="portErrorTooltip"
+                  [matTooltip]="brokerConfigFormGroup.get('port') | getGatewayPortTooltip"
                   *ngIf="(brokerConfigFormGroup.get('port').hasError('required') ||
                                             brokerConfigFormGroup.get('port').hasError('min') ||
                                             brokerConfigFormGroup.get('port').hasError('max')) &&

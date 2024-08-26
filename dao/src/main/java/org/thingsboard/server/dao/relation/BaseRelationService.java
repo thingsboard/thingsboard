@@ -21,12 +21,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.common.util.concurrent.SettableFuture;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.context.annotation.Lazy;
-import org.springframework.dao.ConcurrencyFailureException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.event.TransactionalEventListener;
@@ -52,8 +53,6 @@ import org.thingsboard.server.dao.service.ConstraintValidator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 import org.thingsboard.server.dao.sql.relation.JpaRelationQueryExecutorService;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashMap;
@@ -149,16 +148,16 @@ public class BaseRelationService implements RelationService {
                     return relationDao.getRelation(tenantId, from, to, relationType, typeGroup);
                 },
                 RelationCacheValue::getRelation,
-                relations -> RelationCacheValue.builder().relation(relations).build(), false);
+                relation -> RelationCacheValue.builder().relation(relation).build(), false);
     }
 
     @Override
-    public boolean saveRelation(TenantId tenantId, EntityRelation relation) {
+    public EntityRelation saveRelation(TenantId tenantId, EntityRelation relation) {
         log.trace("Executing saveRelation [{}]", relation);
         validate(relation);
         var result = relationDao.saveRelation(tenantId, relation);
-        publishEvictEvent(EntityRelationEvent.from(relation));
-        eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_ADD_OR_UPDATE));
+        publishEvictEvent(EntityRelationEvent.from(result));
+        eventPublisher.publishEvent(new RelationActionEvent(tenantId, result, ActionType.RELATION_ADD_OR_UPDATE));
         return result;
     }
 
@@ -168,10 +167,11 @@ public class BaseRelationService implements RelationService {
         for (EntityRelation relation : relations) {
             validate(relation);
         }
+        List<EntityRelation> savedRelations = new ArrayList<>(relations.size());
         for (List<EntityRelation> partition : Lists.partition(relations, 1024)) {
-            relationDao.saveRelations(tenantId, partition);
+            savedRelations.addAll(relationDao.saveRelations(tenantId, partition));
         }
-        for (EntityRelation relation : relations) {
+        for (EntityRelation relation : savedRelations) {
             publishEvictEvent(EntityRelationEvent.from(relation));
             eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_ADD_OR_UPDATE));
         }
@@ -182,11 +182,13 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing saveRelationAsync [{}]", relation);
         validate(relation);
         var future = relationDao.saveRelationAsync(tenantId, relation);
-        future.addListener(() -> {
-            handleEvictEvent(EntityRelationEvent.from(relation));
-            eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_ADD_OR_UPDATE));
+        return Futures.transform(future, savedRelation -> {
+            if (savedRelation != null) {
+                handleEvictEvent(EntityRelationEvent.from(savedRelation));
+                eventPublisher.publishEvent(new RelationActionEvent(tenantId, savedRelation, ActionType.RELATION_ADD_OR_UPDATE));
+            }
+            return savedRelation != null;
         }, MoreExecutors.directExecutor());
-        return future;
     }
 
     @Override
@@ -194,10 +196,11 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing DeleteRelation [{}]", relation);
         validate(relation);
         var result = relationDao.deleteRelation(tenantId, relation);
-        //TODO: evict cache only if the relation was deleted. Note: relationDao.deleteRelation requires improvement.
-        publishEvictEvent(EntityRelationEvent.from(relation));
-        eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_DELETED));
-        return result;
+        if (result != null) {
+            publishEvictEvent(EntityRelationEvent.from(result));
+            eventPublisher.publishEvent(new RelationActionEvent(tenantId, result, ActionType.RELATION_DELETED));
+        }
+        return result != null;
     }
 
     @Override
@@ -205,22 +208,24 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing deleteRelationAsync [{}]", relation);
         validate(relation);
         var future = relationDao.deleteRelationAsync(tenantId, relation);
-        future.addListener(() -> {
-            handleEvictEvent(EntityRelationEvent.from(relation));
-            eventPublisher.publishEvent(new RelationActionEvent(tenantId, relation, ActionType.RELATION_DELETED));
+        return Futures.transform(future, deletedRelation -> {
+            if (deletedRelation != null) {
+                handleEvictEvent(EntityRelationEvent.from(deletedRelation));
+                eventPublisher.publishEvent(new RelationActionEvent(tenantId, deletedRelation, ActionType.RELATION_DELETED));
+            }
+            return deletedRelation != null;
         }, MoreExecutors.directExecutor());
-        return future;
     }
 
     @Override
-    public boolean deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
+    public EntityRelation deleteRelation(TenantId tenantId, EntityId from, EntityId to, String relationType, RelationTypeGroup typeGroup) {
         log.trace("Executing deleteRelation [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         var result = relationDao.deleteRelation(tenantId, from, to, relationType, typeGroup);
-        //TODO: evict cache only if the relation was deleted. Note: relationDao.deleteRelation requires improvement.
-        EntityRelation entityRelation = new EntityRelation(from, to, relationType, typeGroup);
-        publishEvictEvent(EntityRelationEvent.from(entityRelation));
-        eventPublisher.publishEvent(new RelationActionEvent(tenantId, entityRelation, ActionType.RELATION_DELETED));
+        if (result != null) {
+            publishEvictEvent(EntityRelationEvent.from(result));
+            eventPublisher.publishEvent(new RelationActionEvent(tenantId, result, ActionType.RELATION_DELETED));
+        }
         return result;
     }
 
@@ -229,9 +234,12 @@ public class BaseRelationService implements RelationService {
         log.trace("Executing deleteRelationAsync [{}][{}][{}][{}]", from, to, relationType, typeGroup);
         validate(from, to, relationType, typeGroup);
         var future = relationDao.deleteRelationAsync(tenantId, from, to, relationType, typeGroup);
-        EntityRelationEvent event = new EntityRelationEvent(from, to, relationType, typeGroup);
-        future.addListener(() -> handleEvictEvent(event), MoreExecutors.directExecutor());
-        return future;
+        return Futures.transform(future, deletedEvent -> {
+            if (deletedEvent != null) {
+                handleEvictEvent(EntityRelationEvent.from(deletedEvent));
+            }
+            return deletedEvent != null;
+        }, MoreExecutors.directExecutor());
     }
 
     @Transactional
@@ -250,60 +258,27 @@ public class BaseRelationService implements RelationService {
     public void deleteEntityRelations(TenantId tenantId, EntityId entityId, RelationTypeGroup relationTypeGroup) {
         log.trace("Executing deleteEntityRelations [{}]", entityId);
         validate(entityId);
-        List<EntityRelation> inboundRelations = relationTypeGroup == null
-                    ? relationDao.findAllByTo(tenantId, entityId)
-                    : relationDao.findAllByTo(tenantId, entityId, relationTypeGroup);
-        List<EntityRelation> outboundRelations = relationTypeGroup == null
-                    ? relationDao.findAllByFrom(tenantId, entityId)
-                    : relationDao.findAllByFrom(tenantId, entityId, relationTypeGroup);
 
-        if (!inboundRelations.isEmpty()) {
-            try {
-                if (relationTypeGroup == null) {
-                    relationDao.deleteInboundRelations(tenantId, entityId);
-                } else {
-                    relationDao.deleteInboundRelations(tenantId, entityId, relationTypeGroup);
-                }
-            } catch (ConcurrencyFailureException e) {
-                log.debug("Concurrency exception while deleting relations [{}]", inboundRelations, e);
-            }
-
-            for (EntityRelation relation : inboundRelations) {
-                eventPublisher.publishEvent(EntityRelationEvent.from(relation));
-            }
-        }
-
-        if (!outboundRelations.isEmpty()) {
-            if (relationTypeGroup == null) {
-                relationDao.deleteOutboundRelations(tenantId, entityId);
-            } else {
-                relationDao.deleteOutboundRelations(tenantId, entityId, relationTypeGroup);
-            }
-
-            for (EntityRelation relation : outboundRelations) {
-                eventPublisher.publishEvent(EntityRelationEvent.from(relation));
-            }
-        }
-    }
-
-    private List<ListenableFuture<Boolean>> deleteRelationGroupsAsync(TenantId tenantId, List<List<EntityRelation>> relations, boolean deleteFromDb) {
-        List<ListenableFuture<Boolean>> results = new ArrayList<>();
-        for (List<EntityRelation> relationList : relations) {
-            relationList.forEach(relation -> results.add(deleteAsync(tenantId, relation, deleteFromDb)));
-        }
-        return results;
-    }
-
-    private ListenableFuture<Boolean> deleteAsync(TenantId tenantId, EntityRelation relation, boolean deleteFromDb) {
-        if (deleteFromDb) {
-            return Futures.transform(relationDao.deleteRelationAsync(tenantId, relation),
-                    bool -> {
-                        handleEvictEvent(EntityRelationEvent.from(relation));
-                        return bool;
-                    }, MoreExecutors.directExecutor());
+        List<EntityRelation> inboundRelations;
+        if (relationTypeGroup == null) {
+            inboundRelations = relationDao.deleteInboundRelations(tenantId, entityId);
         } else {
-            handleEvictEvent(EntityRelationEvent.from(relation));
-            return Futures.immediateFuture(false);
+            inboundRelations = relationDao.deleteInboundRelations(tenantId, entityId, relationTypeGroup);
+        }
+
+        for (EntityRelation relation : inboundRelations) {
+            eventPublisher.publishEvent(EntityRelationEvent.from(relation));
+        }
+
+        List<EntityRelation> outboundRelations;
+        if (relationTypeGroup == null) {
+            outboundRelations = relationDao.deleteOutboundRelations(tenantId, entityId);
+        } else {
+            outboundRelations = relationDao.deleteOutboundRelations(tenantId, entityId, relationTypeGroup);
+        }
+
+        for (EntityRelation relation : outboundRelations) {
+            eventPublisher.publishEvent(EntityRelationEvent.from(relation));
         }
     }
 

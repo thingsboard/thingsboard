@@ -15,13 +15,13 @@
  */
 package org.thingsboard.server.common.data.notification.rule.trigger.config;
 
+import jakarta.validation.constraints.Max;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.EntityType;
 
-import jakarta.validation.constraints.Max;
 import java.util.Set;
 
 @Data

@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
+import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
@@ -181,7 +182,8 @@ public class EdgeEventSourcingListener {
                             return false;
                         }
                         if (oldEntity != null) {
-                            User oldUser = (User) oldEntity;
+                            user = JacksonUtil.clone(user);
+                            User oldUser = JacksonUtil.clone((User) oldEntity);
                             cleanUpUserAdditionalInfo(oldUser);
                             cleanUpUserAdditionalInfo(user);
                             return !user.equals(oldUser);
@@ -194,7 +196,7 @@ public class EdgeEventSourcingListener {
                     }
                     break;
                 case ALARM:
-                    if (entity instanceof AlarmApiCallResult || entity instanceof Alarm) {
+                    if (entity instanceof AlarmApiCallResult || entity instanceof Alarm || entity instanceof EntityAlarm) {
                         return false;
                     }
                     break;
@@ -225,6 +227,7 @@ public class EdgeEventSourcingListener {
                 user.setAdditionalInfo(additionalInfo);
             }
         }
+        user.setVersion(null);
     }
 
     private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {

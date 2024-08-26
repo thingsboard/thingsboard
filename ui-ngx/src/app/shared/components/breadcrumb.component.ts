@@ -14,16 +14,18 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, ChangeDetectorRef, Component, Input, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectionStrategy, ChangeDetectorRef, Component, OnDestroy, OnInit } from '@angular/core';
 import { BehaviorSubject, Subject, Subscription } from 'rxjs';
 import { BreadCrumb, BreadCrumbConfig } from './breadcrumb';
 import { ActivatedRoute, ActivatedRouteSnapshot, NavigationEnd, Router } from '@angular/router';
-import { distinctUntilChanged, filter, map, tap } from 'rxjs/operators';
+import { distinctUntilChanged, filter, first, map, switchMap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { guid } from '@core/utils';
 import { BroadcastService } from '@core/services/broadcast.service';
 import { ActiveComponentService } from '@core/services/active-component.service';
 import { UtilsService } from '@core/services/utils.service';
+import { MenuSection, menuSectionMap } from '@core/services/menu.models';
+import { MenuService } from '@core/services/menu.service';
 
 @Component({
   selector: 'tb-breadcrumb',
@@ -44,7 +46,9 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     this.activeComponentValue = activeComponent;
     if (this.activeComponentValue && this.activeComponentValue.updateBreadcrumbs) {
       this.updateBreadcrumbsSubscription = this.activeComponentValue.updateBreadcrumbs.subscribe(() => {
-        this.breadcrumbs$.next(this.buildBreadCrumbs(this.activatedRoute.snapshot));
+        this.menuService.availableMenuSections().pipe(first()).subscribe((sections) => {
+          this.breadcrumbs$.next(this.buildBreadCrumbs(this.activatedRoute.snapshot, sections));
+        });
       });
     }
   }
@@ -54,7 +58,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
   routerEventsSubscription = this.router.events.pipe(
     filter((event) => event instanceof NavigationEnd ),
     distinctUntilChanged(),
-    map( () => this.buildBreadCrumbs(this.activatedRoute.snapshot) )
+    switchMap(() => this.menuService.availableMenuSections().pipe(first())),
+    map( (sections) => this.buildBreadCrumbs(this.activatedRoute.snapshot, sections) )
   ).subscribe(breadcrumns => this.breadcrumbs$.next(breadcrumns) );
 
   activeComponentSubscription = this.activeComponentService.onActiveComponentChanged().subscribe(comp => this.setActiveComponent(comp));
@@ -69,6 +74,7 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
               private activeComponentService: ActiveComponentService,
               private cd: ChangeDetectorRef,
               private translate: TranslateService,
+              private menuService: MenuService,
               public utils: UtilsService) {
   }
 
@@ -96,7 +102,8 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     return child;
   }
 
-  buildBreadCrumbs(route: ActivatedRouteSnapshot, breadcrumbs: Array<BreadCrumb> = [],
+  buildBreadCrumbs(route: ActivatedRouteSnapshot, availableMenuSections: MenuSection[],
+                   breadcrumbs: Array<BreadCrumb> = [],
                    lastChild?: ActivatedRouteSnapshot): Array<BreadCrumb> {
     if (!lastChild) {
       lastChild = this.lastChild(route);
@@ -105,24 +112,27 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
     if (route.routeConfig && route.routeConfig.data) {
       const breadcrumbConfig = route.routeConfig.data.breadcrumb as BreadCrumbConfig<any>;
       if (breadcrumbConfig && !breadcrumbConfig.skip) {
-        let label;
-        let labelFunction;
-        let ignoreTranslate;
+        let labelFunction: () => string;
+        let section: MenuSection = null;
+        if (breadcrumbConfig.menuId) {
+          section = availableMenuSections.find(menu => menu.id === breadcrumbConfig.menuId);
+          if (!section) {
+            section = menuSectionMap.get(breadcrumbConfig.menuId);
+          }
+        }
+        const label = section?.name || breadcrumbConfig.label || 'home.home';
+        const customTranslate = section?.customTranslate || false;
         if (breadcrumbConfig.labelFunction) {
           labelFunction = () => this.activeComponentValue ?
-            breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data) : breadcrumbConfig.label;
-          ignoreTranslate = true;
-        } else {
-          label = breadcrumbConfig.label || 'home.home';
-          ignoreTranslate = false;
+            breadcrumbConfig.labelFunction(route, this.translate, this.activeComponentValue, lastChild.data) : label;
         }
-        const icon = breadcrumbConfig.icon || 'home';
+        const icon = section?.icon || breadcrumbConfig.icon || 'home';
         const link = [ route.pathFromRoot.map(v => v.url.map(segment => segment.toString()).join('/')).join('/') ];
         const breadcrumb = {
           id: guid(),
           label,
+          customTranslate,
           labelFunction,
-          ignoreTranslate,
           icon,
           link,
           queryParams: null
@@ -131,12 +141,12 @@ export class BreadcrumbComponent implements OnInit, OnDestroy {
       }
     }
     if (route.firstChild) {
-      return this.buildBreadCrumbs(route.firstChild, newBreadcrumbs, lastChild);
+      return this.buildBreadCrumbs(route.firstChild, availableMenuSections, newBreadcrumbs, lastChild);
     }
     return newBreadcrumbs;
   }
 
-  trackByBreadcrumbs(index: number, breadcrumb: BreadCrumb){
+  trackByBreadcrumbs(_index: number, breadcrumb: BreadCrumb){
     return breadcrumb.id;
   }
 }

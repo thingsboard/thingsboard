@@ -153,9 +153,11 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
     this.ctx.widgetActions = [this.viewAllAction, this.filterAction, this.markAsReadAction];
 
     this.viewAllAction.show = isDefined(this.settings.enableViewAll) ? this.settings.enableViewAll : true;
-    this.store.pipe(select(selectUserDetails), take(1)).subscribe(
-      user => this.viewAllAction.show = !user.additionalInfo?.defaultDashboardFullscreen
-    );
+    if (this.viewAllAction.show) {
+      this.store.pipe(select(selectUserDetails), take(1)).subscribe(
+        user => this.viewAllAction.show = !user.additionalInfo?.defaultDashboardFullscreen
+      );
+    }
     this.filterAction.show = isDefined(this.settings.enableFilter) ? this.settings.enableFilter : true;
     this.markAsReadAction.show = isDefined(this.settings.enableMarkAsRead) ? this.settings.enableMarkAsRead : true;
 

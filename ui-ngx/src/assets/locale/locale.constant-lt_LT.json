@@ -1256,7 +1256,6 @@
         "maximum-upload-file-size": "Maksimalus įkeliamo failo dydis: {{ size }}",
         "cannot-upload-file": "Failo įkelti nepavyko",
         "settings": "Nustatymai",
-        "layout-settings": "Išdėstymo nustatymai",
         "columns-count": "Stulpelių skaičius",
         "columns-count-required": "Stulpelių skaičius būtinas.",
         "min-columns-count-message": "Minimalus stulpelių skaičius - 10.",

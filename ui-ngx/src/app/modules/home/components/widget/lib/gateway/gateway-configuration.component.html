@@ -726,6 +726,10 @@
               <mat-error *ngIf="gatewayConfigGroup.get('thingsboard.minPackSendDelayMS').hasError('min')">
                 {{ 'gateway.min-pack-send-delay-min' | translate }}
               </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.minPackSendDelayMS').hasError('pattern')">
+                {{ 'gateway.min-pack-send-delay-min-pattern' | translate }}
+              </mat-error>
               <mat-icon matIconSuffix style="cursor:pointer;"
                         matTooltip="{{ 'gateway.hints.minimal-pack-delay' | translate }}">info_outlined
               </mat-icon>
@@ -747,22 +751,64 @@
               </mat-icon>
             </mat-form-field>
           </section>
-          <mat-form-field appearance="outline" class="mat-block">
-            <mat-label translate>gateway.statistics.check-connectors-configuration</mat-label>
-            <input matInput formControlName="checkConnectorsConfigurationInSeconds" type="number" min="0"/>
-            <mat-error
-              *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('required')">
-              {{ 'gateway.statistics.check-connectors-configuration-required' | translate }}
-            </mat-error>
-            <mat-error
-              *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('min')">
-              {{ 'gateway.statistics.check-connectors-configuration-min' | translate }}
-            </mat-error>
-            <mat-error
-              *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('pattern')">
-              {{ 'gateway.statistics.check-connectors-configuration-pattern' | translate }}
-            </mat-error>
-          </mat-form-field>
+          <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
+            <mat-form-field appearance="outline" class="flex">
+              <mat-label translate>gateway.statistics.check-connectors-configuration</mat-label>
+              <input matInput formControlName="checkConnectorsConfigurationInSeconds" type="number" min="0"/>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('required')">
+                {{ 'gateway.statistics.check-connectors-configuration-required' | translate }}
+              </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('min')">
+                {{ 'gateway.statistics.check-connectors-configuration-min' | translate }}
+              </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.checkConnectorsConfigurationInSeconds').hasError('pattern')">
+                {{ 'gateway.statistics.check-connectors-configuration-pattern' | translate }}
+              </mat-error>
+            </mat-form-field>
+            <mat-form-field appearance="outline" class="flex">
+              <mat-label translate>gateway.statistics.max-payload-size-bytes</mat-label>
+              <input matInput formControlName="maxPayloadSizeBytes" type="number" min="0"/>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.maxPayloadSizeBytes').hasError('required')">
+                {{ 'gateway.statistics.max-payload-size-bytes-required' | translate }}
+              </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.maxPayloadSizeBytes').hasError('min')">
+                {{ 'gateway.statistics.max-payload-size-bytes-min' | translate }}
+              </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.maxPayloadSizeBytes').hasError('pattern')">
+                {{ 'gateway.statistics.max-payload-size-bytes-pattern' | translate }}
+              </mat-error>
+              <mat-icon matIconSuffix style="cursor:pointer;"
+                        matTooltip="{{ 'gateway.hints.max-payload-size-bytes' | translate }}">info_outlined
+              </mat-icon>
+            </mat-form-field>
+          </section>
+          <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">
+            <mat-form-field appearance="outline" class="flex">
+              <mat-label translate>gateway.statistics.min-pack-size-to-send</mat-label>
+              <input matInput formControlName="minPackSizeToSend" type="number" min="0"/>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.minPackSizeToSend').hasError('required')">
+                {{ 'gateway.statistics.min-pack-size-to-send-required' | translate }}
+              </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.minPackSizeToSend').hasError('min')">
+                {{ 'gateway.statistics.min-pack-size-to-send-min' | translate }}
+              </mat-error>
+              <mat-error
+                *ngIf="gatewayConfigGroup.get('thingsboard.minPackSizeToSend').hasError('pattern')">
+                {{ 'gateway.statistics.min-pack-size-to-send-pattern' | translate }}
+              </mat-error>
+              <mat-icon matIconSuffix style="cursor:pointer;"
+                        matTooltip="{{ 'gateway.hints.min-pack-size-to-send' | translate }}">info_outlined
+              </mat-icon>
+            </mat-form-field>
+          </section>
         </div>
       </div>
     </ng-template>

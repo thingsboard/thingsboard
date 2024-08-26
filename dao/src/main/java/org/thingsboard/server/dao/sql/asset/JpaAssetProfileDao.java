@@ -19,7 +19,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.asset.AssetProfile;
@@ -56,14 +55,6 @@ public class JpaAssetProfileDao extends JpaAbstractDao<AssetProfileEntity, Asset
     @Override
     public AssetProfileInfo findAssetProfileInfoById(TenantId tenantId, UUID assetProfileId) {
         return assetProfileRepository.findAssetProfileInfoById(assetProfileId);
-    }
-
-    @Transactional
-    @Override
-    public AssetProfile saveAndFlush(TenantId tenantId, AssetProfile assetProfile) {
-        AssetProfile result = save(tenantId, assetProfile);
-        assetProfileRepository.flush();
-        return result;
     }
 
     @Override

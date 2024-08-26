@@ -28,8 +28,8 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -52,12 +52,12 @@ import {
   RequestType,
   RequestTypesTranslationsMap
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
+import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-mapping-table',
@@ -191,7 +191,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, MappingInfo, MappingValue>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, ConnectorMapping>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -206,7 +206,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           if (isDefinedAndNotNull(index)) {
             this.mappingFormGroup.at(index).patchValue(res);
           } else {
-            this.mappingFormGroup.push(this.fb.group(res));
+            this.pushDataAsFormArrays([res]);
           }
           this.mappingFormGroup.markAsDirty();
         }
@@ -222,7 +222,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
         )
       );
     }
-    this.dataSource.loadMappings(tableValue);
+    this.dataSource.loadData(tableValue);
   }
 
   deleteMapping($event: Event, index: number): void {
@@ -310,33 +310,8 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   }
 }
 
-export class MappingDatasource implements DataSource<{[key: string]: any}> {
-
-  private mappingSubject = new BehaviorSubject<Array<{[key: string]: any}>>([]);
-
-  constructor() {}
-
-  connect(): Observable<Array<{[key: string]: any}>> {
-    return this.mappingSubject.asObservable();
-  }
-
-  disconnect(): void {
-    this.mappingSubject.complete();
-  }
-
-  loadMappings(mappings: Array<{[key: string]: any}>): void {
-    this.mappingSubject.next(mappings);
-  }
-
-  isEmpty(): Observable<boolean> {
-    return this.mappingSubject.pipe(
-      map((mappings) => !mappings.length)
-    );
-  }
-
-  total(): Observable<number> {
-    return this.mappingSubject.pipe(
-      map((mappings) => mappings.length)
-    );
+export class MappingDatasource extends TbTableDatasource<MappingValue> {
+  constructor() {
+    super();
   }
 }
