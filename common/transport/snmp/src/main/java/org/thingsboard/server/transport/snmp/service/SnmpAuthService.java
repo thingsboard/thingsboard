@@ -24,6 +24,7 @@ import org.snmp4j.security.SecurityLevel;
 import org.snmp4j.security.SecurityModel;
 import org.snmp4j.security.SecurityProtocols;
 import org.snmp4j.security.USM;
+import org.snmp4j.security.UsmUser;
 import org.snmp4j.smi.Address;
 import org.snmp4j.smi.GenericAddress;
 import org.snmp4j.smi.OID;
@@ -72,28 +73,23 @@ public class SnmpAuthService {
                 OctetString engineId = OctetString.fromString(deviceTransportConfig.getEngineId(), 16);
 
                 OID authenticationProtocol = new OID(deviceTransportConfig.getAuthenticationProtocol().getOid());
-                byte[] authenticationPassphrase = SecurityProtocols.getInstance().passwordToKey(authenticationProtocol,
-                        new OctetString(deviceTransportConfig.getAuthenticationPassphrase()), engineId.getValue());
-                if (authenticationPassphrase == null) {
-                    throw new UnsupportedOperationException("Authentication protocol " + deviceTransportConfig.getAuthenticationProtocol() + " is not supported");
-                }
+                OctetString authenticationPassphrase = Optional.ofNullable(SecurityProtocols.getInstance().passwordToKey(authenticationProtocol,
+                                new OctetString(deviceTransportConfig.getAuthenticationPassphrase()), engineId.getValue()))
+                        .map(OctetString::new)
+                        .orElseThrow(() -> new UnsupportedOperationException("Authentication protocol " + deviceTransportConfig.getAuthenticationProtocol() + " is not supported"));
 
                 OID privacyProtocol = new OID(deviceTransportConfig.getPrivacyProtocol().getOid());
-                byte[] privacyPassphrase = SecurityProtocols.getInstance().passwordToKey(privacyProtocol,
-                        authenticationProtocol, new OctetString(deviceTransportConfig.getPrivacyPassphrase()), engineId.getValue());
-                if (privacyPassphrase == null) {
-                    throw new UnsupportedOperationException("Privacy protocol " + deviceTransportConfig.getPrivacyProtocol() + " is not supported");
-                }
+                OctetString privacyPassphrase = Optional.ofNullable(SecurityProtocols.getInstance().passwordToKey(privacyProtocol,
+                                authenticationProtocol, new OctetString(deviceTransportConfig.getPrivacyPassphrase()), engineId.getValue()))
+                        .map(OctetString::new)
+                        .orElseThrow(() -> new UnsupportedOperationException("Privacy protocol " + deviceTransportConfig.getPrivacyProtocol() + " is not supported"));
 
                 USM usm = snmpTransportService.getSnmp().getUSM();
                 if (usm.hasUser(engineId, securityName)) {
                     usm.removeAllUsers(username, engineId);
                 }
-                usm.addLocalizedUser(
-                        engineId.getValue(), username,
-                        authenticationProtocol, authenticationPassphrase,
-                        privacyProtocol, privacyPassphrase
-                );
+                UsmUser usmUser = new UsmUser(username, authenticationProtocol, authenticationPassphrase, privacyProtocol, privacyPassphrase, engineId);
+                usm.addUser(username, engineId, usmUser);
 
                 UserTarget userTarget = new UserTarget();
                 userTarget.setSecurityName(securityName);
