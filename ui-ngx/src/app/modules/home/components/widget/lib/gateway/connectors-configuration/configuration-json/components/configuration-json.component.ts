@@ -36,10 +36,9 @@ import { JsonObjectEditComponent } from '@shared/components/json-object-edit.com
 import { Store } from '@ngrx/store';
 import { RafService } from '@core/services/raf.service';
 import { Observable, of } from 'rxjs';
-import { catchError, map, take, tap } from 'rxjs/operators';
+import { catchError, map } from 'rxjs/operators';
 import { ConnectorType } from '@home/components/widget/lib/gateway/gateway-form.models';
 import { AceBase, CustomAnnotation } from '@shared/models/ace/ace.models';
-import { isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-configuration-json',
