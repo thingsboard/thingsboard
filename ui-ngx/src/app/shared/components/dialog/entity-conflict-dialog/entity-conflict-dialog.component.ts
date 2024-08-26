@@ -47,6 +47,10 @@ export class EntityConflictDialogComponent {
   ) {}
 
   onCancel(): void {
+    this.dialogRef.close();
+  }
+
+  onDiscard(): void {
     this.dialogRef.close(false);
   }
 

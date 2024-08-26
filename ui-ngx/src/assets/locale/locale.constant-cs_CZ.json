@@ -745,7 +745,6 @@
         "maximum-upload-file-size": "Maximální velikost souboru: {{ size }}",
         "cannot-upload-file": "Soubor nelze nahrát",
         "settings": "Nastavení",
-        "layout-settings": "Nastavení rozložení",
         "columns-count": "Počet sloupců",
         "columns-count-required": "Počet sloupců je povinný.",
         "min-columns-count-message": "Minimální povolený počet sloupců je 10.",

@@ -35,10 +35,10 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import {
   SecurityConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
+import { HOUR } from '@shared/models/time/time.models';
 
 @Component({
   selector: 'tb-opc-server-config',
@@ -62,7 +62,6 @@ import {
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
-    TruncateWithTooltipDirective,
   ]
 })
 export class OpcServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
@@ -80,7 +79,8 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
       name: ['', []],
       url: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       timeoutInMillis: [1000, [Validators.required, Validators.min(1000)]],
-      scanPeriodInMillis: [1000, [Validators.required, Validators.min(1000)]],
+      scanPeriodInMillis: [HOUR, [Validators.required, Validators.min(1000)]],
+      pollPeriodInMillis: [5000, [Validators.required, Validators.min(50)]],
       enableSubscriptions: [true, []],
       subCheckPeriodInMillis: [100, [Validators.required, Validators.min(100)]],
       showMap: [false, []],
@@ -118,7 +118,8 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
   writeValue(serverConfig: ServerConfig): void {
     const {
       timeoutInMillis = 1000,
-      scanPeriodInMillis = 1000,
+      scanPeriodInMillis = HOUR,
+      pollPeriodInMillis = 5000,
       enableSubscriptions = true,
       subCheckPeriodInMillis = 100,
       showMap = false,
@@ -130,6 +131,7 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
       ...serverConfig,
       timeoutInMillis,
       scanPeriodInMillis,
+      pollPeriodInMillis,
       enableSubscriptions,
       subCheckPeriodInMillis,
       showMap,
