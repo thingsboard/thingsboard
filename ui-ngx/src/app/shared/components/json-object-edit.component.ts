@@ -41,7 +41,6 @@ import { guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { AceBase, getAce } from '@shared/models/ace/ace.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import { take } from 'rxjs/operators';
 import { Observable } from 'rxjs';
 
 export const jsonRequired = (control: AbstractControl): ValidationErrors | null => !control.value ? {required: true} : null;
@@ -115,7 +114,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
   }
 
   ngOnInit(): void {
-    getAce().pipe(take(1)).subscribe(ace => this.onGetAce(ace));
+    getAce().subscribe(ace => this.onGetAce(ace));
   }
 
   ngOnDestroy(): void {
@@ -135,13 +134,11 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     this.jsonEditor.setValue(this.contentValue ? this.contentValue : '', -1);
     this.jsonEditor.setReadOnly(this.disabled || this.readonly);
     this.jsonEditor.on('change', () => this.onAceChanged());
-    this.editorResize$ = new ResizeObserver(() => {
-      this.onAceEditorResize();
-    });
+    this.editorResize$ = new ResizeObserver(() => this.onAceEditorResize());
     this.editorResize$.observe(editorElement);
   }
 
-  protected onAceChanged(): void {
+  private onAceChanged(): void {
     if (!this.ignoreChange) {
       this.cleanupJsonErrors();
       this.updateView();

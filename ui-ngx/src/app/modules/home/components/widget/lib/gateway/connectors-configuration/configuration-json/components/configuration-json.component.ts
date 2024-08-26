@@ -98,21 +98,41 @@ export class ConfigurationJsonComponent extends JsonObjectEditComponent implemen
   }
 
   override validate(): Observable<ValidationErrors | null> {
-    return this.configurationValidateService.validateConfiguration(this.deviceId, this.connectorType, this.contentValue)
+    return this.configurationValidateService
+      .checkConnectorConfiguration(this.deviceId, this.connectorType, this.contentValue)
       .pipe(
-        take(1),
-        map(() => this.objectValid ? null : {jsonParseError: {valid: false}}),
-        tap(() => {
-          this.annotations = [];
-          this.annotationChanged = true;
+        map(() => {
+          if (this.annotations.length !== 0) {
+            this.annotations = [];
+            this.annotationChanged = true;
+          }
+          return this.objectValid ? null : {jsonParseError: {valid: false}};
         }),
         catchError(validationWithErrors => {
-          this.annotations =
-            validationWithErrors.error.annotations?.map((annotation: CustomAnnotation) => ({ ...annotation, custom: true })) ?? [];
-          this.annotationChanged = true;
+          const newAnnotations = validationWithErrors.error.annotations?.map(
+            (annotation: CustomAnnotation) => ({...annotation, custom: true})
+          ) ?? [];
+
+          if (!this.areAnnotationsEqual(this.annotations, newAnnotations)) {
+            this.annotations = newAnnotations;
+            this.annotationChanged = true;
+          }
 
           return of({jsonParseError: {valid: false}});
         })
       );
+  }
+
+  private areAnnotationsEqual(
+    oldAnnotations: CustomAnnotation[],
+    newAnnotations: CustomAnnotation[]
+  ): boolean {
+    if (oldAnnotations?.length !== newAnnotations.length) {
+      return false;
+    }
+
+    return oldAnnotations?.every((annotation: CustomAnnotation, index: number) =>
+      JSON.stringify(annotation) === JSON.stringify(newAnnotations[index])
+    ) ?? false;
   }
 }

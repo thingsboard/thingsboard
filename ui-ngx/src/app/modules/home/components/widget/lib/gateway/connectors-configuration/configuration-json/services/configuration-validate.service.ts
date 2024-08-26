@@ -28,7 +28,7 @@ export class ConfigurationValidateService {
 
   constructor(private http: HttpClient) {}
 
-  validateConfiguration(
+  checkConnectorConfiguration(
     gatewayDeviceId: string,
     connectorType: string,
     connectorConfig: string
