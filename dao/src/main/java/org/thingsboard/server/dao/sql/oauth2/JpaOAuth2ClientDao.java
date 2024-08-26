@@ -90,8 +90,8 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
-    public List<OAuth2Client> findByIds(TenantId tenantId, List<OAuth2ClientId> oAuth2ClientIds) {
-        return DaoUtil.convertDataList(repository.findByTenantIdAndIdIn(tenantId.getId(), toUUIDs(oAuth2ClientIds)));
+    public List<OAuth2Client> findByIds(UUID tenantId, List<OAuth2ClientId> oAuth2ClientIds) {
+        return DaoUtil.convertDataList(repository.findByTenantIdAndIdIn(tenantId, toUUIDs(oAuth2ClientIds)));
     }
 
     @Override

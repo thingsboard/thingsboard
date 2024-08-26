@@ -123,7 +123,7 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     @Override
     public List<OAuth2ClientInfo> findOAuth2ClientInfosByIds(TenantId tenantId, List<OAuth2ClientId> oAuth2ClientIds) {
         log.trace("Executing findQueueStatsByIds, tenantId [{}], oAuth2ClientIds [{}]", tenantId, oAuth2ClientIds);
-        return oauth2ClientDao.findByIds(tenantId, oAuth2ClientIds)
+        return oauth2ClientDao.findByIds(tenantId.getId(), oAuth2ClientIds)
                 .stream()
                 .map(OAuth2ClientInfo::new)
                 .collect(Collectors.toList());
