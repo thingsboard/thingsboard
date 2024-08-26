@@ -199,6 +199,17 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('realtime.hideQuickInterval').enable();
       }
     });
+    this.timewindowForm.get('realtime.hideLastInterval').valueChanges.subscribe((hideLastInterval: boolean) => {
+      if (hideLastInterval && !this.timewindowForm.get('realtime.hideQuickInterval').value) {
+        this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.INTERVAL);
+      }
+    });
+    this.timewindowForm.get('realtime.hideQuickInterval').valueChanges.subscribe((hideQuickInterval: boolean) => {
+      if (hideQuickInterval && !this.timewindowForm.get('realtime.hideLastInterval').value) {
+        this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.LAST_INTERVAL);
+      }
+    });
+
     this.timewindowForm.get('history.hideInterval').valueChanges.subscribe((value: boolean) => {
       if (value) {
         this.timewindowForm.get('history.hideLastInterval').disable();
@@ -208,6 +219,33 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('history.hideLastInterval').enable();
         this.timewindowForm.get('history.hideQuickInterval').enable();
         this.timewindowForm.get('history.hideFixedInterval').enable();
+      }
+    });
+    this.timewindowForm.get('history.hideLastInterval').valueChanges.subscribe((hideLastInterval: boolean) => {
+      if (hideLastInterval) {
+        if (!this.timewindowForm.get('history.hideFixedInterval').value) {
+          this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.FIXED);
+        } else if (!this.timewindowForm.get('history.hideQuickInterval').value) {
+          this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.INTERVAL);
+        }
+      }
+    });
+    this.timewindowForm.get('history.hideFixedInterval').valueChanges.subscribe((hideFixedInterval: boolean) => {
+      if (hideFixedInterval) {
+        if (!this.timewindowForm.get('history.hideLastInterval').value) {
+          this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.LAST_INTERVAL);
+        } else if (!this.timewindowForm.get('history.hideQuickInterval').value) {
+          this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.INTERVAL);
+        }
+      }
+    });
+    this.timewindowForm.get('history.hideQuickInterval').valueChanges.subscribe((hideQuickInterval: boolean) => {
+      if (hideQuickInterval) {
+        if (!this.timewindowForm.get('history.hideLastInterval').value) {
+          this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.LAST_INTERVAL);
+        } else if (!this.timewindowForm.get('history.hideFixedInterval').value) {
+          this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.FIXED);
+        }
       }
     });
   }
@@ -234,6 +272,26 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   onTimewindowTypeChange() {
     this.timewindowForm.markAsDirty();
     const timewindowFormValue = this.timewindowForm.getRawValue();
+    if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
+      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
+        this.timewindowForm.get('realtime').patchValue({
+          realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
+            RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
+            timewindowFormValue.realtime.realtimeType,
+          timewindowMs: timewindowFormValue.history.timewindowMs,
+          quickInterval: timewindowFormValue.history.quickInterval.startsWith('CURRENT') ?
+            timewindowFormValue.history.quickInterval : timewindowFormValue.realtime.quickInterval
+        });
+        setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
+      }
+    } else {
+      this.timewindowForm.get('history').patchValue({
+        historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
+        timewindowMs: timewindowFormValue.realtime.timewindowMs,
+        quickInterval: timewindowFormValue.realtime.quickInterval
+      });
+      setTimeout(() => this.timewindowForm.get('history.interval').patchValue(timewindowFormValue.realtime.interval));
+    }
     this.timewindowForm.patchValue({
       aggregation: {
         type: timewindowFormValue.aggregation.type,

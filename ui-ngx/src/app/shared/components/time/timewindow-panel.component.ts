@@ -180,6 +180,37 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     const history = this.timewindow.history;
     const aggregation = this.timewindow.aggregation;
 
+    if (!this.isEdit) {
+      if (realtime.hideLastInterval && !realtime.hideQuickInterval) {
+        realtime.realtimeType = RealtimeWindowType.INTERVAL;
+      }
+      if (realtime.hideQuickInterval && !realtime.hideLastInterval) {
+        realtime.realtimeType = RealtimeWindowType.LAST_INTERVAL;
+      }
+
+      if (history.hideLastInterval) {
+        if (!history.hideFixedInterval) {
+          history.historyType = HistoryWindowType.FIXED;
+        } else if (!history.hideQuickInterval) {
+          history.historyType = HistoryWindowType.INTERVAL;
+        }
+      }
+      if (history.hideFixedInterval) {
+        if (!history.hideLastInterval) {
+          history.historyType = HistoryWindowType.LAST_INTERVAL;
+        } else if (!history.hideQuickInterval) {
+          history.historyType = HistoryWindowType.INTERVAL;
+        }
+      }
+      if (history.hideQuickInterval) {
+        if (!history.hideLastInterval) {
+          history.historyType = HistoryWindowType.LAST_INTERVAL;
+        } else if (!history.hideFixedInterval) {
+          history.historyType = HistoryWindowType.FIXED;
+        }
+      }
+    }
+
     this.timewindowForm = this.fb.group({
       realtime: this.fb.group({
         realtimeType: [{
@@ -447,35 +478,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       return DAY;
     }
   }
-
-  // TODO: pay attention to selecting another option on hiding interval in config
-  // onHideLastIntervalChanged() {
-  //   if (this.timewindow.realtime.hideLastInterval) {
-  //     this.timewindowForm.get('realtime.timewindowMs').disable({emitEvent: false});
-  //     if (!this.timewindow.realtime.hideQuickInterval) {
-  //       this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.INTERVAL);
-  //     }
-  //   } else {
-  //     if (!this.timewindow.hideInterval) {
-  //       this.timewindowForm.get('realtime.timewindowMs').enable({emitEvent: false});
-  //     }
-  //   }
-  //   this.timewindowForm.markAsDirty();
-  // }
-
-  // onHideQuickIntervalChanged() {
-  //   if (this.timewindow.realtime.hideQuickInterval) {
-  //     this.timewindowForm.get('realtime.quickInterval').disable({emitEvent: false});
-  //     if (!this.timewindow.realtime.hideLastInterval) {
-  //       this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.LAST_INTERVAL);
-  //     }
-  //   } else {
-  //     if (!this.timewindow.hideInterval) {
-  //       this.timewindowForm.get('realtime.quickInterval').enable({emitEvent: false});
-  //     }
-  //   }
-  //   this.timewindowForm.markAsDirty();
-  // }
 
   openTimewindowConfig() {
     this.prepareTimewindowConfig();
