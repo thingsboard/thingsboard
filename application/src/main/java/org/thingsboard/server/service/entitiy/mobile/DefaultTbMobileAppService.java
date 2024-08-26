@@ -42,7 +42,7 @@ public class DefaultTbMobileAppService extends AbstractTbEntityService implement
         TenantId tenantId = mobileApp.getTenantId();
         try {
             MobileApp savedMobileApp = checkNotNull(mobileAppService.saveMobileApp(tenantId, mobileApp));
-            if (!CollectionUtils.isEmpty(oauth2Clients)) {
+            if (CollectionUtils.isNotEmpty(oauth2Clients)) {
                 mobileAppService.updateOauth2Clients(tenantId, savedMobileApp.getId(), oauth2Clients);
             }
             logEntityActionService.logEntityAction(tenantId, savedMobileApp.getId(), savedMobileApp, actionType, user);

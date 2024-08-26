@@ -64,7 +64,7 @@ public class JpaOAuth2ClientDao extends JpaAbstractDao<OAuth2ClientEntity, OAuth
     }
 
     @Override
-    public List<OAuth2Client> findEnabledByPckNameAndPlatformType(String pkgName, PlatformType platformType) {
+    public List<OAuth2Client> findEnabledByPkgNameAndPlatformType(String pkgName, PlatformType platformType) {
         return DaoUtil.convertDataList(repository.findEnabledByPkgNameAndPlatformType(pkgName,
                 platformType != null ? platformType.name() : null));
     }

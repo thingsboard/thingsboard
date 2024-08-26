@@ -42,7 +42,7 @@ public class DefaultTbDomainService extends AbstractTbEntityService implements T
         TenantId tenantId = domain.getTenantId();
         try {
             Domain savedDomain = checkNotNull(domainService.saveDomain(tenantId, domain));
-            if (!CollectionUtils.isEmpty(oAuth2Clients)) {
+            if (CollectionUtils.isNotEmpty(oAuth2Clients)) {
                 domainService.updateOauth2Clients(domain.getTenantId(), savedDomain.getId(), oAuth2Clients);
             }
             logEntityActionService.logEntityAction(tenantId, savedDomain.getId(), savedDomain, actionType, user, oAuth2Clients);
