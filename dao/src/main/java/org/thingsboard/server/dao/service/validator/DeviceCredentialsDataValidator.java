@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.service.validator;
 
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
@@ -32,7 +33,7 @@ public class DeviceCredentialsDataValidator extends DataValidator<DeviceCredenti
     @Autowired
     private DeviceCredentialsDao deviceCredentialsDao;
 
-    @Autowired
+    @Autowired @Lazy
     private DeviceService deviceService;
 
     @Override

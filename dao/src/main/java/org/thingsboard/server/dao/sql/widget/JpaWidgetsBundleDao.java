@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.model.sql.WidgetsBundleEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
@@ -64,8 +65,8 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
-    public PageData<WidgetsBundle> findSystemWidgetsBundles(TenantId tenantId, boolean fullSearch, PageLink pageLink) {
-        if (fullSearch) {
+    public PageData<WidgetsBundle> findSystemWidgetsBundles(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        if (widgetsBundleFilter.isFullSearch()) {
             return DaoUtil.toPageData(
                     widgetsBundleRepository
                             .findSystemWidgetsBundlesFullSearch(
@@ -93,13 +94,13 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
     }
 
     @Override
-    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
-        return findTenantWidgetsBundlesByTenantIds(Arrays.asList(tenantId, NULL_UUID), fullSearch, pageLink);
+    public PageData<WidgetsBundle> findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        return findTenantWidgetsBundlesByTenantIds(Arrays.asList(widgetsBundleFilter.getTenantId().getId(), NULL_UUID), widgetsBundleFilter, pageLink);
     }
 
     @Override
-    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(UUID tenantId, boolean fullSearch, PageLink pageLink) {
-        return findTenantWidgetsBundlesByTenantIds(Collections.singletonList(tenantId), fullSearch, pageLink);
+    public PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantId(WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        return findTenantWidgetsBundlesByTenantIds(Collections.singletonList(widgetsBundleFilter.getTenantId().getId()), widgetsBundleFilter, pageLink);
     }
 
     @Override
@@ -107,13 +108,14 @@ public class JpaWidgetsBundleDao extends JpaAbstractDao<WidgetsBundleEntity, Wid
         return DaoUtil.toPageData(widgetsBundleRepository.findAll(DaoUtil.toPageable(pageLink)));
     }
 
-    private PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIds(List<UUID> tenantIds, boolean fullSearch, PageLink pageLink) {
-        if (fullSearch) {
+    private PageData<WidgetsBundle> findTenantWidgetsBundlesByTenantIds(List<UUID> tenantIds, WidgetsBundleFilter widgetsBundleFilter, PageLink pageLink) {
+        if (widgetsBundleFilter.isFullSearch()) {
             return DaoUtil.toPageData(
                     widgetsBundleRepository
                             .findAllTenantWidgetsBundlesByTenantIdsFullSearch(
                                     tenantIds,
                                     pageLink.getTextSearch(),
+                                    widgetsBundleFilter.isScadaFirst(),
                                     DaoUtil.toPageable(pageLink)));
         } else {
             return DaoUtil.toPageData(

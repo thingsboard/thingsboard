@@ -101,5 +101,4 @@ public interface EventDao {
      */
     void removeEvents(UUID tenantId, UUID entityId, EventFilter eventFilter, Long startTime, Long endTime);
 
-    void migrateEvents(long regularEventTs, long debugEventTs);
 }

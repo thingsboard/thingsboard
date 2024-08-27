@@ -52,6 +52,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipes/gateway-port-tooltip.pipe';
 import { takeUntil } from 'rxjs/operators';
 import { isEqual } from '@core/utils';
+import { helpBaseUrl } from '@shared/models/constants';
 
 @Component({
   selector: 'tb-modbus-slave-dialog',
@@ -97,7 +98,7 @@ export class ModbusSlaveDialogComponent extends DialogComponent<ModbusSlaveDialo
   readonly ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
   readonly ModbusMethodLabelsMap = ModbusMethodLabelsMap;
   readonly modbusHelpLink =
-    'https://thingsboard.io/docs/iot-gateway/config/modbus/#section-master-description-and-configuration-parameters';
+    helpBaseUrl + '/docs/iot-gateway/config/modbus/#section-master-description-and-configuration-parameters';
 
   private readonly serialSpecificControlKeys = ['serialPort', 'baudrate', 'stopbits', 'bytesize', 'parity', 'strict'];
   private readonly tcpUdpSpecificControlKeys = ['port', 'security', 'host', 'wordOrder'];
