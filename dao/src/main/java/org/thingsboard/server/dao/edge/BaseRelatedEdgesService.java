@@ -29,9 +29,6 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 
-import java.util.ArrayList;
-import java.util.List;
-
 @Service
 public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, RelatedEdgesCacheValue, RelatedEdgesEvictEvent> implements RelatedEdgesService {
 
@@ -51,27 +48,15 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
     @Override
     public PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
         if (!pageLink.equals(FIRST_PAGE)) {
-            return findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink);
+            return edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink)
         }
         return cache.getAndPutInTransaction(new RelatedEdgesCacheKey(tenantId, entityId),
-                () -> new RelatedEdgesCacheValue(findEdgesByEntityIdAndConvertToEdgeId(tenantId, entityId, pageLink)), false).getPageData();
+                () -> new RelatedEdgesCacheValue(edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink)), false).getPageData();
     }
 
     @Override
     public void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId) {
         publishEvictEvent(new RelatedEdgesEvictEvent(tenantId, entityId));
-    }
-
-    private PageData<EdgeId> findEdgesByEntityIdAndConvertToEdgeId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
-        PageData<EdgeId> pageData = edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink);
-        if (pageData == null) {
-            return PageData.emptyPageData();
-        }
-        List<EdgeId> edgeIds = new ArrayList<>();
-        if (pageData.getData() != null && !pageData.getData().isEmpty()) {
-            edgeIds = new ArrayList<>(pageData.getData());
-        }
-        return new PageData<>(edgeIds, pageData.getTotalPages(), pageData.getTotalElements(), pageData.hasNext());
     }
 
 }
