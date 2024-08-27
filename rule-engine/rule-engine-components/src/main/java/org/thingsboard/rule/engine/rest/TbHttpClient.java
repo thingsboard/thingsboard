@@ -132,6 +132,7 @@ public class TbHttpClient {
             this.webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
                     .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
+                    .codecs(clientCodecConfigurer -> clientCodecConfigurer.defaultCodecs().maxInMemorySize(config.getMaxInMemoryBufferSizeInKb() * 1024))
                     .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
