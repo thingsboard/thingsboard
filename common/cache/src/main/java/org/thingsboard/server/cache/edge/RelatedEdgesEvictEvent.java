@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.edge;
+package org.thingsboard.server.cache.edge;
 
 import lombok.Data;
 import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Data
 @RequiredArgsConstructor
-class EdgeCacheEvictEvent {
+public class RelatedEdgesEvictEvent {
 
     private final TenantId tenantId;
-    private final String newName;
-    private final String oldName;
+    private final EntityId entityId;
 
 }
