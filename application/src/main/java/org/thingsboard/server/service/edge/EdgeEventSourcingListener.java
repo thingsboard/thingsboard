@@ -32,10 +32,10 @@ import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmComment;
 import org.thingsboard.server.common.data.alarm.EntityAlarm;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.domain.Domain;
 import org.thingsboard.server.common.data.edge.EdgeEventActionType;
 import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.data.rule.RuleChain;
@@ -204,10 +204,11 @@ public class EdgeEventSourcingListener {
                     return !event.getCreated();
                 case API_USAGE_STATE, EDGE:
                     return false;
+                case DOMAIN:
+                    if (entity instanceof Domain domain) {
+                        return domain.isPropagateToEdge();
+                    }
             }
-        }
-        if (entity instanceof OAuth2Info oAuth2Info) {
-            return oAuth2Info.isEdgeEnabled();
         }
         // Default: If the entity doesn't match any of the conditions, consider it as valid.
         return true;
@@ -233,16 +234,12 @@ public class EdgeEventSourcingListener {
     private EdgeEventType getEdgeEventTypeForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
             return EdgeEventType.ALARM_COMMENT;
-        } else if (entity instanceof OAuth2Info) {
-            return EdgeEventType.OAUTH2;
         }
         return null;
     }
 
     private String getBodyMsgForEntityEvent(Object entity) {
         if (entity instanceof AlarmComment) {
-            return JacksonUtil.toString(entity);
-        } else if (entity instanceof OAuth2Info) {
             return JacksonUtil.toString(entity);
         }
         return null;

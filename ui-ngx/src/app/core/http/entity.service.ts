@@ -96,6 +96,7 @@ import { NotificationType } from '@shared/models/notification.models';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmService } from '@core/http/alarm.service';
 import { ResourceService } from '@core/http/resource.service';
+import { OAuth2Service } from '@core/http/oauth2.service';
 
 @Injectable({
   providedIn: 'root'
@@ -125,7 +126,8 @@ export class EntityService {
     private queueService: QueueService,
     private notificationService: NotificationService,
     private alarmService: AlarmService,
-    private resourceService: ResourceService
+    private resourceService: ResourceService,
+    private oauth2Service: OAuth2Service
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -271,6 +273,9 @@ export class EntityService {
         break;
       case EntityType.QUEUE_STATS:
         observable = this.queueService.getQueueStatisticsByIds(entityIds, config);
+        break;
+      case EntityType.OAUTH2_CLIENT:
+        observable = this.oauth2Service.findTenantOAuth2ClientInfosByIds(entityIds, config);
         break;
     }
     return observable;
@@ -452,6 +457,11 @@ export class EntityService {
       case EntityType.QUEUE_STATS:
         pageLink.sortOrder.property = 'createdTime';
         entitiesObservable = this.queueService.getQueueStatistics(pageLink, config);
+        break;
+      case EntityType.OAUTH2_CLIENT:
+        pageLink.sortOrder.property = 'createdTime';
+        entitiesObservable = this.oauth2Service.findTenantOAuth2ClientInfos(pageLink, config);
+        break;
     }
     return entitiesObservable;
   }

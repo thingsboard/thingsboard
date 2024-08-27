@@ -614,13 +614,11 @@ public class DefaultTbClusterService implements TbClusterService {
     private void pushDeviceUpdateMessage(TenantId tenantId, EdgeId edgeId, EntityId entityId, EdgeEventActionType action) {
         log.trace("{} Going to send edge update notification for device actor, device id {}, edge id {}", tenantId, entityId, edgeId);
         switch (action) {
-            case ASSIGNED_TO_EDGE:
-                pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
-                break;
-            case UNASSIGNED_FROM_EDGE:
+            case ASSIGNED_TO_EDGE -> pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), edgeId), null);
+            case UNASSIGNED_FROM_EDGE -> {
                 EdgeId relatedEdgeId = findRelatedEdgeIdIfAny(tenantId, entityId);
                 pushMsgToCore(new DeviceEdgeUpdateMsg(tenantId, new DeviceId(entityId.getId()), relatedEdgeId), null);
-                break;
+            }
         }
     }
 

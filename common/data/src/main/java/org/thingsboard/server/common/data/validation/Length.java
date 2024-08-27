@@ -33,6 +33,8 @@ public @interface Length {
 
     int max() default 255;
 
+    int min() default 0;
+
     Class<?>[] groups() default {};
 
     Class<? extends Payload>[] payload() default {};

@@ -108,7 +108,6 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -699,13 +698,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
             stats.log(toDeviceActorMsg);
         }
         actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback));
-    }
-
-    private void forwardToAppActor(UUID id, Optional<TbActorMsg> actorMsg, TbCallback callback) {
-        if (actorMsg.isPresent()) {
-            forwardToAppActor(id, actorMsg.get());
-        }
-        callback.onSuccess();
     }
 
     private void forwardToAppActor(UUID id, TbActorMsg actorMsg) {

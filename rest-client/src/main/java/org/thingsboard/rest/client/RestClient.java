@@ -87,6 +87,8 @@ import org.thingsboard.server.common.data.asset.AssetSearchQuery;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.audit.AuditLog;
 import org.thingsboard.server.common.data.device.DeviceSearchQuery;
+import org.thingsboard.server.common.data.domain.Domain;
+import org.thingsboard.server.common.data.domain.DomainInfo;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.edge.EdgeInfo;
@@ -101,9 +103,12 @@ import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.DomainId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
+import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.OAuth2ClientRegistrationTemplateId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.QueueId;
@@ -118,9 +123,12 @@ import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.MobileAppInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientRegistrationTemplate;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
@@ -2071,7 +2079,7 @@ public class RestClient implements Closeable {
                 }).getBody();
     }
 
-    public List<OAuth2ClientInfo> getOAuth2Clients(String pkgName, PlatformType platformType) {
+    public List<OAuth2ClientLoginInfo> getOAuth2Clients(String pkgName, PlatformType platformType) {
         Map<String, String> params = new HashMap<>();
         StringBuilder urlBuilder = new StringBuilder(baseURL);
         urlBuilder.append("/api/noauth/oauth2Clients");
@@ -2092,16 +2100,106 @@ public class RestClient implements Closeable {
                 urlBuilder.toString(),
                 HttpMethod.POST,
                 HttpEntity.EMPTY,
-                new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
+                new ParameterizedTypeReference<List<OAuth2ClientLoginInfo>>() {
                 }, params).getBody();
     }
 
-    public OAuth2Info getCurrentOAuth2Info() {
-        return restTemplate.getForEntity(baseURL + "/api/oauth2/config", OAuth2Info.class).getBody();
+    public List<OAuth2ClientInfo> getTenantOAuth2Clients() {
+        return restTemplate.exchange(
+                baseURL + "/api/oauth2/client/infos",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<OAuth2ClientInfo>>() {
+                }).getBody();
     }
 
-    public OAuth2Info saveOAuth2Info(OAuth2Info oauth2Info) {
-        return restTemplate.postForEntity(baseURL + "/api/oauth2/config", oauth2Info, OAuth2Info.class).getBody();
+    public Optional<OAuth2Client> getOauth2ClientById(OAuth2ClientId oAuth2ClientId) {
+        try {
+            ResponseEntity<OAuth2Client> oauth2Client = restTemplate.getForEntity(baseURL + "/api/oauth2/client/{id}", OAuth2Client.class, oAuth2ClientId.getId());
+            return Optional.ofNullable(oauth2Client.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public OAuth2Client saveOAuth2Client(OAuth2Client oAuth2Client) {
+        return restTemplate.postForEntity(baseURL + "/api/oauth2/client", oAuth2Client, OAuth2Client.class).getBody();
+    }
+
+    public void deleteOauth2CLient(OAuth2ClientId oAuth2ClientId) {
+        restTemplate.delete(baseURL + "/api/oauth2/client/{id}", oAuth2ClientId.getId());
+    }
+
+    public List<DomainInfo> getTenantDomainInfos() {
+        return restTemplate.exchange(
+                baseURL + "/api/domain/infos",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<DomainInfo>>() {
+                }).getBody();
+    }
+
+    public Optional<DomainInfo> getDomainInfoById(DomainId domainId) {
+        try {
+            ResponseEntity<DomainInfo> domainInfo = restTemplate.getForEntity(baseURL + "/api/domain/info/{id}", DomainInfo.class, domainId.getId());
+            return Optional.ofNullable(domainInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public Domain saveDomain(Domain domain) {
+        return restTemplate.postForEntity(baseURL + "/api/domain", domain, Domain.class).getBody();
+    }
+
+    public void deleteDomain(DomainId domainId) {
+        restTemplate.delete(baseURL + "/api/domain/{id}", domainId.getId());
+    }
+
+    public void updateDomainOauth2Clients(DomainId domainId, UUID[] oauth2ClientIds) {
+        restTemplate.postForLocation(baseURL + "/api/domain/{id}/oauth2Clients", oauth2ClientIds, domainId.getId());
+    }
+
+    public List<DomainInfo> getTenantMobileAppInfos() {
+        return restTemplate.exchange(
+                baseURL + "/api/mobileApp/infos",
+                HttpMethod.GET,
+                HttpEntity.EMPTY,
+                new ParameterizedTypeReference<List<DomainInfo>>() {
+                }).getBody();
+    }
+
+    public Optional<MobileAppInfo> getMobileAppInfoById(MobileAppId mobileAppId) {
+        try {
+            ResponseEntity<MobileAppInfo> mobileAppInfo = restTemplate.getForEntity(baseURL + "/api/mobileApp/info/{id}", MobileAppInfo.class, mobileAppId.getId());
+            return Optional.ofNullable(mobileAppInfo.getBody());
+        } catch (HttpClientErrorException exception) {
+            if (exception.getStatusCode() == HttpStatus.NOT_FOUND) {
+                return Optional.empty();
+            } else {
+                throw exception;
+            }
+        }
+    }
+
+    public MobileApp saveMobileApp(MobileApp mobileApp) {
+        return restTemplate.postForEntity(baseURL + "/api/mobileApp", mobileApp, MobileApp.class).getBody();
+    }
+
+    public void deleteMobileApp(MobileAppId mobileAppId) {
+        restTemplate.delete(baseURL + "/api/mobileApp/{id}", mobileAppId.getId());
+    }
+
+    public void updateMobileAppOauth2Clients(MobileAppId mobileAppId, UUID[] oauth2ClientIds) {
+        restTemplate.postForLocation(baseURL + "/api/mobileApp/{id}/oauth2Clients", oauth2ClientIds, mobileAppId.getId());
     }
 
     public String getLoginProcessingUrl() {
