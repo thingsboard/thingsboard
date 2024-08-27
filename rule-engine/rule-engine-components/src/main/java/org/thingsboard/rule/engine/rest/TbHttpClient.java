@@ -132,7 +132,7 @@ public class TbHttpClient {
             this.webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
                     .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
-                    .codecs(clientCodecConfigurer -> clientCodecConfigurer.defaultCodecs().maxInMemorySize(config.getMaxInMemoryBufferSizeInKb() * 1024))
+                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(config.getMaxInMemoryBufferSizeInKb() * 1024))
                     .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
@@ -286,6 +286,9 @@ public class TbHttpClient {
             metaData.putValue(STATUS, restClientResponseException.getStatusText());
             metaData.putValue(STATUS_CODE, restClientResponseException.getStatusCode().value() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
+            if (restClientResponseException.getStatusCode().is2xxSuccessful()) {
+                metaData.putValue(ERROR, metaData.getValue(ERROR) + ". Cause: " +restClientResponseException.getCause().getMessage());
+            }
         }
         return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
