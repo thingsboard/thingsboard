@@ -23,7 +23,9 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
+import java.util.Collections;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -134,7 +136,6 @@ public class TbEntityLocalSubsInfo {
         if (subs.isEmpty()) {
             return toEvent(ComponentLifecycleEvent.DELETED);
         }
-        TbSubscriptionsInfo oldState = state.copy();
 
         //copy unchanged state only
         TbSubscriptionsInfo newState = state.copy();
@@ -155,8 +156,28 @@ public class TbEntityLocalSubsInfo {
                 newState.tsKeys = null;
         }
 
+        return updateState(Collections.singleton(sub.getType()), newState);
+    }
+
+    public TbEntitySubEvent removeAll(List<TbSubscription<?>> subsToRemove) {
+        Set<TbSubscriptionType> changedTypes = new HashSet<>();
+        for (TbSubscription<?> sub : subsToRemove) {
+            log.trace("[{}][{}][{}] Removing: {}", tenantId, entityId, sub.getSubscriptionId(), sub);
+            if (!subs.remove(sub)) {
+                continue;
+            }
+            if (subs.isEmpty()) {
+                return toEvent(ComponentLifecycleEvent.DELETED);
+            }
+            changedTypes.add(sub.getType());
+        }
+
+        return updateState(changedTypes, new TbSubscriptionsInfo());
+    }
+
+    private TbEntitySubEvent updateState(Set<TbSubscriptionType> changedTypes, TbSubscriptionsInfo newState) {
         for (TbSubscription<?> subscription : subs) {
-            if (subscription.getType() != sub.getType()) {
+            if (!changedTypes.contains(subscription.getType())) {
                 continue; // skip unchanged types
             }
             switch (subscription.getType()) {
@@ -199,7 +220,7 @@ public class TbEntityLocalSubsInfo {
                     break;
             }
         }
-        if (newState.equals(oldState)) {
+        if (newState.equals(state)) {
             return null;
         } else {
             this.state = newState;
@@ -222,7 +243,7 @@ public class TbEntityLocalSubsInfo {
 
 
     public boolean isEmpty() {
-        return state.isEmpty();
+        return subs.isEmpty();
     }
 
     public TbSubscription<?> registerPendingSubscription(TbSubscription<?> subscription, TbEntitySubEvent event) {
