@@ -13,28 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.edge;
+package org.thingsboard.server.cache.edge;
 
-import lombok.Builder;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
+import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.TenantId;
 
-import java.io.Serializable;
-
-@Getter
-@EqualsAndHashCode
+@Data
 @RequiredArgsConstructor
-@Builder
-public class EdgeCacheKey implements Serializable {
+public class EdgeCacheEvictEvent {
 
     private final TenantId tenantId;
-    private final String name;
-
-    @Override
-    public String toString() {
-        return tenantId + "_" + name;
-    }
+    private final String newName;
+    private final String oldName;
 
 }
