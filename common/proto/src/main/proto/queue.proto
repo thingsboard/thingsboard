@@ -817,6 +817,8 @@ message TbEntitySubEventCallbackProto {
   int32 seqNumber = 3;
   int64 attributesUpdateTs = 4;
   int64 timeSeriesUpdateTs = 5;
+  int64 tenantIdMSB = 6;
+  int64 tenantIdLSB = 7;
 }
 
 message TsValueProto {
