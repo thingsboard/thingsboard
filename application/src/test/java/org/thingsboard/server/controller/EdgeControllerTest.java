@@ -908,14 +908,14 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgs(), savedDevice.getId()));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
-        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
+        printQueueMsgsIfNotEmpty(edgeImitator);
 
         edgeImitator.expectMessageAmount(21);
         doPost("/api/edge/sync/" + edge.getId()).andExpect(status().isOk());
         waitForMessages(edgeImitator);
 
         verifyFetchersMsgs(edgeImitator, savedDevice);
-        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
+        printQueueMsgsIfNotEmpty(edgeImitator);
 
         edgeImitator.allowIgnoredTypes();
         try {
@@ -929,6 +929,15 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         doDelete("/api/edge/" + edge.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    private static void printQueueMsgsIfNotEmpty(EdgeImitator edgeImitator) {
+        if (!edgeImitator.getDownlinkMsgs().isEmpty()) {
+            for (AbstractMessage downlinkMsg : edgeImitator.getDownlinkMsgs()) {
+                log.warn("Unexpected message in the queue: {}", downlinkMsg);
+            }
+        }
+        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
     }
 
     private RuleChainId getEdgeRootRuleChainId(EdgeImitator edgeImitator) {
