@@ -85,9 +85,9 @@ public class TbSubscriptionUtils {
     public static ToCoreNotificationMsg toProto(TenantId tenantId, UUID id, int seqNumber, TbEntityUpdatesInfo update) {
         TransportProtos.TbEntitySubEventCallbackProto.Builder updateProto = TransportProtos.TbEntitySubEventCallbackProto.newBuilder()
                 .setEntityIdMSB(id.getMostSignificantBits())
-                .setEntityIdLSB(tenantId.getId().getLeastSignificantBits())
+                .setEntityIdLSB(id.getLeastSignificantBits())
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(id.getLeastSignificantBits())
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
                 .setSeqNumber(seqNumber)
                 .setAttributesUpdateTs(update.attributesUpdateTs)
                 .setTimeSeriesUpdateTs(update.timeSeriesUpdateTs);
