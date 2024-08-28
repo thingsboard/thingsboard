@@ -45,6 +45,7 @@
     "long_bottom_filter",
     "short_top_filter",
     "long_top_filter",
+    "stand_filter",
     "horizontal_wheel_valve",
     "vertical_wheel_valve",
     "horizontal_ball_valve",
