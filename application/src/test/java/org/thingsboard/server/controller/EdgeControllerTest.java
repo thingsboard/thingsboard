@@ -1278,6 +1278,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.1.5");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
+        edgeUpgradeInstructionsService.setAppVersion("3.6.1.6-SNAPSHOT");
+        Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.2");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
 
@@ -1287,6 +1289,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeUpgradeInstructionsService.setAppVersion("3.6.1");
         Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.2");
+        Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
+        edgeUpgradeInstructionsService.setAppVersion("3.6.2-SNAPSHOT");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.2.6");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
