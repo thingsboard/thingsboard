@@ -37,12 +37,6 @@ import {
   SecurityConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
 import {
-  WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
-import {
-  BrokerConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
-import {
   MappingTableComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
 import {
@@ -70,8 +64,6 @@ import {
     CommonModule,
     SharedModule,
     SecurityConfigComponent,
-    WorkersConfigControlComponent,
-    BrokerConfigControlComponent,
     MappingTableComponent,
     OpcServerConfigComponent,
   ],

@@ -26,12 +26,13 @@ import {
   AddConnectorConfigData,
   ConnectorType,
   CreatedConnectorConfigData,
+  GatewayConnector,
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
-  getDefaultConfig,
+  GatewayVersionedDefaultConfig,
   noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { Subject } from 'rxjs';
+import { Observable, Subject } from 'rxjs';
 import { ResourcesService } from '@core/services/resources.service';
 import { takeUntil, tap } from 'rxjs/operators';
 import { helpBaseUrl } from '@shared/models/constants';
@@ -42,7 +43,8 @@ import { helpBaseUrl } from '@shared/models/constants';
   styleUrls: ['./add-connector-dialog.component.scss'],
   providers: [],
 })
-export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
+export class AddConnectorDialogComponent
+  extends DialogComponent<AddConnectorDialogComponent, BaseData<HasId>> implements OnInit, OnDestroy {
 
   connectorForm: UntypedFormGroup;
 
@@ -95,8 +97,8 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
     this.submitted = true;
     const value = this.connectorForm.getRawValue();
     if (value.useDefaults) {
-      getDefaultConfig(this.resourcesService, value.type).subscribe((defaultConfig) => {
-        value.configurationJson = defaultConfig;
+      this.getDefaultConfig(value.type).subscribe(({current, legacy, ...defaultConfig}: GatewayVersionedDefaultConfig) => {
+        value.configurationJson = (this.data.gatewayVersion ? current : legacy) ?? defaultConfig;
         if (this.connectorForm.valid) {
           this.dialogRef.close(value);
         }
@@ -130,4 +132,8 @@ export class AddConnectorDialogComponent extends DialogComponent<AddConnectorDia
       takeUntil(this.destroy$),
     ).subscribe();
   }
+
+  private getDefaultConfig(type: string): Observable<GatewayVersionedDefaultConfig | GatewayConnector> {
+    return this.resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
+  };
 }

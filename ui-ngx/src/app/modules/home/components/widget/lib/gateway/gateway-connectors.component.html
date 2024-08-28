@@ -156,6 +156,7 @@
       <div class="tb-form-panel-title">
         {{ initialConnector?.type ? GatewayConnectorTypesTranslatesMap.get(initialConnector.type) : '' }}
         {{ 'gateway.configuration' | translate }}
+        <span class="version-placeholder" *ngIf="connectorForm.get('configVersion').value">v{{connectorForm.get('configVersion').value}}</span>
       </div>
       <tb-toggle-select *ngIf="initialConnector && allowBasicConfig.has(initialConnector.type)"
                         formControlName="mode" appearance="fill">
@@ -175,10 +176,16 @@
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">
       <ng-container *ngIf="connectorForm.get('mode')?.value === ConnectorConfigurationModes.BASIC else defaultConfig">
         <ng-container [ngSwitch]="initialConnector.type">
-          <tb-mqtt-basic-config *ngSwitchCase="ConnectorType.MQTT"
-                                formControlName="basicConfig"
-                                [generalTabContent]="generalTabContent">
-          </tb-mqtt-basic-config>
+          <ng-container *ngSwitchCase="ConnectorType.MQTT">
+            <tb-mqtt-basic-config
+              *ngIf="connectorForm.get('configVersion').value else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+            />
+            <ng-template #legacy>
+              <tb-mqtt-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
+            </ng-template>
+          </ng-container>
           <tb-opc-ua-basic-config *ngSwitchCase="ConnectorType.OPCUA"
                                   formControlName="basicConfig"
                                   [generalTabContent]="generalTabContent">

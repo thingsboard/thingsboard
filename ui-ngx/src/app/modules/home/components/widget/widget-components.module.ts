@@ -113,7 +113,7 @@ import { GatewayHelpLinkPipe } from '@home/components/widget/lib/gateway/pipes/g
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import {
   BrokerConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/broker-config-control/broker-config-control.component';
 import {
   WorkersConfigControlComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
@@ -122,7 +122,7 @@ import {
 } from '@home/components/widget/lib/gateway/connectors-configuration/opc-server-config/opc-server-config.component';
 import {
   MqttBasicConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config/mqtt-basic-config.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-basic-config.component';
 import {
   MappingTableComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
@@ -145,6 +145,9 @@ import {
   ModbusRpcParametersComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-rpc-parameters/modbus-rpc-parameters.component';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
+import {
+  MqttLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-legacy-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -233,6 +236,7 @@ import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/sc
     ModbusBasicConfigComponent,
     EllipsisChipListDirective,
     ModbusRpcParametersComponent,
+    MqttLegacyBasicConfigComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,

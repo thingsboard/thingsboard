@@ -14,8 +14,6 @@
 /// limitations under the License.
 ///
 
-import { ResourcesService } from '@core/services/resources.service';
-import { Observable } from 'rxjs';
 import { helpBaseUrl, ValueTypeData } from '@shared/models/constants';
 import { AttributeData } from '@shared/models/telemetry/telemetry.models';
 
@@ -114,21 +112,37 @@ export interface GatewayAttributeData extends AttributeData {
   skipSync?: boolean;
 }
 
-export interface GatewayConnector {
+export interface GatewayConnectorBase {
   name: string;
   type: ConnectorType;
   configuration?: string;
-  configurationJson: ConnectorBaseConfig;
-  basicConfig?: ConnectorBaseConfig;
   logLevel: string;
   key?: string;
   class?: string;
   mode?: ConnectorConfigurationModes;
+  configVersion?: string;
+}
+
+export type GatewayConnector = CurrentGatewayConnector | LegacyGatewayConnector;
+
+export interface CurrentGatewayConnector extends GatewayConnectorBase {
+  configurationJson: ConnectorBaseConfig;
+  basicConfig?: ConnectorBaseConfig;
+}
+
+export interface LegacyGatewayConnector extends GatewayConnectorBase {
+  configurationJson: ConnectorLegacyBaseConfig;
+  basicConfig?: ConnectorLegacyBaseConfig;
+}
+
+export interface GatewayVersionedDefaultConfig {
+  legacy: LegacyGatewayConnector;
+  current: GatewayConnector;
 }
 
 export interface DataMapping {
   topicFilter: string;
-  QoS: string;
+  QoS: string | number;
   converter: Converter;
 }
 
@@ -180,11 +194,13 @@ export interface ConnectorSecurity {
   mode?: ModeType;
 }
 
-export type ConnectorMapping = DeviceConnectorMapping | RequestMappingData | ConverterConnectorMapping;
+export type ConnectorMapping = DeviceConnectorMapping | RequestMappingValue | ConverterConnectorMapping;
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
 
 export type ConnectorBaseConfig = ConnectorBaseInfo | MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+
+export type ConnectorLegacyBaseConfig = ConnectorBaseInfo | MQTTLegacyBasicConfig;
 
 export interface ConnectorBaseInfo {
   name: string;
@@ -194,10 +210,21 @@ export interface ConnectorBaseInfo {
 }
 
 export interface MQTTBasicConfig {
-  dataMapping: ConverterConnectorMapping[];
-  requestsMapping: Record<RequestType, RequestMappingData[]> | RequestMappingData[];
+  mapping: ConverterConnectorMapping[];
+  requestsMapping: Record<RequestType, RequestMappingData[] | RequestMappingValue[]> | RequestMappingData[] | RequestMappingValue[];
   broker: BrokerConfig;
   workers?: WorkersConfig;
+}
+
+export interface MQTTLegacyBasicConfig {
+  mapping: LegacyConverterConnectorMapping[];
+  broker: BrokerConfig;
+  workers?: WorkersConfig;
+  connectRequests: LegacyRequestMappingData[];
+  disconnectRequests: LegacyRequestMappingData[];
+  attributeRequests: LegacyRequestMappingData[];
+  attributeUpdates: LegacyRequestMappingData[];
+  serverSideRpc: LegacyRequestMappingData[];
 }
 
 export interface OPCBasicConfig {
@@ -215,11 +242,11 @@ export interface WorkersConfig {
   maxMessageNumberPerWorker: number;
 }
 
-interface DeviceInfo {
+export interface ConnectorDeviceInfo {
   deviceNameExpression: string;
-  deviceNameExpressionSource: string;
+  deviceNameExpressionSource: SourceType;
   deviceProfileExpression: string;
-  deviceProfileExpressionSource: string;
+  deviceProfileExpressionSource: SourceType;
 }
 
 export interface Attribute {
@@ -252,18 +279,39 @@ export interface AttributesUpdate {
 
 export interface Converter {
   type: ConvertorType;
-  deviceNameJsonExpression: string;
-  deviceTypeJsonExpression: string;
+  deviceInfo?: ConnectorDeviceInfo;
   sendDataOnlyOnChange: boolean;
   timeout: number;
-  attributes: Attribute[];
-  timeseries: Timeseries[];
+  attributes?: Attribute[];
+  timeseries?: Timeseries[];
+  extension?: string;
+  cached?: boolean;
+  extensionConfig?: Record<string, number>;
+}
+
+export interface LegacyConverter extends Converter {
+  deviceNameJsonExpression?: string;
+  deviceTypeJsonExpression?: string;
+  deviceNameTopicExpression?: string;
+  deviceTypeTopicExpression?: string;
+  deviceNameExpression?: string;
+  deviceNameExpressionSource?: string;
+  deviceTypeExpression?: string;
+  deviceProfileExpression?: string;
+  deviceProfileExpressionSource?: string;
+  ['extension-config']?: Record<string, unknown>;
 }
 
 export interface ConverterConnectorMapping {
   topicFilter: string;
-  subscriptionQos?: string;
+  subscriptionQos?: string | number;
   converter: Converter;
+}
+
+export interface LegacyConverterConnectorMapping {
+  topicFilter: string;
+  subscriptionQos?: string | number;
+  converter: LegacyConverter;
 }
 
 export type ConverterMappingFormValue = Omit<ConverterConnectorMapping, 'converter'> & {
@@ -274,8 +322,8 @@ export type ConverterMappingFormValue = Omit<ConverterConnectorMapping, 'convert
 
 export interface DeviceConnectorMapping {
   deviceNodePattern: string;
-  deviceNodeSource: string;
-  deviceInfo: DeviceInfo;
+  deviceNodeSource: SourceType;
+  deviceInfo: ConnectorDeviceInfo;
   attributes?: Attribute[];
   timeseries?: Timeseries[];
   rpc_methods?: RpcMethod[];
@@ -460,6 +508,7 @@ export interface GatewayLogData {
 
 export interface AddConnectorConfigData {
   dataSourceData: Array<any>;
+  gatewayVersion: string;
 }
 
 export interface CreatedConnectorConfigData {
@@ -590,13 +639,13 @@ export const ConvertorTypeTranslationsMap = new Map<ConvertorType, string>(
   ]
 );
 
-export enum SourceTypes {
+export enum SourceType {
   MSG = 'message',
   TOPIC = 'topic',
   CONST = 'constant'
 }
 
-export enum OPCUaSourceTypes {
+export enum OPCUaSourceType {
   PATH = 'path',
   IDENTIFIER = 'identifier',
   CONST = 'constant'
@@ -607,33 +656,116 @@ export enum DeviceInfoType {
   PARTIAL = 'partial'
 }
 
-export const SourceTypeTranslationsMap = new Map<SourceTypes | OPCUaSourceTypes, string>(
+export const SourceTypeTranslationsMap = new Map<SourceType | OPCUaSourceType, string>(
   [
-    [SourceTypes.MSG, 'gateway.source-type.msg'],
-    [SourceTypes.TOPIC, 'gateway.source-type.topic'],
-    [SourceTypes.CONST, 'gateway.source-type.const'],
-    [OPCUaSourceTypes.PATH, 'gateway.source-type.path'],
-    [OPCUaSourceTypes.IDENTIFIER, 'gateway.source-type.identifier'],
-    [OPCUaSourceTypes.CONST, 'gateway.source-type.const']
+    [SourceType.MSG, 'gateway.source-type.msg'],
+    [SourceType.TOPIC, 'gateway.source-type.topic'],
+    [SourceType.CONST, 'gateway.source-type.const'],
+    [OPCUaSourceType.PATH, 'gateway.source-type.path'],
+    [OPCUaSourceType.IDENTIFIER, 'gateway.source-type.identifier'],
+    [OPCUaSourceType.CONST, 'gateway.source-type.const']
   ]
 );
 
-export interface RequestMappingData {
+export interface RequestMappingValue {
   requestType: RequestType;
-  requestValue: RequestDataItem;
+  requestValue: RequestMappingData;
 }
 
-export type RequestMappingFormValue = Omit<RequestMappingData, 'requestValue'> & {
-  requestValue: Record<RequestType, RequestDataItem>;
-};
-
-export interface RequestDataItem {
-  type: string;
-  details: string;
+export interface RequestMappingFormValue {
   requestType: RequestType;
-  methodFilter?: string;
-  attributeFilter?: string;
-  topicFilter?: string;
+  requestValue: Record<RequestType, RequestMappingData>;
+}
+
+export type RequestMappingData = ConnectRequest | DisconnectRequest | AttributeRequest | AttributeUpdate | ServerSideRpc;
+
+export type LegacyRequestMappingData =
+  LegacyConnectRequest
+  | LegacyDisconnectRequest
+  | LegacyAttributeRequest
+  | LegacyAttributeUpdate
+  | LegacyServerSideRpc;
+
+export interface ConnectRequest {
+  topicFilter: string;
+  deviceInfo: ConnectorDeviceInfo;
+}
+
+export interface DisconnectRequest {
+  topicFilter: string;
+  deviceInfo: ConnectorDeviceInfo;
+}
+
+export interface AttributeRequest {
+  retain: boolean;
+  topicFilter: string;
+  deviceInfo: ConnectorDeviceInfo;
+  attributeNameExpressionSource: SourceType;
+  attributeNameExpression: string;
+  topicExpression: string;
+  valueExpression: string;
+}
+
+export interface AttributeUpdate {
+  retain: boolean;
+  deviceNameFilter: string;
+  attributeFilter: string;
+  topicExpression: string;
+  valueExpression: string;
+}
+
+export interface ServerSideRpc {
+  type: ServerSideRpcType;
+  deviceNameFilter: string;
+  methodFilter: string;
+  requestTopicExpression: string;
+  responseTopicExpression?: string;
+  responseTopicQoS?: number;
+  responseTimeout?: number;
+  valueExpression: string;
+}
+
+export enum ServerSideRpcType {
+  WithResponse = 'twoWay',
+  WithoutResponse = 'oneWay'
+}
+
+export interface LegacyConnectRequest {
+  topicFilter: string;
+  deviceNameJsonExpression?: string;
+  deviceNameTopicExpression?: string;
+}
+
+interface LegacyDisconnectRequest {
+  topicFilter: string;
+  deviceNameJsonExpression?: string;
+  deviceNameTopicExpression?: string;
+}
+
+interface LegacyAttributeRequest {
+  retain: boolean;
+  topicFilter: string;
+  deviceNameJsonExpression: string;
+  attributeNameJsonExpression: string;
+  topicExpression: string;
+  valueExpression: string;
+}
+
+interface LegacyAttributeUpdate {
+  retain: boolean;
+  deviceNameFilter: string;
+  attributeFilter: string;
+  topicExpression: string;
+  valueExpression: string;
+}
+
+interface LegacyServerSideRpc {
+  deviceNameFilter: string;
+  methodFilter: string;
+  requestTopicExpression: string;
+  responseTopicExpression?: string;
+  responseTimeout?: number;
+  valueExpression: string;
 }
 
 export enum RequestType {
@@ -706,9 +838,6 @@ export enum ServerSideRPCType {
   ONE_WAY = 'oneWay',
   TWO_WAY = 'twoWay'
 }
-
-export const getDefaultConfig = (resourcesService: ResourcesService, type: string): Observable<any> =>
-  resourcesService.loadJsonResource(`/assets/metadata/connector-default-configs/${type}.json`);
 
 export enum MappingValueType {
   STRING = 'string',
