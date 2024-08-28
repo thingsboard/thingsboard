@@ -145,15 +145,16 @@
         </div>
         <div class="tb-form-row space-between">
           <div translate>dashboard.min-layout-width</div>
-          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number medium-width" subscriptSizing="dynamic"
+                          [class.tb-suffix-absolute]="gridSettingsFormGroup.get('minColumns').invalid && gridSettingsFormGroup.get('minColumns').touched">
             <input matInput formControlName="minColumns" type="number" min="10" max="1008" step="1"
                    required
                    placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="(gridSettingsFormGroup.get('columns').hasError('required') ? 'dashboard.columns-count-required' :
-                                     (gridSettingsFormGroup.get('columns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate"
+                      [matTooltip]="(gridSettingsFormGroup.get('minColumns').hasError('required') ? 'dashboard.columns-count-required' :
+                                     (gridSettingsFormGroup.get('minColumns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate"
                       *ngIf="gridSettingsFormGroup.get('minColumns').invalid && gridSettingsFormGroup.get('minColumns').touched"
                       class="tb-error">
               warning
@@ -190,7 +191,7 @@
         </div>
         <div *ngIf="isDefaultLayout && !isDefaultBreakpoint" class="tb-form-row space-between">
           <div translate>dashboard.row-height</div>
-          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number medium-width" subscriptSizing="dynamic">
             <input matInput formControlName="rowHeight" type="number" min="5" max="200" step="any"
                    required
                    placeholder="{{ 'widget-config.set' | translate }}">
@@ -245,7 +246,7 @@
         </div>
         <div *ngIf="!isScada()" class="tb-form-row space-between">
           <div translate>dashboard.mobile-row-height</div>
-          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic">
+          <mat-form-field appearance="outline" class="number medium-width" subscriptSizing="dynamic">
             <input matInput formControlName="mobileRowHeight" type="number" min="5" max="200" step="any"
                    required
                    placeholder="{{ 'widget-config.set' | translate }}">
