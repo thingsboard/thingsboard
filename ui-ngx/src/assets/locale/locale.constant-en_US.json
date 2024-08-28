@@ -3861,7 +3861,21 @@
             "heat-pump-color": "Heat pump color",
             "power-button-background": "Power button background",
             "value-box-background": "Value box background",
-            "value-units": "Value units"
+            "value-units": "Value units",
+            "filtration-mode": "Filtration mode",
+            "filtration-mode-hint": "Integer value indication the current filtration mode.",
+            "filtration-mode-update": "Filtration mode update state",
+            "filtration-mode-update-hint": "Action invoked when user clicks to change current filtration mode.",
+            "filter-mode": "Filter",
+            "waste-mode": "Waste",
+            "backwash-mode": "Backwash",
+            "recirculate-mode": "Recirculate",
+            "rinse-mode": "Rinse",
+            "closed-mode": "Closed",
+            "stand-filter-color": "Stand filter color",
+            "mode-box-background": "Mode box background",
+            "border-color": "Border color",
+            "label-color": "Label color"
         }
     },
     "item": {
