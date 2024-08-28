@@ -1251,6 +1251,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.isEditingWidgetClosed = true;
       this.isAddingWidgetClosed = false;
     }
+    this.resetHighlight();
     this.isAddingWidget = true;
     this.addingLayoutCtx = layoutCtx;
   }
