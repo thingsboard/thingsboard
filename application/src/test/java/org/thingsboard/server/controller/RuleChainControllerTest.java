@@ -375,7 +375,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
         ruleChainMetaData.setNodes(ruleNodes);
 
         ruleChainMetaData = doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
-        assertThat(ruleChainMetaData.getVersion()).isEqualTo(2); // in this case when saving metadata, rule chain will also be updated
+        assertThat(ruleChainMetaData.getVersion()).isEqualTo(2);
 
         ruleChain = doGet("/api/ruleChain/" + ruleChain.getId(), RuleChain.class);
         assertThat(ruleChain.getVersion()).isEqualTo(2);
