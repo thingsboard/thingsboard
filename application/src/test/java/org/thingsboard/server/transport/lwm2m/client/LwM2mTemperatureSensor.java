@@ -16,9 +16,13 @@
 package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.client.LeshanClient;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
+import org.eclipse.leshan.client.send.ManualDataSender;
 import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
+import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
@@ -26,6 +30,7 @@ import org.eclipse.leshan.core.response.ReadResponse;
 import javax.security.auth.Destroyable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
@@ -39,6 +44,9 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     private double currentTemp = 20d;
     private double minMeasuredValue = currentTemp;
     private double maxMeasuredValue = currentTemp;
+
+    private LeshanClient leshanClient;
+    private List<Double> containingValues;
     protected static final Random RANDOM = new Random();
     private static final List<Integer> supportedResources = Arrays.asList(5601, 5602, 5700, 5701);
 
@@ -65,7 +73,17 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
             case 5602:
                 return ReadResponse.success(resourceId, getTwoDigitValue(maxMeasuredValue));
             case 5700:
-                return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                if (identity == LwM2mServer.SYSTEM)  {
+                    setTemperature();
+                    setData();
+                    return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                } else if (this.getId() == 12 && this.leshanClient != null)  {
+                    containingValues = new ArrayList<>();
+                    sendCollected(5700);
+                    return ReadResponse.success(resourceId, getData());
+                } else {
+                    return ReadResponse.success(resourceId, getTwoDigitValue(currentTemp));
+                }
             case 5701:
                 return ReadResponse.success(resourceId, UNIT_CELSIUS);
             default:
@@ -91,8 +109,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     }
 
     private void adjustTemperature() {
-        float delta = (RANDOM.nextInt(20) - 10) / 10f;
-        currentTemp += delta;
+        setTemperature();
         Integer changedResource = adjustMinMaxMeasuredValue(currentTemp);
         fireResourceChange(5700);
         if (changedResource != null) {
@@ -100,6 +117,10 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
         }
     }
 
+    private void setTemperature(){
+        float delta = (RANDOM.nextInt(20) - 10) / 10f;
+        currentTemp += delta;
+    }
     private synchronized Integer adjustMinMaxMeasuredValue(double newTemperature) {
         if (newTemperature > maxMeasuredValue) {
             maxMeasuredValue = newTemperature;
@@ -122,9 +143,48 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
         return supportedResources;
     }
 
+    protected void setLeshanClient(LeshanClient leshanClient){
+        this.leshanClient = leshanClient;
+    }
+
     @Override
     public void destroy() {
     }
 
+    private void sendCollected(int resourceId) {
+        try {
+            LwM2mServer registeredServer = this.leshanClient.getRegisteredServers().values().iterator().next();
+            ManualDataSender sender = this.leshanClient.getSendService().getDataSender(ManualDataSender.DEFAULT_NAME,
+                    ManualDataSender.class);
+            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            Thread.sleep(1000);
+            sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            sender.sendCollectedData(registeredServer, ContentFormat.SENML_JSON, 1000, false);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+    }
+    private LwM2mPath getPathForCollectedValue(int resourceId) {
+        return new LwM2mPath(3303, this.getId(), resourceId);
+    }
 
+    private double getData() {
+        if (containingValues.size() > 1) {
+            Integer t0 = Math.toIntExact(Math.round(containingValues.get(0) * 100));
+            Integer t1 = Math.toIntExact(Math.round(containingValues.get(1) * 100));
+            long to_t1 = (((long) t0) << 32) | (t1 & 0xffffffffL);
+            return Double.longBitsToDouble(to_t1);
+        } else {
+            return currentTemp;
+        }
+
+    }
+
+    private void setData() {
+        if (containingValues == null){
+            containingValues = new ArrayList<>();
+        }
+        containingValues.add(getTwoDigitValue(currentTemp));
+    }
 }
+
