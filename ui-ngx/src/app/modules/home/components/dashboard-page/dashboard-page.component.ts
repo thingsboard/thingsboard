@@ -450,7 +450,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         }),
         skip(1)
       ).subscribe(() => {
-          this.layouts.main.layoutCtx.ctrl.updatedCurrentBreakpoint();
+          this.dashboardUtils.updatedLayoutForBreakpoint(this.layouts.main, this.dashboardCtx.breakpoint);
           this.updateLayoutSizes();
         }
       )
@@ -1129,7 +1129,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private updateLayout(layout: DashboardPageLayout, layoutInfo: DashboardLayoutInfo) {
     layout.layoutCtx.layoutData = layoutInfo;
     layout.layoutCtx.layoutDataChanged.next();
-    layout.layoutCtx.ctrl?.updatedCurrentBreakpoint(this.isEdit ? layout.layoutCtx.breakpoint : null, layout.show);
+    this.dashboardUtils.updatedLayoutForBreakpoint(layout, this.isEdit ? layout.layoutCtx.breakpoint : this.dashboardCtx.breakpoint);
     this.updateLayoutSizes();
   }
 
