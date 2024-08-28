@@ -43,8 +43,12 @@ public class TbAttributeSubscription extends TbSubscription<TelemetrySubscriptio
     }
 
     @Override
-    protected boolean canEqual(final Object other) {
-        return other instanceof TbAttributeSubscription;
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

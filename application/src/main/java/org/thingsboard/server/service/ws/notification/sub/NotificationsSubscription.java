@@ -47,11 +47,6 @@ public class NotificationsSubscription extends AbstractNotificationSubscription<
         this.limit = limit;
     }
 
-    @Override
-    protected boolean canEqual(final Object other) {
-        return other instanceof NotificationsSubscription;
-    }
-
     public UnreadNotificationsUpdate createFullUpdate() {
         return UnreadNotificationsUpdate.builder()
                 .cmdId(getSubscriptionId())

@@ -34,11 +34,6 @@ public class NotificationsCountSubscription extends AbstractNotificationSubscrip
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.NOTIFICATIONS_COUNT, updateProcessor);
     }
 
-    @Override
-    protected boolean canEqual(final Object other) {
-        return other instanceof NotificationsCountSubscription;
-    }
-
     public UnreadNotificationsCountUpdate createUpdate() {
         return UnreadNotificationsCountUpdate.builder()
                 .cmdId(getSubscriptionId())

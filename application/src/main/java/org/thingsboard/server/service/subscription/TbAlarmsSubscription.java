@@ -36,8 +36,12 @@ public class TbAlarmsSubscription extends TbSubscription<AlarmSubscriptionUpdate
     }
 
     @Override
-    public boolean canEqual(final Object other) {
-        return other instanceof TbAlarmsSubscription;
+    public boolean equals(Object o) {
+        return super.equals(o);
     }
 
+    @Override
+    public int hashCode() {
+        return super.hashCode();
+    }
 }

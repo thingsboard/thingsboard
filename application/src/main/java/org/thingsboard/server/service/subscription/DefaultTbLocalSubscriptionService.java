@@ -227,7 +227,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         onSubEventCallback(tenantId, entityId.getId(), seqNumber, entityUpdatesInfo, callback);
     }
 
-    public void onSubEventCallback(TenantId tenantId, UUID entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
+    private void onSubEventCallback(TenantId tenantId, UUID entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback callback) {
         log.debug("[{}][{}][{}] Processing sub event callback: {}.", tenantId, entityId, seqNumber, entityUpdatesInfo);
         entityUpdates.put(entityId, entityUpdatesInfo);
         Set<TbSubscription<?>> pendingSubs = null;

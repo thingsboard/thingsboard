@@ -27,17 +27,16 @@ import java.util.Set;
  */
 @RequiredArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
+@EqualsAndHashCode(exclude = {"seqNumber"})
 @ToString
 public class TbSubscriptionsInfo {
 
     protected boolean notifications;
     protected boolean alarms;
     protected boolean tsAllKeys;
-    protected boolean attrAllKeys; // primitives first for equals performance
     protected Set<String> tsKeys;
+    protected boolean attrAllKeys;
     protected Set<String> attrKeys;
-    @EqualsAndHashCode.Exclude
     protected int seqNumber;
 
     public boolean isEmpty() {
@@ -49,7 +48,7 @@ public class TbSubscriptionsInfo {
     }
 
     protected TbSubscriptionsInfo copy(int seqNumber) {
-        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, attrAllKeys, tsKeys, attrKeys, seqNumber);
+        return new TbSubscriptionsInfo(notifications, alarms, tsAllKeys, tsKeys, attrAllKeys, attrKeys, seqNumber);
     }
 
 }

@@ -109,9 +109,8 @@ public class TbSubscriptionUtils {
                 .type(event);
         if (!ComponentLifecycleEvent.DELETED.equals(event)) {
             builder.info(new TbSubscriptionsInfo(proto.getNotifications(), proto.getAlarms(),
-                    proto.getTsAllKeys(), proto.getAttrAllKeys(),
-                    proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
-                    proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysList()) : null,
+                    proto.getTsAllKeys(), proto.getTsKeysCount() > 0 ? new HashSet<>(proto.getTsKeysList()) : null,
+                    proto.getAttrAllKeys(), proto.getAttrKeysCount() > 0 ? new HashSet<>(proto.getAttrKeysList()) : null,
                     proto.getSeqNumber()));
         }
         return builder.build();
