@@ -97,20 +97,28 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
                 if (versionedEntity.getVersion() == null) {
                     HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
                     if (existingEntity != null) {
-                        versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                        /*
+                         * manually resetting the version to latest to allow force overwrite of the entity
+                         * */
+                        versionedEntity.setVersion(existingEntity.getVersion());
                     } else {
                         return doSave(entity, true, flush);
                     }
                 }
-                entity = entityManager.merge(entity);
+                versionedEntity = entityManager.merge(versionedEntity);
                 /*
-                 * flushing so that the query is executed right away and the version is incremented,
-                 * then removing the entity from the persistence context so that it is not affected
+                 * by default, Hibernate doesn't issue an update query and thus version increment
+                 * if the entity was not modified. to bypass this and always increment the version, we do it manually
+                 * */
+                versionedEntity.setVersion(versionedEntity.getVersion() + 1);
+                /*
+                 * flushing and then removing the entity from the persistence context so that it is not affected
                  * by next flushes (e.g. when a transaction is committed) to avoid double version increment
                  * */
                 entityManager.flush();
-                entityManager.detach(entity);
+                entityManager.detach(versionedEntity);
                 flushed = true;
+                entity = (E) versionedEntity;
             } else {
                 entity = entityManager.merge(entity);
             }
@@ -161,6 +169,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         log.debug("Remove request: {}", id);
     }
 
+    @Override
     @Transactional
     public void removeAllByIds(Collection<UUID> ids) {
         JpaRepository<E, UUID> repository = getRepository();

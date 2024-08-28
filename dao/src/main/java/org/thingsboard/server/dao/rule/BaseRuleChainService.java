@@ -168,7 +168,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, true);
     }
 
-
+    @Transactional
     @Override
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
@@ -237,7 +237,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if ((ruleChain.getFirstRuleNodeId() != null && !ruleChain.getFirstRuleNodeId().equals(firstRuleNodeId))
                     || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
                 ruleChain.setFirstRuleNodeId(firstRuleNodeId);
-                ruleChainDao.save(tenantId, ruleChain);
             }
             if (ruleChainMetaData.getConnections() != null) {
                 for (NodeConnectionInfo nodeConnection : ruleChainMetaData.getConnections()) {
@@ -286,6 +285,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
+        ruleChain = ruleChainDao.save(tenantId, ruleChain);
         if (publishSaveEvent) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain).entityId(ruleChain.getId()).build());
         }

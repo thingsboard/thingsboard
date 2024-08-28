@@ -360,7 +360,7 @@ public class RuleChainControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveRuleChainWithOutdatedVersion() throws Exception {
-        RuleChain ruleChain = createRuleChain("Rule chain with invalid nodes");
+        RuleChain ruleChain = createRuleChain("My rule chain");
 
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChain.getId());
@@ -392,11 +392,11 @@ public class RuleChainControllerTest extends AbstractControllerTest {
                 .andExpect(status().isConflict());
 
         ruleChainMetaData.setVersion(3L);
-        doPost("/api/ruleChain/metadata", ruleChainMetaData)
-                .andExpect(status().isOk());
-        ruleChain.setVersion(3L);
-        doPost("/api/ruleChain", ruleChain)
-                .andExpect(status().isOk());
+        ruleChainMetaData = doPost("/api/ruleChain/metadata", ruleChainMetaData, RuleChainMetaData.class);
+        assertThat(ruleChainMetaData.getVersion()).isEqualTo(4);
+        ruleChain.setVersion(4L);
+        ruleChain = doPost("/api/ruleChain", ruleChain, RuleChain.class);
+        assertThat(ruleChain.getVersion()).isEqualTo(5);
     }
 
     private RuleChain createRuleChain(String name) {
