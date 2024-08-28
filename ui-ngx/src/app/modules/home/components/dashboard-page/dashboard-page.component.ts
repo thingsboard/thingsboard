@@ -759,6 +759,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const prevMainLayoutWidth = this.mainLayoutSize.width;
     const prevMainLayoutHeight = this.mainLayoutSize.height;
     const prevMainLayoutMaxWidth = this.mainLayoutSize.maxWidth;
+    const prevMainLayoutMinWidth = this.mainLayoutSize.minWidth;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
       this.mainLayoutSize.width = '100%';
     } else {
@@ -773,18 +774,18 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       const xOffset = this.dashboardContainer.nativeElement.getBoundingClientRect().x;
       const breakpoint = this.dashboardUtils.getBreakpointInfoById(this.layouts.main.layoutCtx.breakpoint);
 
-      let maxWidth: string;
-      if (breakpoint?.maxWidth) {
-        if (this.isMobileSize(breakpoint)) {
-          maxWidth = `${breakpoint.maxWidth}px`;
-        } else {
-          maxWidth = `${breakpoint.maxWidth - xOffset}px`;
-        }
-      } else {
-        maxWidth = '100%';
-      }
+      let maxWidth = '100%';
+      let minWidth: string;
 
-      const minWidth = breakpoint?.minWidth ? `${breakpoint.minWidth}px` : undefined;
+      if (breakpoint) {
+        const isMobile = this.isMobileSize(breakpoint);
+        if (breakpoint.maxWidth) {
+          maxWidth = isMobile ? `${breakpoint.maxWidth}px` : `${breakpoint.maxWidth - xOffset}px`;
+        }
+        if (breakpoint.minWidth) {
+          minWidth = isMobile ? `${breakpoint.minWidth}px` : `${breakpoint.minWidth - xOffset}px`;
+        }
+      }
 
       this.mainLayoutSize.maxWidth = maxWidth;
       this.mainLayoutSize.minWidth = minWidth;
@@ -793,7 +794,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.mainLayoutSize.minWidth = undefined;
     }
     return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height ||
-      prevMainLayoutMaxWidth !== this.mainLayoutSize.maxWidth;
+      prevMainLayoutMaxWidth !== this.mainLayoutSize.maxWidth || prevMainLayoutMinWidth !== this.mainLayoutSize.minWidth;
   }
 
   private updateRightLayoutSize(): boolean {
