@@ -57,7 +57,10 @@ public enum EntityType {
     NOTIFICATION_REQUEST(31),
     NOTIFICATION(32),
     NOTIFICATION_RULE(33),
-    QUEUE_STATS(34);
+    QUEUE_STATS(34),
+    OAUTH2_CLIENT(35),
+    DOMAIN(36),
+    MOBILE_APP(37);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto

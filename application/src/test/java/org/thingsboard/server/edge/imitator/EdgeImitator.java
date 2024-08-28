@@ -47,7 +47,8 @@ import org.thingsboard.server.gen.edge.v1.EntityViewUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationRuleUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTargetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.NotificationTemplateUpdateMsg;
-import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
@@ -318,9 +319,14 @@ public class EdgeImitator {
                 result.add(saveDownlinkMsg(resourceUpdateMsg));
             }
         }
-        if (downlinkMsg.getOAuth2UpdateMsgCount() > 0) {
-            for (OAuth2UpdateMsg oAuth2UpdateMsg : downlinkMsg.getOAuth2UpdateMsgList()) {
-                result.add(saveDownlinkMsg(oAuth2UpdateMsg));
+        if (downlinkMsg.getOAuth2ClientUpdateMsgCount() > 0) {
+            for (OAuth2ClientUpdateMsg oAuth2ClientUpdateMsg : downlinkMsg.getOAuth2ClientUpdateMsgList()) {
+                result.add(saveDownlinkMsg(oAuth2ClientUpdateMsg));
+            }
+        }
+        if (downlinkMsg.getOAuth2DomainUpdateMsgCount() > 0) {
+            for (OAuth2DomainUpdateMsg oAuth2DomainUpdateMsg : downlinkMsg.getOAuth2DomainUpdateMsgList()) {
+                result.add(saveDownlinkMsg(oAuth2DomainUpdateMsg));
             }
         }
         if (downlinkMsg.getNotificationTemplateUpdateMsgCount() > 0) {

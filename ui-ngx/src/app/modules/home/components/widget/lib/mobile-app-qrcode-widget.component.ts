@@ -19,7 +19,7 @@ import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
 import { BadgePosition, MobileAppSettings } from '@shared/models/mobile-app.models';
-import { MobileAppService } from '@core/http/mobile-app.service';
+import { MobileApplicationService } from '@core/http/mobile-application.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, Subject } from 'rxjs';
@@ -78,7 +78,7 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               protected cd: ChangeDetectorRef,
-              private mobileAppService: MobileAppService,
+              private mobileAppService: MobileApplicationService,
               private utilsService: UtilsService,
               private elementRef: ElementRef,
               private imagePipe: ImagePipe,

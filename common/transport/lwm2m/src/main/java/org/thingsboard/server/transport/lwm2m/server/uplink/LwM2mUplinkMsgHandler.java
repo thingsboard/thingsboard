@@ -15,10 +15,10 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.uplink;
 
+import org.eclipse.leshan.core.node.TimestampedLwM2mNodes;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CreateRequest;
-import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.response.ReadCompositeResponse;
@@ -50,7 +50,7 @@ public interface LwM2mUplinkMsgHandler {
     void onUpdateValueAfterReadCompositeResponse(Registration registration, ReadCompositeResponse response);
     void onErrorObservation(Registration registration, String errorMsg);
 
-    void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest);
+    void onUpdateValueWithSendRequest(Registration registration, TimestampedLwM2mNodes data);
 
     void onDeviceProfileUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceProfile deviceProfile);
 

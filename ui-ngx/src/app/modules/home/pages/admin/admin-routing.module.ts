@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { inject, Injectable, NgModule } from '@angular/core';
+import { inject, NgModule } from '@angular/core';
 import { ActivatedRouteSnapshot, Resolve, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
@@ -22,9 +22,7 @@ import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
-import { OAuth2SettingsComponent } from '@home/pages/admin/oauth2-settings.component';
-import { forkJoin, Observable } from 'rxjs';
-import { OAuth2Service } from '@core/http/oauth2.service';
+import { forkJoin } from 'rxjs';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
@@ -41,22 +39,12 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { auditLogsRoutes } from '@home/pages/audit-log/audit-log-routing.module';
 import { ImageGalleryComponent } from '@shared/components/image/image-gallery.component';
 import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
+import { oAuth2Routes } from '@home/pages/admin/oauth2/oauth2-routing.module';
 import { ImageResourceType, IMAGES_URL_PREFIX, ResourceSubType } from '@shared/models/resource.models';
 import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.component';
 import { ImageService } from '@core/http/image.service';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { MenuId } from '@core/services/menu.models';
-
-@Injectable()
-export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
-
-  constructor(private oauth2Service: OAuth2Service) {
-  }
-
-  resolve(): Observable<string> {
-    return this.oauth2Service.getLoginProcessingUrl();
-  }
-}
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
@@ -400,21 +388,7 @@ const routes: Routes = [
           }
         }
       },
-      {
-        path: 'oauth2',
-        component: OAuth2SettingsComponent,
-        canDeactivate: [ConfirmOnExitGuard],
-        data: {
-          auth: [Authority.SYS_ADMIN],
-          title: 'admin.oauth2.oauth2',
-          breadcrumb: {
-            menuId: MenuId.oauth2
-          }
-        },
-        resolve: {
-          loginProcessingUrl: OAuth2LoginProcessingUrlResolver
-        }
-      },
+      ...oAuth2Routes,
       ...auditLogsRoutes
     ]
   }
@@ -424,7 +398,6 @@ const routes: Routes = [
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
   providers: [
-    OAuth2LoginProcessingUrlResolver,
     ResourcesLibraryTableConfigResolver,
     QueuesTableConfigResolver
   ]
