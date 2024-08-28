@@ -1056,7 +1056,6 @@
         "maximum-upload-file-size": "Mida màxima del fitxer de pujada: {{ size }}",
         "cannot-upload-file": "No s'ha pogut pujar el fitxer",
         "settings": "Configuració",
-        "layout-settings": "Paràmetres de la disposició",
         "columns-count": "Número de columnes",
         "columns-count-required": "Cal número de columnes.",
         "min-columns-count-message": "Sol es permet un número mínim de 10 columnes.",

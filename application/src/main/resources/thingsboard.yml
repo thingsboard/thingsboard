@@ -20,8 +20,8 @@ server:
   address: "${HTTP_BIND_ADDRESS:0.0.0.0}"
   # Server bind port
   port: "${HTTP_BIND_PORT:8080}"
-  # Server forward headers strategy
-  forward_headers_strategy: "${HTTP_FORWARD_HEADERS_STRATEGY:NONE}"
+  # Server forward headers strategy. Required for SWAGGER UI when reverse proxy is used
+  forward_headers_strategy: "${HTTP_FORWARD_HEADERS_STRATEGY:framework}"
   # Server SSL configuration
   ssl:
     # Enable/disable SSL support
@@ -490,7 +490,7 @@ actors:
 
 # Cache settings parameters
 cache:
-  # caffeine or redis
+  # caffeine or redis(7.2 - latest compatible version)
   type: "${CACHE_TYPE:caffeine}"
   maximumPoolSize: "${CACHE_MAXIMUM_POOL_SIZE:16}" # max pool size to process futures that call the external cache
   attributes:
@@ -575,6 +575,9 @@ cache:
     edgeSessions:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGE_SESSIONS_TTL:0}" # Edge Sessions cache TTL; no expiration time if set to '0'
       maxSize: "${CACHE_SPECS_EDGE_SESSIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
+    relatedEdges:
+      timeToLiveInMinutes: "${CACHE_SPECS_RELATED_EDGES_TTL:1440}" # Related Edges cache TTL
+      maxSize: "${CACHE_SPECS_RELATED_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled
     repositorySettings:
       timeToLiveInMinutes: "${CACHE_SPECS_REPOSITORY_SETTINGS_TTL:1440}" # Repository settings cache TTL
       maxSize: "${CACHE_SPECS_REPOSITORY_SETTINGS_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -776,7 +779,28 @@ spring:
       leakDetectionThreshold: "${SPRING_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
       # This property increases the number of connections in the pool as demand increases. At the same time, the property ensures that the pool doesn't grow to the point of exhausting a system's resources, which ultimately affects an application's performance and availability
       maximumPoolSize: "${SPRING_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
-      registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}" # true - enable MBean to diagnose pools state via JMX
+      # Enable MBean to diagnose pools state via JMX
+      registerMbeans: "${SPRING_DATASOURCE_HIKARI_REGISTER_MBEANS:false}"
+    events:
+      # Enable dedicated datasource (a separate database) for events and audit logs.
+      # Before enabling this, make sure you have set up the following tables in the new DB:
+      # error_event, lc_event, rule_chain_debug_event, rule_node_debug_event, stats_event, audit_log
+      enabled: "${SPRING_DEDICATED_EVENTS_DATASOURCE_ENABLED:false}"
+      # Database driver for Spring JPA for events datasource
+      driverClassName: "${SPRING_EVENTS_DATASOURCE_DRIVER_CLASS_NAME:org.postgresql.Driver}"
+      # Database connection URL for events datasource
+      url: "${SPRING_EVENTS_DATASOURCE_URL:jdbc:postgresql://localhost:5432/thingsboard_events}"
+      # Database username for events datasource
+      username: "${SPRING_EVENTS_DATASOURCE_USERNAME:postgres}"
+      # Database user password for events datasource
+      password: "${SPRING_EVENTS_DATASOURCE_PASSWORD:postgres}"
+      hikari:
+        # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak for events datasource. A value of 0 means leak detection is disabled
+        leakDetectionThreshold: "${SPRING_EVENTS_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
+        # This property increases the number of connections in the pool as demand increases for events datasource. At the same time, the property ensures that the pool doesn't grow to the point of exhausting a system's resources, which ultimately affects an application's performance and availability
+        maximumPoolSize: "${SPRING_EVENTS_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
+        # Enable MBean to diagnose pools state via JMX for events datasource
+        registerMbeans: "${SPRING_EVENTS_DATASOURCE_HIKARI_REGISTER_MBEANS:false}"
 
 # Audit log parameters
 audit-log:

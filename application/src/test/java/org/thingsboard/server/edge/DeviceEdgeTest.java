@@ -207,8 +207,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(savedDevice.getId(), deviceCredentials.getDeviceId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.ACCESS_TOKEN);
         deviceCredentials.setCredentialsId("access_token");
-        doPost("/api/device/credentials", deviceCredentials)
-                .andExpect(status().isOk());
+        deviceCredentials = doPost("/api/device/credentials", deviceCredentials, DeviceCredentials.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);
@@ -221,8 +220,7 @@ public class DeviceEdgeTest extends AbstractEdgeTest {
         deviceCredentials.setCredentialsType(DeviceCredentialsType.X509_CERTIFICATE);
         deviceCredentials.setCredentialsId(null);
         deviceCredentials.setCredentialsValue("-----BEGIN RSA PRIVATE KEY-----");
-        doPost("/api/device/credentials", deviceCredentials)
-                .andExpect(status().isOk());
+        deviceCredentials = doPost("/api/device/credentials", deviceCredentials, DeviceCredentials.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof DeviceCredentialsUpdateMsg);

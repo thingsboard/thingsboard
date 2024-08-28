@@ -41,7 +41,6 @@ import { generateSecret } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
-import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -52,7 +51,6 @@ import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-t
     CommonModule,
     SharedModule,
     GatewayHelpLinkPipe,
-    TruncateWithTooltipDirective,
   ]
 })
 export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {

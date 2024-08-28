@@ -34,12 +34,12 @@
     </div>
   </div>
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.opcua-timeout' | translate }}">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.opc-timeout' | translate }}">
       <div tbTruncateWithTooltip>{{ 'gateway.timeout' | translate }}</div>
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <input matInput type="number" min="1000" name="value" formControlName="timeoutInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
@@ -69,7 +69,7 @@
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" name="value"
+        <input matInput type="number" min="1000" name="value"
                formControlName="scanPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"
@@ -85,17 +85,38 @@
     </div>
   </div>
   <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.poll-period' | translate }}">
+      <div tbTruncateWithTooltip>{{ 'gateway.poll-period' | translate }}</div>
+    </div>
+    <div class="tb-flex no-gap">
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="50" name="value"
+               formControlName="pollPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
+        <mat-icon matSuffix
+                  matTooltipPosition="above"
+                  matTooltipClass="tb-error-tooltip"
+                  [matTooltip]="'gateway.poll-period-error' | translate: {min: 50}"
+                  *ngIf="(serverConfigFormGroup.get('pollPeriodInMillis').hasError('required') ||
+                         serverConfigFormGroup.get('pollPeriodInMillis').hasError('min')) &&
+                         serverConfigFormGroup.get('pollPeriodInMillis').touched"
+                  class="tb-error">
+          warning
+        </mat-icon>
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
     <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.sub-check-period' | translate }}">
       <div tbTruncateWithTooltip>{{ 'gateway.sub-check-period' | translate }}</div>
     </div>
     <div class="tb-flex no-gap">
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput type="number" min="0" name="value"
+        <input matInput type="number" min="100" name="value"
                formControlName="subCheckPeriodInMillis" placeholder="{{ 'gateway.set' | translate }}"/>
         <mat-icon matSuffix
                   matTooltipPosition="above"
                   matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="'gateway.sub-check-period-error' | translate: {min: 10}"
+                  [matTooltip]="'gateway.sub-check-period-error' | translate: {min: 100}"
                   *ngIf="(serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('required') ||
                          serverConfigFormGroup.get('subCheckPeriodInMillis').hasError('min')) &&
                          serverConfigFormGroup.get('subCheckPeriodInMillis').touched"

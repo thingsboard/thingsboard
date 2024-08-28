@@ -88,7 +88,7 @@ public class EdgeSyncCursor {
             fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
             fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
-            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getOAuth2Service()));
+            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getDomainService()));
         }
     }
 

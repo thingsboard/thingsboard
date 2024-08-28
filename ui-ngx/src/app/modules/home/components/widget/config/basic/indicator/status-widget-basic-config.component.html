@@ -22,11 +22,11 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.initial-state"
+                                    panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    trueLabel="widgets.rpc-state.on"
-                                    falseLabel="widgets.rpc-state.off"
-                                    stateLabel="widgets.rpc-state.on"
+                                    trueLabel="{{ 'widgets.rpc-state.on' | translate }}"
+                                    falseLabel="{{ 'widgets.rpc-state.off' | translate }}"
+                                    stateLabel="{{ 'widgets.rpc-state.on' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -35,9 +35,9 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.disabled-state"
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    stateLabel="widgets.rpc-state.disabled"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"

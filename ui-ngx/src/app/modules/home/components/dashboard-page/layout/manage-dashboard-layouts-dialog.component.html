@@ -25,16 +25,77 @@
       <mat-icon class="material-icons">close</mat-icon>
     </button>
   </mat-toolbar>
-  <div mat-dialog-content fxLayout="column" fxLayoutGap="20px" style="min-width: 300px; overflow: hidden;">
-    <div fxLayout="row" fxLayoutAlign="start center">
-        <mat-slide-toggle formControlName="right" color="accent">
-          {{ 'layout.divider' | translate }}
-        </mat-slide-toggle>
-    </div>
+  <div mat-dialog-content>
+    <section class="tb-form-panel no-padding no-border">
+      <div class="tb-form-row space-between">
+        <div class="fixed-title-width" translate>dashboard.layout</div>
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <mat-select formControlName="layoutType">
+            <mat-option *ngFor="let type of layoutTypes" [value]="type">
+              {{ layoutTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+      </div>
+      <div *ngIf="!isDividerLayout; else dividerLayout" class="tb-form-panel stroked">
+        <div class="tb-form-table tb-layout-breakpoints">
+          <div class="tb-form-table-header no-padding-right">
+            <div class="tb-form-table-header-cell tb-icon"></div>
+            <div class="tb-form-table-header-cell tb-breakpoint" translate>layout.breakpoints</div>
+            <div class="tb-form-table-header-cell tb-size" translate>layout.size</div>
+            <div class="tb-form-table-header-cell tb-actions"></div>
+          </div>
+          <div class="tb-form-table-body no-gap">
+            <ng-container *ngFor="let breakpoint of layoutBreakpoints; let last = last">
+              <div class="tb-form-table-row no-padding-right">
+                <div class="tb-form-table-row-cell tb-icon">
+                  <tb-icon>{{ breakpoint.icon }}</tb-icon>
+                </div>
+                <div class="tb-form-table-row-cell tb-breakpoint">
+                  {{ breakpoint.name }}
+                </div>
+                <div class="tb-form-table-row-cell tb-size" tbTruncateWithTooltip>
+                  {{ breakpoint.descriptionSize }}
+                </div>
+                <div class="tb-form-table-row-cell-buttons tb-actions">
+                  <button mat-icon-button
+                          matTooltip="{{ 'layout.settings' | translate }}"
+                          matTooltipPosition="above"
+                          (click)="openLayoutSettings('main', breakpoint.breakpoint)"
+                          type="button" >
+                    <mat-icon>settings</mat-icon>
+                  </button>
+                  <button mat-icon-button
+                          matTooltip="{{ 'action.delete' | translate }}"
+                          matTooltipPosition="above"
+                          [disabled]="breakpoint.breakpoint === 'default'"
+                          [class.tb-hidden]="breakpoint.breakpoint === 'default'"
+                          (click)="deleteBreakpoint($event, breakpoint.breakpoint)"
+                          type="button" >
+                    <tb-icon>delete</tb-icon>
+                  </button>
+                </div>
+              </div>
+              <mat-divider *ngIf="!last"></mat-divider>
+            </ng-container>
+          </div>
+        </div>
+        <button mat-button fxFlex class="tb-add-breakpoint-button"
+                matTooltip="{{ 'layout.add-new-breakpoint' | translate }}"
+                matTooltipPosition="above"
+                color="primary"
+                type="button"
+                [disabled]="!allowBreakpointIds.length"
+                (click)="addBreakpoint()">
+          <mat-icon>add</mat-icon>
+        </button>
+      </div>
+    </section>
+    <ng-template #dividerLayout>
     <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="20px">
       <mat-button-toggle-group aria-label="Select width value type"
                                formControlName="type"
-                               [fxShow]="layoutsFormGroup.get('right').value">
+                               [fxShow]="isDividerLayout">
         <mat-button-toggle fxFlex value="percentage">
           {{ 'layout.percentage-width' | translate }}
         </mat-button-toggle>
@@ -52,7 +113,7 @@
           <div fxLayout="column" fxLayoutAlign="start center" fxFlex="{{ buttonFlexValue() }}" class="tb-layout-preview-container-main">
             <button mat-icon-button
                     type="button"
-                    matTooltip="{{ 'dashboard.layout-settings' | translate }}"
+                    matTooltip="{{ 'layout.settings' | translate }}"
                     matTooltipPosition="above"
                     (click)="openLayoutSettings('main')"
                     class="tb-layout-preview-element"
@@ -72,7 +133,7 @@
               <span [matTooltip]="layoutButtonText('main')"
                     #mainLayoutTooltip="matTooltip"
                     matTooltipPosition="above">
-                {{ (layoutsFormGroup.value.right ? 'layout.left' : 'layout.main')  | translate }}
+                {{ (isDividerLayout ? 'layout.left' : 'layout.main')  | translate }}
               </span>
             </button>
             <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('main')">
@@ -93,10 +154,10 @@
                      required>
             </div>
           </div>
-          <div fxLayout="column" fxLayoutAlign="start center" fxFlex *ngIf="layoutsFormGroup.get('right').value" matTooltip="">
+          <div fxLayout="column" fxLayoutAlign="start center" fxFlex *ngIf="isDividerLayout" matTooltip="">
             <button mat-icon-button
                     type="button"
-                    matTooltip="{{ 'dashboard.layout-settings' | translate }}"
+                    matTooltip="{{ 'layout.settings' | translate }}"
                     matTooltipPosition="above"
                     (click)="openLayoutSettings('right')"
                     class="tb-layout-preview-element"
@@ -138,7 +199,7 @@
           </div>
         </div>
       </div>
-      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px" *ngIf="layoutsFormGroup.get('right').value" style="width: 80%">
+      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px" *ngIf="isDividerLayout" style="width: 80%">
         <mat-slider *ngIf="layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE"
                     step="1"
                     min="{{ layoutPercentageSize.MIN }}"
@@ -167,6 +228,7 @@
         </div>
       </div>
     </div>
+    </ng-template>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button
