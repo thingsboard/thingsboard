@@ -30,7 +30,7 @@
       <mat-label translate>layout.breakpoint</mat-label>
       <mat-select formControlName="newBreakpointId" [hideSingleSelectionIndicator]="false">
         <mat-select-trigger>{{ getName(this.addBreakpointFormGroup.get('newBreakpointId').value) }}</mat-select-trigger>
-        <mat-option *ngFor="let breakpoint of allowBreakpointIds" [value]="breakpoint">
+        <mat-option *ngFor="let breakpoint of allowBreakpointIds" [value]="breakpoint" style="min-height:56px;">
           <mat-icon><tb-icon>{{ getIcon(breakpoint) }}</tb-icon></mat-icon>
           <div>{{ getName(breakpoint) }}</div>
           <div style="font-size: 12px;letter-spacing: 0.4px;color: #9e9e9e;">{{ getSizeDescription(breakpoint) }}</div>
@@ -41,7 +41,7 @@
       <mat-label translate>layout.copy-from</mat-label>
       <mat-select formControlName="copyFrom" [hideSingleSelectionIndicator]="false">
         <mat-select-trigger>{{ getName(this.addBreakpointFormGroup.get('copyFrom').value) }}</mat-select-trigger>
-        <mat-option *ngFor="let breakpoint of selectedBreakpointIds" [value]="breakpoint">
+        <mat-option *ngFor="let breakpoint of selectedBreakpointIds" [value]="breakpoint" style="min-height:56px;">
           <mat-icon><tb-icon>{{ getIcon(breakpoint) }}</tb-icon></mat-icon>
           <div>{{ getName(breakpoint) }}</div>
           <div style="font-size: 12px;letter-spacing: 0.4px;color: #9e9e9e;">{{ getSizeDescription(breakpoint) }}</div>
