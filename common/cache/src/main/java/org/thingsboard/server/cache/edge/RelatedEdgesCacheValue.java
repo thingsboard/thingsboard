@@ -13,32 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.attributes;
+package org.thingsboard.server.cache.edge;
 
-import lombok.AllArgsConstructor;
-import lombok.EqualsAndHashCode;
-import lombok.Getter;
-import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.id.EntityId;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.EdgeId;
+import org.thingsboard.server.common.data.page.PageData;
 
 import java.io.Serial;
 import java.io.Serializable;
 
-@EqualsAndHashCode
-@Getter
-@AllArgsConstructor
-public class AttributeCacheKey implements Serializable {
+@Data
+public class RelatedEdgesCacheValue implements Serializable {
 
     @Serial
-    private static final long serialVersionUID = 2013369077925351881L;
+    private static final long serialVersionUID = -2765080094748518572L;
 
-    private final AttributeScope scope;
-    private final EntityId entityId;
-    private final String key;
+    private final PageData<EdgeId> pageData;
 
-    @Override
-    public String toString() {
-        return "{" + entityId + "}" + scope + "_" + key;
+    public RelatedEdgesCacheValue(PageData<EdgeId> pageData) {
+        this.pageData = pageData;
     }
 
 }

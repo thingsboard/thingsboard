@@ -18,11 +18,13 @@ package org.thingsboard.server.dao.tenant;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
 public class TenantProfileCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8220455917177676472L;
 
     private final TenantProfileId tenantProfileId;
@@ -50,4 +52,5 @@ public class TenantProfileCacheKey implements Serializable {
             return tenantProfileId.toString();
         }
     }
+
 }

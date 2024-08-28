@@ -226,9 +226,7 @@ public abstract class DeviceEdgeProcessor extends BaseDeviceProcessor implements
                 Device device = deviceService.findDeviceById(edgeEvent.getTenantId(), deviceId);
                 if (device != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
-                    DeviceUpdateMsg deviceUpdateMsg = ((DeviceMsgConstructor)
-                            deviceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
-                            .constructDeviceUpdatedMsg(msgType, device);
+                    DeviceUpdateMsg deviceUpdateMsg = msgConstructor.constructDeviceUpdatedMsg(msgType, device);
                     DownlinkMsg.Builder builder = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                             .addDeviceUpdateMsg(deviceUpdateMsg);
@@ -247,19 +245,17 @@ public abstract class DeviceEdgeProcessor extends BaseDeviceProcessor implements
                 break;
             case DELETED:
             case UNASSIGNED_FROM_EDGE:
-                DeviceUpdateMsg deviceUpdateMsg = msgConstructor.constructDeviceDeleteMsg(deviceId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                        .addDeviceUpdateMsg(deviceUpdateMsg)
+                        .addDeviceUpdateMsg(msgConstructor.constructDeviceDeleteMsg(deviceId))
                         .build();
                 break;
             case CREDENTIALS_UPDATED:
                 DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(edgeEvent.getTenantId(), deviceId);
                 if (deviceCredentials != null) {
-                    DeviceCredentialsUpdateMsg deviceCredentialsUpdateMsg = msgConstructor.constructDeviceCredentialsUpdatedMsg(deviceCredentials);
                     downlinkMsg = DownlinkMsg.newBuilder()
                             .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
-                            .addDeviceCredentialsUpdateMsg(deviceCredentialsUpdateMsg)
+                            .addDeviceCredentialsUpdateMsg(msgConstructor.constructDeviceCredentialsUpdatedMsg(deviceCredentials))
                             .build();
                 }
                 break;

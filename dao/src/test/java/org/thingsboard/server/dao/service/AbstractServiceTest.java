@@ -42,8 +42,8 @@ import org.thingsboard.server.common.data.device.profile.DefaultDeviceProfileTra
 import org.thingsboard.server.common.data.device.profile.DeviceProfileData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
-import org.thingsboard.server.common.data.housekeeper.TenantEntitiesDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.common.data.housekeeper.TenantEntitiesDeletionHousekeeperTask;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -55,12 +55,12 @@ import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
+import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.audit.AuditLogLevelFilter;
 import org.thingsboard.server.dao.audit.AuditLogLevelMask;
 import org.thingsboard.server.dao.audit.AuditLogLevelProperties;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 import org.thingsboard.server.dao.entity.EntityServiceRegistry;
-import org.thingsboard.server.common.msg.housekeeper.HousekeeperClient;
 import org.thingsboard.server.dao.tenant.TenantService;
 
 import java.io.IOException;
