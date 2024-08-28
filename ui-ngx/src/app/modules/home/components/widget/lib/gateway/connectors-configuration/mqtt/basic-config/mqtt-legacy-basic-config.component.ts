@@ -75,7 +75,7 @@ export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigCompo
   @Input()
   generalTabContent: TemplateRef<any>;
 
-  writeValue(basicConfig: any): void {
+  writeValue(basicConfig: MQTTLegacyBasicConfig): void {
     const {
       broker,
       mapping = [],
