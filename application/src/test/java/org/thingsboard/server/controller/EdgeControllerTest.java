@@ -958,6 +958,13 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     private void simulateEdgeActivation(Edge edge) throws Exception {
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<RuleChain> ruleChains = getEdgeRuleChains(edge.getId());
+                    return ruleChains.size() == 1 && ruleChains.get(0).getId().equals(edge.getRootRuleChainId());
+                });
+
         ObjectNode attributes = JacksonUtil.newObjectNode();
         attributes.put("active", true);
         doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + AttributeScope.SERVER_SCOPE, attributes);
