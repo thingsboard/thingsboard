@@ -30,7 +30,7 @@
   <div class="message-container">
     <span>
       {{ 'entity.version-conflict.link' | translate:
-    { entityType: (entityTypeTranslations.get(data.entity.id.entityType).type | translate) }
+    { entityType: (entityTypeTranslations.get(entityId.entityType).type | translate) }
       }}
       <a class="cursor-pointer" (click)="onLinkClick($event)">{{ 'entity.link' | translate }}</a>.
     </span>

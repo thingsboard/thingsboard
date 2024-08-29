@@ -34,6 +34,11 @@ export interface EntityInfoData {
   name: string;
 }
 
+export interface EntityDTOInfoData {
+  ruleChainId: EntityId;
+  name: string;
+}
+
 export interface ImportEntityData {
   lineNumber: number;
   name: string;

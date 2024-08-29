@@ -20,11 +20,12 @@ import { SharedModule } from '@shared/shared.module';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { CommonModule } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityInfoData } from '@shared/models/entity.models';
+import { EntityDTOInfoData, EntityInfoData } from '@shared/models/entity.models';
+import { EntityId } from '@shared/models/id/entity-id';
 
 interface EntityConflictDialogData {
   message: string;
-  entity: EntityInfoData;
+  entity: EntityInfoData | EntityDTOInfoData;
 }
 
 @Component({
@@ -38,13 +39,18 @@ interface EntityConflictDialogData {
   ],
 })
 export class EntityConflictDialogComponent {
+
+  entityId: EntityId;
+
   readonly entityTypeTranslations = entityTypeTranslations;
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: EntityConflictDialogData,
     private dialogRef: MatDialogRef<EntityConflictDialogComponent>,
     private importExportService: ImportExportService,
-  ) {}
+  ) {
+    this.entityId = (data.entity as EntityInfoData).id ?? (data.entity as EntityDTOInfoData).ruleChainId;
+  }
 
   onCancel(): void {
     this.dialogRef.close();
