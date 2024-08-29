@@ -55,8 +55,6 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
     this.config.headerComponent = MobileAppTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
-    this.config.displayPagination = false;
-    this.config.pageMode = false;
 
     this.config.columns.push(
       new DateEntityTableColumn<MobileAppInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
@@ -134,8 +132,8 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
 
   private appSecretText(entity): string {
     let text = entity.appSecret;
-    if (text.length > 40) {
-      text = `${text.slice(0, 40)}…`;
+    if (text.length > 35) {
+      text = `${text.slice(0, 35)}…`;
     }
     return text;
   }
