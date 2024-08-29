@@ -46,10 +46,9 @@ public class UserEdgeTest extends AbstractEdgeTest {
     private BCryptPasswordEncoder passwordEncoder;
 
     @Test
-    @Ignore("Ignored until fix")
     public void testCreateUpdateDeleteTenantUser() throws Exception {
         // create user
-        edgeImitator.expectMessageAmount(4);
+        edgeImitator.expectMessageAmount(5);
         User newTenantAdmin = new User();
         newTenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         newTenantAdmin.setTenantId(tenantId);
@@ -133,7 +132,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         // create user
-        edgeImitator.expectMessageAmount(4);
+        edgeImitator.expectMessageAmount(5);
         User customerUser = new User();
         customerUser.setAuthority(Authority.CUSTOMER_USER);
         customerUser.setTenantId(tenantId);
