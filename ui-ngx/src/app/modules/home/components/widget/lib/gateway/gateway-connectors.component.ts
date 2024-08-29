@@ -763,6 +763,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       case ConnectorType.OPCUA:
       case ConnectorType.MODBUS:
         this.connectorForm.get('mode').setValue(connector.mode || ConnectorConfigurationModes.BASIC, {emitEvent: false});
+        this.connectorForm.get('configVersion').setValue(connector.configVersion, {emitEvent: false});
         setTimeout(() => {
           this.connectorForm.patchValue(connector, {emitEvent: false});
           this.connectorForm.markAsPristine();
