@@ -75,10 +75,14 @@ public class TbAwsLambdaNodeTest {
     void setUp() {
         node = new TbAwsLambdaNode();
         config = new TbAwsLambdaNodeConfiguration().defaultConfiguration();
+        config.setAccessKey("accessKey");
+        config.setSecretKey("secretKey");
+        config.setFunctionName("new-function");
     }
 
     @Test
     public void verifyDefaultConfig() {
+        config = new TbAwsLambdaNodeConfiguration().defaultConfiguration();
         assertThat(config.getAccessKey()).isNull();
         assertThat(config.getSecretKey()).isNull();
         assertThat(config.getRegion()).isEqualTo(("us-east-1"));
@@ -97,7 +101,70 @@ public class TbAwsLambdaNodeTest {
         var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
         assertThatThrownBy(() -> node.init(ctx, configuration))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("Function name must be set!");
+                .hasMessage("Function name must be set!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidAccessKey_whenInit_thenThrowsException(String accessKey) {
+        config.setAccessKey(accessKey);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Access Key must be set!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidSecretAccessKey_whenInit_thenThrowsException(String secretAccessKey) {
+        config.setSecretKey(secretAccessKey);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Secret Access Key must be set!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidRegion_whenInit_thenThrowsException(String region) {
+        config.setRegion(region);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Region must be set!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
+    public void givenInvalidConnectionTimeout_whenInit_thenThrowsException() {
+        config.setConnectionTimeout(-100);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Min connection timeout is 0!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
+    public void givenInvalidRequestTimeout_whenInit_thenThrowsException() {
+        config.setRequestTimeout(-100);
+        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        assertThatThrownBy(() -> node.init(ctx, configuration))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Min request timeout is 0!")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
     }
 
     @ParameterizedTest
@@ -281,9 +348,6 @@ public class TbAwsLambdaNodeTest {
     }
 
     private void init() {
-        config.setAccessKey("accessKey");
-        config.setSecretKey("secretKey");
-        config.setFunctionName("new-function");
         ReflectionTestUtils.setField(node, "client", clientMock);
         ReflectionTestUtils.setField(node, "config", config);
     }
