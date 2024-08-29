@@ -36,13 +36,14 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
-import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -50,8 +51,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -72,7 +73,7 @@ public class TbAwsLambdaNodeTest {
     private AWSLambdaAsync clientMock;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         node = new TbAwsLambdaNode();
         config = new TbAwsLambdaNodeConfiguration().defaultConfiguration();
         config.setAccessKey("accessKey");
@@ -98,12 +99,7 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidFunctionName_whenInit_thenThrowsException(String funcName) {
         config.setFunctionName(funcName);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Function name must be set!")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyDataValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -111,12 +107,7 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidAccessKey_whenInit_thenThrowsException(String accessKey) {
         config.setAccessKey(accessKey);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Access Key must be set!")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyDataValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -124,12 +115,7 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidSecretAccessKey_whenInit_thenThrowsException(String secretAccessKey) {
         config.setSecretKey(secretAccessKey);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Secret Access Key must be set!")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyDataValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -137,34 +123,19 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidRegion_whenInit_thenThrowsException(String region) {
         config.setRegion(region);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Region must be set!")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyDataValidationExceptionOnInit();
     }
 
     @Test
     public void givenInvalidConnectionTimeout_whenInit_thenThrowsException() {
         config.setConnectionTimeout(-100);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Min connection timeout is 0!")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyDataValidationExceptionOnInit();
     }
 
     @Test
     public void givenInvalidRequestTimeout_whenInit_thenThrowsException() {
         config.setRequestTimeout(-100);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Min request timeout is 0!")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyDataValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -345,6 +316,16 @@ public class TbAwsLambdaNodeTest {
         ArgumentCaptor<Throwable> throwableCaptor = ArgumentCaptor.forClass(Throwable.class);
         verify(ctx).tellFailure(eq(msg), throwableCaptor.capture());
         assertThat(throwableCaptor.getValue()).isInstanceOf(AWSLambdaException.class).hasMessageStartingWith(errorMsg);
+    }
+
+    private void verifyDataValidationExceptionOnInit() {
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setName("test");
+        when(ctx.getSelf()).thenReturn(ruleNode);
+        String errorPrefix = "'test' node configuration is invalid: ";
+        assertThatThrownBy(() -> node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining(errorPrefix);
     }
 
     private void init() {

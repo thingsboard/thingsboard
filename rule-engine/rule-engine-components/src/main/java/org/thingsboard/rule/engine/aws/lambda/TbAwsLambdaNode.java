@@ -39,6 +39,8 @@ import org.thingsboard.server.common.msg.TbMsgMetaData;
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
 
+import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
+
 @Slf4j
 @RuleNode(
         type = ComponentType.EXTERNAL,
@@ -62,7 +64,8 @@ public class TbAwsLambdaNode extends TbAbstractExternalNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         config = TbNodeUtils.convert(configuration, TbAwsLambdaNodeConfiguration.class);
-        validateConfig();
+        String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
+        validateFields(config, errorPrefix);
         try {
             AWSCredentials awsCredentials = new BasicAWSCredentials(config.getAccessKey(), config.getSecretKey());
             client = AWSLambdaAsyncClientBuilder.standard()
@@ -134,27 +137,6 @@ public class TbAwsLambdaNode extends TbAbstractExternalNode {
         metaData.putValue("error", t.getClass() + ": " + t.getMessage());
         metaData.putValue("requestId", invokeResult.getSdkResponseMetadata().getRequestId());
         return TbMsg.transformMsgMetadata(origMsg, metaData);
-    }
-
-    private void validateConfig() throws TbNodeException {
-        if (StringUtils.isBlank(config.getFunctionName())) {
-            throw new TbNodeException("Function name must be set!", true);
-        }
-        if (StringUtils.isBlank(config.getAccessKey())) {
-            throw new TbNodeException("Access Key must be set!", true);
-        }
-        if (StringUtils.isBlank(config.getSecretKey())) {
-            throw new TbNodeException("Secret Access Key must be set!", true);
-        }
-        if (StringUtils.isBlank(config.getRegion())) {
-            throw new TbNodeException("Region must be set!", true);
-        }
-        if (config.getConnectionTimeout() < 0) {
-            throw new TbNodeException("Min connection timeout is 0!", true);
-        }
-        if (config.getRequestTimeout() < 0) {
-            throw new TbNodeException("Min request timeout is 0!", true);
-        }
     }
 
     @Override
