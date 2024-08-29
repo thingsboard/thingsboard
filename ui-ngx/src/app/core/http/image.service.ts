@@ -21,11 +21,15 @@ import { defaultHttpOptionsFromConfig, defaultHttpUploadOptions, RequestConfig }
 import { Observable, of, ReplaySubject } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import {
-  NO_IMAGE_DATA_URI,
+  ImageExportData,
   ImageResourceInfo,
-  imageResourceType,
   ImageResourceType,
-  IMAGES_URL_PREFIX, isImageResourceUrl, ImageExportData, removeTbImagePrefix, ResourceSubType
+  imageResourceType,
+  IMAGES_URL_PREFIX,
+  isImageResourceUrl,
+  NO_IMAGE_DATA_URI,
+  removeTbImagePrefix,
+  ResourceSubType
 } from '@shared/models/resource.models';
 import { catchError, map, switchMap } from 'rxjs/operators';
 import { DomSanitizer, SafeUrl } from '@angular/platform-browser';
@@ -46,7 +50,8 @@ export class ImageService {
   ) {
   }
 
-  public uploadImage(file: File, title: string, imageSubType: ResourceSubType, config?: RequestConfig): Observable<ImageResourceInfo> {
+  public uploadImage(file: File, title: string, imageSubType: ResourceSubType = ResourceSubType.IMAGE,
+                     config?: RequestConfig): Observable<ImageResourceInfo> {
     if (!config) {
       config = {};
     }
@@ -82,7 +87,7 @@ export class ImageService {
       imageInfo, defaultHttpOptionsFromConfig(config));
   }
 
-  public getImages(pageLink: PageLink, imageSubType: ResourceSubType,
+  public getImages(pageLink: PageLink, imageSubType: ResourceSubType = ResourceSubType.IMAGE,
                    includeSystemImages = false, config?: RequestConfig): Observable<PageData<ImageResourceInfo>> {
     return this.http.get<PageData<ImageResourceInfo>>(
       `${IMAGES_URL_PREFIX}${pageLink.toQuery()}&imageSubType=${imageSubType}&includeSystemImages=${includeSystemImages}`,
