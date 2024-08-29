@@ -56,7 +56,6 @@ import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import {
-  EntityDTOInfoData,
   EntityInfoData,
   ImportEntitiesResultInfo,
   ImportEntityData
@@ -365,8 +364,8 @@ export class ImportExportService {
     });
   }
 
-  public exportEntity(entityData: EntityInfoData | EntityDTOInfoData): void {
-    const id = (entityData as EntityInfoData).id ?? (entityData as EntityDTOInfoData).ruleChainId;
+  public exportEntity(entityData: EntityInfoData | RuleChainMetaData): void {
+    const id = (entityData as EntityInfoData).id ?? (entityData as RuleChainMetaData).ruleChainId;
     let preparedData;
     switch (id.entityType) {
       case EntityType.DEVICE_PROFILE:
@@ -395,7 +394,7 @@ export class ImportExportService {
       default:
         preparedData = this.prepareExport(entityData);
     }
-    this.exportToPc(preparedData, entityData.name);
+    this.exportToPc(preparedData, (entityData as EntityInfoData).name);
   }
 
   private exportSelectedWidgetsBundle(widgetsBundle: WidgetsBundle): void {

@@ -20,12 +20,13 @@ import { SharedModule } from '@shared/shared.module';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 import { CommonModule } from '@angular/common';
 import { entityTypeTranslations } from '@shared/models/entity-type.models';
-import { EntityDTOInfoData, EntityInfoData } from '@shared/models/entity.models';
+import { EntityInfoData } from '@shared/models/entity.models';
 import { EntityId } from '@shared/models/id/entity-id';
+import { RuleChainMetaData } from '@shared/models/rule-chain.models';
 
 interface EntityConflictDialogData {
   message: string;
-  entity: EntityInfoData | EntityDTOInfoData;
+  entity: EntityInfoData | RuleChainMetaData;
 }
 
 @Component({
@@ -49,7 +50,7 @@ export class EntityConflictDialogComponent {
     private dialogRef: MatDialogRef<EntityConflictDialogComponent>,
     private importExportService: ImportExportService,
   ) {
-    this.entityId = (data.entity as EntityInfoData).id ?? (data.entity as EntityDTOInfoData).ruleChainId;
+    this.entityId = (data.entity as EntityInfoData).id ?? (data.entity as RuleChainMetaData).ruleChainId;
   }
 
   onCancel(): void {
