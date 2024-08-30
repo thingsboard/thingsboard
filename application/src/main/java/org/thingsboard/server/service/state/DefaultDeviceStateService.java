@@ -365,8 +365,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                             @Override
                             public void onSuccess(DeviceStateData state) {
                                 TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, device.getId());
-                                if (tpi.isMyPartition()) {
-                                    Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
+                                Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
+                                boolean isMyPartition = deviceIds != null;
+                                if (isMyPartition) {
                                     deviceIds.add(state.getDeviceId());
                                     initializeActivityState(deviceId, state);
                                     callback.onSuccess();
@@ -454,8 +455,9 @@ public class DefaultDeviceStateService extends AbstractPartitionBasedService<Dev
                         if (devicePackFutureHolder.future == null || !devicePackFutureHolder.future.isCancelled()) {
                             for (var state : states) {
                                 TopicPartitionInfo tpi = entry.getKey();
-                                if (tpi.isMyPartition()) {
-                                    Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
+                                Set<DeviceId> deviceIds = partitionedEntities.get(tpi);
+                                boolean isMyPartition = deviceIds != null;
+                                if (isMyPartition) {
                                     deviceIds.add(state.getDeviceId());
                                     deviceStates.putIfAbsent(state.getDeviceId(), state);
                                     checkAndUpdateState(state.getDeviceId(), state);
