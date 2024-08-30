@@ -38,7 +38,7 @@ import { RafService } from '@core/services/raf.service';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ConnectorType } from '@home/components/widget/lib/gateway/gateway-form.models';
-import { AceBase, CustomAnnotation } from '@shared/models/ace/ace.models';
+import { CustomAnnotation } from '@shared/models/ace/ace.models';
 
 @Component({
   selector: 'tb-configuration-json',
@@ -81,7 +81,7 @@ export class ConfigurationJsonComponent extends JsonObjectEditComponent implemen
     );
   }
 
-  protected onGetAce(ace: AceBase): void {
+  protected onGetAce(ace): void {
     super.onGetAce(ace);
     this.jsonEditor.renderer.on('afterRender', () => {
       const currentAnnotations = this.jsonEditor.session.getAnnotations();

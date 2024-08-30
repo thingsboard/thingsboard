@@ -92,12 +92,6 @@ export function getAceDiff(): Observable<any> {
   }
 }
 
-export interface AceBase {
-  renderer: Ace.VirtualRenderer;
-  session: Ace.EditSession;
-  edit: (editorElement: ElementRef, options: Partial<Ace.EditorOptions>) => Ace.Editor;
-}
-
 export interface CustomAnnotation extends Ace.Annotation {
   custom?: boolean;
 }

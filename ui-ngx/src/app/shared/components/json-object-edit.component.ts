@@ -39,7 +39,7 @@ import { AppState } from '@core/core.state';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { guid, isDefinedAndNotNull, isObject, isUndefined } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { AceBase, getAce } from '@shared/models/ace/ace.models';
+import { getAce } from '@shared/models/ace/ace.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { Observable } from 'rxjs';
 
@@ -126,7 +126,7 @@ export class JsonObjectEditComponent implements OnInit, ControlValueAccessor, Va
     }
   }
 
-  protected onGetAce(ace: AceBase): void {
+  protected onGetAce(ace): void {
     const editorElement = this.jsonEditorElmRef.nativeElement;
 
     this.jsonEditor = ace.edit(editorElement, this.getAceOptions());
