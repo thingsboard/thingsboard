@@ -3875,7 +3875,11 @@
             "stand-filter-color": "Stand filter color",
             "mode-box-background": "Mode box background",
             "border-color": "Border color",
-            "label-color": "Label color"
+            "label-color": "Label color",
+            "full-value": "Full value",
+            "full-value-hint": "Double value indicating full value.",
+            "label": "Label",
+            "icon": "Icon"
         }
     },
     "item": {
