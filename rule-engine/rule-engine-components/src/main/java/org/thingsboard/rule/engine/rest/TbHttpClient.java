@@ -209,11 +209,21 @@ public class TbHttpClient {
                             semaphore.release();
                         }
 
-                        onFailure.accept(processException(msg, throwable), throwable);
+                        onFailure.accept(processException(msg, throwable), processThrowable(throwable));
                     });
         } catch (InterruptedException e) {
             log.warn("Timeout during waiting for reply!", e);
         }
+    }
+
+    private Throwable processThrowable(Throwable origin) {
+        if (origin instanceof WebClientResponseException restClientResponseException
+                && restClientResponseException.getStatusCode().is2xxSuccessful()) {
+            // return cause instead of original exception in case 2xx status code
+            // this will provide meaningful error message to the user
+            return new RuntimeException(restClientResponseException.getCause());
+        }
+        return origin;
     }
 
     public URI buildEncodedUri(String endpointUrl) {
@@ -287,9 +297,6 @@ public class TbHttpClient {
             metaData.putValue(STATUS, restClientResponseException.getStatusText());
             metaData.putValue(STATUS_CODE, restClientResponseException.getStatusCode().value() + "");
             metaData.putValue(ERROR_BODY, restClientResponseException.getResponseBodyAsString());
-            if (restClientResponseException.getStatusCode().is2xxSuccessful()) {
-                metaData.putValue(ERROR, metaData.getValue(ERROR) + ". Cause: " +restClientResponseException.getCause().getMessage());
-            }
         }
         return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
