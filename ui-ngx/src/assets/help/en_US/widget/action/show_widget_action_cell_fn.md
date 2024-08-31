@@ -36,7 +36,7 @@ return widgetContext.currentUser.authority === 'CUSTOMER_USER';
 * Display action only if the entity in the row is device and has type `thermostat`:
 
 ```javascript
-return data && data.entityType === 'DEVICE' && data.Type === 'thermostat';
+return data && data.entityType === 'Device' && data.Type === 'thermostat';
 {:copy-code}
 ```
 
