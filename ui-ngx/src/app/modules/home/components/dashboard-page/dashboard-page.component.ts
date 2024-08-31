@@ -269,7 +269,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   rightLayoutSize: {width: string; height: string} = {width: '100%', height: '100%'};
 
   private dashboardLogoCache: SafeUrl;
-  private defaultDashboardLogo = 'assets/logo_title_white.svg';
+  private defaultDashboardLogo = 'assets/wasslz-logo-white.svg';
 
   private dashboardResize$: ResizeObserver;
 
