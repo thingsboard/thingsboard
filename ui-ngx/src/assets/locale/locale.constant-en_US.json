@@ -992,6 +992,7 @@
     },
     "contact": {
         "country": "Country",
+        "country-required": "Country is required.",
         "city": "City",
         "state": "State / Province",
         "postal-code": "Zip / Postal Code",
@@ -1001,6 +1002,8 @@
         "phone": "Phone",
         "email": "Email",
         "no-address": "No address",
+        "no-country-found": "No countries found.",
+        "no-country-matching": "No country matching '{{country}}' were found.",
         "state-max-length": "State length should be less than 256",
         "phone-max-length": "Phone number should be less than 256",
         "city-max-length": "Specified city should be less than 256"
