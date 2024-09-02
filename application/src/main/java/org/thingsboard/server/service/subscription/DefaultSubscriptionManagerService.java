@@ -118,7 +118,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             }
             callback.onSuccess();
             if (event.hasTsOrAttrSub()) {
-                sendSubEventCallback(serviceId, entityId, event.getSeqNumber());
+                sendSubEventCallback(tenantId, serviceId, entityId, event.getSeqNumber());
             }
         } else {
             log.warn("[{}][{}][{}] Event belongs to external partition. Probably re-balancing is in progress. Topic: {}"
@@ -142,12 +142,12 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         }
     }
 
-    private void sendSubEventCallback(String targetId, EntityId entityId, int seqNumber) {
+    private void sendSubEventCallback(TenantId tenantId, String targetId, EntityId entityId, int seqNumber) {
         var update = getEntityUpdatesInfo(entityId);
         if (serviceId.equals(targetId)) {
-            localSubscriptionService.onSubEventCallback(entityId, seqNumber, update, TbCallback.EMPTY);
+            localSubscriptionService.onSubEventCallback(tenantId, entityId, seqNumber, update, TbCallback.EMPTY);
         } else {
-            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(entityId.getId(), seqNumber, update));
+            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(tenantId, entityId.getId(), seqNumber, update));
         }
     }
 

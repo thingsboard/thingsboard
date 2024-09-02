@@ -113,7 +113,7 @@ public abstract class TbAbstractDataSubCtx<T extends AbstractDataQuery<? extends
     public void clearEntitySubscriptions() {
         if (subToEntityIdMap != null) {
             for (Integer subId : subToEntityIdMap.keySet()) {
-                localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
+                localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId);
             }
             subToEntityIdMap.clear();
         }
