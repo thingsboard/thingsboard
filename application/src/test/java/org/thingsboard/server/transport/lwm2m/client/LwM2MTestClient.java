@@ -189,7 +189,9 @@ public class LwM2MTestClient {
         locationParams = new LwM2MLocationParams();
         locationParams.getPos();
         initializer.setInstancesForObject(LOCATION, new LwM2mLocation(locationParams.getLatitude(), locationParams.getLongitude(), locationParams.getScaleFactor(), executor, OBJECT_INSTANCE_ID_0));
-        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2MTemperatureSensor = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0), new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12));
+        LwM2mTemperatureSensor lwM2mTemperatureSensor0 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_0);
+        LwM2mTemperatureSensor lwM2mTemperatureSensor12 = new LwM2mTemperatureSensor(executor, OBJECT_INSTANCE_ID_12);
+        initializer.setInstancesForObject(TEMPERATURE_SENSOR, lwM2mTemperatureSensor0, lwM2mTemperatureSensor12);
 
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
 
@@ -314,6 +316,7 @@ public class LwM2MTestClient {
         clientDtlsCid = new HashMap<>();
         clientStates.add(ON_INIT);
         leshanClient = builder.build();
+        lwM2mTemperatureSensor12.setLeshanClient(leshanClient);
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
             @Override

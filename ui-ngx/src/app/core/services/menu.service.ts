@@ -72,10 +72,12 @@ export class MenuService {
   private updateOpenedMenuSections() {
     const url = this.router.url;
     const openedMenuSections = getCurrentOpenedMenuSections(this.store);
-    this.currentMenuSections.filter(section => section.type === 'toggle' &&
-      (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
-      section => section.opened = true
-    );
+    if (this.currentMenuSections?.length) {
+      this.currentMenuSections.filter(section => section.type === 'toggle' &&
+        (url.startsWith(section.path) || openedMenuSections.includes(section.path))).forEach(
+        section => section.opened = true
+      );
+    }
   }
 
   private allMenuLinks(sections: Array<MenuSection>): Array<MenuSection> {
