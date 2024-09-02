@@ -17,11 +17,8 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
-import {
-  ConnectorBaseConfig,
-  ConnectorConfigValidation
-} from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { defaultHttpOptionsFromConfig } from '@core/http/http-utils';
+import { ConnectorConfigValidation } from '../models/configuration-validate.models';
 
 @Injectable()
 export class ConfigurationValidateService {

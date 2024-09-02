@@ -38,7 +38,7 @@ import { RafService } from '@core/services/raf.service';
 import { Observable, of } from 'rxjs';
 import { catchError, map } from 'rxjs/operators';
 import { ConnectorType } from '@home/components/widget/lib/gateway/gateway-form.models';
-import { CustomAnnotation } from '@shared/models/ace/ace.models';
+import { CustomAnnotation } from '../models/configuration-validate.models';
 
 @Component({
   selector: 'tb-configuration-json',

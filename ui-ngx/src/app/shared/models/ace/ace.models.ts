@@ -18,7 +18,6 @@ import { Ace } from 'ace-builds';
 import { Observable } from 'rxjs/internal/Observable';
 import { forkJoin, from, of } from 'rxjs';
 import { map, mergeMap, tap } from 'rxjs/operators';
-import { ElementRef } from '@angular/core';
 
 let aceDependenciesLoaded = false;
 let aceModule: any;
@@ -90,10 +89,6 @@ export function getAceDiff(): Observable<any> {
       })
     );
   }
-}
-
-export interface CustomAnnotation extends Ace.Annotation {
-  custom?: boolean;
 }
 
 export class Range implements Ace.Range {
