@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../../../../scss/constants";
 
 :host {
   display: flex;
@@ -26,23 +25,6 @@
   .tb-form-panel {
     padding: 12px;
     gap: 24px;
-  }
-
-  .tb-flex {
-    gap: 16px;
-  }
-
-  .mat-content {
-    overflow: hidden;
-  }
-
-  .mat-padding {
-    padding: 0 16px;
-  }
-
-  .hide-label {
-    margin-bottom: 5px;
-    margin-right: 5px;
   }
 
 }

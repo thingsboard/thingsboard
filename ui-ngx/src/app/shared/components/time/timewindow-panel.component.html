@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<form [formGroup]="timewindowForm" class="mat-content">
+<form [formGroup]="timewindowForm" class="tb-timewindow-panel-form">
   <mat-tab-group [class.tb-headless]="historyOnly"
                  (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
@@ -121,8 +121,7 @@
         </ng-container>
       </div>
     </mat-tab>
-    <mat-tab disabled labelClass="timewindow-config-btn">
-<!--    <mat-tab *ngIf="isEdit" disabled>-->
+    <mat-tab *ngIf="isEdit" disabled labelClass="timewindow-config-btn">
       <ng-template mat-tab-label>
         <button mat-icon-button (click)="openTimewindowConfig()">
           <mat-icon>settings</mat-icon>

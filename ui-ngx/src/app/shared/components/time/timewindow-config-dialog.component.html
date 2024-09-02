@@ -25,7 +25,7 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<form [formGroup]="timewindowForm" mat-dialog-content  class="timewindow-settings-form mat-content">
+<form [formGroup]="timewindowForm" mat-dialog-content  class="timewindow-settings-form">
   <mat-tab-group (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
     <mat-tab label="{{ 'timewindow.realtime' | translate }}">
       <div class="tb-flex column">

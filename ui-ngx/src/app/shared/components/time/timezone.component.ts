@@ -20,10 +20,8 @@ import {
   forwardRef,
   HostBinding,
   Input,
-  OnChanges,
   OnInit,
   Renderer2,
-  SimpleChanges,
   ViewContainerRef
 } from '@angular/core';
 import { ControlValueAccessor, NG_VALUE_ACCESSOR } from '@angular/forms';
@@ -31,13 +29,6 @@ import { TranslateService } from '@ngx-translate/core';
 import { TooltipPosition } from '@angular/material/tooltip';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { coerceBoolean } from '@shared/decorators/coercion';
-import {
-  ComponentStyle,
-  defaultTimezoneStyle,
-  iconStyle,
-  textStyle,
-  TimezoneStyle
-} from '@shared/models/widget-settings.models';
 import { TimezonePanelComponent, TimezoneSelectionResult } from '@shared/components/time/timezone-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { getTimezoneInfo, TimezoneInfo } from '@shared/models/time/time.models';
@@ -56,7 +47,7 @@ import { TimeService } from '@core/services/time.service';
     }
   ]
 })
-export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChanges {
+export class TimezoneComponent implements ControlValueAccessor, OnInit {
 
   @HostBinding('class.no-margin')
   @Input()
@@ -91,23 +82,8 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
   @coerceBoolean()
   hideLabel = false;
 
-  isEditValue = false;
-
-  @Input()
-  set isEdit(val) {
-    this.isEditValue = coerceBooleanProperty(val);
-    this.timezoneDisabled = this.isTimezoneDisabled();
-  }
-
-  get isEdit() {
-    return this.isEditValue;
-  }
-
   @Input()
   tooltipPosition: TooltipPosition = 'above';
-
-  @Input()
-  timezoneStyle: TimezoneStyle;
 
   @Input()
   @coerceBoolean()
@@ -155,10 +131,6 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
 
   timezoneDisabled: boolean;
 
-  computedTimezoneStyle: TimezoneStyle;
-  timezoneComponentStyle: ComponentStyle;
-  timezoneIconStyle: ComponentStyle;
-
   private propagateChange = (_: any) => {};
 
   constructor(private translate: TranslateService,
@@ -170,19 +142,6 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   ngOnInit() {
-    this.updateTimezoneStyle();
-  }
-
-  ngOnChanges(changes: SimpleChanges): void {
-    for (const propName of Object.keys(changes)) {
-      const change = changes[propName];
-      if (!change.firstChange && change.currentValue !== change.previousValue) {
-        if (propName === 'timezoneStyle') {
-          this.updateTimezoneStyle();
-          this.updateDisplayValue();
-        }
-      }
-    }
   }
 
   toggleTimezone($event: Event) {
@@ -219,17 +178,6 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit, OnChange
       timezoneSelectionPopover.tbComponentRef.instance.popoverComponent = timezoneSelectionPopover;
     }
     this.cd.detectChanges();
-  }
-
-  private updateTimezoneStyle() {
-    if (!this.asButton) {
-      this.computedTimezoneStyle = {...defaultTimezoneStyle, ...(this.timezoneStyle || {})};
-      this.timezoneComponentStyle = textStyle(this.computedTimezoneStyle.font);
-      if (this.computedTimezoneStyle.color) {
-        this.timezoneComponentStyle.color = this.computedTimezoneStyle.color;
-      }
-      this.timezoneIconStyle = this.computedTimezoneStyle.iconSize ? iconStyle(this.computedTimezoneStyle.iconSize) : {};
-    }
   }
 
   registerOnChange(fn: any): void {

@@ -22,7 +22,6 @@
         type="button"
         mat-raised-button color="primary"
         (click)="toggleTimezone($event)">
-<!--  <mat-icon class="material-icons">query_builder</mat-icon>-->
   <span>{{displayValue()}}</span>
 </button>
 <button *ngIf="asButton && strokedButton"
@@ -32,7 +31,6 @@
         type="button"
         mat-stroked-button color="primary"
         (click)="toggleTimezone($event)">
-<!--  <mat-icon class="material-icons">query_builder</mat-icon>-->
   <span>{{displayValue()}}</span>
 </button>
 <button *ngIf="asButton && flatButton"
@@ -42,7 +40,6 @@
         type="button"
         mat-button
         (click)="toggleTimezone($event)">
-<!--  <mat-icon class="material-icons">query_builder</mat-icon>-->
   <span>{{displayValue()}}</span>
 </button>
 <section *ngIf="!asButton"
@@ -50,13 +47,8 @@
          [class]="{'no-padding': noPadding}"
          [matTooltip]="tooltipValue()"
          [matTooltipPosition]="tooltipPosition"
-         [style]="timezoneComponentStyle"
          (click)="toggleTimezone($event)">
-  <tb-icon *ngIf="computedTimezoneStyle.showIcon && computedTimezoneStyle.iconPosition === 'left'"
-           [style]="timezoneIconStyle">{{ computedTimezoneStyle.icon }}</tb-icon>
   <div class="tb-timezone-label" [fxHide]="hideLabel">
-    {{timezoneInfo}}
+    {{displayValue()}}
   </div>
-  <tb-icon *ngIf="computedTimezoneStyle.showIcon && computedTimezoneStyle.iconPosition === 'right'"
-           [style]="timezoneIconStyle">{{ computedTimezoneStyle.icon }}</tb-icon>
 </section>
