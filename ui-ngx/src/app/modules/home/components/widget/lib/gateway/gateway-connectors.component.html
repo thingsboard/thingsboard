@@ -200,7 +200,7 @@
               [deviceId]="device.id"
               [connectorType]="connectorForm.get('type').value"
               fillHeight="true"
-              class="tb-flex fill-height"
+              class="tb-flex fill-height configuration-json"
               fxLayout="column"
               jsonRequired
               label="{{ 'gateway.configuration' | translate }}"
@@ -208,7 +208,7 @@
             <ng-template #defaultJsonConfig>
               <tb-json-object-edit
                 fillHeight="true"
-                class="tb-flex fill-height"
+                class="tb-flex fill-height configuration-json"
                 fxLayout="column"
                 jsonRequired
                 label="{{ 'gateway.configuration' | translate }}"
