@@ -58,11 +58,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -135,7 +133,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private static final Pattern FW_REQUEST_PATTERN = Pattern.compile(MqttTopics.DEVICE_FIRMWARE_REQUEST_TOPIC_PATTERN);
     private static final Pattern SW_REQUEST_PATTERN = Pattern.compile(MqttTopics.DEVICE_SOFTWARE_REQUEST_TOPIC_PATTERN);
 
-    private static final String SERVICE_CONFIGURATION = "getServiceConfiguration";
+    private static final String SESSION_LIMITS = "getSessionLimits";
 
     private static final String PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE";
 
@@ -500,8 +498,8 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)) {
                 TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = payloadAdaptor.convertToServerRpcRequest(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC);
                 toServerRpcSubTopicType = TopicType.V1;
-                if (SERVICE_CONFIGURATION.equals(rpcRequestMsg.getMethodName())) {
-                    onGetServiceConfigurationRpc(deviceSessionCtx.getSessionInfo(), ctx, msgId, rpcRequestMsg);
+                if (SESSION_LIMITS.equals(rpcRequestMsg.getMethodName())) {
+                    onGetSessionLimitsRpc(deviceSessionCtx.getSessionInfo(), ctx, msgId, rpcRequestMsg);
                 } else {
                     transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
                 }
@@ -1340,32 +1338,34 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
-    private void onGetServiceConfigurationRpc( TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.ToServerRpcRequestMsg rpcRequestMsg) {
+    private void onGetSessionLimitsRpc(TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.ToServerRpcRequestMsg rpcRequestMsg) {
         var tenantProfile = context.getTenantProfileCache().get(deviceSessionCtx.getTenantId());
         DefaultTenantProfileConfiguration profile = tenantProfile.getDefaultProfileConfiguration();
-        Map<String, Object> serviceConfiguration = new HashMap<>();
+        Map<String, Object> sessionLimits = new HashMap<>();
+        Map<String, String> rateLimits = new HashMap<>();
 
         if (sessionInfo.getIsGateway()) {
-            serviceConfiguration.put("gatewayMsgRateLimit", profile.getTransportGatewayMsgRateLimit());
-            serviceConfiguration.put("gatewayTelemetryMsgRateLimit", profile.getTransportGatewayTelemetryMsgRateLimit());
-            serviceConfiguration.put("gatewayTelemetryDataPointsRateLimit", profile.getTransportGatewayTelemetryDataPointsRateLimit());
-            serviceConfiguration.put("gatewayDeviceMsgRateLimit", profile.getTransportGatewayDeviceMsgRateLimit());
-            serviceConfiguration.put("gatewayDeviceTelemetryMsgRateLimit", profile.getTransportGatewayDeviceTelemetryMsgRateLimit());
-            serviceConfiguration.put("gatewayDeviceTelemetryDataPointsRateLimit", profile.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+            rateLimits.put("messages", profile.getTransportGatewayMsgRateLimit());
+            rateLimits.put("telemetryMessages", profile.getTransportGatewayTelemetryMsgRateLimit());
+            rateLimits.put("telemetryDataPoints", profile.getTransportGatewayTelemetryDataPointsRateLimit());
+            rateLimits.put("deviceMessages", profile.getTransportGatewayDeviceMsgRateLimit());
+            rateLimits.put("deviceTelemetryMessages", profile.getTransportGatewayDeviceTelemetryMsgRateLimit());
+            rateLimits.put("deviceTelemetryDataPoints", profile.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
         } else {
-            serviceConfiguration.put("deviceMsgRateLimit", profile.getTransportDeviceMsgRateLimit());
-            serviceConfiguration.put("deviceTelemetryMsgRateLimit", profile.getTransportDeviceTelemetryMsgRateLimit());
-            serviceConfiguration.put("deviceTelemetryDataPointsRateLimit", profile.getTransportDeviceTelemetryDataPointsRateLimit());
+            rateLimits.put("messages", profile.getTransportDeviceMsgRateLimit());
+            rateLimits.put("telemetryMessages", profile.getTransportDeviceTelemetryMsgRateLimit());
+            rateLimits.put("telemetryDataPoints", profile.getTransportDeviceTelemetryDataPointsRateLimit());
         }
-        serviceConfiguration.put("maxPayloadSize", context.getMaxPayloadSize());
-        serviceConfiguration.put("maxInflightMessages", context.getMessageQueueSizePerDeviceLimit());
-        serviceConfiguration.put("payloadType", deviceSessionCtx.getPayloadType());
+        sessionLimits.put("rateLimits", rateLimits);
+        sessionLimits.put("maxPayloadSize", context.getMaxPayloadSize());
+        sessionLimits.put("maxInflightMessages", context.getMessageQueueSizePerDeviceLimit());
+        sessionLimits.put("payloadType", deviceSessionCtx.getPayloadType());
 
         ack(ctx, msgId, MqttReasonCodes.PubAck.SUCCESS);
 
         TransportProtos.ToServerRpcResponseMsg responseMsg = TransportProtos.ToServerRpcResponseMsg.newBuilder()
                 .setRequestId(rpcRequestMsg.getRequestId())
-                .setPayload(JacksonUtil.toString(serviceConfiguration))
+                .setPayload(JacksonUtil.toString(sessionLimits))
                 .build();
 
         onToServerRpcResponse(responseMsg);

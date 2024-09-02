@@ -51,7 +51,7 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
     private int maxInflightMessages;
 
     @Test
-    public void getServiceConfigurationRpcForDeviceTest() throws Exception {
+    public void getSessionLimitsRpcForDeviceTest() throws Exception {
         loginSysAdmin();
         TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId, TenantProfile.class);
         DefaultTenantProfileConfiguration profileConfiguration = tenantProfile.getDefaultProfileConfiguration();
@@ -75,29 +75,30 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         client.setCallback(callback);
         client.subscribeAndWait(DEVICE_RPC_RESPONSE_SUB_TOPIC, MqttQoS.AT_MOST_ONCE);
 
-        client.publishAndWait(DEVICE_RPC_REQUESTS_TOPIC + "1", "{\"method\":\"getServiceConfiguration\",\"params\":{}}".getBytes());
+        client.publishAndWait(DEVICE_RPC_REQUESTS_TOPIC + "1", "{\"method\":\"getSessionLimits\",\"params\":{}}".getBytes());
 
         assertThat(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS))
                 .as("await callback").isTrue();
 
         var payload = callback.getPayloadBytes();
-        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {
-        });
+        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {});
 
         assertNotNull(response);
-        assertEquals(response.size(), 6);
-        assertEquals(response.get("deviceMsgRateLimit"), profileConfiguration.getTransportDeviceMsgRateLimit());
-        assertEquals(response.get("deviceTelemetryMsgRateLimit"), profileConfiguration.getTransportDeviceTelemetryMsgRateLimit());
-        assertEquals(response.get("deviceTelemetryDataPointsRateLimit"), profileConfiguration.getTransportDeviceTelemetryDataPointsRateLimit());
+        assertEquals(4, response.size());
         assertEquals(response.get("maxPayloadSize"), maxPayloadSize);
         assertEquals(response.get("maxInflightMessages"), maxInflightMessages);
         assertEquals(response.get("payloadType"), TransportPayloadType.JSON.name());
+        Map<String, String> rateLimits = (Map<String, String>) response.get("rateLimits");
+        assertEquals(3, rateLimits.size());
+        assertEquals(rateLimits.get("messages"), profileConfiguration.getTransportDeviceMsgRateLimit());
+        assertEquals(rateLimits.get("telemetryMessages"), profileConfiguration.getTransportDeviceTelemetryMsgRateLimit());
+        assertEquals(rateLimits.get("telemetryDataPoints"), profileConfiguration.getTransportDeviceTelemetryDataPointsRateLimit());
 
         client.disconnect();
     }
 
     @Test
-    public void getServiceConfigurationRpcForGatewayTest() throws Exception {
+    public void getSessionLimitsRpcForGatewayTest() throws Exception {
         loginSysAdmin();
         TenantProfile tenantProfile = doGet("/api/tenantProfile/" + tenantProfileId, TenantProfile.class);
         DefaultTenantProfileConfiguration profileConfiguration = tenantProfile.getDefaultProfileConfiguration();
@@ -125,25 +126,26 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         client.setCallback(callback);
         client.subscribeAndWait(DEVICE_RPC_RESPONSE_SUB_TOPIC, MqttQoS.AT_MOST_ONCE);
 
-        client.publishAndWait(DEVICE_RPC_REQUESTS_TOPIC + "1", "{\"method\":\"getServiceConfiguration\",\"params\":{}}".getBytes());
+        client.publishAndWait(DEVICE_RPC_REQUESTS_TOPIC + "1", "{\"method\":\"getSessionLimits\",\"params\":{}}".getBytes());
 
         assertTrue(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
 
         var payload = callback.getPayloadBytes();
-        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {
-        });
+        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {});
 
         assertNotNull(response);
-        assertEquals(response.size(), 9);
-        assertEquals(response.get("gatewayMsgRateLimit"), profileConfiguration.getTransportGatewayMsgRateLimit());
-        assertEquals(response.get("gatewayTelemetryMsgRateLimit"), profileConfiguration.getTransportGatewayTelemetryMsgRateLimit());
-        assertEquals(response.get("gatewayTelemetryDataPointsRateLimit"), profileConfiguration.getTransportGatewayTelemetryDataPointsRateLimit());
-        assertEquals(response.get("gatewayDeviceMsgRateLimit"), profileConfiguration.getTransportGatewayDeviceMsgRateLimit());
-        assertEquals(response.get("gatewayDeviceTelemetryMsgRateLimit"), profileConfiguration.getTransportGatewayDeviceTelemetryMsgRateLimit());
-        assertEquals(response.get("gatewayDeviceTelemetryDataPointsRateLimit"), profileConfiguration.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+        assertEquals(4, response.size());
         assertEquals(response.get("maxPayloadSize"), maxPayloadSize);
         assertEquals(response.get("maxInflightMessages"), maxInflightMessages);
         assertEquals(response.get("payloadType"), TransportPayloadType.JSON.name());
+        Map<String, String> rateLimits = (Map<String, String>) response.get("rateLimits");
+        assertEquals(6, rateLimits.size());
+        assertEquals(rateLimits.get("messages"), profileConfiguration.getTransportGatewayMsgRateLimit());
+        assertEquals(rateLimits.get("telemetryMessages"), profileConfiguration.getTransportGatewayTelemetryMsgRateLimit());
+        assertEquals(rateLimits.get("telemetryDataPoints"), profileConfiguration.getTransportGatewayTelemetryDataPointsRateLimit());
+        assertEquals(rateLimits.get("deviceMessages"), profileConfiguration.getTransportGatewayDeviceMsgRateLimit());
+        assertEquals(rateLimits.get("deviceTelemetryMessages"), profileConfiguration.getTransportGatewayDeviceTelemetryMsgRateLimit());
+        assertEquals(rateLimits.get("deviceTelemetryDataPoints"), profileConfiguration.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
 
         client.disconnect();
     }
