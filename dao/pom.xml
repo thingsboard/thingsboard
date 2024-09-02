@@ -20,7 +20,7 @@
     <modelVersion>4.0.0</modelVersion>
     <parent>
         <groupId>org.thingsboard</groupId>
-        <version>3.7.0-SNAPSHOT</version>
+        <version>3.7.1-SNAPSHOT</version>
         <artifactId>thingsboard</artifactId>
     </parent>
     <artifactId>dao</artifactId>
@@ -214,6 +214,11 @@
         <dependency>
             <groupId>org.testcontainers</groupId>
             <artifactId>jdbc</artifactId>
+            <scope>test</scope>
+        </dependency>
+        <dependency>
+            <groupId>org.testcontainers</groupId>
+            <artifactId>junit-jupiter</artifactId>
             <scope>test</scope>
         </dependency>
         <dependency>

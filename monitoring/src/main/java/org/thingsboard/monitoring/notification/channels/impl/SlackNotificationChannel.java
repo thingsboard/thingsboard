@@ -15,6 +15,7 @@
  */
 package org.thingsboard.monitoring.notification.channels.impl;
 
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -23,7 +24,6 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.monitoring.notification.channels.NotificationChannel;
 
-import jakarta.annotation.PostConstruct;
 import java.time.Duration;
 import java.util.Map;
 

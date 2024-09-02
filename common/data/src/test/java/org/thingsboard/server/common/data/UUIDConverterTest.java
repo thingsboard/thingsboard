@@ -16,8 +16,8 @@
 package org.thingsboard.server.common.data;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.junit.jupiter.MockitoExtension;
 

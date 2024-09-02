@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.sql.notification;
 
-import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;

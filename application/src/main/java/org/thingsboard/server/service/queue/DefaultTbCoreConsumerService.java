@@ -96,6 +96,7 @@ import org.thingsboard.server.service.queue.processing.AbstractConsumerService;
 import org.thingsboard.server.service.queue.processing.IdMsgPair;
 import org.thingsboard.server.service.resource.TbImageService;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
+import org.thingsboard.server.service.ruleengine.RuleEngineCallService;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.subscription.SubscriptionManagerService;
@@ -107,7 +108,6 @@ import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpd
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 
 import java.util.List;
-import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
@@ -149,6 +149,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     private final NotificationRuleProcessor notificationRuleProcessor;
     private final TbCoreQueueFactory queueFactory;
     private final TbImageService imageService;
+    private final RuleEngineCallService ruleEngineCallService;
     private final TbCoreConsumerStats stats;
 
     private MainQueueConsumerManager<TbProtoQueueMsg<ToCoreMsg>, CoreQueueConfig> mainConsumer;
@@ -177,7 +178,8 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                                         JwtSettingsService jwtSettingsService,
                                         NotificationSchedulerService notificationSchedulerService,
                                         NotificationRuleProcessor notificationRuleProcessor,
-                                        TbImageService imageService) {
+                                        TbImageService imageService,
+                                        RuleEngineCallService ruleEngineCallService) {
         super(actorContext, tenantProfileCache, deviceProfileCache, assetProfileCache, apiUsageStateService, partitionService,
                 eventPublisher, jwtSettingsService);
         this.stateService = stateService;
@@ -192,6 +194,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         this.notificationSchedulerService = notificationSchedulerService;
         this.notificationRuleProcessor = notificationRuleProcessor;
         this.imageService = imageService;
+        this.ruleEngineCallService = ruleEngineCallService;
         this.queueFactory = tbCoreQueueFactory;
     }
 
@@ -377,6 +380,9 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         } else if (toCoreNotification.hasFromDeviceRpcResponse()) {
             log.trace("[{}] Forwarding message to RPC service {}", id, toCoreNotification.getFromDeviceRpcResponse());
             forwardToCoreRpcService(toCoreNotification.getFromDeviceRpcResponse(), callback);
+        } else if (toCoreNotification.hasRestApiCallResponseMsg()) {
+            log.trace("[{}] Forwarding message to RuleEngineCallService service {}", id, toCoreNotification.getRestApiCallResponseMsg());
+            forwardToRuleEngineCallService(toCoreNotification.getRestApiCallResponseMsg(), callback);
         } else if (toCoreNotification.hasComponentLifecycle()) {
             handleComponentLifecycleMsg(id, ProtoUtils.fromProto(toCoreNotification.getComponentLifecycle()));
             callback.onSuccess();
@@ -694,13 +700,6 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
         actorContext.tell(new TransportToDeviceActorMsgWrapper(toDeviceActorMsg, callback));
     }
 
-    private void forwardToAppActor(UUID id, Optional<TbActorMsg> actorMsg, TbCallback callback) {
-        if (actorMsg.isPresent()) {
-            forwardToAppActor(id, actorMsg.get());
-        }
-        callback.onSuccess();
-    }
-
     private void forwardToAppActor(UUID id, TbActorMsg actorMsg) {
         log.trace("[{}] Forwarding message to App Actor {}", id, actorMsg);
         actorContext.tell(actorMsg);
@@ -736,6 +735,10 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
                 result -> callback.onSuccess(),
                 callback::onFailure,
                 actorContext.getDbCallbackExecutor());
+    }
+
+    void forwardToRuleEngineCallService(TransportProtos.RestApiCallResponseMsgProto restApiCallResponseMsg, TbCallback callback) {
+        ruleEngineCallService.onQueueMsg(restApiCallResponseMsg, callback);
     }
 
     private void throwNotHandled(Object msg, TbCallback callback) {

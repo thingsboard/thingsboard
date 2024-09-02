@@ -17,12 +17,12 @@ package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.security.jackson2.SecurityJackson2Modules;
-
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.security.jackson2.SecurityJackson2Modules;
+
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Base64;

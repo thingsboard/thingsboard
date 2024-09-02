@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.entitiy;
 
 import com.fasterxml.jackson.core.type.TypeReference;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -53,7 +54,6 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
 
-import javax.annotation.PostConstruct;
 import java.util.Set;
 
 @Component
@@ -66,7 +66,7 @@ public class EntityStateSourcingListener {
 
     @PostConstruct
     public void init() {
-        log.info("EntityStateSourcingListener initiated");
+        log.debug("EntityStateSourcingListener initiated");
     }
 
     @TransactionalEventListener(fallbackExecution = true)
@@ -264,4 +264,5 @@ public class EntityStateSourcingListener {
         metaData.putValue("assignedFromTenantName", tenant.getName());
         return metaData;
     }
+
 }

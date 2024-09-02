@@ -18,7 +18,6 @@ import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DeviceProfileConfiguration, DeviceProfileType } from '@shared/models/device.models';
 import { deepClone } from '@core/utils';
 import { Subject } from 'rxjs';
@@ -41,15 +40,6 @@ export class DeviceProfileConfigurationComponent implements ControlValueAccessor
   deviceProfileConfigurationFormGroup: UntypedFormGroup;
 
   private destroy$ = new Subject<void>();
-
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
-  @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
 
   @Input()
   disabled: boolean;

@@ -247,6 +247,7 @@ public final class EdgeGrpcSession implements Closeable {
                 }
             }, ctx.getGrpcCallbackExecutorService());
         } else {
+            log.info("[{}][{}] sync process completed", this.tenantId, edge.getId());
             DownlinkMsg syncCompleteDownlinkMsg = DownlinkMsg.newBuilder()
                     .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                     .setSyncCompletedMsg(SyncCompletedMsg.newBuilder().build())
@@ -325,7 +326,11 @@ public final class EdgeGrpcSession implements Closeable {
     }
 
     private void sendDownlinkMsg(ResponseMsg downlinkMsg) {
-        log.trace("[{}][{}] Sending downlink msg [{}]", this.tenantId, this.sessionId, downlinkMsg);
+        if (downlinkMsg.getDownlinkMsg().getWidgetTypeUpdateMsgCount() > 0) {
+            log.trace("[{}][{}] Sending downlink widgetTypeUpdateMsg, downlinkMsgId = {}", this.tenantId, this.sessionId, downlinkMsg.getDownlinkMsg().getDownlinkMsgId());
+        } else {
+            log.trace("[{}][{}] Sending downlink msg [{}]", this.tenantId, this.sessionId, downlinkMsg);
+        }
         if (isConnected()) {
             downlinkMsgLock.lock();
             try {
@@ -337,7 +342,7 @@ public final class EdgeGrpcSession implements Closeable {
             } finally {
                 downlinkMsgLock.unlock();
             }
-            log.trace("[{}][{}] Response msg successfully sent [{}]", this.tenantId, this.sessionId, downlinkMsg);
+            log.trace("[{}][{}] Response msg successfully sent. downlinkMsgId = {}", this.tenantId, this.sessionId, downlinkMsg.getDownlinkMsg().getDownlinkMsgId());
         }
     }
 
@@ -371,10 +376,10 @@ public final class EdgeGrpcSession implements Closeable {
                 @Override
                 public void onSuccess(@Nullable Pair<Long, Long> newStartTsAndSeqId) {
                     if (newStartTsAndSeqId != null) {
-                        ListenableFuture<List<String>> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
+                        ListenableFuture<List<Long>> updateFuture = updateQueueStartTsAndSeqId(newStartTsAndSeqId);
                         Futures.addCallback(updateFuture, new FutureCallback<>() {
                             @Override
-                            public void onSuccess(@Nullable List<String> list) {
+                            public void onSuccess(@Nullable List<Long> list) {
                                 log.debug("[{}][{}] queue offset was updated [{}]", tenantId, sessionId, newStartTsAndSeqId);
                                 if (fetcher.isSeqIdNewCycleStarted()) {
                                     seqIdEnd = fetcher.getSeqIdEnd();
@@ -551,9 +556,13 @@ public final class EdgeGrpcSession implements Closeable {
             DownlinkMsg downlinkMsg = null;
             try {
                 switch (edgeEvent.getAction()) {
-                    case UPDATED, ADDED, DELETED, ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE, ALARM_ACK, ALARM_CLEAR, ALARM_DELETE, CREDENTIALS_UPDATED, RELATION_ADD_OR_UPDATE, RELATION_DELETED, CREDENTIALS_REQUEST, RPC_CALL, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, ADDED_COMMENT, UPDATED_COMMENT, DELETED_COMMENT -> {
+                    case UPDATED, ADDED, DELETED, ASSIGNED_TO_EDGE, UNASSIGNED_FROM_EDGE, ALARM_ACK, ALARM_CLEAR, ALARM_DELETE, CREDENTIALS_UPDATED, RELATION_ADD_OR_UPDATE, RELATION_DELETED, RPC_CALL, ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER, ADDED_COMMENT, UPDATED_COMMENT, DELETED_COMMENT -> {
                         downlinkMsg = convertEntityEventToDownlink(edgeEvent);
-                        log.trace("[{}][{}] entity message processed [{}]", this.tenantId, this.sessionId, downlinkMsg);
+                        if (downlinkMsg != null && downlinkMsg.getWidgetTypeUpdateMsgCount() > 0) {
+                            log.trace("[{}][{}] widgetTypeUpdateMsg message processed, downlinkMsgId = {}", this.tenantId, this.sessionId, downlinkMsg.getDownlinkMsgId());
+                        } else {
+                            log.trace("[{}][{}] entity message processed [{}]", this.tenantId, this.sessionId, downlinkMsg);
+                        }
                     }
                     case ATTRIBUTES_UPDATED, POST_ATTRIBUTES, ATTRIBUTES_DELETED, TIMESERIES_UPDATED ->
                             downlinkMsg = ctx.getTelemetryProcessor().convertTelemetryEventToDownlink(edge, edgeEvent);
@@ -626,7 +635,7 @@ public final class EdgeGrpcSession implements Closeable {
         return startSeqId;
     }
 
-    private ListenableFuture<List<String>> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
+    private ListenableFuture<List<Long>> updateQueueStartTsAndSeqId(Pair<Long, Long> pair) {
         this.newStartTs = pair.getFirst();
         this.newStartSeqId = pair.getSecond();
         log.trace("[{}] updateQueueStartTsAndSeqId [{}][{}][{}]", this.sessionId, edge.getId(), this.newStartTs, this.newStartSeqId);
@@ -689,8 +698,10 @@ public final class EdgeGrpcSession implements Closeable {
                 return ctx.getNotificationEdgeProcessor().convertNotificationTargetToDownlink(edgeEvent);
             case NOTIFICATION_TEMPLATE:
                 return ctx.getNotificationEdgeProcessor().convertNotificationTemplateToDownlink(edgeEvent);
-            case OAUTH2:
-                return ctx.getOAuth2EdgeProcessor().convertOAuth2EventToDownlink(edgeEvent);
+            case OAUTH2_CLIENT:
+                return ctx.getOAuth2EdgeProcessor().convertOAuth2ClientEventToDownlink(edgeEvent, this.edgeVersion);
+            case DOMAIN:
+                return ctx.getOAuth2EdgeProcessor().convertOAuth2DomainEventToDownlink(edgeEvent, this.edgeVersion);
             default:
                 log.warn("[{}] Unsupported edge event type [{}]", this.tenantId, edgeEvent);
                 return null;

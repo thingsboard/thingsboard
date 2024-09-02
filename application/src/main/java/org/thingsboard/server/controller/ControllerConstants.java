@@ -117,6 +117,8 @@ public class ControllerConstants {
     protected static final String RESOURCE_INFO_DESCRIPTION = "Resource Info is a lightweight object that includes main information about the Resource excluding the heavyweight data. ";
     protected static final String RESOURCE_DESCRIPTION = "Resource is a heavyweight object that includes main information about the Resource and also data. ";
 
+    protected static final String RESOURCE_IMAGE_SUB_TYPE_DESCRIPTION = "A string value representing resource sub-type.";
+
     protected static final String RESOURCE_INCLUDE_SYSTEM_IMAGES_DESCRIPTION = "Use 'true' to include system images. Disabled by default. Ignored for requests by users with system administrator authority.";
 
     protected static final String RESOURCE_TEXT_SEARCH_DESCRIPTION = "The case insensitive 'substring' filter based on the resource title.";
@@ -791,7 +793,7 @@ public class ControllerConstants {
             " * 'SHARED_ATTRIBUTE' - used for shared attributes; \n" +
             " * 'SERVER_ATTRIBUTE' - used for server attributes; \n" +
             " * 'ATTRIBUTE' - used for any of the above; \n" +
-            " * 'TIME_SERIES' - used for time-series values; \n" +
+            " * 'TIME_SERIES' - used for time series values; \n" +
             " * 'ENTITY_FIELD' - used for accessing entity fields like 'name', 'label', etc. The list of available fields depends on the entity type; \n" +
             " * 'ALARM_FIELD' - similar to entity field, but is used in alarm queries only; \n" +
             "\n\n Let's review the example:\n\n" +
@@ -902,7 +904,7 @@ public class ControllerConstants {
 
     protected static final String KEY_FILTERS =
             "\n\n # Key Filters" +
-                    "\nKey Filter allows you to define complex logical expressions over entity field, attribute or latest time-series value. The filter is defined using 'key', 'valueType' and 'predicate' objects. " +
+                    "\nKey Filter allows you to define complex logical expressions over entity field, attribute or latest time series value. The filter is defined using 'key', 'valueType' and 'predicate' objects. " +
                     "Single Entity Query may have zero, one or multiple predicates. If multiple filters are defined, they are evaluated using logical 'AND'. " +
                     "The example below checks that temperature of the entity is above 20 degrees:" +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
@@ -933,7 +935,7 @@ public class ControllerConstants {
                     "For example, \"find all devices with profile 'Moisture Sensor'\" or \"Find all devices related to asset 'Building A'\"" +
                     "\n\nOptional **key filters** allow to filter results of the entity filter by complex criteria against " +
                     "main entity fields (name, label, type, etc), attributes and telemetry. " +
-                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"." +
+                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and time series field 'batteryLevel' > 40\"." +
                     "\n\nLet's review the example:" +
                     "\n\n" + MARKDOWN_CODE_BLOCK_START +
                     "{\n" +
@@ -968,13 +970,13 @@ public class ControllerConstants {
     protected static final String ENTITY_DATA_QUERY_DESCRIPTION =
             "Allows to run complex queries over platform entities (devices, assets, customers, etc) " +
                     "based on the combination of main entity filter and multiple key filters. " +
-                    "Returns the paginated result of the query that contains requested entity fields and latest values of requested attributes and time-series data.\n\n" +
+                    "Returns the paginated result of the query that contains requested entity fields and latest values of requested attributes and time series data.\n\n" +
                     "# Query Definition\n\n" +
                     "\n\nMain **entity filter** is mandatory and defines generic search criteria. " +
                     "For example, \"find all devices with profile 'Moisture Sensor'\" or \"Find all devices related to asset 'Building A'\"" +
                     "\n\nOptional **key filters** allow to filter results of the **entity filter** by complex criteria against " +
                     "main entity fields (name, label, type, etc), attributes and telemetry. " +
-                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and timeseries field 'batteryLevel' > 40\"." +
+                    "For example, \"temperature > 20 or temperature< 10\" or \"name starts with 'T', and attribute 'model' is 'T1000', and time series field 'batteryLevel' > 40\"." +
                     "\n\nThe **entity fields** and **latest values** contains list of entity fields and latest attribute/telemetry fields to fetch for each entity." +
                     "\n\nThe **page link** contains information about the page to fetch and the sort ordering." +
                     "\n\nLet's review the example:" +
@@ -1052,7 +1054,7 @@ public class ControllerConstants {
     protected static final String ALARM_DATA_QUERY_DESCRIPTION = "This method description defines how Alarm Data Query extends the Entity Data Query. " +
             "See method 'Find Entity Data by Query' first to get the info about 'Entity Data Query'." +
             "\n\n The platform will first search the entities that match the entity and key filters. Then, the platform will use 'Alarm Page Link' to filter the alarms related to those entities. " +
-            "Finally, platform fetch the properties of alarm that are defined in the **'alarmFields'** and combine them with the other entity, attribute and latest time-series fields to return the result. " +
+            "Finally, platform fetch the properties of alarm that are defined in the **'alarmFields'** and combine them with the other entity, attribute and latest time series fields to return the result. " +
             "\n\n See example of the alarm query below. The query will search first 100 active alarms with type 'Temperature Alarm' or 'Fire Alarm' for any device with current temperature > 0. " +
             "The query will return combination of the entity fields: name of the device, device model and latest temperature reading and alarms fields: createdTime, type, severity and status: " +
             "\n\n" + MARKDOWN_CODE_BLOCK_START +
@@ -1173,7 +1175,7 @@ public class ControllerConstants {
     protected static final String ALARM_FILTER_KEY = "## Alarm Filter Key" + NEW_LINE +
             "Filter Key defines either entity field, attribute, telemetry or constant. It is a JSON object that consists the key name and type. The following filter key types are supported:\n" +
             " * 'ATTRIBUTE' - used for attributes values;\n" +
-            " * 'TIME_SERIES' - used for time-series values;\n" +
+            " * 'TIME_SERIES' - used for time series values;\n" +
             " * 'ENTITY_FIELD' - used for accessing entity fields like 'name', 'label', etc. The list of available fields depends on the entity type;\n" +
             " * 'CONSTANT' - constant value specified." + NEW_LINE + "Let's review the example:" + NEW_LINE +
             MARKDOWN_CODE_BLOCK_START +
@@ -1291,7 +1293,7 @@ public class ControllerConstants {
 
     protected static final String KEY_FILTERS_DESCRIPTION = "# Key Filters" + NEW_LINE +
             "Key filter objects are created under the **'condition'** array. They allow you to define complex logical expressions over entity field, " +
-            "attribute, latest time-series value or constant. The filter is defined using 'key', 'valueType', " +
+            "attribute, latest time series value or constant. The filter is defined using 'key', 'valueType', " +
             "'value' (refers to the value of the 'CONSTANT' alarm filter key type) and 'predicate' objects. Let's review each object:" + NEW_LINE +
             ALARM_FILTER_KEY + FILTER_VALUE_TYPE + NEW_LINE + DEVICE_PROFILE_FILTER_PREDICATE + NEW_LINE;
 
@@ -1604,7 +1606,7 @@ public class ControllerConstants {
     protected static final String ATTRIBUTES_JSON_REQUEST_DESCRIPTION = "A string value representing the json object. For example, '{\"key\":\"value\"}'. See API call description for more details.";
 
     protected static final String TELEMETRY_KEYS_BASE_DESCRIPTION = "A string value representing the comma-separated list of telemetry keys.";
-    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest timeseries. For example, 'temperature,humidity'.";
+    protected static final String TELEMETRY_KEYS_DESCRIPTION = TELEMETRY_KEYS_BASE_DESCRIPTION + " If keys are not selected, the result will return all latest time series. For example, 'temperature,humidity'.";
     protected static final String TELEMETRY_SCOPE_DESCRIPTION = "Value is deprecated, reserved for backward compatibility and not used in the API call implementation. Specify any scope for compatibility";
     protected static final String TELEMETRY_JSON_REQUEST_DESCRIPTION = "A JSON with the telemetry values. See API call description for more details.";
 
@@ -1620,11 +1622,11 @@ public class ControllerConstants {
     protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_UNAUTHORIZED = "User is not authorized to save entity attributes for selected entity. Most likely, User belongs to different Customer or Tenant.";
     protected static final String SAVE_ENTITY_ATTRIBUTES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
             "Platform creates an audit log event about entity attributes updates with action type 'ATTRIBUTES_UPDATED' that includes an error stacktrace.";
-    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Timeseries from the request was created or updated. " +
-            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED'.";
-    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED = "User is not authorized to save entity timeseries for selected entity. Most likely, User belongs to different Customer or Tenant.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_OK = "Time series from the request was created or updated. " +
+            "Platform creates an audit log event about entity time series updates with action type 'TIMESERIES_UPDATED'.";
+    protected static final String SAVE_ENTITY_TIMESERIES_STATUS_UNAUTHORIZED = "User is not authorized to save entity time series for selected entity. Most likely, User belongs to different Customer or Tenant.";
     protected static final String SAVE_ENTITY_TIMESERIES_STATUS_INTERNAL_SERVER_ERROR = "The exception was thrown during processing the request. " +
-            "Platform creates an audit log event about entity timeseries updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
+            "Platform creates an audit log event about entity time series updates with action type 'TIMESERIES_UPDATED' that includes an error stacktrace.";
 
     protected static final String ENTITY_ATTRIBUTE_SCOPES_TEMPLATE = " List of possible attribute scopes depends on the entity type: " +
             "\n\n * SERVER_SCOPE - supported for all entity types;" +
@@ -1712,4 +1714,6 @@ public class ControllerConstants {
             MARKDOWN_CODE_BLOCK_START +
             "[{\"ts\":1634712287000,\"values\":{\"temperature\":26, \"humidity\":87}}, {\"ts\":1634712588000,\"values\":{\"temperature\":25, \"humidity\":88}}]" +
             MARKDOWN_CODE_BLOCK_END ;
+
+    protected static final String SECURITY_WRITE_CHECK = " Security check is performed to verify that the user has 'WRITE' permission for the entity (entities).";
 }

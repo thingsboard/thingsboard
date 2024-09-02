@@ -20,6 +20,7 @@ import org.junit.Test;
 import org.springframework.test.context.TestPropertySource;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.test.web.servlet.request.MockHttpServletRequestBuilder;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -29,6 +30,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.atomic.AtomicInteger;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.asyncDispatch;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
@@ -40,6 +42,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
  */
 @TestPropertySource(properties = {
         "transport.http.enabled=true",
+        "transport.http.max_payload_size=/api/v1/*/rpc/**=10000;/api/v1/**=20000"
 })
 public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
 
@@ -72,6 +75,58 @@ public abstract class BaseHttpDeviceApiTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         Thread.sleep(2000);
         doGetAsync("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes?clientKeys=keyA,keyB,keyC").andExpect(status().isOk());
+    }
+
+    @Test
+    public void testReplyToCommandWithLargeResponse() throws Exception {
+        String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
+                JacksonUtil.toString(createJsonPayloadOfSize(10001)),
+                String.class,
+                status().isPayloadTooLarge());
+        assertThat(errorResponse).contains("Payload size exceeds the limit");
+
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc/5",
+                JacksonUtil.toString(createJsonPayloadOfSize(10000)),
+                String.class,
+                status().isOk());
+    }
+
+    @Test
+    public void testPostRpcRequestWithLargeResponse() throws Exception {
+        String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
+                JacksonUtil.toString(createRpcRequestPayload(10001)),
+                String.class,
+                status().isPayloadTooLarge());
+        assertThat(errorResponse).contains("Payload size exceeds the limit");
+
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/rpc",
+                JacksonUtil.toString(createRpcRequestPayload(10000)),
+                String.class,
+                status().isOk());
+    }
+
+    @Test
+    public void testPostLargeAttribute() throws Exception {
+        String errorResponse = doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes",
+                JacksonUtil.toString(createJsonPayloadOfSize(20001)),
+                String.class,
+                status().isPayloadTooLarge());
+        assertThat(errorResponse).contains("Payload size exceeds the limit");
+
+        doPost("/api/v1/" + deviceCredentials.getCredentialsId() + "/attributes",
+                JacksonUtil.toString(createJsonPayloadOfSize(20000)),
+                String.class,
+                status().isOk());
+    }
+
+    private String createJsonPayloadOfSize(int size) {
+        String value = "a".repeat(size - 19);
+        return "{\"result\":\"" + value + "\"}";
+    }
+
+    private String createRpcRequestPayload(int size) {
+        String value = "a".repeat(size - 50);
+        return "{\"method\":\"get\",\"params\":{\"value\":\"" + value + "\"}}";
     }
 
     protected ResultActions doGetAsync(String urlTemplate, Object... urlVariables) throws Exception {

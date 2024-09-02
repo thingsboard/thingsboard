@@ -102,9 +102,9 @@ export class GatewayConfigurationComponent implements OnInit {
           statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(60), Validators.pattern(/^-?[0-9]+$/)]],
           commands: this.fb.array([], [])
         }),
-        maxPayloadSizeBytes: [1024, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        minPackSendDelayMS: [200, [Validators.required, Validators.min(0), Validators.pattern(/^-?[0-9]+$/)]],
-        minPackSizeToSend: [500, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+        maxPayloadSizeBytes: [8196, [Validators.required, Validators.min(100), Validators.pattern(/^-?[0-9]+$/)]],
+        minPackSendDelayMS: [50, [Validators.required, Validators.min(10), Validators.pattern(/^-?[0-9]+$/)]],
+        minPackSizeToSend: [500, [Validators.required, Validators.min(100), Validators.pattern(/^-?[0-9]+$/)]],
         handleDeviceRenaming: [true, []],
         checkingDeviceActivity: this.fb.group({
           checkDeviceInactivity: [false, []],
@@ -619,6 +619,9 @@ export class GatewayConfigurationComponent implements OnInit {
         updateCredentials = true;
       } else {
         updateCredentials = this.initialCredentials.credentialsId !== securityConfig.accessToken;
+        if (updateCredentials) {
+          this.initialCredentials.credentialsId = securityConfig.accessToken;
+        }
       }
       if (updateCredentials) {
         newCredentials = {

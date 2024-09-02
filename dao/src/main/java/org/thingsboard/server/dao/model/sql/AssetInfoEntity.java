@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.model.sql;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 
 import java.util.HashMap;

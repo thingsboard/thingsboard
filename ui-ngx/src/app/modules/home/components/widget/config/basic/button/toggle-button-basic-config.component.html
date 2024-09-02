@@ -22,11 +22,11 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.initial-state"
+                                    panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    trueLabel="widgets.toggle-button.checked"
-                                    falseLabel="widgets.toggle-button.unchecked"
-                                    stateLabel="widgets.toggle-button.checked"
+                                    trueLabel="{{ 'widgets.toggle-button.checked' | translate }}"
+                                    falseLabel="{{ 'widgets.toggle-button.unchecked' | translate }}"
+                                    stateLabel="{{ 'widgets.toggle-button.checked' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -35,7 +35,7 @@
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.check-hint' | translate}}" translate>widgets.toggle-button.check</div>
       <tb-set-value-action-settings fxFlex
-                                    panelTitle="widgets.toggle-button.check"
+                                    panelTitle="{{ 'widgets.toggle-button.check' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -44,7 +44,7 @@
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.uncheck-hint' | translate}}" translate>widgets.toggle-button.uncheck</div>
       <tb-set-value-action-settings fxFlex
-                                    panelTitle="widgets.toggle-button.uncheck"
+                                    panelTitle="{{ 'widgets.toggle-button.uncheck' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"
@@ -53,9 +53,9 @@
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
       <tb-get-value-action-settings fxFlex
-                                    panelTitle="widgets.rpc-state.disabled-state"
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
-                                    stateLabel="widgets.rpc-state.disabled"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
                                     [widgetType]="widgetType"

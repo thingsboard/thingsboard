@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.service.edge.rpc;
 
+import lombok.Getter;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -53,6 +54,7 @@ public class EdgeSyncCursor {
 
     private final List<EdgeEventFetcher> fetchers = new LinkedList<>();
 
+    @Getter
     private int currentIdx = 0;
 
     public EdgeSyncCursor(EdgeContextComponent ctx, Edge edge, boolean fullSync) {
@@ -62,12 +64,12 @@ public class EdgeSyncCursor {
             fetchers.add(new RuleChainsEdgeEventFetcher(ctx.getRuleChainService()));
             fetchers.add(new AdminSettingsEdgeEventFetcher(ctx.getAdminSettingsService()));
             fetchers.add(new TenantAdminUsersEdgeEventFetcher(ctx.getUserService()));
-            Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
-            fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));
-            if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
-                fetchers.add(new CustomerEdgeEventFetcher(edge.getCustomerId()));
-                fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
-            }
+        }
+        Customer publicCustomer = ctx.getCustomerService().findOrCreatePublicCustomer(edge.getTenantId());
+        fetchers.add(new CustomerEdgeEventFetcher(publicCustomer.getId()));
+        if (edge.getCustomerId() != null && !EntityId.NULL_UUID.equals(edge.getCustomerId().getId())) {
+            fetchers.add(new CustomerEdgeEventFetcher(edge.getCustomerId()));
+            fetchers.add(new CustomerUsersEdgeEventFetcher(ctx.getUserService(), edge.getCustomerId()));
         }
         fetchers.add(new DashboardsEdgeEventFetcher(ctx.getDashboardService()));
         fetchers.add(new DefaultProfilesEdgeEventFetcher(ctx.getDeviceProfileService(), ctx.getAssetProfileService()));
@@ -86,7 +88,7 @@ public class EdgeSyncCursor {
             fetchers.add(new TenantWidgetsBundlesEdgeEventFetcher(ctx.getWidgetsBundleService()));
             fetchers.add(new OtaPackagesEdgeEventFetcher(ctx.getOtaPackageService()));
             fetchers.add(new TenantResourcesEdgeEventFetcher(ctx.getResourceService()));
-            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getOAuth2Service()));
+            fetchers.add(new OAuth2EdgeEventFetcher(ctx.getDomainService()));
         }
     }
 
@@ -102,9 +104,4 @@ public class EdgeSyncCursor {
         currentIdx++;
         return edgeEventFetcher;
     }
-
-    public int getCurrentIdx() {
-        return currentIdx;
-    }
-
 }

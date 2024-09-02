@@ -37,8 +37,9 @@ import org.springframework.util.CollectionUtils;
 import org.springframework.web.util.UriComponents;
 import org.springframework.web.util.UriComponentsBuilder;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.dao.oauth2.OAuth2Configuration;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.oauth2.TbOAuth2ParameterNames;
 import org.thingsboard.server.service.security.model.token.OAuth2AppTokenFactory;
@@ -70,7 +71,7 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
     private ClientRegistrationRepository clientRegistrationRepository;
 
     @Autowired
-    private OAuth2Service oAuth2Service;
+    private OAuth2ClientService oAuth2ClientService;
 
     @Autowired
     private OAuth2AppTokenFactory oAuth2AppTokenFactory;
@@ -115,14 +116,14 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
         return request.getParameter("appToken");
     }
 
-    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String registrationId, String redirectUriAction, String appPackage, String appToken) {
-        if (registrationId == null) {
+    private OAuth2AuthorizationRequest resolve(HttpServletRequest request, String oauth2ClientId, String redirectUriAction, String appPackage, String appToken) {
+        if (oauth2ClientId == null) {
             return null;
         }
 
-        ClientRegistration clientRegistration = this.clientRegistrationRepository.findByRegistrationId(registrationId);
+        ClientRegistration clientRegistration = this.clientRegistrationRepository.findByRegistrationId(oauth2ClientId);
         if (clientRegistration == null) {
-            throw new IllegalArgumentException("Invalid Client Registration with Id: " + registrationId);
+            throw new IllegalArgumentException("Invalid Client Registration with Id: " + oauth2ClientId);
         }
 
         Map<String, Object> attributes = new HashMap<>();
@@ -131,7 +132,7 @@ public class CustomOAuth2AuthorizationRequestResolver implements OAuth2Authoriza
             if (StringUtils.isEmpty(appToken)) {
                 throw new IllegalArgumentException("Invalid application token.");
             } else {
-                String appSecret = this.oAuth2Service.findAppSecret(UUID.fromString(registrationId), appPackage);
+                String appSecret = this.oAuth2ClientService.findAppSecret(new OAuth2ClientId(UUID.fromString(oauth2ClientId)), appPackage);
                 if (StringUtils.isEmpty(appSecret)) {
                     throw new IllegalArgumentException("Invalid package: " + appPackage + ". No application secret found for Client Registration with given application package.");
                 }

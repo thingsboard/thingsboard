@@ -1256,7 +1256,6 @@
         "maximum-upload-file-size": "Maksymalny rozmiar przesyłanego pliku: {{ size }}",
         "cannot-upload-file": "Nie można przesłać pliku",
         "settings": "Ustawienia",
-        "layout-settings": "Ustawienia układu",
         "columns-count": "Liczba kolumn",
         "columns-count-required": "Liczba kolumn jest wymagana.",
         "min-columns-count-message": "Dozwolona jest tylko minimalna liczba kolumn wynosząca 10.",
@@ -6808,7 +6807,6 @@
             "event-key-contains": "Klucz zdarzenia zawiera...",
             "show-connector": "Show for the connector",
             "connector-state-param-key": "Connector state parameter key",
-            "status": "Status",
             "message": "Message",
             "created-time": "Created time"
         },

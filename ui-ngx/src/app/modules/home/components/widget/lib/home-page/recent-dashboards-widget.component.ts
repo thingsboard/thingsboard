@@ -21,7 +21,8 @@ import {
   Input,
   OnDestroy,
   OnInit,
-  QueryList, ViewChild,
+  QueryList,
+  ViewChild,
   ViewChildren
 } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
@@ -29,11 +30,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { Authority } from '@shared/models/authority.enum';
 import { BehaviorSubject, Observable, of } from 'rxjs';
-import { getCurrentAuthUser } from '@core/auth/auth.selectors';
+import { getCurrentAuthState, getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { WidgetContext } from '@home/models/widget-component.models';
 import {
   AbstractUserDashboardInfo,
-  LastVisitedDashboardInfo, StarredDashboardInfo,
+  LastVisitedDashboardInfo,
+  StarredDashboardInfo,
   UserDashboardAction,
   UserDashboardsInfo
 } from '@shared/models/user-settings.models';
@@ -77,6 +79,8 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   hasDashboardsAccess = true;
 
   dirty = false;
+  public customerId: string;
+  private isFullscreenMode = getCurrentAuthState(this.store).forceFullscreen;
 
   constructor(protected store: Store<AppState>,
               private cd: ChangeDetectorRef,
@@ -85,6 +89,9 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
   }
 
   ngOnInit() {
+    if (this.authUser.authority === Authority.CUSTOMER_USER) {
+      this.customerId = this.authUser.customerId;
+    }
     this.hasDashboardsAccess = [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER].includes(this.authUser.authority);
     if (this.hasDashboardsAccess) {
       this.reload();
@@ -108,6 +115,11 @@ export class RecentDashboardsWidgetComponent extends PageComponent implements On
         this.cd.markForCheck();
       }
     );
+  }
+
+  public createDashboardUrl(id: string): string {
+    const baseUrl = this.isFullscreenMode ? '/dashboard/' : '/dashboards/';
+    return baseUrl + id;
   }
 
   toggleValueChange(value: 'last' | 'starred') {
