@@ -273,13 +273,13 @@ public class TbUtils {
                 Long.class, boolean.class, boolean.class)));
         parserConfig.addImport("longToHex", new MethodStub(TbUtils.class.getMethod("longToHex",
                 Long.class, boolean.class, boolean.class, int.class)));
-        parserConfig.addImport("intLongToString", new MethodStub(TbUtils.class.getMethod("intLongToString",
+        parserConfig.addImport("intLongToRadixString", new MethodStub(TbUtils.class.getMethod("intLongToRadixString",
                 Long.class)));
-        parserConfig.addImport("intLongToString", new MethodStub(TbUtils.class.getMethod("intLongToString",
+        parserConfig.addImport("intLongToRadixString", new MethodStub(TbUtils.class.getMethod("intLongToRadixString",
                 Long.class, int.class)));
-        parserConfig.addImport("intLongToString", new MethodStub(TbUtils.class.getMethod("intLongToString",
+        parserConfig.addImport("intLongToRadixString", new MethodStub(TbUtils.class.getMethod("intLongToRadixString",
                 Long.class, int.class, boolean.class)));
-        parserConfig.addImport("intLongToString", new MethodStub(TbUtils.class.getMethod("intLongToString",
+        parserConfig.addImport("intLongToRadixString", new MethodStub(TbUtils.class.getMethod("intLongToRadixString",
                 Long.class, int.class, boolean.class, boolean.class)));
         parserConfig.addImport("floatToHex", new MethodStub(TbUtils.class.getMethod("floatToHex",
                 Float.class)));
@@ -327,7 +327,7 @@ public class TbUtils {
                 String.class)));
         parserConfig.addImport("isHexadecimal", new MethodStub(TbUtils.class.getMethod("isHexadecimal",
                 String.class)));
-        parserConfig.addImport("byteArrayToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("bytesToExecutionArrayList",
+        parserConfig.addImport("bytesToExecutionArrayList", new MethodStub(TbUtils.class.getMethod("bytesToExecutionArrayList",
                 ExecutionContext.class, byte[].class)));
         parserConfig.addImport("padStart", new MethodStub(TbUtils.class.getMethod("padStart",
                 String.class, int.class, char.class)));
@@ -725,19 +725,19 @@ public class TbUtils {
         return prepareNumberHexString(l, bigEndian, pref, len, HEX_LEN_LONG_MAX);
     }
 
-    public static String intLongToString(Long number) {
-        return intLongToString(number, DEC_RADIX);
+    public static String intLongToRadixString(Long number) {
+        return intLongToRadixString(number, DEC_RADIX);
     }
 
-    public static String intLongToString(Long number, int radix) {
-        return intLongToString(number, radix, true);
+    public static String intLongToRadixString(Long number, int radix) {
+        return intLongToRadixString(number, radix, true);
     }
 
-    public static String intLongToString(Long number, int radix, boolean bigEndian) {
-        return intLongToString(number, radix, bigEndian, false);
+    public static String intLongToRadixString(Long number, int radix, boolean bigEndian) {
+        return intLongToRadixString(number, radix, bigEndian, false);
     }
 
-    public static String intLongToString(Long number, int radix, boolean bigEndian, boolean pref) {
+    public static String intLongToRadixString(Long number, int radix, boolean bigEndian, boolean pref) {
         if (radix >= 25 && radix <= MAX_RADIX) {
             return Long.toString(number, radix);
         }
@@ -1344,8 +1344,8 @@ public class TbUtils {
      * Writes the bit value to the appropriate location in the bins array, starting at the end of the array,
      * to ensure proper alignment (highest bit to low end).
      */
-    public static byte[] parseLongToBinaryArray(long longValue, int binsLength) {
-        int len = Math.min(binsLength, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
+    public static byte[] parseLongToBinaryArray(long longValue, int binLength) {
+        int len = Math.min(binLength, BYTES_LEN_LONG_MAX * BIN_LEN_MAX);
         byte[] bins = new byte[len];
         for (int i = 0; i < len; i++) {
             bins[len - 1 - i] = (byte) ((longValue >> i) & 1);
