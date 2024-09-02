@@ -15,7 +15,7 @@
 ///
 
 import { AfterViewInit, Component, forwardRef, Input, OnInit } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { TranslateService } from '@ngx-translate/core';
@@ -62,6 +62,10 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
+
+  entityTypeNullUid: Set<AliasEntityType | EntityType> = new Set([
+    AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER, AliasEntityType.CURRENT_RULE_NODE
+  ]);
 
   private readonly defaultEntityType: EntityType | AliasEntityType = null;
 
@@ -143,9 +147,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         id: this.modelValue.entityType !== entityType ? null : entityId
       };
 
-      if (this.modelValue.entityType === AliasEntityType.CURRENT_TENANT
-        || this.modelValue.entityType === AliasEntityType.CURRENT_USER
-        || this.modelValue.entityType === AliasEntityType.CURRENT_USER_OWNER) {
+      if (this.entityTypeNullUid.has(this.modelValue.entityType)) {
         this.modelValue.id = NULL_UUID;
       } else if (this.modelValue.entityType === AliasEntityType.CURRENT_CUSTOMER && !this.modelValue.id) {
         this.modelValue.id = NULL_UUID;
