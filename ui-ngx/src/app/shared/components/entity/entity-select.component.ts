@@ -22,8 +22,8 @@ import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType } from '@shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
 import { EntityId } from '@shared/models/id/entity-id';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-select',
@@ -47,24 +47,22 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
   @Input()
   useAliasEntityTypes: boolean;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;
+
+  @Input()
+  additionEntityTypes: {[entityType in string]: string} = {};
 
   displayEntityTypeSelect: boolean;
 
   AliasEntityType = AliasEntityType;
 
-  entityTypeNullUid: Set<AliasEntityType | EntityType> = new Set([
-    AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER, AliasEntityType.CURRENT_RULE_NODE
+  entityTypeNullUUID: Set<AliasEntityType | EntityType | string> = new Set([
+    AliasEntityType.CURRENT_TENANT, AliasEntityType.CURRENT_USER, AliasEntityType.CURRENT_USER_OWNER
   ]);
 
   private readonly defaultEntityType: EntityType | AliasEntityType = null;
@@ -110,6 +108,10 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         this.updateView(this.modelValue.entityType, id);
       }
     );
+    const additionNullUIIDEntityTypes = Object.keys(this.additionEntityTypes) as string[];
+    if (additionNullUIIDEntityTypes.length > 0) {
+      additionNullUIIDEntityTypes.forEach((entityType) => this.entityTypeNullUUID.add(entityType));
+    }
   }
 
   ngAfterViewInit(): void {
@@ -147,7 +149,7 @@ export class EntitySelectComponent implements ControlValueAccessor, OnInit, Afte
         id: this.modelValue.entityType !== entityType ? null : entityId
       };
 
-      if (this.entityTypeNullUid.has(this.modelValue.entityType)) {
+      if (this.entityTypeNullUUID.has(this.modelValue.entityType)) {
         this.modelValue.id = NULL_UUID;
       } else if (this.modelValue.entityType === AliasEntityType.CURRENT_CUSTOMER && !this.modelValue.id) {
         this.modelValue.id = NULL_UUID;
