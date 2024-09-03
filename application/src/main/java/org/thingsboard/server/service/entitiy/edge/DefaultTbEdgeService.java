@@ -54,7 +54,7 @@ public class DefaultTbEdgeService extends AbstractTbEntityService implements TbE
 
             if (ActionType.ADDED.equals(actionType)) {
                 ruleChainService.assignRuleChainToEdge(tenantId, edgeTemplateRootRuleChain.getId(), edgeId);
-                edgeService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
+                savedEdge = edgeService.setEdgeRootRuleChain(tenantId, savedEdge, edgeTemplateRootRuleChain.getId());
                 edgeService.assignDefaultRuleChainsToEdge(tenantId, edgeId);
             }
 
