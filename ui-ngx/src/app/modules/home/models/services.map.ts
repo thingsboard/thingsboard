@@ -50,6 +50,8 @@ import { TenantService } from '@core/http/tenant.service';
 import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { UiSettingsService } from '@core/http/ui-settings.service';
 import { UsageInfoService } from '@core/http/usage-info.service';
+import { EventService } from '@core/http/event.service';
+import { AuditLogService } from '@core/http/audit-log.service';
 
 export const ServicesMap = new Map<string, Type<any>>(
   [
@@ -87,6 +89,8 @@ export const ServicesMap = new Map<string, Type<any>>(
    ['userSettingsService', UserSettingsService],
    ['uiSettingsService', UiSettingsService],
    ['usageInfoService', UsageInfoService],
-   ['notificationService', NotificationService]
+   ['notificationService', NotificationService],
+   ['eventService', EventService],
+   ['auditLogService', AuditLogService]
   ]
 );
