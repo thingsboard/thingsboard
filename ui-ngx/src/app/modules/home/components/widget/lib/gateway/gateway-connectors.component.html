@@ -195,14 +195,25 @@
             <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
           </mat-tab>
           <mat-tab label="{{ 'gateway.configuration' | translate }}*">
-            <tb-json-object-edit
+            <tb-configuration-json
+              *ngIf="allowBasicConfig.has(connectorForm.get('type').value) else defaultJsonConfig"
+              [deviceId]="device.id"
+              [connectorType]="connectorForm.get('type').value"
               fillHeight="true"
-              class="tb-flex fill-height"
+              class="tb-flex fill-height configuration-json"
               fxLayout="column"
               jsonRequired
               label="{{ 'gateway.configuration' | translate }}"
-              formControlName="configurationJson">
-            </tb-json-object-edit>
+              formControlName="configurationJson"/>
+            <ng-template #defaultJsonConfig>
+              <tb-json-object-edit
+                fillHeight="true"
+                class="tb-flex fill-height configuration-json"
+                fxLayout="column"
+                jsonRequired
+                label="{{ 'gateway.configuration' | translate }}"
+                formControlName="configurationJson"/>
+            </ng-template>
           </mat-tab>
         </mat-tab-group>
       </ng-template>

@@ -145,6 +145,12 @@ import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-t
 import {
     ModbusRpcParametersComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-rpc-parameters/modbus-rpc-parameters.component';
+import {
+    ConfigurationJsonComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/configuration-json/components/configuration-json.component';
+import {
+  ConfigurationValidateService
+} from '@home/components/widget/lib/gateway/connectors-configuration/configuration-json/services/configuration-validate.service';
 
 @NgModule({
   declarations: [
@@ -233,6 +239,7 @@ import {
     EllipsisChipListDirective,
     TruncateWithTooltipDirective,
     ModbusRpcParametersComponent,
+    ConfigurationJsonComponent
   ],
   exports: [
     EntitiesTableWidgetComponent,
@@ -301,7 +308,8 @@ import {
     NotificationTypeFilterPanelComponent
   ],
   providers: [
-    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule},
+    {provide: ConfigurationValidateService, useClass: ConfigurationValidateService},
   ]
 })
 export class WidgetComponentsModule {

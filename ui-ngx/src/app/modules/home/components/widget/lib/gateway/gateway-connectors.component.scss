@@ -147,5 +147,13 @@
       }
     }
   }
+
+  .configuration-json {
+    .ace_tooltip {
+      @media #{$mat-gt-sm} {
+        transform: translate(-250px, -120px);
+      }
+    }
+  }
 }
 
