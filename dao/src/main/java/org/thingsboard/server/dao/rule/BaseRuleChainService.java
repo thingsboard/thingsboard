@@ -31,6 +31,7 @@ import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.exception.EntityVersionMismatchException;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
@@ -167,13 +168,15 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         return saveRuleChainMetaData(tenantId, ruleChainMetaData, ruleNodeUpdater, true);
     }
 
-
+    @Transactional
     @Override
     public RuleChainUpdateResult saveRuleChainMetaData(TenantId tenantId, RuleChainMetaData ruleChainMetaData, Function<RuleNode, RuleNode> ruleNodeUpdater, boolean publishSaveEvent) {
         Validator.validateId(ruleChainMetaData.getRuleChainId(), "Incorrect rule chain id.");
         RuleChain ruleChain = findRuleChainById(tenantId, ruleChainMetaData.getRuleChainId());
         if (ruleChain == null) {
             return RuleChainUpdateResult.failed();
+        } else if (ruleChainMetaData.getVersion() != null && !ruleChainMetaData.getVersion().equals(ruleChain.getVersion())) {
+            throw new EntityVersionMismatchException(EntityType.RULE_CHAIN, null);
         }
         RuleChainDataValidator.validateMetaDataFieldsAndConnections(ruleChainMetaData);
 
@@ -234,7 +237,6 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
             if ((ruleChain.getFirstRuleNodeId() != null && !ruleChain.getFirstRuleNodeId().equals(firstRuleNodeId))
                     || (ruleChain.getFirstRuleNodeId() == null && firstRuleNodeId != null)) {
                 ruleChain.setFirstRuleNodeId(firstRuleNodeId);
-                ruleChainDao.save(tenantId, ruleChain);
             }
             if (ruleChainMetaData.getConnections() != null) {
                 for (NodeConnectionInfo nodeConnection : ruleChainMetaData.getConnections()) {
@@ -283,6 +285,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         if (!relations.isEmpty()) {
             relationService.saveRelations(tenantId, relations);
         }
+        ruleChain = ruleChainDao.save(tenantId, ruleChain);
         if (publishSaveEvent) {
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(ruleChain).entityId(ruleChain.getId()).build());
         }
@@ -298,6 +301,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         RuleChainMetaData ruleChainMetaData = new RuleChainMetaData();
         ruleChainMetaData.setRuleChainId(ruleChainId);
+        ruleChainMetaData.setVersion(ruleChain.getVersion());
         List<RuleNode> ruleNodes = getRuleChainNodes(tenantId, ruleChainId);
         Collections.sort(ruleNodes, Comparator.comparingLong(RuleNode::getCreatedTime).thenComparing(RuleNode::getId, Comparator.comparing(RuleNodeId::getId)));
         Map<RuleNodeId, Integer> ruleNodeIndexMap = new HashMap<>();
