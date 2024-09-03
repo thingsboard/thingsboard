@@ -921,7 +921,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     let gridSettings: GridSettings = null;
     const layoutKeys = this.dashboardUtils.isSingleLayoutDashboard(this.dashboard);
     if (layoutKeys) {
-      gridSettings = deepClone(this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout].gridSettings);
+      const layouts = this.dashboardUtils.getDashboardLayoutConfig(
+        this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout],
+        this.layouts[layoutKeys.layout].layoutCtx.breakpoint);
+      gridSettings = deepClone(layouts.gridSettings);
     }
     this.dialog.open<DashboardSettingsDialogComponent, DashboardSettingsDialogData,
       DashboardSettingsDialogData>(DashboardSettingsDialogComponent, {
@@ -939,9 +942,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.updateDashboardCss();
         const newGridSettings = data.gridSettings;
         if (newGridSettings) {
-          const layout = this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout];
-          this.dashboardUtils.updateLayoutSettings(layout, newGridSettings);
-          this.updateLayouts();
+          const layouts = deepClone(this.dashboard.configuration.states[layoutKeys.state].layouts);
+          const layoutConfig = this.dashboardUtils.getDashboardLayoutConfig(
+            layouts[layoutKeys.layout], this.layouts[layoutKeys.layout].layoutCtx.breakpoint);
+          this.dashboardUtils.updateLayoutSettings(layoutConfig, newGridSettings);
+          this.updateDashboardLayouts(layouts);
        }
       }
     });
