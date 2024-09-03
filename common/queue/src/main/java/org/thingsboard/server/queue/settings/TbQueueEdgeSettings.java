@@ -13,28 +13,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.msg.edge;
+package org.thingsboard.server.queue.settings;
 
 import lombok.Data;
-import org.thingsboard.server.common.data.id.EdgeId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.MsgType;
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.annotation.Lazy;
+import org.springframework.stereotype.Component;
 
-import java.util.UUID;
-
+@Lazy
 @Data
-public class ToEdgeSyncRequest implements EdgeSessionMsg {
+@Component
+public class TbQueueEdgeSettings {
 
-    private static final long serialVersionUID = -7624597032448212259L;
-
-    private final UUID id;
-    private final TenantId tenantId;
-    private final EdgeId edgeId;
-    private final String serviceId;
-
-    @Override
-    public MsgType getMsgType() {
-        return MsgType.EDGE_SYNC_REQUEST_TO_EDGE_SESSION_MSG;
-    }
+    @Value("${queue.edge.topic}")
+    private String topic;
 
 }

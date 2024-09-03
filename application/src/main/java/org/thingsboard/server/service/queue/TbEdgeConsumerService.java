@@ -13,24 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.stats;
+package org.thingsboard.server.service.queue;
 
-public enum StatsType {
-    RULE_ENGINE("ruleEngine"),
-    CORE("core"),
-    TRANSPORT("transport"),
-    JS_INVOKE("jsInvoke"),
-    RATE_EXECUTOR("rateExecutor"),
-    HOUSEKEEPER("housekeeper"),
-    EDGE("edge");
-
-    private final String name;
-
-    StatsType(String name) {
-        this.name = name;
-    }
-
-    public String getName() {
-        return name;
-    }
+public interface TbEdgeConsumerService {
 }

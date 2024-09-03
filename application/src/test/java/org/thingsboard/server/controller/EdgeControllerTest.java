@@ -40,8 +40,8 @@ import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.AdminSettings;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EdgeUpgradeInfo;
@@ -62,6 +62,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.queue.Queue;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
@@ -166,7 +167,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertEquals(NULL_UUID, savedEdge.getCustomerId().getId());
         Assert.assertEquals(edge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
+        testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(savedEdge, savedEdge.getId(), savedEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.ADDED, 2);
 
@@ -176,7 +177,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Edge foundEdge = doGet("/api/edge/" + savedEdge.getId().getId().toString(), Edge.class);
         Assert.assertEquals(foundEdge.getName(), savedEdge.getName());
 
-        testNotifyEntityBroadcastEntityStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
+        testNotifyEdgeStateChangeEventManyTimeMsgToEdgeServiceNever(foundEdge, foundEdge.getId(), foundEdge.getId(),
                 tenantId, tenantAdminUser.getCustomerId(), tenantAdminUser.getId(), tenantAdminUser.getEmail(),
                 ActionType.UPDATED, 1);
     }
@@ -876,7 +877,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
 
         Asset asset = new Asset();
         asset.setName("Test Sync Edge Asset 1");
-        asset.setType("test");
+        asset.setType("default");
         Asset savedAsset = doPost("/api/asset", asset, Asset.class);
 
         Device device = new Device();
@@ -896,7 +897,7 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
         edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
 
-        edgeImitator.expectMessageAmount(27);
+        edgeImitator.expectMessageAmount(26);
         edgeImitator.connect();
         waitForMessages(edgeImitator);
 
@@ -905,16 +906,16 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
         Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgs(), savedDevice.getId()));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
-        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
+        printQueueMsgsIfNotEmpty(edgeImitator);
 
-        edgeImitator.expectMessageAmount(22);
-        doPost("/api/edge/sync/" + edge.getId());
+        edgeImitator.expectMessageAmount(21);
+        doPost("/api/edge/sync/" + edge.getId()).andExpect(status().isOk());
         waitForMessages(edgeImitator);
 
         verifyFetchersMsgs(edgeImitator, savedDevice);
-        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
+        printQueueMsgsIfNotEmpty(edgeImitator);
 
         edgeImitator.allowIgnoredTypes();
         try {
@@ -928,6 +929,15 @@ public class EdgeControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
         doDelete("/api/edge/" + edge.getId().getId().toString())
                 .andExpect(status().isOk());
+    }
+
+    private static void printQueueMsgsIfNotEmpty(EdgeImitator edgeImitator) {
+        if (!edgeImitator.getDownlinkMsgs().isEmpty()) {
+            for (AbstractMessage downlinkMsg : edgeImitator.getDownlinkMsgs()) {
+                log.warn("Unexpected message in the queue: {}", downlinkMsg);
+            }
+        }
+        Assert.assertTrue(edgeImitator.getDownlinkMsgs().isEmpty());
     }
 
     private RuleChainId getEdgeRootRuleChainId(EdgeImitator edgeImitator) {
@@ -948,11 +958,18 @@ public class EdgeControllerTest extends AbstractControllerTest {
     }
 
     private void simulateEdgeActivation(Edge edge) throws Exception {
+        Awaitility.await()
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
+                .until(() -> {
+                    List<RuleChain> ruleChains = getEdgeRuleChains(edge.getId());
+                    return ruleChains.size() == 1 && ruleChains.get(0).getId().equals(edge.getRootRuleChainId());
+                });
+
         ObjectNode attributes = JacksonUtil.newObjectNode();
         attributes.put("active", true);
-        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + DataConstants.SERVER_SCOPE, attributes);
+        doPost("/api/plugins/telemetry/EDGE/" + edge.getId() + "/attributes/" + AttributeScope.SERVER_SCOPE, attributes);
         Awaitility.await()
-                .atMost(30, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     List<Map<String, Object>> values = doGetAsyncTyped("/api/plugins/telemetry/EDGE/" + edge.getId() +
                             "/values/attributes/SERVER_SCOPE", new TypeReference<>() {});
@@ -960,8 +977,9 @@ public class EdgeControllerTest extends AbstractControllerTest {
                     if (activeAttrOpt.isEmpty()) {
                         return false;
                     }
+                    List<RuleChain> ruleChains = getEdgeRuleChains(edge.getId());
                     Map<String, Object> activeAttr = activeAttrOpt.get();
-                    return "true".equals(activeAttr.get("value").toString());
+                    return "true".equals(activeAttr.get("value").toString()) && ruleChains.size() == 1;
                 });
     }
 
@@ -988,13 +1006,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
         Assert.assertTrue(popUserMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, TENANT_ADMIN_EMAIL, Authority.TENANT_ADMIN));
         Assert.assertTrue(popCustomerMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Public"));
         Assert.assertTrue(popDeviceProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popDeviceMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Device 1"));
         Assert.assertTrue(popDeviceCredentialsMsg(edgeImitator.getDownlinkMsgs(), savedDevice.getId()));
-        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "test"));
+        Assert.assertTrue(popAssetProfileMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "default"));
         Assert.assertTrue(popAssetMsg(edgeImitator.getDownlinkMsgs(), UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, "Test Sync Edge Asset 1"));
         Assert.assertTrue(popTenantMsg(edgeImitator.getDownlinkMsgs(), tenantId));
         Assert.assertTrue(popTenantProfileMsg(edgeImitator.getDownlinkMsgs(), tenantProfileId));
@@ -1223,6 +1240,12 @@ public class EdgeControllerTest extends AbstractControllerTest {
         return doPost("/api/edge", edge, Edge.class);
     }
 
+    private List<RuleChain> getEdgeRuleChains(EdgeId edgeId) throws Exception {
+        return doGetTypedWithTimePageLink("/api/edge/" + edgeId + "/ruleChains?",
+                new TypeReference<PageData<RuleChain>>() {
+                }, new TimePageLink(10)).getData();
+    }
+
     @Test
     public void testGetEdgeInstallInstructions() throws Exception {
         Edge edge = constructEdge(tenantId, "Edge for Test Docker Install Instructions", "default", "7390c3a6-69b0-9910-d155-b90aca4b772e", "l7q4zsjplzwhk16geqxy");
@@ -1271,6 +1294,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.1.5");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
+        edgeUpgradeInstructionsService.setAppVersion("3.6.1.6-SNAPSHOT");
+        Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.2");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
 
@@ -1280,6 +1305,8 @@ public class EdgeControllerTest extends AbstractControllerTest {
         edgeUpgradeInstructionsService.setAppVersion("3.6.1");
         Assert.assertFalse(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.2");
+        Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
+        edgeUpgradeInstructionsService.setAppVersion("3.6.2-SNAPSHOT");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));
         edgeUpgradeInstructionsService.setAppVersion("3.6.2.6");
         Assert.assertTrue(edgeUpgradeInstructionsService.isUpgradeAvailable(savedEdge.getTenantId(), savedEdge.getId()));

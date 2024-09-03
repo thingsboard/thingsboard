@@ -27,6 +27,7 @@ import java.util.Map;
 @Component
 @ConditionalOnProperty(prefix = "queue", value = "type", havingValue = "kafka")
 public class TbKafkaTopicConfigs {
+
     public static final String NUM_PARTITIONS_SETTING = "partitions";
 
     @Value("${queue.kafka.topic-properties.core:}")
@@ -43,6 +44,8 @@ public class TbKafkaTopicConfigs {
     private String fwUpdatesProperties;
     @Value("${queue.kafka.topic-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.kafka.topic-properties.edge:}")
+    private String edgeProperties;
     @Value("${queue.kafka.topic-properties.housekeeper:}")
     private String housekeeperProperties;
     @Value("${queue.kafka.topic-properties.housekeeper-reprocessing:}")
@@ -70,6 +73,8 @@ public class TbKafkaTopicConfigs {
     private Map<String, String> housekeeperConfigs;
     @Getter
     private Map<String, String> housekeeperReprocessingConfigs;
+    @Getter
+    private Map<String, String> edgeConfigs;
 
     @PostConstruct
     private void init() {
@@ -86,6 +91,7 @@ public class TbKafkaTopicConfigs {
         vcConfigs = PropertyUtils.getProps(vcProperties);
         housekeeperConfigs = PropertyUtils.getProps(housekeeperProperties);
         housekeeperReprocessingConfigs = PropertyUtils.getProps(housekeeperReprocessingProperties);
+        edgeConfigs = PropertyUtils.getProps(edgeProperties);
     }
 
 }

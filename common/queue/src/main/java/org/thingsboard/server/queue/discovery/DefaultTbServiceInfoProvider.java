@@ -88,7 +88,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             assignedTenantProfiles = Collections.emptySet();
         }
 
-       generateNewServiceInfoWithCurrentSystemInfo();
+        generateNewServiceInfoWithCurrentSystemInfo();
     }
 
     @AfterContextReady

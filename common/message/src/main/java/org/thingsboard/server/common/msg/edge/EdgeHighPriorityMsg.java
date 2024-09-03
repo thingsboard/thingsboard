@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.service.edge;
+package org.thingsboard.server.common.msg.edge;
 
-import org.thingsboard.server.common.data.edge.Edge;
-import org.thingsboard.server.common.data.id.RuleChainId;
+import lombok.Data;
+import org.thingsboard.server.common.data.edge.EdgeEvent;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.msg.queue.TbCallback;
-import org.thingsboard.server.gen.transport.TransportProtos;
+import org.thingsboard.server.common.msg.MsgType;
 
-public interface EdgeNotificationService {
+@Data
+public class EdgeHighPriorityMsg implements EdgeSessionMsg {
 
-    Edge setEdgeRootRuleChain(TenantId tenantId, Edge edge, RuleChainId ruleChainId) throws Exception;
+    private final TenantId tenantId;
+    private final EdgeEvent edgeEvent;
 
-    void pushNotificationToEdge(TransportProtos.EdgeNotificationMsgProto edgeNotificationMsg, TbCallback callback);
+    @Override
+    public MsgType getMsgType() {
+        return MsgType.EDGE_HIGH_PRIORITY_TO_EDGE_SESSION_MSG;
+    }
+
 }
