@@ -201,7 +201,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
 
         assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("Client ID was too long '" + invalidClientId + "'. " +
+                .hasMessage("Client ID is too long '" + invalidClientId + "'. " +
                         "The length of Client ID cannot be longer than 23, but current length is " + invalidClientId.length() + ".")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
                 .isEqualTo(true);
@@ -221,7 +221,7 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
         String resultedClientId = validClientId + "_" + serviceId;
         assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
                 .isInstanceOf(TbNodeException.class)
-                .hasMessage("Client ID was too long '" + resultedClientId + "'. " +
+                .hasMessage("Client ID is too long '" + resultedClientId + "'. " +
                         "The length of Client ID cannot be longer than 23, but current length is " + resultedClientId.length() + ".")
                 .extracting(e -> ((TbNodeException) e).isUnrecoverable())
                 .isEqualTo(true);
