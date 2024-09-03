@@ -1154,7 +1154,7 @@ public class TbUtils {
     }
 
     public static void raiseError(String message, Object value) {
-        String msg = value == null ? message : message + " for value " + value;
+        String msg = value == null ? message : message + " A value of " + value + " is invalid.";
         throw new RuntimeException(msg);
     }
 

@@ -891,7 +891,7 @@ public class TbUtilsTest {
             TbUtils.raiseError(message, value);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
-            Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. for value 4"));
+            Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. A value of 4 is invalid."));
         }
         try {
             TbUtils.raiseError(message);
