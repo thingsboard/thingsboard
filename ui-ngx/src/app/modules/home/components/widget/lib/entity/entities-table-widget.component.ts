@@ -49,7 +49,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
@@ -408,7 +408,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         } as EntityColumn
       );
       this.contentsInfo.entityType = {
-        useCellContentFunction: false
+        useCellContentFunction: true,
+        cellContentFunction: (entityType: EntityType) =>
+          entityType ? this.translate.instant(entityTypeTranslations.get(entityType).type) : ''
       };
       this.stylesInfo.entityType = {
         useCellStyleFunction: false
@@ -869,9 +871,9 @@ class EntityDatasource implements DataSource<EntityData> {
     }
     if (datasource.entityType) {
       entity.id.entityType = datasource.entityType;
-      entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
+      entity.entityType = datasource.entityType;
     } else {
-      entity.entityType = '';
+      entity.entityType = null;
     }
     this.dataKeys.forEach((dataKey, index) => {
       const keyData = data[index].data;
