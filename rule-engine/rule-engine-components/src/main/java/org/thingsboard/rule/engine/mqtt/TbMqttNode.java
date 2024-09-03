@@ -152,7 +152,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
                 this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() :
                 this.mqttNodeConfiguration.getClientId();
         if (clientId.length() > 23) {
-            throw new TbNodeException("Client ID was too long '" + clientId + "'. " +
+            throw new TbNodeException("Client ID is too long '" + clientId + "'. " +
                     "The length of Client ID cannot be longer than 23, but current length is " + clientId.length() + ".", true);
         }
         return clientId;
