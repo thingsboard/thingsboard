@@ -152,8 +152,8 @@
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
-                      [matTooltip]="(gridSettingsFormGroup.get('columns').hasError('required') ? 'dashboard.columns-count-required' :
-                                     (gridSettingsFormGroup.get('columns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate"
+                      [matTooltip]="(gridSettingsFormGroup.get('minColumns').hasError('required') ? 'dashboard.columns-count-required' :
+                                     (gridSettingsFormGroup.get('minColumns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate"
                       *ngIf="gridSettingsFormGroup.get('minColumns').invalid && gridSettingsFormGroup.get('minColumns').touched"
                       class="tb-error">
               warning
