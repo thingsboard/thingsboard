@@ -224,7 +224,7 @@ export class AuthService {
   }
 
   public loadOAuth2Clients(): Observable<Array<OAuth2ClientLoginInfo>> {
-    const url = '/api/noauth/oauth2/client?platform=' + PlatformType.WEB;
+    const url = '/api/noauth/oauth2Clients?platform=' + PlatformType.WEB;
     return this.http.post<Array<OAuth2ClientLoginInfo>>(url,
       null, defaultHttpOptions()).pipe(
       catchError(err => of([])),
