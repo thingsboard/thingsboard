@@ -752,10 +752,25 @@ export class DashboardUtilsService {
   public moveWidgets(layout: DashboardLayout, cols: number, rows: number) {
     cols = isDefinedAndNotNull(cols) ? Math.round(cols) : 0;
     rows = isDefinedAndNotNull(rows) ? Math.round(rows) : 0;
+    if (cols < 0 || rows < 0) {
+      let widgetMinCol = Infinity;
+      let widgetMinRow = Infinity;
+      for (const w of Object.keys(layout.widgets)) {
+        const widget = layout.widgets[w];
+        widgetMinCol = Math.min(widgetMinCol, widget.col);
+        widgetMinRow = Math.min(widgetMinRow, widget.row);
+      }
+      if ((cols + widgetMinCol) < 0 ){
+        cols = -widgetMinCol;
+      }
+      if ((rows + widgetMinRow) < 0 ){
+        rows = -widgetMinRow;
+      }
+    }
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
-      widget.col = Math.max(0, widget.col + cols);
-      widget.row = Math.max(0, widget.row + rows);
+      widget.col += cols;
+      widget.row += rows;
     }
   }
 
