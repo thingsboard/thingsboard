@@ -26,6 +26,7 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 import { isDefinedAndNotNull } from '@core/utils';
 import { getCurrentAuthState } from '@core/auth/auth.selectors';
 import { AuthState } from '@core/auth/auth.models';
+import { CountryData } from '@shared/models/country.models';
 
 @Component({
   selector: 'tb-customer',
@@ -43,8 +44,9 @@ export class CustomerComponent extends ContactBasedComponent<Customer> {
               @Inject('entity') protected entityValue: Customer,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<Customer>,
               protected fb: UntypedFormBuilder,
-              protected cd: ChangeDetectorRef) {
-    super(store, fb, entityValue, entitiesTableConfigValue, cd);
+              protected cd: ChangeDetectorRef,
+              protected countryData: CountryData) {
+    super(store, fb, entityValue, entitiesTableConfigValue, cd, countryData);
   }
 
   hideDelete() {
