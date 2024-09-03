@@ -76,7 +76,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
     private int pollInterval;
     @Value("${queue.edge.pack-processing-timeout:10000}")
     private int packProcessingTimeout;
-    @Value("${queue.core.consumer-per-partition:true}")
+    @Value("${queue.edge.consumer-per-partition:false}")
     private boolean consumerPerPartition;
     @Value("${queue.edge.pack-processing-retries:3}")
     private int packProcessingRetries;
@@ -125,11 +125,9 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
 
     @Override
     protected void onTbApplicationEvent(PartitionChangeEvent event) {
-        if (ServiceType.TB_CORE.equals(event.getServiceType())) {
-            var partitions = event.getEdgePartitions();
-            log.info("Subscribing to partitions: {}", partitions);
-            mainConsumer.update(partitions);
-        }
+        var partitions = event.getEdgePartitions();
+        log.debug("Subscribing to partitions: {}", partitions);
+        mainConsumer.update(partitions);
     }
 
     private void processMsgs(List<TbProtoQueueMsg<ToEdgeMsg>> msgs, TbQueueConsumer<TbProtoQueueMsg<ToEdgeMsg>> consumer, EdgeQueueConfig edgeQueueConfig) throws InterruptedException {
@@ -235,7 +233,7 @@ public class DefaultTbEdgeConsumerService extends AbstractConsumerService<ToEdge
                 callback.onSuccess();
             }
         } catch (Exception e) {
-            log.error("Error processing edge notification message: {}", e.getMessage(), e);
+            log.error("Error processing edge notification message", e);
             callback.onFailure(e);
         }
 

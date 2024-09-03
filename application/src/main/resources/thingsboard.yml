@@ -1798,6 +1798,8 @@ queue:
     pack-processing-timeout: "${TB_QUEUE_EDGE_PACK_PROCESSING_TIMEOUT_MS:10000}"
     # Retries for processing a failure message pack by Edge services
     pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:3}"
+    # Enable/disable a separate consumer per partition for Edge queue
+    consumer-per-partition: "${TB_QUEUE_EDGE_CONSUMER_PER_PARTITION:false}"
     stats:
       # Enable/disable statistics for Edge services
       enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
