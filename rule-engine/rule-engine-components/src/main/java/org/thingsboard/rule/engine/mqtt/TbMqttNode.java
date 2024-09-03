@@ -77,6 +77,8 @@ public class TbMqttNode extends TbAbstractExternalNode {
         this.mqttNodeConfiguration = TbNodeUtils.convert(configuration, TbMqttNodeConfiguration.class);
         try {
             this.mqttClient = initClient(ctx);
+        } catch (TbNodeException e) {
+            throw e;
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
@@ -119,8 +121,7 @@ public class TbMqttNode extends TbAbstractExternalNode {
         MqttClientConfig config = new MqttClientConfig(getSslContext());
         config.setOwnerId(getOwnerId(ctx));
         if (!StringUtils.isEmpty(this.mqttNodeConfiguration.getClientId())) {
-            config.setClientId(this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
-                    this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() : this.mqttNodeConfiguration.getClientId());
+            config.setClientId(getClientId(ctx));
         }
         config.setCleanSession(this.mqttNodeConfiguration.isCleanSession());
 
@@ -144,6 +145,17 @@ public class TbMqttNode extends TbAbstractExternalNode {
             throw new RuntimeException(String.format("Failed to connect to MQTT broker at %s. Result code is: %s", hostPort, result.getReturnCode()));
         }
         return client;
+    }
+
+    private String getClientId(TbContext ctx) throws TbNodeException {
+        String clientId = this.mqttNodeConfiguration.isAppendClientIdSuffix() ?
+                this.mqttNodeConfiguration.getClientId() + "_" + ctx.getServiceId() :
+                this.mqttNodeConfiguration.getClientId();
+        if (clientId.length() > 23) {
+            throw new TbNodeException("Client ID was too long '" + clientId + "'. " +
+                    "The length of Client ID cannot be longer than 23, but current length is " + clientId.length() + ".", true);
+        }
+        return clientId;
     }
 
     MqttClient getMqttClient(TbContext ctx, MqttClientConfig config) {

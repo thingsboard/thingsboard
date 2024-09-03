@@ -192,6 +192,42 @@ public class TbMqttNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
+    public void givenClientIdIsTooLong_whenInit_thenThrowsException() {
+        String invalidClientId = "vhfrbeb38ygwfwrgfwefgterhytjytj";
+        mqttNodeConfig.setClientId(invalidClientId);
+
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.getSelf()).willReturn(new RuleNode(RULE_NODE_ID));
+
+        assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Client ID was too long '" + invalidClientId + "'. " +
+                        "The length of Client ID cannot be longer than 23, but current length is " + invalidClientId.length() + ".")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
+    public void givenClientIdIsOkAndAppendClientIdSuffixIsTrue_whenInit_thenClientIdBecomesInvalidAndThrowsException() {
+        String validClientId = "fertjnhnjj4ge";
+        mqttNodeConfig.setClientId("fertjnhnjj4ge");
+        mqttNodeConfig.setAppendClientIdSuffix(true);
+
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.getSelf()).willReturn(new RuleNode(RULE_NODE_ID));
+        String serviceId = "test-service";
+        given(ctxMock.getServiceId()).willReturn(serviceId);
+
+        String resultedClientId = validClientId + "_" + serviceId;
+        assertThatThrownBy(() -> mqttNode.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(mqttNodeConfig))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessage("Client ID was too long '" + resultedClientId + "'. " +
+                        "The length of Client ID cannot be longer than 23, but current length is " + resultedClientId.length() + ".")
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
+    @Test
     public void givenFailedByTimeoutConnectResult_whenInit_thenThrowsException() throws ExecutionException, InterruptedException, TimeoutException {
         mqttNodeConfig.setHost("localhost");
         mqttNodeConfig.setClientId("bfrbTESTmfkr23");
