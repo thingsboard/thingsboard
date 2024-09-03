@@ -459,7 +459,7 @@ export class EntityService {
         entitiesObservable = this.queueService.getQueueStatistics(pageLink, config);
         break;
       case EntityType.OAUTH2_CLIENT:
-        pageLink.sortOrder.property = 'createdTime';
+        pageLink.sortOrder.property = 'title';
         entitiesObservable = this.oauth2Service.findTenantOAuth2ClientInfos(pageLink, config);
         break;
     }
