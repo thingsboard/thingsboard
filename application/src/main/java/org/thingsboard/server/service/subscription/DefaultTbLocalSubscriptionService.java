@@ -61,6 +61,7 @@ import org.thingsboard.server.service.ws.telemetry.sub.AlarmSubscriptionUpdate;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -158,28 +159,29 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
              * Even if we cache locally the list of active subscriptions by entity id, it is still time-consuming operation to get them from cache
              * Since number of subscriptions is usually much less than number of devices that are pushing data.
              */
-            Set<UUID> staleSubs = new HashSet<>();
+            Map<TenantId, Set<UUID>> staleSubs = new HashMap<>();
             subscriptionsByEntityId.forEach((id, sub) -> {
                 try {
                     pushSubEventToManagerService(sub.getTenantId(), sub.getEntityId(), sub.toEvent(ComponentLifecycleEvent.UPDATED));
                 } catch (TenantNotFoundException e) {
-                    staleSubs.add(id);
+                    staleSubs.computeIfAbsent(sub.getTenantId(), key -> new HashSet<>()).add(id);
                     log.warn("Cleaning up stale subscription {} for tenant {} due to TenantNotFoundException", id, sub.getTenantId());
                 } catch (Exception e) {
                     log.error("Failed to push subscription {} to manager service", sub, e);
                 }
             });
-            if (!staleSubs.isEmpty()) {
+            staleSubs.forEach((tenantId, subs) -> {
+                var subsLock = getSubsLock(tenantId);
                 subsLock.lock();
                 try {
-                    staleSubs.forEach(entityId -> {
+                    subs.forEach(entityId -> {
                         subscriptionsByEntityId.remove(entityId);
                         entityUpdates.remove(entityId);
                     });
                 } finally {
                     subsLock.unlock();
                 }
-            }
+            });
         }
     }
 
