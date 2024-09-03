@@ -59,6 +59,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
+import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
 
 @Injectable({
   providedIn: 'root'
@@ -1080,5 +1081,23 @@ export class DashboardUtilsService {
     const minStr = isDefined(currentData?.minWidth) ? `min ${currentData.minWidth}px` : '';
     const maxStr = isDefined(currentData?.maxWidth) ? `max ${currentData.maxWidth}px` : '';
     return minStr && maxStr ? `${minStr} - ${maxStr}` : `${minStr}${maxStr}`;
+  }
+
+  updatedLayoutForBreakpoint(layout: DashboardPageLayout, breakpointId: BreakpointId) {
+    let selectBreakpointId: BreakpointId = 'default';
+    if (layout.layoutCtx.layoutData[breakpointId]) {
+      selectBreakpointId = breakpointId;
+    }
+    layout.layoutCtx.breakpoint = selectBreakpointId;
+    const layoutInfo = layout.layoutCtx.layoutData[selectBreakpointId];
+    if (layoutInfo.gridSettings) {
+      layout.layoutCtx.gridSettings = layoutInfo.gridSettings;
+    }
+    layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    layout.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
+    if (layout.show && layout.layoutCtx.ctrl) {
+      layout.layoutCtx.ctrl.reload();
+    }
+    layout.layoutCtx.ignoreLoading = true;
   }
 }
