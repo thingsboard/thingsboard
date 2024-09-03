@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.mqtt.mqttv3.rpc;
 
-import com.fasterxml.jackson.core.type.TypeReference;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Value;
@@ -26,16 +25,16 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+import org.thingsboard.server.transport.mqtt.limits.GatewaySessionLimits;
+import org.thingsboard.server.transport.mqtt.limits.SessionLimits;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestSubscribeOnTopicCallback;
 
-import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_REQUESTS_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_RPC_RESPONSE_SUB_TOPIC;
@@ -62,6 +61,15 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
 
         doPost("/api/tenantProfile", tenantProfile);
 
+        var expectedLimits = new SessionLimits();
+        var deviceLimits = new SessionLimits.SessionRateLimits(profileConfiguration.getTransportDeviceMsgRateLimit(),
+                profileConfiguration.getTransportDeviceTelemetryMsgRateLimit(),
+                profileConfiguration.getTransportDeviceTelemetryDataPointsRateLimit());
+        expectedLimits.setRateLimits(deviceLimits);
+        expectedLimits.setMaxPayloadSize(maxPayloadSize);
+        expectedLimits.setMaxInflightMessages(maxInflightMessages);
+        expectedLimits.setPayloadType(TransportPayloadType.JSON);
+
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .deviceName("Test Get Service Configuration")
                 .transportPayloadType(TransportPayloadType.JSON)
@@ -81,18 +89,8 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
                 .as("await callback").isTrue();
 
         var payload = callback.getPayloadBytes();
-        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {});
-
-        assertNotNull(response);
-        assertEquals(4, response.size());
-        assertEquals(response.get("maxPayloadSize"), maxPayloadSize);
-        assertEquals(response.get("maxInflightMessages"), maxInflightMessages);
-        assertEquals(response.get("payloadType"), TransportPayloadType.JSON.name());
-        Map<String, String> rateLimits = (Map<String, String>) response.get("rateLimits");
-        assertEquals(3, rateLimits.size());
-        assertEquals(rateLimits.get("messages"), profileConfiguration.getTransportDeviceMsgRateLimit());
-        assertEquals(rateLimits.get("telemetryMessages"), profileConfiguration.getTransportDeviceTelemetryMsgRateLimit());
-        assertEquals(rateLimits.get("telemetryDataPoints"), profileConfiguration.getTransportDeviceTelemetryDataPointsRateLimit());
+        SessionLimits actualLimits = JacksonUtil.fromBytes(payload, SessionLimits.class);
+        assertEquals(expectedLimits, actualLimits);
 
         client.disconnect();
     }
@@ -113,6 +111,19 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
 
         doPost("/api/tenantProfile", tenantProfile);
 
+        var expectedLimits = new GatewaySessionLimits();
+        var gatewayLimits = new SessionLimits.SessionRateLimits(profileConfiguration.getTransportGatewayMsgRateLimit(),
+                profileConfiguration.getTransportGatewayTelemetryMsgRateLimit(),
+                profileConfiguration.getTransportGatewayTelemetryDataPointsRateLimit());
+        var gatewayDeviceLimits = new SessionLimits.SessionRateLimits(profileConfiguration.getTransportGatewayDeviceMsgRateLimit(),
+                profileConfiguration.getTransportGatewayDeviceTelemetryMsgRateLimit(),
+                profileConfiguration.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+        expectedLimits.setGatewayRateLimits(gatewayLimits);
+        expectedLimits.setRateLimits(gatewayDeviceLimits);
+        expectedLimits.setMaxPayloadSize(maxPayloadSize);
+        expectedLimits.setMaxInflightMessages(maxInflightMessages);
+        expectedLimits.setPayloadType(TransportPayloadType.JSON);
+
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName("Test Get Service Configuration Gateway")
                 .transportPayloadType(TransportPayloadType.JSON)
@@ -131,21 +142,8 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         assertTrue(callback.getSubscribeLatch().await(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS));
 
         var payload = callback.getPayloadBytes();
-        Map<String, Object> response = JacksonUtil.fromBytes(payload, new TypeReference<>() {});
-
-        assertNotNull(response);
-        assertEquals(4, response.size());
-        assertEquals(response.get("maxPayloadSize"), maxPayloadSize);
-        assertEquals(response.get("maxInflightMessages"), maxInflightMessages);
-        assertEquals(response.get("payloadType"), TransportPayloadType.JSON.name());
-        Map<String, String> rateLimits = (Map<String, String>) response.get("rateLimits");
-        assertEquals(6, rateLimits.size());
-        assertEquals(rateLimits.get("messages"), profileConfiguration.getTransportGatewayMsgRateLimit());
-        assertEquals(rateLimits.get("telemetryMessages"), profileConfiguration.getTransportGatewayTelemetryMsgRateLimit());
-        assertEquals(rateLimits.get("telemetryDataPoints"), profileConfiguration.getTransportGatewayTelemetryDataPointsRateLimit());
-        assertEquals(rateLimits.get("deviceMessages"), profileConfiguration.getTransportGatewayDeviceMsgRateLimit());
-        assertEquals(rateLimits.get("deviceTelemetryMessages"), profileConfiguration.getTransportGatewayDeviceTelemetryMsgRateLimit());
-        assertEquals(rateLimits.get("deviceTelemetryDataPoints"), profileConfiguration.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+        SessionLimits actualLimits = JacksonUtil.fromBytes(payload, GatewaySessionLimits.class);
+        assertEquals(expectedLimits, actualLimits);
 
         client.disconnect();
     }

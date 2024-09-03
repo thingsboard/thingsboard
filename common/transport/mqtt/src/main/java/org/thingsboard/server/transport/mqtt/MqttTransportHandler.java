@@ -79,6 +79,8 @@ import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.limits.GatewaySessionLimits;
+import org.thingsboard.server.transport.mqtt.limits.SessionLimits;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
@@ -97,9 +99,7 @@ import java.security.cert.X509Certificate;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 import java.util.Optional;
 import java.util.UUID;
 import java.util.concurrent.Callable;
@@ -936,7 +936,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             } else {
                 log.debug("[{}] Failed to process unsubscription [{}] to [{}] - Subscription not found", sessionId, mqttMsg.variableHeader().messageId(), topicName);
-                unSubResults.add((short)MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
+                unSubResults.add((short) MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
             }
         }
         if (!activityReported) {
@@ -1341,25 +1341,30 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private void onGetSessionLimitsRpc(TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.ToServerRpcRequestMsg rpcRequestMsg) {
         var tenantProfile = context.getTenantProfileCache().get(deviceSessionCtx.getTenantId());
         DefaultTenantProfileConfiguration profile = tenantProfile.getDefaultProfileConfiguration();
-        Map<String, Object> sessionLimits = new HashMap<>();
-        Map<String, String> rateLimits = new HashMap<>();
+
+        SessionLimits sessionLimits;
 
         if (sessionInfo.getIsGateway()) {
-            rateLimits.put("messages", profile.getTransportGatewayMsgRateLimit());
-            rateLimits.put("telemetryMessages", profile.getTransportGatewayTelemetryMsgRateLimit());
-            rateLimits.put("telemetryDataPoints", profile.getTransportGatewayTelemetryDataPointsRateLimit());
-            rateLimits.put("deviceMessages", profile.getTransportGatewayDeviceMsgRateLimit());
-            rateLimits.put("deviceTelemetryMessages", profile.getTransportGatewayDeviceTelemetryMsgRateLimit());
-            rateLimits.put("deviceTelemetryDataPoints", profile.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+            var gatewaySessionLimits = new GatewaySessionLimits();
+            var gatewayLimits = new SessionLimits.SessionRateLimits(profile.getTransportGatewayMsgRateLimit(),
+                    profile.getTransportGatewayTelemetryMsgRateLimit(),
+                    profile.getTransportGatewayTelemetryDataPointsRateLimit());
+            var gatewayDeviceLimits = new SessionLimits.SessionRateLimits(profile.getTransportGatewayDeviceMsgRateLimit(),
+                    profile.getTransportGatewayDeviceTelemetryMsgRateLimit(),
+                    profile.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+            gatewaySessionLimits.setGatewayRateLimits(gatewayLimits);
+            gatewaySessionLimits.setRateLimits(gatewayDeviceLimits);
+            sessionLimits = gatewaySessionLimits;
         } else {
-            rateLimits.put("messages", profile.getTransportDeviceMsgRateLimit());
-            rateLimits.put("telemetryMessages", profile.getTransportDeviceTelemetryMsgRateLimit());
-            rateLimits.put("telemetryDataPoints", profile.getTransportDeviceTelemetryDataPointsRateLimit());
+            var rateLimits = new SessionLimits.SessionRateLimits(profile.getTransportDeviceMsgRateLimit(),
+                    profile.getTransportDeviceTelemetryMsgRateLimit(),
+                    profile.getTransportDeviceTelemetryDataPointsRateLimit());
+            sessionLimits = new SessionLimits();
+            sessionLimits.setRateLimits(rateLimits);
         }
-        sessionLimits.put("rateLimits", rateLimits);
-        sessionLimits.put("maxPayloadSize", context.getMaxPayloadSize());
-        sessionLimits.put("maxInflightMessages", context.getMessageQueueSizePerDeviceLimit());
-        sessionLimits.put("payloadType", deviceSessionCtx.getPayloadType());
+        sessionLimits.setMaxPayloadSize(context.getMaxPayloadSize());
+        sessionLimits.setMaxInflightMessages(context.getMessageQueueSizePerDeviceLimit());
+        sessionLimits.setPayloadType(deviceSessionCtx.getPayloadType());
 
         ack(ctx, msgId, MqttReasonCodes.PubAck.SUCCESS);
 
