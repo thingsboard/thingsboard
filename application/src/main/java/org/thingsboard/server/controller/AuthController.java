@@ -159,7 +159,7 @@ public class AuthController extends BaseController {
             String resetUrl = String.format("%s/api/noauth/resetPassword?resetToken=%s", baseUrl,
                     userCredentials.getResetToken());
 
-            mailService.sendResetPasswordEmailAsync(resetUrl, email);
+            mailService.sendResetPasswordEmailAsync(resetUrl, userCredentials.getResetTokenTtl(), email);
         } catch (Exception e) {
             log.warn("Error occurred: {}", e.getMessage());
         }
