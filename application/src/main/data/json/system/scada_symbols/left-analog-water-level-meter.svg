@@ -43,7 +43,7 @@
     },
     {
       "tag": "label",
-      "stateRenderFunction": "var label = ctx.properties.label;\nif (label) {\n    var icon = ctx.properties.icon;\n    ctx.api.text(element, ctx.properties.labelText);\n    if (!icon) {\n        element.transform({translateX: 10});\n    }\n    element.show();\n} else {\n    element.hide();\n}",
+      "stateRenderFunction": "var label = ctx.properties.label;\nif (label) {\n    var icon = ctx.properties.icon;\n    var labelTextFont = ctx.properties.labelTextFont;\n    var labelTextColor = ctx.properties.labelTextColor;\n    ctx.api.font(element, labelTextFont, labelTextColor);\n    ctx.api.text(element, ctx.properties.labelText);\n    if (!icon) {\n        element.transform({translateX: 10});\n    }\n    element.show();\n} else {\n    element.hide();\n}",
       "actions": null
     },
     {
@@ -311,6 +311,44 @@
       "disableOnProperty": "label",
       "rowClass": "",
       "fieldClass": "flex",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "labelTextFont",
+      "name": "{i18n:scada.symbol.label}",
+      "type": "font",
+      "default": {
+        "size": 13,
+        "sizeUnit": "px",
+        "family": "Roboto",
+        "weight": "500",
+        "style": "normal"
+      },
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "label",
+      "rowClass": "",
+      "fieldClass": "",
+      "min": null,
+      "max": null,
+      "step": null
+    },
+    {
+      "id": "labelTextColor",
+      "name": "{i18n:scada.symbol.label}",
+      "type": "color",
+      "default": "#0000008A",
+      "required": null,
+      "subLabel": null,
+      "divider": null,
+      "fieldSuffix": null,
+      "disableOnProperty": "label",
+      "rowClass": "",
+      "fieldClass": "",
       "min": null,
       "max": null,
       "step": null
