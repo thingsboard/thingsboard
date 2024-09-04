@@ -25,7 +25,7 @@
     },
     {
       "tag": "walve",
-      "stateRenderFunction": "var opened = ctx.values.opened;\nif (opened) {\n    element.attr({fill: ctx.properties.openedColor});\n    ctx.api.resetAnimation(element);\n} else {\n    element.attr({fill: ctx.properties.closedColor});\n    if (ctx.values.criticalAnimation) {\n        ctx.api.animate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetAnimation(element);\n    }\n}\n",
+      "stateRenderFunction": "var opened = ctx.values.opened;\nif (opened) {\n    element.attr({fill: ctx.properties.openedColor});\n    ctx.api.resetAnimation(element);\n} else {\n    element.attr({fill: ctx.properties.closedColor});\n    if (ctx.values.closeAnimation) {\n        ctx.api.animate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetAnimation(element);\n    }\n}\n",
       "actions": null
     }
   ],
@@ -134,9 +134,9 @@
       "defaultWidgetActionSettings": null
     },
     {
-      "id": "criticalAnimation",
-      "name": "{i18n:scada.symbol.critical-state-animation}",
-      "hint": "{i18n:scada.symbol.critical-state-animation-hint}",
+      "id": "closeAnimation",
+      "name": "{i18n:scada.symbol.close-state-animation}",
+      "hint": "{i18n:scada.symbol.close-state-animation-hint}",
       "group": null,
       "type": "value",
       "valueType": "BOOLEAN",
