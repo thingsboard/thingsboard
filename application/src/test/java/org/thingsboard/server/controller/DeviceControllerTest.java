@@ -192,7 +192,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         savedDevice.setName("My new device");
-        doPost("/api/device", savedDevice, Device.class);
+        savedDevice = doPost("/api/device", savedDevice, Device.class);
 
         testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
@@ -247,7 +247,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
         savedDevice.setName("My new device");
-        doPost("/api/device", savedDevice, Device.class);
+        savedDevice = doPost("/api/device", savedDevice, Device.class);
 
         testNotifyEntityAllOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.UPDATED);
@@ -749,8 +749,7 @@ public class DeviceControllerTest extends AbstractControllerTest {
 
         Mockito.reset(tbClusterService, auditLogService, gatewayNotificationsService);
 
-        doPost("/api/device/credentials", deviceCredentials)
-                .andExpect(status().isOk());
+        deviceCredentials = doPost("/api/device/credentials", deviceCredentials, DeviceCredentials.class);
 
         testNotifyEntityMsgToEdgePushMsgToCoreOneTime(savedDevice, savedDevice.getId(), savedDevice.getId(), savedTenant.getId(),
                 tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.CREDENTIALS_UPDATED, deviceCredentials);
@@ -1504,11 +1503,12 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(deviceBulkImportResult.getErrorsList().isEmpty());
 
         Device updatedDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
+        savedDevice.setVersion(updatedDevice.getVersion());
         Assert.assertEquals(savedDevice, updatedDevice);
 
         DeviceCredentials updatedCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-
+        savedCredentials.setVersion(updatedCredentials.getVersion());
         Assert.assertEquals(savedCredentials, updatedCredentials);
     }
 
@@ -1586,10 +1586,33 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertEquals(newAttributeValue, actualAttribute.get("value"));
     }
 
+    @Test
+    public void testSaveDeviceWithOutdatedVersion() throws Exception {
+        Device device = createDevice("Device v1.0");
+        assertThat(device.getVersion()).isOne();
+
+        device.setName("Device v2.0");
+        device = doPost("/api/device", device, Device.class);
+        assertThat(device.getVersion()).isEqualTo(2);
+
+        device.setName("Device v1.1");
+        device.setVersion(1L);
+        String response = doPost("/api/device", device).andExpect(status().isConflict())
+                .andReturn().getResponse().getContentAsString();
+        assertThat(JacksonUtil.toJsonNode(response).get("message").asText())
+                .containsIgnoringCase("already changed by someone else");
+
+        device.setVersion(null); // overriding entity
+        device = doPost("/api/device", device, Device.class);
+        assertThat(device.getName()).isEqualTo("Device v1.1");
+        assertThat(device.getVersion()).isEqualTo(3);
+    }
+
     private Device createDevice(String name) {
         Device device = new Device();
         device.setName(name);
         device.setType("default");
         return doPost("/api/device", device, Device.class);
     }
+
 }

@@ -83,33 +83,27 @@ public interface DeviceRepository extends JpaRepository<DeviceEntity, UUID>, Exp
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.firmwareId = null " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(d.label, CONCAT('%', :textSearch, '%')) = true)")
+            "AND d.firmwareId IS NULL")
     Page<DeviceEntity> findByTenantIdAndTypeAndFirmwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                                 @Param("deviceProfileId") UUID deviceProfileId,
-                                                                @Param("textSearch") String textSearch,
                                                                 Pageable pageable);
 
     @Query("SELECT d FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.softwareId = null " +
-            "AND (:textSearch IS NULL OR ilike(d.name, CONCAT('%', :textSearch, '%')) = true " +
-            "OR ilike(d.label, CONCAT('%', :textSearch, '%')) = true)")
+            "AND d.softwareId IS NULL")
     Page<DeviceEntity> findByTenantIdAndTypeAndSoftwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                                 @Param("deviceProfileId") UUID deviceProfileId,
-                                                                @Param("textSearch") String textSearch,
                                                                 Pageable pageable);
 
     @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.firmwareId = null")
+            "AND d.firmwareId IS NULL")
     Long countByTenantIdAndDeviceProfileIdAndFirmwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                               @Param("deviceProfileId") UUID deviceProfileId);
 
     @Query("SELECT count(*) FROM DeviceEntity d WHERE d.tenantId = :tenantId " +
             "AND d.deviceProfileId = :deviceProfileId " +
-            "AND d.softwareId = null")
+            "AND d.softwareId IS NULL")
     Long countByTenantIdAndDeviceProfileIdAndSoftwareIdIsNull(@Param("tenantId") UUID tenantId,
                                                               @Param("deviceProfileId") UUID deviceProfileId);
 

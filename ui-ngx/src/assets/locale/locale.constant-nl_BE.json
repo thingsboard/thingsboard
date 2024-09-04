@@ -1168,7 +1168,6 @@
         "maximum-upload-file-size": "Maximale bestandsgrootte uploaden: {{ size }}",
         "cannot-upload-file": "Kan bestand niet uploaden",
         "settings": "Instellingen",
-        "layout-settings": "Lay-out instellingen",
         "columns-count": "Aantal kolommen",
         "columns-count-required": "Het aantal kolommen is vereist.",
         "min-columns-count-message": "Er is slechts een minimum van 10 kolommen toegestaan.",

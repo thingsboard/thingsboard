@@ -2695,10 +2695,17 @@
   dependencies:
     "@svgdotjs/svg.js" "^3.1.1"
 
-"@svgdotjs/svg.js@^3.1.1", "@svgdotjs/svg.js@^3.2.0":
+"@svgdotjs/svg.js@^3.0.16", "@svgdotjs/svg.js@^3.1.1", "@svgdotjs/svg.js@^3.2.0":
   version "3.2.0"
   resolved "https://registry.yarnpkg.com/@svgdotjs/svg.js/-/svg.js-3.2.0.tgz#6baa8cef6778a93818ac18faa2055222e60aa644"
   integrity sha512-Tr8p+QVP7y+QT1GBlq1Tt57IvedVH8zCPoYxdHLX0Oof3a/PqnC/tXAkVufv1JQJfsDHlH/UrjcDfgxSofqSNA==
+
+"@svgdotjs/svg.panzoom.js@^2.1.2":
+  version "2.1.2"
+  resolved "https://registry.yarnpkg.com/@svgdotjs/svg.panzoom.js/-/svg.panzoom.js-2.1.2.tgz#50e66a861f7c4f9e3992707f8e62e6e8da5c5223"
+  integrity sha512-0Nzo2TRlTebW3pzfAPtHx8Ye7Y3kuMEkK7hwVJi0SgQUB/vstjg7fvCJxB++EqsuDEetP0/SC+4CpLMVm6Lh2g==
+  dependencies:
+    "@svgdotjs/svg.js" "^3.0.16"
 
 "@tinymce/tinymce-angular@^7.0.0":
   version "7.0.0"

@@ -18,6 +18,7 @@ package org.thingsboard.server.controller.plugin;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import jakarta.websocket.RemoteEndpoint;
 import jakarta.websocket.SendHandler;
@@ -65,7 +66,6 @@ import org.thingsboard.server.service.ws.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
-import javax.annotation.PostConstruct;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Optional;

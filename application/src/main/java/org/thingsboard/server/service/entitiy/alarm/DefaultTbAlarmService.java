@@ -196,7 +196,7 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     public Boolean delete(Alarm alarm, User user) {
         TenantId tenantId = alarm.getTenantId();
         logEntityActionService.logEntityAction(tenantId, alarm.getOriginator(), alarm, alarm.getCustomerId(),
-                ActionType.ALARM_DELETE, user);
+                ActionType.ALARM_DELETE, user, alarm.getId());
         return alarmSubscriptionService.deleteAlarm(tenantId, alarm.getId());
     }
 

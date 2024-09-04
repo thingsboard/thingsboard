@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
@@ -63,10 +64,13 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
         if (CollectionsUtil.isEmpty(resourceTypes)) {
             resourceTypes = EnumSet.allOf(ResourceType.class);
         }
+        Set<ResourceSubType> resourceSubTypes = filter.getResourceSubTypes();
         return DaoUtil.toPageData(resourceInfoRepository
                 .findAllTenantResourcesByTenantId(
                         filter.getTenantId().getId(), TenantId.NULL_UUID,
                         resourceTypes.stream().map(Enum::name).collect(Collectors.toList()),
+                        CollectionsUtil.isEmpty(resourceSubTypes) ? null :
+                                resourceSubTypes.stream().map(Enum::name).collect(Collectors.toList()),
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
     }
@@ -77,10 +81,13 @@ public class JpaTbResourceInfoDao extends JpaAbstractDao<TbResourceInfoEntity, T
         if (CollectionsUtil.isEmpty(resourceTypes)) {
             resourceTypes = EnumSet.allOf(ResourceType.class);
         }
+        Set<ResourceSubType> resourceSubTypes = filter.getResourceSubTypes();
         return DaoUtil.toPageData(resourceInfoRepository
                 .findTenantResourcesByTenantId(
                         filter.getTenantId().getId(),
                         resourceTypes.stream().map(Enum::name).collect(Collectors.toList()),
+                        CollectionsUtil.isEmpty(resourceSubTypes) ? null :
+                                resourceSubTypes.stream().map(Enum::name).collect(Collectors.toList()),
                         pageLink.getTextSearch(),
                         DaoUtil.toPageable(pageLink)));
     }

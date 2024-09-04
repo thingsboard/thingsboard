@@ -249,7 +249,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     @Override
     public void handleUnsubCmd(WebSocketSessionRef sessionRef, UnsubscribeCmd cmd) {
-        localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), cmd.getCmdId());
+        localSubscriptionService.cancelSubscription(sessionRef.getTenantId(), sessionRef.getSessionId(), cmd.getCmdId());
     }
 
     private void sendUpdate(String sessionId, CmdUpdate update) {

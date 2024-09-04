@@ -17,6 +17,9 @@ package org.thingsboard.server.dao.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.BooleanNode;
+import com.fasterxml.jackson.databind.node.IntNode;
+import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -434,16 +437,11 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         saveUserCredentials(tenantId, userCredentials);
 
         User user = findUserById(tenantId, userId);
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(USER_CREDENTIALS_ENABLED, enabled);
-        user.setAdditionalInfo(additionalInfo);
+        user.setAdditionalInfoField(USER_CREDENTIALS_ENABLED, BooleanNode.valueOf(enabled));
         if (enabled) {
             resetFailedLoginAttempts(user);
         }
-        userDao.save(user.getTenantId(), user);
+        saveUser(tenantId, user);
     }
 
 
@@ -456,23 +454,13 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     private void resetFailedLoginAttempts(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(FAILED_LOGIN_ATTEMPTS, 0);
-        user.setAdditionalInfo(additionalInfo);
+        user.setAdditionalInfoField(FAILED_LOGIN_ATTEMPTS, IntNode.valueOf(0));
     }
 
     @Override
     public void setLastLoginTs(TenantId tenantId, UserId userId) {
         User user = findUserById(tenantId, userId);
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        ((ObjectNode) additionalInfo).put(LAST_LOGIN_TS, System.currentTimeMillis());
-        user.setAdditionalInfo(additionalInfo);
+        user.setAdditionalInfoField(LAST_LOGIN_TS, new LongNode(System.currentTimeMillis()));
         saveUser(tenantId, user);
     }
 
@@ -522,17 +510,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     }
 
     private int increaseFailedLoginAttempts(User user) {
-        JsonNode additionalInfo = user.getAdditionalInfo();
-        if (!(additionalInfo instanceof ObjectNode)) {
-            additionalInfo = JacksonUtil.newObjectNode();
-        }
-        int failedLoginAttempts = 0;
-        if (additionalInfo.has(FAILED_LOGIN_ATTEMPTS)) {
-            failedLoginAttempts = additionalInfo.get(FAILED_LOGIN_ATTEMPTS).asInt();
-        }
-        failedLoginAttempts = failedLoginAttempts + 1;
-        ((ObjectNode) additionalInfo).put(FAILED_LOGIN_ATTEMPTS, failedLoginAttempts);
-        user.setAdditionalInfo(additionalInfo);
+        int failedLoginAttempts = user.getAdditionalInfoField(FAILED_LOGIN_ATTEMPTS, JsonNode::asInt, 0);
+        failedLoginAttempts++;
+        user.setAdditionalInfoField(FAILED_LOGIN_ATTEMPTS, new IntNode(failedLoginAttempts));
         return failedLoginAttempts;
     }
 

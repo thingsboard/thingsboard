@@ -107,7 +107,7 @@ export class RouterTabsComponent extends PageComponent implements OnInit {
     if (found) {
       const rootPath = sectionPath.substring(0, sectionPath.length - found.path.length);
       const isRoot = rootPath === '';
-      const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.disabled && (!page.rootOnly || isRoot)) : [];
+      const tabs: Array<MenuSection> = found ? found.pages.filter(page => !page.rootOnly || isRoot) : [];
       return tabs.map((tab) => ({...tab, path: rootPath + tab.path}));
     }
     return [];

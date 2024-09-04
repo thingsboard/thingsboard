@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
+import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.After;
 import org.junit.Assert;
@@ -64,6 +65,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
 
     @Autowired
     private AuditLogDao auditLogDao;
+    @Getter
     @SpyBean
     private SqlPartitioningRepository partitioningRepository;
     @SpyBean
@@ -161,7 +163,7 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         Device savedDevice = doPost("/api/device", device, Device.class);
         for (int i = 0; i < 11; i++) {
             savedDevice.setName("Device name" + i);
-            doPost("/api/device", savedDevice, Device.class);
+            savedDevice = doPost("/api/device", savedDevice, Device.class);
         }
 
         List<AuditLog> loadedAuditLogs = new ArrayList<>();
@@ -183,12 +185,12 @@ public class AuditLogControllerTest extends AbstractControllerTest {
     @Test
     public void whenSavingNewAuditLog_thenCheckAndCreatePartitionIfNotExists() throws ParseException {
         long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2024-01-01T01:43:11Z").getTime();
-        reset(partitioningRepository);
+        reset(getPartitioningRepository());
         AuditLog auditLog = createAuditLog(ActionType.LOGIN, tenantAdminUserId, entityTs);
-        verify(partitioningRepository).createPartitionIfNotExists(eq("audit_log"), eq(auditLog.getCreatedTime()), eq(partitionDurationInMs));
+        verify(getPartitioningRepository()).createPartitionIfNotExists(eq("audit_log"), eq(auditLog.getCreatedTime()), eq(partitionDurationInMs));
 
-        List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
-        assertThat(partitions).contains(partitioningRepository.calculatePartitionStartTime(auditLog.getCreatedTime(), partitionDurationInMs));
+        List<Long> partitions = getPartitioningRepository().fetchPartitions("audit_log");
+        assertThat(partitions).contains(getPartitioningRepository().calculatePartitionStartTime(auditLog.getCreatedTime(), partitionDurationInMs));
     }
 
     @Test
@@ -197,15 +199,15 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         final long oldAuditLogTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2020-10-01T00:00:00Z").getTime();
         final long currentTimeMillis = oldAuditLogTs + TimeUnit.SECONDS.toMillis(auditLogsTtlInSec) * 2;
 
-        final long partitionStartTs = partitioningRepository.calculatePartitionStartTime(oldAuditLogTs, partitionDurationInMs);
-        partitioningRepository.createPartitionIfNotExists("audit_log", oldAuditLogTs, partitionDurationInMs);
-        List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
+        final long partitionStartTs = getPartitioningRepository().calculatePartitionStartTime(oldAuditLogTs, partitionDurationInMs);
+        getPartitioningRepository().createPartitionIfNotExists("audit_log", oldAuditLogTs, partitionDurationInMs);
+        List<Long> partitions = getPartitioningRepository().fetchPartitions("audit_log");
         assertThat(partitions).contains(partitionStartTs);
 
         willReturn(currentTimeMillis).given(auditLogsCleanUpService).getCurrentTimeMillis();
         auditLogsCleanUpService.cleanUp();
 
-        partitions = partitioningRepository.fetchPartitions("audit_log");
+        partitions = getPartitioningRepository().fetchPartitions("audit_log");
         assertThat(partitions).as("partitions cleared").doesNotContain(partitionStartTs);
         assertThat(partitions).as("only newer partitions left").allSatisfy(partitionsStart -> {
             long partitionEndTs = partitionsStart + partitionDurationInMs;
@@ -218,18 +220,18 @@ public class AuditLogControllerTest extends AbstractControllerTest {
         // creating partition bigger than sql.audit_logs.partition_size
         long entityTs = ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-29T07:43:11Z").getTime();
         //the partition 7 days is overlapping default partition size 1 day, use in the far past to not affect other tests
-        partitioningRepository.createPartitionIfNotExists("audit_log", entityTs, TimeUnit.DAYS.toMillis(7));
-        List<Long> partitions = partitioningRepository.fetchPartitions("audit_log");
+        getPartitioningRepository().createPartitionIfNotExists("audit_log", entityTs, TimeUnit.DAYS.toMillis(7));
+        List<Long> partitions = getPartitioningRepository().fetchPartitions("audit_log");
         log.warn("entityTs [{}], fetched partitions {}", entityTs, partitions);
         assertThat(partitions).contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());
-        partitioningRepository.cleanupPartitionsCache("audit_log", entityTs, 0);
+        getPartitioningRepository().cleanupPartitionsCache("audit_log", entityTs, 0);
 
         assertDoesNotThrow(() -> {
             // expecting partition overlap error on partition save
             createAuditLog(ActionType.LOGIN, tenantAdminUserId, entityTs);
         });
-        assertThat(partitioningRepository.fetchPartitions("audit_log"))
-                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());;
+        assertThat(getPartitioningRepository().fetchPartitions("audit_log"))
+                .contains(ISO_8601_EXTENDED_DATETIME_TIME_ZONE_FORMAT.parse("2022-04-28T00:00:00Z").getTime());
     }
 
     private AuditLog createAuditLog(ActionType actionType, EntityId entityId, long entityTs) {
