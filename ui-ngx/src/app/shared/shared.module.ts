@@ -223,6 +223,7 @@ import { HexInputComponent } from '@shared/components/color-picker/hex-input.com
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol-input.component';
 import { CountryAutocompleteComponent } from '@shared/components/country-autocomplete.component';
+import { CountryData } from '@shared/models/country.models';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -279,7 +280,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         disableTooltipInteractivity: true
       }
     },
-    TbBreakPointsProvider
+    TbBreakPointsProvider,
+    CountryData
   ],
   declarations: [
     FooterComponent,
