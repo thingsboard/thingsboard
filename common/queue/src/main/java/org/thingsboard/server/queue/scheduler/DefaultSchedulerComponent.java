@@ -15,25 +15,27 @@
  */
 package org.thingsboard.server.queue.scheduler;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
 
-import jakarta.annotation.PostConstruct;
-import jakarta.annotation.PreDestroy;
 import java.util.concurrent.Callable;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
 
+@Slf4j
 @Component
 public class DefaultSchedulerComponent implements SchedulerComponent {
 
-    protected ScheduledExecutorService schedulerExecutor;
+    private ScheduledExecutorService schedulerExecutor;
 
     @PostConstruct
     public void init() {
-        this.schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
+        schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
     }
 
     @PreDestroy
@@ -52,10 +54,19 @@ public class DefaultSchedulerComponent implements SchedulerComponent {
     }
 
     public ScheduledFuture<?> scheduleAtFixedRate(Runnable command, long initialDelay, long period, TimeUnit unit) {
-        return schedulerExecutor.scheduleAtFixedRate(command, initialDelay, period, unit);
+        return schedulerExecutor.scheduleAtFixedRate(() -> runSafely(command), initialDelay, period, unit);
     }
 
     public ScheduledFuture<?> scheduleWithFixedDelay(Runnable command, long initialDelay, long delay, TimeUnit unit) {
-        return schedulerExecutor.scheduleWithFixedDelay(command, initialDelay, delay, unit);
+        return schedulerExecutor.scheduleWithFixedDelay(() -> runSafely(command), initialDelay, delay, unit);
     }
+
+    private void runSafely(Runnable command) {
+        try {
+            command.run();
+        } catch (Throwable t) {
+            log.error("Unexpected error occurred while executing task!", t);
+        }
+    }
+
 }
