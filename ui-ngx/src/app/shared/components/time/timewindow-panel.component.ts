@@ -32,7 +32,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-import { isDefined } from '@core/utils';
+import { deepClone, isDefined } from '@core/utils';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
@@ -489,7 +489,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
         data: {
           quickIntervalOnly: this.quickIntervalOnly,
           aggregation: this.aggregation,
-          timewindow: this.timewindow
+          timewindow: deepClone(this.timewindow)
         }
       }).afterClosed()
       .subscribe((res) => {
