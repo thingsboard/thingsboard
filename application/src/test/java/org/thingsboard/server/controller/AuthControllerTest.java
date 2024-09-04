@@ -195,7 +195,8 @@ public class AuthControllerTest extends AbstractControllerTest {
         userCredentialsDao.save(tenantId, userCredentials);
 
         doGet("/api/noauth/resetPassword?resetToken={resetToken}", this.currentResetPasswordToken)
-                .andExpect(status().isGone());
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string(HttpHeaders.LOCATION, "/passwordResetLinkExpired"));
         JsonNode resetPasswordRequest = JacksonUtil.newObjectNode()
                 .put("resetToken", this.currentResetPasswordToken)
                 .put("password", "wefwefe");
@@ -229,7 +230,8 @@ public class AuthControllerTest extends AbstractControllerTest {
         userCredentials.setActivateTokenExpTime(System.currentTimeMillis() - 1);
         userCredentialsDao.save(tenantId, userCredentials);
         doGet("/api/noauth/activate?activateToken={activateToken}", initialActivationToken)
-                .andExpect(status().isGone());
+                .andExpect(status().isSeeOther())
+                .andExpect(header().string(HttpHeaders.LOCATION, "/activationLinkExpired"));
         doPost("/api/noauth/activate", JacksonUtil.newObjectNode()
                 .put("activateToken", initialActivationToken)
                 .put("password", "wefewe")).andExpect(status().isBadRequest())

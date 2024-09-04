@@ -58,9 +58,6 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import java.net.URI;
-import java.net.URISyntaxException;
-
 @RestController
 @TbCoreComponent
 @RequestMapping("/api")
@@ -132,7 +129,7 @@ public class AuthController extends BaseController {
             notes = "Checks the activation token and forwards user to 'Create Password' page. " +
                     "If token is valid, returns '303 See Other' (redirect) response code with the correct address of 'Create Password' page and same 'activateToken' specified in the URL parameters. " +
                     "If token is not valid, returns '409 Conflict'. " +
-                    "If token is expired, returns '410 Gone'.")
+                    "If token is expired, redirects to error page.")
     @GetMapping(value = "/noauth/activate", params = {"activateToken"})
     public ResponseEntity<?> checkActivateToken(
             @Parameter(description = "The activate token string.")
@@ -141,18 +138,9 @@ public class AuthController extends BaseController {
         if (userCredentials == null) {
             return response(HttpStatus.CONFLICT);
         } else if (userCredentials.isActivationTokenExpired()) {
-            return response(HttpStatus.GONE);
+            return redirectTo("/activationLinkExpired");
         }
-
-        String createURI = "/login/createPassword";
-        try {
-            URI location = new URI(createURI + "?activateToken=" + activateToken);
-            return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                    .location(location).build();
-        } catch (URISyntaxException e) {
-            log.error("Unable to create URI with address [{}]", createURI);
-            return response(HttpStatus.BAD_REQUEST);
-        }
+        return redirectTo("/login/createPassword?activateToken=" + activateToken);
     }
 
     @ApiOperation(value = "Request reset password email (requestResetPasswordByEmail)",
@@ -181,7 +169,7 @@ public class AuthController extends BaseController {
             notes = "Checks the password reset token and forwards user to 'Reset Password' page. " +
                     "If token is valid, returns '303 See Other' (redirect) response code with the correct address of 'Reset Password' page and same 'resetToken' specified in the URL parameters. " +
                     "If token is not valid, returns '409 Conflict'. " +
-                    "If token is expired, returns '410 Gone'.")
+                    "If token is expired, redirects to error page.")
     @GetMapping(value = "/noauth/resetPassword", params = {"resetToken"})
     public ResponseEntity<?> checkResetToken(
             @Parameter(description = "The reset token string.")
@@ -190,21 +178,12 @@ public class AuthController extends BaseController {
         if (userCredentials == null) {
             return response(HttpStatus.CONFLICT);
         } else if (userCredentials.isResetTokenExpired()) {
-            return response(HttpStatus.GONE);
+            return redirectTo("/passwordResetLinkExpired");
         }
         if (!rateLimitService.checkRateLimit(LimitedApi.PASSWORD_RESET, userCredentials.getUserId(), defaultLimitsConfiguration)) {
             return response(HttpStatus.TOO_MANY_REQUESTS);
         }
-
-        String resetURI = "/login/resetPassword";
-        try {
-            URI location = new URI(resetURI + "?resetToken=" + resetToken);
-            return ResponseEntity.status(HttpStatus.SEE_OTHER)
-                    .location(location).build();
-        } catch (URISyntaxException e) {
-            log.error("Unable to create URI with address [{}]", resetURI);
-            return response(HttpStatus.BAD_REQUEST);
-        }
+        return redirectTo("/login/resetPassword?resetToken=" + resetToken);
     }
 
     @ApiOperation(value = "Activate User",
