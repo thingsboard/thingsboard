@@ -31,13 +31,11 @@ import java.util.concurrent.TimeUnit;
 @Component
 public class DefaultSchedulerComponent implements SchedulerComponent {
 
-    private static final String SCHEDULER_NAME = "queue-scheduler";
-
     private ScheduledExecutorService schedulerExecutor;
 
     @PostConstruct
     public void init() {
-        schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName(SCHEDULER_NAME));
+        schedulerExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("queue-scheduler"));
     }
 
     @PreDestroy
@@ -66,8 +64,8 @@ public class DefaultSchedulerComponent implements SchedulerComponent {
     private void runSafely(Runnable command) {
         try {
             command.run();
-        } catch (Exception e) {
-            log.error("[{}] Unexpected error occurred while executing task! {}", SCHEDULER_NAME, Thread.currentThread(), e);
+        } catch (Throwable t) {
+            log.error("Unexpected error occurred while executing task!", t);
         }
     }
 
