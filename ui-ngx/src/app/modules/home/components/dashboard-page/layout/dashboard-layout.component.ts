@@ -332,25 +332,4 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     const pos = this.dashboard.getEventGridPosition($event);
     this.layoutCtx.dashboardCtrl.pasteWidgetReference($event, this.layoutCtx, pos);
   }
-
-  updatedCurrentBreakpoint(breakpointId?: BreakpointId, showLayout = true) {
-    if (!isNotEmptyStr(breakpointId)) {
-      breakpointId = this.dashboardCtx.breakpoint;
-    }
-    if (this.layoutCtx.layoutData[breakpointId]) {
-      this.layoutCtx.breakpoint = breakpointId;
-    } else {
-      this.layoutCtx.breakpoint = 'default';
-    }
-    const layoutInfo = this.layoutCtx.layoutData[this.layoutCtx.breakpoint];
-    if (layoutInfo.gridSettings) {
-      this.layoutCtx.gridSettings = layoutInfo.gridSettings;
-    }
-    this.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
-    this.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
-    if (showLayout && this.layoutCtx.ctrl) {
-      this.layoutCtx.ctrl.reload();
-    }
-    this.layoutCtx.ignoreLoading = true;
-  }
 }

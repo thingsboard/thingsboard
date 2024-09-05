@@ -84,7 +84,7 @@ export class ImagesDatasource implements DataSource<ImageResourceInfo> {
   }
 
   fetchEntities(pageLink: PageLink, imageSubType: ResourceSubType, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
-    return this.imageService.getImages(pageLink, imageSubType, includeSystemImages);
+    return this.imageService.getImages(pageLink, includeSystemImages, imageSubType);
   }
 
   isAllSelected(): Observable<boolean> {

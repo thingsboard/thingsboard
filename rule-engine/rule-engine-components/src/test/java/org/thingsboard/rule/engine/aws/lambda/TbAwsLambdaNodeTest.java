@@ -41,6 +41,7 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -50,8 +51,8 @@ import java.util.Map;
 import java.util.UUID;
 import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.AssertionsForClassTypes.assertThat;
-import static org.assertj.core.api.AssertionsForClassTypes.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
@@ -72,13 +73,17 @@ public class TbAwsLambdaNodeTest {
     private AWSLambdaAsync clientMock;
 
     @BeforeEach
-    void setUp() {
+    public void setUp() {
         node = new TbAwsLambdaNode();
         config = new TbAwsLambdaNodeConfiguration().defaultConfiguration();
+        config.setAccessKey("accessKey");
+        config.setSecretKey("secretKey");
+        config.setFunctionName("new-function");
     }
 
     @Test
     public void verifyDefaultConfig() {
+        config = new TbAwsLambdaNodeConfiguration().defaultConfiguration();
         assertThat(config.getAccessKey()).isNull();
         assertThat(config.getSecretKey()).isNull();
         assertThat(config.getRegion()).isEqualTo(("us-east-1"));
@@ -94,10 +99,43 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidFunctionName_whenInit_thenThrowsException(String funcName) {
         config.setFunctionName(funcName);
-        var configuration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-        assertThatThrownBy(() -> node.init(ctx, configuration))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Function name must be set!");
+        verifyValidationExceptionOnInit();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidAccessKey_whenInit_thenThrowsException(String accessKey) {
+        config.setAccessKey(accessKey);
+        verifyValidationExceptionOnInit();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidSecretAccessKey_whenInit_thenThrowsException(String secretAccessKey) {
+        config.setSecretKey(secretAccessKey);
+        verifyValidationExceptionOnInit();
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    @ValueSource(strings = "  ")
+    public void givenInvalidRegion_whenInit_thenThrowsException(String region) {
+        config.setRegion(region);
+        verifyValidationExceptionOnInit();
+    }
+
+    @Test
+    public void givenInvalidConnectionTimeout_whenInit_thenThrowsException() {
+        config.setConnectionTimeout(-100);
+        verifyValidationExceptionOnInit();
+    }
+
+    @Test
+    public void givenInvalidRequestTimeout_whenInit_thenThrowsException() {
+        config.setRequestTimeout(-100);
+        verifyValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -280,10 +318,19 @@ public class TbAwsLambdaNodeTest {
         assertThat(throwableCaptor.getValue()).isInstanceOf(AWSLambdaException.class).hasMessageStartingWith(errorMsg);
     }
 
+    private void verifyValidationExceptionOnInit() {
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setName("test");
+        when(ctx.getSelf()).thenReturn(ruleNode);
+        String errorPrefix = "'test' node configuration is invalid: ";
+        assertThatThrownBy(() -> node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessageContaining(errorPrefix)
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
+    }
+
     private void init() {
-        config.setAccessKey("accessKey");
-        config.setSecretKey("secretKey");
-        config.setFunctionName("new-function");
         ReflectionTestUtils.setField(node, "client", clientMock);
         ReflectionTestUtils.setField(node, "config", config);
     }

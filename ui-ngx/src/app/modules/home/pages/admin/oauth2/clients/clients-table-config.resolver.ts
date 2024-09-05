@@ -61,8 +61,6 @@ export class ClientsTableConfigResolver implements Resolve<EntityTableConfig<OAu
     this.config.headerComponent = ClientTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
-    this.config.displayPagination = false;
-    this.config.pageMode = false;
 
     this.config.columns.push(
       new DateEntityTableColumn<OAuth2ClientInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
