@@ -25,125 +25,118 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<form [formGroup]="timewindowForm" mat-dialog-content  class="timewindow-settings-form">
-  <mat-tab-group (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
-    <mat-tab label="{{ 'timewindow.realtime' | translate }}">
-      <div class="tb-flex column">
-        <section formGroupName="realtime" class="tb-form-panel stroked">
-          <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
-            {{ 'timewindow.hide-time-range' | translate }}
+<form [formGroup]="timewindowForm" mat-dialog-content  class="tb-timewindow-form">
+  <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom">
+    <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
+                      [options]="timewindowTypeOptions" formControlName="selectedTab">
+    </tb-toggle-select>
+  </div>
+  <div class="tb-timewindow-form-content tb-form-panel no-border">
+    <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
+      <section formGroupName="realtime" class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
+          {{ 'timewindow.hide-timewindow-section' | translate }}
+        </mat-slide-toggle>
+
+        <tb-toggle-select *ngIf="realtimeTypeSelectionAvailable"
+                          appearance="stroked" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
+        </tb-toggle-select>
+
+        <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
+          <mat-slide-toggle *ngIf="!quickIntervalOnly"
+                            class="mat-slide fixed-title-width" formControlName="hideLastInterval">
+            {{ 'timewindow.hide-last-interval' | translate }}
           </mat-slide-toggle>
-
-          <tb-toggle-select *ngIf="realtimeTypeSelectionAvailable"
-                            appearance="stroked" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
-          </tb-toggle-select>
-
-          <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-            <mat-slide-toggle *ngIf="!quickIntervalOnly"
-                              class="mat-slide fixed-title-width" formControlName="hideLastInterval">
-              {{ 'timewindow.hide-last-interval' | translate }}
-            </mat-slide-toggle>
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
-              {{ 'timewindow.disable-custom-interval' | translate }}
-            </mat-slide-toggle>
-            <tb-timeinterval
-              formControlName="timewindowMs"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
-              [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
+            {{ 'timewindow.disable-custom-interval' | translate }}
+          </mat-slide-toggle>
+          <tb-timeinterval
+            formControlName="timewindowMs"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
+            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-            </tb-timeinterval>
-          </ng-container>
+          </tb-timeinterval>
+        </ng-container>
 
-          <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-            <mat-slide-toggle *ngIf="!quickIntervalOnly"
-                              class="mat-slide fixed-title-width" formControlName="hideQuickInterval">
-              {{ 'timewindow.hide-relative-interval' | translate }}
-            </mat-slide-toggle>
-            <tb-quick-time-interval
-              displayLabel="false"
-              formControlName="quickInterval"
-              onlyCurrentInterval="true"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
-                              timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-            </tb-quick-time-interval>
-          </ng-container>
-        </section>
-        <ng-container *ngTemplateOutlet="aggregationConfig">
-        </ng-container>
-        <ng-container *ngTemplateOutlet="timezoneSelectionPanel">
-        </ng-container>
-      </div>
-    </mat-tab>
-    <mat-tab label="{{ 'timewindow.history' | translate }}">
-      <div class="tb-flex column">
-        <section formGroupName="history" class="tb-form-panel stroked">
-          <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
-            {{ 'timewindow.hide-time-range' | translate }}
+        <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+          <mat-slide-toggle *ngIf="!quickIntervalOnly"
+                            class="mat-slide fixed-title-width" formControlName="hideQuickInterval">
+            {{ 'timewindow.hide-relative-interval' | translate }}
           </mat-slide-toggle>
+          <tb-quick-time-interval
+            displayLabel="false"
+            formControlName="quickInterval"
+            onlyCurrentInterval="true"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                              timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+          </tb-quick-time-interval>
+        </ng-container>
+      </section>
+    </ng-container>
 
-          <tb-toggle-select appearance="stroked" [options]="historyTimewindowOptions" formControlName="historyType">
-          </tb-toggle-select>
+    <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
+      <section formGroupName="history" class="tb-form-panel stroked">
+        <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+        <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideInterval">
+          {{ 'timewindow.hide-timewindow-section' | translate }}
+        </mat-slide-toggle>
 
-          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideLastInterval">
-              {{ 'timewindow.hide-last-interval' | translate }}
-            </mat-slide-toggle>
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
-              {{ 'timewindow.disable-custom-interval' | translate }}
-            </mat-slide-toggle>
-            <tb-timeinterval
-              formControlName="timewindowMs"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
-              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+        <tb-toggle-select appearance="stroked" [options]="historyTimewindowOptions" formControlName="historyType">
+        </tb-toggle-select>
+
+        <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideLastInterval">
+            {{ 'timewindow.hide-last-interval' | translate }}
+          </mat-slide-toggle>
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomInterval">
+            {{ 'timewindow.disable-custom-interval' | translate }}
+          </mat-slide-toggle>
+          <tb-timeinterval
+            formControlName="timewindowMs"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
+            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-            </tb-timeinterval>
-          </ng-container>
+          </tb-timeinterval>
+        </ng-container>
 
-          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideFixedInterval">
-              {{ 'timewindow.hide-fixed-interval' | translate }}
-            </mat-slide-toggle>
-            <tb-datetime-period
-              formControlName="fixedTimewindow"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              class="history-time-input"
-              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+        <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideFixedInterval">
+            {{ 'timewindow.hide-fixed-interval' | translate }}
+          </mat-slide-toggle>
+          <tb-datetime-period
+            formControlName="fixedTimewindow"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            class="history-time-input"
+            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                             timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-            </tb-datetime-period>
-          </ng-container>
+          </tb-datetime-period>
+        </ng-container>
 
-          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideQuickInterval">
-              {{ 'timewindow.hide-relative-interval' | translate }}
-            </mat-slide-toggle>
-            <tb-quick-time-interval
-              displayLabel="false"
-              formControlName="quickInterval"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+        <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideQuickInterval">
+            {{ 'timewindow.hide-relative-interval' | translate }}
+          </mat-slide-toggle>
+          <tb-quick-time-interval
+            displayLabel="false"
+            formControlName="quickInterval"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-            </tb-quick-time-interval>
-          </ng-container>
-        </section>
-        <ng-container *ngTemplateOutlet="aggregationConfig">
+          </tb-quick-time-interval>
         </ng-container>
-        <ng-container *ngTemplateOutlet="timezoneSelectionPanel">
-        </ng-container>
-      </div>
-    </mat-tab>
-  </mat-tab-group>
-  <ng-template #aggregationConfig>
-    <div *ngIf="aggregation" class="tb-flex column">
+      </section>
+    </ng-container>
+
+    <ng-container *ngIf="aggregation">
       <section class="tb-form-panel stroked">
         <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideAggregation">
@@ -216,9 +209,8 @@
           </tb-timeinterval>
         </ng-container>
       </section>
-    </div>
-  </ng-template>
-  <ng-template #timezoneSelectionPanel>
+    </ng-container>
+
     <section class="tb-form-panel stroked tb-flex">
       <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="hideTimezone">
@@ -231,7 +223,7 @@
                           displayLabel="false">
       </tb-timezone-select>
     </section>
-  </ng-template>
+  </div>
 </form>
 <mat-divider></mat-divider>
 <div mat-dialog-actions class="tb-dialog-actions tb-flex flex-end no-gap">

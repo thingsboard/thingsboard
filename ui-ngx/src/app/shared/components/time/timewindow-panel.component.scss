@@ -23,16 +23,26 @@
   max-width: 100%;
   background-color: #fff;
 
-  .tb-form-panel {
-    padding: 12px;
-    gap: 12px;
-  }
-
-  .tb-timewindow-panel-form {
+  .tb-timewindow-form {
+    display: flex;
+    flex-direction: column;
     overflow: hidden;
 
     .tb-flex {
       gap: 16px;
+    }
+
+    &-header {
+      flex-direction: row;
+      align-items: center;
+    }
+
+    &-type-options {
+      flex: 1;
+    }
+
+    &-content {
+      overflow: auto;
     }
   }
 
@@ -57,22 +67,4 @@
     }
   }
 
-}
-
-:host ::ng-deep {
-  .mat-mdc-tab-group:not(.tb-headless) {
-    height: 100%;
-  }
-
-  .mat-mdc-tab-body-content {
-    padding: 12px 16px;
-  }
-
-  .mat-mdc-tab-group>.mat-mdc-tab-header .mat-mdc-tab.timewindow-config-btn {
-    flex-grow: unset;
-    min-width: 0;
-    padding: 0 8px;
-    color: unset;
-    opacity: unset;
-  }
 }

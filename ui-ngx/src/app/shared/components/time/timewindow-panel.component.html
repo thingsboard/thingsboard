@@ -15,122 +15,117 @@
     limitations under the License.
 
 -->
-<form [formGroup]="timewindowForm" class="tb-timewindow-panel-form">
-  <mat-tab-group [class.tb-headless]="historyOnly"
-                 (selectedTabChange)="onTimewindowTypeChange()" [(selectedIndex)]="timewindow.selectedTab">
-    <mat-tab label="{{ 'timewindow.realtime' | translate }}">
-      <div class="tb-flex column">
-        <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
-          <div class="tb-flex space-between"
-               [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
-            <div class="tb-flex column no-flex flex-xs">
-              <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-              <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
-                <tb-toggle-select appearance="fill" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
-                </tb-toggle-select>
-              </ng-container>
-            </div>
+<form [formGroup]="timewindowForm" class="tb-timewindow-form">
+  <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom no-gap" *ngIf="!historyOnly">
+    <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
+                      [options]="timewindowTypeOptions" formControlName="selectedTab">
+    </tb-toggle-select>
+    <button mat-icon-button type="button" class="tb-box-button"
+            *ngIf="isEdit"
+            (click)="openTimewindowConfig()">
+      <mat-icon>settings</mat-icon>
+    </button>
+  </div>
 
-            <ng-container *ngTemplateOutlet="timezoneSelection">
+  <div class="tb-timewindow-form-content tb-form-panel no-border">
+    <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
+      <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
+        <div class="tb-flex space-between"
+             [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
+          <div class="tb-flex column no-flex flex-xs">
+            <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+            <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
+              <tb-toggle-select appearance="stroked" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
+              </tb-toggle-select>
             </ng-container>
           </div>
 
-          <ng-container formGroupName="realtime">
-            <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-              <tb-timeinterval
-                formControlName="timewindowMs"
-                subscriptSizing="dynamic"
-                appearance="outline"
-                [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
-                [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+          <ng-container *ngTemplateOutlet="timezoneSelection">
+          </ng-container>
+        </div>
+
+        <ng-container formGroupName="realtime">
+          <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
+            <tb-timeinterval
+              formControlName="timewindowMs"
+              subscriptSizing="dynamic"
+              appearance="outline"
+              [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
+              [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
                                 timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-              </tb-timeinterval>
-            </ng-container>
-
-            <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-              <tb-quick-time-interval
-                displayLabel="false"
-                formControlName="quickInterval"
-                onlyCurrentInterval="true"
-                subscriptSizing="dynamic"
-                appearance="outline"
-                [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
-                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-              </tb-quick-time-interval>
-            </ng-container>
+            </tb-timeinterval>
           </ng-container>
-        </section>
-        <ng-container *ngTemplateOutlet="aggregationConfig">
-        </ng-container>
-      </div>
-    </mat-tab>
-    <mat-tab label="{{ 'timewindow.history' | translate }}">
-      <div class="tb-flex column">
-        <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
-          <div class="tb-flex space-between"
-               [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
-            <div class="tb-flex column no-flex flex-xs">
-              <div class="tb-form-panel-title">{{ 'timewindow.time-range' | translate }}</div>
-              <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
-                <tb-toggle-select appearance="fill" [options]="historyTimewindowOptions" formControlName="historyType">
-                </tb-toggle-select>
-              </ng-container>
-            </div>
 
-            <ng-container *ngTemplateOutlet="timezoneSelection">
+          <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+            <tb-quick-time-interval
+              displayLabel="false"
+              formControlName="quickInterval"
+              onlyCurrentInterval="true"
+              subscriptSizing="dynamic"
+              appearance="outline"
+              [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+            </tb-quick-time-interval>
+          </ng-container>
+        </ng-container>
+      </section>
+    </ng-container>
+
+    <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
+      <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
+        <div class="tb-flex space-between"
+             [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
+          <div class="tb-flex column no-flex flex-xs">
+            <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
+            <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
+              <tb-toggle-select appearance="stroked" [options]="historyTimewindowOptions" formControlName="historyType">
+              </tb-toggle-select>
             </ng-container>
           </div>
 
-          <ng-container formGroupName="history" *ngIf="historyIntervalSelectionAvailable &&
-                                  timewindowForm.get('history.historyType').value !== historyTypes.FOR_ALL_TIME">
-            <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-              <tb-timeinterval
-                formControlName="timewindowMs"
-                subscriptSizing="dynamic"
-                appearance="outline"
-                [disabledAdvanced]="timewindow.history.disableCustomInterval"
-                [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                              timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-              </tb-timeinterval>
-            </ng-container>
-
-            <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-              <tb-datetime-period
-                formControlName="fixedTimewindow"
-                subscriptSizing="dynamic"
-                appearance="outline"
-                class="history-time-input"
-                [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                              timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-              </tb-datetime-period>
-            </ng-container>
-
-            <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-              <tb-quick-time-interval
-                displayLabel="false"
-                formControlName="quickInterval"
-                subscriptSizing="dynamic"
-                appearance="outline"
-                [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                            timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-              </tb-quick-time-interval>
-            </ng-container>
+          <ng-container *ngTemplateOutlet="timezoneSelection">
           </ng-container>
-        </section>
-        <ng-container *ngTemplateOutlet="aggregationConfig">
+        </div>
+
+        <ng-container formGroupName="history" *ngIf="historyIntervalSelectionAvailable &&
+                                  timewindowForm.get('history.historyType').value !== historyTypes.FOR_ALL_TIME">
+          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
+            <tb-timeinterval
+              formControlName="timewindowMs"
+              subscriptSizing="dynamic"
+              appearance="outline"
+              [disabledAdvanced]="timewindow.history.disableCustomInterval"
+              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                              timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
+            </tb-timeinterval>
+          </ng-container>
+
+          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED">
+            <tb-datetime-period
+              formControlName="fixedTimewindow"
+              subscriptSizing="dynamic"
+              appearance="outline"
+              class="history-time-input"
+              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                              timewindowForm.get('history.historyType').value === historyTypes.FIXED">
+            </tb-datetime-period>
+          </ng-container>
+
+          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
+            <tb-quick-time-interval
+              displayLabel="false"
+              formControlName="quickInterval"
+              subscriptSizing="dynamic"
+              appearance="outline"
+              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                            timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
+            </tb-quick-time-interval>
+          </ng-container>
         </ng-container>
-      </div>
-    </mat-tab>
-    <mat-tab *ngIf="isEdit" disabled labelClass="timewindow-config-btn">
-      <ng-template mat-tab-label>
-        <button mat-icon-button (click)="openTimewindowConfig()">
-          <mat-icon>settings</mat-icon>
-        </button>
-      </ng-template>
-    </mat-tab>
-  </mat-tab-group>
-  <ng-template #aggregationConfig>
-    <div *ngIf="aggregationOptionsAvailable" class="tb-flex column">
+      </section>
+    </ng-container>
+
+    <ng-container *ngIf="aggregationOptionsAvailable">
       <ng-container formGroupName="aggregation">
         <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideAggregation">
           <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
@@ -189,8 +184,9 @@
           </tb-timeinterval>
         </ng-container>
       </section>
-    </div>
-  </ng-template>
+    </ng-container>
+  </div>
+
   <ng-template #timezoneSelectionPanel>
     <section class="tb-form-panel stroked tb-flex row align-center space-between">
       <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>

@@ -59,7 +59,7 @@ export const realtimeWindowTypeTranslations = new Map<RealtimeWindowType, string
 ]);
 export const historyWindowTypeTranslations = new Map<HistoryWindowType, string>([
   [HistoryWindowType.LAST_INTERVAL, 'timewindow.last'],
-  [HistoryWindowType.FIXED, 'timewindow.fixed'],
+  [HistoryWindowType.FIXED, 'timewindow.range'],
   [HistoryWindowType.INTERVAL, 'timewindow.relative'],
   [HistoryWindowType.FOR_ALL_TIME, 'timewindow.for-all-time']
 ]);

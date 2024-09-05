@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit } from '@angular/core';
+import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
 import {
   aggregationTranslations,
   AggregationType,
@@ -36,6 +36,8 @@ import { isDefined, isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { Subject } from 'rxjs';
+import { takeUntil } from 'rxjs/operators';
 
 export interface TimewindowConfigDialogData {
   quickIntervalOnly: boolean;
@@ -48,7 +50,7 @@ export interface TimewindowConfigDialogData {
   templateUrl: './timewindow-config-dialog.component.html',
   styleUrls: ['./timewindow-config-dialog.component.scss']
 })
-export class TimewindowConfigDialogComponent extends PageComponent implements OnInit {
+export class TimewindowConfigDialogComponent extends PageComponent implements OnInit, OnDestroy {
 
   quickIntervalOnly = false;
 
@@ -71,6 +73,17 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   aggregationTypesTranslations = aggregationTranslations;
 
   result: Timewindow;
+
+  timewindowTypeOptions: ToggleHeaderOption[] = [
+    {
+      name: this.translate.instant('timewindow.realtime'),
+      value: this.timewindowTypes.REALTIME
+    },
+    {
+      name: this.translate.instant('timewindow.history'),
+      value: this.timewindowTypes.HISTORY
+    }
+  ];
 
   realtimeTimewindowOptions: ToggleHeaderOption[] = [
     {
@@ -95,6 +108,8 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   ];
 
   realtimeTypeSelectionAvailable: boolean;
+
+  private destroy$ = new Subject<void>();
 
   constructor(@Inject(MAT_DIALOG_DATA) public data: TimewindowConfigDialogData,
               public dialogRef: MatDialogRef<TimewindowConfigDialogComponent, Timewindow>,
@@ -123,6 +138,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     const aggregation = this.timewindow.aggregation;
 
     this.timewindowForm = this.fb.group({
+      selectedTab: [isDefined(this.timewindow.selectedTab) ? this.timewindow.selectedTab : TimewindowType.REALTIME],
       realtime: this.fb.group({
         realtimeType: [ isDefined(realtime?.realtimeType) ? this.timewindow.realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL ],
         timewindowMs: [ isDefined(realtime?.timewindowMs) ? this.timewindow.realtime.timewindowMs : null ],
@@ -187,10 +203,19 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     });
 
     this.updateValidators(this.timewindowForm.get('aggregation.type').value);
-    this.timewindowForm.get('aggregation.type').valueChanges.subscribe((aggregationType: AggregationType) => {
+    this.timewindowForm.get('aggregation.type').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((aggregationType: AggregationType) => {
       this.updateValidators(aggregationType);
     });
-    this.timewindowForm.get('realtime.hideInterval').valueChanges.subscribe((value: boolean) => {
+    this.timewindowForm.get('selectedTab').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((selectedTab: TimewindowType) => {
+      this.onTimewindowTypeChange(selectedTab);
+    });
+    this.timewindowForm.get('realtime.hideInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: boolean) => {
       if (value) {
         this.timewindowForm.get('realtime.hideLastInterval').disable();
         this.timewindowForm.get('realtime.hideQuickInterval').disable();
@@ -199,18 +224,24 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('realtime.hideQuickInterval').enable();
       }
     });
-    this.timewindowForm.get('realtime.hideLastInterval').valueChanges.subscribe((hideLastInterval: boolean) => {
+    this.timewindowForm.get('realtime.hideLastInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((hideLastInterval: boolean) => {
       if (hideLastInterval && !this.timewindowForm.get('realtime.hideQuickInterval').value) {
         this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.INTERVAL);
       }
     });
-    this.timewindowForm.get('realtime.hideQuickInterval').valueChanges.subscribe((hideQuickInterval: boolean) => {
+    this.timewindowForm.get('realtime.hideQuickInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((hideQuickInterval: boolean) => {
       if (hideQuickInterval && !this.timewindowForm.get('realtime.hideLastInterval').value) {
         this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.LAST_INTERVAL);
       }
     });
 
-    this.timewindowForm.get('history.hideInterval').valueChanges.subscribe((value: boolean) => {
+    this.timewindowForm.get('history.hideInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: boolean) => {
       if (value) {
         this.timewindowForm.get('history.hideLastInterval').disable();
         this.timewindowForm.get('history.hideQuickInterval').disable();
@@ -221,7 +252,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('history.hideFixedInterval').enable();
       }
     });
-    this.timewindowForm.get('history.hideLastInterval').valueChanges.subscribe((hideLastInterval: boolean) => {
+    this.timewindowForm.get('history.hideLastInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((hideLastInterval: boolean) => {
       if (hideLastInterval) {
         if (!this.timewindowForm.get('history.hideFixedInterval').value) {
           this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.FIXED);
@@ -230,7 +263,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         }
       }
     });
-    this.timewindowForm.get('history.hideFixedInterval').valueChanges.subscribe((hideFixedInterval: boolean) => {
+    this.timewindowForm.get('history.hideFixedInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((hideFixedInterval: boolean) => {
       if (hideFixedInterval) {
         if (!this.timewindowForm.get('history.hideLastInterval').value) {
           this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.LAST_INTERVAL);
@@ -239,7 +274,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         }
       }
     });
-    this.timewindowForm.get('history.hideQuickInterval').valueChanges.subscribe((hideQuickInterval: boolean) => {
+    this.timewindowForm.get('history.hideQuickInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((hideQuickInterval: boolean) => {
       if (hideQuickInterval) {
         if (!this.timewindowForm.get('history.hideLastInterval').value) {
           this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.LAST_INTERVAL);
@@ -248,6 +285,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         }
       }
     });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private checkLimit(limit?: number): number {
@@ -269,10 +311,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
   }
 
-  onTimewindowTypeChange() {
-    this.timewindowForm.markAsDirty();
+  private onTimewindowTypeChange(selectedTab: TimewindowType) {
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
+    if (selectedTab === TimewindowType.REALTIME) {
       if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
         this.timewindowForm.get('realtime').patchValue({
           realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?

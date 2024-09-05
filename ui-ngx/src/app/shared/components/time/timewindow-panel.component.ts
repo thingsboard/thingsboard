@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, InjectionToken, OnInit, ViewContainerRef } from '@angular/core';
+import { Component, Inject, InjectionToken, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
 import {
   aggregationTranslations,
   AggregationType,
@@ -41,6 +41,8 @@ import {
   TimewindowConfigDialogComponent,
   TimewindowConfigDialogData
 } from '@shared/components/time/timewindow-config-dialog.component';
+import { takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
 
 export interface TimewindowPanelData {
   historyOnly: boolean;
@@ -59,7 +61,7 @@ export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelDat
   templateUrl: './timewindow-panel.component.html',
   styleUrls: ['./timewindow-panel.component.scss']
 })
-export class TimewindowPanelComponent extends PageComponent implements OnInit {
+export class TimewindowPanelComponent extends PageComponent implements OnInit, OnDestroy {
 
   historyOnly = false;
 
@@ -91,6 +93,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   result: Timewindow;
 
+  timewindowTypeOptions: ToggleHeaderOption[] = [{
+    name: this.translate.instant('timewindow.history'),
+    value: this.timewindowTypes.HISTORY
+  }];
+
   realtimeTimewindowOptions: ToggleHeaderOption[] = [];
 
   historyTimewindowOptions: ToggleHeaderOption[] = [];
@@ -100,6 +107,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
   historyTypeSelectionAvailable: boolean;
   historyIntervalSelectionAvailable: boolean;
   aggregationOptionsAvailable: boolean;
+
+  private destroy$ = new Subject<void>();
 
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
               public overlayRef: OverlayRef,
@@ -117,6 +126,13 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.aggregation = data.aggregation;
     this.timezone = data.timezone;
     this.isEdit = data.isEdit;
+
+    if (!this.historyOnly) {
+      this.timewindowTypeOptions.unshift({
+        name: this.translate.instant('timewindow.realtime'),
+        value: this.timewindowTypes.REALTIME
+      });
+    }
 
     if ((this.isEdit || !this.timewindow.realtime.hideLastInterval) && !this.quickIntervalOnly) {
       this.realtimeTimewindowOptions.push({
@@ -212,6 +228,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     }
 
     this.timewindowForm = this.fb.group({
+      selectedTab: [isDefined(this.timewindow.selectedTab) ? this.timewindow.selectedTab : TimewindowType.REALTIME],
       realtime: this.fb.group({
         realtimeType: [{
           value: isDefined(realtime?.realtimeType) ? realtime.realtimeType : RealtimeWindowType.LAST_INTERVAL,
@@ -268,9 +285,22 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
       }]
     });
     this.updateValidators(this.timewindowForm.get('aggregation.type').value);
-    this.timewindowForm.get('aggregation.type').valueChanges.subscribe((aggregationType: AggregationType) => {
+    this.timewindowForm.get('aggregation.type').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((aggregationType: AggregationType) => {
       this.updateValidators(aggregationType);
     });
+
+    this.timewindowForm.get('selectedTab').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((selectedTab: TimewindowType) => {
+      this.onTimewindowTypeChange(selectedTab);
+    });
+  }
+
+  ngOnDestroy() {
+    this.destroy$.next();
+    this.destroy$.complete();
   }
 
   private checkLimit(limit?: number): number {
@@ -292,10 +322,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
     this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
   }
 
-  onTimewindowTypeChange() {
-    this.timewindowForm.markAsDirty();
+  private onTimewindowTypeChange(selectedTab: TimewindowType) {
     const timewindowFormValue = this.timewindowForm.getRawValue();
-    if (this.timewindow.selectedTab === TimewindowType.REALTIME) {
+    if (selectedTab === TimewindowType.REALTIME) {
       if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
         this.timewindowForm.get('realtime').patchValue({
           realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
@@ -332,6 +361,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit {
 
   private prepareTimewindowConfig() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
+    this.timewindow.selectedTab = timewindowFormValue.selectedTab;
     this.timewindow.realtime = {...this.timewindow.realtime, ...{
         realtimeType: timewindowFormValue.realtime.realtimeType,
         timewindowMs: timewindowFormValue.realtime.timewindowMs,
