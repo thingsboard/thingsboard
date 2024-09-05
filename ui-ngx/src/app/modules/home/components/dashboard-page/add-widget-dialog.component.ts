@@ -187,6 +187,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     this.widget.config.mobileHeight = widgetConfig.layout.mobileHeight;
     this.widget.config.mobileHide = widgetConfig.layout.mobileHide;
     this.widget.config.desktopHide = widgetConfig.layout.desktopHide;
+    this.widget.config.preserveAspectRatio = widgetConfig.layout.preserveAspectRatio;
+    this.widget.config.resizable = widgetConfig.layout.resizable;
     this.dialogRef.close(this.widget);
   }
 }

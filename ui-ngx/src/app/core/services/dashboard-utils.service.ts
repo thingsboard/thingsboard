@@ -345,10 +345,11 @@ export class DashboardUtilsService {
     return widgetConfig;
   }
 
-  public prepareWidgetForScadaLayout(widget: Widget): Widget {
+  public prepareWidgetForScadaLayout(widget: Widget, isScada: boolean): Widget {
     const config = widget.config;
     config.showTitle = false;
     config.dropShadow = false;
+    config.preserveAspectRatio = isScada;
     config.padding = '0';
     config.margin = '0';
     config.backgroundColor = 'rgba(0,0,0,0)';
@@ -654,7 +655,9 @@ export class DashboardUtilsService {
       mobileOrder: widget.config.mobileOrder,
       mobileHeight: widget.config.mobileHeight,
       mobileHide: widget.config.mobileHide,
-      desktopHide: widget.config.desktopHide
+      desktopHide: widget.config.desktopHide,
+      preserveAspectRatio: widget.config.preserveAspectRatio,
+      resizable: widget.config.resizable
     };
     if (isUndefined(originalColumns)) {
       originalColumns = 24;

@@ -1351,7 +1351,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         }
         const scada = this.isAddingToScadaLayout();
         if (scada) {
-          newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget);
+          newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget, widgetTypeInfo.scada);
         }
         let showLayoutConfig = true;
         if (scada || this.layouts.right.show || !this.showLayoutConfigInEdit(this.layouts.main.layoutCtx)) {

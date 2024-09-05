@@ -6045,7 +6045,11 @@
         "color": "Color",
         "tooltip": "Tooltip",
         "units-required": "Unit is required.",
-        "list-layout": "List layout"
+        "list-layout": "List layout",
+        "layout": "Layout",
+        "resize-options": "Resize options",
+        "resizable": "Resizable",
+        "preserve-aspect-ratio": "Preserve aspect ratio"
     },
     "widget-type": {
         "import": "Import widget type",

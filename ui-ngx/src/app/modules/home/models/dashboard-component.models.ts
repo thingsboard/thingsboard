@@ -343,6 +343,10 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   private selectedValue = false;
   private selectedCallback: (selected: boolean) => void = () => {};
 
+  resizableHandles = {} as any;
+
+  resizeEnabled = true;
+
   isFullscreen = false;
   isReference = false;
 
@@ -387,6 +391,15 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
   private gridsterItemComponentSubject = new Subject<GridsterItemComponentInterface>();
   private gridsterItemComponentValue: GridsterItemComponentInterface;
 
+  private readonly aspectRatio: number;
+
+  private heightValue: number;
+  private widthValue: number;
+
+  private rowsValue: number;
+  private colsValue: number;
+
+
   get mobileHide(): boolean {
     return this.widgetLayout ? this.widgetLayout.mobileHide === true : false;
   }
@@ -397,8 +410,94 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
 
   set gridsterItemComponent(item: GridsterItemComponentInterface) {
     this.gridsterItemComponentValue = item;
+
+    if (this.widgetLayout?.preserveAspectRatio) {
+      this.applyPreserveAspectRatio(item);
+    }
+
     this.gridsterItemComponentSubject.next(this.gridsterItemComponentValue);
     this.gridsterItemComponentSubject.complete();
+  }
+
+  private applyPreserveAspectRatio(item: GridsterItemComponentInterface) {
+    this.resizableHandles.ne = false;
+    this.resizableHandles.sw = false;
+    this.resizableHandles.nw = false;
+
+    const $item = item.$item;
+
+    this.rowsValue = $item.rows;
+    this.colsValue = $item.cols;
+
+    Object.defineProperty($item, 'rows', {
+      get: () => this.rowsValue,
+      set: v => {
+        if (this.rowsValue !== v) {
+          if (this.preserveAspectRatio) {
+            this.colsValue = v * this.aspectRatio;
+          }
+          this.rowsValue = v;
+        }
+      }
+    });
+
+    Object.defineProperty($item, 'cols', {
+      get: () => this.colsValue,
+      set: v => {
+        if (this.colsValue !== v) {
+          if (this.preserveAspectRatio) {
+            this.rowsValue = v / this.aspectRatio;
+          }
+          this.colsValue = v;
+        }
+      }
+    });
+
+    const resizable = item.resize;
+
+    this.heightValue = resizable.height;
+    this.widthValue = resizable.width;
+
+    const setItemHeight = resizable.setItemHeight.bind(resizable);
+    const setItemWidth = resizable.setItemWidth.bind(resizable);
+    resizable.setItemHeight = (height) => {
+      setItemHeight(height);
+      this.heightValue = height;
+      if (this.preserveAspectRatio) {
+        setItemWidth(height * this.aspectRatio);
+      }
+    };
+    resizable.setItemWidth = (width) => {
+      setItemWidth(width);
+      this.widthValue = width;
+      if (this.preserveAspectRatio) {
+        setItemHeight(width / this.aspectRatio);
+      }
+    };
+
+    Object.defineProperty(resizable, 'height', {
+      get: () => this.heightValue,
+      set: v => {
+        if (this.heightValue !== v) {
+          if (this.preserveAspectRatio) {
+            this.widthValue = v * this.aspectRatio;
+          }
+          this.heightValue = v;
+        }
+      }
+    });
+
+    Object.defineProperty(resizable, 'width', {
+      get: () => this.widthValue,
+      set: v => {
+        if (this.widthValue !== v) {
+          if (this.preserveAspectRatio) {
+            this.heightValue = v / this.aspectRatio;
+          }
+          this.widthValue = v;
+        }
+      }
+    });
   }
 
   get highlighted() {
@@ -434,6 +533,13 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     public widgetLayout?: WidgetLayout,
     private parentDashboard?: IDashboardComponent,
     private popoverComponent?: TbPopoverComponent) {
+
+    if (isDefined(widgetLayout?.resizable)) {
+      this.resizeEnabled = widgetLayout.resizable;
+    }
+    if (widgetLayout?.preserveAspectRatio) {
+      this.aspectRatio = this.widgetLayout.sizeX / this.widgetLayout.sizeY;
+    }
     if (!widget.id) {
       widget.id = guid();
     }
@@ -603,30 +709,28 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     }
   }
 
+  get preserveAspectRatio(): boolean {
+    if (!this.dashboard.isMobileSize && this.widgetLayout) {
+      return this.widgetLayout.preserveAspectRatio;
+    } else {
+      return false;
+    }
+  }
+
   @enumerable(true)
   get cols(): number {
-    let res;
-    if (this.widgetLayout) {
-      res = this.widgetLayout.sizeX;
-    } else {
-      res = this.widget.sizeX;
-    }
-    return Math.floor(res);
+    return Math.floor(this.sizeX);
   }
 
   set cols(cols: number) {
     if (!this.dashboard.isMobileSize) {
-      if (this.widgetLayout) {
-        this.widgetLayout.sizeX = cols;
-      } else {
-        this.widget.sizeX = cols;
-      }
+      this.sizeX = cols;
     }
   }
 
   @enumerable(true)
   get rows(): number {
-    let res;
+    let res: number;
     if (this.dashboard.isMobileSize) {
       let mobileHeight;
       if (this.widgetLayout) {
@@ -638,26 +742,50 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       if (mobileHeight) {
         res = mobileHeight;
       } else {
-        const sizeY = this.widgetLayout ? this.widgetLayout.sizeY : this.widget.sizeY;
+        const sizeY = this.sizeY;
         res = sizeY * 24 / this.dashboard.gridsterOpts.minCols;
       }
     } else {
-      if (this.widgetLayout) {
-        res = this.widgetLayout.sizeY;
-      } else {
-        res = this.widget.sizeY;
-      }
+      res = this.sizeY;
     }
     return Math.floor(res);
   }
 
   set rows(rows: number) {
     if (!this.dashboard.isMobileSize && !this.dashboard.autofillHeight) {
-      if (this.widgetLayout) {
-        this.widgetLayout.sizeY = rows;
-      } else {
-        this.widget.sizeY = rows;
-      }
+      this.sizeY = rows;
+    }
+  }
+
+  get sizeX(): number {
+    if (this.widgetLayout) {
+      return this.widgetLayout.sizeX;
+    } else {
+      return this.widget.sizeX;
+    }
+  }
+
+  set sizeX(sizeX: number) {
+    if (this.widgetLayout) {
+      this.widgetLayout.sizeX = sizeX;
+    } else {
+      this.widget.sizeX = sizeX;
+    }
+  }
+
+  get sizeY(): number {
+    if (this.widgetLayout) {
+      return this.widgetLayout.sizeY;
+    } else {
+      return this.widget.sizeY;
+    }
+  }
+
+  set sizeY(sizeY: number) {
+    if (this.widgetLayout) {
+      this.widgetLayout.sizeY = sizeY;
+    } else {
+      this.widget.sizeY = sizeY;
     }
   }
 

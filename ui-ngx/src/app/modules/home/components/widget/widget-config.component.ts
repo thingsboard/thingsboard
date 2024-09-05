@@ -256,6 +256,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     });
 
     this.layoutSettings = this.fb.group({
+      resizable: [true],
+      preserveAspectRatio: [false],
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       mobileHide: [false],
@@ -349,16 +351,12 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         value: 'actions'
       }
     );
-    if (this.showLayoutConfig) {
-      this.headerOptions.push(
-        {
-          name: this.isDefaultBreakpoint
-            ? this.translate.instant('widget-config.mobile')
-            : this.translate.instant('widget-config.list-layout'),
-          value: 'mobile'
-        }
-      );
-    }
+    this.headerOptions.push(
+      {
+        name: this.translate.instant('widget-config.layout'),
+        value: 'layout'
+      }
+    );
     if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
       this.selectedOption = this.headerOptions[0].value;
     }
@@ -569,6 +567,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       if (layout) {
         this.layoutSettings.patchValue(
           {
+            resizable: isDefined(layout.resizable) ? layout.resizable : true,
+            preserveAspectRatio: layout.preserveAspectRatio,
             mobileOrder: layout.mobileOrder,
             mobileHeight: layout.mobileHeight,
             mobileHide: layout.mobileHide,
@@ -579,6 +579,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.layoutSettings.patchValue(
           {
+            resizable: true,
+            preserveAspectRatio: false,
             mobileOrder: null,
             mobileHeight: null,
             mobileHide: false,
