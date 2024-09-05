@@ -35,6 +35,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
 import java.util.concurrent.TimeUnit;
@@ -65,8 +66,8 @@ public class TbAwsLambdaNode extends TbAbstractExternalNode {
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         config = TbNodeUtils.convert(configuration, TbAwsLambdaNodeConfiguration.class);
         String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
-        validateFields(config, errorPrefix);
         try {
+            validateFields(config, errorPrefix);
             AWSCredentials awsCredentials = new BasicAWSCredentials(config.getAccessKey(), config.getSecretKey());
             client = AWSLambdaAsyncClientBuilder.standard()
                     .withCredentials(new AWSStaticCredentialsProvider(awsCredentials))
@@ -75,6 +76,8 @@ public class TbAwsLambdaNode extends TbAbstractExternalNode {
                             .withConnectionTimeout((int) TimeUnit.SECONDS.toMillis(config.getConnectionTimeout()))
                             .withRequestTimeout((int) TimeUnit.SECONDS.toMillis(config.getRequestTimeout())))
                     .build();
+        } catch (DataValidationException e) {
+            throw new TbNodeException(e, true);
         } catch (Exception e) {
             throw new TbNodeException(e);
         }

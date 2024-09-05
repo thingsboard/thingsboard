@@ -36,6 +36,7 @@ import org.springframework.test.util.ReflectionTestUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
+import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -43,7 +44,6 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
-import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.StandardCharsets;
@@ -99,7 +99,7 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidFunctionName_whenInit_thenThrowsException(String funcName) {
         config.setFunctionName(funcName);
-        verifyDataValidationExceptionOnInit();
+        verifyValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -107,7 +107,7 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidAccessKey_whenInit_thenThrowsException(String accessKey) {
         config.setAccessKey(accessKey);
-        verifyDataValidationExceptionOnInit();
+        verifyValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -115,7 +115,7 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidSecretAccessKey_whenInit_thenThrowsException(String secretAccessKey) {
         config.setSecretKey(secretAccessKey);
-        verifyDataValidationExceptionOnInit();
+        verifyValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -123,19 +123,19 @@ public class TbAwsLambdaNodeTest {
     @ValueSource(strings = "  ")
     public void givenInvalidRegion_whenInit_thenThrowsException(String region) {
         config.setRegion(region);
-        verifyDataValidationExceptionOnInit();
+        verifyValidationExceptionOnInit();
     }
 
     @Test
     public void givenInvalidConnectionTimeout_whenInit_thenThrowsException() {
         config.setConnectionTimeout(-100);
-        verifyDataValidationExceptionOnInit();
+        verifyValidationExceptionOnInit();
     }
 
     @Test
     public void givenInvalidRequestTimeout_whenInit_thenThrowsException() {
         config.setRequestTimeout(-100);
-        verifyDataValidationExceptionOnInit();
+        verifyValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -318,14 +318,16 @@ public class TbAwsLambdaNodeTest {
         assertThat(throwableCaptor.getValue()).isInstanceOf(AWSLambdaException.class).hasMessageStartingWith(errorMsg);
     }
 
-    private void verifyDataValidationExceptionOnInit() {
+    private void verifyValidationExceptionOnInit() {
         RuleNode ruleNode = new RuleNode();
         ruleNode.setName("test");
         when(ctx.getSelf()).thenReturn(ruleNode);
         String errorPrefix = "'test' node configuration is invalid: ";
         assertThatThrownBy(() -> node.init(ctx, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(DataValidationException.class)
-                .hasMessageContaining(errorPrefix);
+                .isInstanceOf(TbNodeException.class)
+                .hasMessageContaining(errorPrefix)
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
     }
 
     private void init() {
