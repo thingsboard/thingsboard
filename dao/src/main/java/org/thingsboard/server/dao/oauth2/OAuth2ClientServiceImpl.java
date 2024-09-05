@@ -69,7 +69,6 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    @Transactional
     public OAuth2Client saveOAuth2Client(TenantId tenantId, OAuth2Client oAuth2Client) {
         log.trace("Executing saveOAuth2Client [{}]", oAuth2Client);
         oAuth2ClientDataValidator.validate(oAuth2Client, OAuth2Client::getTenantId);
@@ -97,7 +96,6 @@ public class OAuth2ClientServiceImpl extends AbstractEntityService implements OA
     }
 
     @Override
-    @Transactional
     public void deleteOAuth2ClientById(TenantId tenantId, OAuth2ClientId oAuth2ClientId) {
         log.trace("Executing deleteOAuth2ClientById [{}]", oAuth2ClientId);
         oauth2ClientDao.removeById(tenantId, oAuth2ClientId.getId());
