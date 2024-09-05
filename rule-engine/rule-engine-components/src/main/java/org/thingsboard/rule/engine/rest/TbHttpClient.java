@@ -80,6 +80,8 @@ public class TbHttpClient {
     public static final String PROXY_USER = "tb.proxy.user";
     public static final String PROXY_PASSWORD = "tb.proxy.password";
 
+    public static final String MAX_IN_MEMORY_BUFFER_SIZE_IN_KB = "tb.http.maxInMemoryBufferSizeInKb";
+
     private final TbRestApiCallNodeConfiguration config;
 
     private EventLoopGroup eventLoopGroup;
@@ -129,6 +131,8 @@ public class TbHttpClient {
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));
             }
 
+            validateMaxInMemoryBufferSize(config);
+
             this.webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
                     .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
@@ -137,6 +141,21 @@ public class TbHttpClient {
                     .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
+        }
+    }
+
+    private void validateMaxInMemoryBufferSize(TbRestApiCallNodeConfiguration config) throws TbNodeException {
+        int systemMaxInMemoryBufferSizeInKb = 25000;
+        try {
+            Properties properties = System.getProperties();
+            if (properties.containsKey(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB)) {
+                systemMaxInMemoryBufferSizeInKb = Integer.parseInt(properties.getProperty(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB));
+            }
+        } catch (Exception ignored) {}
+        if (config.getMaxInMemoryBufferSizeInKb() > systemMaxInMemoryBufferSizeInKb) {
+            throw new TbNodeException("The configured maximum in-memory buffer size (in KB) exceeds the system limit for this parameter.\n" +
+                    "The system limit is " + systemMaxInMemoryBufferSizeInKb + " KB.\n" +
+                    "Please use the system variable '" + MAX_IN_MEMORY_BUFFER_SIZE_IN_KB + "' to override the system limit.");
         }
     }
 
