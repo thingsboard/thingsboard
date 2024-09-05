@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
 
+import java.util.Comparator;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -143,6 +144,7 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     private MobileAppInfo getMobileAppInfo(MobileApp mobileApp) {
         List<OAuth2ClientInfo> clients = oauth2ClientDao.findByMobileAppId(mobileApp.getUuidId()).stream()
                 .map(OAuth2ClientInfo::new)
+                .sorted(Comparator.comparing(OAuth2ClientInfo::getTitle))
                 .collect(Collectors.toList());
         return new MobileAppInfo(mobileApp, clients);
     }
