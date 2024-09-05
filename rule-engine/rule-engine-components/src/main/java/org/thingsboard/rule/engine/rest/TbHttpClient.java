@@ -120,7 +120,7 @@ public class TbHttpClient {
                     SslContext sslContext = config.getCredentials().initSslContext();
                     httpClient = httpClient.secure(t -> t.sslContext(sslContext));
                 }
-            } else if (!config.isUseSimpleClientHttpFactory()) {
+            } else if (config.isUseSimpleClientHttpFactory()) {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
                     throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
                 }
@@ -316,8 +316,7 @@ public class TbHttpClient {
         Properties properties = System.getProperties();
         if (properties.containsKey(HTTP_PROXY_HOST) || properties.containsKey(HTTPS_PROXY_HOST)) {
             createHttpProxyFrom(option, properties);
-        }
-        if (properties.containsKey(SOCKS_PROXY_HOST)) {
+        } else if (properties.containsKey(SOCKS_PROXY_HOST)) {
             createSocksProxyFrom(option, properties);
         }
     }
@@ -336,8 +335,8 @@ public class TbHttpClient {
         String hostname = properties.getProperty(hostProperty);
         int port = Integer.parseInt(properties.getProperty(portProperty));
 
-        checkProxyHost(config.getProxyHost());
-        checkProxyPort(config.getProxyPort());
+        checkProxyHost(hostname);
+        checkProxyPort(port);
 
         var proxy = option
                 .type(ProxyProvider.Proxy.HTTP)
@@ -362,8 +361,8 @@ public class TbHttpClient {
         ProxyProvider.Proxy type = SOCKS_VERSION_5.equals(version) ? ProxyProvider.Proxy.SOCKS5 : ProxyProvider.Proxy.SOCKS4;
         int port = Integer.parseInt(properties.getProperty(SOCKS_PROXY_PORT));
 
-        checkProxyHost(config.getProxyHost());
-        checkProxyPort(config.getProxyPort());
+        checkProxyHost(hostname);
+        checkProxyPort(port);
 
         ProxyProvider.Builder proxy = option
                 .type(type)
