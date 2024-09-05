@@ -316,8 +316,6 @@ public class TbUtils {
         parserConfig.addImport("decodeURI", new MethodStub(TbUtils.class.getMethod("decodeURI",
                 String.class)));
         parserConfig.addImport("raiseError", new MethodStub(TbUtils.class.getMethod("raiseError",
-                String.class, Object.class)));
-        parserConfig.addImport("raiseError", new MethodStub(TbUtils.class.getMethod("raiseError",
                 String.class)));
         parserConfig.addImport("isBinary", new MethodStub(TbUtils.class.getMethod("isBinary",
                 String.class)));
@@ -1150,12 +1148,7 @@ public class TbUtils {
     }
 
     public static void raiseError(String message) {
-        raiseError(message, null);
-    }
-
-    public static void raiseError(String message, Object value) {
-        String msg = value == null ? message : message + " A value of " + value + " is invalid.";
-        throw new RuntimeException(msg);
+        throw new RuntimeException(message);
     }
 
     private static void parseRecursive(Object json, Map<String, Object> map, List<String> excludeList, String path, boolean pathInKey) {

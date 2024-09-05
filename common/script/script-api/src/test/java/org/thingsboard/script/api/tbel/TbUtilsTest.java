@@ -19,6 +19,7 @@ import com.google.common.collect.Lists;
 import com.google.common.primitives.Bytes;
 import com.google.common.primitives.Ints;
 import lombok.extern.slf4j.Slf4j;
+import org.checkerframework.checker.units.qual.A;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
@@ -885,14 +886,16 @@ public class TbUtilsTest {
 
     @Test
     public void raiseError_Test() {
-        String message = "frequency_weighting_type must be 0, 1 or 2.";
         Object value = 4;
+        String message = "frequency_weighting_type must be 0, 1 or 2. A value of " + value.toString() + " is invalid.";
+
         try {
-            TbUtils.raiseError(message, value);
+            TbUtils.raiseError(message);
             Assertions.fail("Should throw NumberFormatException");
         } catch (RuntimeException e) {
             Assertions.assertTrue(e.getMessage().contains("frequency_weighting_type must be 0, 1 or 2. A value of 4 is invalid."));
         }
+        message = "frequency_weighting_type must be 0, 1 or 2.";
         try {
             TbUtils.raiseError(message);
             Assertions.fail("Should throw NumberFormatException");
