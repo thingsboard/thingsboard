@@ -15,6 +15,8 @@
  */
 package org.thingsboard.rule.engine.aws.lambda;
 
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
@@ -23,12 +25,18 @@ public class TbAwsLambdaNodeConfiguration implements NodeConfiguration<TbAwsLamb
 
     public static final String DEFAULT_QUALIFIER = "$LATEST";
 
+    @NotBlank
     private String accessKey;
+    @NotBlank
     private String secretKey;
+    @NotBlank
     private String region;
+    @NotBlank
     private String functionName;
     private String qualifier;
+    @Min(0)
     private int connectionTimeout;
+    @Min(0)
     private int requestTimeout;
     private boolean tellFailureIfFuncThrowsExc;
 
