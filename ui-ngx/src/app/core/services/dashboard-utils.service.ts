@@ -349,6 +349,7 @@ export class DashboardUtilsService {
     const config = widget.config;
     config.showTitle = false;
     config.dropShadow = false;
+    config.resizable = !isScada;
     config.preserveAspectRatio = isScada;
     config.padding = '0';
     config.margin = '0';

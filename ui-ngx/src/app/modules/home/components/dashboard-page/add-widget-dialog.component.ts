@@ -130,7 +130,14 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     this.widgetConfig = {
       widgetName: widgetInfo.widgetName,
       config: this.widget.config,
-      layout: {},
+      layout: {
+        resizable: this.widget.config.resizable,
+        preserveAspectRatio: this.widget.config.preserveAspectRatio,
+        mobileHide: this.widget.config.mobileHide,
+        desktopHide: this.widget.config.desktopHide,
+        mobileOrder: this.widget.config.mobileOrder,
+        mobileHeight: this.widget.config.mobileHeight
+      },
       widgetType: this.widget.type,
       typeParameters,
       actionSources,

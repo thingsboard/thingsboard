@@ -63,7 +63,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { merge, Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -248,10 +248,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       noDataDisplayMessage: [null, []]
     });
 
-    this.widgetSettings.get('showTitle').valueChanges.subscribe(() => {
-      this.updateWidgetSettingsEnabledState();
-    });
-    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe(() => {
+    merge(this.widgetSettings.get('showTitle').valueChanges,
+          this.widgetSettings.get('showTitleIcon').valueChanges).subscribe(() => {
       this.updateWidgetSettingsEnabledState();
     });
 
@@ -263,6 +261,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       mobileHide: [false],
       desktopHide: [false]
     });
+
+    this.layoutSettings.get('resizable').valueChanges.subscribe(() => {
+      this.updateLayoutEnabledState();
+    });
+
     this.actionsSettings = this.fb.group({
       actions: [null, []]
     });
@@ -589,6 +592,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           {emitEvent: false}
         );
       }
+      this.updateLayoutEnabledState();
     }
     this.createChangeSubscriptions();
   }
@@ -619,6 +623,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.widgetSettings.get('titleIcon').disable({emitEvent: false});
       this.widgetSettings.get('iconColor').disable({emitEvent: false});
       this.widgetSettings.get('iconSize').disable({emitEvent: false});
+    }
+  }
+
+  private updateLayoutEnabledState() {
+    const resizable: boolean = this.layoutSettings.get('resizable').value;
+    if (resizable) {
+      this.layoutSettings.get('preserveAspectRatio').enable({emitEvent: false});
+    } else {
+      this.layoutSettings.get('preserveAspectRatio').disable({emitEvent: false});
     }
   }
 
