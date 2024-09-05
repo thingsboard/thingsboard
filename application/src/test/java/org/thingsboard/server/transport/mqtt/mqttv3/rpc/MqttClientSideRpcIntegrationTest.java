@@ -68,7 +68,6 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         expectedLimits.setRateLimits(deviceLimits);
         expectedLimits.setMaxPayloadSize(maxPayloadSize);
         expectedLimits.setMaxInflightMessages(maxInflightMessages);
-        expectedLimits.setPayloadType(TransportPayloadType.JSON);
 
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .deviceName("Test Get Service Configuration")
@@ -122,7 +121,6 @@ public class MqttClientSideRpcIntegrationTest extends AbstractMqttIntegrationTes
         expectedLimits.setRateLimits(gatewayDeviceLimits);
         expectedLimits.setMaxPayloadSize(maxPayloadSize);
         expectedLimits.setMaxInflightMessages(maxInflightMessages);
-        expectedLimits.setPayloadType(TransportPayloadType.JSON);
 
         MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
                 .gatewayName("Test Get Service Configuration Gateway")

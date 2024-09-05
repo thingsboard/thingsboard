@@ -23,7 +23,6 @@ public class SessionLimits {
 
     private int maxPayloadSize;
     private int maxInflightMessages;
-    private TransportPayloadType payloadType;
     private SessionRateLimits rateLimits;
 
     public record SessionRateLimits(String messages, String telemetryMessages, String telemetryDataPoints) {}

@@ -1364,7 +1364,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
         sessionLimits.setMaxPayloadSize(context.getMaxPayloadSize());
         sessionLimits.setMaxInflightMessages(context.getMessageQueueSizePerDeviceLimit());
-        sessionLimits.setPayloadType(deviceSessionCtx.getPayloadType());
 
         ack(ctx, msgId, MqttReasonCodes.PubAck.SUCCESS);
 
