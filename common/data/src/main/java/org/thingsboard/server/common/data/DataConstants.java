@@ -140,4 +140,6 @@ public class DataConstants {
     public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
     public static final String QUEUE_NAME = "queueName";
 
+    public static final String EDGE_QUEUE_NAME = "Edge";
+
 }

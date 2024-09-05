@@ -25,6 +25,9 @@
       <mat-error *ngIf="entityForm.hasError('unique')">
         {{ 'admin.oauth2.mobile-package-unique' | translate }}
       </mat-error>
+      <mat-error *ngIf="entityForm.get('pkgName').hasError('maxlength')">
+        {{ 'admin.oauth2.mobile-package-max-length' | translate }}
+      </mat-error>
     </mat-form-field>
   </div>
   <div class="tb-form-row tb-standard-fields no-border no-padding">

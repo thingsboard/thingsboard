@@ -56,7 +56,7 @@ import {
   GatewayServiceRPCConnectorTemplatesComponent
 } from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
-import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/configuration/gateway-configuration.component';
 import {
   GatewayRemoteConfigurationDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
@@ -148,6 +148,12 @@ import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/sc
 import {
   MqttLegacyBasicConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-legacy-basic-config.component';
+import {
+  GatewayBasicConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/basic/gateway-basic-configuration.component';
+import {
+    GatewayAdvancedConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/advanced/gateway-advanced-configuration.component';
 
 @NgModule({
   declarations: [
@@ -237,6 +243,8 @@ import {
     EllipsisChipListDirective,
     ModbusRpcParametersComponent,
     MqttLegacyBasicConfigComponent,
+    GatewayBasicConfigurationComponent,
+    GatewayAdvancedConfigurationComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,

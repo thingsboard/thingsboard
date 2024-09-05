@@ -193,17 +193,18 @@ public class DefaultWebSocketService implements WebSocketService {
     @Override
     public void handleSessionEvent(WebSocketSessionRef sessionRef, SessionEvent event) {
         String sessionId = sessionRef.getSessionId();
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
         log.debug(PROCESSING_MSG, sessionId, event);
         switch (event.getEventType()) {
             case ESTABLISHED:
                 wsSessionsMap.put(sessionId, new WsSessionMetaData(sessionRef));
                 break;
             case ERROR:
-                log.debug("[{}] Unknown websocket session error: ", sessionId,
+                log.debug("[{}][{}] Unknown websocket session error: ", tenantId, sessionId,
                         event.getError().orElse(new RuntimeException("No error specified")));
                 break;
             case CLOSED:
-                cleanupSessionById(sessionId);
+                cleanupSessionById(tenantId, sessionId);
                 processSessionClose(sessionRef);
                 break;
         }
@@ -297,10 +298,10 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     @Override
-    public void cleanupIfStale(String sessionId) {
+    public void cleanupIfStale(TenantId tenantId, String sessionId) {
         if (!msgEndpoint.isOpen(sessionId)) {
             log.info("[{}] Cleaning up stale session ", sessionId);
-            cleanupSessionById(sessionId);
+            cleanupSessionById(tenantId, sessionId);
         }
     }
 
@@ -754,22 +755,23 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void unsubscribe(WebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
         if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
-            log.warn("[{}][{}] Cleanup session due to empty entity id.", sessionId, cmd.getCmdId());
-            cleanupSessionById(sessionId);
+            log.warn("[{}][{}][{}] Cleanup session due to empty entity id.", tenantId, sessionId, cmd.getCmdId());
+            cleanupSessionById(tenantId, sessionId);
         } else {
             Integer subId = sessionCmdMap.getOrDefault(sessionId, Collections.emptyMap()).remove(cmd.getCmdId());
             if (subId == null) {
-                log.trace("[{}][{}] Failed to lookup subscription id mapping", sessionId, cmd.getCmdId());
+                log.trace("[{}][{}][{}] Failed to lookup subscription id mapping", tenantId, sessionId, cmd.getCmdId());
                 subId = cmd.getCmdId();
             }
-            oldSubService.cancelSubscription(sessionId, subId);
+            oldSubService.cancelSubscription(tenantId, sessionId, subId);
         }
     }
 
-    private void cleanupSessionById(String sessionId) {
+    private void cleanupSessionById(TenantId tenantId, String sessionId) {
         wsSessionsMap.remove(sessionId);
-        oldSubService.cancelAllSessionSubscriptions(sessionId);
+        oldSubService.cancelAllSessionSubscriptions(tenantId, sessionId);
         sessionCmdMap.remove(sessionId);
         entityDataSubService.cancelAllSessionSubscriptions(sessionId);
     }

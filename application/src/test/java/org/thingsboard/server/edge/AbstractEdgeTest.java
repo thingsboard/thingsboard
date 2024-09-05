@@ -17,6 +17,7 @@ package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
@@ -27,7 +28,6 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -127,9 +127,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @Autowired
     protected EdgeEventService edgeEventService;
 
-    @Autowired
-    protected TbClusterService clusterService;
-
     @Before
     public void setupEdgeTest() throws Exception {
         loginSysAdmin();
@@ -207,7 +204,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
 
         // wait until assign device and asset events are fully processed by edge notification service
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(1000);
     }
 
     protected void extendDeviceProfileData(DeviceProfile deviceProfile) {
@@ -695,6 +692,27 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // delete dashboard
         doDelete("/api/dashboard/" + dashboardId.getId())
                 .andExpect(status().isOk());
+    }
+
+
+    protected ObjectNode createDefaultRpc() {
+        return createDefaultRpc(1);
+    }
+
+    protected ObjectNode createDefaultRpc(Integer value) {
+        ObjectNode rpc = JacksonUtil.newObjectNode();
+        rpc.put("method", "setGpio");
+
+        ObjectNode params = JacksonUtil.newObjectNode();
+
+        params.put("pin", 7);
+        params.put("value", value);
+
+        rpc.set("params", params);
+        rpc.put("persistent", true);
+        rpc.put("timeout", 5000);
+
+        return rpc;
     }
 
 }

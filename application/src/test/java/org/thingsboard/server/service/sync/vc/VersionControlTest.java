@@ -241,7 +241,7 @@ public class VersionControlTest extends AbstractControllerTest {
 
         checkImportedEntity(tenantId1, device, tenantId1, importedDevice);
         assertThat(importedDevice.getDeviceProfileId()).isEqualTo(device.getDeviceProfileId());
-        assertThat(findDeviceCredentials(device.getId())).isEqualTo(deviceCredentials);
+        assertThat(findDeviceCredentials(device.getId())).isEqualToIgnoringGivenFields(deviceCredentials, "version");
         assertThat(importedDevice.getFirmwareId()).isEqualTo(firmware.getId());
         assertThat(importedDevice.getSoftwareId()).isEqualTo(software.getId());
     }

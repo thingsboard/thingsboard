@@ -54,8 +54,6 @@ export class DomainTableConfigResolver implements Resolve<EntityTableConfig<Doma
     this.config.headerComponent = DomainTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
-    this.config.displayPagination = false;
-    this.config.pageMode = false;
 
     this.config.columns.push(
       new DateEntityTableColumn<DomainInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
