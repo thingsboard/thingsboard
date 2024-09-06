@@ -50,6 +50,10 @@ server:
         key_alias: "${SSL_KEY_ALIAS:tomcat}"
         # Password used to access the key
         key_password: "${SSL_KEY_PASSWORD:thingsboard}"
+  # HTTP settings
+  http:
+    # Semi-colon-separated list of urlPattern=maxPayloadSize pairs that define max http request size for specified url pattern. After first match all other will be skipped
+    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/image*/**=52428800;/api/resource/**=52428800;/api/**=16777216}"
   # HTTP/2 support (takes effect only if server SSL is enabled)
   http2:
     # Enable/disable HTTP/2 support
@@ -572,6 +576,9 @@ cache:
     edges:
       timeToLiveInMinutes: "${CACHE_SPECS_EDGES_TTL:1440}" # Edges cache TTL
       maxSize: "${CACHE_SPECS_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled
+    edgeSessions:
+      timeToLiveInMinutes: "${CACHE_SPECS_EDGE_SESSIONS_TTL:0}" # Edge Sessions cache TTL; no expiration time if set to '0'
+      maxSize: "${CACHE_SPECS_EDGE_SESSIONS_MAX_SIZE:10000}" # 0 means the cache is disabled
     relatedEdges:
       timeToLiveInMinutes: "${CACHE_SPECS_RELATED_EDGES_TTL:1440}" # Related Edges cache TTL
       maxSize: "${CACHE_SPECS_RELATED_EDGES_MAX_SIZE:10000}" # 0 means the cache is disabled
@@ -995,8 +1002,8 @@ transport:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
     # HTTP maximum request processing timeout in milliseconds
     max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
-    # Maximum request size
-    max_payload_size: "${HTTP_MAX_PAYLOAD_SIZE:65536}" # max payload size in bytes
+    # Semi-colon-separated list of urlPattern=maxPayloadSize pairs that define max http request size for specified url pattern. After first match all other will be skipped
+    max_payload_size: "${HTTP_TRANSPORT_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/v1/*/rpc/**=65536;/api/v1/**=52428800}"
   # Local MQTT transport parameters
   mqtt:
     # Enable/disable mqtt transport protocol.
@@ -1380,6 +1387,8 @@ edges:
     no_read_records_sleep: "${EDGES_NO_READ_RECORDS_SLEEP:1000}"
     # Number of milliseconds to wait before resending failed batch of edge events to edge
     sleep_between_batches: "${EDGES_SLEEP_BETWEEN_BATCHES:60000}"
+  # Max number of high priority edge events per edge session. No persistence - stored in memory
+  max_high_priority_queue_size_per_session: "${EDGES_MAX_HIGH_PRIORITY_QUEUE_SIZE_PER_SESSION:10000}"
   # Number of threads that are used to check DB for edge events
   scheduler_pool_size: "${EDGES_SCHEDULER_POOL_SIZE:1}"
   # Number of threads that are used to send downlink messages to edge over gRPC
@@ -1503,9 +1512,9 @@ queue:
         - key: max.poll.interval.ms
           # Example of specific consumer properties value per topic for VC
           value: "${TB_QUEUE_KAFKA_VC_MAX_POLL_INTERVAL_MS:600000}"
-      #      tb_rule_engine.sq:
-      #        - key: max.poll.records
-      #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
+    #      tb_rule_engine.sq:
+    #        - key: max.poll.records
+    #          value: "${TB_QUEUE_KAFKA_SQ_MAX_POLL_RECORDS:1024}"
       tb_housekeeper:
         # Consumer properties for Housekeeper tasks topic
         - key: max.poll.records
@@ -1541,6 +1550,8 @@ queue:
       housekeeper: "${TB_QUEUE_KAFKA_HOUSEKEEPER_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:10;min.insync.replicas:1}"
       # Kafka properties for Housekeeper reprocessing topic; retention.ms is set to 90 days; partitions is set to 1 since only one reprocessing service is running at a time
       housekeeper-reprocessing: "${TB_QUEUE_KAFKA_HOUSEKEEPER_REPROCESSING_TOPIC_PROPERTIES:retention.ms:7776000000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
+      # Kafka properties for Edge topic
+      edge: "${TB_QUEUE_KAFKA_EDGE_TOPIC_PROPERTIES:retention.ms:604800000;segment.bytes:52428800;retention.bytes:1048576000;partitions:1;min.insync.replicas:1}"
     consumer-stats:
       # Prints lag between consumer group offset and last messages offset in Kafka topics
       enabled: "${TB_QUEUE_KAFKA_CONSUMER_STATS_ENABLED:true}"
@@ -1576,6 +1587,8 @@ queue:
       ota-updates: "${TB_QUEUE_AWS_SQS_OTA_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
       # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
       version-control: "${TB_QUEUE_AWS_SQS_VC_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
+      # VisibilityTimeout in seconds;MaximumMessageSize in bytes;MessageRetentionPeriod in seconds
+      edge: "${TB_QUEUE_AWS_SQS_EDGE_QUEUE_PROPERTIES:VisibilityTimeout:30;MaximumMessageSize:262144;MessageRetentionPeriod:604800}"
   pubsub:
     # Project ID from Google Cloud
     project_id: "${TB_QUEUE_PUBSUB_PROJECT_ID:YOUR_PROJECT_ID}"
@@ -1600,6 +1613,8 @@ queue:
       js-executor: "${TB_QUEUE_PUBSUB_JE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
       # Pub/Sub properties for Transport Api subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
       version-control: "${TB_QUEUE_PUBSUB_VC_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
+      # Pub/Sub properties for Edge subscribers, messages which will commit after ackDeadlineInSec period can be consumed again
+      edge: "${TB_QUEUE_PUBSUB_EDGE_QUEUE_PROPERTIES:ackDeadlineInSec:30;messageRetentionInSec:604800}"
   service_bus:
     # Azure namespace
     namespace_name: "${TB_QUEUE_SERVICE_BUS_NAMESPACE_NAME:YOUR_NAMESPACE_NAME}"
@@ -1622,6 +1637,8 @@ queue:
       js-executor: "${TB_QUEUE_SERVICE_BUS_JE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
       # Azure Service Bus properties for Version Control queues
       version-control: "${TB_QUEUE_SERVICE_BUS_VC_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
+      # Azure Service Bus properties for Edge queues
+      edge: "${TB_QUEUE_SERVICE_BUS_EDGE_QUEUE_PROPERTIES:lockDurationInSec:30;maxSizeInMb:1024;messageTimeToLiveInSec:604800}"
   rabbitmq:
     # By default empty
     exchange_name: "${TB_QUEUE_RABBIT_MQ_EXCHANGE_NAME:}"
@@ -1654,6 +1671,8 @@ queue:
       js-executor: "${TB_QUEUE_RABBIT_MQ_JE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
       # RabbitMQ properties for Version Control queues
       version-control: "${TB_QUEUE_RABBIT_MQ_VC_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
+      # RabbitMQ properties for Edge queues
+      edge: "${TB_QUEUE_RABBIT_MQ_EDGE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"
   partitions:
     hash_function_name: "${TB_QUEUE_PARTITIONS_HASH_FUNCTION_NAME:murmur3_128}" # murmur3_32, murmur3_128 or sha256
   transport_api:
@@ -1772,6 +1791,24 @@ queue:
     notifications_topic: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_TOPIC:tb_transport.notifications}"
     # Interval in milliseconds to poll messages
     poll_interval: "${TB_QUEUE_TRANSPORT_NOTIFICATIONS_POLL_INTERVAL_MS:25}"
+  edge:
+    # Default topic name for Kafka, RabbitMQ, etc.
+    topic: "${TB_QUEUE_EDGE_TOPIC:tb_edge}"
+    # Amount of partitions used by Edge services
+    partitions: "${TB_QUEUE_EDGE_PARTITIONS:10}"
+    # Poll interval for topics related to Edge services
+    poll-interval: "${TB_QUEUE_EDGE_POLL_INTERVAL_MS:25}"
+    # Timeout for processing a message pack by Edge services
+    pack-processing-timeout: "${TB_QUEUE_EDGE_PACK_PROCESSING_TIMEOUT_MS:10000}"
+    # Retries for processing a failure message pack by Edge services
+    pack-processing-retries: "${TB_QUEUE_EDGE_MESSAGE_PROCESSING_RETRIES:3}"
+    # Enable/disable a separate consumer per partition for Edge queue
+    consumer-per-partition: "${TB_QUEUE_EDGE_CONSUMER_PER_PARTITION:false}"
+    stats:
+      # Enable/disable statistics for Edge services
+      enabled: "${TB_QUEUE_EDGE_STATS_ENABLED:true}"
+      # Statistics printing interval for Edge services
+      print-interval-ms: "${TB_QUEUE_EDGE_STATS_PRINT_INTERVAL_MS:60000}"
 
 # Event configuration parameters
 event:

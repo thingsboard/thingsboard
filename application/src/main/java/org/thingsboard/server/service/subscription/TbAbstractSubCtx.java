@@ -303,7 +303,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     protected void clearDynamicValueSubscriptions() {
         if (subToDynamicValueKeySet != null) {
             for (Integer subId : subToDynamicValueKeySet) {
-                localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
+                localSubscriptionService.cancelSubscription(getTenantId(), sessionRef.getSessionId(), subId);
             }
             subToDynamicValueKeySet.clear();
         }

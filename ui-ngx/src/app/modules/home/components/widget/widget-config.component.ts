@@ -63,7 +63,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { merge, Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -248,19 +248,24 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       noDataDisplayMessage: [null, []]
     });
 
-    this.widgetSettings.get('showTitle').valueChanges.subscribe(() => {
-      this.updateWidgetSettingsEnabledState();
-    });
-    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe(() => {
+    merge(this.widgetSettings.get('showTitle').valueChanges,
+          this.widgetSettings.get('showTitleIcon').valueChanges).subscribe(() => {
       this.updateWidgetSettingsEnabledState();
     });
 
     this.layoutSettings = this.fb.group({
+      resizable: [true],
+      preserveAspectRatio: [false],
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       mobileHide: [false],
       desktopHide: [false]
     });
+
+    this.layoutSettings.get('resizable').valueChanges.subscribe(() => {
+      this.updateLayoutEnabledState();
+    });
+
     this.actionsSettings = this.fb.group({
       actions: [null, []]
     });
@@ -349,16 +354,12 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         value: 'actions'
       }
     );
-    if (this.showLayoutConfig) {
-      this.headerOptions.push(
-        {
-          name: this.isDefaultBreakpoint
-            ? this.translate.instant('widget-config.mobile')
-            : this.translate.instant('widget-config.list-layout'),
-          value: 'mobile'
-        }
-      );
-    }
+    this.headerOptions.push(
+      {
+        name: this.translate.instant('widget-config.layout'),
+        value: 'layout'
+      }
+    );
     if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
       this.selectedOption = this.headerOptions[0].value;
     }
@@ -569,6 +570,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       if (layout) {
         this.layoutSettings.patchValue(
           {
+            resizable: isDefined(layout.resizable) ? layout.resizable : true,
+            preserveAspectRatio: layout.preserveAspectRatio,
             mobileOrder: layout.mobileOrder,
             mobileHeight: layout.mobileHeight,
             mobileHide: layout.mobileHide,
@@ -579,6 +582,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.layoutSettings.patchValue(
           {
+            resizable: true,
+            preserveAspectRatio: false,
             mobileOrder: null,
             mobileHeight: null,
             mobileHide: false,
@@ -587,6 +592,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           {emitEvent: false}
         );
       }
+      this.updateLayoutEnabledState();
     }
     this.createChangeSubscriptions();
   }
@@ -617,6 +623,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.widgetSettings.get('titleIcon').disable({emitEvent: false});
       this.widgetSettings.get('iconColor').disable({emitEvent: false});
       this.widgetSettings.get('iconSize').disable({emitEvent: false});
+    }
+  }
+
+  private updateLayoutEnabledState() {
+    const resizable: boolean = this.layoutSettings.get('resizable').value;
+    if (resizable) {
+      this.layoutSettings.get('preserveAspectRatio').enable({emitEvent: false});
+    } else {
+      this.layoutSettings.get('preserveAspectRatio').disable({emitEvent: false});
     }
   }
 

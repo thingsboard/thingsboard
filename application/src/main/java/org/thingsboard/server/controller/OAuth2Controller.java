@@ -75,7 +75,7 @@ public class OAuth2Controller extends BaseController {
     @ApiOperation(value = "Get OAuth2 clients (getOAuth2Clients)", notes = "Get the list of OAuth2 clients " +
             "to log in with, available for such domain scheme (HTTP or HTTPS) (if x-forwarded-proto request header is present - " +
             "the scheme is known from it) and domain name and port (port may be known from x-forwarded-port header)")
-    @PostMapping(value = "/noauth/oauth2/client")
+    @PostMapping(value = "/noauth/oauth2Clients")
     public List<OAuth2ClientLoginInfo> getOAuth2Clients(HttpServletRequest request,
                                                         @Parameter(description = "Mobile application package name, to find OAuth2 clients " +
                                                                 "where there is configured mobile application with such package name")

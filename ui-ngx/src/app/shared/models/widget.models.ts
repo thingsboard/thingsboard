@@ -761,6 +761,8 @@ export interface WidgetConfig {
   displayTimewindow?: boolean;
   timewindow?: Timewindow;
   timewindowStyle?: TimewindowStyle;
+  resizable?: boolean;
+  preserveAspectRatio?: boolean;
   desktopHide?: boolean;
   mobileHide?: boolean;
   mobileHeight?: number;

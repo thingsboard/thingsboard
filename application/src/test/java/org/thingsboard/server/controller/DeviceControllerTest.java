@@ -1503,11 +1503,12 @@ public class DeviceControllerTest extends AbstractControllerTest {
         Assert.assertTrue(deviceBulkImportResult.getErrorsList().isEmpty());
 
         Device updatedDevice = doGet("/api/device/" + savedDevice.getId().getId(), Device.class);
+        savedDevice.setVersion(updatedDevice.getVersion());
         Assert.assertEquals(savedDevice, updatedDevice);
 
         DeviceCredentials updatedCredentials =
                 doGet("/api/device/" + savedDevice.getId().getId() + "/credentials", DeviceCredentials.class);
-
+        savedCredentials.setVersion(updatedCredentials.getVersion());
         Assert.assertEquals(savedCredentials, updatedCredentials);
     }
 

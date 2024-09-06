@@ -25,6 +25,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.test.context.ContextConfiguration;
 import org.springframework.test.context.junit4.SpringRunner;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.TbTransactionalCache;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
@@ -34,6 +35,7 @@ import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.QueueId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
@@ -98,6 +100,8 @@ public class DefaultTbClusterServiceTest {
     protected TbQueueProducerProvider producerProvider;
     @MockBean
     protected TbRuleEngineProducerService ruleEngineProducerService;
+    @MockBean
+    protected TbTransactionalCache<EdgeId, String> edgeCache;
 
     @SpyBean
     protected TopicService topicService;
@@ -400,4 +404,5 @@ public class DefaultTbClusterServiceTest {
         ((DefaultTbClusterService) clusterService).getRuleEngineProfileForEntityOrElseNull(tenantId, assetId, tbMsg);
         verify(assetProfileCache, times(1)).get(tenantId, assetProfileId);
     }
+
 }

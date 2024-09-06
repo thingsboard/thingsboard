@@ -16,7 +16,6 @@
 
 import { Component, Input } from '@angular/core';
 import { UntypedFormGroup } from '@angular/forms';
-import { COUNTRIES } from '@home/models/contact.models';
 
 @Component({
   selector: 'tb-contact',
@@ -29,6 +28,15 @@ export class ContactComponent {
 
   @Input() isEdit: boolean;
 
-  countries = COUNTRIES;
+  phoneInputDefaultCountry = 'US';
 
+  constructor() {
+  }
+
+  changeCountry(countryCode: string) {
+    this.phoneInputDefaultCountry = countryCode ?? 'US';
+    setTimeout(() => {
+      this.parentForm.get('phone').setValue(this.parentForm.get('phone').value);
+    });
+  }
 }

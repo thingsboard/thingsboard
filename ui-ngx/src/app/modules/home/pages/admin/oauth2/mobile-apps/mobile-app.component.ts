@@ -54,7 +54,7 @@ export class MobileAppComponent extends EntityComponent<MobileAppInfo> {
 
   buildForm(entity: MobileAppInfo): UntypedFormGroup {
     return this.fb.group({
-      pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required]],
+      pkgName: [entity?.pkgName ? entity.pkgName : '', [Validators.required, Validators.maxLength(255)]],
       appSecret: [entity?.appSecret ? entity.appSecret : btoa(randomAlphanumeric(64)),
         [Validators.required, this.base64Format]],
       oauth2Enabled: isDefinedAndNotNull(entity?.oauth2Enabled) ? entity.oauth2Enabled : true,

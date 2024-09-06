@@ -23,6 +23,9 @@
       <mat-error *ngIf="entityForm.get('title').hasError('required')">
         {{ 'admin.oauth2.client-title-required' | translate }}
       </mat-error>
+      <mat-error *ngIf="entityForm.get('title').hasError('maxlength')">
+        {{ 'admin.oauth2.client-title-max-length' | translate }}
+      </mat-error>
     </mat-form-field>
   </div>
   <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
@@ -67,7 +70,7 @@
       </mat-error>
     </mat-form-field>
   </div>
-  <mat-expansion-panel class="configuration-panel mat-elevation-z0" [expanded]="">
+  <mat-expansion-panel class="configuration-panel mat-elevation-z0" [expanded]="advancedExpanded">
     <mat-expansion-panel-header>
       <mat-panel-title fxLayoutAlign="start center" translate>
         admin.oauth2.advanced-settings
@@ -162,7 +165,7 @@
           <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
             <mat-form-field class="flex">
               <mat-label translate>admin.oauth2.scope</mat-label>
-              <mat-chip-grid #scopeList [disabled]="!this.createNewDialog && !(this.isEdit || this.isAdd)">
+              <mat-chip-grid #scopeList required [disabled]="!this.createNewDialog && !(this.isEdit || this.isAdd)">
                 <mat-chip-row *ngFor="let scope of entityForm.get('scope').value; let k = index; trackBy: trackByParams"
                               removable (removed)="removeScope(k, entityForm)">
                   {{scope}}

@@ -23,6 +23,13 @@
     display: flex;
     flex-direction: column;
     gap: 16px;
+    max-height: 70vh;
+  }
+
+  .dialog-mode {
+    .configuration-block {
+      max-height: 60vh;
+    }
   }
 
   .mat-toolbar {
@@ -60,15 +67,6 @@
     .command-container {
       width: 100%;
     }
-  }
-
-  .actions {
-    grid-row: 3;
-    padding: 8px;
-    display: flex;
-    gap: 8px;
-    justify-content: flex-end;
-    flex: 1;
   }
 
   mat-form-field {
