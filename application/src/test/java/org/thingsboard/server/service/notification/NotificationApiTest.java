@@ -85,6 +85,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
+import org.thingsboard.server.service.notification.channels.TeamsMessage;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
 import java.util.ArrayList;
@@ -803,17 +804,17 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(preview.getRecipientsCountByTarget().get(target.getName())).isEqualTo(1);
         assertThat(preview.getRecipientsPreview()).containsOnly(targetConfig.getChannelName());
 
-        var messageCaptor = ArgumentCaptor.forClass(MicrosoftTeamsNotificationChannel.Message.class);
+        ArgumentCaptor<TeamsMessage> messageCaptor = ArgumentCaptor.forClass(TeamsMessage.class);
         notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
         verify(restTemplate, timeout(20000)).postForEntity(eq(webhookUrl), messageCaptor.capture(), any());
 
-        var message = messageCaptor.getValue();
+        TeamsMessage message = messageCaptor.getValue();
         String expectedParams = "My channel - Device";
-        assertThat(message.getThemeColor()).isEqualTo(template.getThemeColor());
-        assertThat(message.getSections().get(0).getActivityTitle()).isEqualTo("Subject: " + expectedParams);
-        assertThat(message.getSections().get(0).getActivitySubtitle()).isEqualTo("Body: " + expectedParams);
-        assertThat(message.getPotentialAction().get(0).getName()).isEqualTo("Button: " + expectedParams);
-        assertThat(message.getPotentialAction().get(0).getTargets().get(0).getUri()).isEqualTo("https://" + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getBackgroundImage().getUrl()).isNotEmpty();
+        assertThat(message.getAttachments().get(0).getContent().getTextBlocks().get(0).getText()).isEqualTo("Subject: " + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getTextBlocks().get(1).getText()).isEqualTo("Body: " + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getActions().get(0).getTitle()).isEqualTo("Button: " + expectedParams);
+        assertThat(message.getAttachments().get(0).getContent().getActions().get(0).getUrl()).isEqualTo("https://" + expectedParams);
     }
 
     @Test

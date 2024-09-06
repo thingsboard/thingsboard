@@ -15,16 +15,15 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
-import com.fasterxml.jackson.annotation.JsonInclude;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Strings;
-import lombok.Data;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.codec.binary.Base64;
 import org.apache.commons.lang3.StringUtils;
 import org.springframework.boot.web.client.RestTemplateBuilder;
+import org.springframework.http.HttpEntity;
+import org.springframework.http.HttpHeaders;
+import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
@@ -37,6 +36,7 @@ import org.thingsboard.server.common.data.notification.template.MicrosoftTeamsDe
 import org.thingsboard.server.service.notification.NotificationProcessingContext;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
+import java.net.URI;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -56,17 +56,39 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
-        Message message = new Message();
-        message.setThemeColor(Strings.emptyToNull(processedTemplate.getThemeColor()));
+        TeamsMessage teamsMessage = new TeamsMessage();
+        TeamsMessage.Attachment attachment = new TeamsMessage.Attachment();
+        teamsMessage.setAttachments(List.of(attachment));
+        TeamsMessage.AdaptiveCard adaptiveCard = new TeamsMessage.AdaptiveCard();
+        attachment.setContent(adaptiveCard);
+        TeamsMessage.BackgroundImage backgroundImage = new TeamsMessage.BackgroundImage(processedTemplate.getThemeColor());
+        adaptiveCard.setBackgroundImage(backgroundImage);
+
         if (StringUtils.isEmpty(processedTemplate.getSubject())) {
-            message.setText(processedTemplate.getBody());
+            TeamsMessage.TextBlock textBlock = new TeamsMessage.TextBlock();
+            textBlock.setText(processedTemplate.getBody());
+            textBlock.setWeight("Normal");
+            textBlock.setSize("Medium");
+            textBlock.setColor(processedTemplate.getThemeColor());
+            adaptiveCard.getTextBlocks().add(textBlock);
         } else {
-            message.setSummary(processedTemplate.getSubject());
-            Message.Section section = new Message.Section();
-            section.setActivityTitle(processedTemplate.getSubject());
-            section.setActivitySubtitle(processedTemplate.getBody());
-            message.setSections(List.of(section));
+            TeamsMessage.TextBlock subjectTextBlock = new TeamsMessage.TextBlock();
+            subjectTextBlock.setText(processedTemplate.getSubject());
+            subjectTextBlock.setWeight("Bolder");
+            subjectTextBlock.setSize("Large");
+            subjectTextBlock.setColor(processedTemplate.getThemeColor());
+
+            adaptiveCard.getTextBlocks().add(subjectTextBlock);
+
+            TeamsMessage.TextBlock bodyTextBlock = new TeamsMessage.TextBlock();
+            bodyTextBlock.setText(processedTemplate.getBody());
+            bodyTextBlock.setWeight("Lighter");
+            bodyTextBlock.setSize("Medium");
+            bodyTextBlock.setColor(processedTemplate.getThemeColor());
+
+            adaptiveCard.getTextBlocks().add(bodyTextBlock);
         }
+
         var button = processedTemplate.getButton();
         if (button != null && button.isEnabled()) {
             String uri;
@@ -100,16 +122,17 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
                 uri = button.getLink();
             }
             if (StringUtils.isNotBlank(uri) && button.getText() != null) {
-                Message.ActionCard actionCard = new Message.ActionCard();
-                actionCard.setType("OpenUri");
-                actionCard.setName(button.getText());
-                var target = new Message.ActionCard.Target("default", uri);
-                actionCard.setTargets(List.of(target));
-                message.setPotentialAction(List.of(actionCard));
+                TeamsMessage.ActionOpenUrl actionOpenUrl = new TeamsMessage.ActionOpenUrl();
+                actionOpenUrl.setTitle(button.getText());
+                actionOpenUrl.setUrl(uri);
+                adaptiveCard.getActions().add(actionOpenUrl);
             }
         }
 
-        restTemplate.postForEntity(targetConfig.getWebhookUrl(), message, String.class);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsMessage), headers);
+        restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
     }
 
     @Override
@@ -119,76 +142,6 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
     @Override
     public NotificationDeliveryMethod getDeliveryMethod() {
         return NotificationDeliveryMethod.MICROSOFT_TEAMS;
-    }
-
-    @Data
-    public static class Message {
-        @JsonProperty("@type")
-        private final String type = "MessageCard";
-        @JsonProperty("@context")
-        private final String context = "http://schema.org/extensions";
-        private String themeColor;
-        private String summary;
-        private String text;
-        private List<Section> sections;
-        private List<ActionCard> potentialAction;
-
-        @Data
-        public static class Section {
-            private String activityTitle;
-            private String activitySubtitle;
-            private String activityImage;
-            private List<Fact> facts;
-            private boolean markdown;
-
-            @Data
-            public static class Fact {
-                private final String name;
-                private final String value;
-            }
-        }
-
-        @Data
-        @JsonInclude(JsonInclude.Include.NON_NULL)
-        public static class ActionCard {
-            @JsonProperty("@type")
-            private String type; // ActionCard, OpenUri
-            private String name;
-            private List<Input> inputs; // for ActionCard
-            private List<Action> actions; // for ActionCard
-            private List<Target> targets;
-
-            @Data
-            public static class Input {
-                @JsonProperty("@type")
-                private String type; // TextInput, DateInput, MultichoiceInput
-                private String id;
-                private boolean isMultiple;
-                private String title;
-                private boolean isMultiSelect;
-
-                @Data
-                public static class Choice {
-                    private final String display;
-                    private final String value;
-                }
-            }
-
-            @Data
-            public static class Action {
-                @JsonProperty("@type")
-                private final String type; // HttpPOST
-                private final String name;
-                private final String target; // url
-            }
-
-            @Data
-            public static class Target {
-                private final String os;
-                private final String uri;
-            }
-        }
-
     }
 
 }
