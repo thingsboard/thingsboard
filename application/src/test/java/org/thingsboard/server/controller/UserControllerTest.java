@@ -17,6 +17,7 @@ package org.thingsboard.server.controller;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.LongNode;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.After;
 import org.junit.Assert;
@@ -67,6 +68,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.dao.model.ModelConstants.SYSTEM_TENANT;
+import static org.thingsboard.server.dao.user.UserServiceImpl.LAST_LOGIN_TS;
 
 @ContextConfiguration(classes = {UserControllerTest.Config.class})
 @DaoSqlTest
@@ -157,6 +159,39 @@ public class UserControllerTest extends AbstractControllerTest {
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(foundUser, foundUser.getId(), foundUser.getId(),
                 SYSTEM_TENANT, customerNUULId, null, SYS_ADMIN_EMAIL,
                 ActionType.DELETED, ActionType.DELETED, SYSTEM_TENANT.getId().toString());
+    }
+
+    @Test
+    public void testSaveOrUpdateUserLastLoginTs() throws Exception {
+        loginSysAdmin();
+
+        User user = createTenantAdminUser();
+        String email = user.getEmail();
+        user.setAdditionalInfoField(LAST_LOGIN_TS, new LongNode(System.currentTimeMillis()));
+
+        User savedUser = doPost("/api/user", user, User.class);
+        Assert.assertNotNull(savedUser);
+        Assert.assertNotNull(savedUser.getAdditionalInfo());
+        Assert.assertFalse(savedUser.getAdditionalInfo().has(LAST_LOGIN_TS));
+
+        resetTokens();
+        JsonNode activateRequest = getActivateRequest("testPassword");
+        JsonNode tokenInfo = readResponse(doPost("/api/noauth/activate", activateRequest).andExpect(status().isOk()), JsonNode.class);
+        validateAndSetJwtToken(tokenInfo, user.getEmail());
+
+        login(email, "testPassword");
+        loginSysAdmin();
+        User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
+        Assert.assertTrue(foundUser.getAdditionalInfo().has(LAST_LOGIN_TS));
+
+        var lastLoginTs = foundUser.getAdditionalInfo().get(LAST_LOGIN_TS);
+
+        foundUser.setAdditionalInfoField(LAST_LOGIN_TS, new LongNode(0L));
+        savedUser = doPost("/api/user", foundUser, User.class);
+        Assert.assertEquals(lastLoginTs, savedUser.getAdditionalInfo().get(LAST_LOGIN_TS));
+
+        doDelete("/api/user/" + savedUser.getId().getId().toString())
+                .andExpect(status().isOk());
     }
 
     @Test

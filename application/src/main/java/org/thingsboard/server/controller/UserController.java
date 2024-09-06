@@ -109,6 +109,7 @@ import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARA
 import static org.thingsboard.server.controller.ControllerConstants.USER_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.dao.entity.BaseEntityService.NULL_CUSTOMER_ID;
+import static org.thingsboard.server.dao.user.UserServiceImpl.LAST_LOGIN_TS;
 
 @RequiredArgsConstructor
 @RestController
@@ -212,13 +213,28 @@ public class UserController extends BaseController {
     public User saveUser(
             @Parameter(description = "A JSON value representing the User.", required = true)
             @RequestBody User user,
-            @Parameter(description = "Send activation email (or use activation link)" , schema = @Schema(defaultValue = "true"))
+            @Parameter(description = "Send activation email (or use activation link)", schema = @Schema(defaultValue = "true"))
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail, HttpServletRequest request) throws ThingsboardException {
         if (!Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
             user.setTenantId(getCurrentUser().getTenantId());
         }
         checkEntity(user.getId(), user, Resource.USER);
+        checkLastLoginTs(user);
         return tbUserService.save(getTenantId(), getCurrentUser().getCustomerId(), user, sendActivationMail, request, getCurrentUser());
+    }
+
+    private void checkLastLoginTs(User user) throws ThingsboardException {
+        if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
+            additionalInfo.remove(LAST_LOGIN_TS);
+        }
+        UserId userId = user.getId();
+        if (userId == null) {
+            return;
+        }
+        User foundUser = userService.findUserById(getTenantId(), userId);
+        if (foundUser.getAdditionalInfo() instanceof ObjectNode additionalInfo && additionalInfo.has(LAST_LOGIN_TS)) {
+            user.setAdditionalInfoField(LAST_LOGIN_TS, additionalInfo.get(LAST_LOGIN_TS));
+        }
     }
 
     @ApiOperation(value = "Send or re-send the activation email",
@@ -411,7 +427,7 @@ public class UserController extends BaseController {
     public void setUserCredentialsEnabled(
             @Parameter(description = USER_ID_PARAM_DESCRIPTION)
             @PathVariable(USER_ID) String strUserId,
-            @Parameter(description = "Enable (\"true\") or disable (\"false\") the credentials." , schema = @Schema(defaultValue = "true"))
+            @Parameter(description = "Enable (\"true\") or disable (\"false\") the credentials.", schema = @Schema(defaultValue = "true"))
             @RequestParam(required = false, defaultValue = "true") boolean userCredentialsEnabled) throws ThingsboardException {
         checkParameter(USER_ID, strUserId);
         UserId userId = new UserId(toUUID(strUserId));

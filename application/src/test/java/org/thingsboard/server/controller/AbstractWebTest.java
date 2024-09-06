@@ -534,7 +534,7 @@ public abstract class AbstractWebTest extends AbstractInMemoryStorageTest {
         return doGet("/api/user/" + savedUser.getId(), User.class);
     }
 
-    private JsonNode getActivateRequest(String password) throws Exception {
+    protected JsonNode getActivateRequest(String password) throws Exception {
         doGet("/api/noauth/activate?activateToken={activateToken}", this.currentActivateToken)
                 .andExpect(status().isSeeOther())
                 .andExpect(header().string(HttpHeaders.LOCATION, "/login/createPassword?activateToken=" + this.currentActivateToken));
