@@ -81,7 +81,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .limit(cmd.getLimit())
                 .notificationTypes(cmd.getTypes())
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
 
         fetchUnreadNotifications(subscription);
         sendUpdate(sessionRef.getSessionId(), subscription.createFullUpdate());
@@ -99,7 +99,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsCountSubscriptionUpdate)
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
 
         fetchUnreadNotificationsCount(subscription);
         sendUpdate(sessionRef.getSessionId(), subscription.createUpdate());
@@ -249,7 +249,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     @Override
     public void handleUnsubCmd(WebSocketSessionRef sessionRef, UnsubscribeCmd cmd) {
-        localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), cmd.getCmdId());
+        localSubscriptionService.cancelSubscription(sessionRef.getTenantId(), sessionRef.getSessionId(), cmd.getCmdId());
     }
 
     private void sendUpdate(String sessionId, CmdUpdate update) {

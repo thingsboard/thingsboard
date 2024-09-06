@@ -176,7 +176,7 @@ public class EntityViewControllerTest extends AbstractControllerTest {
 
         savedView.setName("New test entity view");
 
-        doPost("/api/entityView", savedView, EntityView.class);
+        savedView = doPost("/api/entityView", savedView, EntityView.class);
         foundEntityView = doGet("/api/entityView/" + savedView.getId().getId().toString(), EntityView.class);
 
         assertEquals(savedView, foundEntityView);

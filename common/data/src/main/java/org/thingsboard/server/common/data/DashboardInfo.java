@@ -17,19 +17,21 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import lombok.Getter;
+import lombok.Setter;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
-import jakarta.validation.Valid;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
 
 @Schema
-public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle, HasImage {
+public class DashboardInfo extends BaseData<DashboardId> implements HasName, HasTenantId, HasTitle, HasImage, HasVersion {
 
     private static final long serialVersionUID = -9080404114760433799L;
 
@@ -42,6 +44,9 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
     private Set<ShortCustomerInfo> assignedCustomers;
     private boolean mobileHide;
     private Integer mobileOrder;
+
+    @Getter @Setter
+    private Long version;
 
     public DashboardInfo() {
         super();
@@ -59,6 +64,7 @@ public class DashboardInfo extends BaseData<DashboardId> implements HasName, Has
         this.assignedCustomers = dashboardInfo.getAssignedCustomers();
         this.mobileHide = dashboardInfo.isMobileHide();
         this.mobileOrder = dashboardInfo.getMobileOrder();
+        this.version = dashboardInfo.getVersion();
     }
 
     @Schema(description = "JSON object with the dashboard Id. " +

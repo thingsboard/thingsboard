@@ -15,13 +15,13 @@
 ///
 
 import { AfterViewInit, Component, forwardRef, Input, OnChanges, OnInit, SimpleChanges } from '@angular/core';
-import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
+import { ControlValueAccessor, NG_VALUE_ACCESSOR, UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
 import { AliasEntityType, EntityType, entityTypeTranslations } from '@app/shared/models/entity-type.models';
 import { EntityService } from '@core/http/entity.service';
-import { coerceBooleanProperty } from '@angular/cdk/coercion';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-entity-type-select',
@@ -48,28 +48,21 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   @Input()
   filterAllowedEntityTypes = true;
 
-  private showLabelValue: boolean;
-  get showLabel(): boolean {
-    return this.showLabelValue;
-  }
   @Input()
-  set showLabel(value: boolean) {
-    this.showLabelValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  showLabel: boolean;
 
-  private requiredValue: boolean;
-  get required(): boolean {
-    return this.requiredValue;
-  }
   @Input()
-  set required(value: boolean) {
-    this.requiredValue = coerceBooleanProperty(value);
-  }
+  @coerceBoolean()
+  required: boolean;
 
   @Input()
   disabled: boolean;
 
-  entityTypes: Array<EntityType | AliasEntityType>;
+  @Input()
+  additionEntityTypes: {[key in string]: string} = {};
+
+  entityTypes: Array<EntityType | AliasEntityType | string>;
 
   private propagateChange = (v: any) => { };
 
@@ -93,6 +86,10 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
     this.entityTypes = this.filterAllowedEntityTypes
       ? this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes)
       : this.allowedEntityTypes;
+    const additionEntityTypes = Object.keys(this.additionEntityTypes);
+    if (additionEntityTypes.length > 0) {
+      this.entityTypes.push(...additionEntityTypes);
+    }
     this.entityTypeFormGroup.get('entityType').valueChanges.subscribe(
       (value) => {
         let modelValue;
@@ -113,6 +110,10 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
         if (propName === 'allowedEntityTypes') {
           this.entityTypes = this.filterAllowedEntityTypes ?
             this.entityService.prepareAllowedEntityTypesList(this.allowedEntityTypes, this.useAliasEntityTypes) : this.allowedEntityTypes;
+          const additionEntityTypes = Object.keys(this.additionEntityTypes);
+          if (additionEntityTypes.length > 0) {
+            this.entityTypes.push(...additionEntityTypes);
+          }
           const currentEntityType: EntityType | AliasEntityType = this.entityTypeFormGroup.get('entityType').value;
           if (currentEntityType && !this.entityTypes.includes(currentEntityType)) {
             this.entityTypeFormGroup.get('entityType').patchValue(null, {emitEvent: true});
@@ -152,7 +153,9 @@ export class EntityTypeSelectComponent implements ControlValueAccessor, OnInit, 
   }
 
   displayEntityTypeFn(entityType?: EntityType | AliasEntityType | null): string | undefined {
-    if (entityType) {
+    if (this.additionEntityTypes[entityType]) {
+      return this.additionEntityTypes[entityType];
+    } else if (entityType) {
       return this.translate.instant(entityTypeTranslations.get(entityType as EntityType).type);
     } else {
       return '';

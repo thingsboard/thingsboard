@@ -17,12 +17,14 @@ package org.thingsboard.server.common.data.edge;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
+import lombok.Getter;
 import lombok.Setter;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseDataWithAdditionalInfo;
 import org.thingsboard.server.common.data.HasCustomerId;
 import org.thingsboard.server.common.data.HasLabel;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
@@ -34,7 +36,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @EqualsAndHashCode(callSuper = true)
 @ToString
 @Setter
-public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel, HasTenantId, HasCustomerId {
+public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel, HasTenantId, HasCustomerId, HasVersion {
 
     private static final long serialVersionUID = 4934987555236873728L;
 
@@ -57,6 +59,9 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
     @Length(fieldName = "secret")
     private String secret;
 
+    @Getter
+    private Long version;
+
     public Edge() {
         super();
     }
@@ -70,22 +75,24 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
+        this.name = edge.getName();
         this.type = edge.getType();
         this.label = edge.getLabel();
-        this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
+        this.version = edge.getVersion();
     }
 
     public void update(Edge edge) {
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
+        this.name = edge.getName();
         this.type = edge.getType();
         this.label = edge.getLabel();
-        this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
+        this.version = edge.getVersion();
     }
 
     @Schema(description = "JSON object with the Edge Id. " +

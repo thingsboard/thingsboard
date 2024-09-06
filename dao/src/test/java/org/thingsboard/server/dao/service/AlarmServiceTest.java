@@ -340,7 +340,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
-        Assert.assertTrue(relationService.saveRelation(tenantId, relation));
+        Assert.assertNotNull(relationService.saveRelation(tenantId, relation));
 
         long ts = System.currentTimeMillis();
         AlarmApiCallResult result = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()
@@ -877,7 +877,7 @@ public class AlarmServiceTest extends AbstractServiceTest {
 
         EntityRelation relation = new EntityRelation(parentId, childId, EntityRelation.CONTAINS_TYPE);
 
-        Assert.assertTrue(relationService.saveRelation(tenantId, relation));
+        Assert.assertNotNull(relationService.saveRelation(tenantId, relation));
 
         long ts = System.currentTimeMillis();
         AlarmApiCallResult result = alarmService.createAlarm(AlarmCreateOrUpdateActiveRequest.builder()

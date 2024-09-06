@@ -94,4 +94,5 @@ public class DefaultEdgeInstallInstructionsService extends BaseEdgeInstallUpgrad
     protected String getBaseDirName() {
         return INSTALL_DIR;
     }
+
 }

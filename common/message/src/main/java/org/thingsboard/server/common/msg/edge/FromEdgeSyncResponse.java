@@ -25,15 +25,17 @@ import java.util.UUID;
 @Data
 public class FromEdgeSyncResponse implements EdgeSessionMsg {
 
-    private static final long serialVersionUID = -6360890886315347486L;
+    private static final long serialVersionUID = -6360890556315667486L;
 
     private final UUID id;
     private final TenantId tenantId;
     private final EdgeId edgeId;
     private final boolean success;
+    private final String error;
 
     @Override
     public MsgType getMsgType() {
         return MsgType.EDGE_SYNC_RESPONSE_FROM_EDGE_SESSION_MSG;
     }
+
 }

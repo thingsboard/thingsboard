@@ -56,7 +56,7 @@ import {
   GatewayServiceRPCConnectorTemplatesComponent
 } from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
-import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/configuration/gateway-configuration.component';
 import {
   GatewayRemoteConfigurationDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
@@ -141,6 +141,16 @@ import {
 import {
   TypeValuePanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
+import {
+  ModbusRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-rpc-parameters/modbus-rpc-parameters.component';
+import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
+import {
+  GatewayBasicConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/basic/gateway-basic-configuration.component';
+import {
+    GatewayAdvancedConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/advanced/gateway-advanced-configuration.component';
 
 @NgModule({
   declarations: [
@@ -208,7 +218,8 @@ import {
     LabelCardWidgetComponent,
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
-    NotificationTypeFilterPanelComponent
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
   ],
   imports: [
     CommonModule,
@@ -227,6 +238,9 @@ import {
     KeyValueIsNotEmptyPipe,
     ModbusBasicConfigComponent,
     EllipsisChipListDirective,
+    ModbusRpcParametersComponent,
+    GatewayBasicConfigurationComponent,
+    GatewayAdvancedConfigurationComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,
@@ -292,7 +306,8 @@ import {
     LabelCardWidgetComponent,
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
-    NotificationTypeFilterPanelComponent
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
   ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}

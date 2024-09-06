@@ -29,7 +29,7 @@ import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 public class RuleChainExportData extends EntityExportData<RuleChain> {
 
     @JsonProperty(index = 3)
-    @JsonIgnoreProperties("ruleChainId")
+    @JsonIgnoreProperties({"ruleChainId", "version"})
     private RuleChainMetaData metaData;
 
 }

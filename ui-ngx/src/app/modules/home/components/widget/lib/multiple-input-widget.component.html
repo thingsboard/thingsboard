@@ -123,8 +123,8 @@
             <mat-label>{{key.label}}</mat-label>
             <mat-select formControlName="{{key.formId}}"
                         [required]="key.settings.required"
-                        (focus)="key.isFocused = true;"
-                        (selectionChange)="key.isFocused = false; inputChanged(source, key)">
+                        (openedChange)="key.isFocused = $event"
+                        (selectionChange)="inputChanged(source, key)">
               <mat-option *ngFor="let option of key.settings.selectOptions"
                           [value]="option.value"
                           [disabled]="key.settings.isEditable === 'readonly'">

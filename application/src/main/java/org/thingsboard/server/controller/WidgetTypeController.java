@@ -19,7 +19,6 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.ArraySchema;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -42,8 +41,10 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.resource.ImageService;
@@ -84,6 +85,7 @@ public class WidgetTypeController extends AutoCommitController {
     private static final String WIDGET_TYPE_INFO_DESCRIPTION = "Widget Type Info is a lightweight object that represents Widget Type but does not contain the heavyweight widget descriptor JSON";
     private static final String TENANT_ONLY_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether only tenant widget types should be returned";
     private static final String FULL_SEARCH_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether search widgets by description not only by name";
+    private static final String SCADA_FIRST_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to fetch SCADA symbol widgets first";
     private static final String DEPRECATED_FILTER_PARAM_DESCRIPTION = "Optional string parameter indicating whether to include deprecated widgets";
     private static final String UPDATE_EXISTING_BY_FQN_PARAM_DESCRIPTION = "Optional boolean parameter indicating whether to update existing widget type by FQN if present instead of creating new one";
     private static final String WIDGET_TYPE_ARRAY_DESCRIPTION = "A list of string values separated by comma ',' representing one of the widget type value";
@@ -187,18 +189,26 @@ public class WidgetTypeController extends AutoCommitController {
             @Parameter(description = DEPRECATED_FILTER_PARAM_DESCRIPTION, schema = @Schema(allowableValues = {"ALL", "ACTUAL", "DEPRECATED"}))
             @RequestParam(required = false) String deprecatedFilter,
             @Parameter(description = WIDGET_TYPE_ARRAY_DESCRIPTION, array = @ArraySchema(schema = @Schema(type = "string", allowableValues = {"timeseries", "latest", "control", "alarm", "static"})))
-            @RequestParam(required = false) String[] widgetTypeList) throws ThingsboardException {
+            @RequestParam(required = false) String[] widgetTypeList,
+            @Parameter(description = SCADA_FIRST_PARAM_DESCRIPTION)
+            @RequestParam(required = false) Boolean scadaFirst) throws ThingsboardException {
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         List<String> widgetTypes = widgetTypeList != null ? Arrays.asList(widgetTypeList) : Collections.emptyList();
-        boolean fullSearchBool = fullSearch != null && fullSearch;
         DeprecatedFilter widgetTypeDeprecatedFilter = StringUtils.isNotEmpty(deprecatedFilter) ? DeprecatedFilter.valueOf(deprecatedFilter) : DeprecatedFilter.ALL;
+        WidgetTypeFilter widgetTypeFilter = WidgetTypeFilter.builder()
+                .tenantId(getTenantId())
+                .widgetTypes(widgetTypes)
+                .deprecatedFilter(widgetTypeDeprecatedFilter)
+                .fullSearch(fullSearch != null && fullSearch)
+                .scadaFirst(scadaFirst != null && scadaFirst)
+                .build();
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
-            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(getTenantId(), fullSearchBool, widgetTypeDeprecatedFilter, widgetTypes, pageLink));
+            return checkNotNull(widgetTypeService.findSystemWidgetTypesByPageLink(widgetTypeFilter, pageLink));
         } else {
             if (tenantOnly != null && tenantOnly) {
-                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearchBool, widgetTypeDeprecatedFilter, widgetTypes, pageLink));
+                return checkNotNull(widgetTypeService.findTenantWidgetTypesByTenantIdAndPageLink(widgetTypeFilter, pageLink));
             } else {
-                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(getTenantId(), fullSearchBool, widgetTypeDeprecatedFilter, widgetTypes, pageLink));
+                return checkNotNull(widgetTypeService.findAllTenantWidgetTypesByTenantIdAndPageLink(widgetTypeFilter, pageLink));
             }
         }
     }

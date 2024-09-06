@@ -82,8 +82,6 @@ import java.util.UUID;
 @Slf4j
 public class DefaultEdgeRequestsService implements EdgeRequestsService {
 
-    private static final int DEFAULT_PAGE_SIZE = 1000;
-
     @Autowired
     private EdgeEventService edgeEventService;
 
@@ -115,10 +113,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
         if (ruleChainMetadataRequestMsg.getRuleChainIdMSB() == 0 || ruleChainMetadataRequestMsg.getRuleChainIdLSB() == 0) {
             return Futures.immediateFuture(null);
         }
-        RuleChainId ruleChainId =
-                new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
-        return saveEdgeEvent(tenantId, edge.getId(),
-                EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
+        RuleChainId ruleChainId = new RuleChainId(new UUID(ruleChainMetadataRequestMsg.getRuleChainIdMSB(), ruleChainMetadataRequestMsg.getRuleChainIdLSB()));
+        return saveEdgeEvent(tenantId, edge.getId(), EdgeEventType.RULE_CHAIN_METADATA, EdgeEventActionType.ADDED, ruleChainId, null);
     }
 
     @Override
@@ -142,8 +138,10 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
     private ListenableFuture<Void> processEntityAttributesAndAddToEdgeQueue(TenantId tenantId, EntityId entityId, Edge edge,
                                                                             EdgeEventType entityType, String scope, List<AttributeKvEntry> ssAttributes,
                                                                             AttributesRequestMsg attributesRequestMsg) {
+        Map<String, Object> entityData = null;
+        ObjectNode attributes = null;
+        ListenableFuture<Void> future;
         try {
-            ListenableFuture<Void> future;
             if (ssAttributes == null || ssAttributes.isEmpty()) {
                 log.trace("[{}][{}] No attributes found for entity {} [{}]", tenantId,
                         edge.getName(),
@@ -151,8 +149,8 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                         entityId.getId());
                 future = Futures.immediateFuture(null);
             } else {
-                Map<String, Object> entityData = new HashMap<>();
-                ObjectNode attributes = JacksonUtil.newObjectNode();
+                entityData = new HashMap<>();
+                attributes = JacksonUtil.newObjectNode();
                 for (AttributeKvEntry attr : ssAttributes) {
                     if (DefaultDeviceStateService.PERSISTENT_ATTRIBUTES.contains(attr.getKey())
                             && !DefaultDeviceStateService.INACTIVITY_TIMEOUT.equals(attr.getKey())) {
@@ -170,7 +168,7 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
                         attributes.put(attr.getKey(), attr.getValueAsString());
                     }
                 }
-                if (attributes.size() > 0) {
+                if (!attributes.isEmpty()) {
                     entityData.put("kv", attributes);
                     entityData.put("scope", scope);
                     JsonNode body = JacksonUtil.valueToTree(entityData);
@@ -182,12 +180,13 @@ public class DefaultEdgeRequestsService implements EdgeRequestsService {
             }
             return Futures.transformAsync(future, v -> processLatestTimeseriesAndAddToEdgeQueue(tenantId, entityId, edge, entityType), dbCallbackExecutorService);
         } catch (Exception e) {
-            String errMsg = String.format("[%s][%s] Failed to save attribute updates to the edge [%s]", tenantId, edge.getId(), attributesRequestMsg);
+            String errMsg = String.format("[%s][%s] Failed to save attribute updates to the edge [%s], scope = %s, entityData = %s, attributes = %s",
+                    tenantId, edge.getId(), attributesRequestMsg, scope, entityData, attributes);
             log.error(errMsg, e);
             return Futures.immediateFailedFuture(new RuntimeException(errMsg, e));
         }
     }
-    
+
     private ListenableFuture<Void> processLatestTimeseriesAndAddToEdgeQueue(TenantId tenantId, EntityId entityId, Edge edge,
                                                                             EdgeEventType entityType) {
         ListenableFuture<List<TsKvEntry>> getAllLatestFuture = timeseriesService.findAllLatest(tenantId, entityId);

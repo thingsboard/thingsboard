@@ -36,6 +36,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleNodeState;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
@@ -52,6 +53,7 @@ import java.util.concurrent.TimeUnit;
         name = "device profile",
         customRelations = true,
         relationTypes = {"Alarm Created", "Alarm Updated", "Alarm Severity Updated", "Alarm Cleared", "Success", "Failure"},
+        version = 1,
         configClazz = TbDeviceProfileNodeConfiguration.class,
         nodeDescription = "Process device messages based on device profile settings",
         nodeDetails = "Create and clear alarms based on alarm rules defined in device profile. The output relation type is either " +
@@ -241,4 +243,25 @@ public class TbDeviceProfileNode implements TbNode {
             ctx.removeRuleNodeStateForEntity(deviceId);
         }
     }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                String persistAlarmRulesState = "persistAlarmRulesState";
+                String fetchAlarmRulesStateOnStart = "fetchAlarmRulesStateOnStart";
+                if (oldConfiguration.has(persistAlarmRulesState)) {
+                    if (!oldConfiguration.get(persistAlarmRulesState).asBoolean()) {
+                        hasChanges = true;
+                        ((ObjectNode) oldConfiguration).put(fetchAlarmRulesStateOnStart, false);
+                    }
+                }
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
+    }
+
 }

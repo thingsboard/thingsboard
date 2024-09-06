@@ -15,7 +15,6 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.google.common.collect.Sets;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.extern.slf4j.Slf4j;
@@ -34,9 +33,11 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import java.util.HashSet;
 import java.util.List;
 import java.util.NoSuchElementException;
+
+import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
 
 @Slf4j
 @RuleNode(
@@ -59,12 +60,6 @@ import java.util.NoSuchElementException;
 )
 public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOriginatorNodeConfiguration> {
 
-    private static final String CUSTOMER_SOURCE = "CUSTOMER";
-    private static final String TENANT_SOURCE = "TENANT";
-    private static final String RELATED_SOURCE = "RELATED";
-    private static final String ALARM_ORIGINATOR_SOURCE = "ALARM_ORIGINATOR";
-    private static final String ENTITY_SOURCE = "ENTITY";
-
     @Override
     protected TbChangeOriginatorNodeConfiguration loadNodeConfiguration(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         var config = TbNodeUtils.convert(configuration, TbChangeOriginatorNodeConfiguration.class);
@@ -85,15 +80,15 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
 
     private ListenableFuture<? extends EntityId> getNewOriginator(TbContext ctx, TbMsg msg) {
         switch (config.getOriginatorSource()) {
-            case CUSTOMER_SOURCE:
+            case CUSTOMER:
                 return EntitiesCustomerIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
-            case TENANT_SOURCE:
+            case TENANT:
                 return Futures.immediateFuture(ctx.getTenantId());
-            case RELATED_SOURCE:
+            case RELATED:
                 return EntitiesRelatedEntityIdAsyncLoader.findEntityAsync(ctx, msg.getOriginator(), config.getRelationsQuery());
-            case ALARM_ORIGINATOR_SOURCE:
+            case ALARM_ORIGINATOR:
                 return EntitiesAlarmOriginatorIdAsyncLoader.findEntityIdAsync(ctx, msg.getOriginator());
-            case ENTITY_SOURCE:
+            case ENTITY:
                 EntityType entityType = EntityType.valueOf(config.getEntityType());
                 String entityName = TbNodeUtils.processPattern(config.getEntityNamePattern(), msg);
                 try {
@@ -108,28 +103,22 @@ public class TbChangeOriginatorNode extends TbAbstractTransformNode<TbChangeOrig
     }
 
     private void validateConfig(TbChangeOriginatorNodeConfiguration conf) {
-        HashSet<String> knownSources = Sets.newHashSet(CUSTOMER_SOURCE, TENANT_SOURCE, RELATED_SOURCE, ALARM_ORIGINATOR_SOURCE, ENTITY_SOURCE);
-        if (!knownSources.contains(conf.getOriginatorSource())) {
-            log.error("Unsupported source [{}] for TbChangeOriginatorNode", conf.getOriginatorSource());
-            throw new IllegalArgumentException("Unsupported source TbChangeOriginatorNode" + conf.getOriginatorSource());
+        if (conf.getOriginatorSource() == null) {
+            log.debug("Originator source should be specified.");
+            throw new IllegalArgumentException("Originator source should be specified.");
         }
-
-        if (conf.getOriginatorSource().equals(RELATED_SOURCE)) {
-            if (conf.getRelationsQuery() == null) {
-                log.error("Related source for TbChangeOriginatorNode should have relations query. Actual [{}]",
-                        conf.getRelationsQuery());
-                throw new IllegalArgumentException("Wrong config for RElated Source in TbChangeOriginatorNode" + conf.getOriginatorSource());
-            }
+        if (conf.getOriginatorSource().equals(RELATED) && conf.getRelationsQuery() == null) {
+            log.debug("Relations query should be specified if 'Related entity' source is selected.");
+            throw new IllegalArgumentException("Relations query should be specified if 'Related entity' source is selected.");
         }
-
-        if (conf.getOriginatorSource().equals(ENTITY_SOURCE)) {
+        if (conf.getOriginatorSource().equals(ENTITY)) {
             if (conf.getEntityType() == null) {
-                log.error("Entity type not specified for [{}]", ENTITY_SOURCE);
-                throw new IllegalArgumentException("Wrong config for [{}] in TbChangeOriginatorNode!" + ENTITY_SOURCE);
+                log.debug("Entity type should be specified if '{}' source is selected.", ENTITY);
+                throw new IllegalArgumentException("Entity type should be specified if 'Entity by name pattern' source is selected.");
             }
             if (StringUtils.isEmpty(conf.getEntityNamePattern())) {
-                log.error("EntityNamePattern not specified for type [{}]", conf.getEntityType());
-                throw new IllegalArgumentException("Wrong config for [{}] in TbChangeOriginatorNode!" + ENTITY_SOURCE);
+                log.debug("Name pattern should be specified if '{}' source is selected.", ENTITY);
+                throw new IllegalArgumentException("Name pattern should be specified if 'Entity by name pattern' source is selected.");
             }
             EntitiesByNameAndTypeLoader.checkEntityType(EntityType.valueOf(conf.getEntityType()));
         }

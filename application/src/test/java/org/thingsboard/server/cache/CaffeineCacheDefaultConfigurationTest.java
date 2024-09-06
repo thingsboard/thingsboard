@@ -41,12 +41,16 @@ public class CaffeineCacheDefaultConfigurationTest {
     @Test
     public void verifyTransactionAwareCacheManagerProxy() {
         assertThat(cacheSpecsMap.getSpecs()).as("specs").isNotNull();
-        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->assertThat(cacheSpecs).as("cache %s specs", name).isNotNull());
+        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs) -> assertThat(cacheSpecs).as("cache %s specs", name).isNotNull());
 
         SoftAssertions softly = new SoftAssertions();
-        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs)->{
+        cacheSpecsMap.getSpecs().forEach((name, cacheSpecs) -> {
             softly.assertThat(name).as("cache name").isNotEmpty();
-            softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
+            if (name.equals("edgeSessions")) {
+                softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isEqualTo(0);
+            } else {
+                softly.assertThat(cacheSpecs.getTimeToLiveInMinutes()).as("cache %s time to live", name).isGreaterThan(0);
+            }
             softly.assertThat(cacheSpecs.getMaxSize()).as("cache %s max size", name).isGreaterThan(0);
         });
         softly.assertAll();

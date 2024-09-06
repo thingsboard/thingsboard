@@ -67,6 +67,7 @@ import { ColorPickerModule } from '@iplab/ngx-color-picker';
 import { NgxHmCarouselModule } from 'ngx-hm-carousel';
 import { EditorModule, TINYMCE_SCRIPT_SRC } from '@tinymce/tinymce-angular';
 import { UserMenuComponent } from '@shared/components/user-menu.component';
+import { TruncateWithTooltipDirective } from '@shared/directives/truncate-with-tooltip.directive';
 import { NospacePipe } from '@shared/pipe/nospace.pipe';
 import { TranslateModule } from '@ngx-translate/core';
 import { TbCheckboxComponent } from '@shared/components/tb-checkbox.component';
@@ -219,6 +220,10 @@ import { ImageGalleryDialogComponent } from '@shared/components/image/image-gall
 import { RuleChainSelectPanelComponent } from '@shared/components/rule-chain/rule-chain-select-panel.component';
 import { WidgetButtonComponent } from '@shared/components/button/widget-button.component';
 import { HexInputComponent } from '@shared/components/color-picker/hex-input.component';
+import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
+import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol-input.component';
+import { CountryAutocompleteComponent } from '@shared/components/country-autocomplete.component';
+import { CountryData } from '@shared/models/country.models';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -237,6 +242,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     SafePipe,
     ShortNumberPipe,
     ImagePipe,
+    CustomTranslatePipe,
     {
       provide: FlowInjectionToken,
       useValue: Flow
@@ -274,7 +280,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         disableTooltipInteractivity: true
       }
     },
-    TbBreakPointsProvider
+    TbBreakPointsProvider,
+    CountryData
   ],
   declarations: [
     FooterComponent,
@@ -353,6 +360,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NavTreeComponent,
     LedLightComponent,
     MarkdownEditorComponent,
+    TruncateWithTooltipDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -362,6 +370,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     ImagePipe,
+    CustomTranslatePipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
@@ -377,6 +386,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
+    CountryAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
@@ -418,7 +428,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
     WidgetButtonComponent,
-    HexInputComponent
+    HexInputComponent,
+    ScadaSymbolInputComponent
   ],
   imports: [
     CommonModule,
@@ -606,6 +617,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     NavTreeComponent,
     LedLightComponent,
     MarkdownEditorComponent,
+    TruncateWithTooltipDirective,
     NospacePipe,
     MillisecondsToTimeStringPipe,
     EnumToArrayPipe,
@@ -616,6 +628,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     FileSizePipe,
     DateAgoPipe,
     ImagePipe,
+    CustomTranslatePipe,
     SafePipe,
     ShortNumberPipe,
     SelectableColumnsPipe,
@@ -631,6 +644,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
+    CountryAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
@@ -671,7 +685,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     MultipleGalleryImageInputComponent,
     EmbedImageDialogComponent,
     ImageGalleryDialogComponent,
-    WidgetButtonComponent
+    WidgetButtonComponent,
+    ScadaSymbolInputComponent
   ]
 })
 export class SharedModule { }
