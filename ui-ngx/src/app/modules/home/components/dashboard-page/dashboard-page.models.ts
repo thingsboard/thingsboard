@@ -57,6 +57,8 @@ export interface IDashboardController {
   dashboardCtx: DashboardContext;
   dashboardContainer: ElementRef;
   elRef: ElementRef;
+  matDrawerContent: ElementRef;
+  isFullscreen: boolean;
   openRightLayout();
   openDashboardState(stateId: string, openRightLayout: boolean);
   addWidget($event: Event, layoutCtx: DashboardPageLayoutContext);

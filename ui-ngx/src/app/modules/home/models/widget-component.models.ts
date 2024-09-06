@@ -180,8 +180,12 @@ export class WidgetContext {
     }
   }
 
-  get dashboardPageElement(): HTMLElement {
-    return this.dashboard?.stateController?.dashboardCtrl?.elRef?.nativeElement;
+  get dashboardDrawerContentElement(): HTMLElement {
+    return this.dashboard?.stateController?.dashboardCtrl?.matDrawerContent?.nativeElement;
+  }
+
+  get dashboardIsFullscreenMode(): boolean {
+    return this.dashboard?.stateController?.dashboardCtrl?.isFullscreen;
   }
 
   authService: AuthService;

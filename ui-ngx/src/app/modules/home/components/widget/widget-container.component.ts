@@ -148,9 +148,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
     $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
-    const dashboardElement = this.widget.widgetContext.dashboardPageElement;
-    if (dashboardElement) {
-      this.initEditWidgetActionTooltip(dashboardElement);
+    const dashboardDrawerElement = this.widget.widgetContext.dashboardDrawerContentElement;
+    if (dashboardDrawerElement) {
+      this.initEditWidgetActionTooltip(dashboardDrawerElement);
     }
   }
 
@@ -279,7 +279,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
           const clientRect = helper.origin.getBoundingClientRect();
           const container = parent.getBoundingClientRect();
           position.coord.left = clientRect.right - position.size.width - container.left;
-          position.coord.top = position.coord.top - container.top;
+          if (!this.widget.widgetContext.dashboardIsFullscreenMode) {
+            position.coord.top = position.coord.top - container.top;
+          }
           position.target = clientRect.right;
           return position;
         },

@@ -350,6 +350,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @ViewChild('dashboardWidgetSelect') dashboardWidgetSelectComponent: DashboardWidgetSelectComponent;
 
+  @ViewChild('matDrawerContent', {static: true, read: ElementRef}) matDrawerContent: ElementRef;
+
   private changeMobileSize = new Subject<boolean>();
 
   constructor(protected store: Store<AppState>,
@@ -1251,7 +1253,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.isEditingWidgetClosed = true;
       this.isAddingWidgetClosed = false;
     }
-    this.resetHighlight();
     this.isAddingWidget = true;
     this.addingLayoutCtx = layoutCtx;
   }
