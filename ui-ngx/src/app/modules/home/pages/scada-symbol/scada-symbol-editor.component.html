@@ -15,13 +15,19 @@
     limitations under the License.
 
 -->
-<div class="tb-scada-symbol-editor-shape" #scadaSymbolShape></div>
-<div class="tb-scada-symbol-editor-tooltips" #tooltipsContainer>
+<div class="tb-scada-symbol-editor-shape" [fxShow]="editorMode === 'svg'" #scadaSymbolShape></div>
+<div class="tb-scada-symbol-editor-tooltips" [fxShow]="editorMode === 'svg'" #tooltipsContainer>
   <tb-anchor #tooltipsContainerComponent></tb-anchor>
+</div>
+<div class="tb-scada-symbol-editor-svg-xml" [fxShow]="editorMode === 'xml'">
+  <tb-svg-xml [formControl]="svgContentFormControl"
+              fillHeight
+              noLabel>
+  </tb-svg-xml>
 </div>
 <div class="tb-scada-symbol-editor-buttons">
   <div class="tb-scada-symbol-editor-view-buttons">
-    <div class="tb-scada-symbol-editor-zoom-buttons tb-primary-fill">
+    <div class="tb-scada-symbol-editor-zoom-buttons tb-primary-fill" [fxShow]="editorMode === 'svg'">
       <button mat-icon-button
               [disabled]="zoomInDisabled"
               (click)="zoomIn()"
@@ -37,7 +43,7 @@
         <mat-icon>remove</mat-icon>
       </button>
     </div>
-    <div *ngIf="displayShowHidden" class="tb-primary-fill">
+    <div *ngIf="displayShowHidden" [fxShow]="editorMode === 'svg'" class="tb-primary-fill">
       <button mat-icon-button
               (click)="toggleShowHidden()"
               matTooltip="{{ (showHiddenElements ? 'scada.hide-hidden-elements' : 'scada.show-hidden-elements') | translate }}"
@@ -46,7 +52,7 @@
       </button>
     </div>
   </div>
-  <div class="tb-scada-symbol-editor-upload-buttons">
+  <div class="tb-scada-symbol-editor-right-buttons">
     <div class="tb-primary-fill">
       <button mat-icon-button
               (click)="updateScadaSymbol.emit()"
@@ -63,5 +69,14 @@
         <mat-icon>download</mat-icon>
       </button>
     </div>
+    <tb-toggle-select appearance="fill"
+                      [disabled]="!svgContentFormControl.valid"
+                      fillHeight
+                      extraPadding
+                      primaryBackground
+                      [(ngModel)]="editorMode">
+      <tb-toggle-option value="svg">{{ 'scada.mode-svg' | translate }}</tb-toggle-option>
+      <tb-toggle-option value="xml">{{ 'scada.mode-xml' | translate }}</tb-toggle-option>
+    </tb-toggle-select>
   </div>
 </div>

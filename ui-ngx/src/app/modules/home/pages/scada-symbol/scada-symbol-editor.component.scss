@@ -25,6 +25,11 @@
   inset: 0;
   pointer-events: none;
 }
+.tb-scada-symbol-editor-svg-xml {
+  width: 100%;
+  height: 100%;
+  padding-top: 88px;
+}
 .tb-scada-symbol-editor-buttons {
   pointer-events: none;
   position: absolute;
@@ -64,11 +69,14 @@
     }
   }
 
-  .tb-scada-symbol-editor-upload-buttons {
+  .tb-scada-symbol-editor-right-buttons {
     display: flex;
     flex-direction: row;
     gap: 8px;
     z-index: 101;
+    tb-toggle-select {
+      pointer-events: auto;
+    }
   }
 }
 
