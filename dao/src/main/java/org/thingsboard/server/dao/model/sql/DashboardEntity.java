@@ -30,7 +30,7 @@ import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.dao.model.BaseSqlEntity;
+import org.thingsboard.server.dao.model.BaseVersionedEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
@@ -42,7 +42,7 @@ import java.util.UUID;
 @EqualsAndHashCode(callSuper = true)
 @Entity
 @Table(name = ModelConstants.DASHBOARD_TABLE_NAME)
-public final class DashboardEntity extends BaseSqlEntity<Dashboard> {
+public final class DashboardEntity extends BaseVersionedEntity<Dashboard> {
 
     private static final JavaType assignedCustomersType =
             JacksonUtil.constructCollectionType(HashSet.class, ShortCustomerInfo.class);
@@ -77,10 +77,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> {
     }
 
     public DashboardEntity(Dashboard dashboard) {
-        if (dashboard.getId() != null) {
-            this.setUuid(dashboard.getId().getId());
-        }
-        this.setCreatedTime(dashboard.getCreatedTime());
+        super(dashboard);
         if (dashboard.getTenantId() != null) {
             this.tenantId = dashboard.getTenantId().getId();
         }
@@ -105,6 +102,7 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> {
     public Dashboard toData() {
         Dashboard dashboard = new Dashboard(new DashboardId(this.getUuid()));
         dashboard.setCreatedTime(this.getCreatedTime());
+        dashboard.setVersion(version);
         if (tenantId != null) {
             dashboard.setTenantId(TenantId.fromUUID(tenantId));
         }
@@ -125,4 +123,5 @@ public final class DashboardEntity extends BaseSqlEntity<Dashboard> {
         }
         return dashboard;
     }
+
 }

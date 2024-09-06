@@ -19,6 +19,7 @@ import { RouterModule, Routes } from '@angular/router';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { VersionControlComponent } from '@home/components/vc/version-control.component';
+import { MenuId } from '@core/services/menu.models';
 
 export const vcRoutes: Routes = [
   {
@@ -29,8 +30,7 @@ export const vcRoutes: Routes = [
       auth: [Authority.TENANT_ADMIN],
       title: 'version-control.version-control',
       breadcrumb: {
-        label: 'version-control.version-control',
-        icon: 'history'
+        menuId: MenuId.version_control
       }
     }
   }

@@ -36,7 +36,6 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private boolean useSimpleClientHttpFactory;
     private int readTimeoutMs;
     private int maxParallelRequestsCount;
-    private boolean useRedisQueueForMsgPersistence;
     private boolean parseToPlainText;
     private boolean enableProxy;
     private boolean useSystemProxyProperties;
@@ -47,6 +46,7 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String proxyScheme;
     private ClientCredentials credentials;
     private boolean ignoreRequestBody;
+    private int maxInMemoryBufferSizeInKb;
 
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
@@ -57,11 +57,11 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setUseSimpleClientHttpFactory(false);
         configuration.setReadTimeoutMs(0);
         configuration.setMaxParallelRequestsCount(0);
-        configuration.setUseRedisQueueForMsgPersistence(false);
         configuration.setParseToPlainText(false);
         configuration.setEnableProxy(false);
         configuration.setCredentials(new AnonymousCredentials());
         configuration.setIgnoreRequestBody(false);
+        configuration.setMaxInMemoryBufferSizeInKb(256);
         return configuration;
     }
 

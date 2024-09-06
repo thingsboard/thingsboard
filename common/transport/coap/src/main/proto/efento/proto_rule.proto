@@ -50,11 +50,19 @@ option java_outer_classname = "ProtoRuleProtos";
 /*  - CO2_EQUIVALENT - [ppm] - Parts per million. Resolution 1ppm. Range [0:1000000]. Carbon dioxide equivalent.                */
 /*  - BREATH_VOC - [ppm] - Parts per million. Resolution 1ppm. Range [0:100000]. Breath VOC estimate.                           */
 /*  - PERCENTAGE - [%] - Percentage. Resolution 0.01%. Range [0.00:100.00].                                                     */
+/*  - VOLTAGE - [mV] - Milivolt. Resolution 0.1mV. Range [0.0:100000.0].                                                        */
+/*  - CURRENT - [mA] - Miliampere. Resolution 0.01mA. Range [0.00:10000.00].                                                    */
 /*  - PULSE_CNT_ACC_MINOR - [NB] - Number of pulses. Resolution 1 pulse. Range [0:1000000]. Accumulative pulse counter (minor). */
 /*  - PULSE_CNT_ACC_MAJOR - [kNB] - Number of kilopulses. Resolution 1 kilopulse. Range [0:1000000].                            */
 /*                                  Accumulative pulse counter (major).                                                         */
 /*  - ELEC_METER_ACC_MINOR - [Wh] - Watt-hour. Resolution 1Wh. Range [0:1000000]. Accumulative electricity meter (minor).       */
 /*  - ELEC_METER_ACC_MAJOR - [kWh] - Kilowatt-hour. Resolution 1kWh. Range [0:1000000]. Accumulative electricity meter (major). */
+/*  - PULSE_CNT_ACC_WIDE_MINOR - [NB] - Number of pulses. Resolution 1 pulse. Range [0:999999].                                 */
+/*                                      Accumulative pulse counter wide range (minor).                                          */
+/*  - PULSE_CNT_ACC_WIDE_MAJOR - [MNB] - Number of megapulses. Resolution 1 megapulse. Range [0:999999].                        */
+/*                                       Accumulative pulse counter wide range (major).                                         */
+/*  - CURRENT_PRECISE - [mA] - Miliampere. Resolution 0.001mA. Range [-4 000.000:4 000.000].                                    */
+/*  - OUTPUT_CONTROL - Not applicable                                                                                           */
 
 /* Encoding R: used to set relative values in the Rules (e.g. differential threshold and hysteresis)                            */
 /*  - TEMPERATURE - [°C] - Celsius degree. Resolution 0.1°C. Range [0.1:4273.2].                                                */
@@ -88,11 +96,19 @@ option java_outer_classname = "ProtoRuleProtos";
 /*  - CO2_EQUIVALENT - [ppm] - Parts per million. Resolution 1ppm. Range [1:1000000]. Carbon dioxide equivalent.                */
 /*  - BREATH_VOC - [ppm] - Parts per million. Resolution 1ppm. Range [1:100000]. Breath VOC estimate.                           */
 /*  - PERCENTAGE - [%] - Percentage. Resolution 0.01%. Range [0.01:100.00].                                                     */
+/*  - VOLTAGE - [mV] - Milivolt. Resolution 0.1mV. Range [0.1:100000.0].                                                        */
+/*  - CURRENT - [mA] - Miliampere. Resolution 0.01mA. Range [0.01:10000.00].                                                    */
 /*  - PULSE_CNT_ACC_MINOR - [NB] - Number of pulses. Resolution 1 pulse. Range [1:1000000]. Accumulative pulse counter (minor). */
 /*  - PULSE_CNT_ACC_MAJOR - [kNB] - Number of kilopulses. Resolution 1 kilopulse. Range [1:1000000].                            */
 /*                                  Accumulative pulse counter (major).                                                         */
 /*  - ELEC_METER_ACC_MINOR - [Wh] - Watt-hour. Resolution 1Wh. Range [1:1000000]. Accumulative electricity meter (minor).       */
 /*  - ELEC_METER_ACC_MAJOR - [kWh] - Kilowatt-hour. Resolution 1kWh. Range [1:1000000]. Accumulative electricity meter (major). */
+/*  - PULSE_CNT_ACC_WIDE_MINOR - [NB] - Number of pulses. Resolution 1 pulse. Range [1:999999].                                 */
+/*                                      Accumulative pulse counter wide range (minor).                                          */
+/*  - PULSE_CNT_ACC_WIDE_MAJOR - [MNB] - Number of megapulses. Resolution 1 megapulse. Range [1:999999].                        */
+/*                                       Accumulative pulse counter wide range (major).                                         */
+/*  - CURRENT_PRECISE - [mA] - Miliampere. Resolution 0.001mA. Range [0.001:8 000.000].                                         */
+/*  - OUTPUT_CONTROL - Not applicable                                                                                           */
 
 /* Condition to be checked by the device. If the condition is true, an action is triggered                                      */
 enum Condition {
@@ -202,6 +218,10 @@ enum Action {
 
   /* To trigger the transmission with ACK                                                                                       */
   ACTION_TRIGGER_TRANSMISSION_WITH_ACK = 3;
+
+  /* To change BLE advertising period mode to fast (with lower user-configured advertising interval).                           */
+  /* Once the rule is deactived avertising period mode returns to previously configured value.                                  */
+  ACTION_FAST_ADVERTISING_MODE = 4;
 }
 
 /* Type of a rule calendars.                                                                                                    */

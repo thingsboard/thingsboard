@@ -33,6 +33,8 @@ import {
 } from '@core/auth/auth.selectors';
 import { EntityKeyType } from '@shared/models/query/query.models';
 import { ResourcesService } from '@core/services/resources.service';
+import { isDefinedAndNotNull } from '@core/utils';
+import { MenuId } from '@core/services/menu.models';
 
 const sysAdminHomePageJson = '/assets/dashboard/sys_admin_home_page.json';
 const tenantAdminHomePageJson = '/assets/dashboard/tenant_admin_home_page.json';
@@ -83,12 +85,12 @@ const applySystemParametersToHomeDashboard = (store: Store<AppState>,
             }
           }
         }
-        if (params.mobileQrEnabled) {
+        if (isDefinedAndNotNull(params.mobileQrEnabled)) {
           for (const widgetId of Object.keys(dashboard.configuration.widgets)) {
             if (dashboard.configuration.widgets[widgetId].config.title === 'Select show mobile QR code') {
               dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction =
                 (dashboard.configuration.widgets[widgetId].config.settings.markdownTextFunction as string)
-                  .replace('\'${mobileQrEnabled}\'', String(true));
+                  .replace(/\${mobileQrEnabled:([^}]+)}/, `\${mobileQrEnabled:${String(params.mobileQrEnabled)}}`);
               break;
             }
           }
@@ -124,8 +126,7 @@ const routes: Routes = [
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
       title: 'home.home',
       breadcrumb: {
-        label: 'home.home',
-        icon: 'home'
+        menuId: MenuId.home
       }
     },
     resolve: {

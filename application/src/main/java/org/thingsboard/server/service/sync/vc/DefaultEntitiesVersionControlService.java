@@ -164,13 +164,13 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
         var cacheEntry = taskCache.get(requestId);
         if (cacheEntry == null || cacheEntry.get() == null) {
             log.debug("[{}] No cache record: {}", requestId, cacheEntry);
-            throw new ThingsboardException(ThingsboardErrorCode.ITEM_NOT_FOUND);
+            throw new ThingsboardException("Task execution timed-out", ThingsboardErrorCode.ITEM_NOT_FOUND);
         } else {
             var entry = cacheEntry.get();
             log.trace("[{}] Cache get: {}", requestId, entry);
             var result = getter.apply(entry);
             if (result == null) {
-                throw new ThingsboardException(ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+                throw new ThingsboardException("Invalid task", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
             } else {
                 return result;
             }
@@ -526,12 +526,8 @@ public class DefaultEntitiesVersionControlService implements EntitiesVersionCont
     }
 
     @Override
-    public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) throws Exception {
-        if (repositorySettingsService.delete(tenantId)) {
-            return gitServiceQueue.clearRepository(tenantId);
-        } else {
-            return Futures.immediateFuture(null);
-        }
+    public ListenableFuture<Void> deleteVersionControlSettings(TenantId tenantId) {
+        return gitServiceQueue.clearRepository(tenantId);
     }
 
     @Override

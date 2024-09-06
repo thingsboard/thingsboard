@@ -300,9 +300,15 @@ public class NotificationController extends BaseController {
         request.setOriginatorEntityId(user.getId());
         List<NotificationTarget> targets = request.getTargets().stream()
                 .map(NotificationTargetId::new)
-                .map(targetId -> notificationTargetService.findNotificationTargetById(user.getTenantId(), targetId))
+                .map(targetId -> {
+                    NotificationTarget target = notificationTargetService.findNotificationTargetById(user.getTenantId(), targetId);
+                    if (target == null) {
+                        throw new IllegalArgumentException("Notification target for id " + targetId + " not found");
+                    }
+                    return target;
+                })
                 .sorted(Comparator.comparing(target -> target.getConfiguration().getType()))
-                .collect(Collectors.toList());
+                .toList();
 
         NotificationRequestPreview preview = new NotificationRequestPreview();
 

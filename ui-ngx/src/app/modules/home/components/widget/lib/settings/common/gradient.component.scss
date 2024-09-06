@@ -16,11 +16,36 @@
 
 @import "../../../../../../../../scss/constants";
 
-
 :host {
   overflow: auto;
   height: 100%;
   max-height: 420px;
+
+  .gradient-preview {
+    width: 100%;
+    padding: 40px 15px 0;
+    .gradient-background {
+      position: relative;
+      height: 56px;
+      border-radius: 8px;
+    }
+  }
+
+  .gradient-settings {
+    flex: 1;
+    gap: 16px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .tb-add-gradient {
+    margin-right: 92px;
+    @media #{$mat-lt-lg} {
+      margin-right: 52px;
+    }
+  }
+}
+::ng-deep {
   .gradient {
     display: flex;
     flex: 1;
@@ -67,32 +92,6 @@
       }
     }
   }
-
-  .gradient-preview {
-    width: 100%;
-    padding: 40px 12px 0;
-    .gradient-background {
-      position: relative;
-      height: 56px;
-      border-radius: 8px;
-    }
-  }
-
-  .gradient-settings {
-    flex: 1;
-    gap: 16px;
-    display: flex;
-    flex-direction: column;
-  }
-
-  .tb-add-gradient {
-    margin-right: 92px;
-    @media #{$mat-lt-lg} {
-      margin-right: 52px;
-    }
-  }
-}
-::ng-deep {
   .gradient-background {
     .pointer {
       position: absolute;
@@ -121,11 +120,13 @@
         display: flex;
         align-items: center;
         justify-content: center;
-        width: 33px;
+        width: 38px;
         height: 24px;
         border-radius: 4px;
         background-color: rgba(0, 0, 0, 0.06);
         &-text {
+          text-overflow: ellipsis;
+          overflow: hidden;
           font-size: 14px;
           font-weight: 500;
         }

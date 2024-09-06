@@ -15,12 +15,12 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
-import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -54,7 +54,6 @@ import org.thingsboard.server.service.state.DeviceStateService;
 import org.thingsboard.server.service.ws.notification.sub.NotificationUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
-import jakarta.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -118,7 +117,7 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
             }
             callback.onSuccess();
             if (event.hasTsOrAttrSub()) {
-                sendSubEventCallback(serviceId, entityId, event.getSeqNumber());
+                sendSubEventCallback(tenantId, serviceId, entityId, event.getSeqNumber());
             }
         } else {
             log.warn("[{}][{}][{}] Event belongs to external partition. Probably re-balancing is in progress. Topic: {}"
@@ -142,12 +141,12 @@ public class DefaultSubscriptionManagerService extends TbApplicationEventListene
         }
     }
 
-    private void sendSubEventCallback(String targetId, EntityId entityId, int seqNumber) {
+    private void sendSubEventCallback(TenantId tenantId, String targetId, EntityId entityId, int seqNumber) {
         var update = getEntityUpdatesInfo(entityId);
         if (serviceId.equals(targetId)) {
-            localSubscriptionService.onSubEventCallback(entityId, seqNumber, update, TbCallback.EMPTY);
+            localSubscriptionService.onSubEventCallback(tenantId, entityId, seqNumber, update, TbCallback.EMPTY);
         } else {
-            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(entityId.getId(), seqNumber, update));
+            sendCoreNotification(targetId, entityId, TbSubscriptionUtils.toProto(tenantId, entityId.getId(), seqNumber, update));
         }
     }
 

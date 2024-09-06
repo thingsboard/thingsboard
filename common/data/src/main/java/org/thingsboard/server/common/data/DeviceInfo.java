@@ -18,11 +18,13 @@ package org.thingsboard.server.common.data;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 import org.thingsboard.server.common.data.id.DeviceId;
 
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 public class DeviceInfo extends Device {
 
     private static final long serialVersionUID = -3004579925090663691L;

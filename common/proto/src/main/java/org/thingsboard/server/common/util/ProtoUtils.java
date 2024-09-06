@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.util;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.protobuf.ByteString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.common.util.JacksonUtil;
@@ -26,7 +27,9 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
 import org.thingsboard.server.common.data.DeviceProfileType;
 import org.thingsboard.server.common.data.DeviceTransportType;
+import org.thingsboard.server.common.data.EdgeUtils;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.Tenant;
@@ -35,6 +38,8 @@ import org.thingsboard.server.common.data.device.data.CoapDeviceTransportConfigu
 import org.thingsboard.server.common.data.device.data.Lwm2mDeviceTransportConfiguration;
 import org.thingsboard.server.common.data.device.data.PowerMode;
 import org.thingsboard.server.common.data.device.data.PowerSavingConfiguration;
+import org.thingsboard.server.common.data.edge.EdgeEventActionType;
+import org.thingsboard.server.common.data.edge.EdgeEventType;
 import org.thingsboard.server.common.data.id.ApiUsageStateId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -67,6 +72,7 @@ import org.thingsboard.server.common.data.sync.vc.RepositoryAuthMethod;
 import org.thingsboard.server.common.data.sync.vc.RepositorySettings;
 import org.thingsboard.server.common.msg.ToDeviceActorNotificationMsg;
 import org.thingsboard.server.common.msg.edge.EdgeEventUpdateMsg;
+import org.thingsboard.server.common.msg.edge.EdgeHighPriorityMsg;
 import org.thingsboard.server.common.msg.edge.FromEdgeSyncResponse;
 import org.thingsboard.server.common.msg.edge.ToEdgeSyncRequest;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
@@ -89,6 +95,8 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.DataConstants.GATEWAY_PARAMETER;
 
 @Slf4j
 public class ProtoUtils {
@@ -137,6 +145,7 @@ public class ProtoUtils {
                 .setRequestIdLSB(request.getId().getLeastSignificantBits())
                 .setEdgeIdMSB(request.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(request.getEdgeId().getId().getLeastSignificantBits())
+                .setServiceId(request.getServiceId())
                 .build();
     }
 
@@ -144,7 +153,8 @@ public class ProtoUtils {
         return new ToEdgeSyncRequest(
                 new UUID(proto.getRequestIdMSB(), proto.getRequestIdLSB()),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
+                proto.getServiceId()
         );
     }
 
@@ -157,6 +167,7 @@ public class ProtoUtils {
                 .setEdgeIdMSB(response.getEdgeId().getId().getMostSignificantBits())
                 .setEdgeIdLSB(response.getEdgeId().getId().getLeastSignificantBits())
                 .setSuccess(response.isSuccess())
+                .setError(response.getError())
                 .build();
     }
 
@@ -164,8 +175,53 @@ public class ProtoUtils {
         return new FromEdgeSyncResponse(
                 new UUID(proto.getResponseIdMSB(), proto.getResponseIdLSB()),
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
-                proto.getSuccess()
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB())),
+                proto.getSuccess(),
+                proto.getError()
+        );
+    }
+
+    public static TransportProtos.EdgeHighPriorityMsgProto toProto(EdgeHighPriorityMsg msg) {
+        TransportProtos.EdgeHighPriorityMsgProto.Builder builder = TransportProtos.EdgeHighPriorityMsgProto.newBuilder()
+                .setTenantIdMSB(msg.getTenantId().getId().getMostSignificantBits())
+                .setTenantIdLSB(msg.getTenantId().getId().getLeastSignificantBits())
+                .setType(msg.getEdgeEvent().getType().name())
+                .setAction(msg.getEdgeEvent().getAction().name());
+
+        if (msg.getEdgeEvent().getEntityId() != null) {
+            builder.setEntityIdMSB(msg.getEdgeEvent().getEntityId().getMostSignificantBits());
+            builder.setEntityIdLSB(msg.getEdgeEvent().getEntityId().getLeastSignificantBits());
+        }
+        if (msg.getEdgeEvent().getEdgeId() != null) {
+            builder.setEdgeIdMSB(msg.getEdgeEvent().getEdgeId().getId().getMostSignificantBits());
+            builder.setEdgeIdLSB(msg.getEdgeEvent().getEdgeId().getId().getLeastSignificantBits());
+        }
+        if (msg.getEdgeEvent().getBody() != null) {
+            builder.setBody(JacksonUtil.toString(msg.getEdgeEvent().getBody()));
+        }
+
+        return builder.build();
+    }
+
+    public static EdgeHighPriorityMsg fromProto(TransportProtos.EdgeHighPriorityMsgProto proto) {
+        EdgeEventType type = EdgeEventType.valueOf(proto.getType());
+        EdgeEventActionType actionType = EdgeEventActionType.valueOf(proto.getAction());
+        JsonNode body = proto.hasBody() ? JacksonUtil.toJsonNode(proto.getBody()) : null;
+
+        EdgeId edgeId = null;
+        if (proto.hasEdgeIdMSB() && proto.hasEdgeIdLSB()) {
+            edgeId = EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
+        }
+
+        EntityId entityId = null;
+        if (proto.hasEntityIdMSB() && proto.hasEntityIdLSB()) {
+            entityId = EntityIdFactory.getByEdgeEventTypeAndUuid(type, new UUID(proto.getEntityIdMSB(), proto.getEntityIdLSB()));
+        }
+
+        return new EdgeHighPriorityMsg(
+                TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                EdgeUtils.constructEdgeEvent(TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
+                        edgeId, type, actionType, entityId, body)
         );
     }
 
@@ -181,7 +237,7 @@ public class ProtoUtils {
     public static EdgeEventUpdateMsg fromProto(TransportProtos.EdgeEventUpdateMsgProto proto) {
         return new EdgeEventUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
-                new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
+                EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()))
         );
     }
 
@@ -203,7 +259,7 @@ public class ProtoUtils {
     private static DeviceEdgeUpdateMsg fromProto(TransportProtos.DeviceEdgeUpdateMsgProto proto) {
         EdgeId edgeId = null;
         if (proto.hasEdgeIdMSB() && proto.hasEdgeIdLSB()) {
-            edgeId = new EdgeId(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
+            edgeId = EdgeId.fromUUID(new UUID(proto.getEdgeIdMSB(), proto.getEdgeIdLSB()));
         }
         return new DeviceEdgeUpdateMsg(
                 TenantId.fromUUID(new UUID(proto.getTenantIdMSB(), proto.getTenantIdLSB())),
@@ -254,39 +310,48 @@ public class ProtoUtils {
 
         if (msg.getValues() != null) {
             for (AttributeKvEntry attributeKvEntry : msg.getValues()) {
-                TransportProtos.AttributeValueProto.Builder attributeValueBuilder = TransportProtos.AttributeValueProto.newBuilder()
-                        .setLastUpdateTs(attributeKvEntry.getLastUpdateTs())
-                        .setKey(attributeKvEntry.getKey());
-                switch (attributeKvEntry.getDataType()) {
-                    case BOOLEAN -> {
-                        attributeKvEntry.getBooleanValue().ifPresent(attributeValueBuilder::setBoolV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getBooleanValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.BOOLEAN_V);
-                    }
-                    case STRING -> {
-                        attributeKvEntry.getStrValue().ifPresent(attributeValueBuilder::setStringV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getStrValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.STRING_V);
-                    }
-                    case DOUBLE -> {
-                        attributeKvEntry.getDoubleValue().ifPresent(attributeValueBuilder::setDoubleV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getDoubleValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.DOUBLE_V);
-                    }
-                    case LONG -> {
-                        attributeKvEntry.getLongValue().ifPresent(attributeValueBuilder::setLongV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getLongValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.LONG_V);
-                    }
-                    case JSON -> {
-                        attributeKvEntry.getJsonValue().ifPresent(attributeValueBuilder::setJsonV);
-                        attributeValueBuilder.setHasV(attributeKvEntry.getJsonValue().isPresent());
-                        attributeValueBuilder.setType(TransportProtos.KeyValueType.JSON_V);
-                    }
-                }
-                builder.addValues(attributeValueBuilder.build());
+                builder.addValues(toProto(attributeKvEntry));
             }
         }
+        return builder.build();
+    }
+
+    public static TransportProtos.AttributeValueProto toProto(AttributeKvEntry attributeKvEntry) {
+        TransportProtos.AttributeValueProto.Builder builder = TransportProtos.AttributeValueProto.newBuilder()
+                .setLastUpdateTs(attributeKvEntry.getLastUpdateTs())
+                .setKey(attributeKvEntry.getKey());
+        switch (attributeKvEntry.getDataType()) {
+            case BOOLEAN:
+                attributeKvEntry.getBooleanValue().ifPresent(builder::setBoolV);
+                builder.setHasV(attributeKvEntry.getBooleanValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.BOOLEAN_V);
+                break;
+            case STRING:
+                attributeKvEntry.getStrValue().ifPresent(builder::setStringV);
+                builder.setHasV(attributeKvEntry.getStrValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.STRING_V);
+                break;
+            case DOUBLE:
+                attributeKvEntry.getDoubleValue().ifPresent(builder::setDoubleV);
+                builder.setHasV(attributeKvEntry.getDoubleValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.DOUBLE_V);
+                break;
+            case LONG:
+                attributeKvEntry.getLongValue().ifPresent(builder::setLongV);
+                builder.setHasV(attributeKvEntry.getLongValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.LONG_V);
+                break;
+            case JSON:
+                attributeKvEntry.getJsonValue().ifPresent(builder::setJsonV);
+                builder.setHasV(attributeKvEntry.getJsonValue().isPresent());
+                builder.setType(TransportProtos.KeyValueType.JSON_V);
+                break;
+        }
+
+        if (attributeKvEntry.getVersion() != null) {
+            builder.setVersion(attributeKvEntry.getVersion());
+        }
+
         return builder.build();
     }
 
@@ -498,18 +563,23 @@ public class ProtoUtils {
         }
         List<AttributeKvEntry> result = new ArrayList<>();
         for (TransportProtos.AttributeValueProto kvEntry : valuesList) {
-            boolean hasValue = kvEntry.getHasV();
-            KvEntry entry = switch (kvEntry.getType()) {
-                case BOOLEAN_V -> new BooleanDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getBoolV() : null);
-                case LONG_V -> new LongDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getLongV() : null);
-                case DOUBLE_V -> new DoubleDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getDoubleV() : null);
-                case STRING_V -> new StringDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getStringV() : null);
-                case JSON_V -> new JsonDataEntry(kvEntry.getKey(), hasValue ? kvEntry.getJsonV() : null);
-                default -> null;
-            };
-            result.add(new BaseAttributeKvEntry(kvEntry.getLastUpdateTs(), entry));
+            result.add(fromProto(kvEntry));
         }
         return result;
+    }
+
+    public static AttributeKvEntry fromProto(TransportProtos.AttributeValueProto proto) {
+        boolean hasValue = proto.getHasV();
+        String key = proto.getKey();
+        KvEntry entry = switch (proto.getType()) {
+            case BOOLEAN_V -> new BooleanDataEntry(key, hasValue ? proto.getBoolV() : null);
+            case LONG_V -> new LongDataEntry(key, hasValue ? proto.getLongV() : null);
+            case DOUBLE_V -> new DoubleDataEntry(key, hasValue ? proto.getDoubleV() : null);
+            case STRING_V -> new StringDataEntry(key, hasValue ? proto.getStringV() : null);
+            case JSON_V -> new JsonDataEntry(key, hasValue ? proto.getJsonV() : null);
+            default -> null;
+        };
+        return new BaseAttributeKvEntry(entry, proto.getLastUpdateTs(), proto.hasVersion() ? proto.getVersion() : null);
     }
 
     public static TransportProtos.DeviceProto toProto(Device device) {
@@ -549,6 +619,9 @@ public class ProtoUtils {
         if (isNotNull(device.getDeviceDataBytes())) {
             builder.setDeviceData(ByteString.copyFrom(device.getDeviceDataBytes()));
         }
+        if (isNotNull(device.getVersion())) {
+            builder.setVersion(device.getVersion());
+        }
         return builder.build();
     }
 
@@ -579,6 +652,9 @@ public class ProtoUtils {
         }
         if (proto.hasDeviceData()) {
             device.setDeviceDataBytes(proto.getDeviceData().toByteArray());
+        }
+        if (proto.hasVersion()) {
+            device.setVersion(proto.getVersion());
         }
         return device;
     }
@@ -635,6 +711,9 @@ public class ProtoUtils {
             builder.setDefaultEdgeRuleChainIdMSB(getMsb(deviceProfile.getDefaultEdgeRuleChainId()))
                     .setDefaultEdgeRuleChainIdLSB(getLsb(deviceProfile.getDefaultEdgeRuleChainId()));
         }
+        if (isNotNull(deviceProfile.getVersion())) {
+            builder.setVersion(deviceProfile.getVersion());
+        }
         return builder.build();
     }
 
@@ -658,6 +737,8 @@ public class ProtoUtils {
         }
         if (proto.hasDefaultRuleChainIdMSB() && proto.hasDefaultRuleChainIdLSB()) {
             deviceProfile.setDefaultRuleChainId(getEntityId(proto.getDefaultRuleChainIdMSB(), proto.getDefaultRuleChainIdLSB(), RuleChainId::new));
+        }
+        if (proto.hasDefaultDashboardIdMSB() && proto.hasDefaultDashboardIdLSB()) {
             deviceProfile.setDefaultDashboardId(getEntityId(proto.getDefaultDashboardIdMSB(), proto.getDefaultDashboardIdLSB(), DashboardId::new));
         }
         if (proto.hasDefaultQueueName()) {
@@ -677,6 +758,9 @@ public class ProtoUtils {
         }
         if (proto.hasDefaultEdgeRuleChainIdMSB() && proto.hasDefaultEdgeRuleChainIdLSB()) {
             deviceProfile.setDefaultEdgeRuleChainId(getEntityId(proto.getDefaultEdgeRuleChainIdMSB(), proto.getDefaultEdgeRuleChainIdLSB(), RuleChainId::new));
+        }
+        if (proto.hasVersion()) {
+            deviceProfile.setVersion(proto.getVersion());
         }
         return deviceProfile;
     }
@@ -720,6 +804,9 @@ public class ProtoUtils {
         if (isNotNull(tenant.getAdditionalInfo())) {
             builder.setAdditionalInfo(JacksonUtil.toString(tenant.getAdditionalInfo()));
         }
+        if (isNotNull(tenant.getVersion())) {
+            builder.setVersion(tenant.getVersion());
+        }
         return builder.build();
     }
 
@@ -758,6 +845,9 @@ public class ProtoUtils {
         }
         if (proto.hasAdditionalInfo()) {
             tenant.setAdditionalInfo(JacksonUtil.toJsonNode(proto.getAdditionalInfo()));
+        }
+        if (proto.hasVersion()) {
+            tenant.setVersion(proto.getVersion());
         }
         return tenant;
     }
@@ -827,6 +917,9 @@ public class ProtoUtils {
         if (isNotNull(resource.getPreview())) {
             builder.setPreview(ByteString.copyFrom(resource.getPreview()));
         }
+        if (isNotNull(resource.getResourceSubType())) {
+            builder.setResourceSubType(resource.getResourceSubType().name());
+        }
         return builder.build();
     }
 
@@ -857,6 +950,9 @@ public class ProtoUtils {
         }
         if (proto.hasPreview()) {
             resource.setPreview(proto.getPreview().toByteArray());
+        }
+        if (proto.hasResourceSubType()) {
+            resource.setResourceSubType(ResourceSubType.valueOf(proto.getResourceSubType()));
         }
         return resource;
     }
@@ -902,7 +998,8 @@ public class ProtoUtils {
                 .setRepositoryUri(repositorySettings.getRepositoryUri())
                 .setAuthMethod(repositorySettings.getAuthMethod().name())
                 .setReadOnly(repositorySettings.isReadOnly())
-                .setShowMergeCommits(repositorySettings.isShowMergeCommits());
+                .setShowMergeCommits(repositorySettings.isShowMergeCommits())
+                .setLocalOnly(repositorySettings.isLocalOnly());
 
         if (isNotNull(repositorySettings.getUsername())) {
             builder.setUsername(repositorySettings.getUsername());
@@ -931,6 +1028,7 @@ public class ProtoUtils {
         repositorySettings.setAuthMethod(RepositoryAuthMethod.valueOf(proto.getAuthMethod()));
         repositorySettings.setReadOnly(proto.getReadOnly());
         repositorySettings.setShowMergeCommits(proto.getShowMergeCommits());
+        repositorySettings.setLocalOnly(proto.getLocalOnly());
         if (proto.hasUsername()) {
             repositorySettings.setUsername(proto.getUsername());
         }
@@ -965,6 +1063,9 @@ public class ProtoUtils {
         if (deviceCredentials.getCredentialsValue() != null) {
             builder.setCredentialsValue(deviceCredentials.getCredentialsValue());
         }
+        if (deviceCredentials.getVersion() != null) {
+            builder.setVersion(deviceCredentials.getVersion());
+        }
         return builder.build();
     }
 
@@ -976,6 +1077,7 @@ public class ProtoUtils {
         deviceCredentials.setCredentialsId(proto.getCredentialsId());
         deviceCredentials.setCredentialsType(DeviceCredentialsType.valueOf(proto.getCredentialsType().name()));
         deviceCredentials.setCredentialsValue(proto.hasCredentialsValue() ? proto.getCredentialsValue() : null);
+        deviceCredentials.setVersion(proto.hasVersion() ? proto.getVersion() : null);
         return deviceCredentials;
     }
 
@@ -1010,6 +1112,10 @@ public class ProtoUtils {
                 .setDeviceProfileIdMSB(device.getDeviceProfileId().getId().getMostSignificantBits())
                 .setDeviceProfileIdLSB(device.getDeviceProfileId().getId().getLeastSignificantBits())
                 .setAdditionalInfo(JacksonUtil.toString(device.getAdditionalInfo()));
+
+        if (device.getAdditionalInfo().has(GATEWAY_PARAMETER)) {
+            builder.setIsGateway(device.getAdditionalInfo().get(GATEWAY_PARAMETER).booleanValue());
+        }
 
         PowerSavingConfiguration psmConfiguration = switch (device.getDeviceData().getTransportConfiguration().getType()) {
             case LWM2M -> (Lwm2mDeviceTransportConfiguration) device.getDeviceData().getTransportConfiguration();

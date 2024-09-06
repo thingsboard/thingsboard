@@ -41,17 +41,9 @@
 
     <div class="tb-form-row space-between column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showMinMax">
-        {{ 'widgets.gauge.min-and-max-value' | translate }}
+        {{ 'widgets.gauge.min-and-max-label' | translate }}
       </mat-slide-toggle>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
-        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-          <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
-        <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
-        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-          <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
         <tb-font-settings formControlName="minMaxFont"
                           disabledLineHeight
                           [previewText]="previewFn">
@@ -60,6 +52,28 @@
                         colorClearButton
                         formControlName="minMaxColor">
         </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width">{{ 'widgets.gauge.min-and-max-value' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widgets.gauge.min-max-validation-text' | translate"
+                    *ngIf="digitalGaugeWidgetSettingsForm.get('maxValue').hasError('maxValue')"
+                    class="material-icons tb-suffix-show-always tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
       </div>
     </div>
 
@@ -161,14 +175,6 @@
     </div>
 
     <div class="tb-form-row space-between">
-      <div class="fixed-title-width">{{ 'widgets.gauge.default-color' | translate }}</div>
-      <tb-color-input asBoxInput
-                      colorClearButton
-                      formControlName="defaultColor">
-      </tb-color-input>
-    </div>
-
-    <div class="tb-form-row space-between">
       <div class="fixed-title-width">{{ 'widgets.gauge.gauge-bar-background' | translate }}</div>
       <tb-color-input asBoxInput
                       colorClearButton
@@ -180,6 +186,7 @@
       <div class="fixed-title-width">{{ 'widgets.gauge.bar-color' | translate }}</div>
       <tb-color-settings formControlName="barColor"
                          rangeAdvancedMode
+                         gradientAdvancedMode
                          [minValue]="digitalGaugeWidgetSettingsForm.get('minValue').value"
                          [maxValue]="digitalGaugeWidgetSettingsForm.get('maxValue').value"
                          [aliasController]="aliasController"
@@ -222,13 +229,23 @@
           <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
                (cdkDropListDropped)="tickValueDrop($event)">
             <div cdkDrag class="tb-draggable" *ngFor="let tickValueControl of tickValuesFormArray().controls; trackBy: trackByTickValue;
-              let $index = index; last as isLast;" fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-                <tb-tick-value [formControl]="tickValueControl"
+              let $index = index; last as isLast;" fxLayout="row" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+                <tb-tick-value fxFlex
+                               [formControl]="tickValueControl"
                                [aliasController]="aliasController"
                                [dataKeyCallbacks]="dataKeyCallbacks"
                                [datasource]="datasource"
                                (removeTickValue)="removeTickValue($index)">
                 </tb-tick-value>
+                <button class="tb-box-button"
+                        fxHide.lt-lg
+                        mat-icon-button
+                        type="button"
+                        cdkDragHandle
+                        matTooltip="{{ 'action.drag' | translate }}"
+                        matTooltipPosition="above">
+                  <mat-icon>drag_indicator</mat-icon>
+                </button>
             </div>
           </div>
           <div *ngIf="!tickValuesFormArray().controls.length">

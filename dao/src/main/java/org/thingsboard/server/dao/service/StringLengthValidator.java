@@ -16,16 +16,16 @@
 package org.thingsboard.server.dao.service;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.validation.ConstraintValidator;
+import jakarta.validation.ConstraintValidatorContext;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.validation.Length;
 
-import jakarta.validation.ConstraintValidator;
-import jakarta.validation.ConstraintValidatorContext;
-
 @Slf4j
 public class StringLengthValidator implements ConstraintValidator<Length, Object> {
     private int max;
+    private int min;
 
     @Override
     public boolean isValid(Object value, ConstraintValidatorContext context) {
@@ -35,14 +35,15 @@ public class StringLengthValidator implements ConstraintValidator<Length, Object
         } else {
             return true;
         }
-        if (StringUtils.isEmpty(stringValue)) {
+        if (stringValue == null) {
             return true;
         }
-        return stringValue.length() <= max;
+        return stringValue.length() >= min && stringValue.length() <= max;
     }
 
     @Override
     public void initialize(Length constraintAnnotation) {
         this.max = constraintAnnotation.max();
+        this.min = constraintAnnotation.min();
     }
 }

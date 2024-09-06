@@ -26,6 +26,7 @@ import org.thingsboard.server.common.data.id.NotificationId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.notification.Notification;
 import org.thingsboard.server.common.data.notification.NotificationStatus;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.dao.notification.NotificationService;
 import org.thingsboard.server.queue.discovery.TbServiceInfoProvider;
@@ -78,8 +79,9 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsSubscriptionUpdate)
                 .limit(cmd.getLimit())
+                .notificationTypes(cmd.getTypes())
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
 
         fetchUnreadNotifications(subscription);
         sendUpdate(sessionRef.getSessionId(), subscription.createFullUpdate());
@@ -97,7 +99,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
                 .entityId(securityCtx.getId())
                 .updateProcessor(this::handleNotificationsCountSubscriptionUpdate)
                 .build();
-        localSubscriptionService.addSubscription(subscription);
+        localSubscriptionService.addSubscription(subscription, sessionRef);
 
         fetchUnreadNotificationsCount(subscription);
         sendUpdate(sessionRef.getSessionId(), subscription.createUpdate());
@@ -105,8 +107,8 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     private void fetchUnreadNotifications(NotificationsSubscription subscription) {
         log.trace("[{}, subId: {}] Fetching unread notifications from DB", subscription.getSessionId(), subscription.getSubscriptionId());
-        PageData<Notification> notifications = notificationService.findLatestUnreadNotificationsByRecipientId(subscription.getTenantId(),
-                WEB, (UserId) subscription.getEntityId(), subscription.getLimit());
+        PageData<Notification> notifications = notificationService.findLatestUnreadNotificationsByRecipientIdAndNotificationTypes(subscription.getTenantId(),
+                WEB, (UserId) subscription.getEntityId(), subscription.getNotificationTypes(), subscription.getLimit());
         subscription.getLatestUnreadNotifications().clear();
         notifications.getData().forEach(notification -> {
             subscription.getLatestUnreadNotifications().put(notification.getUuidId(), notification);
@@ -139,6 +141,11 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
         log.trace("[{}, subId: {}] Handling notification update: {}", subscription.getSessionId(), subscription.getSubscriptionId(), update);
         Notification notification = update.getNotification();
         UUID notificationId = notification != null ? notification.getUuidId() : update.getNotificationId();
+        NotificationType notificationType = notification != null ? notification.getType() : update.getNotificationType();
+        if (notificationType != null && !subscription.checkNotificationType(notificationType)) {
+            return;
+        }
+
         if (update.isCreated()) {
             subscription.getLatestUnreadNotifications().put(notificationId, notification);
             subscription.getTotalUnreadCounter().incrementAndGet();
@@ -242,7 +249,7 @@ public class DefaultNotificationCommandsHandler implements NotificationCommandsH
 
     @Override
     public void handleUnsubCmd(WebSocketSessionRef sessionRef, UnsubscribeCmd cmd) {
-        localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), cmd.getCmdId());
+        localSubscriptionService.cancelSubscription(sessionRef.getTenantId(), sessionRef.getSessionId(), cmd.getCmdId());
     }
 
     private void sendUpdate(String sessionId, CmdUpdate update) {

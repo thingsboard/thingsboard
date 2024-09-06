@@ -15,12 +15,11 @@
  */
 package org.thingsboard.server.service.entitiy.user;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 public interface TbUserService {
 

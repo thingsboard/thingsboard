@@ -70,6 +70,9 @@ export const authReducer = (
     case AuthActionTypes.UPDATE_HAS_REPOSITORY:
       return { ...state, ...action.payload};
 
+    case AuthActionTypes.UPDATE_MOBILE_QR_ENABLED:
+      return { ...state, ...action.payload};
+
     case AuthActionTypes.UPDATE_OPENED_MENU_SECTION:
       const openedMenuSections = new Set(state.userSettings.openedMenuSections);
       if (action.payload.opened) {

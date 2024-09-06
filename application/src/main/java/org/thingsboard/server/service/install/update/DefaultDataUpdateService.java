@@ -105,17 +105,35 @@ public class DefaultDataUpdateService implements DataUpdateService {
             var configurationOpt = tenantProfile.getProfileConfiguration();
             configurationOpt.ifPresent(configuration -> {
                 boolean updated = false;
-                if (configuration.getTransportDeviceMsgRateLimit() != null && configuration.getTransportGatewayMsgRateLimit() == null) {
-                    configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
-                    updated = true;
+                if (configuration.getTransportDeviceMsgRateLimit() != null) {
+                    if (configuration.getTransportGatewayMsgRateLimit() == null) {
+                        configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceMsgRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                        updated = true;
+                    }
                 }
-                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null && configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
-                    configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
-                    updated = true;
+                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null) {
+                    if (configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
+                        configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceTelemetryMsgRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                        updated = true;
+                    }
                 }
-                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null && configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
-                    configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
-                    updated = true;
+                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null) {
+                    if (configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
+                        configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceTelemetryDataPointsRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                        updated = true;
+                    }
                 }
                 if (updated) {
                     try {

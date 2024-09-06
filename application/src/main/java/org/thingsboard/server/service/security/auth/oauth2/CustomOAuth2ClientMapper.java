@@ -16,6 +16,7 @@
 package org.thingsboard.server.service.security.auth.oauth2;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.boot.web.client.RestTemplateBuilder;
 import org.springframework.security.oauth2.client.authentication.OAuth2AuthenticationToken;
@@ -25,12 +26,10 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.oauth2.OAuth2CustomMapperConfig;
 import org.thingsboard.server.common.data.oauth2.OAuth2MapperConfig;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 import org.thingsboard.server.dao.oauth2.OAuth2User;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
-
-import jakarta.servlet.http.HttpServletRequest;
 
 @Service(value = "customOAuth2ClientMapper")
 @Slf4j
@@ -42,10 +41,10 @@ public class CustomOAuth2ClientMapper extends AbstractOAuth2ClientMapper impleme
     private RestTemplateBuilder restTemplateBuilder = new RestTemplateBuilder();
 
     @Override
-    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Registration registration) {
-        OAuth2MapperConfig config = registration.getMapperConfig();
+    public SecurityUser getOrCreateUserByClientPrincipal(HttpServletRequest request, OAuth2AuthenticationToken token, String providerAccessToken, OAuth2Client auth2Client) {
+        OAuth2MapperConfig config = auth2Client.getMapperConfig();
         OAuth2User oauth2User = getOAuth2User(token, providerAccessToken, config.getCustom());
-        return getOrCreateSecurityUserFromOAuth2User(oauth2User, registration);
+        return getOrCreateSecurityUserFromOAuth2User(oauth2User, auth2Client);
     }
 
     private synchronized OAuth2User getOAuth2User(OAuth2AuthenticationToken token, String providerAccessToken, OAuth2CustomMapperConfig custom) {

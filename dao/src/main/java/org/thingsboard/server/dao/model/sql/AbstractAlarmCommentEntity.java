@@ -26,7 +26,6 @@ import org.thingsboard.server.common.data.alarm.AlarmCommentType;
 import org.thingsboard.server.common.data.id.AlarmCommentId;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
@@ -40,7 +39,7 @@ import static org.thingsboard.server.dao.model.ModelConstants.ALARM_COMMENT_TYPE
 @Data
 @EqualsAndHashCode(callSuper = true)
 @MappedSuperclass
-public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends BaseSqlEntity<T> implements BaseEntity<T> {
+public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends BaseSqlEntity<T> {
 
     @Column(name = ALARM_COMMENT_ALARM_ID, columnDefinition = "uuid")
     private UUID alarmId;
@@ -94,4 +93,5 @@ public abstract class AbstractAlarmCommentEntity<T extends AlarmComment> extends
         alarmComment.setComment(comment);
         return alarmComment;
     }
+
 }

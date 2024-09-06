@@ -198,9 +198,9 @@ public class BaseQueueControllerTest extends AbstractControllerTest {
         });
         ruleEngineStatisticsService.reportQueueStats(System.currentTimeMillis(), testStats);
 
-        List<QueueStats> queueStatsList = queueStatsService.findByTenantId(tenantId);
-        assertThat(queueStatsList).hasSize(1);
-        QueueStats queueStats = queueStatsList.get(0);
+        PageData<QueueStats> queueStatsList = queueStatsService.findByTenantId(tenantId, new PageLink(10));
+        assertThat(queueStatsList.getData()).hasSize(1);
+        QueueStats queueStats = queueStatsList.getData().get(0);
         assertThat(queueStats.getQueueName()).isEqualTo(queue.getName());
 
         ArgumentCaptor<Long> ttlCaptor = ArgumentCaptor.forClass(Long.class);

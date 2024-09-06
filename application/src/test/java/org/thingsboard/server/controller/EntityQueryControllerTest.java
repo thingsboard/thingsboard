@@ -25,6 +25,8 @@ import org.junit.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.web.servlet.ResultActions;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.Customer;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
@@ -52,8 +54,8 @@ import org.thingsboard.server.common.data.query.EntityTypeFilter;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.KeyFilter;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
-import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.query.RelationsQueryFilter;
+import org.thingsboard.server.common.data.query.StringFilterPredicate;
 import org.thingsboard.server.common.data.query.TsValue;
 import org.thingsboard.server.common.data.queue.QueueStats;
 import org.thingsboard.server.common.data.relation.EntityRelation;
@@ -76,6 +78,11 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class EntityQueryControllerTest extends AbstractControllerTest {
 
+    private static final String CUSTOMER_USER_EMAIL = "entityQueryCustomer@thingsboard.org";
+    private static final String TENANT_PASSWORD = "testPassword1";
+    private static final String CUSTOMER_USER_PASSWORD = "customer";
+    private static final String TENANT_EMAIL = "entityQueryTenant@thingsboard.org";
+
     private Tenant savedTenant;
     private User tenantAdmin;
 
@@ -94,11 +101,11 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         tenantAdmin = new User();
         tenantAdmin.setAuthority(Authority.TENANT_ADMIN);
         tenantAdmin.setTenantId(savedTenant.getId());
-        tenantAdmin.setEmail("tenant2@thingsboard.org");
+        tenantAdmin.setEmail(TENANT_EMAIL);
         tenantAdmin.setFirstName("Joe");
         tenantAdmin.setLastName("Downs");
 
-        tenantAdmin = createUserAndLogin(tenantAdmin, "testPassword1");
+        tenantAdmin = createUserAndLogin(tenantAdmin, TENANT_PASSWORD);
     }
 
     @After
@@ -622,7 +629,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
 
         Awaitility.await()
                 .alias("data by query")
-                .atMost(30, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> {
                     var data = doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {});
                     var loadedEntities = new ArrayList<>(data.getData());
@@ -682,7 +689,7 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"), EntityDataSortOrder.Direction.ASC
         );
         EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
-        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"),
+        List<EntityKey> entityFields = Arrays.asList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"), new EntityKey(EntityKeyType.ENTITY_FIELD, "queueName"),
                 new EntityKey(EntityKeyType.ENTITY_FIELD, "serviceId"));
 
         EntityDataQuery query = new EntityDataQuery(entityTypeFilter, pageLink, entityFields, null, null);
@@ -696,8 +703,12 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         Assert.assertTrue(data.hasNext());
         Assert.assertEquals(10, data.getData().size());
         data.getData().forEach(entityData -> {
-            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("queueName")).asString().isNotBlank();
-            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("serviceId")).asString().isNotBlank();
+            String queueName = entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("queueName").getValue();
+            String serviceId = entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("serviceId").getValue();
+            assertThat(queueName).isNotBlank();
+            assertThat(serviceId).isNotBlank();
+            assertThat(entityData.getLatest().get(EntityKeyType.ENTITY_FIELD).get("name").getValue()).isEqualTo(queueName + "_" + serviceId);
+
         });
 
         EntityCountQuery countQuery = new EntityCountQuery(entityTypeFilter);
@@ -805,6 +816,61 @@ public class EntityQueryControllerTest extends AbstractControllerTest {
         // all devices with owner type = CUSTOMER
         EntityDataQuery customerEntitiesQuery = new EntityDataQuery(filter, pageLink, entityFields, latestValues, List.of(activeAlarmTimeFilter, customerOwnerTypeFilter));
         checkEntitiesByQuery(customerEntitiesQuery, 0, null, null);
+    }
+
+    @Test
+    public void testFindCustomerDashboards() throws Exception {
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        Dashboard savedDashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        Customer customer = new Customer();
+        customer.setTitle("My customer");
+        Customer savedCustomer = doPost("/api/customer", customer, Customer.class);
+
+        //assign dashboard
+        doPost("/api/customer/" + savedCustomer.getId().getId().toString()
+                + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        // check entity data query by customer
+        User customerUser = new User();
+        customerUser.setAuthority(Authority.CUSTOMER_USER);
+        customerUser.setTenantId(savedTenant.getId());
+        customerUser.setCustomerId(savedCustomer.getId());
+        customerUser.setEmail(CUSTOMER_USER_EMAIL);
+
+        createUserAndLogin(customerUser, CUSTOMER_USER_PASSWORD);
+
+        EntityTypeFilter filter = new EntityTypeFilter();
+        filter.setEntityType(EntityType.DASHBOARD);
+
+        EntityDataSortOrder sortOrder = new EntityDataSortOrder(
+                new EntityKey(EntityKeyType.ENTITY_FIELD, "createdTime"), EntityDataSortOrder.Direction.ASC);
+        EntityDataPageLink pageLink = new EntityDataPageLink(10, 0, null, sortOrder);
+        List<EntityKey> entityFields = Collections.singletonList(new EntityKey(EntityKeyType.ENTITY_FIELD, "name"));
+
+        EntityDataQuery query = new EntityDataQuery(filter, pageLink, entityFields, null, null);
+
+        PageData<EntityData> data =
+                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+                });
+
+        Assert.assertEquals(1, data.getTotalElements());
+        Assert.assertEquals(1, data.getTotalPages());
+        Assert.assertEquals(1, data.getData().size());
+
+        // unnassign dashboard
+        login(TENANT_EMAIL, TENANT_PASSWORD);
+        doDelete("/api/customer/" + savedCustomer.getId().getId().toString() + "/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
+
+        login(CUSTOMER_USER_EMAIL, CUSTOMER_USER_PASSWORD);
+        PageData<EntityData> dataAfterUnassign =
+                doPostWithTypedResponse("/api/entitiesQuery/find", query, new TypeReference<PageData<EntityData>>() {
+                });
+
+        Assert.assertEquals(0, dataAfterUnassign.getTotalElements());
+        Assert.assertEquals(0, dataAfterUnassign.getTotalPages());
+        Assert.assertEquals(0, dataAfterUnassign.getData().size());
     }
 
     private void checkEntitiesByQuery(EntityDataQuery query, int expectedNumOfDevices, String expectedOwnerName, String expectedOwnerType) throws Exception {

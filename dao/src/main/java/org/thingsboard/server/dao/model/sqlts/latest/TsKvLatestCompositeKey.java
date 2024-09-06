@@ -15,11 +15,11 @@
  */
 package org.thingsboard.server.dao.model.sqlts.latest;
 
+import jakarta.persistence.Transient;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 
-import jakarta.persistence.Transient;
 import java.io.Serializable;
 import java.util.UUID;
 

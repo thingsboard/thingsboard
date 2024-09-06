@@ -18,7 +18,6 @@ package org.thingsboard.server.dao.dashboard;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -57,6 +56,7 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.sql.JpaExecutorService;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -235,13 +235,12 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
             publishEvictEvent(new DashboardTitleEvictEvent(dashboardId));
             countService.publishCountEntityEvictEvent(tenantId, EntityType.DASHBOARD);
             eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(dashboardId).build());
-        } catch (Exception t) {
-            ConstraintViolationException e = extractConstraintViolationException(t).orElse(null);
-            if (e != null && e.getConstraintName() != null && e.getConstraintName().equalsIgnoreCase("fk_default_dashboard_device_profile")) {
-                throw new DataValidationException("The dashboard referenced by the device profiles cannot be deleted!");
-            } else {
-                throw t;
-            }
+        } catch (Exception e) {
+            checkConstraintViolation(e, Map.of(
+                    "fk_default_dashboard_device_profile", "The dashboard is referenced by a device profile",
+                    "fk_default_dashboard_asset_profile", "The dashboard is referenced by an asset profile"
+            ));
+            throw e;
         }
     }
 
@@ -305,7 +304,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboards from non-existent customer!");
         }
-        new CustomerDashboardsUnassigner(customer).removeEntities(tenantId, customer);
+        new CustomerDashboardsRemover(customer).removeEntities(tenantId, customer);
     }
 
     @Override
@@ -414,11 +413,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return EntityType.DASHBOARD;
     }
 
-    private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsRemover extends PaginatedRemover<Customer, DashboardInfo> {
 
-        private Customer customer;
+        private final Customer customer;
 
-        CustomerDashboardsUnassigner(Customer customer) {
+        CustomerDashboardsRemover(Customer customer) {
             this.customer = customer;
         }
 
@@ -436,7 +435,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {
 
-        private Customer customer;
+        private final Customer customer;
 
         CustomerDashboardsUpdater(Customer customer) {
             this.customer = customer;

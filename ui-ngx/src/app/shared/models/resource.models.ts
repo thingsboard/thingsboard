@@ -27,6 +27,11 @@ export enum ResourceType {
   JS_MODULE = 'JS_MODULE'
 }
 
+export enum ResourceSubType {
+  IMAGE = 'IMAGE',
+  SCADA_SYMBOL = 'SCADA_SYMBOL'
+}
+
 export const ResourceTypeMIMETypes = new Map<ResourceType, string>(
   [
     [ResourceType.LWM2M_MODEL, 'application/xml,text/xml'],
@@ -59,6 +64,7 @@ export interface TbResourceInfo<D> extends Omit<BaseData<TbResourceId>, 'name' |
   resourceKey?: string;
   title?: string;
   resourceType: ResourceType;
+  resourceSubType?: ResourceSubType;
   fileName: string;
   public: boolean;
   publicResourceKey?: string;
@@ -94,6 +100,7 @@ export interface ImageExportData {
   mediaType: string;
   fileName: string;
   title: string;
+  subType: string;
   resourceKey: string;
   public: boolean;
   publicResourceKey: string;
@@ -160,7 +167,11 @@ export const isImageResourceUrl = (url: string): boolean => url && IMAGES_URL_RE
 
 export const extractParamsFromImageResourceUrl = (url: string): {type: ImageResourceType; key: string} => {
   const res = url.match(IMAGES_URL_REGEXP);
-  return {type: res[1] as ImageResourceType, key: res[2]};
+  if (res?.length > 2) {
+    return {type: res[1] as ImageResourceType, key: res[2]};
+  } else {
+    return null;
+  }
 };
 
 export const isBase64DataImageUrl = (url: string): boolean => url && url.startsWith(IMAGE_BASE64_URL_PREFIX);

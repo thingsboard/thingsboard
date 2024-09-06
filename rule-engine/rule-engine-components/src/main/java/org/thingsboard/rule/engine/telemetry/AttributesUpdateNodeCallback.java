@@ -15,11 +15,11 @@
  */
 package org.thingsboard.rule.engine.telemetry;
 
+import jakarta.annotation.Nullable;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.msg.TbMsg;
 
-import jakarta.annotation.Nullable;
 import java.util.List;
 
 public class AttributesUpdateNodeCallback extends TelemetryNodeCallback {

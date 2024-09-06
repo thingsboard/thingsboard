@@ -60,7 +60,7 @@ export class TbCanvasDigitalGauge {
     this.localSettings.gaugeWidthScale = settings.gaugeWidthScale || 0.75;
     this.localSettings.gaugeColor = settings.gaugeColor || tinycolor(keyColor).setAlpha(0.2).toRgbString();
 
-    convertLevelColorsSettingsToColorProcessor(settings);
+    convertLevelColorsSettingsToColorProcessor(settings, keyColor);
     this.localSettings.barColor = settings.barColor;
 
     this.localSettings.showTicks = settings.showTicks || false;

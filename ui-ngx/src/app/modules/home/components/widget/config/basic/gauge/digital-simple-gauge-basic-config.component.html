@@ -53,17 +53,9 @@
 
     <div class="tb-form-row space-between column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showMinMax">
-        {{ 'widgets.gauge.min-and-max-value' | translate }}
+        {{ 'widgets.gauge.min-and-max-label' | translate }}
       </mat-slide-toggle>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
-        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-          <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
-        <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
-        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-          <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-        </mat-form-field>
         <tb-font-settings formControlName="minMaxFont"
                           disabledLineHeight
                           [previewText]="previewFn">
@@ -72,6 +64,27 @@
                         colorClearButton
                         formControlName="minMaxColor">
         </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div class="fixed-title-width">{{ 'widgets.gauge.min-and-max-value' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widgets.gauge.min-max-validation-text' | translate"
+                    *ngIf="simpleGaugeWidgetConfigForm.get('maxValue').hasError('maxValue')"
+                    class="material-icons tb-suffix-show-always tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
       </div>
     </div>
 
@@ -118,14 +131,6 @@
     </div>
 
     <div class="tb-form-row space-between">
-      <div translate>widgets.gauge.default-color</div>
-      <tb-color-input asBoxInput
-                      colorClearButton
-                      formControlName="defaultColor">
-      </tb-color-input>
-    </div>
-
-    <div class="tb-form-row space-between">
       <div translate>widgets.gauge.gauge-bar-background</div>
       <tb-color-input asBoxInput
                       colorClearButton
@@ -137,6 +142,7 @@
       <div class="fixed-title-width">{{ 'widgets.gauge.bar-color' | translate }}</div>
       <tb-color-settings formControlName="barColor"
                          rangeAdvancedMode
+                         gradientAdvancedMode
                          [minValue]="simpleGaugeWidgetConfigForm.get('minValue').value"
                          [maxValue]="simpleGaugeWidgetConfigForm.get('maxValue').value"
                          [aliasController]="aliasController"

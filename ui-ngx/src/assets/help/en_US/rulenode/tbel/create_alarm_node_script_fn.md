@@ -5,7 +5,7 @@
 
 *function Details(msg, metadata, msgType): any*
 
-[TBEL{:target="_blank"}](${siteBaseUrl}/docs/user-guide/tbel/) function generating **Alarm Details** object. Used for storing additional parameters inside Alarm.<br>
+[TBEL{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/tbel/) function generating **Alarm Details** object. Used for storing additional parameters inside Alarm.<br>
 For example you can save attribute name/value pair from Original Message payload or Metadata.
 
 **Parameters:**
@@ -59,11 +59,11 @@ return details;
 
 <br>
 
-More details about Alarms can be found in [this tutorial{:target="_blank"}](${siteBaseUrl}/docs/user-guide/alarms/).
+More details about Alarms can be found in [this tutorial{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/alarms/).
 
 You can see the real life example, where this node is used, in the next tutorial:
 
-- [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs/user-guide/rule-engine-2-0/tutorials/create-clear-alarms/)
+- [Create and Clear Alarms{:target="_blank"}](${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/rule-engine-2-0/tutorials/create-clear-alarms/)
 
 <br>
 <br>

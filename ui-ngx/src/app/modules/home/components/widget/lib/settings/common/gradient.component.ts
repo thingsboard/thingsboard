@@ -71,10 +71,10 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   datasource: Datasource;
 
   @Input()
-  minValue: string;
+  minValue: number;
 
   @Input()
-  maxValue: string;
+  maxValue: number;
 
   @Input()
   @coerceBoolean()
@@ -109,12 +109,17 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
           source: [{type: ValueSourceType.constant}],
           color: ['rgba(255, 0, 0, 1)']
         })
-      })
+      }),
+      minValue: {value: 0, disabled: isFinite(this.minValue)},
+      maxValue: {value: 100, disabled: isFinite(this.maxValue)}
     });
 
     this.gradientFormGroup.valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe(() => this.updateModel());
+    this.gradientFormGroup.get('advancedMode').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe(() => setTimeout(() => {this.popover?.updatePosition();}, 0));
   }
 
   ngOnDestroy() {
@@ -136,6 +141,8 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   writeValue(value: ColorGradientSettings): void {
     if (isDefinedAndNotNull(value)) {
       this.gradientFormGroup.get('advancedMode').patchValue(value.advancedMode, {emitEvent: false});
+      this.gradientFormGroup.get('minValue').patchValue(isFinite(this.minValue) ? this.minValue : value.minValue, {emitEvent: false});
+      this.gradientFormGroup.get('maxValue').patchValue(isFinite(this.maxValue) ? this.maxValue : value.maxValue, {emitEvent: false});
       if (value?.gradient?.length) {
         this.gradientFormGroup.get('gradient').get('start').patchValue(value.gradient[0], {emitEvent: false});
         this.gradientFormGroup.get('gradient').get('end').patchValue(value.gradient[value.gradient.length - 1], {emitEvent: false});
@@ -160,10 +167,10 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
         this.advancedGradientListFormArray.value.map((v, i) => this.pointer(shift * (i + 1), i+1, null, true)).join('') +
         `<div class="pointer end"></div>`;
     } else {
-      const point = (+this.maxValue - +this.minValue) / (this.gradientListFormArray.value.length + 1);
+      const min = this.gradientFormGroup.get('minValue').value || 0;
+      const max = this.gradientFormGroup.get('maxValue').value || 100;
+      const point = (+max - +min) / (this.gradientListFormArray.value.length + 1);
       const shift = 100 / (this.gradientListFormArray.value.length + 1);
-      const min = isDefinedAndNotNull(this.minValue) ? this.minValue : 0;
-      const max = isDefinedAndNotNull(this.maxValue) ? this.maxValue : 100;
       return `<div class="pointer start"><div class="pointer-value"><span class="pointer-value-text">${min}</span></div></div>` +
         this.gradientListFormArray.value.map((v, i) => this.pointer(shift * (i + 1), i+1, point)).join('') +
         `<div class="pointer end"><div class="pointer-value"><span class="pointer-value-text">${max}</span></div></div>`;
@@ -175,7 +182,8 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
       return `<div class="pointer" style="left: ${shift}%"></div>`;
     } else {
       return `<div class="pointer" style="left: ${shift}%">` +
-        `<div class="pointer-value"><span class="pointer-value-text">${Math.floor(+this.minValue + (value * index))}</span></div></div>`;
+        `<div class="pointer-value"><span class="pointer-value-text">` +
+        `${Math.floor(+this.gradientFormGroup.get('minValue').value + (value * index))}</span></div></div>`;
     }
   }
 
@@ -251,15 +259,14 @@ export class GradientComponent implements OnInit, ControlValueAccessor, OnDestro
   }
 
   updateModel() {
+    const gradient = this.gradientFormGroup.getRawValue();
     this.propagateChange(
       {
-        advancedMode: this.gradientFormGroup.value.advancedMode,
-        gradient: [this.gradientFormGroup.value.gradient.start,
-        ...this.gradientFormGroup.value.gradient.gradientList.map(item => item.color),
-        this.gradientFormGroup.value.gradient.end],
-        gradientAdvanced: [this.gradientFormGroup.value.gradientAdvanced.start,
-          ...this.gradientFormGroup.value.gradientAdvanced.gradientList,
-          this.gradientFormGroup.value.gradientAdvanced.end]
+        advancedMode: gradient.advancedMode,
+        gradient: [gradient.gradient.start, ...gradient.gradient.gradientList.map(item => item.color), gradient.gradient.end],
+        gradientAdvanced: [gradient.gradientAdvanced.start, ...gradient.gradientAdvanced.gradientList, gradient.gradientAdvanced.end],
+        minValue: gradient.minValue,
+        maxValue: gradient.maxValue
       }
     );
   }
