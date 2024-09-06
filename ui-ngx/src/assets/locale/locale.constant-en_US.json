@@ -3885,7 +3885,11 @@
             "label-color": "Label color",
             "water-leak-hint": "Indicates whether a leak.",
             "default-color": "Default color",
-            "leak-color": "Leak color"
+            "leak-color": "Leak color",
+            "full-value": "Full value",
+            "full-value-hint": "Double value indicating full value.",
+            "label": "Label",
+            "icon": "Icon"
         }
     },
     "item": {
