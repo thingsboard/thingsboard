@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.sql.event;
 
 import jakarta.annotation.PostConstruct;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
@@ -32,6 +32,7 @@ import org.thingsboard.server.common.data.event.LifecycleEvent;
 import org.thingsboard.server.common.data.event.RuleChainDebugEvent;
 import org.thingsboard.server.common.data.event.RuleNodeDebugEvent;
 import org.thingsboard.server.common.data.event.StatisticsEvent;
+import org.thingsboard.server.dao.config.DefaultDataSource;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.sql.PreparedStatement;
@@ -44,9 +45,11 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
+@DefaultDataSource
 @Repository
 @Transactional
 @SqlDao
+@RequiredArgsConstructor
 public class EventInsertRepository {
 
     private static final ThreadLocal<Pattern> PATTERN_THREAD_LOCAL = ThreadLocal.withInitial(() -> Pattern.compile(String.valueOf(Character.MIN_VALUE)));
@@ -55,11 +58,8 @@ public class EventInsertRepository {
 
     private final Map<EventType, String> insertStmtMap = new ConcurrentHashMap<>();
 
-    @Autowired
-    protected JdbcTemplate jdbcTemplate;
-
-    @Autowired
-    private TransactionTemplate transactionTemplate;
+    private final JdbcTemplate jdbcTemplate;
+    private final TransactionTemplate transactionTemplate;
 
     @Value("${sql.remove_null_chars:true}")
     private boolean removeNullChars;
@@ -236,4 +236,5 @@ public class EventInsertRepository {
         }
         return strValue;
     }
+
 }

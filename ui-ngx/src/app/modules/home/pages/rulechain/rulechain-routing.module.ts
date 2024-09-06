@@ -39,7 +39,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { ItemBufferService } from '@core/public-api';
+import { ItemBufferService, MenuId } from '@core/public-api';
 import { MODULES_MAP } from '@shared/public-api';
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -127,8 +127,7 @@ const routes: Routes = [
     path: 'ruleChains',
     data: {
       breadcrumb: {
-        label: 'rulechain.rulechains',
-        icon: 'settings_ethernet'
+        menuId: MenuId.rule_chains
       }
     },
     children: [

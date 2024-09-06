@@ -55,13 +55,13 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @PersistenceContext
     private EntityManager entityManager;
 
-    protected abstract Class<E> getEntityClass();
-
-    protected abstract JpaRepository<E, UUID> getRepository();
-
     @Override
     @Transactional
     public D save(TenantId tenantId, D domain) {
+        return save(tenantId, domain, false);
+    }
+
+    private D save(TenantId tenantId, D domain, boolean flush) {
         E entity;
         try {
             entity = getEntityClass().getConstructor(domain.getClass()).newInstance(domain);
@@ -77,14 +77,16 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
             entity.setCreatedTime(Uuids.unixTimestamp(uuid));
         }
         try {
-            entity = doSave(entity, isNew);
+            entity = doSave(entity, isNew, flush);
         } catch (OptimisticLockException e) {
-            throw new EntityVersionMismatchException((getEntityType() != null ? getEntityType().getNormalName() : "Entity") + " was already changed by someone else", e);
+            throw new EntityVersionMismatchException(getEntityType(), e);
         }
         return DaoUtil.getData(entity);
     }
 
-    protected E doSave(E entity, boolean isNew) {
+    protected E doSave(E entity, boolean isNew, boolean flush) {
+        boolean flushed = false;
+        EntityManager entityManager = getEntityManager();
         if (isNew) {
             if (entity instanceof HasVersion versionedEntity) {
                 versionedEntity.setVersion(1L);
@@ -95,16 +97,34 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
                 if (versionedEntity.getVersion() == null) {
                     HasVersion existingEntity = entityManager.find(versionedEntity.getClass(), entity.getUuid());
                     if (existingEntity != null) {
-                        versionedEntity.setVersion(existingEntity.getVersion()); // manually resetting the version to latest to allow force overwrite of the entity
+                        /*
+                         * manually resetting the version to latest to allow force overwrite of the entity
+                         * */
+                        versionedEntity.setVersion(existingEntity.getVersion());
                     } else {
-                        return doSave(entity, true);
+                        return doSave(entity, true, flush);
                     }
                 }
-                entity = entityManager.merge(entity);
+                versionedEntity = entityManager.merge(versionedEntity);
+                /*
+                 * by default, Hibernate doesn't issue an update query and thus version increment
+                 * if the entity was not modified. to bypass this and always increment the version, we do it manually
+                 * */
+                versionedEntity.setVersion(versionedEntity.getVersion() + 1);
+                /*
+                 * flushing and then removing the entity from the persistence context so that it is not affected
+                 * by next flushes (e.g. when a transaction is committed) to avoid double version increment
+                 * */
                 entityManager.flush();
+                entityManager.detach(versionedEntity);
+                flushed = true;
+                entity = (E) versionedEntity;
             } else {
                 entity = entityManager.merge(entity);
             }
+        }
+        if (flush && !flushed) {
+            entityManager.flush();
         }
         return entity;
     }
@@ -112,9 +132,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
     @Override
     @Transactional
     public D saveAndFlush(TenantId tenantId, D domain) {
-        D d = save(tenantId, domain);
-        getRepository().flush();
-        return d;
+        return save(tenantId, domain, true);
     }
 
     @Override
@@ -151,6 +169,7 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         log.debug("Remove request: {}", id);
     }
 
+    @Override
     @Transactional
     public void removeAllByIds(Collection<UUID> ids) {
         JpaRepository<E, UUID> repository = getRepository();
@@ -176,11 +195,23 @@ public abstract class JpaAbstractDao<E extends BaseEntity<D>, D>
         }
         query += " ORDER BY id LIMIT ?";
 
-        return jdbcTemplate.queryForList(query, UUID.class, params);
+        return getJdbcTemplate().queryForList(query, UUID.class, params);
     }
 
     protected String getTenantIdColumn() {
         return ModelConstants.TENANT_ID_COLUMN;
     }
+
+    protected EntityManager getEntityManager() {
+        return entityManager;
+    }
+
+    protected JdbcTemplate getJdbcTemplate() {
+        return jdbcTemplate;
+    }
+
+    protected abstract Class<E> getEntityClass();
+
+    protected abstract JpaRepository<E, UUID> getRepository();
 
 }

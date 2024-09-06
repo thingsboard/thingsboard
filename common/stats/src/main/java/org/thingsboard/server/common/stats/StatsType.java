@@ -21,9 +21,10 @@ public enum StatsType {
     TRANSPORT("transport"),
     JS_INVOKE("jsInvoke"),
     RATE_EXECUTOR("rateExecutor"),
-    HOUSEKEEPER("housekeeper");
+    HOUSEKEEPER("housekeeper"),
+    EDGE("edge");
 
-    private String name;
+    private final String name;
 
     StatsType(String name) {
         this.name = name;

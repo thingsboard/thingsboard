@@ -830,7 +830,6 @@
         "empty-image": "Aucune image",
         "maximum-upload-file-size": "Taille de fichier maximum: {{ size }}",
         "cannot-upload-file": "Le téléchargement a échoué",
-        "layout-settings": "Paramètres de mise en page",
         "margin-required": "Valeur de marge requise.",
         "min-margin-message": "0 est la valeur minimum permise.",
         "max-margin-message": "50 est la valeur maximum permise.",

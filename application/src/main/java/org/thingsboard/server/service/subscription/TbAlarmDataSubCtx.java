@@ -341,7 +341,7 @@ public class TbAlarmDataSubCtx extends TbAbstractDataSubCtx<AlarmDataQuery> {
             long startTs = System.currentTimeMillis() - query.getPageLink().getTimeWindow();
             newSubsList.forEach(entity -> createAlarmSubscriptionForEntity(query.getPageLink(), startTs, entity));
         }
-        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getSessionId(), subId));
+        subIdsToCancel.forEach(subId -> localSubscriptionService.cancelSubscription(getTenantId(), getSessionId(), subId));
         subsToAdd.forEach(subscription -> localSubscriptionService.addSubscription(subscription, sessionRef));
     }
 

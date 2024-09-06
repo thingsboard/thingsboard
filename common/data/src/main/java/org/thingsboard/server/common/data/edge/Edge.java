@@ -75,9 +75,9 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
+        this.name = edge.getName();
         this.type = edge.getType();
         this.label = edge.getLabel();
-        this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
         this.version = edge.getVersion();
@@ -87,9 +87,9 @@ public class Edge extends BaseDataWithAdditionalInfo<EdgeId> implements HasLabel
         this.tenantId = edge.getTenantId();
         this.customerId = edge.getCustomerId();
         this.rootRuleChainId = edge.getRootRuleChainId();
+        this.name = edge.getName();
         this.type = edge.getType();
         this.label = edge.getLabel();
-        this.name = edge.getName();
         this.routingKey = edge.getRoutingKey();
         this.secret = edge.getSecret();
         this.version = edge.getVersion();

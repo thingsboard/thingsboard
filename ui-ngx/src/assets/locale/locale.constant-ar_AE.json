@@ -1283,7 +1283,6 @@
         "maximum-upload-file-size": "الحد الأقصى لحجم الملف المرفوع: {{ size }}",
         "cannot-upload-file": "لا يمكن تحميل الملف",
         "settings": "الإعدادات",
-        "layout-settings": "إعدادات التخطيط",
         "columns-count": "عدد الأعمدة",
         "columns-count-required": "عدد الأعمدة مطلوب.",
         "min-columns-count-message": "الحد الأدنى المسموح به هو 10 أعمدة.",

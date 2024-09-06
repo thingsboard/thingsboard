@@ -174,14 +174,23 @@ tb-dashboard-toolbar {
 
                 @media #{$mat-sm} {
                   gap: 6px;
+                  &.tb-left-panel {
+                    gap: 3px;
+                  }
                 }
 
                 @media #{$mat-md} {
-                  gap: 6px;
+                  gap: 3px;
+                  &.tb-left-panel {
+                    gap: 1px;
+                  }
                 }
 
                 @media #{$mat-gt-md} {
-                  gap: 12px;
+                  gap: 6px;
+                  &.tb-left-panel {
+                    gap: 3px;
+                  }
                 }
 
                 @media #{$mat-gt-sm} {
