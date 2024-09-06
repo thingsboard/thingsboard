@@ -18,7 +18,6 @@ package org.thingsboard.rule.engine.rest;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.ssl.SslContext;
-import io.netty.handler.ssl.SslContextBuilder;
 import io.netty.handler.timeout.ReadTimeoutHandler;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -130,10 +129,12 @@ public class TbHttpClient {
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));
             }
 
-            this.webClient = WebClient.builder()
-                    .clientConnector(new ReactorClientHttpConnector(httpClient))
-                    .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
-                    .build();
+            WebClient.Builder webClientBuilder = WebClient.builder()
+                    .clientConnector(new ReactorClientHttpConnector(httpClient));
+            if (config.isCloseConnectionAfterEachRequest()) {
+                webClientBuilder.defaultHeader(HttpHeaders.CONNECTION, "close"); // Added for hotfix "Connection reset"
+            }
+            this.webClient = webClientBuilder.build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }

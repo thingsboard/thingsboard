@@ -16,7 +16,6 @@
 package org.thingsboard.rule.engine.rest;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import com.fasterxml.jackson.databind.JsonNode;
 import org.apache.http.HttpException;
 import org.apache.http.HttpRequest;
 import org.apache.http.HttpResponse;
@@ -27,13 +26,18 @@ import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
+import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.http.HttpHeaders;
+import org.springframework.web.reactive.function.client.WebClient;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -41,7 +45,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
@@ -50,15 +53,18 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
 @ExtendWith(MockitoExtension.class)
-public class TbRestApiCallNodeTest {
+public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
 
+    @Spy
     private TbRestApiCallNode restNode;
 
     @Mock
@@ -96,6 +102,32 @@ public class TbRestApiCallNodeTest {
         if (server != null) {
             server.stop();
         }
+    }
+
+    @Test
+    public void givenDefaultConfig_whenInit_verifyNoConnectionCloseHeaderPresentInWebClient() {
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        initWithConfig(config);
+        TbHttpClient httpClient = restNode.httpClient;
+        WebClient webClient = httpClient.getWebClient();
+        WebClient.Builder builder = webClient.mutate();
+        builder.defaultHeaders(httpHeaders -> assertThat(httpHeaders).isNullOrEmpty());
+    }
+
+    @Test
+    public void givenDefaultConfig_whenInit_verifyConnectionCloseHeaderPresentInWebClient() {
+        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
+        config.setCloseConnectionAfterEachRequest(true);
+        initWithConfig(config);
+        TbHttpClient httpClient = restNode.httpClient;
+        WebClient webClient = httpClient.getWebClient();
+        WebClient.Builder builder = webClient.mutate();
+        builder.defaultHeaders(httpHeaders -> {
+            assertThat(httpHeaders).isNotNull();
+            var headers = httpHeaders.get(HttpHeaders.CONNECTION);
+            assertThat(headers).isNotNull().hasSize(1);
+            assertThat(headers.get(0)).isEqualTo("close");
+        });
     }
 
     @Test
@@ -214,20 +246,61 @@ public class TbRestApiCallNodeTest {
         assertEquals(TbMsg.EMPTY_JSON_OBJECT, dataCaptor.getValue());
     }
 
-    @Test
-    public void givenOldConfig_whenUpgrade_thenShouldReturnTrueResultWithNewConfig() throws Exception {
-        var defaultConfig = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        var node = new TbRestApiCallNode();
-        String oldConfig = "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\":\"POST\"," +
-                "\"useSimpleClientHttpFactory\":false,\"ignoreRequestBody\":false,\"enableProxy\":false," +
-                "\"useSystemProxyProperties\":false,\"proxyScheme\":null,\"proxyHost\":null,\"proxyPort\":0," +
-                "\"proxyUser\":null,\"proxyPassword\":null,\"readTimeoutMs\":0,\"maxParallelRequestsCount\":0," +
-                "\"headers\":{\"Content-Type\":\"application/json\"},\"useRedisQueueForMsgPersistence\":false," +
-                "\"trimQueue\":null,\"maxQueueSize\":null,\"credentials\":{\"type\":\"anonymous\"},\"trimDoubleQuotes\":true}";
-        JsonNode configJson = JacksonUtil.toJsonNode(oldConfig);
-        TbPair<Boolean, JsonNode> upgrade = node.upgrade(0, configJson);
-        Assertions.assertTrue(upgrade.getFirst());
-        Assertions.assertTrue(JacksonUtil.treeToValue(upgrade.getSecond(), defaultConfig.getClass()).isParseToPlainText());
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // config for version 2 with upgrade from version 0
+                Arguments.of(0,
+                        """
+                              {
+                                 "restEndpointUrlPattern":"http://localhost/api",
+                                 "requestMethod":"POST",
+                                 "useSimpleClientHttpFactory":false,
+                                 "ignoreRequestBody":false,
+                                 "enableProxy":false,
+                                 "useSystemProxyProperties":false,
+                                 "proxyScheme":null,
+                                 "proxyHost":null,
+                                 "proxyPort":0,
+                                 "proxyUser":null,
+                                 "proxyPassword":null,
+                                 "readTimeoutMs":0,
+                                 "maxParallelRequestsCount":0,
+                                 "headers":{"Content-Type":"application/json"},
+                                 "useRedisQueueForMsgPersistence":false,
+                                 "trimQueue":null,
+                                 "maxQueueSize":null,
+                                 "credentials":{"type":"anonymous"},
+                                 "trimDoubleQuotes":false
+                              }""",
+                        true,
+                        """
+                              {
+                                 "restEndpointUrlPattern":"http://localhost/api",
+                                 "requestMethod":"POST",
+                                 "useSimpleClientHttpFactory":false,
+                                 "ignoreRequestBody":false,
+                                 "enableProxy":false,
+                                 "useSystemProxyProperties":false,
+                                 "proxyScheme":null,
+                                 "proxyHost":null,
+                                 "proxyPort":0,
+                                 "proxyUser":null,
+                                 "proxyPassword":null,
+                                 "readTimeoutMs":0,
+                                 "maxParallelRequestsCount":0,
+                                 "headers":{"Content-Type":"application/json"},
+                                 "useRedisQueueForMsgPersistence":false,
+                                 "trimQueue":null,
+                                 "maxQueueSize":null,
+                                 "credentials":{"type":"anonymous"},
+                                 "parseToPlainText":false,
+                                 "closeConnectionAfterEachRequest":false
+                              }""")
+        );
     }
 
+    @Override
+    protected TbNode getTestNode() {
+        return restNode;
+    }
 }
