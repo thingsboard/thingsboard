@@ -3835,6 +3835,8 @@
             "open-hint": "Action invoked when user clicks to open component.",
             "close": "Close",
             "close-hint": "Action invoked when user clicks to close component.",
+            "close-state-animation": "Closed state animation",
+            "close-state-animation-hint": "Whether to enable blinking animation when component is in closed state.",
             "opened-color": "Opened color",
             "closed-color": "Closed color",
             "opened-rotation-angle": "Opened rotation angle",
@@ -3880,7 +3882,10 @@
             "stand-filter-color": "Stand filter color",
             "mode-box-background": "Mode box background",
             "border-color": "Border color",
-            "label-color": "Label color"
+            "label-color": "Label color",
+            "water-leak-hint": "Indicates whether a leak.",
+            "default-color": "Default color",
+            "leak-color": "Leak color"
         }
     },
     "item": {
