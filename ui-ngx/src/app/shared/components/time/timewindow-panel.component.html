@@ -122,8 +122,8 @@
 
     <ng-container *ngIf="aggregationOptionsAvailable">
       <ng-container formGroupName="aggregation">
-        <section class="tb-form-panel stroked" *ngIf="isEdit || !timewindow.hideAggregation">
-          <div class="tb-form-panel-title">{{ 'aggregation.aggregation' | translate }}</div>
+        <section class="tb-form-row column-xs space-between same-padding" *ngIf="isEdit || !timewindow.hideAggregation">
+          <div class="fixed-title-width">{{ 'aggregation.aggregation' | translate }}</div>
           <mat-form-field subscriptSizing="dynamic" appearance="outline">
             <mat-select formControlName="type">
               <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
@@ -133,31 +133,28 @@
           </mat-form-field>
         </section>
 
-        <section class="tb-form-panel stroked"
+        <section class="tb-form-row column-xs space-between same-padding"
                  *ngIf="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE && (isEdit || !timewindow.hideAggInterval)">
-          <div class="tb-form-panel-title">{{ 'aggregation.limit' | translate }}</div>
-          <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center"
-               fxLayout.xs="column" fxLayoutAlign.xs="stretch">
-            <div fxLayout="row" fxLayoutAlign="start center" fxFlex>
-              <mat-slider fxFlex
-                          min="{{minDatapointsLimit()}}"
-                          max="{{maxDatapointsLimit()}}">
-                <input matSliderThumb formControlName="limit"/>
-              </mat-slider>
-              <mat-form-field class="limit-slider-value" subscriptSizing="dynamic" appearance="outline">
-                <input matInput formControlName="limit" type="number" step="1"
-                       [value]="timewindowForm.get('aggregation.limit').value"
-                       min="{{minDatapointsLimit()}}"
-                       max="{{maxDatapointsLimit()}}"/>
-              </mat-form-field>
-            </div>
+          <div>{{ 'aggregation.limit' | translate }}</div>
+          <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center">
+            <mat-slider fxFlex
+                        min="{{minDatapointsLimit()}}"
+                        max="{{maxDatapointsLimit()}}">
+              <input matSliderThumb formControlName="limit"/>
+            </mat-slider>
+            <mat-form-field class="limit-slider-value" subscriptSizing="dynamic" appearance="outline">
+              <input matInput formControlName="limit" type="number" step="1"
+                     [value]="timewindowForm.get('aggregation.limit').value"
+                     min="{{minDatapointsLimit()}}"
+                     max="{{maxDatapointsLimit()}}"/>
+            </mat-form-field>
           </div>
         </section>
       </ng-container>
 
-      <section class="tb-form-panel stroked" [fxShow]="(isEdit || !timewindow.hideAggInterval)
+      <section class="tb-form-row column-xs space-between same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
        && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
-        <div class="tb-form-panel-title">{{ 'aggregation.group-interval' | translate }}</div>
+        <div class="fixed-title-width">{{ 'aggregation.group-interval' | translate }}</div>
         <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"
