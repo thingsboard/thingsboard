@@ -14,15 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component,
-  ComponentFactoryResolver,
-  Inject,
-  Injector,
-  SkipSelf,
-  ViewChild
-} from '@angular/core';
+import { Component, Inject, SkipSelf, ViewChild } from '@angular/core';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
@@ -30,7 +22,6 @@ import { AppState } from '@core/core.state';
 import { FormGroupDirective, NgForm, UntypedFormControl } from '@angular/forms';
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
-import { TenantProfileService } from '@core/http/tenant-profile.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
 import { WidgetsBundleComponent } from '@home/pages/widget/widgets-bundle.component';
 import { WidgetService } from '@core/http/widget.service';
@@ -46,7 +37,7 @@ export interface WidgetsBundleDialogData {
   styleUrls: ['widgets-bundle-dialog.component.scss']
 })
 export class WidgetsBundleDialogComponent extends
-  DialogComponent<WidgetsBundleDialogComponent, WidgetsBundle> implements ErrorStateMatcher, AfterViewInit {
+  DialogComponent<WidgetsBundleDialogComponent, WidgetsBundle> implements ErrorStateMatcher {
 
   widgetsBundle: WidgetsBundle;
 
@@ -58,18 +49,10 @@ export class WidgetsBundleDialogComponent extends
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: WidgetsBundleDialogData,
               public dialogRef: MatDialogRef<WidgetsBundleDialogComponent, WidgetsBundle>,
-              private componentFactoryResolver: ComponentFactoryResolver,
-              private injector: Injector,
               @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private widgetsService: WidgetService) {
     super(store, router, dialogRef);
     this.widgetsBundle = this.data.widgetsBundle;
-  }
-
-  ngAfterViewInit(): void {
-    setTimeout(() => {
-      this.widgetsBundleComponent.entityForm.markAsDirty();
-    }, 0);
   }
 
   isErrorState(control: UntypedFormControl | null, form: FormGroupDirective | NgForm | null): boolean {
