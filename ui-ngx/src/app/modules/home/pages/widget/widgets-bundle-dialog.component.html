@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<form [formGroup]="saveWidgetTypeAsFormGroup" (ngSubmit)="saveAs()" style="min-width: 360px">
+<form (ngSubmit)="save()" style="width: 650px;">
   <mat-toolbar color="primary">
-    <h2 translate>{{ dialogTitle }}</h2>
+    <h2 translate>widgets-bundle.add</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -29,32 +29,25 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
-    <span translate>{{ dialogTitle }}</span>
-    <mat-form-field class="mat-block">
-      <mat-label translate>widget.title</mat-label>
-      <input matInput formControlName="title" required>
-      <mat-error *ngIf="saveWidgetTypeAsFormGroup.get('title').hasError('required')">
-        {{ 'widget.title-required' | translate }}
-      </mat-error>
-    </mat-form-field>
-    <tb-widgets-bundle-select
-      formControlName="widgetsBundle"
-      createNew
-      bundlesScope="{{bundlesScope}}">
-    </tb-widgets-bundle-select>
+    <tb-widgets-bundle
+      #widgetsBundleComponent
+      [isEdit]="true"
+      [entity]="widgetsBundle"
+      [standalone]="true">
+    </tb-widgets-bundle>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"
             type="button"
+            cdkFocusInitial
             [disabled]="(isLoading$ | async)"
-            (click)="cancel()" cdkFocusInitial>
+            (click)="cancel()">
       {{ 'action.cancel' | translate }}
     </button>
     <button mat-raised-button color="primary"
             type="submit"
-            [disabled]="(isLoading$ | async) || saveWidgetTypeAsFormGroup.invalid
-            || !saveWidgetTypeAsFormGroup.dirty">
-      {{ saveAsActionTitle | translate }}
+            [disabled]="(isLoading$ | async) || widgetsBundleComponent.entityForm?.invalid || !widgetsBundleComponent.entityForm?.dirty">
+      {{ 'action.add' | translate }}
     </button>
   </div>
 </form>

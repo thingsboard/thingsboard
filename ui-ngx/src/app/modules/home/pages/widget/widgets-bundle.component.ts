@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Input, Optional } from '@angular/core';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { EntityComponent } from '../../components/entity/entity.component';
@@ -29,9 +29,12 @@ import { EntityTableConfig } from '@home/models/entity/entities-table-config.mod
 })
 export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
 
+  @Input()
+  standalone = false;
+
   constructor(protected store: Store<AppState>,
-              @Inject('entity') protected entityValue: WidgetsBundle,
-              @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<WidgetsBundle>,
+              @Optional() @Inject('entity') protected entityValue: WidgetsBundle,
+              @Optional() @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<WidgetsBundle>,
               public fb: UntypedFormBuilder,
               protected cd: ChangeDetectorRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);

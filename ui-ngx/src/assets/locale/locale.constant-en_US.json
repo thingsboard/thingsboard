@@ -5935,7 +5935,8 @@
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, =1 {1 widgets bundle} other {# widgets bundles} } selected",
         "open-widgets-bundle": "Open widgets bundle",
-        "loading-widgets-bundles": "Loading widgets bundles..."
+        "loading-widgets-bundles": "Loading widgets bundles...",
+        "create-new": "Create new widget bundle"
     },
     "widget-config": {
         "data": "Data",

@@ -191,10 +191,10 @@ export interface ScadaSymbolMetadata {
   properties: ScadaSymbolProperty[];
 }
 
-export const emptyMetadata = (): ScadaSymbolMetadata => ({
+export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
   title: '',
-  widgetSizeX: 3,
-  widgetSizeY: 3,
+  widgetSizeX: width ? width/100 : 3,
+  widgetSizeY: height ? height/100 : 3,
   tags: [],
   behavior: [],
   properties: []
@@ -255,7 +255,8 @@ const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata 
     if (elements.length) {
       return JSON.parse(elements[0].textContent);
     } else {
-      return emptyMetadata();
+      const viewBox = svgDoc.getElementsByTagName('svg')[0].viewBox.baseVal;
+      return emptyMetadata(viewBox.width, viewBox.height);
     }
   } catch (_e) {
     console.error(_e);
