@@ -34,10 +34,14 @@ import {
   ScadaSymbolEditObjectCallbacks
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
+import { FormControl } from '@angular/forms';
+import { removeScadaSymbolMetadata } from '@home/components/widget/lib/scada/scada-symbol.models';
 
 export interface ScadaSymbolEditorData {
   scadaSymbolContent: string;
 }
+
+type editorModeType = 'svg' | 'xml';
 
 @Component({
   selector: 'tb-scada-symbol-editor',
@@ -84,10 +88,31 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
 
   displayShowHidden = false;
 
+  svgContentFormControl = new FormControl();
+
+  svgContent: string;
+
+  private editorModeValue: editorModeType = 'svg';
+
+  get editorMode(): editorModeType {
+    return this.editorModeValue;
+  }
+
+  set editorMode(value: editorModeType) {
+    this.updateEditorMode(value);
+  }
+
   constructor(private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
+    this.svgContentFormControl.valueChanges.subscribe((svgContent) => {
+      if (this.svgContent !== svgContent) {
+        this.svgContent = svgContent;
+        this.editObjectCallbacks.onSymbolEditObjectDirty(true);
+      }
+      this.editObjectCallbacks.onSymbolEditObjectValid(this.svgContentFormControl.valid);
+    });
   }
 
   ngAfterViewInit() {
@@ -114,13 +139,16 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
       const change = changes[propName];
       if (!change.firstChange && change.currentValue !== change.previousValue) {
         if (propName === 'data') {
-          if (this.scadaSymbolEditObject) {
-            setTimeout(() => {
-              this.updateContent(this.data.scadaSymbolContent);
-            });
-          }
+          setTimeout(() => {
+            this.updateContent(this.data.scadaSymbolContent);
+          });
         } else if (propName === 'readonly') {
           this.scadaSymbolEditObject.setReadOnly(this.readonly);
+          if (this.readonly) {
+            this.svgContentFormControl.disable({emitEvent: false});
+          } else {
+            this.svgContentFormControl.enable({emitEvent: false});
+          }
         }
       }
     }
@@ -131,7 +159,11 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
   }
 
   getContent(): string {
-    return this.scadaSymbolEditObject?.getContent();
+    if (this.editorMode === 'svg') {
+      return this.scadaSymbolEditObject?.getContent();
+    } else {
+      return this.svgContent;
+    }
   }
 
   zoomIn() {
@@ -148,12 +180,33 @@ export class ScadaSymbolEditorComponent implements OnInit, OnDestroy, AfterViewI
     this.scadaSymbolEditObject.showHiddenElements(this.showHiddenElements);
   }
 
+  private updateEditorMode(mode: editorModeType) {
+    this.editorModeValue = mode;
+    if (mode === 'xml') {
+      this.svgContent = this.scadaSymbolEditObject.getContent();
+      this.svgContentFormControl.setValue(this.svgContent, {emitEvent: false});
+    } else {
+      this.updateEditObjectContent(this.svgContent);
+    }
+  }
+
   private updateContent(content: string) {
-    this.displayShowHidden = false;
-    this.scadaSymbolEditObject.setContent(content);
-    setTimeout(() => {
-      this.updateZoomButtonsState();
-    });
+    this.svgContent = removeScadaSymbolMetadata(content);
+    if (this.editorMode === 'xml') {
+      this.svgContentFormControl.setValue(this.svgContent, {emitEvent: false});
+    } else {
+      this.updateEditObjectContent(this.svgContent);
+    }
+  }
+
+  private updateEditObjectContent(content: string) {
+    if (this.scadaSymbolEditObject) {
+      this.displayShowHidden = false;
+      this.scadaSymbolEditObject.setContent(content);
+      setTimeout(() => {
+        this.updateZoomButtonsState();
+      });
+    }
   }
 
   private updateZoomButtonsState() {

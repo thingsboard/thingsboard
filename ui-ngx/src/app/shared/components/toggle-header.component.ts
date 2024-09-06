@@ -187,6 +187,18 @@ export class ToggleHeaderComponent extends _ToggleBase implements OnInit, AfterV
   @coerceBoolean()
   disabled = false;
 
+  @Input()
+  @coerceBoolean()
+  fillHeight = false;
+
+  @Input()
+  @coerceBoolean()
+  extraPadding = false;
+
+  @Input()
+  @coerceBoolean()
+  primaryBackground = false;
+
   get isMdLg(): boolean {
     return !this.ignoreMdLgSize && this.isMdLgValue;
   }
