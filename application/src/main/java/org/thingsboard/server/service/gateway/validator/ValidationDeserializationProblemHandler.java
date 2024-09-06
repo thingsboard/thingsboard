@@ -32,6 +32,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @Getter
 public class ValidationDeserializationProblemHandler extends DeserializationProblemHandler {
@@ -105,6 +106,14 @@ public class ValidationDeserializationProblemHandler extends DeserializationProb
             String errorMessage = "Invalid value \"" + valueToConvert + "\" for field \""
                     + ctxt.getParser().getParsingContext().getCurrentName()
                     + "\". Expected type: " + targetType.getSimpleName();
+            errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr() - 1,
+                    currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
+        } else if (targetType.isEnum()) {
+            String errorMessage = "Invalid value \"" + valueToConvert + "\" for field \""
+                    + ctxt.getParser().getParsingContext().getCurrentName()
+                    + "\". Expected one of: " + Arrays.stream(targetType.getEnumConstants())
+                    .map(e -> "\"" + e.toString().toLowerCase() + "\"")
+                    .collect(Collectors.joining(", ", "[", "]"));
             errors.add(new GatewayConnectorValidationRecord(errorMessage, currentLocation.getLineNr() - 1,
                     currentLocation.getColumnNr(), GatewayConnectorValidationRecordType.ERROR));
         } else {

@@ -356,6 +356,7 @@ public class LatestMqttConnectorConfiguration {
     public static class PartDeviceInfo {
 
         @Present
+        @NotNull(message = "cannot be empty or null, allowed values are: [\"constant\", \"topic\", \"message\"]")
         protected SourceType deviceNameExpressionSource;
 
         @NotBlank
@@ -366,6 +367,7 @@ public class LatestMqttConnectorConfiguration {
     public static class FullDeviceInfo extends PartDeviceInfo {
 
         @Present
+        @NotNull(message = "cannot be empty or null, allowed values are: [\"constant\", \"topic\", \"message\"]")
         private SourceType deviceProfileExpressionSource;
 
         @NotBlank

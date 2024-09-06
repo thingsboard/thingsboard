@@ -307,7 +307,6 @@ public class GatewayControllerTest extends AbstractControllerTest {
         assertThat(validationResult.isValid()).isFalse();
         assertThat(validationResult.getAnnotations()).isNotNull();
         List<GatewayConnectorValidationRecord> annotations = validationResult.getAnnotations();
-        assertThat(annotations.size()).isEqualTo(17);
         assertThat(annotations)
                 .extracting("type", "text")
                 .containsExactlyInAnyOrder(
@@ -315,7 +314,7 @@ public class GatewayControllerTest extends AbstractControllerTest {
                         tuple(GatewayConnectorValidationRecordType.ERROR, "Field \"type\" contains unknown value, possible values: [bytes, custom, json]"),
                         tuple(GatewayConnectorValidationRecordType.ERROR, "Invalid value \"invalidQoS\" for field \"responseTopicQoS\". Expected type: Integer"),
                         tuple(GatewayConnectorValidationRecordType.ERROR, "Invalid value \"invalidTimeout\" for field \"responseTimeout\". Expected type: Long"),
-                        tuple(GatewayConnectorValidationRecordType.ERROR, "\"deviceProfileExpressionSource\" must not be blank"),
+                        tuple(GatewayConnectorValidationRecordType.ERROR, "\"deviceProfileExpressionSource\" cannot be empty or null, allowed values are: [\"constant\", \"topic\", \"message\"]"),
                         tuple(GatewayConnectorValidationRecordType.ERROR, "\"responseTimeout\" must not be null"),
                         tuple(GatewayConnectorValidationRecordType.ERROR, "\"deviceProfileExpression\" must not be blank"),
                         tuple(GatewayConnectorValidationRecordType.ERROR, "\"port\" must not be null"),
