@@ -45,28 +45,26 @@
         </div>
 
         <ng-container formGroupName="realtime">
-          <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-            <tb-timeinterval
-              formControlName="timewindowMs"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
-              [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
-                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
-            </tb-timeinterval>
-          </ng-container>
+          <tb-timeinterval
+            *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
+            formControlName="timewindowMs"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [disabledAdvanced]="timewindow.realtime.disableCustomInterval"
+            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                              timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
+          </tb-timeinterval>
 
-          <ng-container *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-            <tb-quick-time-interval
-              displayLabel="false"
-              formControlName="quickInterval"
-              onlyCurrentInterval="true"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
-                                timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
-            </tb-quick-time-interval>
-          </ng-container>
+          <tb-quick-time-interval
+            *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
+            displayLabel="false"
+            formControlName="quickInterval"
+            onlyCurrentInterval="true"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+                              timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
+          </tb-quick-time-interval>
         </ng-container>
       </section>
     </ng-container>
@@ -89,38 +87,35 @@
 
         <ng-container formGroupName="history" *ngIf="historyIntervalSelectionAvailable &&
                                   timewindowForm.get('history.historyType').value !== historyTypes.FOR_ALL_TIME">
-          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-            <tb-timeinterval
-              formControlName="timewindowMs"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [disabledAdvanced]="timewindow.history.disableCustomInterval"
-              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                              timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
-            </tb-timeinterval>
-          </ng-container>
+          <tb-timeinterval
+            *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
+            formControlName="timewindowMs"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [disabledAdvanced]="timewindow.history.disableCustomInterval"
+            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                            timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
+          </tb-timeinterval>
 
-          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-            <tb-datetime-period
-              formControlName="fixedTimewindow"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              class="history-time-input"
-              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                              timewindowForm.get('history.historyType').value === historyTypes.FIXED">
-            </tb-datetime-period>
-          </ng-container>
+          <tb-datetime-period
+            *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED"
+            formControlName="fixedTimewindow"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            class="history-time-input"
+            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                            timewindowForm.get('history.historyType').value === historyTypes.FIXED">
+          </tb-datetime-period>
 
-          <ng-container *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-            <tb-quick-time-interval
-              displayLabel="false"
-              formControlName="quickInterval"
-              subscriptSizing="dynamic"
-              appearance="outline"
-              [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
-                            timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
-            </tb-quick-time-interval>
-          </ng-container>
+          <tb-quick-time-interval
+            *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL"
+            displayLabel="false"
+            formControlName="quickInterval"
+            subscriptSizing="dynamic"
+            appearance="outline"
+            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+                          timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
+          </tb-quick-time-interval>
         </ng-container>
       </section>
     </ng-container>
@@ -195,12 +190,11 @@
     </section>
   </ng-template>
   <ng-template #timezoneSelection>
-    <ng-container *ngIf="timezone && (isEdit || !timewindow.hideTimezone)">
-      <tb-timezone asButton strokedButton noMargin
-                   localBrowserTimezonePlaceholderOnEmpty="true"
-                   formControlName="timezone">
-      </tb-timezone>
-    </ng-container>
+    <tb-timezone *ngIf="timezone && (isEdit || !timewindow.hideTimezone)"
+                 asButton strokedButton noMargin
+                 localBrowserTimezonePlaceholderOnEmpty="true"
+                 formControlName="timezone">
+    </tb-timezone>
   </ng-template>
 </form>
 <mat-divider></mat-divider>

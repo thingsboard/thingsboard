@@ -59,7 +59,7 @@ export const TIMEWINDOW_PANEL_DATA = new InjectionToken<any>('TimewindowPanelDat
 @Component({
   selector: 'tb-timewindow-panel',
   templateUrl: './timewindow-panel.component.html',
-  styleUrls: ['./timewindow-panel.component.scss']
+  styleUrls: ['./timewindow-panel.component.scss', './timewindow-form.scss']
 })
 export class TimewindowPanelComponent extends PageComponent implements OnInit, OnDestroy {
 

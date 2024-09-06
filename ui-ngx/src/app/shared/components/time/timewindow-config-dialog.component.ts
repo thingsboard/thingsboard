@@ -48,7 +48,7 @@ export interface TimewindowConfigDialogData {
 @Component({
   selector: 'tb-timewindow-config-dialog',
   templateUrl: './timewindow-config-dialog.component.html',
-  styleUrls: ['./timewindow-config-dialog.component.scss']
+  styleUrls: ['./timewindow-config-dialog.component.scss', './timewindow-form.scss']
 })
 export class TimewindowConfigDialogComponent extends PageComponent implements OnInit, OnDestroy {
 

@@ -13,22 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../scss/constants";
 
 :host {
-  width: 500px;
+  display: flex;
+  flex-direction: column;
+  max-height: 100%;
+  max-width: 100%;
+  background-color: #fff;
 
   .tb-timewindow-form {
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-
-    &-header {
-      flex-direction: row;
-      align-items: center;
+    .tb-flex {
+      gap: 16px;
     }
 
-    &-type-options {
-      flex: 1;
+    &-content {
+      overflow: auto;
     }
   }
+
+  .limit-slider-container {
+    .limit-slider-value {
+      margin-left: 16px;
+      min-width: 25px;
+      max-width: 100px;
+    }
+    mat-form-field input[type=number] {
+      text-align: center;
+    }
+  }
+
+  @media #{$mat-gt-sm} {
+    .limit-slider-container {
+      > label {
+        margin-right: 16px;
+        width: min-content;
+        max-width: 40%;
+      }
+    }
+  }
+
 }
