@@ -117,6 +117,12 @@ public abstract class AbstractChunkedAggregationTimeseriesDao extends AbstractSq
     }
 
     @Override
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        return processFindAllAsync(tenantId, entitiesId, queries);
+    }
+
+
+    @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
         var aggParams = query.getAggParameters();
         if (Aggregation.NONE.equals(aggParams.getAggregation())) {

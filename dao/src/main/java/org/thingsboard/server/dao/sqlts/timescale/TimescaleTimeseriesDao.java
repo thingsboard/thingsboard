@@ -111,6 +111,13 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     @Override
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        return processFindAllAsync(tenantId, entitiesId, queries);
+
+    }
+
+
+    @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         int dataPointDays = getDataPointDays(tsKvEntry, computeTtl(ttl));
         String strKey = tsKvEntry.getKey();

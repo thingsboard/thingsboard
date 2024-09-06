@@ -1613,6 +1613,8 @@ public class ControllerConstants {
 
     protected static final String STRICT_DATA_TYPES_DESCRIPTION = "Enables/disables conversion of telemetry values to strings. Conversion is enabled by default. Set parameter to 'true' in order to disable the conversion.";
     protected static final String INVALID_ENTITY_ID_OR_ENTITY_TYPE_DESCRIPTION = "Referencing a non-existing entity Id or invalid entity type will cause an error. ";
+    protected static final String INVALID_DEVICE_ID_DESCRIPTION = "Referencing a non-existing device Id will cause an error. ";
+
 
     protected static final String SAVE_ATTIRIBUTES_STATUS_OK = "Attribute from the request was created or updated. ";
     protected static final String INVALID_STRUCTURE_OF_THE_REQUEST = "Invalid structure of the request";
@@ -1684,6 +1686,9 @@ public class ControllerConstants {
             "    }\n" +
             "  ]\n" +
             "}";
+
+    protected static final String TS_STRICT_DATA_EXAMPLE_DEVICES = "{\"f1f84f60-6c3a-11ef-96b5-1189063e69f9\":{\"t\":[{\"ts\":1705874401000,\"value\":\"2\"},{\"ts\":1705874400000,\"value\":\"9\"},{\"ts\":1705269601000,\"value\":\"5\"},{\"ts\":1705269600000,\"value\":\"2\"},{\"ts\":1704899729000,\"value\":\"3\"},{\"ts\":1704899728000,\"value\":\"1\"}]},\"f24250b0-6c3a-11ef-96b5-1189063e69f9\":{\"t\":[{\"ts\":1705874401000,\"value\":\"4\"},{\"ts\":1705874400000,\"value\":\"18\"},{\"ts\":1705269601000,\"value\":\"10\"},{\"ts\":1705269600000,\"value\":\"4\"},{\"ts\":1704899729000,\"value\":\"6\"},{\"ts\":1704899728000,\"value\":\"2\"}]}}";
+
 
     protected static final String SAVE_ATTRIBUTES_REQUEST_PAYLOAD = "The request payload is a JSON object with key-value format of attributes to create or update. " +
             "For example:\n\n"
