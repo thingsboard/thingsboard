@@ -1,0 +1,125 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-mapping-table tb-absolute-fill">
+  <div fxFlex fxLayout="column" class="tb-mapping-table-content">
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
+      <div class="mat-toolbar-tools" *ngIf="(dataSource.isEmpty() | async) === false">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+          <span class="tb-mapping-table-title">{{mappingTypeTranslationsMap.get(mappingType) | translate}}</span>
+        </div>
+        <span fxFlex></span>
+        <button mat-icon-button
+                (click)="manageMapping($event)"
+                matTooltip="{{ 'action.add' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>add</mat-icon>
+        </button>
+        <button mat-icon-button
+                (click)="enterFilterMode()"
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+      <div class="mat-toolbar-tools">
+        <button mat-icon-button
+                matTooltip="{{ 'action.search' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>search</mat-icon>
+        </button>
+        <mat-form-field fxFlex>
+          <mat-label>&nbsp;</mat-label>
+          <input #searchInput matInput
+                 [formControl]="textSearch"
+                 placeholder="{{ 'common.enter-search' | translate }}"/>
+        </mat-form-field>
+        <button mat-icon-button (click)="exitFilterMode()"
+                matTooltip="{{ 'action.close' | translate }}"
+                matTooltipPosition="above">
+          <mat-icon>close</mat-icon>
+        </button>
+      </div>
+    </mat-toolbar>
+    <div class="table-container">
+      <table mat-table [dataSource]="dataSource">
+        <ng-container [matColumnDef]="column.def" *ngFor="let column of mappingColumns; let i = index">
+          <mat-header-cell *matHeaderCellDef class="table-value-column"
+                           [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+            {{ column.title | translate }}
+          </mat-header-cell>
+          <mat-cell tbTruncateWithTooltip *matCellDef="let mapping" class="table-value-column"
+                    [class.request-column]="mappingType === mappingTypeEnum.REQUESTS">
+            {{ mapping[column.def] }}
+          </mat-cell>
+        </ng-container>
+        <ng-container matColumnDef="actions" stickyEnd>
+          <mat-header-cell *matHeaderCellDef
+                           [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px', textAlign: 'center'}">
+          </mat-header-cell>
+          <mat-cell *matCellDef="let mapping; let i = index"
+                    [ngStyle.gt-md]="{ minWidth: '96px', maxWidth: '96px', width: '96px'}">
+            <ng-template #rowActions>
+              <button mat-icon-button
+                      matTooltip="{{ 'action.edit' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="manageMapping($event, i)">
+                <tb-icon>edit</tb-icon>
+              </button>
+              <button mat-icon-button
+                      matTooltip="{{ 'action.delete' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="deleteMapping($event, i)">
+                <tb-icon>delete</tb-icon>
+              </button>
+            </ng-template>
+            <div fxHide fxShow.gt-md fxFlex fxLayout="row" fxLayoutAlign="end">
+              <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
+            </div>
+            <div fxHide fxShow.lt-lg fxFlex fxLayout="row" fxLayoutAlign="end">
+              <button mat-icon-button
+                      (click)="$event.stopPropagation()"
+                      [matMenuTriggerFor]="cellActionsMenu">
+                <mat-icon class="material-icons">more_vert</mat-icon>
+              </button>
+              <mat-menu #cellActionsMenu="matMenu" xPosition="before">
+                <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
+              </mat-menu>
+            </div>
+          </mat-cell>
+        </ng-container>
+        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
+        <mat-row *matRowDef="let mapping; columns: displayedColumns;"></mat-row>
+      </table>
+      <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"
+               class="mat-headline-5 tb-absolute-fill tb-add-new">
+        <button mat-button class="connector"
+                (click)="manageMapping($event)">
+          <mat-icon class="tb-mat-96">add</mat-icon>
+          <span>{{ 'gateway.add-mapping' | translate }}</span>
+        </button>
+      </section>
+    </div>
+    <span [fxShow]="textSearchMode && (dataSource.isEmpty() | async)"
+          fxLayoutAlign="center center"
+          class="no-data-found" translate>
+      widget.no-data-found
+    </span>
+  </div>
+</div>

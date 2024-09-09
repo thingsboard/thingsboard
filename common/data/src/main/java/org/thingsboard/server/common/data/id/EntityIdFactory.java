@@ -105,6 +105,12 @@ public class EntityIdFactory {
                 return new NotificationId(uuid);
             case QUEUE_STATS:
                 return new QueueStatsId(uuid);
+            case OAUTH2_CLIENT:
+                return new OAuth2ClientId(uuid);
+            case MOBILE_APP:
+                return new MobileAppId(uuid);
+            case DOMAIN:
+                return new DomainId(uuid);
         }
         throw new IllegalArgumentException("EntityType " + type + " is not supported!");
     }
@@ -153,6 +159,10 @@ public class EntityIdFactory {
                 return new NotificationTargetId(uuid);
             case NOTIFICATION_TEMPLATE:
                 return new NotificationTemplateId(uuid);
+            case OAUTH2_CLIENT:
+                return new OAuth2ClientId(uuid);
+            case DOMAIN:
+                return new DomainId(uuid);
         }
         throw new IllegalArgumentException("EdgeEventType " + edgeEventType + " is not supported!");
     }

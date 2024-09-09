@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.discovery.event.ClusterTopologyChangeEvent;
+import org.thingsboard.server.service.ws.WebSocketSessionRef;
 import org.thingsboard.server.service.ws.notification.sub.NotificationRequestUpdate;
 import org.thingsboard.server.service.ws.notification.sub.NotificationsSubscriptionUpdate;
 
@@ -29,15 +30,15 @@ import java.util.List;
 
 public interface TbLocalSubscriptionService {
 
-    void addSubscription(TbSubscription<?> subscription);
+    void addSubscription(TbSubscription<?> subscription, WebSocketSessionRef sessionRef);
 
     void onSubEventCallback(TransportProtos.TbEntitySubEventCallbackProto subEventCallback, TbCallback callback);
 
-    void onSubEventCallback(EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty);
+    void onSubEventCallback(TenantId tenantId, EntityId entityId, int seqNumber, TbEntityUpdatesInfo entityUpdatesInfo, TbCallback empty);
 
-    void cancelSubscription(String sessionId, int subscriptionId);
+    void cancelSubscription(TenantId tenantId, String sessionId, int subscriptionId);
 
-    void cancelAllSessionSubscriptions(String sessionId);
+    void cancelAllSessionSubscriptions(TenantId tenantId, String sessionId);
 
     void onTimeSeriesUpdate(TransportProtos.TbSubUpdateProto tsUpdate, TbCallback callback);
 

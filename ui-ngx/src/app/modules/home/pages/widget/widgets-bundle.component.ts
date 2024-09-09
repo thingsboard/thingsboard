@@ -51,6 +51,7 @@ export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
         title: [entity ? entity.title : '', [Validators.required, Validators.maxLength(255)]],
         image: [entity ? entity.image : ''],
         description: [entity  ? entity.description : '', Validators.maxLength(1024)],
+        scada: [entity ? entity.scada : false],
         order: [entity ? entity.order : null]
       }
     );
@@ -61,6 +62,7 @@ export class WidgetsBundleComponent extends EntityComponent<WidgetsBundle> {
       title: entity.title,
       image: entity.image,
       description: entity.description,
+      scada: entity.scada,
       order: entity.order
     });
   }

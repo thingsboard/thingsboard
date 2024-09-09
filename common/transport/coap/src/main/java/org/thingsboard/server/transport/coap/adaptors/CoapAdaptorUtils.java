@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.coap.adaptors;
 
 import org.eclipse.californium.core.coap.Request;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.adaptor.AdaptorException;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.Arrays;

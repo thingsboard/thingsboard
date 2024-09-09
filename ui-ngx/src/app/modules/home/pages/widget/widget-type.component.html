@@ -67,9 +67,14 @@
         label="{{ 'widget.tags' | translate }}"
         formControlName="tags">
       </tb-string-items-list>
-      <mat-slide-toggle formControlName="deprecated">
-        {{ 'widget.deprecated' | translate }}
-      </mat-slide-toggle>
+      <div fxLayout="column" fxLayoutGap="16px">
+        <mat-slide-toggle formControlName="scada">
+          {{ 'widget.scada' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle formControlName="deprecated">
+          {{ 'widget.deprecated' | translate }}
+        </mat-slide-toggle>
+      </div>
     </fieldset>
   </form>
 </div>

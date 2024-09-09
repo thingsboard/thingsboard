@@ -37,6 +37,8 @@ export interface AddWidgetDialogData {
   stateController: IStateController;
   widget: Widget;
   widgetInfo: WidgetInfo;
+  showLayoutConfig: boolean;
+  isDefaultBreakpoint: boolean;
 }
 
 @Component({
@@ -58,6 +60,9 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
   aliasController: IAliasController;
   stateController: IStateController;
   widget: Widget;
+
+  showLayoutConfig = true;
+  isDefaultBreakpoint = true;
 
   widgetConfig: WidgetConfigComponentData;
 
@@ -91,6 +96,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     this.aliasController = this.data.aliasController;
     this.stateController = this.data.stateController;
     this.widget = this.data.widget;
+    this.showLayoutConfig = this.data.showLayoutConfig;
+    this.isDefaultBreakpoint = this.data.isDefaultBreakpoint;
 
     const widgetInfo = this.data.widgetInfo;
 
@@ -123,7 +130,14 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     this.widgetConfig = {
       widgetName: widgetInfo.widgetName,
       config: this.widget.config,
-      layout: {},
+      layout: {
+        resizable: this.widget.config.resizable,
+        preserveAspectRatio: this.widget.config.preserveAspectRatio,
+        mobileHide: this.widget.config.mobileHide,
+        desktopHide: this.widget.config.desktopHide,
+        mobileOrder: this.widget.config.mobileOrder,
+        mobileHeight: this.widget.config.mobileHeight
+      },
       widgetType: this.widget.type,
       typeParameters,
       actionSources,
@@ -180,6 +194,8 @@ export class AddWidgetDialogComponent extends DialogComponent<AddWidgetDialogCom
     this.widget.config.mobileHeight = widgetConfig.layout.mobileHeight;
     this.widget.config.mobileHide = widgetConfig.layout.mobileHide;
     this.widget.config.desktopHide = widgetConfig.layout.desktopHide;
+    this.widget.config.preserveAspectRatio = widgetConfig.layout.preserveAspectRatio;
+    this.widget.config.resizable = widgetConfig.layout.resizable;
     this.dialogRef.close(this.widget);
   }
 }

@@ -32,6 +32,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-statistics',
@@ -133,6 +134,11 @@ export class GatewayStatisticsComponent implements AfterViewInit {
           });
       }
     }
+  }
+
+  public navigateToStatistics() {
+    const params = deepClone(this.ctx.stateController.getStateParams());
+    this.ctx.stateController.openState('configuration', params);
   }
 
   public sortData() {

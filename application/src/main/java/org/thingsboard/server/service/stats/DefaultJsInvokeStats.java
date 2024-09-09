@@ -15,14 +15,13 @@
  */
 package org.thingsboard.server.service.stats;
 
+import jakarta.annotation.PostConstruct;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.actors.JsInvokeStats;
 import org.thingsboard.server.common.stats.StatsCounter;
 import org.thingsboard.server.common.stats.StatsFactory;
 import org.thingsboard.server.common.stats.StatsType;
-
-import jakarta.annotation.PostConstruct;
 
 @Service
 public class DefaultJsInvokeStats implements JsInvokeStats {

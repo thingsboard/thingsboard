@@ -75,8 +75,10 @@ public class TbCaffeineCacheConfiguration {
                 = Caffeine.newBuilder()
                 .weigher(collectionSafeWeigher())
                 .maximumWeight(cacheSpec.getMaxSize())
-                .expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES)
                 .ticker(ticker());
+        if (!cacheSpec.getTimeToLiveInMinutes().equals(0)) {
+            caffeineBuilder.expireAfterWrite(cacheSpec.getTimeToLiveInMinutes(), TimeUnit.MINUTES);
+        }
         return new CaffeineCache(name, caffeineBuilder.build());
     }
 

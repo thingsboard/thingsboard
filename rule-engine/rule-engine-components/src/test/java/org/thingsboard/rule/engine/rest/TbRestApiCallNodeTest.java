@@ -168,7 +168,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                 try {
                     assertEquals(path, request.getRequestLine().getUri(), "Request path matches");
                     assertTrue(request.containsHeader("Content-Type"), "Content-Type included");
-                    assertEquals("text/plain;charset=UTF-8",
+                    assertEquals("application/json",
                             request.getFirstHeader("Content-Type").getValue(), "Content-Type value");
                     assertTrue(request.containsHeader("Content-Length"), "Content-Length included");
                     assertEquals("2",

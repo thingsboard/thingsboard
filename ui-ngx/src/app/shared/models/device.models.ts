@@ -22,7 +22,7 @@ import { DeviceCredentialsId } from '@shared/models/id/device-credentials-id';
 import { EntitySearchQuery } from '@shared/models/relation.models';
 import { DeviceProfileId } from '@shared/models/id/device-profile-id';
 import { RuleChainId } from '@shared/models/id/rule-chain-id';
-import { EntityInfoData, HasTenantId } from '@shared/models/entity.models';
+import { EntityInfoData, HasTenantId, HasVersion } from '@shared/models/entity.models';
 import { FilterPredicateValue, KeyFilter } from '@shared/models/query/query.models';
 import { TimeUnit } from '@shared/models/time/time.models';
 import * as _moment from 'moment';
@@ -584,7 +584,7 @@ export interface DeviceProfileData {
   provisionConfiguration?: DeviceProvisionConfiguration;
 }
 
-export interface DeviceProfile extends BaseData<DeviceProfileId>, HasTenantId, ExportableEntity<DeviceProfileId> {
+export interface DeviceProfile extends BaseData<DeviceProfileId>, HasTenantId, HasVersion, ExportableEntity<DeviceProfileId> {
   tenantId?: TenantId;
   name: string;
   description?: string;
@@ -655,7 +655,7 @@ export enum SnmpAuthenticationProtocol {
   SHA_256 = 'SHA_256',
   SHA_384 = 'SHA_384',
   SHA_512 = 'SHA_512',
-  MD5 = 'MD%'
+  MD5 = 'MD5'
 }
 
 export const SnmpAuthenticationProtocolTranslationMap = new Map<SnmpAuthenticationProtocol, string>([
@@ -711,7 +711,7 @@ export interface DeviceData {
   transportConfiguration: DeviceTransportConfiguration;
 }
 
-export interface Device extends BaseData<DeviceId>, HasTenantId, ExportableEntity<DeviceId> {
+export interface Device extends BaseData<DeviceId>, HasTenantId, HasVersion, ExportableEntity<DeviceId> {
   tenantId?: TenantId;
   customerId?: CustomerId;
   name: string;
@@ -801,7 +801,7 @@ export const credentialTypesByTransportType = new Map<DeviceTransportType, Devic
   ]
 );
 
-export interface DeviceCredentials extends BaseData<DeviceCredentialsId> {
+export interface DeviceCredentials extends BaseData<DeviceCredentialsId>, HasTenantId {
   deviceId: DeviceId;
   credentialsType: DeviceCredentialsType;
   credentialsId: string;
