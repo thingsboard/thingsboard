@@ -187,11 +187,8 @@ public class RuleChainEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testUpdateRootRuleChain() throws Exception {
-        RuleChainMetaData rootRuleChainMetadata = doGet("/api/ruleChain/" + edge.getRootRuleChainId().getId().toString() + "/metadata", RuleChainMetaData.class);
-
-        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugMode(true));
         edgeImitator.expectMessageAmount(2);
-        doPost("/api/ruleChain/metadata", rootRuleChainMetadata, RuleChainMetaData.class);
+        updateRootRuleChainMetadata();
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         Optional<RuleChainUpdateMsg> ruleChainUpdateMsgOpt = edgeImitator.findMessageByType(RuleChainUpdateMsg.class);
