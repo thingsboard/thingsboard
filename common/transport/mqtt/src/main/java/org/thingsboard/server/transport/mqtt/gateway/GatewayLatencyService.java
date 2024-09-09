@@ -30,7 +30,6 @@ import org.thingsboard.server.transport.mqtt.TbMqttTransportComponent;
 import org.thingsboard.server.transport.mqtt.gateway.latency.GatewayLatencyData;
 import org.thingsboard.server.transport.mqtt.gateway.latency.GatewayLatencyState;
 
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -56,7 +55,7 @@ public class GatewayLatencyService {
         scheduler.scheduleAtFixedRate(this::reportLatency, latencyReportIntervalSec, latencyReportIntervalSec, TimeUnit.SECONDS);
     }
 
-    public void process(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId, List<GatewayLatencyData> data, long ts) {
+    public void process(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId, Map<String, GatewayLatencyData> data, long ts) {
         states.computeIfAbsent(gatewayId, k -> new GatewayLatencyState(sessionInfo)).update(ts, data);
     }
 

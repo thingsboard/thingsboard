@@ -15,5 +15,5 @@
  */
 package org.thingsboard.server.transport.mqtt.gateway.latency;
 
-public record GatewayLatencyData(String connectorName, long receivedTs, long publishedTs) {
+public record GatewayLatencyData(long receivedTs, long publishedTs) {
 }

@@ -19,7 +19,6 @@ import lombok.Getter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.HashMap;
-import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -44,11 +43,11 @@ public class GatewayLatencyState {
         this.sessionInfo = sessionInfo;
     }
 
-    public void update(long ts, List<GatewayLatencyData> latencyData) {
+    public void update(long ts, Map<String, GatewayLatencyData> latencyData) {
         updateLock.lock();
         try {
-            latencyData.forEach(data -> {
-                connectors.computeIfAbsent(data.connectorName(), k -> new ConnectorLatencyState()).update(ts, data);
+            latencyData.forEach((connectorName, data) -> {
+                connectors.computeIfAbsent(connectorName, k -> new ConnectorLatencyState()).update(ts, data);
             });
         } finally {
             updateLock.unlock();

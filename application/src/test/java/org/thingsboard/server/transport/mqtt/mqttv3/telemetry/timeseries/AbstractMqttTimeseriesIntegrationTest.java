@@ -40,7 +40,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
-import java.util.OptionalLong;
 import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
@@ -137,7 +136,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         client.connectAndWait(gatewayAccessToken);
 
         Map<String, List<Long>> gwLatencies = new HashMap<>();
-        List<Long> transportLatencies = new ArrayList<>();
+        Map<String, List<Long>> transportLatencies = new HashMap<>();
 
         publishLatency(client, gwLatencies, transportLatencies, 5);
 
@@ -153,15 +152,17 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         Map<String, GatewayLatencyState.ConnectorLatencyResult> latencyCheckValue = JacksonUtil.fromString((String) latencyCheckTelemetry.get("value"), new TypeReference<>() {});
         assertNotNull(latencyCheckValue);
 
-        long avgTransportLatency = (long) transportLatencies.stream().mapToLong(Long::longValue).average().getAsDouble();
-        long minTransportLatency = transportLatencies.stream().mapToLong(Long::longValue).min().getAsLong();
-        long maxTransportLatency = transportLatencies.stream().mapToLong(Long::longValue).max().getAsLong();
-
-
         gwLatencies.forEach((connectorName, gwLatencyList) -> {
             long avgGwLatency = (long) gwLatencyList.stream().mapToLong(Long::longValue).average().getAsDouble();
             long minGwLatency = gwLatencyList.stream().mapToLong(Long::longValue).min().getAsLong();
             long maxGwLatency = gwLatencyList.stream().mapToLong(Long::longValue).max().getAsLong();
+
+            List<Long> transportLatencyList = transportLatencies.get(connectorName);
+            assertNotNull(transportLatencyList);
+
+            long avgTransportLatency = (long) transportLatencyList.stream().mapToLong(Long::longValue).average().getAsDouble();
+            long minTransportLatency = transportLatencyList.stream().mapToLong(Long::longValue).min().getAsLong();
+            long maxTransportLatency = transportLatencyList.stream().mapToLong(Long::longValue).max().getAsLong();
 
             GatewayLatencyState.ConnectorLatencyResult connectorLatencyResult = latencyCheckValue.get(connectorName);
             assertNotNull(connectorLatencyResult);
@@ -175,29 +176,31 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
                 .untilAsserted(() -> verify(gatewayLatencyService).onDeviceDisconnect(savedGateway.getId()));
     }
 
-    private void publishLatency(MqttTestClient client, Map<String, List<Long>> gwLatencies, List<Long> transportLatencies, int n) throws Exception {
+    private void publishLatency(MqttTestClient client, Map<String, List<Long>> gwLatencies,  Map<String, List<Long>> transportLatencies, int n) throws Exception {
         Random random = new Random();
         for (int i = 0; i < n; i++) {
-            long publishedTs = System.currentTimeMillis();
-            long gatewayLatencyA = random.nextLong(1000, 5000);
-            long gatewayLatencyB = random.nextLong(1200, 4500);
-            long transportReceiveTs = publishLatencyAndGetTransportReceiveTs(client, publishedTs, gatewayLatencyA, gatewayLatencyB);
+            Map<String, GatewayLatencyData> data = new HashMap<>();
+            long publishedTs = System.currentTimeMillis() - 10;
+            long gatewayLatencyA = random.nextLong(100, 500);
+            data.put("connectorA", new GatewayLatencyData(publishedTs - gatewayLatencyA, publishedTs));
             gwLatencies.computeIfAbsent("connectorA", key -> new ArrayList<>()).add(gatewayLatencyA);
-            gwLatencies.computeIfAbsent("connectorB", key -> new ArrayList<>()).add(gatewayLatencyB);
-            transportLatencies.add(transportReceiveTs - publishedTs);
-            Thread.sleep(1);
+            boolean sendB = i % 2 == 0;
+            if (sendB) {
+                long gatewayLatencyB = random.nextLong(120, 450);
+                data.put("connectorB", new GatewayLatencyData(publishedTs - gatewayLatencyB, publishedTs));
+                gwLatencies.computeIfAbsent("connectorB", key -> new ArrayList<>()).add(gatewayLatencyB);
+            }
+
+            client.publishAndWait(GATEWAY_LATENCY_TOPIC, JacksonUtil.writeValueAsBytes(data));
+            ArgumentCaptor<Long> transportReceiveTsCaptor = ArgumentCaptor.forClass(Long.class);
+            verify(gatewayLatencyService).process(any(), eq(savedGateway.getId()), eq(data), transportReceiveTsCaptor.capture());
+            Long transportReceiveTs = transportReceiveTsCaptor.getValue();
+            Long transportLatency = transportReceiveTs - publishedTs;
+            transportLatencies.computeIfAbsent("connectorA", key -> new ArrayList<>()).add(transportLatency);
+            if (sendB) {
+                transportLatencies.computeIfAbsent("connectorB", key -> new ArrayList<>()).add(transportLatency);
+            }
         }
-    }
-
-    private long publishLatencyAndGetTransportReceiveTs(MqttTestClient client, long publishedTs, long gatewayLatencyA, long gatewayLatencyB) throws Exception {
-        List<GatewayLatencyData> data = new ArrayList<>();
-        data.add(new GatewayLatencyData("connectorA", publishedTs - gatewayLatencyA, publishedTs));
-        data.add(new GatewayLatencyData("connectorB", publishedTs - gatewayLatencyB, publishedTs));
-
-        client.publishAndWait(GATEWAY_LATENCY_TOPIC, JacksonUtil.writeValueAsBytes(data));
-        ArgumentCaptor<Long> transportReceiveTsCaptor = ArgumentCaptor.forClass(Long.class);
-        verify(gatewayLatencyService).process(any(), eq(savedGateway.getId()), eq(data), transportReceiveTsCaptor.capture());
-        return transportReceiveTsCaptor.getValue();
     }
 
     private void checkConnectorLatencyResult(GatewayLatencyState.ConnectorLatencyResult result, long avgGwLatency, long minGwLatency, long maxGwLatency,
