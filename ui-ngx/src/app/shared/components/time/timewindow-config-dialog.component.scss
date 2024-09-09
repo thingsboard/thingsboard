@@ -22,5 +22,11 @@
       overflow: hidden;
       padding: 0;
     }
+
+    tb-timezone-select,
+    tb-quick-time-interval,
+    tb-datetime-period {
+      flex: 1;
+    }
   }
 }
