@@ -29,6 +29,7 @@ import {
   GatewayConnector,
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
+  GatewayVersion,
   GatewayVersionedDefaultConfig,
   noLeadTrailSpacesRegex
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -102,7 +103,7 @@ export class AddConnectorDialogComponent
         if (gatewayVersion) {
           value.configVersion = gatewayVersion;
         }
-        value.configurationJson = (gatewayVersion
+        value.configurationJson = (gatewayVersion === GatewayVersion.Current
           ? defaultConfig[this.data.gatewayVersion]
           : defaultConfig.legacy)
           ?? defaultConfig;

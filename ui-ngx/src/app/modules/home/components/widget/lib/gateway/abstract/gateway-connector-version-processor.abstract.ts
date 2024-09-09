@@ -1,4 +1,4 @@
-import { GatewayConnector } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { GatewayConnector, GatewayVersion } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   gatewayVersion: number;
@@ -11,7 +11,7 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
 
   getProcessedByVersion(): GatewayConnector<BasicConfig> {
     if (this.isVersionUpdateNeeded()) {
-      return !this.configVersion || this.configVersion < this.gatewayVersion
+      return this.isVersionUpgradeNeeded()
         ? this.getUpgradedVersion()
         : this.getDowngradedVersion();
     }
@@ -25,6 +25,10 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
     }
 
     return this.configVersion !== this.gatewayVersion;
+  }
+
+  private isVersionUpgradeNeeded(): boolean {
+    return (!this.configVersion || this.configVersion < this.gatewayVersion) && this.gatewayVersionStr === GatewayVersion.Current;
   }
 
   private parseVersion(version: string): number {

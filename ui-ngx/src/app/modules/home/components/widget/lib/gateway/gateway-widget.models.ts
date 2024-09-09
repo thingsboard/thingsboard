@@ -188,6 +188,11 @@ export interface ConnectorSecurity {
   mode?: ModeType;
 }
 
+export enum GatewayVersion {
+  Current = '3.5.1',
+  Legacy = 'legacy'
+}
+
 export type ConnectorMapping = DeviceConnectorMapping | RequestMappingValue | ConverterConnectorMapping;
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;

@@ -59,6 +59,7 @@ import {
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
   noLeadTrailSpacesRegex,
+  GatewayVersion,
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
@@ -101,6 +102,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
   readonly GatewayConnectorTypesTranslatesMap = GatewayConnectorDefaultTypesTranslatesMap;
   readonly ConnectorConfigurationModes = ConfigurationModes;
+  readonly GatewayVersion = GatewayVersion;
 
   pageLink: PageLink;
   dataSource: MatTableDataSource<GatewayAttributeData>;

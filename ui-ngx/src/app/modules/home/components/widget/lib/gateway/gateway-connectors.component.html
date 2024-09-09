@@ -178,7 +178,7 @@
         <ng-container [ngSwitch]="initialConnector.type">
           <ng-container *ngSwitchCase="ConnectorType.MQTT">
             <tb-mqtt-basic-config
-              *ngIf="connectorForm.get('configVersion').value else legacy"
+              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
             />
