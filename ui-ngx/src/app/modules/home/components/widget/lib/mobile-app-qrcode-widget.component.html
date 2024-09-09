@@ -1,0 +1,46 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-mobile-app-qrcode-panel"
+     [style.padding]="padding"
+     [class.preview]="previewMode"
+     [style]="backgroundStyle$ | async">
+  <div class="tb-mobile-app-qrcode-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-flex column center">
+    <div class="tb-flex row center align-center shrink"
+         [class.row]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.RIGHT"
+         [class.row-reverse]="mobileAppSettings?.qrCodeConfig.badgePosition === badgePosition.LEFT">
+      <div class="tb-qrcode" (click)="navigateByDeepLink($event)" [innerHTML]="qrCodeSVG | safe: 'html'"></div>
+      <div class="tb-badges" [class.tb-no-interaction]="previewMode"
+           *ngIf="(mobileAppSettings?.iosConfig.enabled || mobileAppSettings?.androidConfig.enabled) &&
+                    mobileAppSettings?.qrCodeConfig.badgeEnabled && showBadgeContainer">
+        <a *ngIf="mobileAppSettings?.iosConfig.enabled" [href]="appStoreLink" target="_blank">
+          <img alt="{{ 'widgets.mobile-app-qr-code.download-on-the-app-store' | translate }}"
+               src="assets/android-ios-stores-badges/ios_store_en_black_badge.svg">
+        </a>
+        <a *ngIf="mobileAppSettings?.androidConfig.enabled" [href]="googlePlayLink" target="_blank">
+          <img alt="{{ 'widgets.mobile-app-qr-code.get-it-on-google-play' | translate }}"
+               src="assets/android-ios-stores-badges/android_store_en_black_badge.svg">
+        </a>
+      </div>
+    </div>
+    <div class="tb-qrcode-label" *ngIf="mobileAppSettings?.qrCodeConfig.qrCodeLabelEnabled">
+      {{ mobileAppSettings.qrCodeConfig.qrCodeLabel }}
+    </div>
+  </div>
+</div>

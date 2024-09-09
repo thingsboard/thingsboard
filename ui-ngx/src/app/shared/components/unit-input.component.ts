@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -24,12 +24,19 @@ import {
   ViewChild,
   ViewEncapsulation
 } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, FormControl, NG_VALUE_ACCESSOR } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormControl,
+  NG_VALUE_ACCESSOR,
+  Validators
+} from '@angular/forms';
 import { Observable, of, shareReplay, switchMap } from 'rxjs';
-import { getUnits, searchUnits, Unit, unitBySymbol } from '@shared/models/unit.models';
+import { getUnits, searchUnits, Unit, unitBySymbol, UnitsType } from '@shared/models/unit.models';
 import { map, mergeMap, tap } from 'rxjs/operators';
 import { TranslateService } from '@ngx-translate/core';
 import { ResourcesService } from '@core/services/resources.service';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-unit-input',
@@ -55,6 +62,13 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
   @Input()
   disabled: boolean;
 
+  @Input()
+  @coerceBoolean()
+  required = false;
+
+  @Input()
+  tagFilter: UnitsType;
+
   @ViewChild('unitInput', {static: true}) unitInput: ElementRef;
 
   filteredUnits: Observable<Array<Unit | string>>;
@@ -73,7 +87,7 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
   }
 
   ngOnInit() {
-    this.unitsFormControl = this.fb.control('', []);
+    this.unitsFormControl = this.fb.control('', this.required ? [Validators.required] : []);
     this.filteredUnits = this.unitsFormControl.valueChanges
       .pipe(
         tap(value => {
@@ -157,11 +171,16 @@ export class UnitInputComponent implements ControlValueAccessor, OnInit {
   private unitsConstant(): Observable<Array<Unit>> {
     if (this.fetchUnits$ === null) {
       this.fetchUnits$ = getUnits(this.resourcesService).pipe(
-        map(units => units.map(u => ({
-          symbol: u.symbol,
-          name: this.translate.instant(u.name),
-          tags: u.tags
-        }))),
+        map((units) => {
+          if (this.tagFilter) {
+            units = units.filter(u => u.tags.includes(this.tagFilter));
+          }
+          return units.map(u => ({
+            symbol: u.symbol,
+            name: this.translate.instant(u.name),
+            tags: u.tags
+          }));
+        }),
         shareReplay(1)
       );
     }

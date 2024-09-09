@@ -1,0 +1,180 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="axisSettingsFormGroup">
+  <div class="tb-form-panel stroked tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [(expanded)]="alwaysExpanded || settingsExpanded"
+                         [disabled]="alwaysExpanded || !axisSettingsFormGroup.get('show').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="show" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.time-series-chart.axis.show' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row column-xs">
+          <div class="fixed-title-width" translate>widgets.time-series-chart.axis.label</div>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <tb-font-settings formControlName="labelFont"
+                              clearButton
+                              disabledLineHeight
+                              forceSizeUnit="px"
+                              [previewText]="axisSettingsFormGroup.get('label').value">
+            </tb-font-settings>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="labelColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between column-xs">
+          <div translate>widgets.time-series-chart.axis.position</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="position">
+              <mat-option *ngFor="let position of axisPositions" [value]="position">
+                {{ timeSeriesAxisPositionTranslations.get(position) | translate }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div *ngIf="axisType === 'yAxis' && !hideUnits" class="tb-form-row space-between">
+          <div translate>widget-config.units-short</div>
+          <tb-unit-input
+            formControlName="units">
+          </tb-unit-input>
+        </div>
+        <div *ngIf="axisType === 'yAxis' && !hideDecimals" class="tb-form-row space-between">
+          <div translate>widget-config.decimals-short</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+        <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row">
+          <tb-js-func fxFlex
+                      formControlName="ticksGenerator"
+                      [globalVariables]="functionScopeVariables"
+                      [functionArgs]="['extent']"
+                      functionTitle="{{ 'widgets.time-series-chart.axis.ticks-generator-function' | translate }}"
+                      helpId="widget/lib/chart/ticks_generator_fn">
+          </tb-js-func>
+        </div>
+        <div class="tb-form-panel no-padding stroked">
+          <div class="tb-form-row no-border space-between column-xs">
+            <mat-slide-toggle class="mat-slide" formControlName="showTickLabels">
+              <div translate>widgets.time-series-chart.axis.tick-labels</div>
+            </mat-slide-toggle>
+            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+              <tb-auto-date-format-settings *ngIf="axisType === 'xAxis'"
+                                            formControlName="ticksFormat"
+                                            [defaultValues]="defaultXAxisTicksFormat">
+              </tb-auto-date-format-settings>
+              <tb-font-settings formControlName="tickLabelFont"
+                                clearButton
+                                disabledLineHeight
+                                forceSizeUnit="px"
+                                previewText="100">
+              </tb-font-settings>
+              <tb-color-input asBoxInput
+                              colorClearButton
+                              formControlName="tickLabelColor">
+              </tb-color-input>
+            </div>
+          </div>
+          <div *ngIf="axisType === 'yAxis' && advanced" class="tb-form-row no-border">
+            <tb-js-func fxFlex
+              formControlName="ticksFormatter"
+              [globalVariables]="functionScopeVariables"
+              [functionArgs]="['value']"
+              functionTitle="{{ 'widgets.time-series-chart.axis.ticks-formatter-function' | translate }}"
+              helpId="widget/lib/flot/ticks_formatter_fn">
+            </tb-js-func>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide" formControlName="showTicks">
+            {{ 'widgets.time-series-chart.axis.show-ticks' | translate }}
+          </mat-slide-toggle>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="ticksColor">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide" formControlName="showLine">
+            {{ 'widgets.time-series-chart.axis.show-line' | translate }}
+          </mat-slide-toggle>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="lineColor">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide" formControlName="showSplitLines">
+            <div tb-hint-tooltip-icon="{{ (axisType === 'xAxis' ? 'widgets.time-series-chart.axis.show-split-lines-x-axis-hint'
+                                                                : 'widgets.time-series-chart.axis.show-split-lines-y-axis-hint') | translate}}">
+              {{ 'widgets.time-series-chart.axis.show-split-lines' | translate }}
+            </div>
+          </mat-slide-toggle>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="splitLinesColor">
+          </tb-color-input>
+        </div>
+        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
+          <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.ticks-interval-hint' | translate }}">
+            {{ 'widgets.time-series-chart.axis.ticks-interval' | translate }}
+          </div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="interval"
+                   type="number" min="0" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+        </div>
+        <div *ngIf="axisType === 'yAxis'" class="tb-form-row space-between">
+          <div tb-hint-tooltip-icon="{{ 'widgets.time-series-chart.axis.split-number-hint' | translate }}">
+            {{ 'widgets.time-series-chart.axis.split-number' | translate }}
+          </div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="splitNumber"
+                   type="number" min="1" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+    <div *ngIf="axisType === 'yAxis'" class="tb-form-panel no-border no-padding-top">
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.chart.chart-axis.scale</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="min"
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+          <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-max</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="max"
+                   type="number" placeholder="{{ 'widgets.chart.chart-axis.scale-auto' | translate }}">
+          </mat-form-field>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

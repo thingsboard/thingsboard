@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { AfterViewInit, Component, ElementRef, Input, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, Input, OnInit, ViewChild } from '@angular/core';
 import { MatDialogRef } from '@angular/material/dialog';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { PageLink } from '@shared/models/page/page-link';
@@ -30,7 +30,7 @@ import { GatewayLogData, GatewayStatus, LogLink } from './gateway-widget.models'
   templateUrl: './gateway-logs.component.html',
   styleUrls: ['./gateway-logs.component.scss']
 })
-export class GatewayLogsComponent implements AfterViewInit {
+export class GatewayLogsComponent implements OnInit, AfterViewInit {
 
   pageLink: PageLink;
 
@@ -81,6 +81,10 @@ export class GatewayLogsComponent implements AfterViewInit {
     this.dataSource = new MatTableDataSource<GatewayLogData>([]);
   }
 
+  ngOnInit(): void {
+    this.updateWidgetTitle();
+  }
+
   ngAfterViewInit() {
     this.dataSource.sort = this.sort;
     this.dataSource.paginator = this.paginator;
@@ -107,6 +111,17 @@ export class GatewayLogsComponent implements AfterViewInit {
     this.changeSubscription();
   }
 
+  private updateWidgetTitle(): void {
+    if (this.ctx.settings.isConnectorLog && this.ctx.settings.connectorLogState) {
+      const widgetTitle = this.ctx.widgetConfig.title;
+      const titlePlaceholder = '${connectorName}';
+      if (widgetTitle.includes(titlePlaceholder)) {
+        const connector = this.ctx.stateController.getStateParams()[this.ctx.settings.connectorLogState];
+        this.ctx.widgetTitle = widgetTitle.replace(titlePlaceholder, connector.key);
+      }
+    }
+  }
+
 
   private updateData() {
     if (this.ctx.defaultSubscription.data.length && this.ctx.defaultSubscription.data[0]) {
@@ -114,9 +129,15 @@ export class GatewayLogsComponent implements AfterViewInit {
         const result = {
           ts: data[0],
           key: this.activeLink.key,
-          message: /\[(.*)/.exec(data[1])[0],
+          message: data[1],
           status: 'INVALID LOG FORMAT' as GatewayStatus
         };
+
+        try {
+          result.message = /\[(.*)/.exec(data[1])[0];
+        } catch (e) {
+          result.message = data[1];
+        }
 
         try {
           result.status = data[1].match(/\|(\w+)\|/)[1];
@@ -158,6 +179,10 @@ export class GatewayLogsComponent implements AfterViewInit {
     }
   }
 
+  trackByLogTs(_: number, log: GatewayLogData): number {
+    return log.ts;
+  }
+
   private changeSubscription() {
     if (this.ctx.datasources && this.ctx.datasources[0].entity && this.ctx.defaultSubscription.options.datasources) {
       this.ctx.defaultSubscription.options.datasources[0].dataKeys = [{
@@ -172,5 +197,4 @@ export class GatewayLogsComponent implements AfterViewInit {
       };
     }
   }
-
 }

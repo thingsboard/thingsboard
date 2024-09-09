@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@
 <ng-container [formGroup]="aggregatedValueCardWidgetSettingsForm">
   <div class="tb-form-panel">
     <div class="tb-form-panel-title" translate>widgets.aggregated-value-card.aggregated-value-card-style</div>
+    <div class="tb-form-row">
+      <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+        {{ 'widgets.aggregated-value-card.auto-scale' | translate }}
+      </mat-slide-toggle>
+    </div>
     <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showSubtitle">
         {{ 'widgets.aggregated-value-card.subtitle' | translate }}
@@ -60,6 +65,12 @@
       <div>{{ 'widgets.background.background' | translate }}</div>
       <tb-background-settings formControlName="background">
       </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
     </div>
   </div>
 </ng-container>

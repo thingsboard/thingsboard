@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-form-field [appearance]="appearance" [class]="additionalClass"
+                [subscriptSizing]="subscriptSizing" style="width: 100%">
+  <mat-label *ngIf="label">{{label}}</mat-label>
+  <input matInput #nameInput [formControl]="selectionFormControl"
+         [placeholder]="placeholderText"
+         (focusin)="onFocus()"
+         [matAutocomplete]="optionsAutocomplete">
+  <button *ngIf="selectionFormControl.value && !disabled"
+          type="button"
+          class="tb-icon-24"
+          matSuffix mat-icon-button aria-label="Clear"
+          (click)="clear()">
+    <mat-icon class="material-icons">close</mat-icon>
+  </button>
+  <mat-icon *ngIf="selectionFormControl.hasError('required') && !showInlineError"
+            matIconSuffix
+            [matTooltip]="errorText"
+            matTooltipPosition="above"
+            [matTooltipClass]="tooltipClass"
+            class="material-icons tb-suffix-show-always tb-error">
+    warning
+  </mat-icon>
+  <mat-error *ngIf="selectionFormControl.hasError('required') && showInlineError">
+    {{errorText}}
+  </mat-error>
+  <mat-autocomplete
+    #optionsAutocomplete="matAutocomplete"
+    class="tb-autocomplete tb-options-input-autocomplete"
+    panelWidth="fit-content">
+    <mat-option *ngFor="let option of filteredOptions$ | async" [value]="option">
+      <span class="tb-option-name" fxFlex [innerHTML]="option | highlight:searchText:true:'ig'"></span>
+    </mat-option>
+  </mat-autocomplete>
+</mat-form-field>

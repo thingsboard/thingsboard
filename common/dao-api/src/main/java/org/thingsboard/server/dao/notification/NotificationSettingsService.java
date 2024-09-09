@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ public interface NotificationSettingsService {
     void saveNotificationSettings(TenantId tenantId, NotificationSettings settings);
 
     NotificationSettings findNotificationSettings(TenantId tenantId);
+
+    void deleteNotificationSettings(TenantId tenantId);
 
     UserNotificationSettings saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings);
 

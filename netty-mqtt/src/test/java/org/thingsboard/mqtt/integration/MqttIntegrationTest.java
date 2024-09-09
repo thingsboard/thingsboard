@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,13 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.handler.codec.mqtt.MqttMessageType;
 import io.netty.handler.codec.mqtt.MqttQoS;
 import io.netty.util.concurrent.Future;
+import io.netty.util.concurrent.Promise;
 import lombok.extern.slf4j.Slf4j;
-import org.junit.After;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.parallel.ResourceLock;
 import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.mqtt.MqttClient;
 import org.thingsboard.mqtt.MqttClientConfig;
@@ -38,6 +40,7 @@ import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+@ResourceLock("port8885") // test MQTT server port
 @Slf4j
 public class MqttIntegrationTest {
 
@@ -52,7 +55,7 @@ public class MqttIntegrationTest {
 
     AbstractListeningExecutor handlerExecutor;
 
-    @Before
+    @BeforeEach
     public void init() throws Exception {
         this.handlerExecutor = new AbstractListeningExecutor() {
             @Override
@@ -68,7 +71,7 @@ public class MqttIntegrationTest {
         this.mqttServer.init();
     }
 
-    @After
+    @AfterEach
     public void destroy() throws InterruptedException {
         if (this.mqttClient != null) {
             this.mqttClient.disconnect();
@@ -99,7 +102,7 @@ public class MqttIntegrationTest {
 
         log.warn("Waiting for messages acknowledgments...");
         boolean awaitResult = latch.await(10, TimeUnit.SECONDS);
-        Assert.assertTrue(awaitResult);
+        Assertions.assertTrue(awaitResult);
         log.warn("Messages are delivered successfully...");
 
         //when
@@ -110,7 +113,7 @@ public class MqttIntegrationTest {
         List<MqttMessageType> allReceivedEvents = this.mqttServer.getEventsFromClient();
         long disconnectCount = allReceivedEvents.stream().filter(type -> type == MqttMessageType.DISCONNECT).count();
 
-        Assert.assertEquals(1, disconnectCount);
+        Assertions.assertEquals(1, disconnectCount);
     }
 
     private Future<Void> publishMsg() {
@@ -127,7 +130,7 @@ public class MqttIntegrationTest {
         config.setReconnectDelay(RECONNECT_DELAY_SECONDS);
         MqttClient client = MqttClient.create(config, null, handlerExecutor);
         client.setEventLoop(this.eventLoopGroup);
-        Future<MqttConnectResult> connectFuture = client.connect(MQTT_HOST, this.mqttServer.getMqttPort());
+        Promise<MqttConnectResult> connectFuture = client.connect(MQTT_HOST, this.mqttServer.getMqttPort());
 
         String hostPort = MQTT_HOST + ":" + this.mqttServer.getMqttPort();
         MqttConnectResult result;

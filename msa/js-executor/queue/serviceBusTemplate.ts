@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -31,7 +31,8 @@ import {
 export class ServiceBusTemplate implements IQueue {
 
     private logger = _logger(`serviceBusTemplate`);
-    private requestTopic: string = config.get('request_topic');
+    private queuePrefix: string = config.get('queue_prefix');
+    private requestTopic: string = this.queuePrefix ? this.queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
     private namespaceName = config.get('service_bus.namespace_name');
     private sasKeyName = config.get('service_bus.sas_key_name');
     private sasKey = config.get('service_bus.sas_key');

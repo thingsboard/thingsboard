@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,17 +17,15 @@
 import { AfterViewInit, Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { ControlValueAccessor, UntypedFormBuilder, UntypedFormGroup, NG_VALUE_ACCESSOR } from '@angular/forms';
 import { Observable, Subject, Subscription, throwError } from 'rxjs';
-import { map, mergeMap, publishReplay, refCount, startWith, tap } from 'rxjs/operators';
+import { map, mergeMap, startWith, tap, share } from 'rxjs/operators';
 import { Store } from '@ngrx/store';
 import { AppState } from '@app/core/core.state';
 import { TranslateService } from '@ngx-translate/core';
-import { DeviceService } from '@core/http/device.service';
-import { EntitySubtype, EntityType } from '@app/shared/models/entity-type.models';
+import { EntityType } from '@app/shared/models/entity-type.models';
 import { BroadcastService } from '@app/core/services/broadcast.service';
-import { AssetService } from '@core/http/asset.service';
-import { EdgeService } from '@core/http/edge.service';
-import { EntityViewService } from '@core/http/entity-view.service';
 import { SubscriptSizing } from '@angular/material/form-field';
+import { isNotEmptyStr } from '@core/utils';
+import { EntityService } from '@core/http/entity.service';
 
 @Component({
   selector: 'tb-entity-subtype-select',
@@ -66,11 +64,11 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   entitySubtypeTitle: string;
   entitySubtypeRequiredText: string;
 
-  subTypesOptions: Observable<Array<EntitySubtype | string>>;
+  subTypesOptions: Observable<Array<string>>;
 
   private subTypesOptionsSubject: Subject<string> = new Subject();
 
-  subTypes: Observable<Array<EntitySubtype | string>>;
+  private subTypes: Observable<Array<string>>;
 
   subTypesLoaded = false;
 
@@ -81,11 +79,8 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
   constructor(private store: Store<AppState>,
               private broadcast: BroadcastService,
               public translate: TranslateService,
-              private deviceService: DeviceService,
-              private assetService: AssetService,
-              private edgeService: EdgeService,
-              private entityViewService: EntityViewService,
-              private fb: UntypedFormBuilder) {
+              private fb: UntypedFormBuilder,
+              private entityService: EntityService) {
     this.subTypeFormGroup = this.fb.group({
       subType: ['']
     });
@@ -136,7 +131,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
 
     this.subTypesOptions = this.subTypesOptionsSubject.asObservable().pipe(
-      startWith<string | EntitySubtype>(''),
+      startWith<string>(''),
       mergeMap(() => this.getSubTypes())
     );
 
@@ -146,7 +141,7 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
         if (!value || value === '') {
           modelValue = '';
         } else {
-          modelValue = value.type;
+          modelValue = value;
         }
         this.updateView(modelValue);
       }
@@ -193,65 +188,41 @@ export class EntitySubTypeSelectComponent implements ControlValueAccessor, OnIni
     }
   }
 
-  displaySubTypeFn(subType?: EntitySubtype | string): string | undefined {
-    if (subType && typeof subType !== 'string') {
+  displaySubTypeFn(subType?: string): string | undefined {
+    if (isNotEmptyStr(subType)) {
       if (this.typeTranslatePrefix) {
-        return this.translate.instant(this.typeTranslatePrefix + '.' + subType.type);
+        return this.translate.instant(this.typeTranslatePrefix + '.' + subType);
       } else {
-        return subType.type;
+        return subType;
       }
     } else {
       return this.translate.instant('entity.all-subtypes');
     }
   }
 
-  findSubTypes(searchText?: string): Observable<Array<EntitySubtype | string>> {
+  findSubTypes(searchText: string): Observable<Array<string>> {
     return this.getSubTypes().pipe(
-      map(subTypes => subTypes.filter( subType => {
-          return searchText ? (typeof subType === 'string' ? false : subType.type === searchText) : false;
-      }))
+      map(subTypes => subTypes.filter( subType => subType === searchText))
     );
   }
 
-  getSubTypes(): Observable<Array<EntitySubtype | string>> {
+  getSubTypes(): Observable<Array<string>> {
     if (!this.subTypes) {
-      switch (this.entityType) {
-        case EntityType.ASSET:
-          this.subTypes = this.assetService.getAssetTypes({ignoreLoading: true});
-          break;
-        case EntityType.DEVICE:
-          this.subTypes = this.deviceService.getDeviceTypes({ignoreLoading: true});
-          break;
-        case EntityType.EDGE:
-          this.subTypes = this.edgeService.getEdgeTypes({ignoreLoading: true});
-          break;
-        case EntityType.ENTITY_VIEW:
-          this.subTypes = this.entityViewService.getEntityViewTypes({ignoreLoading: true});
-          break;
-      }
-      if (this.subTypes) {
-        this.subTypes = this.subTypes.pipe(
-          map((allSubtypes) => {
-              allSubtypes.unshift('');
-              this.subTypesLoaded = true;
-              return allSubtypes;
+      const subTypesObservable = this.entityService.getEntitySubtypesObservable(this.entityType);
+      if (subTypesObservable) {
+        this.subTypes = subTypesObservable.pipe(
+          map((subTypes) => {
+            this.subTypesLoaded = true;
+            subTypes.unshift('');
+            return subTypes;
           }),
           tap((subTypes) => {
-            const type: EntitySubtype | string = this.subTypeFormGroup.get('subType').value;
-            const strType = typeof type === 'string' ? type : type.type;
-            const found = subTypes.find((subType) => {
-              if (typeof subType === 'string') {
-                return subType === type;
-              } else {
-                return subType.type === strType;
-              }
-            });
+            const found = subTypes.find(subType => subType === this.subTypeFormGroup.get('subType').value);
             if (found) {
               this.subTypeFormGroup.get('subType').patchValue(found);
             }
           }),
-          publishReplay(1),
-          refCount()
+          share()
         );
       } else {
         return throwError(null);

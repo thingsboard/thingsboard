@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -77,6 +77,22 @@ public class JpaRuleNodeDao extends JpaAbstractDao<RuleNodeEntity, RuleNode> imp
                         version,
                         Objects.toString(pageLink.getTextSearch(), ""),
                         DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public PageData<RuleNodeId> findAllRuleNodeIdsByTypeAndVersionLessThan(String type, int version, PageLink pageLink) {
+        return DaoUtil.pageToPageData(ruleNodeRepository
+                        .findAllRuleNodeIdsByTypeAndVersionLessThan(
+                                type,
+                                version,
+                                DaoUtil.toPageable(pageLink)))
+                .mapData(RuleNodeId::new);
+    }
+
+    @Override
+    public List<RuleNode> findAllRuleNodeByIds(List<RuleNodeId> ruleNodeIds) {
+        return DaoUtil.convertDataList(ruleNodeRepository.findAllById(
+                ruleNodeIds.stream().map(RuleNodeId::getId).collect(Collectors.toList())));
     }
 
     @Override

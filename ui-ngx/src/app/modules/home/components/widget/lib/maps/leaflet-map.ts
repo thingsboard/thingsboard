@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import {
   WidgetUnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
-import { Observable, of } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { Circle } from './circle';
@@ -63,6 +63,8 @@ import {
 import { MatDialog } from '@angular/material/dialog';
 import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { take, tap } from 'rxjs/operators';
 
 export default abstract class LeafletMap {
 
@@ -895,16 +897,27 @@ export default abstract class LeafletMap {
           const currentImage: MarkerImageInfo = this.options.useMarkerImageFunction ?
             safeExecute(this.options.parsedMarkerImageFunction,
               [data, this.options.markerImages, markersData, data.dsIndex]) : this.options.currentImage;
-          const imageSize = `height: ${this.options.markerImageSize || 34}px; width: ${this.options.markerImageSize || 34}px;`;
-          const style = currentImage ? 'background-image: url(' + currentImage.url + '); ' + imageSize : '';
-          this.options.icon = { icon: L.divIcon({
-            html: `<div class="arrow"
+          const imageUrl$ =
+            currentImage
+              ? this.ctx.$injector.get(ImagePipe).transform(currentImage.url, {asString: true, ignoreLoadingImage: true})
+              : of(null);
+          this.options.icon$ = imageUrl$.pipe(
+            map((imageUrl) => {
+              const size = this.options.useMarkerImageFunction && currentImage ? currentImage.size : this.options.markerImageSize;
+              const imageSize = `height: ${size || 34}px; width: ${size || 34}px;`;
+              const style = imageUrl ? 'background-image: url(' + imageUrl + '); ' + imageSize : '';
+              return { icon: L.divIcon({
+                  html: `<div class="arrow"
                style="transform: translate(-10px, -10px)
                rotate(${data.rotationAngle}deg);
                ${style}"><div>`
-          }),  size: [30, 30]};
+                }),  size: [size, size]};
+            })
+          );
+          this.options.icon = null;
         } else {
           this.options.icon = null;
+          this.options.icon$ = null;
         }
         if (this.markers.get(data.entityName)) {
           m = this.updateMarker(data.entityName, data, markersData, this.options);
@@ -928,7 +941,12 @@ export default abstract class LeafletMap {
       this.markersData = markersData;
       if (this.options.useClusterMarkers) {
         if (createdMarkers.length) {
-          this.markersCluster.addLayers(createdMarkers.map(marker => marker.leafletMarker));
+          createdMarkers.forEach((marker) => {
+            marker.createMarkerIconSubject.pipe(
+              tap(() => this.markersCluster.addLayer(marker.leafletMarker)),
+              take(1)
+            ).subscribe();
+          });
         }
         if (updatedMarkers.length) {
           this.markersCluster.refreshClusters(updatedMarkers.map(marker => marker.leafletMarker));
@@ -959,10 +977,15 @@ export default abstract class LeafletMap {
       }
       this.markers.set(key, newMarker);
       if (!this.options.useClusterMarkers) {
-        this.map.addLayer(newMarker.leafletMarker);
-        if (this.map.pm.globalDragModeEnabled() && newMarker.leafletMarker.pm) {
-          newMarker.leafletMarker.pm.enableLayerDrag();
-        }
+        newMarker.createMarkerIconSubject.pipe(
+          tap(() => {
+            this.map.addLayer(newMarker.leafletMarker);
+            if (this.map.pm.globalDragModeEnabled() && newMarker.leafletMarker.pm) {
+              newMarker.leafletMarker.pm.enableLayerDrag();
+            }
+          }),
+          take(1)
+        ).subscribe();
       }
       return newMarker;
     }

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -16,9 +16,11 @@
 
 -->
 <ng-container [formGroup]="countWidgetConfigForm">
-  <tb-image-cards-select rowHeight="{{ '3:1' }}"
-                         [cols]="2"
-                         [colsLtMd]="1"
+  <tb-image-cards-select rowHeight="3:1"
+                         [cols]="{columns: 2,
+                                    breakpoints: {
+                                      'lt-md': 1
+                                    }}"
                          label="{{ 'widgets.count.layout' | translate }}" formControlName="layout">
     <tb-image-cards-select-option *ngFor="let layout of countCardLayouts"
                                   [value]="layout"
@@ -26,6 +28,11 @@
       {{ countCardLayoutTranslationMap.get(layout) | translate }}
     </tb-image-cards-select-option>
   </tb-image-cards-select>
+  <div class="tb-form-row">
+    <mat-slide-toggle class="mat-slide" formControlName="autoScale">
+      {{ 'widgets.count.auto-scale' | translate }}
+    </mat-slide-toggle>
+  </div>
   <div class="tb-form-row column-xs">
     <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
       {{ 'widgets.count.label' | translate }}
@@ -37,7 +44,7 @@
       <tb-font-settings formControlName="labelFont"
                         [previewText]="countWidgetConfigForm.get('label').value">
       </tb-font-settings>
-      <tb-color-settings formControlName="labelColor">
+      <tb-color-settings formControlName="labelColor" settingsKey="{{'widgets.count.label' | translate }}">
       </tb-color-settings>
     </div>
   </div>
@@ -58,7 +65,7 @@
                                                           : ''"
                                formControlName="icon">
       </tb-material-icon-select>
-      <tb-color-settings formControlName="iconColor">
+      <tb-color-settings formControlName="iconColor" settingsKey="{{'widgets.count.icon' | translate }}">
       </tb-color-settings>
     </div>
   </div>
@@ -71,7 +78,7 @@
         <input matInput type="number" min="0" formControlName="iconBackgroundSize" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
       <tb-css-unit-select fxFlex formControlName="iconBackgroundSizeUnit"></tb-css-unit-select>
-      <tb-color-settings formControlName="iconBackgroundColor">
+      <tb-color-settings formControlName="iconBackgroundColor" settingsKey="{{'widgets.count.icon-background' | translate }}">
       </tb-color-settings>
     </div>
   </div>
@@ -81,7 +88,7 @@
       <tb-font-settings formControlName="valueFont"
                         previewText="10">
       </tb-font-settings>
-      <tb-color-settings formControlName="valueColor">
+      <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.count.value' | translate }}">
       </tb-color-settings>
     </div>
   </div>

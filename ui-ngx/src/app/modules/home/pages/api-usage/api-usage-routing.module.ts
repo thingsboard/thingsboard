@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { ApiUsageComponent } from '@home/pages/api-usage/api-usage.component';
 import { Dashboard } from '@shared/models/dashboard.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
+import { MenuId } from '@core/services/menu.models';
 
 const apiUsageDashboardJson = '/assets/dashboard/api_usage.json';
 
@@ -38,8 +39,7 @@ const routes: Routes = [
       auth: [Authority.TENANT_ADMIN],
       title: 'api-usage.api-usage',
       breadcrumb: {
-        label: 'api-usage.api-usage',
-        icon: 'insert_chart'
+        menuId: MenuId.api_usage
       }
     },
     resolve: {

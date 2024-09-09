@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,8 +44,7 @@ public class EntitiesCustomerIdAsyncLoader {
     }
 
     private static <T extends HasCustomerId> ListenableFuture<CustomerId> toCustomerIdAsync(TbContext ctx, ListenableFuture<T> future) {
-        return Futures.transformAsync(future, in -> in != null ? Futures.immediateFuture(in.getCustomerId())
-                : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
+        return Futures.transform(future, in -> in != null ? in.getCustomerId() : null, ctx.getDbCallbackExecutor());
     }
 
 }

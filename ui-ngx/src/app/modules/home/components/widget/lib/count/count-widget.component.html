@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,23 +15,25 @@
     limitations under the License.
 
 -->
-<div class="tb-count-panel" [class.tb-count-pointer]="hasCardClickAction" (click)="cardClick($event)">
-  <div class="tb-count-panel-column">
-    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
-    <div class="tb-count-panel-row">
-      <div class="tb-count-icon-panel" *ngIf="showIconBackground || showIcon"
-           [style]="{minWidth: iconBackgroundSize, minHeight: iconBackgroundSize}">
-        <div *ngIf="showIconBackground" class="tb-count-icon-background-panel">
-          <div [style]="iconBackgroundStyle" [style.background-color]="iconBackgroundColor.color"></div>
+<div #countPanel class="tb-count-panel" [class.tb-count-pointer]="hasCardClickAction" (click)="cardClick($event)">
+  <div #countPanelContent class="tb-count-panel-content">
+    <div class="tb-count-panel-column">
+      <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+      <div class="tb-count-panel-row">
+        <div class="tb-count-icon-panel" *ngIf="showIconBackground || showIcon"
+             [style]="{minWidth: iconBackgroundSize, minHeight: iconBackgroundSize}">
+          <div *ngIf="showIconBackground" class="tb-count-icon-background-panel">
+            <div [style]="iconBackgroundStyle" [style.background-color]="iconBackgroundColor.color"></div>
+          </div>
+          <tb-icon *ngIf="showIcon" [style]="iconStyle" [style.color]="iconColor.color">{{ icon }}</tb-icon>
         </div>
-        <tb-icon *ngIf="showIcon" [style]="iconStyle" [style.color]="iconColor.color">{{ icon }}</tb-icon>
-      </div>
-      <div class="tb-count-label-value-panel" [class.tb-count-layout-row]="layout === countCardLayout.row">
-        <div *ngIf="showLabel" [style]="labelStyle" [style.color]="labelColor.color">{{ label }}</div>
-        <div *ngIf="layout === countCardLayout.row" style="flex: 1;"></div>
-        <div [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
+        <div class="tb-count-label-value-panel" [class.tb-count-layout-row]="layout === countCardLayout.row">
+          <div *ngIf="showLabel" class="tb-count-label" [style]="labelStyle" [style.color]="labelColor.color">{{ label }}</div>
+          <div *ngIf="layout === countCardLayout.row" style="flex: 1; min-width: 12px;"></div>
+          <div [style]="valueStyle" [style.color]="valueColor.color">{{ valueText }}</div>
+        </div>
       </div>
     </div>
+    <tb-icon *ngIf="showChevron" [style]="chevronStyle">chevron_right</tb-icon>
   </div>
-  <tb-icon *ngIf="showChevron" [style]="chevronStyle">chevron_right</tb-icon>
 </div>

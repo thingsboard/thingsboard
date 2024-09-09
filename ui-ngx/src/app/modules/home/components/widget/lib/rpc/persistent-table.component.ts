@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -517,7 +517,7 @@ class PersistentDatasource implements DataSource<PersistentRpcData> {
         if (!this.executingRpcRequest || rejection.status === 504) {
           this.subscription.rpcRejection = rejection;
           if (rejection.status === 504) {
-            this.subscription.rpcErrorText = 'Request Timeout.';
+            this.subscription.rpcErrorText = 'Request timeout';
           } else {
             this.subscription.rpcErrorText =  'Error : ' + rejection.status + ' - ' + rejection.statusText;
             const error = parseHttpErrorMessage(rejection, this.translate);

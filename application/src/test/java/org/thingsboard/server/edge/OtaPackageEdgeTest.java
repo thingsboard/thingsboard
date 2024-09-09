@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,17 +16,16 @@
 package org.thingsboard.server.edge;
 
 import com.google.protobuf.AbstractMessage;
-import com.google.protobuf.ByteString;
 import org.junit.Assert;
 import org.junit.Test;
 import org.springframework.mock.web.MockMultipartFile;
 import org.springframework.test.web.servlet.request.MockMultipartHttpServletRequestBuilder;
 import org.springframework.test.web.servlet.request.MockMvcRequestBuilders;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.SaveOtaPackageInfoRequest;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
-import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.edge.v1.OtaPackageUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
@@ -59,22 +58,22 @@ public class OtaPackageEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
         OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        OtaPackage otaPackage = JacksonUtil.fromString(otaPackageUpdateMsg.getEntity(), OtaPackage.class, true);
+        Assert.assertNotNull(otaPackage);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
-        Assert.assertEquals(savedFirmwareInfo.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedFirmwareInfo.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getIdLSB());
-        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdMSB());
-        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdLSB());
-        Assert.assertEquals(FIRMWARE, OtaPackageType.valueOf(otaPackageUpdateMsg.getType()));
-        Assert.assertEquals("My firmware #1", otaPackageUpdateMsg.getTitle());
-        Assert.assertEquals("v1.0", otaPackageUpdateMsg.getVersion());
-        Assert.assertEquals("My firmware #1 v1.0", otaPackageUpdateMsg.getTag());
-        Assert.assertEquals("http://localhost:8080/v1/package", otaPackageUpdateMsg.getUrl());
-        Assert.assertFalse(otaPackageUpdateMsg.hasData());
-        Assert.assertFalse(otaPackageUpdateMsg.hasFileName());
-        Assert.assertFalse(otaPackageUpdateMsg.hasContentType());
-        Assert.assertFalse(otaPackageUpdateMsg.hasChecksumAlgorithm());
-        Assert.assertFalse(otaPackageUpdateMsg.hasChecksum());
-        Assert.assertFalse(otaPackageUpdateMsg.hasDataSize());
+        Assert.assertEquals(savedFirmwareInfo.getId(), otaPackage.getId());
+        Assert.assertEquals(thermostatDeviceProfile.getId(), otaPackage.getDeviceProfileId());
+        Assert.assertEquals(FIRMWARE, otaPackage.getType());
+        Assert.assertEquals("My firmware #1", otaPackage.getTitle());
+        Assert.assertEquals("v1.0", otaPackage.getVersion());
+        Assert.assertEquals("My firmware #1 v1.0", otaPackage.getTag());
+        Assert.assertEquals("http://localhost:8080/v1/package", otaPackage.getUrl());
+        Assert.assertNull(otaPackage.getData());
+        Assert.assertNull(otaPackage.getFileName());
+        Assert.assertNull(otaPackage.getContentType());
+        Assert.assertNull(otaPackage.getChecksumAlgorithm());
+        Assert.assertNull(otaPackage.getChecksum());
+        Assert.assertNull(otaPackage.getDataSize());
 
         // delete ota package
         edgeImitator.expectMessageAmount(1);
@@ -113,22 +112,22 @@ public class OtaPackageEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof OtaPackageUpdateMsg);
         OtaPackageUpdateMsg otaPackageUpdateMsg = (OtaPackageUpdateMsg) latestMessage;
+        OtaPackage otaPackage = JacksonUtil.fromString(otaPackageUpdateMsg.getEntity(), OtaPackage.class, true);
+        Assert.assertNotNull(otaPackage);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, otaPackageUpdateMsg.getMsgType());
-        Assert.assertEquals(savedFirmwareInfo.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedFirmwareInfo.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getIdLSB());
-        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getMostSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdMSB());
-        Assert.assertEquals(thermostatDeviceProfile.getUuidId().getLeastSignificantBits(), otaPackageUpdateMsg.getDeviceProfileIdLSB());
-        Assert.assertEquals(FIRMWARE, OtaPackageType.valueOf(otaPackageUpdateMsg.getType()));
-        Assert.assertEquals("My firmware #2", otaPackageUpdateMsg.getTitle());
-        Assert.assertEquals("v2.0", otaPackageUpdateMsg.getVersion());
-        Assert.assertEquals("My firmware #2 v2.0", otaPackageUpdateMsg.getTag());
-        Assert.assertFalse(otaPackageUpdateMsg.hasUrl());
-        Assert.assertEquals("firmware.bin", otaPackageUpdateMsg.getFileName());
-        Assert.assertEquals("image/png", otaPackageUpdateMsg.getContentType());
-        Assert.assertEquals(ChecksumAlgorithm.SHA256.name(), otaPackageUpdateMsg.getChecksumAlgorithm());
-        Assert.assertEquals("62467691cf583d4fa78b18fafaf9801f505e0ef03baf0603fd4b0cd004cd1e75", otaPackageUpdateMsg.getChecksum());
-        Assert.assertEquals(3L, otaPackageUpdateMsg.getDataSize());
-        Assert.assertEquals(ByteString.copyFrom(new byte[]{1, 3, 5}), otaPackageUpdateMsg.getData());
+        Assert.assertEquals(savedFirmwareInfo.getId(), otaPackage.getId());
+        Assert.assertEquals(thermostatDeviceProfile.getId(), otaPackage.getDeviceProfileId());
+        Assert.assertEquals(FIRMWARE, otaPackage.getType());
+        Assert.assertEquals("My firmware #2", otaPackage.getTitle());
+        Assert.assertEquals("v2.0", otaPackage.getVersion());
+        Assert.assertEquals("My firmware #2 v2.0", otaPackage.getTag());
+        Assert.assertFalse(otaPackage.hasUrl());
+        Assert.assertEquals("firmware.bin", otaPackage.getFileName());
+        Assert.assertEquals("image/png", otaPackage.getContentType());
+        Assert.assertEquals(ChecksumAlgorithm.SHA256, otaPackage.getChecksumAlgorithm());
+        Assert.assertEquals("62467691cf583d4fa78b18fafaf9801f505e0ef03baf0603fd4b0cd004cd1e75", otaPackage.getChecksum());
+        Assert.assertEquals(3L, otaPackage.getDataSize().longValue());
+        Assert.assertEquals(ByteBuffer.wrap(new byte[]{1, 3, 5}), otaPackage.getData());
 
         // delete ota package
         edgeImitator.expectMessageAmount(1);

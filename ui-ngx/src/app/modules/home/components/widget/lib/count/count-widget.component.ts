@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,7 +14,18 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit, TemplateRef } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formatValue } from '@core/utils';
 import {
@@ -24,20 +35,31 @@ import {
   iconStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { WidgetComponent } from '@home/components/widget/widget.component';
 import {
   CountCardLayout,
   countDefaultSettings,
   CountWidgetSettings
 } from '@home/components/widget/lib/count/count-widget.models';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { UtilsService } from '@core/services/utils.service';
+
+const layoutHeight = 36;
+const layoutHeightWithTitle = 60;
+const layoutPadding = 24;
 
 @Component({
   selector: 'tb-count-widget',
   templateUrl: './count-widget.component.html',
   styleUrls: ['./count-widget.component.scss']
 })
-export class CountWidgetComponent implements OnInit {
+export class CountWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  @ViewChild('countPanel', {static: false})
+  countPanel: ElementRef<HTMLElement>;
+
+  @ViewChild('countPanelContent', {static: false})
+  countPanelContent: ElementRef<HTMLElement>;
 
   settings: CountWidgetSettings;
 
@@ -79,7 +101,11 @@ export class CountWidgetComponent implements OnInit {
 
   hasCardClickAction = false;
 
-  constructor(private widgetComponent: WidgetComponent,
+  private panelResize$: ResizeObserver;
+  private hasTitle = false;
+
+  constructor(private renderer: Renderer2,
+              private utils: UtilsService,
               private cd: ChangeDetectorRef) {
   }
 
@@ -90,8 +116,8 @@ export class CountWidgetComponent implements OnInit {
     this.layout = this.settings.layout;
 
     this.showLabel = this.settings.showLabel;
-    this.label = this.settings.label;
-    this.labelStyle = textStyle(this.settings.labelFont, '0.4px');
+    this.label = this.utils.customTranslation(this.settings.label, this.settings.label);
+    this.labelStyle = textStyle(this.settings.labelFont);
     this.labelColor = ColorProcessor.fromSettings(this.settings.labelColor);
 
     this.showIcon = this.settings.showIcon;
@@ -112,7 +138,7 @@ export class CountWidgetComponent implements OnInit {
     };
     this.iconBackgroundColor = ColorProcessor.fromSettings(this.settings.iconBackgroundColor);
 
-    this.valueStyle = textStyle(this.settings.valueFont, '0.1px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showChevron = this.settings.showChevron;
@@ -120,6 +146,27 @@ export class CountWidgetComponent implements OnInit {
     this.chevronStyle.color = this.settings.chevronColor;
 
     this.hasCardClickAction = this.ctx.actionsApi.getActionDescriptors('cardClick').length > 0;
+    this.hasTitle = this.ctx.widgetConfig.showTitle;
+  }
+
+  public ngAfterViewInit() {
+    if (this.settings.autoScale) {
+      const height = this.hasTitle ? layoutHeightWithTitle : layoutHeight;
+      this.renderer.setStyle(this.countPanelContent.nativeElement, 'height', height + 'px');
+      this.renderer.setStyle(this.countPanelContent.nativeElement, 'overflow', 'visible');
+      this.renderer.setStyle(this.countPanelContent.nativeElement, 'position', 'absolute');
+      this.panelResize$ = new ResizeObserver(() => {
+        this.onResize();
+      });
+      this.panelResize$.observe(this.countPanel.nativeElement);
+      this.onResize();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.panelResize$) {
+      this.panelResize$.disconnect();
+    }
   }
 
   public onInit() {
@@ -143,5 +190,25 @@ export class CountWidgetComponent implements OnInit {
 
   public cardClick($event: Event) {
     this.ctx.actionsApi.cardClick($event);
+  }
+
+  private onResize() {
+    const panelWidth = this.countPanel.nativeElement.getBoundingClientRect().width - layoutPadding;
+    const panelHeight = this.countPanel.nativeElement.getBoundingClientRect().height - layoutPadding;
+    const targetWidth = panelWidth;
+    let minAspect = 0.25;
+    if (this.settings.showChevron) {
+      minAspect -= 0.05;
+    }
+    if (this.hasTitle) {
+      minAspect += 0.15;
+    }
+    const aspect = Math.min(panelHeight / targetWidth, minAspect);
+    const targetHeight = targetWidth * aspect;
+    const height = this.hasTitle ? layoutHeightWithTitle : layoutHeight;
+    const scale = targetHeight / height;
+    const width = targetWidth / scale;
+    this.renderer.setStyle(this.countPanelContent.nativeElement, 'width', width + 'px');
+    this.renderer.setStyle(this.countPanelContent.nativeElement, 'transform', `scale(${scale})`);
   }
 }

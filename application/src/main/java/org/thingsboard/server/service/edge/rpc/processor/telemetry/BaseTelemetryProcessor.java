@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,21 +15,22 @@
  */
 package org.thingsboard.server.service.edge.rpc.processor.telemetry;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.SettableFuture;
 import com.google.gson.Gson;
-import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.ImmutablePair;
 import org.apache.commons.lang3.tuple.Pair;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.api.msg.DeviceAttributesEventNotificationMsg;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -55,7 +56,7 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.msg.rule.engine.DeviceAttributesEventNotificationMsg;
 import org.thingsboard.server.common.transport.util.JsonUtils;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.gen.edge.v1.AttributeDeleteMsg;
@@ -67,8 +68,6 @@ import org.thingsboard.server.queue.TbQueueProducer;
 import org.thingsboard.server.queue.common.TbProtoQueueMsg;
 import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
@@ -139,41 +138,39 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         TbMsgMetaData metaData = new TbMsgMetaData();
         CustomerId customerId = null;
         switch (entityId.getEntityType()) {
-            case DEVICE:
+            case DEVICE -> {
                 Device device = deviceService.findDeviceById(tenantId, new DeviceId(entityId.getId()));
                 if (device != null) {
                     customerId = device.getCustomerId();
                     metaData.putValue("deviceName", device.getName());
                     metaData.putValue("deviceType", device.getType());
                 }
-                break;
-            case ASSET:
+            }
+            case ASSET -> {
                 Asset asset = assetService.findAssetById(tenantId, new AssetId(entityId.getId()));
                 if (asset != null) {
                     customerId = asset.getCustomerId();
                     metaData.putValue("assetName", asset.getName());
                     metaData.putValue("assetType", asset.getType());
                 }
-                break;
-            case ENTITY_VIEW:
+            }
+            case ENTITY_VIEW -> {
                 EntityView entityView = entityViewService.findEntityViewById(tenantId, new EntityViewId(entityId.getId()));
                 if (entityView != null) {
                     customerId = entityView.getCustomerId();
                     metaData.putValue("entityViewName", entityView.getName());
                     metaData.putValue("entityViewType", entityView.getType());
                 }
-                break;
-            case EDGE:
+            }
+            case EDGE -> {
                 Edge edge = edgeService.findEdgeById(tenantId, new EdgeId(entityId.getId()));
                 if (edge != null) {
                     customerId = edge.getCustomerId();
                     metaData.putValue("edgeName", edge.getName());
                     metaData.putValue("edgeType", edge.getType());
                 }
-                break;
-            default:
-                log.debug("[{}] Using empty metadata for entityId [{}]", tenantId, entityId);
-                break;
+            }
+            default -> log.debug("[{}] Using empty metadata for entityId [{}]", tenantId, entityId);
         }
         return new ImmutablePair<>(metaData, customerId != null ? customerId : new CustomerId(ModelConstants.NULL_UUID));
     }
@@ -253,7 +250,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
         JsonObject json = JsonUtils.getJsonObject(msg.getKvList());
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(json));
         String scope = metaData.getValue("scope");
-        tsSubService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<Void>() {
+        tsSubService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<Void>() {
             @Override
             public void onSuccess(@Nullable Void tmp) {
                 var defaultQueueAndRuleChain = getDefaultQueueNameAndRuleChainId(tenantId, entityId);
@@ -287,7 +284,7 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
 
         String scope = attributeDeleteMsg.getScope();
         List<String> attributeKeys = attributeDeleteMsg.getAttributeNamesList();
-        ListenableFuture<List<String>> removeAllFuture = attributesService.removeAll(tenantId, entityId, scope, attributeKeys);
+        ListenableFuture<List<String>> removeAllFuture = attributesService.removeAll(tenantId, entityId, AttributeScope.valueOf(scope), attributeKeys);
         return Futures.transformAsync(removeAllFuture, removeAttributes -> {
             if (EntityType.DEVICE.name().equals(entityType)) {
                 SettableFuture<Void> futureToSet = SettableFuture.create();
@@ -315,39 +312,25 @@ public abstract class BaseTelemetryProcessor extends BaseEdgeProcessor {
                                                                   EntityType entityType,
                                                                   UUID entityUUID,
                                                                   EdgeEventActionType actionType,
-                                                                  JsonNode body) throws JsonProcessingException {
+                                                                  JsonNode body) {
         EntityId entityId;
         switch (entityType) {
-            case DEVICE:
-                entityId = new DeviceId(entityUUID);
-                break;
-            case ASSET:
-                entityId = new AssetId(entityUUID);
-                break;
-            case ENTITY_VIEW:
-                entityId = new EntityViewId(entityUUID);
-                break;
-            case DASHBOARD:
-                entityId = new DashboardId(entityUUID);
-                break;
-            case TENANT:
-                entityId = TenantId.fromUUID(entityUUID);
-                break;
-            case CUSTOMER:
-                entityId = new CustomerId(entityUUID);
-                break;
-            case USER:
-                entityId = new UserId(entityUUID);
-                break;
-            case EDGE:
-                entityId = new EdgeId(entityUUID);
-                break;
-            default:
+            case DEVICE -> entityId = new DeviceId(entityUUID);
+            case ASSET -> entityId = new AssetId(entityUUID);
+            case ENTITY_VIEW -> entityId = new EntityViewId(entityUUID);
+            case DASHBOARD -> entityId = new DashboardId(entityUUID);
+            case TENANT -> entityId = TenantId.fromUUID(entityUUID);
+            case CUSTOMER -> entityId = new CustomerId(entityUUID);
+            case USER -> entityId = new UserId(entityUUID);
+            case EDGE -> entityId = new EdgeId(entityUUID);
+            default -> {
                 log.warn("[{}] Unsupported edge event type [{}]", tenantId, entityType);
                 return null;
+            }
         }
-        JsonElement entityData = JsonParser.parseString(JacksonUtil.OBJECT_MAPPER.writeValueAsString(body));
-        return entityDataMsgConstructor.constructEntityDataMsg(tenantId, entityId, actionType, entityData);
+        String bodyJackson = JacksonUtil.toString(body);
+        return bodyJackson == null ? null :
+                entityDataMsgConstructor.constructEntityDataMsg(tenantId, entityId, actionType, JsonParser.parseString(bodyJackson));
     }
 
 }

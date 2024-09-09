@@ -1,0 +1,107 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<form class="tb-image-dialog" [formGroup]="imageFormGroup">
+  <mat-toolbar color="primary">
+    <h2>{{ (readonly ? 'image.image-details' : 'image.edit-image') | translate }}</h2>
+    <span fxFlex></span>
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
+  <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+  </mat-progress-bar>
+  <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
+  <div mat-dialog-content>
+    <fieldset [disabled]="isLoading$ | async">
+      <mat-form-field>
+        <mat-label translate>image.name</mat-label>
+        <input matInput formControlName="title" required>
+        <mat-error *ngIf="imageFormGroup.get('title').hasError('required')">
+          {{ 'image.name-required' | translate }}
+        </mat-error>
+        <button *ngIf="!readonly && imageFormGroup.dirty"
+                matIconSuffix
+                type="button"
+                mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.undo' | translate }}"
+                matTooltipPosition="above"
+                (click)="revertInfo()">
+          <mat-icon>close</mat-icon>
+        </button>
+        <button *ngIf="!readonly && !imageFormGroup.invalid && imageFormGroup.dirty"
+                matIconSuffix
+                type="button"
+                color="primary"
+                mat-icon-button [disabled]="isLoading$ | async"
+                matTooltip="{{ 'action.save' | translate }}"
+                matTooltipPosition="above"
+                (click)="saveInfo()">
+          <mat-icon>check</mat-icon>
+        </button>
+      </mat-form-field>
+      <div class="tb-image-container tb-primary-fill">
+        <div class="tb-image-content">
+          <div class="tb-image-actions">
+            <div class="tb-image-actions">
+              <button type="button"
+                      mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'image.download-image' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="downloadImage($event)">
+                <mat-icon>file_download</mat-icon>
+              </button>
+              <button type="button"
+                      mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'image.export-image' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="exportImage($event)">
+                <tb-icon>mdi:file-export</tb-icon>
+              </button>
+              <button type="button"
+                      mat-icon-button [disabled]="isLoading$ | async"
+                      matTooltip="{{ 'image.embed-image' | translate }}"
+                      matTooltipPosition="above"
+                      (click)="embedImage($event)">
+                <mat-icon>code</mat-icon>
+              </button>
+            </div>
+            <button *ngIf="!readonly"
+                    type="button"
+                    mat-flat-button
+                    color="primary"
+                    [disabled]="isLoading$ | async"
+                    (click)="updateImage($event)">
+              {{ 'image.update-image' | translate }}
+            </button>
+          </div>
+          <div class="tb-image-preview-container">
+            <div class="tb-image-preview-spacer"></div>
+            <img class="tb-image-preview" [src]="imagePreviewData | image | async">
+          </div>
+          <div class="tb-image-preview-details">
+            <div>{{ image.descriptor.width }}x{{ image.descriptor.height }}</div>
+            <mat-divider vertical></mat-divider>
+            <div>{{ image.descriptor.size | fileSize }}</div>
+          </div>
+        </div>
+      </div>
+    </fieldset>
+  </div>
+</form>

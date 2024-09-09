@@ -1,0 +1,37 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-latest-chart-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-latest-chart-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div #chartContent class="tb-latest-chart-content" [class]="legendClass">
+    <div #chartShape class="tb-latest-chart-shape">
+    </div>
+    <div *ngIf="showLegend" #chartLegend class="tb-latest-chart-legend">
+      <div class="tb-latest-chart-legend-item" *ngFor="let legendItem of legendItems" [class]="{'pointer': !legendItem.total && legendItem.hasValue}"
+           (mouseenter)="onLegendItemEnter(legendItem)"
+           (mouseleave)="onLegendItemLeave(legendItem)"
+           (click)="toggleLegendItem(legendItem)">
+        <div class="tb-latest-chart-legend-item-label">
+          <div class="tb-latest-chart-legend-item-label-circle" [style]="{background: (!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendItem.color : null}"></div>
+          <div [style]="(!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendLabelStyle : disabledLegendLabelStyle">{{ legendItem.label }}</div>
+        </div>
+        <div [style]="(!legendItem.dataKey?.hidden && legendItem.hasValue) ? legendValueStyle : disabledLegendValueStyle" class="tb-latest-chart-legend-item-value">{{ legendItem.value }}</div>
+      </div>
+    </div>
+  </div>
+</div>

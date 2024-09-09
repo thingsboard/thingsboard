@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,7 +268,7 @@ pre.tb-highlight {
   letter-spacing: normal;
 }
 
-.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel {
+.tb-timewindow-panel, .tb-legend-config-panel, .tb-filter-panel, .tb-panel-container {
   overflow: hidden;
   background: #fff;
   border-radius: 4px;
@@ -342,6 +342,12 @@ mat-label {
   }
 }
 
+mat-icon {
+  &.tb-error {
+    color: rgb(221, 44, 0);
+  }
+}
+
 .tb-error-messages {
   height: 24px; //30px
   margin-top: -6px;
@@ -354,6 +360,14 @@ mat-label {
   font-size: 12px;
   line-height: 14px;
   color: rgb(221, 44, 0);
+}
+
+.mat-mdc-tooltip.tb-error-tooltip {
+  .mdc-tooltip__surface {
+    background-color: #fff2f3;
+    box-shadow: -2px 2px 4px 0px rgba(0,0,0,0.2);
+    color: rgba(209, 39, 48, 1);
+  }
 }
 
 .tb-autocomplete {
@@ -378,6 +392,7 @@ mat-label {
 }
 
 .tb-ace-doc-tooltip {
+  white-space: pre-wrap;
   code {
     color: #444;
     &.title {
@@ -842,6 +857,9 @@ mat-label {
     .mat-icon {
       color: rgba(0, 0, 0, .54);
     }
+    &.tb-pointer {
+      cursor: pointer;
+    }
   }
 
   .mdc-data-table__row:last-child .mdc-data-table__cell {
@@ -903,6 +921,12 @@ mat-label {
   }
 
   .mat-mdc-icon-button {
+    &.tb-mat-16 {
+      @include tb-mat-icon-button-size(16);
+      .mat-icon {
+        @include tb-mat-icon-size(16);
+      }
+    }
     &.tb-mat-20 {
       @include tb-mat-icon-button-size(20);
       .mat-icon {
@@ -1237,5 +1261,9 @@ mat-label {
 
   .cursor-pointer {
     cursor: pointer;
+  }
+
+  .no-wrap {
+    white-space: nowrap;
   }
 }

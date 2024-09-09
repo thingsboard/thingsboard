@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,13 +27,16 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.test.context.ContextConfiguration;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -48,6 +51,7 @@ import org.thingsboard.server.dao.service.DaoSqlTest;
 import java.util.ArrayList;
 import java.util.List;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
@@ -77,7 +81,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         Tenant tenant = new Tenant();
         tenant.setTitle("My tenant");
-        savedTenant = doPost("/api/tenant", tenant, Tenant.class);
+        savedTenant = saveTenant(tenant);
         Assert.assertNotNull(savedTenant);
 
         tenantAdmin = new User();
@@ -94,8 +98,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
     public void afterTest() throws Exception {
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant.getId());
     }
 
     @Test
@@ -166,7 +169,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveDashboardWithEmptyTitle() throws Exception {
         Dashboard dashboard = new Dashboard();
-        String msgError = "Dashboard title " + msgErrorShouldBeSpecified;;
+        String msgError = "Dashboard title " + msgErrorShouldBeSpecified;
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -196,7 +199,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         Assert.assertTrue(assignedDashboard.getAssignedCustomers().contains(savedCustomer.toShortCustomerInfo()));
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
-                savedTenant.getId(),  savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                savedTenant.getId(), savedCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
                 ActionType.UPDATED, assignedDashboard.getId().getId().toString(), savedCustomer.getId().getId().toString(), savedCustomer.getTitle());
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
@@ -239,8 +242,8 @@ public class DashboardControllerTest extends AbstractControllerTest {
         Assert.assertTrue(publicCustomer.isPublic());
 
         testNotifyEntityAllOneTimeLogEntityActionEntityEqClass(assignedDashboard, assignedDashboard.getId(), assignedDashboard.getId(),
-                savedTenant.getId(),  publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
-                ActionType.UPDATED, assignedDashboard .getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
+                savedTenant.getId(), publicCustomer.getId(), tenantAdmin.getId(), tenantAdmin.getEmail(), ActionType.ASSIGNED_TO_CUSTOMER,
+                ActionType.UPDATED, assignedDashboard.getId().getId().toString(), publicCustomer.getId().getId().toString(), publicCustomer.getTitle());
 
         Dashboard foundDashboard = doGet("/api/dashboard/" + savedDashboard.getId().getId().toString(), Dashboard.class);
         Assert.assertTrue(foundDashboard.getAssignedCustomers().contains(publicCustomer.toShortCustomerInfo()));
@@ -283,7 +286,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         Tenant tenant2 = new Tenant();
         tenant2.setTitle("Different tenant");
-        Tenant savedTenant2 = doPost("/api/tenant", tenant2, Tenant.class);
+        Tenant savedTenant2 = saveTenant(tenant2);
         Assert.assertNotNull(savedTenant2);
 
         User tenantAdmin2 = new User();
@@ -321,13 +324,23 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         loginSysAdmin();
 
-        doDelete("/api/tenant/" + savedTenant2.getId().getId().toString())
-                .andExpect(status().isOk());
+        deleteTenant(savedTenant2.getId());
     }
 
     @Test
     public void testFindTenantDashboards() throws Exception {
-        List<DashboardInfo> dashboards = new ArrayList<>();
+        List<DashboardInfo> expectedDashboards = new ArrayList<>();
+        PageLink pageLink = new PageLink(24);
+        PageData<DashboardInfo> pageData = null;
+        do {
+            pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
+                    new TypeReference<PageData<DashboardInfo>>() {
+                    }, pageLink);
+            expectedDashboards.addAll(pageData.getData());
+            if (pageData.hasNext()) {
+                pageLink = pageLink.nextPageLink();
+            }
+        } while (pageData.hasNext());
 
         Mockito.reset(tbClusterService, auditLogService);
 
@@ -335,7 +348,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
         for (int i = 0; i < cntEntity; i++) {
             Dashboard dashboard = new Dashboard();
             dashboard.setTitle("Dashboard" + i);
-            dashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
+            expectedDashboards.add(new DashboardInfo(doPost("/api/dashboard", dashboard, Dashboard.class)));
         }
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Dashboard(), new Dashboard(),
@@ -343,8 +356,6 @@ public class DashboardControllerTest extends AbstractControllerTest {
                 ActionType.ADDED, cntEntity, cntEntity, cntEntity);
 
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
-        PageLink pageLink = new PageLink(24);
-        PageData<DashboardInfo> pageData = null;
         do {
             pageData = doGetTypedWithPageLink("/api/tenant/dashboards?",
                     new TypeReference<PageData<DashboardInfo>>() {
@@ -355,10 +366,10 @@ public class DashboardControllerTest extends AbstractControllerTest {
             }
         } while (pageData.hasNext());
 
-        dashboards.sort(idComparator);
+        expectedDashboards.sort(idComparator);
         loadedDashboards.sort(idComparator);
 
-        Assert.assertEquals(dashboards, loadedDashboards);
+        Assert.assertEquals(expectedDashboards, loadedDashboards);
     }
 
     @Test
@@ -473,7 +484,7 @@ public class DashboardControllerTest extends AbstractControllerTest {
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(new Dashboard(), new Dashboard(),
                 savedTenant.getId(), tenantAdmin.getCustomerId(), tenantAdmin.getId(), tenantAdmin.getEmail(),
-                ActionType.ADDED, cntEntity, cntEntity, cntEntity*2);
+                ActionType.ADDED, cntEntity, cntEntity, cntEntity * 2);
 
         List<DashboardInfo> loadedDashboards = new ArrayList<>();
         PageLink pageLink = new PageLink(21);
@@ -538,6 +549,33 @@ public class DashboardControllerTest extends AbstractControllerTest {
     public void testDeleteDashboardExceptionWithRelationsTransactional() throws Exception {
         DashboardId dashboardId = createDashboard("Dashboard for Test WithRelations Transactional Exception").getId();
         testEntityDaoWithRelationsTransactionalException(dashboardDao, savedTenant.getId(), dashboardId, "/api/dashboard/" + dashboardId);
+    }
+
+    @Test
+    public void whenDeletingDashboard_ifReferencedByDeviceProfile_thenReturnError() throws Exception {
+        Dashboard dashboard = createDashboard("test");
+        DeviceProfile deviceProfile = createDeviceProfile("test");
+        deviceProfile.setDefaultDashboardId(dashboard.getId());
+        doPost("/api/deviceProfile", deviceProfile, DeviceProfile.class);
+
+        String response = doDelete("/api/dashboard/" + dashboard.getUuidId()).andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+        String errorMessage = JacksonUtil.toJsonNode(response).get("message").asText();
+        assertThat(errorMessage).containsIgnoringCase("referenced by a device profile");
+    }
+
+    @Test
+    public void whenDeletingDashboard_ifReferencedByAssetProfile_thenReturnError() throws Exception {
+        Dashboard dashboard = createDashboard("test");
+        AssetProfile assetProfile = createAssetProfile("test");
+        assetProfile.setDefaultDashboardId(dashboard.getId());
+        doPost("/api/assetProfile", assetProfile, AssetProfile.class);
+
+        String response = doDelete("/api/dashboard/" + dashboard.getUuidId()).andExpect(status().isBadRequest())
+                .andReturn().getResponse().getContentAsString();
+        String errorMessage = JacksonUtil.toJsonNode(response).get("message").asText();
+        assertThat(errorMessage).containsIgnoringCase("referenced by an asset profile");
+
     }
 
     private Dashboard createDashboard(String title) {

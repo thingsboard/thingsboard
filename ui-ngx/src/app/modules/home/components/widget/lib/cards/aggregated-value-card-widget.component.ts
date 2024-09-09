@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -20,7 +20,9 @@ import {
   Component,
   ElementRef,
   Input,
+  OnDestroy,
   OnInit,
+  Renderer2,
   TemplateRef,
   ViewChild
 } from '@angular/core';
@@ -35,6 +37,7 @@ import {
 import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import {
+  autoDateFormat,
   backgroundStyle,
   ComponentStyle,
   DateFormatProcessor,
@@ -43,21 +46,37 @@ import {
   overlayStyle,
   textStyle
 } from '@shared/models/widget-settings.models';
-import { DatePipe } from '@angular/common';
-import { TbFlot } from '@home/components/widget/lib/flot-widget';
-import { TbFlotKeySettings, TbFlotSettings } from '@home/components/widget/lib/flot-widget.models';
 import { DataKey } from '@shared/models/widget.models';
-import { formatNumberValue, formatValue, isDefined } from '@core/utils';
+import { formatNumberValue, formatValue, isDefined, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { map } from 'rxjs/operators';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
+import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
+import {
+  TimeSeriesChartKeySettings,
+  TimeSeriesChartSeriesType,
+  TimeSeriesChartSettings
+} from '@home/components/widget/lib/chart/time-series-chart.models';
+import { DeepPartial } from '@shared/models/common';
+
+const valuesLayoutHeight = 66;
+const valuesLayoutVerticalPadding = 16;
 
 @Component({
   selector: 'tb-aggregated-value-card-widget',
   templateUrl: './aggregated-value-card-widget.component.html',
   styleUrls: ['./aggregated-value-card-widget.component.scss']
 })
-export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit {
+export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
 
   @ViewChild('chartElement', {static: false}) chartElement: ElementRef;
+
+  @ViewChild('valueCardValues', {static: false})
+  valueCardValues: ElementRef<HTMLElement>;
+
+  @ViewChild('valueCardValueContainer', {static: false})
+  valueCardValueContainer: ElementRef<HTMLElement>;
 
   aggregatedValueCardKeyPosition = AggregatedValueCardKeyPosition;
 
@@ -85,28 +104,33 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   dateStyle: ComponentStyle = {};
   dateColor: string;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
-  private flot: TbFlot;
-  private flotDataKey: DataKey;
+  private lineChart: TbTimeSeriesChart;
+  private lineChartDataKey: DataKey;
 
   private lastUpdateTs: number;
 
   tickMin$: Observable<string>;
   tickMax$: Observable<string>;
 
-  constructor(private date: DatePipe,
+  private panelResize$: ResizeObserver;
+
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
   }
 
   ngOnInit(): void {
     this.ctx.$scope.aggregatedValueCardWidget = this;
     this.settings = {...aggregatedValueCardDefaultSettings, ...this.ctx.settings};
-    this.showSubtitle = this.settings.showSubtitle;
+    this.showSubtitle = this.settings.showSubtitle && this.ctx.datasources?.length > 0;
     const subtitle = this.settings.subtitle;
     this.subtitle$ = this.ctx.registerLabelPattern(subtitle, this.subtitle$);
-    this.subtitleStyle = textStyle(this.settings.subtitleFont, '0.25px');
+    this.subtitleStyle = textStyle(this.settings.subtitleFont);
     this.subtitleColor =  this.settings.subtitleColor;
 
     const dataKey = getDataKey(this.ctx.defaultSubscription.datasources);
@@ -124,55 +148,78 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     this.showChart = this.settings.showChart;
     if (this.showChart) {
       if (this.ctx.defaultSubscription.firstDatasource?.dataKeys?.length) {
-        this.flotDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
-        this.flotDataKey.settings = {
-          fillLines: false,
-          showLines: true,
-          lineWidth: 2
-        } as TbFlotKeySettings;
+        this.lineChartDataKey = this.ctx.defaultSubscription.firstDatasource?.dataKeys[0];
+        this.lineChartDataKey.settings = {
+          type: TimeSeriesChartSeriesType.line,
+          lineSettings: {
+            showLine: true,
+            step: false,
+            smooth: false,
+            lineWidth: 2,
+            showPoints: false,
+            showPointLabel: false
+          }
+        } as TimeSeriesChartKeySettings;
       }
     }
 
     this.showDate = this.settings.showDate;
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
-    this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
+    this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = this.settings.dateColor;
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+    this.padding = this.settings.background.overlay.enabled ? undefined : this.settings.padding;
   }
 
   ngAfterViewInit(): void {
-    if (this.showChart) {
-      const settings = {
-        shadowSize: 0,
-        enableSelection: false,
-        smoothLines: false,
-        grid: {
-          tickColor: 'rgba(0,0,0,0.12)',
-          horizontalLines: true,
-          verticalLines: false,
-          outlineWidth: 0,
-          minBorderMargin: 0,
-          margin: 0
-        },
-        yaxis: {
-          showLabels: false,
-          tickGenerator: 'return [(axis.max + axis.min) / 2];'
-        },
-        xaxis: {
-          showLabels: false
-        }
-      } as TbFlotSettings;
-      this.flot = new TbFlot(this.ctx, 'line', $(this.chartElement.nativeElement), settings);
-      this.tickMin$ = this.flot.yMin$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals),
-            (this.flotDataKey?.units || this.ctx.units))
+    if (this.showChart && this.ctx.datasources?.length) {
+      const settings: DeepPartial<TimeSeriesChartSettings> = {
+          dataZoom: false,
+          xAxis: {
+            show: false
+          },
+          yAxes: {
+            default: {
+              show: true,
+              showLine: false,
+              showTicks: false,
+              showTickLabels: false,
+              showSplitLines: true,
+              min: 'dataMin',
+              max: 'dataMax',
+              ticksGenerator: (extent?: number[]) => (extent ? [{ value: (extent[0] + extent[1]) / 2}] : [])
+            }
+          },
+          tooltipDateInterval: false,
+          tooltipDateFormat: autoDateFormat()
+      };
+
+      this.lineChart = new TbTimeSeriesChart(this.ctx, settings, this.chartElement.nativeElement, this.renderer, true);
+
+      this.tickMin$ =this.lineChart.yMin$.pipe(
+        map((value) => formatValue(value, (this.lineChartDataKey?.decimals || this.ctx.decimals))
       ));
-      this.tickMax$ = this.flot.yMax$.pipe(
-        map((value) => formatValue(value, (this.flotDataKey?.decimals || this.ctx.decimals),
-          (this.flotDataKey?.units || this.ctx.units))
-        ));
+      this.tickMax$ = this.lineChart.yMax$.pipe(
+        map((value) => formatValue(value, (this.lineChartDataKey?.decimals || this.ctx.decimals))
+      ));
+    }
+    if (this.settings.autoScale && this.showValues) {
+      this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'height', valuesLayoutHeight + 'px');
+      this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'overflow', 'visible');
+      this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'position', 'absolute');
+      this.panelResize$ = new ResizeObserver(() => {
+        this.onValueCardValuesResize();
+      });
+      this.panelResize$.observe(this.valueCardValues.nativeElement);
+      this.onValueCardValuesResize();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.panelResize$) {
+      this.panelResize$.disconnect();
     }
   }
 
@@ -190,7 +237,7 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
     }
 
     if (this.showChart) {
-      this.flot.update();
+      this.lineChart.update();
     }
 
     this.updateLastUpdateTs(ts);
@@ -203,15 +250,15 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
         const tsValue = getTsValueByLatestDataKey(this.ctx.latestData, aggValue.key);
         let ts;
         let value;
-        if (tsValue) {
+        if (tsValue && isDefinedAndNotNull(tsValue[1]) && isNumeric(tsValue[1])) {
           ts = tsValue[0];
           value = tsValue[1];
           aggValue.value = formatValue(value, (aggValue.key.decimals || this.ctx.decimals), null, false);
         } else {
           aggValue.value = 'N/A';
         }
+        aggValue.color.update(value);
         const numeric = formatNumberValue(value, (aggValue.key.decimals || this.ctx.decimals));
-        aggValue.color.update(numeric);
         if (aggValue.showArrow && isDefined(numeric)) {
           aggValue.upArrow = numeric > 0;
           aggValue.downArrow = numeric < 0;
@@ -225,20 +272,14 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
   }
 
   public onResize() {
-    if (this.showChart) {
-      this.flot.resize();
-    }
   }
 
   public onEditModeChanged() {
-    if (this.showChart) {
-      this.flot.checkMouseEvents();
-    }
   }
 
   public onDestroy() {
     if (this.showChart) {
-      this.flot.destroy();
+      this.lineChart.destroy();
     }
   }
 
@@ -247,6 +288,19 @@ export class AggregatedValueCardWidgetComponent implements OnInit, AfterViewInit
       this.lastUpdateTs = ts;
       this.dateFormat.update(ts);
     }
+  }
+
+  private onValueCardValuesResize() {
+    const panelWidth = this.valueCardValues.nativeElement.getBoundingClientRect().width;
+    const panelHeight = this.valueCardValues.nativeElement.getBoundingClientRect().height - valuesLayoutVerticalPadding;
+    const targetWidth = panelWidth;
+    const minAspect = 0.25;
+    const aspect = Math.min(panelHeight / targetWidth, minAspect);
+    const targetHeight = targetWidth * aspect;
+    const scale = targetHeight / valuesLayoutHeight;
+    const width = targetWidth / scale;
+    this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'width', width + 'px');
+    this.renderer.setStyle(this.valueCardValueContainer.nativeElement, 'transform', `scale(${scale})`);
   }
 
 }

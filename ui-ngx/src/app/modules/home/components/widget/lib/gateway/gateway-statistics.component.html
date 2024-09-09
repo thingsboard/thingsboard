@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,10 +15,9 @@
     limitations under the License.
 
 -->
-
 <div class="statistics-container" fxLayout="row" fxLayout.lt-md="column">
   <mat-card [formGroup]="statisticForm" *ngIf="!general">
-    <mat-form-field class="mat-block">
+    <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <mat-label>{{ 'gateway.statistics.statistic' | translate }}</mat-label>
       <mat-select formControlName="statisticKey">
         <mat-option *ngFor="let key of statisticsKeys" [value]="key">
@@ -31,8 +30,13 @@
     </mat-form-field>
     <mat-error
       *ngIf="!statisticsKeys.length && !commands.length">
-      {{'gateway.statistics.statistic-commands-empty' | translate }}
+      {{ 'gateway.statistics.statistic-commands-empty' | translate }}
     </mat-error>
+    <div>
+      <button mat-flat-button color="primary" (click)="navigateToStatistics()">
+        {{ 'gateway.statistics.statistics-button' | translate }}
+      </button>
+    </div>
     <mat-form-field class="mat-block" *ngIf="commandObj">
       <mat-label>{{ 'gateway.statistics.command' | translate }}</mat-label>
       <input matInput [value]="commandObj.command" disabled>
@@ -44,13 +48,16 @@
            matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
            matSortDisableClear>
       <ng-container matColumnDef="0">
-        <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.created-time' | translate }}</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef mat-sort-header>{{ 'widgets.gateway.created-time' | translate }}
+        </mat-header-cell>
         <mat-cell *matCellDef="let row; let rowIndex = index">
-          {{row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
+          {{ row[0]| date:'yyyy-MM-dd HH:mm:ss' }}
         </mat-cell>
       </ng-container>
       <ng-container matColumnDef="1">
-        <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 70%">{{ 'widgets.gateway.message' | translate }}</mat-header-cell>
+        <mat-header-cell *matHeaderCellDef mat-sort-header
+                         style="width: 70%">{{ 'widgets.gateway.message' | translate }}
+        </mat-header-cell>
         <mat-cell *matCellDef="let row">
           {{ row[1] }}
         </mat-cell>

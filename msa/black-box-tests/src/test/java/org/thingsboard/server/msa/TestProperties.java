@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,5 +47,14 @@ public class TestProperties {
             return WSS_URL;
         }
         return System.getProperty("tb.wsUrl", "ws://localhost:8080");
+    }
+
+    public static String getMqttBrokerUrl() {
+        if (instance.isActive()) {
+            String host = instance.getTestContainer().getServiceHost("broker", 1883);
+            Integer port = instance.getTestContainer().getServicePort("broker", 1883);
+            return "tcp://" + host + ":" + port;
+        }
+        return System.getProperty("mqtt.broker", "tcp://localhost:1883");
     }
 }

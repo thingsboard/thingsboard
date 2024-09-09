@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,11 +21,11 @@ import java.util.Collection;
 
 public class HighLatencyNotification implements Notification {
 
-    private final Collection<Latency> latencies;
+    private final Collection<Latency> highLatencies;
     private final int thresholdMs;
 
-    public HighLatencyNotification(Collection<Latency> latencies, int thresholdMs) {
-        this.latencies = latencies;
+    public HighLatencyNotification(Collection<Latency> highLatencies, int thresholdMs) {
+        this.highLatencies = highLatencies;
         this.thresholdMs = thresholdMs;
     }
 
@@ -33,8 +33,8 @@ public class HighLatencyNotification implements Notification {
     public String getText() {
         StringBuilder text = new StringBuilder();
         text.append("Some of the latencies are higher than ").append(thresholdMs).append(" ms:\n");
-        latencies.forEach(latency -> {
-            text.append(String.format("[%s] %,.2f ms\n", latency.getKey(), latency.getAvg()));
+        highLatencies.forEach(latency -> {
+            text.append(String.format("[%s] *%s*\n", latency.getKey(), latency.getFormattedValue()));
         });
         return text.toString();
     }

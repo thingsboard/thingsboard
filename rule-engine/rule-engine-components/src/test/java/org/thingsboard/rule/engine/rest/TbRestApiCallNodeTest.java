@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,14 +24,18 @@ import org.apache.http.impl.bootstrap.HttpServer;
 import org.apache.http.impl.bootstrap.ServerBootstrap;
 import org.apache.http.protocol.HttpContext;
 import org.apache.http.protocol.HttpRequestHandler;
-import org.junit.After;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -47,16 +51,17 @@ import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertFalse;
-import static org.junit.Assert.assertNotSame;
-import static org.junit.Assert.assertTrue;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import static org.mockito.Mockito.verify;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TbRestApiCallNodeTest {
-	
+@ExtendWith(MockitoExtension.class)
+public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
+
+    @Spy
     private TbRestApiCallNode restNode;
 
     @Mock
@@ -68,17 +73,17 @@ public class TbRestApiCallNodeTest {
     private RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
     private RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
 
-	private HttpServer server;
+    private HttpServer server;
 
     public void setupServer(String pattern, HttpRequestHandler handler) throws IOException {
-        SocketConfig config  = SocketConfig.custom().setSoReuseAddress(true).setTcpNoDelay(true).build();
-    	server = ServerBootstrap.bootstrap()
+        SocketConfig config = SocketConfig.custom().setSoReuseAddress(true).setTcpNoDelay(true).build();
+        server = ServerBootstrap.bootstrap()
                 .setSocketConfig(config)
-    			.registerHandler(pattern, handler)
-    			.create();
+                .registerHandler(pattern, handler)
+                .create();
         server.start();
     }
-    
+
     private void initWithConfig(TbRestApiCallNodeConfiguration config) {
         try {
             TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
@@ -89,25 +94,26 @@ public class TbRestApiCallNodeTest {
         }
     }
 
-    @After
+    @AfterEach
     public void teardown() {
-        server.stop();
+        if (server != null) {
+            server.stop();
+        }
     }
-    
+
     @Test
     public void deleteRequestWithoutBody() throws IOException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         final String path = "/path/to/delete";
-    	setupServer("*", new HttpRequestHandler() {
-			
-			@Override
-			public void handle(HttpRequest request, HttpResponse response, HttpContext context)
-					throws HttpException, IOException {
+        setupServer("*", new HttpRequestHandler() {
+
+            @Override
+            public void handle(HttpRequest request, HttpResponse response, HttpContext context)
+                    throws HttpException, IOException {
                 try {
-                    assertEquals("Request path matches", request.getRequestLine().getUri(), path);
-                    assertFalse("Content-Type not included", request.containsHeader("Content-Type"));
-                    assertTrue("Custom header included", request.containsHeader("Foo"));
-                    assertEquals("Custom header value", "Bar", request.getFirstHeader("Foo").getValue());
+                    assertEquals(request.getRequestLine().getUri(), path, "Request path matches");
+                    assertTrue(request.containsHeader("Foo"), "Custom header included");
+                    assertEquals("Bar", request.getFirstHeader("Foo").getValue(), "Custom header value");
                     response.setStatusCode(200);
                     new Thread(new Runnable() {
                         @Override
@@ -121,13 +127,13 @@ public class TbRestApiCallNodeTest {
                             }
                         }
                     }).start();
-                } catch ( Exception e ) {
+                } catch (Exception e) {
                     System.out.println("Exception handling request: " + e.toString());
                     e.printStackTrace();
                     latch.countDown();
                 }
             }
-		});
+        });
 
         TbRestApiCallNodeConfiguration config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
         config.setRequestMethod("DELETE");
@@ -139,7 +145,7 @@ public class TbRestApiCallNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         restNode.onMsg(ctx, msg);
 
-        assertTrue("Server handled request", latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
@@ -160,15 +166,15 @@ public class TbRestApiCallNodeTest {
             public void handle(HttpRequest request, HttpResponse response, HttpContext context)
                     throws HttpException, IOException {
                 try {
-                    assertEquals("Request path matches", path, request.getRequestLine().getUri());
-                    assertTrue("Content-Type included", request.containsHeader("Content-Type"));
-                    assertEquals("Content-Type value", "text/plain;charset=ISO-8859-1",
-                            request.getFirstHeader("Content-Type").getValue());
-                    assertTrue("Content-Length included", request.containsHeader("Content-Length"));
-                    assertEquals("Content-Length value", "2",
-                            request.getFirstHeader("Content-Length").getValue());
-                    assertTrue("Custom header included", request.containsHeader("Foo"));
-                    assertEquals("Custom header value", "Bar", request.getFirstHeader("Foo").getValue());
+                    assertEquals(path, request.getRequestLine().getUri(), "Request path matches");
+                    assertTrue(request.containsHeader("Content-Type"), "Content-Type included");
+                    assertEquals("application/json",
+                            request.getFirstHeader("Content-Type").getValue(), "Content-Type value");
+                    assertTrue(request.containsHeader("Content-Length"), "Content-Length included");
+                    assertEquals("2",
+                            request.getFirstHeader("Content-Length").getValue(), "Content-Length value");
+                    assertTrue(request.containsHeader("Foo"), "Custom header included");
+                    assertEquals("Bar", request.getFirstHeader("Foo").getValue(), "Custom header value");
                     response.setStatusCode(200);
                     new Thread(new Runnable() {
                         @Override
@@ -182,7 +188,7 @@ public class TbRestApiCallNodeTest {
                             }
                         }
                     }).start();
-                } catch ( Exception e ) {
+                } catch (Exception e) {
                     System.out.println("Exception handling request: " + e.toString());
                     e.printStackTrace();
                     latch.countDown();
@@ -200,15 +206,56 @@ public class TbRestApiCallNodeTest {
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, originator, metaData, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
         restNode.onMsg(ctx, msg);
 
-        assertTrue("Server handled request", latch.await(10, TimeUnit.SECONDS));
+        assertTrue(latch.await(10, TimeUnit.SECONDS), "Server handled request");
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<TbMsgMetaData> metadataCaptor = ArgumentCaptor.forClass(TbMsgMetaData.class);
         ArgumentCaptor<String> dataCaptor = ArgumentCaptor.forClass(String.class);
         verify(ctx).transformMsg(msgCaptor.capture(), metadataCaptor.capture(), dataCaptor.capture());
-        
+
         assertNotSame(metaData, metadataCaptor.getValue());
         assertEquals(TbMsg.EMPTY_JSON_OBJECT, dataCaptor.getValue());
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // config for version 2 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\":\"POST\"," +
+                                "\"useSimpleClientHttpFactory\":false,\"ignoreRequestBody\":false,\"enableProxy\":false," +
+                                "\"useSystemProxyProperties\":false,\"proxyScheme\":null,\"proxyHost\":null,\"proxyPort\":0," +
+                                "\"proxyUser\":null,\"proxyPassword\":null,\"readTimeoutMs\":0,\"maxParallelRequestsCount\":0," +
+                                "\"headers\":{\"Content-Type\":\"application/json\"},\"useRedisQueueForMsgPersistence\":false," +
+                                "\"trimQueue\":null,\"maxQueueSize\":null,\"credentials\":{\"type\":\"anonymous\"},\"trimDoubleQuotes\":false}",
+                        true,
+                        "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
+                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
+                                "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
+                                "\"credentials\": {\"type\": \"anonymous\"}}"),
+                // config for version 2 with upgrade from version 1
+                Arguments.of(1,
+                        "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
+                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
+                                "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
+                                "\"useRedisQueueForMsgPersistence\": false,\"trimQueue\": null,\"maxQueueSize\": null," +
+                                "\"credentials\": {\"type\": \"anonymous\"}}",
+                        true,
+                        "{\"restEndpointUrlPattern\":\"http://localhost/api\",\"requestMethod\": \"POST\"," +
+                                "\"useSimpleClientHttpFactory\": false,\"parseToPlainText\": false,\"ignoreRequestBody\": false," +
+                                "\"enableProxy\": false,\"useSystemProxyProperties\": false,\"proxyScheme\": null,\"proxyHost\": null," +
+                                "\"proxyPort\": 0,\"proxyUser\": null,\"proxyPassword\": null,\"readTimeoutMs\": 0," +
+                                "\"maxParallelRequestsCount\": 0,\"headers\": {\"Content-Type\": \"application/json\"}," +
+                                "\"credentials\": {\"type\": \"anonymous\"}}")
+        );
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return restNode;
     }
 
 }

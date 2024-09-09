@@ -10,7 +10,6 @@ if ! getent passwd ${pkg.user} >/dev/null; then
     adduser --quiet \
             --system \
             --ingroup ${pkg.user} \
-            --quiet \
             --disabled-login \
             --disabled-password \
             --home ${pkg.installFolder} \

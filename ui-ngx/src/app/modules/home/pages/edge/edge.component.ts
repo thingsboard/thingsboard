@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { generateSecret, guid } from '@core/utils';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
+import {EdgeService} from "@core/http/edge.service";
 
 @Component({
   selector: 'tb-edge',
@@ -37,9 +38,11 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
   entityType = EntityType;
 
   edgeScope: 'tenant' | 'customer' | 'customer_user';
+  upgradeAvailable: boolean = false;
 
   constructor(protected store: Store<AppState>,
               protected translate: TranslateService,
+              private edgeService: EdgeService,
               @Inject('entity') protected entityValue: EdgeInfo,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<EdgeInfo>,
               public fb: UntypedFormBuilder,
@@ -95,6 +98,10 @@ export class EdgeComponent extends EntityComponent<EdgeInfo> {
       }
     });
     this.generateRoutingKeyAndSecret(entity, this.entityForm);
+    this.edgeService.isEdgeUpgradeAvailable(this.entity.id.id)
+      .subscribe(isUpgradeAvailable => {
+          this.upgradeAvailable = isUpgradeAvailable;
+      });
   }
 
   updateFormState() {

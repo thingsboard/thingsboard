@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import { WidgetConfigComponentData } from '../../models/widget-component.models'
 import { isDefined, isDefinedAndNotNull, isString } from '@core/utils';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-edit-widget',
@@ -55,6 +57,14 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
 
   @Input()
   widgetLayout: WidgetLayout;
+
+  @Input()
+  @coerceBoolean()
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint= true;
 
   @Output()
   applyWidgetConfig = new EventEmitter<void>();
@@ -133,6 +143,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
     const rawDataKeySettingsSchema = widgetInfo.typeDataKeySettingsSchema || widgetInfo.dataKeySettingsSchema;
     const rawLatestDataKeySettingsSchema = widgetInfo.typeLatestDataKeySettingsSchema || widgetInfo.latestDataKeySettingsSchema;
     const typeParameters = widgetInfo.typeParameters;
+    const dataKeySettingsFunction: DataKeySettingsFunction = typeParameters?.dataKeySettingsFunction;
     const actionSources = widgetInfo.actionSources;
     const isDataEnabled = isDefined(widgetInfo.typeParameters) ? !widgetInfo.typeParameters.useCustomDatasources : true;
     let settingsSchema;
@@ -165,6 +176,7 @@ export class EditWidgetComponent extends PageComponent implements OnInit, OnChan
       settingsSchema,
       dataKeySettingsSchema,
       latestDataKeySettingsSchema,
+      dataKeySettingsFunction,
       settingsDirective: widgetInfo.settingsDirective,
       dataKeySettingsDirective: widgetInfo.dataKeySettingsDirective,
       latestDataKeySettingsDirective: widgetInfo.latestDataKeySettingsDirective,

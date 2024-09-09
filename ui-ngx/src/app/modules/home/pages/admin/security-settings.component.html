@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -51,24 +51,37 @@
         <fieldset class="fields-group">
           <legend class="group-title" translate>admin.password-policy</legend>
           <section formGroupName="passwordPolicy">
-            <mat-form-field class="mat-block">
-              <mat-label translate>admin.minimum-password-length</mat-label>
-              <input matInput type="number"
-                     formControlName="minimumLength"
-                     step="1"
-                     min="5"
-                     max="50"
-                     required/>
-              <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('required')">
-                {{ 'admin.minimum-password-length-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('min')">
-                {{ 'admin.minimum-password-length-range' | translate }}
-              </mat-error>
-              <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('max')">
-                {{ 'admin.minimum-password-length-range' | translate }}
-              </mat-error>
-            </mat-form-field>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+              <mat-form-field fxFlex class="mat-block">
+                <mat-label translate>admin.minimum-password-length</mat-label>
+                <input matInput type="number"
+                       formControlName="minimumLength"
+                       step="1"
+                       min="6"
+                       max="50"
+                       required/>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('required')">
+                  {{ 'admin.minimum-password-length-required' | translate }}
+                </mat-error>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('min')">
+                  {{ 'admin.minimum-password-length-range' | translate }}
+                </mat-error>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.minimumLength').hasError('max')">
+                  {{ 'admin.minimum-password-length-range' | translate }}
+                </mat-error>
+              </mat-form-field>
+              <mat-form-field fxFlex class="mat-block" subscriptSizing="dynamic">
+                <mat-label translate>admin.maximum-password-length</mat-label>
+                <input matInput type="number" formControlName="maximumLength" step="1" min="6"/>
+                <mat-hint></mat-hint>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.maximumLength').hasError('min')">
+                  {{ 'admin.maximum-password-length-min' | translate }}
+                </mat-error>
+                <mat-error *ngIf="securitySettingsFormGroup.get('passwordPolicy.maximumLength').hasError('lessMin')">
+                  {{ 'admin.maximum-password-length-less-min' | translate }}
+                </mat-error>
+              </mat-form-field>
+            </div>
             <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
               <mat-form-field fxFlex class="mat-block">
                 <mat-label translate>admin.minimum-uppercase-letters</mat-label>
@@ -140,9 +153,16 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <mat-checkbox formControlName="allowWhitespaces" style="margin-bottom: 16px">
-              <mat-label translate>admin.allow-whitespace</mat-label>
-            </mat-checkbox>
+            <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+              <mat-checkbox fxFlex formControlName="allowWhitespaces" style="margin-bottom: 16px">
+                <mat-label translate>admin.allow-whitespace</mat-label>
+              </mat-checkbox>
+              <mat-checkbox fxFlex formControlName="forceUserToResetPasswordIfNotValid" style="margin-bottom: 16px">
+                <mat-label tb-hint-tooltip-icon="{{'admin.force-reset-password-if-no-valid-hint' | translate}}">
+                  {{'admin.force-reset-password-if-no-valid' | translate}}
+                </mat-label>
+              </mat-checkbox>
+            </div>
           </section>
         </fieldset>
         <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px" class="layout-wrap" style="margin-top: 16px">

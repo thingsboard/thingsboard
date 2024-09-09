@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,14 +14,25 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Input, OnInit, TemplateRef } from '@angular/core';
+import {
+  AfterViewInit,
+  ChangeDetectorRef,
+  Component,
+  ElementRef,
+  Input,
+  OnDestroy,
+  OnInit,
+  Renderer2,
+  TemplateRef,
+  ViewChild
+} from '@angular/core';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { formatValue, isDefinedAndNotNull } from '@core/utils';
-import { DatePipe } from '@angular/common';
 import {
   backgroundStyle,
   ColorProcessor,
-  ComponentStyle, DateFormatProcessor,
+  ComponentStyle,
+  DateFormatProcessor,
   getDataKey,
   getLabel,
   getSingleTsValue,
@@ -32,13 +43,26 @@ import {
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { Observable } from 'rxjs';
+import { ResizeObserver } from '@juggle/resize-observer';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { DomSanitizer } from '@angular/platform-browser';
+
+const squareLayoutSize = 160;
+const squareLayoutPadding = 48;
+const horizontalLayoutHeight = 80;
 
 @Component({
   selector: 'tb-value-card-widget',
   templateUrl: './value-card-widget.component.html',
   styleUrls: ['./value-card-widget.component.scss']
 })
-export class ValueCardWidgetComponent implements OnInit {
+export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestroy {
+
+  @ViewChild('valueCardPanel', {static: false})
+  valueCardPanel: ElementRef<HTMLElement>;
+
+  @ViewChild('valueCardContent', {static: false})
+  valueCardContent: ElementRef<HTMLElement>;
 
   settings: ValueCardWidgetSettings;
 
@@ -70,14 +94,18 @@ export class ValueCardWidgetComponent implements OnInit {
   dateStyle: ComponentStyle = {};
   dateColor: ColorProcessor;
 
-  backgroundStyle: ComponentStyle = {};
+  backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+
+  private panelResize$: ResizeObserver;
 
   private horizontal = false;
   private decimals = 0;
   private units = '';
 
-  constructor(private date: DatePipe,
+  constructor(private imagePipe: ImagePipe,
+              private sanitizer: DomSanitizer,
+              private renderer: Renderer2,
               private widgetComponent: WidgetComponent,
               private cd: ChangeDetectorRef) {
   }
@@ -108,18 +136,41 @@ export class ValueCardWidgetComponent implements OnInit {
     this.showLabel = this.settings.showLabel;
     const label = getLabel(this.ctx.datasources);
     this.label$ = this.ctx.registerLabelPattern(label, this.label$);
-    this.labelStyle = textStyle(this.settings.labelFont, '0.25px');
+    this.labelStyle = textStyle(this.settings.labelFont);
     this.labelColor =  ColorProcessor.fromSettings(this.settings.labelColor);
-    this.valueStyle = textStyle(this.settings.valueFont,  '0.13px');
+    this.valueStyle = textStyle(this.settings.valueFont);
     this.valueColor = ColorProcessor.fromSettings(this.settings.valueColor);
 
     this.showDate = this.settings.showDate;
     this.dateFormat = DateFormatProcessor.fromSettings(this.ctx.$injector, this.settings.dateFormat);
-    this.dateStyle = textStyle(this.settings.dateFont,  '0.25px');
+    this.dateStyle = textStyle(this.settings.dateFont);
     this.dateColor = ColorProcessor.fromSettings(this.settings.dateColor);
 
-    this.backgroundStyle = backgroundStyle(this.settings.background);
+    this.backgroundStyle$ = backgroundStyle(this.settings.background, this.imagePipe, this.sanitizer);
     this.overlayStyle = overlayStyle(this.settings.background.overlay);
+  }
+
+  public ngAfterViewInit() {
+    if (this.settings.autoScale) {
+      if (!this.horizontal) {
+        this.renderer.setStyle(this.valueCardContent.nativeElement, 'width', squareLayoutSize + 'px');
+      }
+      const height = this.horizontal ? horizontalLayoutHeight : squareLayoutSize;
+      this.renderer.setStyle(this.valueCardContent.nativeElement, 'height', height + 'px');
+      this.renderer.setStyle(this.valueCardContent.nativeElement, 'overflow', 'visible');
+      this.renderer.setStyle(this.valueCardContent.nativeElement, 'position', 'absolute');
+      this.panelResize$ = new ResizeObserver(() => {
+        this.onResize();
+      });
+      this.panelResize$.observe(this.valueCardPanel.nativeElement);
+      this.onResize();
+    }
+  }
+
+  ngOnDestroy() {
+    if (this.panelResize$) {
+      this.panelResize$.disconnect();
+    }
   }
 
   public onInit() {
@@ -132,10 +183,10 @@ export class ValueCardWidgetComponent implements OnInit {
     const tsValue = getSingleTsValue(this.ctx.data);
     let ts;
     let value;
-    if (tsValue) {
+    if (tsValue && isDefinedAndNotNull(tsValue[1]) && tsValue[0] !== 0) {
       ts = tsValue[0];
       value = tsValue[1];
-      this.valueText = formatValue(value, this.decimals, this.units, true);
+      this.valueText = formatValue(value, this.decimals, this.units, false);
     } else {
       this.valueText = 'N/A';
     }
@@ -145,5 +196,23 @@ export class ValueCardWidgetComponent implements OnInit {
     this.valueColor.update(value);
     this.dateColor.update(value);
     this.cd.detectChanges();
+  }
+
+  private onResize() {
+    const panelWidth = this.valueCardPanel.nativeElement.getBoundingClientRect().width - squareLayoutPadding;
+    const panelHeight = this.valueCardPanel.nativeElement.getBoundingClientRect().height - (this.horizontal ? 0 : squareLayoutPadding);
+    let scale: number;
+    if (!this.horizontal) {
+      const size = Math.min(panelWidth, panelHeight);
+      scale = size / squareLayoutSize;
+    } else {
+      const targetWidth = panelWidth;
+      const aspect = Math.min(panelHeight / targetWidth, 0.25);
+      const targetHeight = targetWidth * aspect;
+      scale = targetHeight / horizontalLayoutHeight;
+      const width = targetWidth / scale;
+      this.renderer.setStyle(this.valueCardContent.nativeElement, 'width', width + 'px');
+    }
+    this.renderer.setStyle(this.valueCardContent.nativeElement, 'transform', `scale(${scale})`);
   }
 }

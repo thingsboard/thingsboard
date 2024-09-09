@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -27,19 +27,20 @@ import {
 } from '@angular/core';
 import { ControlValueAccessor, UntypedFormControl, NG_VALIDATORS, NG_VALUE_ACCESSOR, Validator } from '@angular/forms';
 import { Ace } from 'ace-builds';
-import { getAce, Range } from '@shared/models/ace/ace.models';
+import { getAce, Range, TbHighlightRule } from '@shared/models/ace/ace.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { ActionNotificationHide, ActionNotificationShow } from '@core/notification/notification.actions';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
-import { guid, isUndefined } from '@app/core/utils';
+import { deepClone, guid, isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
-import { ScriptLanguage } from "@shared/models/rule-node.models";
+import { ScriptLanguage } from '@shared/models/rule-node.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-js-func',
@@ -89,6 +90,10 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
 
   @Input() editorCompleter: TbEditorCompleter;
 
+  @Input() propertyHighlightRules: TbHighlightRule[];
+
+  @Input() objectHighlightRules: TbHighlightRule[];
+
   @Input() globalVariables: Array<string>;
 
   @Input() disableUndefinedCheck = false;
@@ -96,6 +101,10 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   @Input() helpId: string;
 
   @Input() scriptLanguage: ScriptLanguage = ScriptLanguage.JS;
+
+  @Input()
+  @coerceBoolean()
+  hideBrackets = false;
 
   private noValidateValue: boolean;
   get noValidate(): boolean {
@@ -115,7 +124,7 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
     this.requiredValue = coerceBooleanProperty(value);
   }
 
-  functionArgsString = '';
+  functionLabel: string;
 
   fullscreen = false;
 
@@ -130,6 +139,8 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   errorMarkers: number[] = [];
   errorAnnotationId = -1;
 
+  private functionArgsString = '';
+
   private propagateChange = null;
   public hasErrors = false;
 
@@ -142,6 +153,9 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
   }
 
   ngOnInit(): void {
+    if (this.functionTitle) {
+      this.hideBrackets = true;
+    }
     if (!this.resultType || this.resultType.length === 0) {
       this.resultType = 'nocheck';
     }
@@ -152,6 +166,12 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
         }
         this.functionArgsString += functionArg;
       });
+    }
+    if (this.functionTitle) {
+      this.functionLabel = `${this.functionTitle}: f(${this.functionArgsString})`;
+    } else {
+      this.functionLabel =
+        `function ${this.functionName ? this.functionName : ''}(${this.functionArgsString})${this.hideBrackets ? '' : ' {'}`;
     }
     const editorElement = this.javascriptEditorElmRef.nativeElement;
     let editorOptions: Partial<Ace.EditorOptions> = {
@@ -198,6 +218,32 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
               this.cd.markForCheck();
             }
           });
+        }
+        // @ts-ignore
+        if ((this.propertyHighlightRules?.length || this.objectHighlightRules?.length) && !!this.jsEditor.session.$mode) {
+          // @ts-ignore
+          const newMode = new this.jsEditor.session.$mode.constructor();
+          newMode.$highlightRules = new newMode.HighlightRules();
+          if (this.propertyHighlightRules?.length) {
+            const propertiesRules: { token: string; regex: RegExp }[] = newMode.$highlightRules.$rules.property;
+            const index = propertiesRules.findIndex(p => p.token === 'support.constant');
+            const additionalPropertyRules: { token: string; regex: RegExp }[] = this.propertyHighlightRules.map(r => ({
+              token: `tb.${r.class}`,
+              regex: r.regex
+            }));
+            propertiesRules.splice(index, 0, ...additionalPropertyRules);
+          }
+          if (this.objectHighlightRules?.length) {
+            const noRegexRules: { token: string; regex: RegExp }[] = newMode.$highlightRules.$rules.no_regex;
+            const index = noRegexRules.findIndex(p => Array.isArray(p.token) && p.token[0] === 'support.constant');
+            const additionalNoRegexRules: { token: string; regex: RegExp }[] = this.objectHighlightRules.map(r => ({
+              token: `tb.${r.class}`,
+              regex: r.regex
+            }));
+            noRegexRules.splice(index, 0, ...additionalNoRegexRules);
+          }
+          // @ts-ignore
+          this.jsEditor.session.$onChangeMode(newMode);
         }
         // @ts-ignore
         if (!!this.jsEditor.session.$worker) {
@@ -299,6 +345,11 @@ export class JsFuncComponent implements OnInit, OnDestroy, ControlValueAccessor,
         this.errorShowed = true;
       }
     }
+  }
+
+  public focus() {
+    this.javascriptEditorElmRef.nativeElement.scrollIntoView();
+    this.jsEditor?.focus();
   }
 
   private validateJsFunc(): boolean {

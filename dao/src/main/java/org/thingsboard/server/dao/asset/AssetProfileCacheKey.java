@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import lombok.Data;
 import org.thingsboard.server.common.data.id.AssetProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
 public class AssetProfileCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8220455917177676472L;
 
     private final TenantId tenantId;
@@ -38,15 +40,15 @@ public class AssetProfileCacheKey implements Serializable {
         this.defaultProfile = defaultProfile;
     }
 
-    public static AssetProfileCacheKey fromName(TenantId tenantId, String name) {
+    public static AssetProfileCacheKey forName(TenantId tenantId, String name) {
         return new AssetProfileCacheKey(tenantId, name, null, false);
     }
 
-    public static AssetProfileCacheKey fromId(AssetProfileId id) {
+    public static AssetProfileCacheKey forId(AssetProfileId id) {
         return new AssetProfileCacheKey(null, null, id, false);
     }
 
-    public static AssetProfileCacheKey defaultProfile(TenantId tenantId) {
+    public static AssetProfileCacheKey forDefaultProfile(TenantId tenantId) {
         return new AssetProfileCacheKey(tenantId, null, null, true);
     }
 
@@ -60,4 +62,5 @@ public class AssetProfileCacheKey implements Serializable {
             return tenantId + "_" + name;
         }
     }
+
 }

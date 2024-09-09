@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -161,6 +161,13 @@ export class EntitiesHierarchyWidgetComponent extends PageComponent implements O
 
   public onDataUpdated() {
     this.updateNodeData(this.subscription.data);
+  }
+
+  public onEditModeChanged() {
+    if (this.textSearchMode) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
   }
 
   private initializeConfig() {

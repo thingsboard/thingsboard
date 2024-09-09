@@ -1,0 +1,37 @@
+{
+  "fqn": "horizontal_volatile_organic_compounds_card",
+  "name": "Horizontal volatile organic compounds card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAmVBMVEUAAADf39/f39/g4ODg4ODf39/////k5OTYGDjg4ODdNVH64ub1xc3ri5v98fPOzs7iUmnwqLTaJkX09PT5+fnnb4K7u7v41NrCwsK2trba2trumqjw8PDn5+fIyMhYWFjHx8fpfY/gQ13V1dXzt8Gtra3kYHaQkJB0dHRLS0s6OjrU1NSCgoLb29uenp7pfZDkYHflYXZmZmaiBA8wAAAABnRSTlMAIEDfv1C6kOEmAAADj0lEQVR42u3aiW6bQBSF4bRJL9csAwyrsQ1e4iXp3vd/uN6ZIcitWtrIaWS751PijIEg/2YGKYpvAAAAAAAAAAAAAAAAAAAAAAAAAAAAAF7Tm4tnM97eepducvtOOrycLl7mvb25y+gK5Hc3E7oKE4ScGYScG4ScG4ScG4Scm9+HqIp6809EyyVt9yXRZr+d0zn6fYjPIfUe59Qt9x+WD0vvofzU0dyj0w1nV/0onEX3R6MRPgd/HxJoHk62/+Q90sOGykP5gaj0ukN3asVK8zDyyYhY+EpGBYu1Oi1kliiyCp6ptD9+2W0P9OjR8rDdy1PvYbukU6g1CxKVloFvg9gPqx2viFIzWnN0WgjzjCI21rTihJyu28jkIpld38g7zJfbBzpF4EepCwkTGfnujUulkDVRYqZCJVstFSh1H5IIAlJp2IdUMhoNSbUv5yiKIuGwGN6V/SOR13WdRx+6RzO1DnSiwIW4S0FizaF7iebbvqOqn3FfNbNfmcAvLCPZ6dtRokbXyIy1PZHSmgv6wfzo4YVDXIK7w3A/Cp6WTpTu2Dch/uze58Ts89PU52g0RI4vXJGJH/FqISt51LI94dT+npJ9lf298ZCQP5ORslY04tVCInfrsSFuCg6TbzSEdhzaBamlaPCKIdqO9FGIe3QhyVFIMB4SaLfY04RnNPjHIe5eRZrV8DLpKGT3yytC4yG062+/FXNFRka/kM1/3pCdEhLx5/6muzIvPeXkKaQw08OukdmwRkJzxPoPIYE980oOLhKypjZGvuYNWXlO+SQ2GyaUy/PFdkF507gdsiF7fojSXEQ+p6aGi5WWUR8i29furqXNESt711qZI8ZDAm2vg2KTPYRsNnHTtrGMaqqbusyndbzZtHE5j8ucKF5kZdlQFtsdcVs+O4Qqn1nPSNwPIxuyk6dJICF2tFMmRPI4ovEQpXXgVt/9Ucj7eJq18SJ2IYv3H2Us2xZNXLc2ZNI0EtJOF20muXVGzxcEahiR5daIe2rXyHCEcqPxqaXcj4qebOOPdTzdtHVmrkhcNvU0m7axbJuXizYmE5KbK7Iot2bHpq7ppbjF3oe89B9WzWJk5/v2ozxeRkiej+3M6CWFUUhOGlX/95+6FwYh5wYh5wYh5+aKQu6u4N/sRNmdfGDgCv7RnssHBm7e3U68S3f79po+VAMAAAAAAAAAAAAAAAAAAAAAAAAAAADwSr4DXzz6NDozanMAAAAASUVORK5CYII=",
+  "description": "Displays the latest volatile organic compounds (VOCs) telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'voc', label: 'VOCs', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"VOCs\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 500 - 250;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 2000) {\\n\\tvalue = 2000;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"mdi:molecule\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":500,\"color\":\"#80C32C\"},{\"from\":500,\"to\":1000,\"color\":\"#FFA600\"},{\"from\":1000,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":500,\"color\":\"#80C32C\"},{\"from\":500,\"to\":1000,\"color\":\"#FFA600\"},{\"from\":1000,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal temperature card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"ppb\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "externalId": null,
+  "tags": [
+    "environment",
+    "indoor",
+    "air",
+    "vocs",
+    "voc",
+    "organic solvents",
+    "hydrocarbons",
+    "emissions",
+    "fumes",
+    "gaseous organics",
+    "contaminants",
+    "air pollutants"
+  ]
+}

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -37,13 +37,13 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'displayActivationLink')"
-          [fxShow]="!isEdit">
+          [fxShow]="!isEdit && !isUserCredentialPresent()">
     {{'user.display-activation-link' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'resendActivation')"
-          [fxShow]="!isEdit">
+          [fxShow]="!isEdit && !isUserCredentialPresent()">
     {{'user.resend-activation' | translate }}
   </button>
   <button mat-raised-button color="primary"

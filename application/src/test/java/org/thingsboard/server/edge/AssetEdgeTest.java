@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,17 @@
  */
 package org.thingsboard.server.edge;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.google.protobuf.AbstractMessage;
 import org.junit.Assert;
 import org.junit.Test;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
 import org.thingsboard.server.common.data.edge.Edge;
+import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.page.PageData;
@@ -57,11 +57,10 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         Optional<AssetUpdateMsg> assetUpdateMsgOpt = edgeImitator.findMessageByType(AssetUpdateMsg.class);
         Assert.assertTrue(assetUpdateMsgOpt.isPresent());
         AssetUpdateMsg assetUpdateMsg = assetUpdateMsgOpt.get();
+        Asset assetMsg = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
+        Assert.assertNotNull(assetMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, assetUpdateMsg.getMsgType());
-        Assert.assertEquals(savedAsset.getUuidId().getMostSignificantBits(), assetUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedAsset.getUuidId().getLeastSignificantBits(), assetUpdateMsg.getIdLSB());
-        Assert.assertEquals(savedAsset.getName(), assetUpdateMsg.getName());
-        Assert.assertEquals(savedAsset.getType(), assetUpdateMsg.getType());
+        Assert.assertEquals(savedAsset, assetMsg);
         Optional<AssetProfileUpdateMsg> assetProfileUpdateMsgOpt = edgeImitator.findMessageByType(AssetProfileUpdateMsg.class);
         Assert.assertTrue(assetProfileUpdateMsgOpt.isPresent());
         AssetProfileUpdateMsg assetProfileUpdateMsg = assetProfileUpdateMsgOpt.get();
@@ -77,8 +76,10 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetUpdateMsg);
         assetUpdateMsg = (AssetUpdateMsg) latestMessage;
+        assetMsg = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
+        Assert.assertNotNull(assetMsg);
+        Assert.assertEquals(savedAsset.getName(), assetMsg.getName());
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, assetUpdateMsg.getMsgType());
-        Assert.assertEquals(savedAsset.getName(), assetUpdateMsg.getName());
 
         // unassign asset from edge
         edgeImitator.expectMessageAmount(1);
@@ -107,11 +108,10 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         assetUpdateMsgOpt = edgeImitator.findMessageByType(AssetUpdateMsg.class);
         Assert.assertTrue(assetUpdateMsgOpt.isPresent());
         assetUpdateMsg = assetUpdateMsgOpt.get();
+        assetMsg = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
+        Assert.assertNotNull(assetMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, assetUpdateMsg.getMsgType());
-        Assert.assertEquals(savedAsset.getUuidId().getMostSignificantBits(), assetUpdateMsg.getIdMSB());
-        Assert.assertEquals(savedAsset.getUuidId().getLeastSignificantBits(), assetUpdateMsg.getIdLSB());
-        Assert.assertEquals(savedAsset.getName(), assetUpdateMsg.getName());
-        Assert.assertEquals(savedAsset.getType(), assetUpdateMsg.getType());
+        Assert.assertEquals(savedAsset, assetMsg);
         assetProfileUpdateMsgOpt = edgeImitator.findMessageByType(AssetProfileUpdateMsg.class);
         Assert.assertTrue(assetProfileUpdateMsgOpt.isPresent());
         assetProfileUpdateMsg = assetProfileUpdateMsgOpt.get();
@@ -135,9 +135,10 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetUpdateMsg);
         assetUpdateMsg = (AssetUpdateMsg) latestMessage;
+        assetMsg = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
+        Assert.assertNotNull(assetMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, assetUpdateMsg.getMsgType());
-        Assert.assertEquals(savedCustomer.getUuidId().getMostSignificantBits(), assetUpdateMsg.getCustomerIdMSB());
-        Assert.assertEquals(savedCustomer.getUuidId().getLeastSignificantBits(), assetUpdateMsg.getCustomerIdLSB());
+        Assert.assertEquals(savedCustomer.getId(), assetMsg.getCustomerId());
 
         // unassign asset #2 from customer
         edgeImitator.expectMessageAmount(1);
@@ -146,10 +147,10 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof AssetUpdateMsg);
         assetUpdateMsg = (AssetUpdateMsg) latestMessage;
+        assetMsg = JacksonUtil.fromString(assetUpdateMsg.getEntity(), Asset.class, true);
+        Assert.assertNotNull(assetMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_UPDATED_RPC_MESSAGE, assetUpdateMsg.getMsgType());
-        Assert.assertEquals(
-                new CustomerId(EntityId.NULL_UUID),
-                new CustomerId(new UUID(assetUpdateMsg.getCustomerIdMSB(), assetUpdateMsg.getCustomerIdLSB())));
+        Assert.assertEquals(new CustomerId(EntityId.NULL_UUID), assetMsg.getCustomerId());
 
         // delete asset #2 - messages expected
         edgeImitator.expectMessageAmount(1);
@@ -166,14 +167,13 @@ public class AssetEdgeTest extends AbstractEdgeTest {
 
     @Test
     public void testSendAssetToCloud() throws Exception {
-        UUID uuid = Uuids.timeBased();
+        Asset asset = buildAssetForUplinkMsg("Asset Edge 2");
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         AssetUpdateMsg.Builder assetUpdateMsgBuilder = AssetUpdateMsg.newBuilder();
-        assetUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
-        assetUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
-        assetUpdateMsgBuilder.setName("Asset Edge 2");
-        assetUpdateMsgBuilder.setType("test");
+        assetUpdateMsgBuilder.setIdMSB(asset.getUuidId().getMostSignificantBits());
+        assetUpdateMsgBuilder.setIdLSB(asset.getUuidId().getLeastSignificantBits());
+        assetUpdateMsgBuilder.setEntity(JacksonUtil.toString(asset));
         assetUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         testAutoGeneratedCodeByProtobuf(assetUpdateMsgBuilder);
         uplinkMsgBuilder.addAssetUpdateMsg(assetUpdateMsgBuilder.build());
@@ -188,9 +188,9 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         UplinkResponseMsg latestResponseMsg = edgeImitator.getLatestResponseMsg();
         Assert.assertTrue(latestResponseMsg.getSuccess());
 
-        Asset asset = doGet("/api/asset/" + uuid, Asset.class);
-        Assert.assertNotNull(asset);
-        Assert.assertEquals("Asset Edge 2", asset.getName());
+        Asset foundAsset = doGet("/api/asset/" + asset.getUuidId(), Asset.class);
+        Assert.assertNotNull(foundAsset);
+        Assert.assertEquals("Asset Edge 2", foundAsset.getName());
     }
 
     @Test
@@ -198,14 +198,11 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         String assetOnCloudName = StringUtils.randomAlphanumeric(15);
         Asset assetOnCloud = saveAsset(assetOnCloudName);
 
-        UUID uuid = Uuids.timeBased();
+        Asset assetOnEdge = buildAssetForUplinkMsg(assetOnCloudName);
 
         UplinkMsg.Builder uplinkMsgBuilder = UplinkMsg.newBuilder();
         AssetUpdateMsg.Builder assetUpdateMsgBuilder = AssetUpdateMsg.newBuilder();
-        assetUpdateMsgBuilder.setIdMSB(uuid.getMostSignificantBits());
-        assetUpdateMsgBuilder.setIdLSB(uuid.getLeastSignificantBits());
-        assetUpdateMsgBuilder.setName(assetOnCloudName);
-        assetUpdateMsgBuilder.setType("test");
+        assetUpdateMsgBuilder.setEntity(JacksonUtil.toString(assetOnEdge));
         assetUpdateMsgBuilder.setMsgType(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE);
         testAutoGeneratedCodeByProtobuf(assetUpdateMsgBuilder);
         uplinkMsgBuilder.addAssetUpdateMsg(assetUpdateMsgBuilder.build());
@@ -223,7 +220,9 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         Optional<AssetUpdateMsg> assetUpdateMsgOpt = edgeImitator.findMessageByType(AssetUpdateMsg.class);
         Assert.assertTrue(assetUpdateMsgOpt.isPresent());
         AssetUpdateMsg latestAssetUpdateMsg = assetUpdateMsgOpt.get();
-        Assert.assertNotEquals(assetOnCloudName, latestAssetUpdateMsg.getName());
+        Asset assetMsg = JacksonUtil.fromString(latestAssetUpdateMsg.getEntity(), Asset.class, true);
+        Assert.assertNotNull(assetMsg);
+        Assert.assertNotEquals(assetOnCloudName, assetMsg.getName());
 
         UUID newAssetId = new UUID(latestAssetUpdateMsg.getIdMSB(), latestAssetUpdateMsg.getIdLSB());
 
@@ -275,4 +274,12 @@ public class AssetEdgeTest extends AbstractEdgeTest {
         return savedAsset;
     }
 
+    private Asset buildAssetForUplinkMsg(String name) {
+        Asset asset = new Asset();
+        asset.setId(new AssetId(UUID.randomUUID()));
+        asset.setTenantId(tenantId);
+        asset.setName(name);
+        asset.setType("test");
+        return asset;
+    }
 }

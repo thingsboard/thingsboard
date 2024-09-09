@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,8 @@ public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilte
     private String minInsideDurationTimeUnit;
     private String minOutsideDurationTimeUnit;
 
+    private boolean reportPresenceStatusOnEachMessage;
+
     @Override
     public TbGpsGeofencingActionNodeConfiguration defaultConfiguration() {
         TbGpsGeofencingActionNodeConfiguration configuration = new TbGpsGeofencingActionNodeConfiguration();
@@ -43,6 +45,7 @@ public class TbGpsGeofencingActionNodeConfiguration extends TbGpsGeofencingFilte
         configuration.setMinOutsideDurationTimeUnit(TimeUnit.MINUTES.name());
         configuration.setMinInsideDuration(1);
         configuration.setMinOutsideDuration(1);
+        configuration.setReportPresenceStatusOnEachMessage(true);
         return configuration;
     }
 }

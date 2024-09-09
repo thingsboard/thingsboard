@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,11 +32,17 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource saveResource(TbResource resource);
 
-    TbResource getResource(TenantId tenantId, ResourceType resourceType, String resourceId);
+    TbResource saveResource(TbResource resource, boolean doValidate);
+
+    TbResource findResourceByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
+
+    TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
+
+    PageData<TbResource> findAllTenantResources(TenantId tenantId, PageLink pageLink);
 
     ListenableFuture<TbResourceInfo> findResourceInfoByIdAsync(TenantId tenantId, TbResourceId resourceId);
 
@@ -50,7 +56,10 @@ public interface ResourceService extends EntityDaoService {
 
     void deleteResource(TenantId tenantId, TbResourceId resourceId);
 
+    void deleteResource(TenantId tenantId, TbResourceId resourceId, boolean force);
+
     void deleteResourcesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
+
 }

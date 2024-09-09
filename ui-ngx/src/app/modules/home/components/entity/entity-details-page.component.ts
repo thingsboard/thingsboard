@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -51,6 +51,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
 
   isReadOnly = false;
 
+  backNavigationCommands?: any[];
+
   set entitiesTableConfig(entitiesTableConfig: EntityTableConfig<BaseData<HasId>>) {
     if (this.entitiesTableConfigValue !== entitiesTableConfig) {
       this.entitiesTableConfigValue = entitiesTableConfig;
@@ -79,6 +81,7 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
               protected store: Store<AppState>) {
     super(store, injector, cd, componentFactoryResolver);
     this.entitiesTableConfig = this.route.snapshot.data.entitiesTableConfig;
+    this.backNavigationCommands = this.route.snapshot.data.backNavigationCommands;
   }
 
   ngOnInit() {
@@ -145,7 +148,8 @@ export class EntityDetailsPageComponent extends EntityDetailsPanelComponent impl
   }
 
   goBack(): void {
-    this.router.navigate(['../'], { relativeTo: this.route });
+    const commands = this.backNavigationCommands || ['../'];
+    this.router.navigate(commands, { relativeTo: this.route });
   }
 
   private onUpdateEntity() {

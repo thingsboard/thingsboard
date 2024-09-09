@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import org.springframework.context.annotation.Lazy;
 import org.springframework.context.event.EventListener;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.NotificationCenter;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.NotificationRequestId;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.discovery.PartitionService;
 import org.thingsboard.server.queue.notification.NotificationDeduplicationService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
@@ -77,18 +77,17 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
     public void process(NotificationRuleTrigger trigger) {
         NotificationRuleTriggerType triggerType = trigger.getType();
         TenantId tenantId = triggerType.isTenantLevel() ? trigger.getTenantId() : TenantId.SYS_TENANT_ID;
-
-        try {
-            List<NotificationRule> enabledRules = notificationRulesCache.getEnabled(tenantId, triggerType);
-            if (enabledRules.isEmpty()) {
-                return;
-            }
-            if (trigger.deduplicate()) {
-                enabledRules = new ArrayList<>(enabledRules);
-                enabledRules.removeIf(rule -> deduplicationService.alreadyProcessed(trigger, rule));
-            }
-            final List<NotificationRule> rules = enabledRules;
-            notificationExecutor.submit(() -> {
+        notificationExecutor.submit(() -> {
+            try {
+                List<NotificationRule> enabledRules = notificationRulesCache.getEnabled(tenantId, triggerType);
+                if (enabledRules.isEmpty()) {
+                    return;
+                }
+                if (trigger.deduplicate()) {
+                    enabledRules = new ArrayList<>(enabledRules);
+                    enabledRules.removeIf(rule -> deduplicationService.alreadyProcessed(trigger, rule));
+                }
+                final List<NotificationRule> rules = enabledRules;
                 for (NotificationRule rule : rules) {
                     try {
                         processNotificationRule(rule, trigger);
@@ -96,10 +95,10 @@ public class DefaultNotificationRuleProcessor implements NotificationRuleProcess
                         log.error("Failed to process notification rule {} for trigger type {} with trigger object {}", rule.getId(), rule.getTriggerType(), trigger, e);
                     }
                 }
-            });
-        } catch (Throwable e) {
-            log.error("Failed to process notification rules for trigger: {}", trigger, e);
-        }
+            } catch (Throwable e) {
+                log.error("Failed to process notification rules for trigger: {}", trigger, e);
+            }
+        });
     }
 
     private void processNotificationRule(NotificationRule rule, NotificationRuleTrigger trigger) {

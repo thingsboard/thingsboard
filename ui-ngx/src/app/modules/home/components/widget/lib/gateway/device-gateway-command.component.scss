@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,28 +14,37 @@
  * limitations under the License.
  */
 :host {
-  width: 100%;
-  height: 100%;
-  display: block;
+  .tb-commands-hint {
+    color: inherit;
+    font-weight: normal;
+    flex: 1;
+  }
 }
 
 :host ::ng-deep {
   .tb-markdown-view {
     .start-code {
-      code[class*="language-"] {
-        white-space: break-spaces;
-        word-break: break-all;
-      }
-      pre[class*="language-"] {
-        overflow: hidden;
-        background: #F3F6FA;
-        border-color: #305680;
-      }
       .code-wrapper {
         padding: 0;
+
+        pre[class*=language-] {
+          margin: 0;
+          background: #F3F6FA;
+          border-color: #305680;
+          padding-right: 38px;
+          overflow: scroll;
+          padding-bottom: 4px;
+          min-height: 42px;
+          scrollbar-width: thin;
+
+          &::-webkit-scrollbar {
+            width: 4px;
+            height: 4px;
+          }
+        }
       }
       button.clipboard-btn {
-        right: 0;
+        right: -2px;
         p {
           color: #305680;
         }
@@ -54,15 +63,13 @@
             height: 18px;
             background: #305680;
             mask-image: url(/assets/copy-code-icon.svg);
+            -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;
+            -webkit-mask-repeat: no-repeat;
           }
         }
       }
     }
-  }
-
-  .tb-form-panel.tb-tab-body {
-    margin-top: 16px;
   }
 }
 

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -21,7 +21,7 @@
      [active]="activeLink.name === link.name"> {{ link.name }} </a>
 </nav>
 <mat-tab-nav-panel #tabPanel></mat-tab-nav-panel>
-<table mat-table [dataSource]="dataSource"
+<table mat-table [dataSource]="dataSource" [trackBy]="trackByLogTs"
        matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()"
        matSortDisableClear>
   <ng-container matColumnDef="ts">
@@ -31,7 +31,7 @@
     </mat-cell>
   </ng-container>
   <ng-container matColumnDef="status">
-    <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 10%">{{ 'widgets.gateway.status' | translate }}</mat-header-cell>
+    <mat-header-cell *matHeaderCellDef mat-sort-header style="width: 10%">{{ 'widgets.gateway.level' | translate }}</mat-header-cell>
     <mat-cell *matCellDef="let attribute">
       <span [class]="statusClass(attribute.status)">{{ attribute.status }}</span>
     </mat-cell>

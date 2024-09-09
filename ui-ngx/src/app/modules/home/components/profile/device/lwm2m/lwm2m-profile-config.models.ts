@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,7 +25,7 @@ export const ATTRIBUTE = 'attribute';
 export const TELEMETRY = 'telemetry';
 export const KEY_NAME = 'keyName';
 export const DEFAULT_ID_SERVER = 123;
-export const DEFAULT_ID_BOOTSTRAP = 111;
+export const DEFAULT_ID_BOOTSTRAP = 0;
 export const DEFAULT_LOCAL_HOST_NAME = 'localhost';
 export const DEFAULT_PORT_SERVER_NO_SEC = 5685;
 export const DEFAULT_PORT_BOOTSTRAP_NO_SEC = 5687;
@@ -122,6 +122,18 @@ export const PowerModeTranslationMap = new Map<PowerMode, string>(
   ]
 );
 
+export enum ObjectIDVer {
+  V1_0 = '1.0',
+  V1_1 = '1.1'
+}
+
+export const ObjectIDVerTranslationMap = new Map<ObjectIDVer, string>(
+  [
+    [ObjectIDVer.V1_0, 'device-profile.lwm2m.default-object-id-ver.v1-0'],
+    [ObjectIDVer.V1_1, 'device-profile.lwm2m.default-object-id-ver.v1-1']
+  ]
+);
+
 export interface ServerSecurityConfig {
   host?: string;
   port?: number;
@@ -163,7 +175,7 @@ export interface ClientLwM2mSettings {
   edrxCycle?: number;
   pagingTransmissionWindow?: number;
   psmActivityTimer?: number;
-  compositeOperationsSupport: boolean;
+  defaultObjectIDVer: ObjectIDVer;
 }
 
 export interface ObservableAttributes {
@@ -190,7 +202,7 @@ export function getDefaultProfileClientLwM2mSettingsConfig(): ClientLwM2mSetting
     fwUpdateStrategy: 1,
     swUpdateStrategy: 1,
     powerMode: PowerMode.DRX,
-    compositeOperationsSupport: false
+    defaultObjectIDVer: ObjectIDVer.V1_0
   };
 }
 

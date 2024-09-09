@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,11 +31,11 @@ import org.thingsboard.server.dao.device.claim.ReclaimResult;
 
 public interface TbDeviceService {
 
-    Device save(Device device, Device oldDevice, String accessToken, User user) throws Exception;
+    Device save(Device device, String accessToken, User user) throws Exception;
 
     Device saveDeviceWithCredentials(Device device, DeviceCredentials deviceCredentials, User user) throws ThingsboardException;
 
-    ListenableFuture<Void> delete(Device device, User user);
+    void delete(Device device, User user);
 
     Device assignDeviceToCustomer(TenantId tenantId, DeviceId deviceId, Customer customer, User user) throws ThingsboardException;
 

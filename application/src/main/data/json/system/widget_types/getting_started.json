@@ -17,5 +17,11 @@
     "settingsDirective": "",
     "defaultConfig": "{\"showTitle\":false,\"backgroundColor\":\"rgb(255, 255, 255)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"8px\",\"settings\":{},\"title\":\"Getting started\",\"dropShadow\":true}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "hello world",
+    "beginning",
+    "kickoff",
+    "tutorial"
+  ]
 }

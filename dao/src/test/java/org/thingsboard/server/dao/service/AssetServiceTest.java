@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,19 +20,28 @@ import org.junit.Assert;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionStatus;
+import org.springframework.transaction.support.DefaultTransactionDefinition;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.EntitySubtype;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.asset.Asset;
 import org.thingsboard.server.common.data.asset.AssetInfo;
+import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.dao.asset.AssetDao;
+import org.thingsboard.server.dao.asset.AssetProfileService;
 import org.thingsboard.server.dao.asset.AssetService;
 import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -46,7 +55,15 @@ public class AssetServiceTest extends AbstractServiceTest {
     @Autowired
     AssetService assetService;
     @Autowired
+    AssetDao assetDao;
+    @Autowired
     CustomerService customerService;
+    @Autowired
+    RelationService relationService;
+    @Autowired
+    private AssetProfileService assetProfileService;
+    @Autowired
+    private PlatformTransactionManager platformTransactionManager;
 
     private IdComparator<Asset> idComparator = new IdComparator<>();
 
@@ -73,6 +90,29 @@ public class AssetServiceTest extends AbstractServiceTest {
         Assert.assertEquals(foundAsset.getName(), savedAsset.getName());
 
         assetService.deleteAsset(tenantId, savedAsset.getId());
+    }
+
+    @Test
+    public void testShouldNotPutInCacheRolledbackAssetProfile() {
+        AssetProfile assetProfile = new AssetProfile();
+        assetProfile.setName(StringUtils.randomAlphabetic(10));
+        assetProfile.setTenantId(tenantId);
+
+        Asset asset = new Asset();
+        asset.setName("My asset" + StringUtils.randomAlphabetic(15));
+        asset.setType(assetProfile.getName());
+        asset.setTenantId(tenantId);
+
+        DefaultTransactionDefinition def = new DefaultTransactionDefinition();
+        TransactionStatus status = platformTransactionManager.getTransaction(def);
+        try {
+            assetProfileService.saveAssetProfile(assetProfile);
+            assetService.saveAsset(asset);
+        } finally {
+            platformTransactionManager.rollback(status);
+        }
+        AssetProfile assetProfileByName = assetProfileService.findAssetProfileByName(tenantId, assetProfile.getName());
+        Assert.assertNull(assetProfileByName);
     }
 
     @Test
@@ -213,11 +253,15 @@ public class AssetServiceTest extends AbstractServiceTest {
         asset.setName("My asset");
         asset.setType("default");
         Asset savedAsset = assetService.saveAsset(asset);
+        EntityRelation relation = new EntityRelation(tenantId, savedAsset.getId(), EntityRelation.CONTAINS_TYPE);
+        relationService.saveRelation(tenantId, relation);
+
         Asset foundAsset = assetService.findAssetById(tenantId, savedAsset.getId());
         Assert.assertNotNull(foundAsset);
         assetService.deleteAsset(tenantId, savedAsset.getId());
         foundAsset = assetService.findAssetById(tenantId, savedAsset.getId());
         Assert.assertNull(foundAsset);
+        Assert.assertTrue(relationService.findByTo(tenantId, savedAsset.getId(), RelationTypeGroup.COMMON).isEmpty());
     }
 
     @Test

@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container *ngIf="simpleList; else complexEntityReferences">
+  <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: referencedEntitiesList, showDetailsLink: true}"></ng-container>
+</ng-container>
+<ng-template #complexEntityReferences>
+  <ng-container *ngIf="contentReady; else loading">
+    <ul class="tb-references">
+      <ng-container *ngFor="let entry of referencedEntitiesEntries">
+        <li class="tb-entities-container tb-primary-fill" *ngIf="isSystem(entry[0]); else tenantEntities">
+          <div class="tb-entities-title">{{ 'image.system-entities' | translate }}</div>
+          <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: true}"></ng-container>
+        </li>
+        <ng-template #tenantEntities>
+          <li class="tb-entities-container tb-primary-fill">
+            <div class="tb-entities-title">
+              {{ 'tenant.tenant' | translate }} <a class="tb-reference" [routerLink]="entry[1].tenantDetailsUrl">{{ entry[1].tenantName }}</a> {{ 'image.entities' | translate }}
+            </div>
+            <ng-container *ngTemplateOutlet="referencesList; context:{entriesList: entry[1].entities, showDetailsLink: false}"></ng-container>
+          </li>
+        </ng-template>
+      </ng-container>
+    </ul>
+  </ng-container>
+</ng-template>
+<ng-template #referencesList let-entriesList="entriesList" let-showDetailsLink="showDetailsLink">
+  <table class="tb-entities-list-table">
+    <tr *ngFor="let referencedEntity of entriesList">
+      <td class="tb-entity-type">{{ referencedEntity.typeName }}</td>
+      <td class="tb-entity-name">
+        <a *ngIf="showDetailsLink" class="tb-reference" [routerLink]="referencedEntity.detailsUrl">{{ referencedEntity.entity.name }}</a>
+        <span *ngIf="!showDetailsLink">{{ referencedEntity.entity.name }}</span>
+      </td>
+    </tr>
+  </table>
+</ng-template>
+<ng-template #loading>
+  <mat-spinner [diameter]="32" strokeWidth="2"></mat-spinner>
+</ng-template>

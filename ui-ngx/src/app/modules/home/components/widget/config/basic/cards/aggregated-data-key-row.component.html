@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -61,7 +61,7 @@
     </tb-font-settings>
   </div>
   <div class="tb-color-field">
-    <tb-color-settings formControlName="color">
+    <tb-color-settings formControlName="color" settingsKey="{{ (index+1) }}. {{ aggregatedValueCardKeyPositionTranslationMap.get(keyRowFormGroup.get('position').value) | translate }}">
     </tb-color-settings>
   </div>
   <div class="tb-arrow-field">

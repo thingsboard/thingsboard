@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -50,12 +50,11 @@
               <div fxFlex *ngFor="let deliveryMethods of notificationDeliveryMethods">
                 <div fxFlex fxLayoutAlign="start center">
                   <mat-checkbox color="warn"
-                                [disabled]="!allowNotificationDeliveryMethods?.includes(deliveryMethods) || !getSomeChecked()"
                                 [checked]="getChecked(deliveryMethods)"
                                 (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
                                 [indeterminate]="getIndeterminate(deliveryMethods)"
                                 (click)="$event.stopPropagation()">
-                    <mat-label>{{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}</mat-label>
+                    <mat-label>{{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}</mat-label>
                   </mat-checkbox>
                 </div>
               </div>
@@ -63,8 +62,7 @@
             <mat-divider></mat-divider>
             <div *ngFor="let settingsControl of notificationSettingsFormArray.controls; let i = index; let $last = last;">
               <tb-notification-setting-form [formControl]="settingsControl"
-                                            [deliveryMethods]="notificationDeliveryMethods"
-                                            [allowDeliveryMethods]="allowNotificationDeliveryMethods">
+                                            [deliveryMethods]="notificationDeliveryMethods">
               </tb-notification-setting-form>
               <mat-divider *ngIf="!$last"></mat-divider>
             </div>

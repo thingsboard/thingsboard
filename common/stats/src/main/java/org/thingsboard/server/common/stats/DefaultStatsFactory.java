@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,12 +19,13 @@ import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import io.micrometer.core.instrument.Tags;
 import io.micrometer.core.instrument.Timer;
+import jakarta.annotation.PostConstruct;
+import org.apache.commons.lang3.ArrayUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.StringUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
@@ -61,12 +62,11 @@ public class DefaultStatsFactory implements StatsFactory {
 
 
     @Override
-    public StatsCounter createStatsCounter(String key, String statsName) {
+    public StatsCounter createStatsCounter(String key, String statsName, String... otherTags) {
+        String[] tags = getTags(statsName, otherTags);
         return new StatsCounter(
                 new AtomicInteger(0),
-                metricsEnabled ?
-                        meterRegistry.counter(key, STATS_NAME_TAG, statsName)
-                        : STUB_COUNTER,
+                metricsEnabled ? meterRegistry.counter(key, tags) : STUB_COUNTER,
                 statsName
         );
     }
@@ -103,6 +103,24 @@ public class DefaultStatsFactory implements StatsFactory {
             timerBuilder.publishPercentiles(timerPercentiles);
         }
         return timerBuilder.register(meterRegistry);
+    }
+
+    @Override
+    public StatsTimer createTimer(StatsType type, String name, String... tags) {
+        return new StatsTimer(name, Timer.builder(type.getName())
+                .tags(getTags(name, tags))
+                .register(meterRegistry));
+    }
+
+    private static String[] getTags(String statsName, String[] otherTags) {
+        String[] tags = new String[]{STATS_NAME_TAG, statsName};
+        if (otherTags.length > 0) {
+            if (otherTags.length % 2 != 0) {
+                throw new IllegalArgumentException("Invalid tags array size");
+            }
+            tags = ArrayUtils.addAll(tags, otherTags);
+        }
+        return tags;
     }
 
     private static class StubCounter implements Counter {

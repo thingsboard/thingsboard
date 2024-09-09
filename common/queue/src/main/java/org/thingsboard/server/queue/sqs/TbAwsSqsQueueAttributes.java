@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,13 @@
 package org.thingsboard.server.queue.sqs;
 
 import com.amazonaws.services.sqs.model.QueueAttributeName;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.StringUtils;
 
-import javax.annotation.PostConstruct;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -43,6 +43,8 @@ public class TbAwsSqsQueueAttributes {
     private String otaProperties;
     @Value("${queue.aws-sqs.queue-properties.version-control:}")
     private String vcProperties;
+    @Value("${queue.aws-sqs.queue-properties.edge:}")
+    private String edgeProperties;
 
     @Getter
     private Map<String, String> coreAttributes;
@@ -58,6 +60,8 @@ public class TbAwsSqsQueueAttributes {
     private Map<String, String> otaAttributes;
     @Getter
     private Map<String, String> vcAttributes;
+    @Getter
+    private Map<String, String> edgeAttributes;
 
     private final Map<String, String> defaultAttributes = new HashMap<>();
 
@@ -72,6 +76,7 @@ public class TbAwsSqsQueueAttributes {
         jsExecutorAttributes = getConfigs(jsExecutorProperties);
         otaAttributes = getConfigs(otaProperties);
         vcAttributes = getConfigs(vcProperties);
+        edgeAttributes = getConfigs(edgeProperties);
     }
 
     private Map<String, String> getConfigs(String properties) {

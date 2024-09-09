@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,12 +33,13 @@ import {
   ComparisonResultType,
   DataKey,
   DataKeyConfigMode,
-  DatasourceType, JsonSettingsSchema, Widget,
+  DatasourceType,
+  JsonSettingsSchema,
+  Widget,
   widgetType
 } from '@shared/models/widget.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { AggregationType } from '@shared/models/time/time.models';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { TruncatePipe } from '@shared/pipe/truncate.pipe';
 import {
@@ -51,6 +52,7 @@ import {
   aggregatedValueCardKeyPositionTranslations,
   AggregatedValueCardKeySettings
 } from '@home/components/widget/lib/cards/aggregated-value-card.models';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 
 @Component({
   selector: 'tb-aggregated-data-key-row',
@@ -87,6 +89,9 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
   @Input()
   keyName: string;
 
+  @Input()
+  index: number;
+
   @Output()
   keyRemoved = new EventEmitter();
 
@@ -96,7 +101,7 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
-  get callbacks(): DataKeysCallbacks {
+  get callbacks(): WidgetConfigCallbacks {
     return this.widgetConfigComponent.widgetConfigCallbacks;
   }
 
@@ -225,6 +230,7 @@ export class AggregatedDataKeyRowComponent implements ControlValueAccessor, OnIn
         this.keyRowFormGroup.get('units').patchValue(this.modelValue.units, {emitEvent: false});
         this.keyRowFormGroup.get('decimals').patchValue(this.modelValue.decimals, {emitEvent: false});
         this.updateModel();
+        this.cd.markForCheck();
       }
     });
   }

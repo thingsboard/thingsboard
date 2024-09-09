@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,13 +16,12 @@
 package org.thingsboard.server.queue.rabbitmq;
 
 import com.rabbitmq.client.ConnectionFactory;
+import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
-
-import javax.annotation.PostConstruct;
 
 @Slf4j
 @ConditionalOnExpression("'${queue.type:null}'=='rabbitmq'")
@@ -47,6 +46,8 @@ public class TbRabbitMqSettings {
     private int connectionTimeout;
     @Value("${queue.rabbitmq.handshake_timeout:}")
     private int handshakeTimeout;
+    @Value("${queue.rabbitmq.max_poll_messages:1}")
+    private int maxPollMessages;
 
     private ConnectionFactory connectionFactory;
 

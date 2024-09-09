@@ -1,0 +1,51 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel tb-time-series-thresholds-panel">
+  <div class="tb-form-panel-title">{{ 'widgets.time-series-chart.threshold.thresholds' | translate }}</div>
+  <div class="tb-form-table">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell tb-threshold-source-header" translate>widgets.time-series-chart.threshold.source</div>
+      <div class="tb-form-table-header-cell tb-threshold-key-value-header" translate>widgets.time-series-chart.threshold.key-value</div>
+      <div *ngIf="!hideYAxis" class="tb-form-table-header-cell tb-y-axis-header" translate>widgets.time-series-chart.axis.y-axis</div>
+      <div class="tb-form-table-header-cell tb-color-header" translate>widgets.color.color</div>
+      <div class="tb-form-table-header-cell tb-units-header" translate>widget-config.units-short</div>
+      <div class="tb-form-table-header-cell tb-decimals-header" translate>widget-config.decimals-short</div>
+      <div class="tb-form-table-header-cell tb-actions-header"></div>
+    </div>
+    <div *ngIf="thresholdsFormArray().controls.length; else noThresholds" class="tb-form-table-body">
+      <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index; let $last = last">
+        <tb-time-series-chart-threshold-row fxFlex
+                                    [formControl]="thresholdControl"
+                                    [hideYAxis]="hideYAxis"
+                                    [yAxisIds]="yAxisIds"
+                                    (thresholdRemoved)="removeThreshold($index)">
+        </tb-time-series-chart-threshold-row>
+        <mat-divider *ngIf="!$last"></mat-divider>
+      </div>
+    </div>
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addThreshold()">
+      {{ 'widgets.time-series-chart.threshold.add-threshold' | translate }}
+    </button>
+  </div>
+</div>
+<ng-template #noThresholds>
+  <span fxLayoutAlign="center center"
+        class="tb-prompt">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
+</ng-template>

@@ -1,0 +1,116 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="thresholdFormGroup" class="tb-form-table-row tb-time-series-threshold-row">
+  <div class="tb-threshold-source-field">
+    <mat-form-field class="tb-inline-field tb-threshold-type-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="type">
+        <mat-option *ngFor="let type of timeSeriesThresholdTypes" [value]="type">
+          {{ timeSeriesThresholdTypeTranslations.get(type) | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <tb-entity-alias-input
+      *ngIf="thresholdFormGroup.get('type').value === TimeSeriesChartThresholdType.entity"
+      [aliasController]="aliasController"
+      required
+      formControlName="entityAlias">
+    </tb-entity-alias-input>
+  </div>
+  <div class="tb-threshold-key-value-field">
+    <mat-form-field *ngIf="thresholdFormGroup.get('type').value === TimeSeriesChartThresholdType.constant"
+                    appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic"
+                    [class.tb-suffix-absolute]="!thresholdFormGroup.get('value').value">
+      <input required matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="'widgets.time-series-chart.threshold.threshold-value-required' | translate"
+                *ngIf="thresholdFormGroup.get('value').hasError('required')
+                       && thresholdFormGroup.get('value').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
+    <tb-data-key-input
+      *ngIf="thresholdFormGroup.get('type').value === TimeSeriesChartThresholdType.latestKey"
+      required
+      requiredText="widgets.time-series-chart.threshold.key-required"
+      [datasourceType]="datasource?.type"
+      [entityAliasId]="datasource?.entityAliasId"
+      [deviceId]="datasource?.deviceId"
+      [aliasController]="aliasController"
+      [dataKeyType]="datasource?.type === DatasourceType.function ? DataKeyType.function : null"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="dataKeyCallbacks"
+      [editable]="false"
+      [formControl]="latestKeyFormControl">
+    </tb-data-key-input>
+    <tb-data-key-input
+      *ngIf="thresholdFormGroup.get('type').value === TimeSeriesChartThresholdType.entity"
+      required
+      requiredText="widgets.time-series-chart.threshold.entity-key-required"
+      [datasourceType]="DatasourceType.entity"
+      [aliasController]="aliasController"
+      [entityAlias]="thresholdFormGroup.get('entityAlias').value"
+      [dataKeyTypes]="[DataKeyType.attribute, DataKeyType.timeseries]"
+      [callbacks]="dataKeyCallbacks"
+      [editable]="false"
+      [formControl]="entityKeyFormControl">
+    </tb-data-key-input>
+  </div>
+  <div *ngIf="!hideYAxis" class="tb-y-axis-field">
+    <mat-form-field class="tb-inline-field fixed-height" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="yAxisId">
+        <mat-option *ngFor="let yAxis of yAxisIds" [value]="yAxis">
+          {{ yAxis }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </div>
+  <div class="tb-color-field">
+    <tb-color-input asBoxInput
+                    colorClearButton
+                    formControlName="lineColor">
+    </tb-color-input>
+  </div>
+  <div class="tb-units-field">
+    <tb-unit-input formControlName="units">
+    </tb-unit-input>
+  </div>
+  <div class="tb-decimals-field">
+    <mat-form-field appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
+      <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+    </mat-form-field>
+  </div>
+  <div class="tb-form-table-row-cell-buttons">
+    <tb-time-series-chart-threshold-settings
+        [widgetConfig]="widgetConfig"
+        [yAxisIds]="yAxisIds"
+        [hideYAxis]="hideYAxis"
+        icon="settings"
+        [formControl]="thresholdSettingsFormControl">
+    </tb-time-series-chart-threshold-settings>
+    <button type="button"
+            mat-icon-button
+            (click)="thresholdRemoved.emit()"
+            matTooltip="{{ 'widgets.time-series-chart.threshold.remove-threshold' | translate }}"
+            matTooltipPosition="above">
+      <mat-icon>delete</mat-icon>
+    </button>
+  </div>
+</div>

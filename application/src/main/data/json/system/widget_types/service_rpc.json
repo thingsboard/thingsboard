@@ -16,5 +16,18 @@
     "dataKeySettingsSchema": "{}\n",
     "settingsDirective": "tb-gateway-service-rpc-settings",
     "defaultConfig": "{\"targetDeviceAliases\":[],\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"isConnector\":false},\"title\":\"Service RPC\"}"
-  }
+  },
+  "tags": [
+    "command",
+    "downlink",
+    "device configuration",
+    "device control",
+    "invocation",
+    "remote method",
+    "remote function",
+    "interface",
+    "subroutine call",
+    "inter-process communication",
+    "server request"
+  ]
 }

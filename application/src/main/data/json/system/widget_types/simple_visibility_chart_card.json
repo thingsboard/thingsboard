@@ -1,0 +1,39 @@
+{
+  "fqn": "simple_visibility_chart_card",
+  "name": "Simple visibility chart card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAhFBMVEUAAADf39/g4ODf39/f39/g4OD////k5OTg4OCAwywhISE8PDzj4+NYWFjv9+V0dHSsrKyQkJCg0mDy8vLHx8cvLy/V1dWv2Xuenp7P6a+Qy0b3+/OIxzmCgoK6urpmZmaQykbH5aPf8MpKSkrA4Za+4ZSYzlPn9Ni43YhLS0vY7L2o1m7UZuoPAAAABnRSTlMAIL9AEN/GQiaNAAAEm0lEQVR42uzPuxGAIBQAsMdHpKCjdP89PTewBC7ZIAEAAAAAAPBfTZur8Sl53JsbV4lI42nbm6NEnu0AM0dvR+giixFZjcjLbr2rSA4DURjOTnCqCkmUJJTYDjry+7/gIvdlepcF98yAkcF/VMZKPlSBRuuCjNYFGa0LMloXZLR+BVHHI1f8pOMhGjKAOegUcM9vEXL/WBqSoK6Oo9uHeFvMQsarYgBMMDc8muoT0jaIBoUFHNk+pApLWMjgeJSKwzlhjkBOSYHUIa1Pcd4gyaOsMSegJsdeh0AqaV5VC1/rkpkRqQiGyCmwghFSFmOGhQ7J1FYk9YNBsNshECF1InMiEx5ZwGLokFQU6Q5ZAJm+IH1CmSAN+x0AySQ7JkXy9rZbjBtEpVjEBgnour8hSfq02xEQ3MjcKBrebsQ5Ue8Qr4nzE2LLP5DM9Yb9DoGoUNQ9kgGvjIYNsqyqJW4QqZnxDbKYAsaIQ9qHQI00YUn4KkoEMC39ZzGHzLAgXRcmNEMVReMNSIdt1j4EyCmE5vhJwfCNhnii/KePN2t8SMr4pPEhn3VBLshZuiCjdUFG64KM1gUZrSEhXrOfH+LJSHKNfm5IFVqLczNKPTOkFslPUannhaiIvs1+Wsgf9sywV1kQCsDf2A4gooaaoL1at1r9///3AqZmsS7eNqebz4fQoI3HA+c4Gh1cpDharQgJ0ROhSFYqwvFufOQZrVQkIC/3IlmNyI7zPgoU85dOHK1EZEewpstUIaZvIVqgCK2q3asHJpymnAjepqzoTRTzpYmkAdYQ/lI1krbFQVQGOHTtmuRLESZRj2Sop47v6A9UWERpWh1HD73slxI/YhFw19rD5Tci8qQAioy1Uy8AVNa5ZPAPTYcKkjwqXj586TPJCJfJ8ItkmggrtIZWOZuo/GgNe/2NyLCNA4E6CKFexZ5waiTsW7E48AkiGajGGtRaCuAu0R7g1It8VbF3fc3LMffeXYIIjIOS5yHRXt4iCrKuMQpmVcUQO0XkpbExbC4fsyyuUMfxEYdUhN6JIg+Hf2u4UfETkVlmZ1fAFaErnO1GAfUsEgNc9EdWm710YzHohn1YWeQ5VYkopWkktNBUBpVqQvplAPsuFDYwg8j10QVw1h+qUHEB7Tg3o4dPQ2wIE/RnODlOEMmgQG6RH4BTFxZUt8GIQfm+CyJa5dxozHL4YGZ7c4tYj75LAtT9ADcHghzMJFKb2TpFFMAdPXUB7D+LUFfJnkvk1uXb+5uIoZkikuMUOZhF5KIgG6XbGqC7h6yAQvqLUGeenUeEFRAPS0za+Z/7YokagKu3CHUX8FlEmH3kLdJOmo0qu00EniK5cJ9PzSJyNrXBcrE1I44VFKwXsSMU8xGhAQ7c8ZhFpICOxuZhTTx++2UKYg+RXIgczYN7afVIpJFNM8xRMvZouks7yt68kBw8w7Hw0/jqczhWI1L+Eo71iPwSjtWIfGYT2UTWwiayNDaRpbGJLI1NZGlsIv/buWMaAEAYAIKBhq0O8O8TJDCW5s7BG/hqhFTTKKTNcieyQcnOcbdU6/8t1YxOozAAAAAAAIAnB7h9+fIl+d57AAAAAElFTkSuQmCC",
+  "description": "Displays historical visibility values as a simplified chart. Optionally may display the corresponding latest visibility value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'visibility', label: 'Visibility', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'visibility', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Visibility\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 10 - 5;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 20) {\\n\\tvalue = 20;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 10 - 5;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 20) {\\n\\tvalue = 20;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":1,\"color\":\"#D81838\"},{\"from\":1,\"to\":4,\"color\":\"#FFA600\"},{\"from\":4,\"to\":null,\"color\":\"#80C32C\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"Visibility\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"visibility\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"km\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "externalId": null,
+  "tags": [
+    "weather",
+    "environment",
+    "visibility",
+    "sight",
+    "view",
+    "clarity",
+    "transparency",
+    "perceptibility",
+    "discernibility",
+    "range of view",
+    "clearness"
+  ]
+}

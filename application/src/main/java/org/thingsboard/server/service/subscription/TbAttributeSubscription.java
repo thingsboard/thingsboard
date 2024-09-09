@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import java.util.function.BiConsumer;
 
 public class TbAttributeSubscription extends TbSubscription<TelemetrySubscriptionUpdate> {
 
+    @Getter private final long queryTs;
     @Getter private final boolean allKeys;
     @Getter private final Map<String, Long> keyStates;
     @Getter private final TbAttributeSubscriptionScope scope;
@@ -33,8 +34,9 @@ public class TbAttributeSubscription extends TbSubscription<TelemetrySubscriptio
     @Builder
     public TbAttributeSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
                                    BiConsumer<TbSubscription<TelemetrySubscriptionUpdate>, TelemetrySubscriptionUpdate> updateProcessor,
-                                   boolean allKeys, Map<String, Long> keyStates, TbAttributeSubscriptionScope scope) {
+                                   long queryTs, boolean allKeys, Map<String, Long> keyStates, TbAttributeSubscriptionScope scope) {
         super(serviceId, sessionId, subscriptionId, tenantId, entityId, TbSubscriptionType.ATTRIBUTES, updateProcessor);
+        this.queryTs = queryTs;
         this.allKeys = allKeys;
         this.keyStates = keyStates;
         this.scope = scope;

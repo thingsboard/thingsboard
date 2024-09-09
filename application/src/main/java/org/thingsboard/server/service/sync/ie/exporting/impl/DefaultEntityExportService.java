@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,9 +19,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ExportableEntity;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityIdFactory;
@@ -31,6 +32,7 @@ import org.thingsboard.server.common.data.sync.ie.AttributeExportData;
 import org.thingsboard.server.common.data.sync.ie.EntityExportData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.relation.RelationDao;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.sync.ie.exporting.EntityExportService;
 import org.thingsboard.server.service.sync.ie.exporting.ExportableEntitiesService;
@@ -58,6 +60,8 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     private RelationDao relationDao;
     @Autowired
     private AttributesService attributesService;
+    @Autowired
+    protected ImageService imageService;
 
     @Override
     public final D getExportData(EntitiesExportCtx<?> ctx, I entityId) throws ThingsboardException {
@@ -71,6 +75,9 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
         exportData.setEntity(entity);
         exportData.setEntityType(entityId.getEntityType());
         setAdditionalExportData(ctx, entity, exportData);
+        if (entity instanceof HasVersion hasVersion) {
+            hasVersion.setVersion(null);
+        }
 
         var externalId = entity.getExternalId() != null ? entity.getExternalId() : entity.getId();
         ctx.putExternalId(entityId, externalId);
@@ -108,16 +115,16 @@ public class DefaultEntityExportService<I extends EntityId, E extends Exportable
     }
 
     private Map<String, List<AttributeExportData>> exportAttributes(EntitiesExportCtx<?> ctx, E entity) throws ThingsboardException {
-        List<String> scopes;
+        List<AttributeScope> scopes;
         if (entity.getId().getEntityType() == EntityType.DEVICE) {
-            scopes = List.of(DataConstants.SERVER_SCOPE, DataConstants.SHARED_SCOPE);
+            scopes = List.of(AttributeScope.SERVER_SCOPE, AttributeScope.SHARED_SCOPE);
         } else {
-            scopes = Collections.singletonList(DataConstants.SERVER_SCOPE);
+            scopes = Collections.singletonList(AttributeScope.SERVER_SCOPE);
         }
         Map<String, List<AttributeExportData>> attributes = new LinkedHashMap<>();
         scopes.forEach(scope -> {
             try {
-                attributes.put(scope, attributesService.findAll(ctx.getTenantId(), entity.getId(), scope).get().stream()
+                attributes.put(scope.name(), attributesService.findAll(ctx.getTenantId(), entity.getId(), scope).get().stream()
                         .map(attribute -> {
                             AttributeExportData attributeExportData = new AttributeExportData();
                             attributeExportData.setKey(attribute.getKey());

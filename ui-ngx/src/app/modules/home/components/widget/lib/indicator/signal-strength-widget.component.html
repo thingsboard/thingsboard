@@ -1,0 +1,41 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-signal-strength-panel" [style.padding]="padding" [style]="backgroundStyle$ | async"
+     [class.tb-signal-strength-pointer]="hasCardClickAction" (click)="cardClick($event)">
+    <div class="tb-signal-strength-overlay" [style]="overlayStyle"></div>
+    <div *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel || showDate" class="tb-signal-strength-title-panel">
+        <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+        <div *ngIf="showDate" [style]="dateStyle" [innerHTML]="dateFormat.formatted"></div>
+    </div>
+    <div class="tb-signal-strength-content">
+        <div #signalStrengthShape class="tb-signal-strength-shape">
+        </div>
+        <div *ngIf="showTooltip" class="tb-signal-strength-tooltip-container">
+            <div #signalStrengthTooltip [style]="tooltipStyle" class="tb-signal-strength-tooltip">
+                <div *ngIf="showTooltipValue" class="tb-signal-strength-tooltip-row">
+                    <div [style]="tooltipValueLabelStyle" translate>widgets.signal-strength.value</div>
+                    <div [style]="tooltipValueStyle">{{ tooltipValueText }}</div>
+                </div>
+                <div *ngIf="showTooltipDate" class="tb-signal-strength-tooltip-row">
+                    <div [style]="tooltipDateLabelStyle" translate>widgets.signal-strength.last-update</div>
+                    <div [style]="tooltipDateStyle" [innerHTML]="tooltipDateFormat.formatted"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

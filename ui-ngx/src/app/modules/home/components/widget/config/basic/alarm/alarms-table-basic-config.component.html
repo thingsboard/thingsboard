@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -18,6 +18,11 @@
 <ng-container [formGroup]="alarmsTableWidgetConfigForm">
   <tb-timewindow-config-panel formControlName="timewindowConfig">
   </tb-timewindow-config-panel>
+  <tb-datasources
+    [configMode]="basicMode"
+    hideDataKeys
+    formControlName="datasources">
+  </tb-datasources>
   <div class="tb-form-panel">
     <div fxLayout="row" fxLayoutAlign="space-between center">
       <div class="tb-form-panel-title" translate>alarm.filter</div>
@@ -29,17 +34,13 @@
     <tb-alarm-filter-config #alarmFilterConfig buttonMode="false" formControlName="alarmFilterConfig"
                             [initialAlarmFilterConfig]="{}"></tb-alarm-filter-config>
   </div>
-  <tb-datasources
-    [configMode]="basicMode"
-    hideDataKeys
-    formControlName="datasources">
-  </tb-datasources>
   <tb-data-keys-panel
     panelTitle="{{ 'widgets.table.columns' | translate }}"
     addKeyTitle="{{ 'widgets.table.add-column' | translate }}"
     keySettingsTitle="{{ 'widgets.table.column-settings' | translate }}"
     removeKeyTitle="{{ 'widgets.table.remove-column' | translate }}"
     noKeysText="{{ 'widgets.table.no-columns' | translate }}"
+    requiredKeysText="{{ 'widgets.table.alarm-column-error' | translate }}"
     hideDataKeyColor
     hideUnits
     hideDecimals

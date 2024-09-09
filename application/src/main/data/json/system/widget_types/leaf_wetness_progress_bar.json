@@ -1,0 +1,33 @@
+{
+  "fqn": "leaf_wetness_progress_bar",
+  "name": "Leaf wetness progress bar",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAn1BMVEXg4ODf39/g4ODg4OAAAAD////19fXg4OAhISFLcN3j4+M9PT2srKxYWFh0dHTx8fGQkJDo7fsvLy/Hx8e6urqCgoKenp7v7++7yfKGhob09v2Opup4k+WXl5fS2/fV1dX39/dhguG5ubmpqanH0vVsiuPLy8tmZmZKSkre5PewwPClt+6aruzCwsJWed/c3Nx+fn6Dnejm5ubU1NSxsbH6cLmjAAAABXRSTlPvIL+vAC9A4IoAAAQySURBVHja7M/BEQBABAPAOIynp/47vTbCZDtYhD3Udm4Bw+R6DYN3HjAPlSfgSqQUIaMIG0XYKMJGETaKsFGEjSKf3TJYdRyGoehKcLFk2cixt4Fskv//wpHShkzn8TpvFQKvFxor1ln4oNb0bvmI3C2/XiQlulfeiCxSvtXIQKNb5Y0II33XUqzyZiSj0n9zD5GMmd6EQT/J9SKpquz10rsQlcrogyJjxOvsnerA3J1z2lAbSS1DpQS1aJ9ibV2HY1RGbFwvMhkY7C8bmJEpMcD5OZpCE/RRCOBkmaM9fIcNyDtkrkbeNy/dmrEx9HKRwi4x0I8TN38cjgMLKYwo/A6OGBRMpWQOihdl8yI+DStNwWTMV4vs5yfjx63bIX+JzOjEG1pDjfPt3CESjLr2FoUgZiQl7u0FOVFJ5WqRikeIhgF4ESHLDc36QDu4LyKGPZVmBrJ4qzulia4WGVglQoI1UX0VUVMm3VYLYQ1s+ioikXn/tTNGDFZW8OUTacj+LHGqxR+vIgJTJ2w9uX9FMtq+X1R8cWioQx3tOpFePYkyVKp1Gtik4lWkwO2KxebBRVHbKdLAQxQzsUnr0JhsmxjpOpE9jZICyOn53UbfRU6qPK+gkxNATxFaGLDh/Rx9x6sBJnSJyGtKKs/1p1ysZ1I6+8fGmc/f+I/IH/bnkApgGAigGBoYrIH5lzlUejjt+3EQWRFNEU0RTRFNEU0RTRFNEU0RTRFNEU0RTRFNEU0RTRFNEU0RzRhZ2+ObIuvdDphMke+WyM9+HaxaCEJRGB6tYA2diW7kCDpII+j9X+5ysrhwB96a7ciPHqAf3aWJrHbnoF4vpJAznqIXspB4jF7IxhXOPGBb/RciXIVktGhUJ/VCIg8FXz6L4pHphfiYg5sruToAQRA2GIFOLaTLtyUJHrPAJ+h0ISSRHoCLaVmsh1IXQkwLganFiNp/fCckeT8fJ5UFjbehKt1bnRBL1mNGLHYmm2izhUadELeSxblCRoNdNLYi6RyTS6ffhF2psMv30ah/sRKSlACcXNyiznnvhgAuhD/vrfXs9Y47+5OMEG1GiDYjRJsRos0I0WaEaPOCECNs8jwpcj8k8ySTIp/bIfw1aXI7RHjKkyL3V8RkNqJpRj4v/mo9zAjRZoT8tHfHqg0DMQCGz0l+Z2s9HBEaBAaDt8Mm9vs/W2uo14KznOLoh9v1cYNGeSsg3voHUjrLVK4vAyBmJvtAhyGigk1UrdVVgaEwGpP2MstxyPKAXP1LZIOo0M6UFYbxOGQc3EC+2F7OAfECUYGZ8iJE5pbHQs12iE0sxmSgz+MQsnZG1XbIU20TrF2XeQFC3+Ml+Rvoszf7exUQbwXEWwHxVkC8FRBvBcRbAfFWQLwVEG8FxFsngiRO0T1dTnB6Gr6vqUknOD4tv4xbc72/e+nS3H4AH4urRIckSugAAAAASUVORK5CYII=",
+  "description": "Displays leaf wetness reading as a horizontal progress bar. Allows to configure value range, bar colors, and other settings.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 3,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-progress-bar-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-progress-bar-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.progressBarWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.progressBarWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '280px',\n        previewHeight: '180px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'leaf', label: 'Leaf wetness', type: 'timeseries' }];\n        }\n    };\n};\n\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-progress-bar-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-progress-bar-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"layout\":\"default\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":24,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":10,\"color\":\"#4B70DD\"},{\"from\":10,\"to\":50,\"color\":\"#FFA600\"},{\"from\":50,\"to\":90,\"color\":\"#F36900\"},{\"from\":90,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"tickMin\":0,\"tickMax\":100,\"showTicks\":true,\"ticksFont\":{\"family\":\"Roboto\",\"size\":11,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"400\",\"lineHeight\":\"16px\"},\"ticksColor\":\"rgba(0,0,0,0.54)\",\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"barColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":0,\"to\":10,\"color\":\"#4B70DD\"},{\"from\":10,\"to\":50,\"color\":\"#FFA600\"},{\"from\":50,\"to\":90,\"color\":\"#F36900\"},{\"from\":90,\"to\":null,\"color\":\"#D81838\"}]},\"barBackground\":\"rgba(0, 0, 0, 0.04)\"},\"title\":\"Leaf wetness\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"%\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"titleIcon\":\"mdi:leaf\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"18px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null},\"titleColor\":\"rgba(0, 0, 0, 0.87)\"}"
+  },
+  "externalId": null,
+  "tags": [
+    "progress",
+    "weather",
+    "environment",
+    "dew",
+    "leaf moisture",
+    "foliage dampness",
+    "leaf humidity",
+    "foliar moisture"
+  ]
+}

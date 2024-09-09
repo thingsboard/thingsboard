@@ -1,0 +1,182 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="radialGaugeWidgetConfigForm">
+  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
+                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+                              formControlName="timewindowConfig">
+  </tb-timewindow-config-panel>
+  <tb-datasources
+    [configMode]="basicMode"
+    hideDataKeyLabel
+    hideDataKeyColor
+    hideDataKeyUnits
+    hideDataKeyDecimals
+    formControlName="datasources">
+  </tb-datasources>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.gauge.gauge-appearance</div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showUnitTitle">
+        {{ 'widgets.gauge.units-title' | translate }}
+      </mat-slide-toggle>
+      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="unitTitle" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="titleFont"
+                          disabledLineHeight
+                          [previewText]="radialGaugeWidgetConfigForm.get('unitTitle').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="titleColor">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between">
+      <div translate>widget-config.units-short</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <tb-unit-input
+          formControlName="units">
+        </tb-unit-input>
+        <tb-font-settings formControlName="unitsFont"
+                          disabledLineHeight
+                          [previewText]="radialGaugeWidgetConfigForm.get('units').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="unitsColor">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="valueBox">
+        {{ 'widgets.gauge.value' | translate }}
+      </mat-slide-toggle>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+          <input matInput formControlName="valueInt" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+        </mat-form-field>
+        <tb-font-settings formControlName="valueFont"
+                          disabledLineHeight
+                          [previewText]="valuePreviewFn">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="valueColor">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between column-xs">
+      <div translate>widgets.gauge.ticks</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <div class="tb-small-label" translate>widgets.gauge.max-value-short</div>
+        <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+          <input matInput formControlName="maxValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="numbersFont"
+                          disabledLineHeight
+                          [previewText]="valuePreviewFn">
+        </tb-font-settings>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="numbersColor">
+        </tb-color-input>
+      </div>
+    </div>
+
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.arrow-and-scale-color</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="defaultColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.plate-color</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="colorPlate">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between">
+      <div translate>widgets.gauge.scale-color</div>
+      <tb-color-range-settings formControlName="highlights">
+      </tb-color-range-settings>
+    </div>
+
+    <div class="tb-form-panel" *ngIf="gaugeType === 'linear'">
+      <div class="tb-form-panel-title" translate>widgets.gauge.progress-bar</div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.gauge.progress-bar-color-start</div>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="colorBarProgress">
+        </tb-color-input>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.gauge.progress-bar-color-end</div>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="colorBarProgressEnd">
+        </tb-color-input>
+      </div>
+      <div class="tb-form-row space-between">
+        <div translate>widgets.gauge.bar-stroke-color</div>
+        <tb-color-input asBoxInput
+                        colorClearButton
+                        formControlName="colorBarStroke">
+        </tb-color-input>
+      </div>
+    </div>
+
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.background-color' | translate }}</div>
+      <tb-color-input asBoxInput
+                      colorClearButton
+                      formControlName="backgroundColor">
+      </tb-color-input>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <tb-widget-actions-panel
+    formControlName="actions">
+  </tb-widget-actions-panel>
+</ng-container>

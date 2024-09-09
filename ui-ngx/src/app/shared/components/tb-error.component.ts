@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,17 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, Input } from '@angular/core';
+import { ChangeDetectorRef, Component, Input } from '@angular/core';
 import { animate, state, style, transition, trigger } from '@angular/animations';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-error',
   template: `
-  <div [@animation]="state" [ngStyle]="{marginTop: noMargin ? '0' : '0.5rem', fontSize: '.75rem'}">
-      <mat-error >
-      {{message}}
-    </mat-error>
+    <div [@animation]="state" [ngStyle]="{marginTop: noMargin ? '0' : '0.5rem', fontSize: '.75rem'}">
+      <mat-error>
+        {{message}}
+      </mat-error>
     </div>
   `,
   styles: [`
@@ -36,21 +36,23 @@ import { coerceBoolean } from '@shared/decorators/coercion';
     trigger('animation', [
       state('show', style({
         opacity: 1,
+        transform: 'translateY(0)'
       })),
       state('hide',   style({
         opacity: 0,
         transform: 'translateY(-1rem)'
       })),
-      transition('show => hide', animate('200ms ease-out')),
-      transition('* => show', animate('200ms ease-in'))
-
+      transition('* <=> *', animate('200ms ease-out'))
     ]),
   ]
 })
 export class TbErrorComponent {
-  errorValue: any;
-  state: any;
-  message;
+  errorValue: string;
+  state = 'hide';
+  message: string;
+
+  constructor(private cd: ChangeDetectorRef) {
+  }
 
   @Input()
   @coerceBoolean()
@@ -58,15 +60,13 @@ export class TbErrorComponent {
 
   @Input()
   set error(value) {
-    if (value && !this.message) {
-      this.message = value;
-      this.state = 'hide';
-      setTimeout(() => {
-        this.state = 'show';
-      });
-    } else {
+    if (this.errorValue !== value) {
       this.errorValue = value;
+      if (value) {
+        this.message = value;
+      }
       this.state = value ? 'show' : 'hide';
+      this.cd.markForCheck();
     }
   }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -15,3 +15,11 @@
 ///
 
 export * from './home-components.module';
+export * from './widget/config/basic/basic-widget-config.module';
+export * from './widget/lib/settings/common/widget-settings-common.module';
+export * from './widget/widget-components.module';
+export * from './widget/config/widget-config-components.module';
+
+export * from './widget/config/widget-config.component.models';
+export * from './widget/lib/table-widget.models';
+export * from './widget/lib/flot-widget.models';

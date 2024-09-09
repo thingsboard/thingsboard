@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="mat-content tb-rulechain" fxFlex tb-fullscreen [fullscreen]="isFullscreen" tb-hotkeys [hotkeys]="hotKeys"
+<div class="mat-content tb-rulechain" fxFlex tb-fullscreen [fullscreen]="isFullscreen" [tb-hotkeys]="hotKeys"
      [cheatSheet]="cheatSheetComponent" fxLayout="column">
   <tb-hotkeys-cheatsheet #cheatSheetComponent></tb-hotkeys-cheatsheet>
   <section class="tb-rulechain-container" fxFlex fxLayout="column">
@@ -34,7 +34,7 @@
               *ngIf="!isImport"
               [ruleChainType]="ruleChainType"
               [disabled]="isDirtyValue"
-              [(ngModel)]="ruleChain.id.id"
+              [(ngModel)]="ruleChain"
               (ngModelChange)="currentRuleChainIdChanged(ruleChain.id?.id)">
             </tb-rule-chain-select>
           </mat-toolbar>
@@ -129,9 +129,9 @@
                   <div id="tb-node-content" class="mat-padding" fxLayout="column">
                     <div class="tb-node-title">{{editingRuleNode.component.name}}</div>
                     <div>&nbsp;</div>
-                    <div class="tb-node-description">{{editingRuleNode.component.configurationDescriptor.nodeDefinition.description}}</div>
+                    <div class="tb-node-description" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.description | safe: 'html'"></div>
                     <div>&nbsp;</div>
-                    <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details"></div>
+                    <div class="tb-node-details" [innerHtml]="editingRuleNode.component.configurationDescriptor.nodeDefinition.details | safe: 'html'"></div>
                   </div>
                 </div>
               </mat-tab>

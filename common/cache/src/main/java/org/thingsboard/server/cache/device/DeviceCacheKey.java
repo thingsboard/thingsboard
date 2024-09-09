@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,6 +22,7 @@ import lombok.RequiredArgsConstructor;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Getter
@@ -30,9 +31,16 @@ import java.io.Serializable;
 @Builder
 public class DeviceCacheKey implements Serializable {
 
+    @Serial
+    private static final long serialVersionUID = 6366389552842340207L;
+
     private final TenantId tenantId;
     private final DeviceId deviceId;
     private final String deviceName;
+
+    public DeviceCacheKey(DeviceId deviceId) {
+        this(null, deviceId, null);
+    }
 
     public DeviceCacheKey(TenantId tenantId, DeviceId deviceId) {
         this(tenantId, deviceId, null);
@@ -44,10 +52,12 @@ public class DeviceCacheKey implements Serializable {
 
     @Override
     public String toString() {
-        if (deviceId != null) {
-            return tenantId + "_" + deviceId;
-        } else {
+        if (deviceId == null) {
             return tenantId + "_n_" + deviceName;
+        } else if (tenantId == null) {
+            return deviceId.toString();
+        } else {
+            return tenantId + "_" + deviceId;
         }
     }
 

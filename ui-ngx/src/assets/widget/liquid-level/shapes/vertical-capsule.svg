@@ -1,0 +1,49 @@
+<svg preserveAspectRatio="xMidYMid meet" viewBox="0 0 233 201" fill="none" xmlns="http://www.w3.org/2000/svg">
+  <rect class="tb-shape-stroke" x="58.5" y="199.5" width="178" height="116" rx="58" transform="rotate(-90 58.5 199.5)" fill="#6216FF" fill-opacity="0" stroke="#242770" stroke-width="2"/>
+  <mask id="mask0_3572_6660" style="mask-type:alpha" maskUnits="userSpaceOnUse" x="61" y="24" width="111" height="173">
+    <rect class="tb-shape-stroke" x="62.5" y="195.5" width="170" height="108" rx="54" transform="rotate(-90 62.5 195.5)" fill="#F1F1F9" stroke="#242770" stroke-width="2"/>
+  </mask>
+  <g mask="url(#mask0_3572_6660)">
+    <rect class="tb-liquid-fill tb-liquid" x="61.5" y="118.5" width="110" height="172" fill="#7A8BFF"/>
+    <rect class="tb-liquid-surface tb-liquid" x="61.5" y="118.5" width="110" height="1" fill="#7A8BFF"/>
+    <rect class="tb-liquid-surface" x="61.5" y="118.5" width="110" height="1" fill="white" fill-opacity="0.1"/>
+  </g>
+  <path class="tb-shape-stroke" d="M58 146.5H174" stroke="#242770" stroke-width="2"/>
+  <path class="tb-shape-stroke" d="M59 74.5H175" stroke="#242770" stroke-width="2"/>
+  <mask id="path-7-inside-1_3572_6660" fill="white">
+    <path fill-rule="evenodd" clip-rule="evenodd" d="M131.5 5.5H102.5V23.5C102.5 25.1569 108.992 26.5 117 26.5C125.008 26.5 131.5 25.1569 131.5 23.5V5.5Z"/>
+  </mask>
+  <path fill-rule="evenodd" clip-rule="evenodd" d="M131.5 5.5H102.5V23.5C102.5 25.1569 108.992 26.5 117 26.5C125.008 26.5 131.5 25.1569 131.5 23.5V5.5Z"/>
+  <path class="tb-shape-fill" d="M102.5 5.5V3.5H100.5V5.5H102.5ZM131.5 5.5H133.5V3.5H131.5V5.5ZM102.5 7.5H131.5V3.5L102.5 3.5V7.5ZM104.5 23.5V5.5H100.5V23.5H104.5ZM117 24.5C113.09 24.5 109.607 24.1707 107.152 23.6628C105.908 23.4055 105.034 23.1232 104.518 22.8712C104.257 22.7431 104.191 22.6721 104.217 22.6982C104.248 22.7304 104.5 23.0048 104.5 23.5H100.5C100.5 24.4095 100.954 25.0882 101.373 25.511C101.785 25.9277 102.289 26.2334 102.761 26.4643C103.713 26.9301 104.962 27.2943 106.342 27.5798C109.135 28.1577 112.902 28.5 117 28.5V24.5ZM129.5 23.5C129.5 23.0048 129.752 22.7304 129.783 22.6982C129.809 22.6721 129.743 22.7431 129.482 22.8712C128.966 23.1232 128.092 23.4055 126.848 23.6628C124.393 24.1707 120.91 24.5 117 24.5V28.5C121.098 28.5 124.865 28.1577 127.658 27.5798C129.038 27.2943 130.287 26.9301 131.239 26.4643C131.711 26.2334 132.215 25.9277 132.627 25.511C133.046 25.0882 133.5 24.4095 133.5 23.5H129.5ZM129.5 5.5V23.5H133.5V5.5H129.5Z" fill="#242770" mask="url(#path-7-inside-1_3572_6660)"/>
+  <path class="tb-shape-stroke" d="M131.541 6.33233C131.54 6.33319 131.541 6.33233 131.541 6.33233ZM130.866 6.24158C131.077 6.33801 131.231 6.42584 131.341 6.5C131.231 6.57417 131.077 6.66199 130.866 6.75842C130.187 7.06915 129.141 7.3742 127.77 7.63954C125.045 8.16703 121.236 8.5 117 8.5C112.764 8.5 108.955 8.16703 106.23 7.63954C104.859 7.3742 103.813 7.06915 103.134 6.75842C102.923 6.66199 102.769 6.57417 102.659 6.5C102.769 6.42583 102.923 6.33801 103.134 6.24158C103.813 5.93085 104.859 5.6258 106.23 5.36046C108.955 4.83297 112.764 4.5 117 4.5C121.236 4.5 125.045 4.83297 127.77 5.36046C129.141 5.6258 130.187 5.93085 130.866 6.24158ZM102.459 6.66767C102.46 6.6668 102.459 6.66767 102.459 6.66767ZM131.539 6.66507C131.54 6.6668 131.541 6.66767 131.541 6.66767C131.541 6.66767 131.54 6.6668 131.539 6.66507Z" stroke="#242770" stroke-width="2"/>
+  <path class="tb-shape-stroke" d="M131.541 3.33233C131.54 3.33319 131.541 3.33233 131.541 3.33233ZM130.866 3.24158C131.077 3.33801 131.231 3.42584 131.341 3.5C131.231 3.57417 131.077 3.66199 130.866 3.75842C130.187 4.06915 129.141 4.3742 127.77 4.63954C125.045 5.16703 121.236 5.5 117 5.5C112.764 5.5 108.955 5.16703 106.23 4.63954C104.859 4.3742 103.813 4.06915 103.134 3.75842C102.923 3.66199 102.769 3.57417 102.659 3.5C102.769 3.42583 102.923 3.33801 103.134 3.24158C103.813 2.93085 104.859 2.6258 106.23 2.36046C108.955 1.83297 112.764 1.5 117 1.5C121.236 1.5 125.045 1.83297 127.77 2.36046C129.141 2.6258 130.187 2.93085 130.866 3.24158ZM102.459 3.66767C102.46 3.6668 102.459 3.66767 102.459 3.66767ZM131.539 3.66507C131.54 3.6668 131.541 3.66767 131.541 3.66767C131.541 3.66767 131.54 3.6668 131.539 3.66507Z" stroke="#242770" stroke-width="2"/>
+  <g class="container-overlay" clip-path="url(#clip0_3572_6660)">
+    <g filter="url(#filter0_b_3572_6660)">
+      <rect class="absolute-overlay" x="76" y="80" width="81" height="61" rx="4" fill="white" fill-opacity="0.76"/>
+      <foreignObject class="absolute-value-container" x="76" y="80" width="81" height="61">
+      </foreignObject>
+    </g>
+    <g filter="url(#filter1_b_3572_6660)">
+      <rect class="percentage-overlay" x="80.5" y="90.5" width="71" height="40" rx="4" fill="white" fill-opacity="0.76"/>
+      <foreignObject class="percentage-value-container" x="80.5" y="90.5" width="71" height="40">
+      </foreignObject>
+    </g>
+  </g>
+  <defs>
+    <filter id="filter0_b_3572_6660" x="70" y="74" width="93" height="73" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="3"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_3572_6660"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_3572_6660" result="shape"/>
+    </filter>
+    <filter id="filter1_b_3572_6660" x="74.5" y="84.5" width="83" height="52" filterUnits="userSpaceOnUse" color-interpolation-filters="sRGB">
+      <feFlood flood-opacity="0" result="BackgroundImageFix"/>
+      <feGaussianBlur in="BackgroundImageFix" stdDeviation="3"/>
+      <feComposite in2="SourceAlpha" operator="in" result="effect1_backgroundBlur_3572_6660"/>
+      <feBlend mode="normal" in="SourceGraphic" in2="effect1_backgroundBlur_3572_6660" result="shape"/>
+    </filter>
+    <clipPath id="clip0_3572_6660">
+      <rect width="81" height="61" fill="white" transform="translate(76 80)"/>
+    </clipPath>
+  </defs>
+</svg>

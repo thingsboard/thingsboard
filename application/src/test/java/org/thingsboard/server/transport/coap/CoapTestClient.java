@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.coap;
 
+import lombok.Getter;
 import org.eclipse.californium.core.CoapClient;
 import org.eclipse.californium.core.CoapHandler;
 import org.eclipse.californium.core.CoapObserveRelation;
@@ -34,7 +35,10 @@ public class CoapTestClient {
 
     private final CoapClient client;
 
-    public CoapTestClient(){
+    @Getter
+    private CoAP.Type type = CoAP.Type.CON;
+
+    public CoapTestClient() {
         this.client = createClient();
     }
 
@@ -80,9 +84,13 @@ public class CoapTestClient {
         return client.setTimeout(CLIENT_REQUEST_TIMEOUT).get();
     }
 
-    public CoapObserveRelation getObserveRelation(CoapTestCallback callback){
+    public CoapObserveRelation getObserveRelation(CoapTestCallback callback) {
+        return getObserveRelation(callback, true);
+    }
+
+    public CoapObserveRelation getObserveRelation(CoapTestCallback callback, boolean confirmable) {
         Request request = Request.newGet().setObserve();
-        request.setType(CoAP.Type.CON);
+        request.setType(confirmable ? CoAP.Type.CON : CoAP.Type.NON);
         return client.observe(request, callback);
     }
 
@@ -94,10 +102,26 @@ public class CoapTestClient {
     }
 
     public void setURI(String accessToken, FeatureType featureType) {
-        if (featureType == null){
+        if (featureType == null) {
             featureType = FeatureType.ATTRIBUTES;
         }
         setURI(getFeatureTokenUrl(accessToken, featureType));
+    }
+
+    public void useCONs() {
+        if (client == null) {
+            throw new RuntimeException("Failed to connect! CoapClient is not initialized!");
+        }
+        type = CoAP.Type.CON;
+        client.useCONs();
+    }
+
+    public void useNONs() {
+        if (client == null) {
+            throw new RuntimeException("Failed to connect! CoapClient is not initialized!");
+        }
+        type = CoAP.Type.NON;
+        client.useNONs();
     }
 
     private CoapClient createClient() {

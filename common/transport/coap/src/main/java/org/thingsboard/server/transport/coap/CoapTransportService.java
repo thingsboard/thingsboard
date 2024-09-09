@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,24 +15,24 @@
  */
 package org.thingsboard.server.transport.coap;
 
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.californium.core.CoapResource;
 import org.eclipse.californium.core.CoapServer;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.coapserver.CoapServerService;
-import org.thingsboard.server.coapserver.TbCoapServerComponent;
+import org.thingsboard.server.coapserver.TbCoapTransportComponent;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.transport.coap.efento.CoapEfentoTransportResource;
 
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.net.UnknownHostException;
 
 @Service("CoapTransportService")
-@TbCoapServerComponent
+@TbCoapTransportComponent
 @Slf4j
 public class CoapTransportService implements TbTransportService {
 

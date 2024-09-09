@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -280,6 +280,9 @@ export class EntityStateControllerComponent extends StateControllerComponent imp
   private gotoState(stateId: string, update: boolean, openRightLayout?: boolean) {
     const isStateIdChanged = this.dashboardCtrl.dashboardCtx.state !== stateId;
     this.dashboardCtrl.openDashboardState(stateId, openRightLayout);
+    if (isStateIdChanged) {
+      this.stateIdSubject.next(stateId);
+    }
     if (this.syncStateWithQueryParam) {
       this.mobileService.handleDashboardStateName(this.getStateName(this.stateObject.length - 1));
     }

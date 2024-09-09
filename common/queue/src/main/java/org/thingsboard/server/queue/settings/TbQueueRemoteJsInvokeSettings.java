@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,6 +24,9 @@ import org.springframework.stereotype.Component;
 @Data
 @Component
 public class TbQueueRemoteJsInvokeSettings {
+
+    @Value("${queue.prefix:}")
+    private String prefix;
     @Value("${queue.js.request_topic}")
     private String requestTopic;
 
@@ -38,4 +41,12 @@ public class TbQueueRemoteJsInvokeSettings {
 
     @Value("${queue.js.max_requests_timeout}")
     private long maxRequestsTimeout;
+
+    public String getRequestTopic(){
+        return prefix.isBlank() ? requestTopic : prefix + "." + requestTopic;
+    }
+
+    public String getResponseTopic(){
+        return prefix.isBlank() ? responseTopic : prefix + "." + responseTopic;
+    }
 }

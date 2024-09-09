@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -60,7 +60,9 @@ export class FlotWidgetComponent implements OnInit {
     this.settings = this.ctx.settings;
     this.chartType = this.chartType || 'line';
     this.configureLegend();
-    this.flot = new TbFlot(this.ctx, this.chartType, $(this.flotElement.nativeElement));
+    if (this.ctx.datasources?.length) {
+      this.flot = new TbFlot(this.ctx, this.chartType, $(this.flotElement.nativeElement));
+    }
   }
 
   private configureLegend(): void {

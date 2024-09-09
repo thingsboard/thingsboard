@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.sql.query;
 
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
@@ -245,6 +244,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityTableMap.put(EntityType.DEVICE_PROFILE, "device_profile");
         entityTableMap.put(EntityType.ASSET_PROFILE, "asset_profile");
         entityTableMap.put(EntityType.TENANT_PROFILE, "tenant_profile");
+        entityTableMap.put(EntityType.QUEUE_STATS, "queue_stats");
 
         entityNameColumns.put(EntityType.DEVICE, "name");
         entityNameColumns.put(EntityType.CUSTOMER, "title");
@@ -263,6 +263,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         entityNameColumns.put(EntityType.TB_RESOURCE, "search_text");
         entityNameColumns.put(EntityType.EDGE, "name");
         entityNameColumns.put(EntityType.QUEUE, "name");
+        entityNameColumns.put(EntityType.QUEUE_STATS, "queue_name");
     }
 
     public static EntityType[] RELATION_QUERY_ENTITY_TYPES = new EntityType[]{
@@ -358,7 +359,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
             List<EntityKeyMapping> filterMapping = mappings.stream().filter(EntityKeyMapping::hasFilter)
                     .collect(Collectors.toList());
-            List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest())
+            List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() != null)
                     .collect(Collectors.toList());
 
             List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
@@ -366,6 +367,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
 
             String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
+            String aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, "");
             String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
             String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
             String entityTypeStr;
@@ -386,7 +388,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     addEntityTableQuery(ctx, query.getEntityFilter()),
                     entityWhereClause,
                     latestJoinsCnt,
-                    "");
+                    aliasWhereQuery);
 
             String countQuery = String.format("select count(id) %s", fromClauseCount);
 
@@ -417,7 +419,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             QueryContext ctx = new QueryContext(new QuerySecurityContext(tenantId, customerId, entityType, ignorePermissionCheck));
             EntityDataPageLink pageLink = query.getPageLink();
 
-            List<EntityKeyMapping> mappings = EntityKeyMapping.prepareKeyMapping(query);
+            List<EntityKeyMapping> mappings = EntityKeyMapping.prepareKeyMapping(entityType, query);
 
             List<EntityKeyMapping> selectionMapping = mappings.stream().filter(EntityKeyMapping::isSelection)
                     .collect(Collectors.toList());
@@ -428,7 +430,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
 
             List<EntityKeyMapping> filterMapping = mappings.stream().filter(EntityKeyMapping::hasFilter)
                     .collect(Collectors.toList());
-            List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest())
+            List<EntityKeyMapping> entityFieldsFiltersMapping = filterMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() != null)
                     .collect(Collectors.toList());
 
             List<EntityKeyMapping> allLatestMappings = mappings.stream().filter(EntityKeyMapping::isLatest)
@@ -438,7 +440,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             String entityWhereClause = DefaultEntityQueryRepository.this.buildEntityWhere(ctx, query.getEntityFilter(), entityFieldsFiltersMapping);
             String latestJoinsCnt = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, true);
             String latestJoinsData = EntityKeyMapping.buildLatestJoins(ctx, query.getEntityFilter(), entityType, allLatestMappings, false);
-            String textSearchQuery = DefaultEntityQueryRepository.this.buildTextSearchQuery(ctx, selectionMapping, pageLink.getTextSearch());
+            String aliasWhereQuery = DefaultEntityQueryRepository.this.buildAliasWhereQuery(ctx, query.getEntityFilter(), selectionMapping, pageLink.getTextSearch());
             String entityFieldsSelection = EntityKeyMapping.buildSelections(entityFieldsSelectionMapping, query.getEntityFilter().getType(), entityType);
             String entityTypeStr;
             if (query.getEntityFilter().getType().equals(EntityFilterType.RELATIONS_QUERY)) {
@@ -464,7 +466,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     addEntityTableQuery(ctx, query.getEntityFilter()),
                     entityWhereClause,
                     latestJoinsCnt,
-                    textSearchQuery);
+                    aliasWhereQuery);
 
             String fromClauseData = String.format("from (select %s from (select %s from %s e where %s) entities %s ) result %s",
                     topSelection,
@@ -472,7 +474,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     addEntityTableQuery(ctx, query.getEntityFilter()),
                     entityWhereClause,
                     latestJoinsData,
-                    textSearchQuery);
+                    aliasWhereQuery);
 
             if (!StringUtils.isEmpty(pageLink.getTextSearch())) {
                 //Unfortunately, we need to sacrifice performance in case of full text search, because it is applied to all joined records.
@@ -581,6 +583,8 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                 return "e.tenant_id=:permissions_tenant_id and e.id=:permissions_customer_id";
             } else if (ctx.getEntityType() == EntityType.API_USAGE_STATE) {
                 return "e.tenant_id=:permissions_tenant_id and e.entity_id=:permissions_customer_id";
+            } else if (ctx.getEntityType() == EntityType.DASHBOARD) {
+                return "e.tenant_id=:permissions_tenant_id and e.assigned_customers like concat('%', :permissions_customer_id, '%')";
             } else {
                 return "e.tenant_id=:permissions_tenant_id and e.customer_id=:permissions_customer_id";
             }
@@ -727,10 +731,16 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
                     .append(entityFilter.getDirection().equals(EntitySearchDirection.FROM) ? "to" : "from")
                     .append("_type in (:where_entity_types").append(")");
             ctx.addStringListParameter("where_entity_types", Arrays.stream(RELATION_QUERY_ENTITY_TYPES).map(EntityType::name).collect(Collectors.toList()));
-        }
-
-        if (!noConditions && !single) {
-            whereFilter = new StringBuilder().append("(").append(whereFilter).append(")");
+        } else {
+            if (!single) {
+                whereFilter = new StringBuilder()
+                        .append(entityFilter.isNegate() ? " NOT (" : "(")
+                        .append(whereFilter).append(")");
+            } else if (entityFilter.isNegate()) {
+                whereFilter = new StringBuilder()
+                        .append(" NOT (")
+                        .append(whereFilter).append(")");
+            }
         }
 
         if (entityFilter.isFetchLastLevelOnly()) {
@@ -766,8 +776,11 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         boolean hasRelationType = !StringUtils.isEmpty(relationType);
         if (hasRelationType) {
             ctx.addStringParameter("where_relation_type" + entityTypeFilterIdx, relationType);
-            whereFilter
-                    .append("re.relation_type = :where_relation_type").append(entityTypeFilterIdx);
+            if (etf.isNegate()) {
+                whereFilter.append("re.relation_type != :where_relation_type").append(entityTypeFilterIdx);
+            } else {
+                whereFilter.append("re.relation_type = :where_relation_type").append(entityTypeFilterIdx);
+            }
         }
         if (!whereEntityTypes.isEmpty()) {
             if (hasRelationType) {
@@ -799,10 +812,25 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         return from;
     }
 
+    private String buildAliasWhereQuery(QueryContext ctx, EntityFilter entityFilter, List<EntityKeyMapping> selectionMapping, String searchText) {
+        List<EntityKeyMapping> aliasFiltersMapping = selectionMapping.stream().filter(mapping -> !mapping.isLatest() && mapping.getEntityKeyColumn() == null)
+                .collect(Collectors.toList());
+        String entityFieldsQuery = EntityKeyMapping.buildQuery(ctx, aliasFiltersMapping, entityFilter.getType());
+        String searchTextQuery = buildTextSearchQuery(ctx, selectionMapping, searchText);
+        String result = "";
+        if (!entityFieldsQuery.isEmpty()) {
+            result += " where (" + entityFieldsQuery + ")";
+        }
+        if (!searchTextQuery.isEmpty()) {
+            result += (result.isEmpty() ? " where ": " and ") + "(" + searchTextQuery + ") ";
+        }
+        return result;
+    }
+
     private String buildTextSearchQuery(QueryContext ctx, List<EntityKeyMapping> selectionMapping, String searchText) {
         if (!StringUtils.isEmpty(searchText) && !selectionMapping.isEmpty()) {
-            String lowerSearchText = "%" + searchText.toLowerCase() + "%";
-            ctx.addStringParameter("lowerSearchTextParam", lowerSearchText);
+            String sqlSearchText = "%" + searchText + "%";
+            ctx.addStringParameter("lowerSearchTextParam", sqlSearchText);
             List<String> searchAliases = selectionMapping.stream().filter(EntityKeyMapping::isSearchable).map(EntityKeyMapping::getValueAlias).collect(Collectors.toList());
             String searchAliasesExpression;
             if (searchAliases.size() > 1) {
@@ -810,7 +838,7 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
             } else {
                 searchAliasesExpression = searchAliases.get(0);
             }
-            return String.format(" WHERE LOWER(%s) LIKE :%s", searchAliasesExpression, "lowerSearchTextParam");
+            return String.format(" %s ILIKE :%s", searchAliasesExpression, "lowerSearchTextParam");
         } else {
             return "";
         }
@@ -830,10 +858,10 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         ctx.addStringParameter("entity_filter_name_filter", filter.getEntityNameFilter());
         String nameColumn = getNameColumn(filter.getEntityType());
         if (filter.getEntityNameFilter().startsWith("%") || filter.getEntityNameFilter().endsWith("%")) {
-            return String.format("lower(e.%s) like lower(:entity_filter_name_filter)", nameColumn);
+            return String.format("e.%s ilike :entity_filter_name_filter", nameColumn);
         }
 
-        return String.format("lower(e.%s) like lower(concat(:entity_filter_name_filter, '%%'))", nameColumn);
+        return String.format("e.%s ilike concat(:entity_filter_name_filter, '%%')", nameColumn);
     }
 
     private String typeQuery(QueryContext ctx, EntityFilter filter) {
@@ -869,9 +897,9 @@ public class DefaultEntityQueryRepository implements EntityQueryRepository {
         if (!StringUtils.isEmpty(name)) {
             ctx.addStringParameter("entity_filter_type_query_name", name);
             if (name.startsWith("%") || name.endsWith("%")) {
-                return typesFilter + " and lower(e." + nameColumn + ") like lower(:entity_filter_type_query_name)";
+                return typesFilter + " and e." + nameColumn + " ilike :entity_filter_type_query_name";
             }
-            return typesFilter + " and lower(e." + nameColumn + ") like lower(concat(:entity_filter_type_query_name, '%%'))";
+            return typesFilter + " and e." + nameColumn + " ilike concat(:entity_filter_type_query_name, '%%')";
         } else {
             return typesFilter;
         }

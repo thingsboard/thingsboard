@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,8 +15,13 @@
     limitations under the License.
 
 -->
-<mat-form-field fxFlex class="mat-block" [formGroup]="deviceKeyFormGroup">
-  <mat-label>{{ (keyType === dataKeyType.attribute
+<mat-form-field fxFlex [appearance]="inlineField ? 'outline': 'fill'"
+                [subscriptSizing]="inlineField ? 'dynamic' : 'fixed'"
+                [class]="{'tb-inline-field': inlineField, 'flex': inlineField,
+                          'tb-suffix-absolute': (inlineField && !deviceKeyFormGroup.get('key').value)}"
+                class="mat-block"
+                [formGroup]="deviceKeyFormGroup">
+  <mat-label *ngIf="!inlineField">{{ (keyType === dataKeyType.attribute
     ? attributeLabel
     : timeseriesLabel) | translate }}</mat-label>
   <input [required]="required" matInput
@@ -31,6 +36,15 @@
           (click)="clearKey()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="requiredText | translate"
+            *ngIf="inlineField && requiredText && deviceKeyFormGroup.get('key').hasError('required')
+                            && deviceKeyFormGroup.get('key').touched"
+            class="tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete
     class="tb-autocomplete"
     #keyAutocomplete="matAutocomplete">
@@ -38,4 +52,7 @@
       <span [innerHTML]="key | highlight:keySearchText"></span>
     </mat-option>
   </mat-autocomplete>
+  <mat-error *ngIf="!inlineField && requiredText && deviceKeyFormGroup.get('key').hasError('required')">
+    {{ requiredText | translate }}
+  </mat-error>
 </mat-form-field>

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,11 +20,13 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Data
 public class DeviceProfileCacheKey implements Serializable {
 
+    @Serial
     private static final long serialVersionUID = 8220455917177676472L;
 
     private final TenantId tenantId;
@@ -41,19 +43,19 @@ public class DeviceProfileCacheKey implements Serializable {
         this.provisionDeviceKey = provisionDeviceKey;
     }
 
-    public static DeviceProfileCacheKey fromName(TenantId tenantId, String name) {
+    public static DeviceProfileCacheKey forName(TenantId tenantId, String name) {
         return new DeviceProfileCacheKey(tenantId, name, null, false, null);
     }
 
-    public static DeviceProfileCacheKey fromId(DeviceProfileId id) {
+    public static DeviceProfileCacheKey forId(DeviceProfileId id) {
         return new DeviceProfileCacheKey(null, null, id, false, null);
     }
 
-    public static DeviceProfileCacheKey defaultProfile(TenantId tenantId) {
+    public static DeviceProfileCacheKey forDefaultProfile(TenantId tenantId) {
         return new DeviceProfileCacheKey(tenantId, null, null, true, null);
     }
 
-    public static DeviceProfileCacheKey fromProvisionDeviceKey(String provisionDeviceKey) {
+    public static DeviceProfileCacheKey forProvisionKey(String provisionDeviceKey) {
         return new DeviceProfileCacheKey(null, null, null, false, provisionDeviceKey);
     }
 
@@ -71,4 +73,5 @@ public class DeviceProfileCacheKey implements Serializable {
         }
         return tenantId + "_" + name;
     }
+
 }

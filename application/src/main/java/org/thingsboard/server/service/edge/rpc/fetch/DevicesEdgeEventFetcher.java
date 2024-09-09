@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class DevicesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Device
     private final DeviceService deviceService;
 
     @Override
-    PageData<Device> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<Device> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return deviceService.findDevicesByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -44,4 +44,5 @@ public class DevicesEdgeEventFetcher extends BasePageableEdgeEventFetcher<Device
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.DEVICE,
                 EdgeEventActionType.ADDED, device.getId(), null);
     }
+
 }

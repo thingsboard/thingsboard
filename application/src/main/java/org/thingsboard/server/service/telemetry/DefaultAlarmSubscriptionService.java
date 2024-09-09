@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,6 @@ import org.thingsboard.server.common.data.query.AlarmDataQuery;
 import org.thingsboard.server.common.msg.notification.NotificationRuleProcessor;
 import org.thingsboard.server.common.msg.queue.TbCallback;
 import org.thingsboard.server.common.stats.TbApiUsageReportClient;
-import org.thingsboard.server.dao.alarm.AlarmOperationResult;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.entitiy.alarm.TbAlarmCommentService;
@@ -116,55 +115,10 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public Alarm createOrUpdateAlarm(Alarm alarm) {
-        AlarmOperationResult result = alarmService.createOrUpdateAlarm(alarm, apiUsageStateService.getApiUsageState(alarm.getTenantId()).isAlarmCreationEnabled());
-        if (result.isSuccessful()) {
-            onAlarmUpdated(result);
-            AlarmSeverity oldSeverity = result.getOldSeverity();
-            if (oldSeverity != null && !oldSeverity.equals(result.getAlarm().getSeverity())) {
-                AlarmComment alarmComment = AlarmComment.builder()
-                        .alarmId(alarm.getId())
-                        .type(AlarmCommentType.SYSTEM)
-                        .comment(JacksonUtil.newObjectNode().put("text", String.format("Alarm severity was updated from %s to %s", oldSeverity, result.getAlarm().getSeverity())))
-                        .build();
-                try {
-                    alarmCommentService.saveAlarmComment(alarm, alarmComment, null);
-                } catch (ThingsboardException e) {
-                    log.error("Failed to save alarm comment", e);
-                }
-            }
-        }
-        if (result.isCreated()) {
-            apiUsageClient.report(alarm.getTenantId(), null, ApiUsageRecordKey.CREATED_ALARMS_COUNT);
-        }
-        return result.getAlarm();
-    }
-
-    @Override
     public Boolean deleteAlarm(TenantId tenantId, AlarmId alarmId) {
         AlarmApiCallResult result = alarmService.delAlarm(tenantId, alarmId);
         onAlarmDeleted(result);
         return result.isSuccessful();
-    }
-
-    @Override
-    public ListenableFuture<Boolean> ackAlarm(TenantId tenantId, AlarmId alarmId, long ackTs) {
-        ListenableFuture<AlarmApiCallResult> result = Futures.immediateFuture(alarmService.acknowledgeAlarm(tenantId, alarmId, ackTs));
-        Futures.addCallback(result, new AlarmUpdateCallback(), wsCallBackExecutor);
-        return Futures.transform(result, AlarmApiCallResult::isSuccessful, wsCallBackExecutor);
-    }
-
-    @Override
-    public ListenableFuture<Boolean> clearAlarm(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
-        AlarmApiCallResult result = alarmService.clearAlarm(tenantId, alarmId, clearTs, details);
-        return Futures.transform(Futures.immediateFuture(result), AlarmApiCallResult::isSuccessful, wsCallBackExecutor);
-    }
-
-    @Override
-    public ListenableFuture<AlarmOperationResult> clearAlarmForResult(TenantId tenantId, AlarmId alarmId, JsonNode details, long clearTs) {
-        AlarmApiCallResult result = alarmService.clearAlarm(tenantId, alarmId, clearTs, details);
-        Futures.addCallback(Futures.immediateFuture(result), new AlarmUpdateCallback(), wsCallBackExecutor);
-        return Futures.immediateFuture(new AlarmOperationResult(result));
     }
 
     @Override
@@ -183,22 +137,22 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarms(TenantId tenantId, AlarmQuery query) {
+    public PageData<AlarmInfo> findAlarms(TenantId tenantId, AlarmQuery query) {
         return alarmService.findAlarms(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
+    public PageData<AlarmInfo> findCustomerAlarms(TenantId tenantId, CustomerId customerId, AlarmQuery query) {
         return alarmService.findCustomerAlarms(tenantId, customerId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
+    public PageData<AlarmInfo> findAlarmsV2(TenantId tenantId, AlarmQueryV2 query) {
         return alarmService.findAlarmsV2(tenantId, query);
     }
 
     @Override
-    public ListenableFuture<PageData<AlarmInfo>> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
+    public PageData<AlarmInfo> findCustomerAlarmsV2(TenantId tenantId, CustomerId customerId, AlarmQueryV2 query) {
         return alarmService.findCustomerAlarmsV2(tenantId, customerId, query);
     }
 
@@ -218,23 +172,8 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
     }
 
     @Override
-    public ListenableFuture<Alarm> findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
-        return alarmService.findLatestByOriginatorAndType(tenantId, originator, type);
-    }
-
-    @Deprecated
-    private void onAlarmUpdated(AlarmOperationResult result) {
-        wsCallBackExecutor.submit(() -> {
-            AlarmInfo alarm = new AlarmInfo(result.getAlarm());
-            TenantId tenantId = alarm.getTenantId();
-            for (EntityId entityId : result.getPropagatedEntitiesList()) {
-                forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-                    subscriptionManagerService.onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
-                }, () -> {
-                    return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
-                });
-            }
-        });
+    public Alarm findLatestByOriginatorAndType(TenantId tenantId, EntityId originator, String type) {
+        return alarmService.findLatestActiveByOriginatorAndType(tenantId, originator, type);
     }
 
     @Override
@@ -248,10 +187,9 @@ public class DefaultAlarmSubscriptionService extends AbstractSubscriptionService
             TenantId tenantId = alarm.getTenantId();
             for (EntityId entityId : result.getPropagatedEntitiesList()) {
                 forwardToSubscriptionManagerService(tenantId, entityId, subscriptionManagerService -> {
-                    subscriptionManagerService.onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
-                }, () -> {
-                    return TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm);
-                });
+                            subscriptionManagerService.onAlarmUpdate(tenantId, entityId, alarm, TbCallback.EMPTY);
+                        }, () -> TbSubscriptionUtils.toAlarmUpdateProto(tenantId, entityId, alarm)
+                );
             }
             notificationRuleProcessor.process(AlarmTrigger.builder()
                     .tenantId(tenantId)

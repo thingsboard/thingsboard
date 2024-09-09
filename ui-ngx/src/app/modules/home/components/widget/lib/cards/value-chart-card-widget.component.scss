@@ -1,0 +1,69 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-value-chart-card-panel {
+  width: 100%;
+  height: 100%;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 20px 24px 24px 24px;
+  > div:not(.tb-value-chart-card-overlay) {
+    z-index: 1;
+  }
+  div.tb-widget-title {
+    padding: 0;
+  }
+  .tb-value-chart-card-overlay {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    bottom: 12px;
+    right: 12px;
+  }
+  .tb-value-chart-card-content {
+    min-height: 0;
+    flex: 1;
+    display: flex;
+    align-items: flex-end;
+    gap: 16px;
+    position: relative;
+    &.left {
+      flex-direction: row;
+    }
+    &.right {
+      flex-direction: row-reverse;
+    }
+    .tb-value-chart-card-value {
+      white-space: nowrap;
+    }
+    .tb-value-chart-card-chart {
+      flex: 1;
+      min-width: 0;
+      height: 100%;
+    }
+    &.auto-scale {
+      .tb-value-chart-card-value-container {
+        width: 35%;
+        display: flex;
+        justify-content: flex-start;
+      }
+      .tb-value-chart-card-chart {
+        width: 65%;
+      }
+    }
+  }
+}

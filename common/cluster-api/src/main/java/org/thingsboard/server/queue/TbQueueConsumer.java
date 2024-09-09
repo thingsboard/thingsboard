@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
 
     void subscribe(Set<TopicPartitionInfo> partitions);
 
+    void stop();
+
     void unsubscribe();
 
     List<T> poll(long durationInMillis);
@@ -35,10 +37,6 @@ public interface TbQueueConsumer<T extends TbQueueMsg> {
     void commit();
 
     boolean isStopped();
-
-    void onQueueDelete();
-
-    boolean isQueueDeleted();
 
     List<String> getFullTopicNames();
 

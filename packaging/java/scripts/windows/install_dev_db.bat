@@ -5,7 +5,7 @@ setlocal ENABLEEXTENSIONS
 SET BASE=${project.basedir}\target
 SET LOADER_PATH=%BASE%\conf,%BASE%\extensions
 
-SET jarfile=%BASE%\thingsboard-${project.version}-boot.jar
+SET jarfile=%BASE%\${pkg.name}-${project.version}-boot.jar
 SET installDir=%BASE%\data
 SET loadDemo=true
 
@@ -19,7 +19,7 @@ java -cp %jarfile% -Dloader.main=org.thingsboard.server.ThingsboardInstallApplic
                     -Dspring.jpa.hibernate.ddl-auto=none^
                     -Dinstall.upgrade=false^
                     -Dlogging.config=%BASE%\windows\install\logback.xml^
-                    org.springframework.boot.loader.PropertiesLauncher
+                    org.springframework.boot.loader.launch.PropertiesLauncher
 
 if errorlevel 1 (
    @echo ThingsBoard DB installation failed!

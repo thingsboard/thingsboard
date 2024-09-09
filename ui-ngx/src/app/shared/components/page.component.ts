@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -28,6 +28,8 @@ export abstract class PageComponent implements OnDestroy {
   isLoading$: Observable<boolean>;
   loadingSubscription: Subscription;
   disabledOnLoadFormControls: Array<AbstractControl> = [];
+
+  showMainLoadingBar = true;
 
   protected constructor(protected store: Store<AppState>) {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());

@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -110,6 +110,7 @@
           <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
           <tb-widgets-bundle-select fxFlexOffset="5"
                                     fxFlex
+                                    required
                                     [selectFirstBundle]="false"
                                     [selectBundleAlias]="selectedWidgetsBundleAlias"
                                     [ngModel]="null"
@@ -185,6 +186,7 @@
               <div fxFlex fxLayout="row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
+                  *ngIf="attribute.value !== ''"
                   class="attribute-copy"
                   [disabled]="isLoading$ | async"
                   [copyText]="attribute.value | tbJson"

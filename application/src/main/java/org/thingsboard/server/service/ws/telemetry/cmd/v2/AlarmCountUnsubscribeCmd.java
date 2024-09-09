@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,10 +16,15 @@
 package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
 import lombok.Data;
+import org.thingsboard.server.service.ws.WsCmdType;
 
 @Data
 public class AlarmCountUnsubscribeCmd implements UnsubscribeCmd {
 
     private final int cmdId;
 
+    @Override
+    public WsCmdType getType() {
+        return WsCmdType.ALARM_COUNT_UNSUBSCRIBE;
+    }
 }

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -14,13 +14,15 @@
 /// limitations under the License.
 ///
 
-import { Component, Injector } from '@angular/core';
+import { Component } from '@angular/core';
 import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
+  DataKey,
+  Datasource,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -35,6 +37,7 @@ import { formatValue, isUndefined } from '@core/utils';
 import { cssSizeToStrSize, resolveCssSize } from '@shared/models/widget-settings.models';
 import {
   batteryLevelDefaultSettings,
+  BatteryLevelLayout,
   batteryLevelLayoutImages,
   batteryLevelLayouts,
   batteryLevelLayoutTranslations,
@@ -67,9 +70,22 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
 
   valuePreviewFn = this._valuePreviewFn.bind(this);
 
+  get sectionsCountEnabled(): boolean {
+    const layout: BatteryLevelLayout = this.batteryLevelWidgetConfigForm.get('layout').value;
+    return [BatteryLevelLayout.vertical_divided, BatteryLevelLayout.horizontal_divided].includes(layout);
+  }
+
+  public get datasource(): Datasource {
+    const datasources: Datasource[] = this.widgetConfig.config.datasources;
+    if (datasources && datasources.length) {
+      return datasources[0];
+    } else {
+      return null;
+    }
+  }
+
   constructor(protected store: Store<AppState>,
               protected widgetConfigComponent: WidgetConfigComponent,
-              private $injector: Injector,
               private fb: UntypedFormBuilder) {
     super(store, widgetConfigComponent);
   }
@@ -78,8 +94,8 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
     return this.batteryLevelWidgetConfigForm;
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'batteryLevel', label: 'batteryLevel', type: DataKeyType.timeseries }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'batteryLevel', label: 'batteryLevel', type: DataKeyType.timeseries }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
@@ -90,6 +106,7 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
       datasources: [configData.config.datasources, []],
 
       layout: [settings.layout, []],
+      sectionsCount: [settings.sectionsCount, [Validators.min(2), Validators.max(20)]],
 
       showTitle: [configData.config.showTitle, []],
       title: [configData.config.title, []],
@@ -114,6 +131,7 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
 
       cardButtons: [this.getCardButtons(configData.config), []],
       borderRadius: [configData.config.borderRadius, []],
+      padding: [settings.padding, []],
 
       actions: [configData.config.actions || {}, []]
     });
@@ -136,6 +154,7 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
     this.widgetConfig.config.settings.layout = config.layout;
+    this.widgetConfig.config.settings.sectionsCount = config.sectionsCount;
 
     this.widgetConfig.config.settings.showValue = config.showValue;
     this.widgetConfig.config.settings.autoScaleValueSize = config.autoScaleValueSize === true;
@@ -149,19 +168,22 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
 
     this.setCardButtons(config.cardButtons, this.widgetConfig.config);
     this.widgetConfig.config.borderRadius = config.borderRadius;
+    this.widgetConfig.config.settings.padding = config.padding;
 
     this.widgetConfig.config.actions = config.actions;
     return this.widgetConfig;
   }
 
   protected validatorTriggers(): string[] {
-    return ['showTitle', 'showIcon', 'showValue'];
+    return ['showTitle', 'showIcon', 'showValue', 'layout'];
   }
 
   protected updateValidators(emitEvent: boolean, trigger?: string) {
     const showTitle: boolean = this.batteryLevelWidgetConfigForm.get('showTitle').value;
     const showIcon: boolean = this.batteryLevelWidgetConfigForm.get('showIcon').value;
     const showValue: boolean = this.batteryLevelWidgetConfigForm.get('showValue').value;
+    const layout: BatteryLevelLayout = this.batteryLevelWidgetConfigForm.get('layout').value;
+    const divided = [BatteryLevelLayout.vertical_divided, BatteryLevelLayout.horizontal_divided].includes(layout);
 
     if (showTitle) {
       this.batteryLevelWidgetConfigForm.get('title').enable();
@@ -198,6 +220,11 @@ export class BatteryLevelBasicConfigComponent extends BasicWidgetConfigComponent
       this.batteryLevelWidgetConfigForm.get('autoScaleValueSize').disable();
       this.batteryLevelWidgetConfigForm.get('valueFont').disable();
       this.batteryLevelWidgetConfigForm.get('valueColor').disable();
+    }
+    if (divided) {
+      this.batteryLevelWidgetConfigForm.get('sectionsCount').enable();
+    } else {
+      this.batteryLevelWidgetConfigForm.get('sectionsCount').disable();
     }
   }
 

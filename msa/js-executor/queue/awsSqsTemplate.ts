@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -38,7 +38,8 @@ import uuid from 'uuid-random';
 export class AwsSqsTemplate implements IQueue {
 
     private logger = _logger(`awsSqsTemplate`);
-    private requestTopic: string = config.get('request_topic');
+    private queuePrefix: string = config.get('queue_prefix');
+    private requestTopic: string = this.queuePrefix ? this.queuePrefix + "." + config.get('request_topic') : config.get('request_topic');
     private accessKeyId: string = config.get('aws_sqs.access_key_id');
     private secretAccessKey: string = config.get('aws_sqs.secret_access_key');
     private region: string = config.get('aws_sqs.region');

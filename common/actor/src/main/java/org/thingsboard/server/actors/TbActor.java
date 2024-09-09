@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,7 @@ public interface TbActor {
         return InitFailureStrategy.retryWithDelay(5000L * attempt);
     }
 
-    default ProcessFailureStrategy onProcessFailure(Throwable t) {
+    default ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
         if (t instanceof Error) {
             return ProcessFailureStrategy.stop();
         } else {

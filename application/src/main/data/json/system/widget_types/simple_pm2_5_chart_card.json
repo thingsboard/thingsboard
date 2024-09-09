@@ -1,0 +1,41 @@
+{
+  "fqn": "simple_pm2_5_chart_card",
+  "name": "Simple PM2.5 chart card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAhFBMVEUAAADf39/g4ODf39/f39/g4OD////k5OSAwyzg4OAhISF0dHTv9+U8PDzP6a+QkJDx8fFYWFjf8Mr3+/Kg0mEvLy+/4ZWQy0aIxzmCgoLHx8e6urqv2XtKSkrV1dWenp7H5aOsrKzn9Nirq6u43YhmZmaYzlOo1m7X7L2n1m719fWQykb4eF0NAAAABnRSTlMAIL9AEN/GQiaNAAAEq0lEQVR42uzPwQ2AIBAAsBMQcz/mYP8BjRv4BNJu0AAAAAAAAPivXZtr8akln83lXSOunH17I2uU0Q8wS2Q/QoosRmQ1Ii+7daxiMQhEYbg7A2cQncIiShQJef9X3GsWcndhmxQbDNcPLHSqHyxmNDNkNDNkNDNkNDNkNB8RInjLqroUoGnBi2qALKaCg+9TXHJfiKx0+bx5er8zQ2kAEilwa1tjQBdt4BBHMoZ3CAAzqOtvGimZBf10TLjsrpDALv8K2Q1qsQJxoeCl8SgVqvqAS24LQeSL/Pxaygo1b2guHRNxHl1ZlxoN19wSIpF1I+nxDjHTDVALTKaN0jsUp8qAK+4J2UkHyQUnTxzUYErpIWFd8a1koA0Z4klDyPgzJNPQQ9aYUxLUhMQq5nDJPSHYfICy4lQdDsuOsG7ITsR1Fc4D3tEEl9wU0lWX8RwfsaI8ygwZzQwZzQwZzQwZzQwZzQwZzQz5d6F53+TxIWHhQeXZIeK4FEAWOnl0iDLhUKI9OeSLPXPbbRwEAujbZITBFzABX+vNxWnU//+/nZgs9taOam+1riPlPGAzUIlTGEBxzqL+97L8iUUCHft3nTyxiAjAE7H4aUVyVoAnZtGTidRF7lcWDEjEU4nsEsaYKIYrq0/3JxKJhY7yQrC6y4riryadbVgkP4sq2A1Tuu502DlIPidFpuNviCgO/5GAaRowO4LDf2qJs0onx4enynKRxiDacpbLxSgYI1O06cO/j1jkPrfWPrCDxyS6/keRPWmQiplhwrGdjNpTiekX50Ssg35CHkPN+i2+3YcTzVjya74IR7wqCBFP8CUNhjBGSQ6AHw/Pidyv/hkTQiYBY1WlWZJFmWDVbq7IO+KBHim2MIU6SPAY5Hd7eQDiIJXrtE+xgWn8OVGz5GZSsAC+IM+Sc+b0j4JF8TyRELvRXTD1dbfg3MMiGgp1NrLrg0jDpigPLd7nkafG7GEace7PCBFECatiWADNjyhmiSh7Gww3VI5FqLSpwbtIiWEnYruYoSaLFFJcAbSopgfCjv37WTOx+Bv9TlTzkr1BvJQWWzUW4YipIoG7iEHViRgXu1IHS6XEVkqLMEX3JfXbzBNRJd44wFgkdGHpRCSW4JYW+KZuRZ4Q0TYwSVJRsY5Ii6YJSUaORKiw0IuU+D4Qcanltl3+/q5gGpbBt1mU7Fc0Y5ESP3oRRT0eiDymcJvvGiIXbL3PZ5HTcEZCLJeLCAHECiL+v94MRPhkjqQoF4tEbs9aRYQMQgBlBkvr1NWRStuN83IT4dRhoUic3W+AK4i4IaepRWy8iKujszTdu6T4fqHIrvIea4gAL9Ftn17EUPXqUwXt6SbSIl8mUgt9BMcqIoSSkg93MaorxfmfW5W6Xce4HzHnikrX7h6THLWowbOGiMeLgIc3bmMzcAgPsIRoeG/9eZEWzX6fusW0iIxl0PPzItz4/Fko8gYjVhbhYQgDZNOECjbGVn4Oeom8RLbKS2RrvES2xktka7xEtsbvdu6gBkAgBoBgacMl/aED/wKxwPOumXGwBlbIboTspiMHrIPWejKqB8yD3r4i6j5/S5U1aRQGAAAAAADwywcmOfeID1PhnQAAAABJRU5ErkJggg==",
+  "description": "Displays historical fine particulate matter (PM2.5) values as a simplified chart. Optionally may display the corresponding latest PM2.5 value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'pm2.5', label: 'PM2.5', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'pm2.5', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"PM2.5\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 120 - 60;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 500) {\\n\\tvalue = 500;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 120 - 60;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 500) {\\n\\tvalue = 500;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":0,\"to\":10,\"color\":\"#80C32C\"},{\"from\":10,\"to\":35,\"color\":\"#FFA600\"},{\"from\":35,\"to\":75,\"color\":\"#F36900\"},{\"from\":75,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"PM2.5\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"bubble_chart\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"µg/m³\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "externalId": null,
+  "tags": [
+    "environment",
+    "pm2.5",
+    "particulate",
+    "matter",
+    "air",
+    "fine particulates",
+    "fine particles",
+    "particulate matter 2.5",
+    "airborne particles",
+    "microscopic particles",
+    "respirable particles",
+    "aerosol particles",
+    "dust particles"
+  ]
+}

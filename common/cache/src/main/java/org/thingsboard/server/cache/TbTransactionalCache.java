@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
 
     TbCacheValueWrapper<V> get(K key);
 
+    TbCacheValueWrapper<V> get(K key, boolean transactionMode);
+
     void put(K key, V value);
 
     void putIfAbsent(K key, V value);
@@ -47,16 +49,33 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
      */
     TbCacheTransaction<K, V> newTransactionForKeys(List<K> keys);
 
+    default V getOrFetchFromDB(K key, Supplier<V> dbCall, boolean cacheNullValue, boolean putToCache) {
+        if (putToCache) {
+            return getAndPutInTransaction(key, dbCall, cacheNullValue);
+        } else {
+            TbCacheValueWrapper<V> cacheValueWrapper = get(key, true);
+            if (cacheValueWrapper != null) {
+                return cacheValueWrapper.get();
+            }
+            return dbCall.get();
+        }
+    }
+
     default V getAndPutInTransaction(K key, Supplier<V> dbCall, boolean cacheNullValue) {
-        TbCacheValueWrapper<V> cacheValueWrapper = get(key);
+        return getAndPutInTransaction(key, dbCall, Function.identity(), Function.identity(), cacheNullValue);
+    }
+
+    default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
+        TbCacheValueWrapper<V> cacheValueWrapper = get(key, true);
         if (cacheValueWrapper != null) {
-            return cacheValueWrapper.get();
+            V cacheValue = cacheValueWrapper.get();
+            return cacheValue != null ? cacheValueToResult.apply(cacheValue) : null;
         }
         var cacheTransaction = newTransactionForKey(key);
         try {
-            V dbValue = dbCall.get();
+            R dbValue = dbCall.get();
             if (dbValue != null || cacheNullValue) {
-                cacheTransaction.putIfAbsent(key, dbValue);
+                cacheTransaction.put(key, dbValueToCacheValue.apply(dbValue));
                 cacheTransaction.commit();
                 return dbValue;
             } else {
@@ -69,26 +88,16 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
         }
     }
 
-    default <R> R getAndPutInTransaction(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue) {
-        TbCacheValueWrapper<V> cacheValueWrapper = get(key);
-        if (cacheValueWrapper != null) {
-            var cacheValue = cacheValueWrapper.get();
-            return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);
-        }
-        var cacheTransaction = newTransactionForKey(key);
-        try {
-            R dbValue = dbCall.get();
-            if (dbValue != null || cacheNullValue) {
-                cacheTransaction.putIfAbsent(key, dbValueToCacheValue.apply(dbValue));
-                cacheTransaction.commit();
-                return dbValue;
-            } else {
-                cacheTransaction.rollback();
-                return null;
+    default <R> R getOrFetchFromDB(K key, Supplier<R> dbCall, Function<V, R> cacheValueToResult, Function<R, V> dbValueToCacheValue, boolean cacheNullValue, boolean putToCache) {
+        if (putToCache) {
+            return getAndPutInTransaction(key, dbCall, cacheValueToResult, dbValueToCacheValue, cacheNullValue);
+        } else {
+            TbCacheValueWrapper<V> cacheValueWrapper = get(key, true);
+            if (cacheValueWrapper != null) {
+                var cacheValue = cacheValueWrapper.get();
+                return cacheValue == null ? null : cacheValueToResult.apply(cacheValue);
             }
-        } catch (Throwable e) {
-            cacheTransaction.rollback();
-            throw e;
+            return dbCall.get();
         }
     }
 

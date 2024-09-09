@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -21,6 +21,7 @@ import { AppState } from '@core/core.state';
 import { BasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
 import { WidgetConfigComponentData } from '@home/models/widget-component.models';
 import {
+  DataKey,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   WidgetConfig,
@@ -106,8 +107,8 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
     super.setupConfig(widgetConfig);
   }
 
-  protected setupDefaults(configData: WidgetConfigComponentData) {
-    this.setupDefaultDatasource(configData, [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries }]);
+  protected defaultDataKeys(configData: WidgetConfigComponentData): DataKey[] {
+    return [{ name: 'temperature', label: 'Temperature', type: DataKeyType.timeseries }];
   }
 
   protected onConfigSet(configData: WidgetConfigComponentData) {
@@ -116,6 +117,7 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
       timewindowConfig: [getTimewindowConfig(configData.config), []],
       datasources: [configData.config.datasources, []],
       layout: [settings.layout, []],
+      autoScale: [settings.autoScale, []],
 
       showLabel: [settings.showLabel, []],
       label: [getLabel(configData.config.datasources), []],
@@ -154,6 +156,7 @@ export class ValueCardBasicConfigComponent extends BasicWidgetConfigComponent {
     this.widgetConfig.config.settings = this.widgetConfig.config.settings || {};
 
     this.widgetConfig.config.settings.layout = config.layout;
+    this.widgetConfig.config.settings.autoScale = config.autoScale;
 
     this.widgetConfig.config.settings.showLabel = config.showLabel;
     setLabel(config.label, this.widgetConfig.config.datasources);

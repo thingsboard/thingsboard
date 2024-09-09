@@ -1,0 +1,345 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container *ngIf="levelCardWidgetConfigForm" [formGroup]="levelCardWidgetConfigForm">
+  <tb-timewindow-config-panel *ngIf="displayTimewindowConfig"
+                              [onlyHistoryTimewindow]="onlyHistoryTimewindow()"
+                              formControlName="timewindowConfig">
+  </tb-timewindow-config-panel>
+  <tb-datasources
+    [configMode]="basicMode"
+    hideDataKeyLabel
+    hideDataKeyColor
+    hideDataKeyUnits
+    hideDataKeyDecimals
+    formControlName="datasources">
+  </tb-datasources>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
+        {{ 'widgets.liquid-level-card.title' | translate }}
+      </mat-slide-toggle>
+      <div class="tb-flex row flex-start align-center">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+          <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-font-settings formControlName="titleFont"
+                          [previewText]="levelCardWidgetConfigForm.get('title').value">
+        </tb-font-settings>
+        <tb-color-input asBoxInput colorClearButton formControlName="titleColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitleIcon">
+        {{ 'widgets.liquid-level-card.icon' | translate }}
+      </mat-slide-toggle>
+      <div class="tb-flex row flex-end align-center">
+        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+          <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-material-icon-select asBoxInput
+                                 iconClearButton
+                                 [color]="levelCardWidgetConfigForm.get('iconColor').value"
+                                 formControlName="titleIcon">
+        </tb-material-icon-select>
+        <tb-color-input asBoxInput colorClearButton formControlName="iconColor">
+        </tb-color-input>
+      </div>
+    </div>
+    <div fxFlex fxLayout="column" class="tb-form-row space-between">
+      <div class="tb-flex row space-between align-center no-gap fill-width">
+        <div class="fixed-title-width"  translate>widgets.liquid-level-card.shape</div>
+        <tb-toggle-select formControlName="tankSelectionType">
+          <tb-toggle-option *ngFor="let type of DataSourceTypes" [value]="type">
+            {{ DataSourceTypeTranslations.get(type) | translate }}
+          </tb-toggle-option>
+        </tb-toggle-select>
+      </div>
+      <tb-image-cards-select #shapesImageCardsSelect
+                             [fxShow]="levelCardWidgetConfigForm.get('tankSelectionType').value === DataSourceType.static"
+                             rowHeight="1:1"
+                             [cols]="{columns: 5,
+                                    breakpoints: {
+                                      'lt-md': 2
+                                    }}"
+                             style="width: 100%;"
+                             label="{{ 'widgets.liquid-level-card.shape-type' | translate }}" formControlName="selectedShape">
+        <tb-image-cards-select-option *ngFor="let shape of shapes"
+                                      [value]="shape"
+                                      [image]="createShape(shapesImageMap.get(shape), LevelCardLayout.simple)">
+          {{ ShapesTranslationMap.get(shape) | translate }}
+        </tb-image-cards-select-option>
+      </tb-image-cards-select>
+      <ng-container *ngIf="levelCardWidgetConfigForm.get('tankSelectionType').value === DataSourceType.attribute">
+        <div class="tb-form-row space-between" style="width: 100%;">
+          <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.shape-attribute-name</div>
+          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                  required style="flex: 1"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
+                                  formControlName="shapeAttributeName">
+          </tb-string-autocomplete>
+        </div>
+        <div class="tb-flex row space-between align-center no-gap fill-width">
+          <div class="tb-hint" style="padding: 0;" translate>widgets.liquid-level-card.shape-by-attribute</div>
+          <div class="see-example"
+               [tb-help-popup]="'widget/lib/indicator/shape_attribute_fn'"
+               tb-help-popup-placement="left"
+               trigger-style="font-size: 12px"
+               [tb-help-popup-style]="{maxWidth: '820px'}"
+               trigger-text="{{ 'widgets.liquid-level-card.see-examples' | translate }}">
+          </div>
+        </div>
+      </ng-container>
+    </div>
+    <tb-image-cards-select #layoutsImageCardsSelect rowHeight="1:1"
+                           cols="3"
+                           label="{{ 'widgets.liquid-level-card.layout' | translate }}" formControlName="layout">
+      <tb-image-cards-select-option
+        *ngFor="let layout of LevelCardLayouts"
+        [value]="layout"
+        [image]="createShape(shapesImageMap.get(levelCardWidgetConfigForm.get('selectedShape').value), layout)">
+        {{ LevelCardLayoutTranslationMap.get(layout) | translate }}
+      </tb-image-cards-select-option>
+    </tb-image-cards-select>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.liquid-level-card.units</div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.datasource-units</div>
+      <div class="tb-flex row flex-end align-center no-gap">
+        <tb-unit-input required style="max-width: 25%;" class="flex"
+                       [tagFilter]="unitsType.capacity"
+                       formControlName="datasourceUnits">
+        </tb-unit-input>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs" *ngIf="levelCardWidgetConfigForm.get('layout').value === LevelCardLayout.absolute">
+      <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.widget-units</div>
+      <div class="tb-flex row flex-start align-center">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
+          <mat-select formControlName="widgetUnitsSource" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
+              {{ DataSourceTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <tb-unit-input *ngIf="levelCardWidgetConfigForm.get('widgetUnitsSource').value === DataSourceType.static; else selectUnitsAttributes"
+                       class="flex" required
+                       [tagFilter]="unitsType.capacity"
+                       formControlName="units">
+        </tb-unit-input>
+        <ng-template #selectUnitsAttributes>
+          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                  required style="flex: 1"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
+                                  formControlName="widgetUnitsAttributeName">
+          </tb-string-autocomplete>
+        </ng-template>
+      </div>
+    </div>
+    <div class="tb-form-row column-xs" [fxShow]="volumeInput">
+      <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.total-volume</div>
+      <div class="tb-flex row flex-start align-center">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
+          <mat-select formControlName="volumeSource" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
+              {{ DataSourceTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <mat-form-field *ngIf="levelCardWidgetConfigForm.get('volumeSource').value === DataSourceType.static; else volumeAttributes"
+                        appearance="outline" class="flex number" subscriptSizing="dynamic">
+          <input matInput formControlName="volumeConstant" type="number"
+                 min="0.1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <mat-icon matSuffix
+                    matTooltipPosition="above"
+                    matTooltipClass="tb-error-tooltip"
+                    [matTooltip]="'widgets.liquid-level-card.total-volume-required' | translate"
+                    *ngIf="levelCardWidgetConfigForm.get('volumeConstant').hasError('required')"
+                    class="material-icons tb-suffix-show-always tb-error">
+            warning
+          </mat-icon>
+        </mat-form-field>
+        <ng-template #volumeAttributes>
+          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
+                                  required style="flex: 1"
+                                  formControlName="volumeAttributeName">
+          </tb-string-autocomplete>
+        </ng-template>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs" [fxShow]="volumeInput">
+      <div class="fixed-title-width tb-required" translate>widgets.liquid-level-card.total-volume-units</div>
+      <div class="tb-flex row flex-start align-center">
+        <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" style="max-width: 25%">
+          <mat-select formControlName="volumeUnitsSource" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-option *ngFor="let type of DataSourceTypes" [value]="type">
+              {{ DataSourceTypeTranslations.get(type) | translate }}
+            </mat-option>
+          </mat-select>
+        </mat-form-field>
+        <tb-unit-input *ngIf="levelCardWidgetConfigForm.get('volumeUnitsSource').value === DataSourceType.static; else selectVolumeUnitsAttributes"
+                       class="flex" required
+                       [tagFilter]="unitsType.capacity"
+                       formControlName="volumeUnits">
+        </tb-unit-input>
+        <ng-template #selectVolumeUnitsAttributes>
+          <tb-string-autocomplete [fetchOptionsFn]="fetchOptions.bind(this)"
+                                  required style="flex: 1"
+                                  [errorText]="'widgets.liquid-level-card.attribute-name-required' | translate"
+                                  formControlName="volumeUnitsAttributeName">
+          </tb-string-autocomplete>
+        </ng-template>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.liquid-level-card.color-and-font</div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>widgets.liquid-level-card.tank-color</div>
+      <tb-color-settings formControlName="tankColor" settingsKey="{{'widgets.liquid-level-card.tank-color' | translate }}">
+      </tb-color-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>widgets.liquid-level-card.liquid-color</div>
+      <tb-color-settings formControlName="liquidColor" settingsKey="{{'widgets.liquid-level-card.liquid-color' | translate }}">
+      </tb-color-settings>
+    </div>
+    <div class="tb-form-row space-between"
+         *ngIf="levelCardWidgetConfigForm.get('layout').value !== LevelCardLayout.simple">
+      <div class="fixed-title-width" translate>widgets.liquid-level-card.value</div>
+      <div class="tb-flex row flex-end align-center">
+        <mat-form-field style="max-width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
+          <input matInput formControlName="decimals" type="number"
+                 min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+          <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+        </mat-form-field>
+        <tb-font-settings formControlName="valueFont"
+                          [previewText]="valuePreviewFn">
+        </tb-font-settings>
+        <tb-color-settings formControlName="valueColor" settingsKey="{{'widgets.liquid-level-card.value' | translate }}">
+        </tb-color-settings>
+      </div>
+    </div>
+    <div class="tb-form-row" *ngIf="levelCardWidgetConfigForm.get('layout').value === LevelCardLayout.absolute">
+      <div class="fixed-title-width" translate>widgets.liquid-level-card.total-volume</div>
+      <div class="tb-flex row flex-end align-center">
+        <tb-font-settings formControlName="volumeFont"
+                          [previewText]="totalVolumeValuePreviewFn">
+        </tb-font-settings>
+        <tb-color-input asBoxInput colorClearButton formControlName="volumeColor">
+        </tb-color-input>
+      </div>
+    </div>
+  </div>
+  <div class="tb-form-panel tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings"
+      [expanded]="levelCardWidgetConfigForm.get('showTooltip').value"
+      [disabled]="!levelCardWidgetConfigForm.get('showTooltip').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widget-config.tooltip' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row column-xs">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipLevel">
+            {{ 'widgets.liquid-level-card.level' | translate }}
+          </mat-slide-toggle>
+          <div class="tb-flex row flex-end align-center">
+            <tb-unit-input required class="flex"
+                           [tagFilter]="unitsType.capacity"
+                           formControlName="tooltipUnits">
+            </tb-unit-input>
+            <mat-form-field style="width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
+              <input matInput formControlName="tooltipLevelDecimals" type="number" min="0"
+                     max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+              <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+            </mat-form-field>
+            <tb-font-settings formControlName="tooltipLevelFont"
+                              [previewText]="tooltipValuePreviewFn">
+            </tb-font-settings>
+            <tb-color-settings formControlName="tooltipLevelColor" settingsKey="{{'widgets.liquid-level-card.background-overlay' | translate }}">
+            </tb-color-settings>
+          </div>
+        </div>
+        <div class="tb-form-row column-xs">
+          <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipDate">
+            {{ 'widgets.value-card.date' | translate }}
+          </mat-slide-toggle>
+          <div class="tb-flex row flex-start align-center">
+            <tb-date-format-select fxFlex formControlName="tooltipDateFormat"></tb-date-format-select>
+            <tb-font-settings formControlName="tooltipDateFont"
+                              [previewText]="datePreviewFn">
+            </tb-font-settings>
+            <tb-color-input asBoxInput colorClearButton formControlName="tooltipDateColor">
+            </tb-color-input>
+          </div>
+        </div>
+        <div class="tb-form-row space-between">
+          <div class="fixed-title-width" translate>widgets.liquid-level-card.tooltip-background</div>
+          <tb-color-input asBoxInput colorClearButton formControlName="tooltipBackgroundColor">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <div class="fixed-title-width" translate>widgets.liquid-level-card.background-blur</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="tooltipBackgroundBlur" type="number" min="0" step="1"
+                   placeholder="{{ 'widget-config.set' | translate }}">
+            <div matSuffix>px</div>
+          </mat-form-field>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between column-lt-md">
+      <div translate>widget-config.show-card-buttons</div>
+      <mat-chip-listbox multiple formControlName="cardButtons">
+        <mat-chip-option value="fullscreen">{{ 'fullscreen.fullscreen' | translate }}</mat-chip-option>
+      </mat-chip-listbox>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-border-radius' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <tb-widget-actions-panel
+    formControlName="actions">
+  </tb-widget-actions-panel>
+</ng-container>

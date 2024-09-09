@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
 
 export interface AlertDialogData {
   title: string;
   message: string;
   ok: string;
+  textMode?: boolean;
 }
 
 @Component({
@@ -28,7 +33,11 @@ export interface AlertDialogData {
   templateUrl: './alert-dialog.component.html',
   styleUrls: ['./alert-dialog.component.scss']
 })
-export class AlertDialogComponent {
-  constructor(public dialogRef: MatDialogRef<AlertDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: AlertDialogData) {}
+export class AlertDialogComponent extends DialogComponent<AlertDialogComponent, boolean>{
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              public dialogRef: MatDialogRef<AlertDialogComponent, boolean>,
+              @Inject(MAT_DIALOG_DATA) public data: AlertDialogData) {
+    super(store,  router, dialogRef);
+  }
 }

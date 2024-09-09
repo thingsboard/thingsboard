@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ import { RuleChainService } from '@core/http/rule-chain.service';
 import { RuleChainPageComponent } from '@home/pages/rulechain/rulechain-page.component';
 import { RuleNodeComponentDescriptor } from '@shared/models/rule-node.models';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { ItemBufferService } from '@core/public-api';
+import { ItemBufferService, MenuId } from '@core/public-api';
 import { MODULES_MAP } from '@shared/public-api';
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -127,8 +127,7 @@ const routes: Routes = [
     path: 'ruleChains',
     data: {
       breadcrumb: {
-        label: 'rulechain.rulechains',
-        icon: 'settings_ethernet'
+        menuId: MenuId.rule_chains
       }
     },
     children: [

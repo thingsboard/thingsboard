@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -51,5 +51,12 @@ public class SqlEntityDatabaseSchemaService extends SqlAbstractDatabaseSchemaSer
     public void createOrUpdateViewsAndFunctions() throws Exception {
         log.info("Installing SQL DataBase schema views and functions: " + SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
         executeQueryFromFile(SCHEMA_VIEWS_AND_FUNCTIONS_SQL);
+    }
+
+    @Override
+    public void createCustomerTitleUniqueConstraintIfNotExists() {
+        executeQuery("DO $$ BEGIN IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'customer_title_unq_key') THEN " +
+                "ALTER TABLE customer ADD CONSTRAINT customer_title_unq_key UNIQUE(tenant_id, title); END IF; END; $$;",
+                "create 'customer_title_unq_key' constraint if it doesn't already exist!");
     }
 }

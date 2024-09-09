@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,14 +17,15 @@
 import { Directive, ElementRef, Input, OnDestroy, OnInit } from '@angular/core';
 import { Hotkey } from 'angular2-hotkeys';
 import { MousetrapInstance } from 'mousetrap';
-import * as Mousetrap from 'mousetrap';
+import Mousetrap from 'mousetrap';
 import { TbCheatSheetComponent } from '@shared/components/cheatsheet.component';
 
 @Directive({
+  // eslint-disable-next-line @angular-eslint/directive-selector
   selector : '[tb-hotkeys]'
 })
 export class TbHotkeysDirective implements OnInit, OnDestroy {
-  @Input() hotkeys: Hotkey[] = [];
+  @Input('tb-hotkeys') hotkeys: Hotkey[] = [];
   @Input() cheatSheet: TbCheatSheetComponent;
 
   private mousetrap: MousetrapInstance;
@@ -46,7 +47,7 @@ export class TbHotkeysDirective implements OnInit, OnDestroy {
     if (this.cheatSheet) {
       const hotkeyObj: Hotkey = new Hotkey(
         '?',
-        (event: KeyboardEvent) => {
+        () => {
           this.cheatSheet.toggleCheatSheet();
           return false;
         },
@@ -63,7 +64,7 @@ export class TbHotkeysDirective implements OnInit, OnDestroy {
     this.mousetrap.bind((hotkey as Hotkey).combo, (event: KeyboardEvent, combo: string) => {
       let shouldExecute = true;
       if (event) {
-        const target: HTMLElement = (event.target || event.srcElement) as HTMLElement;
+        const target: HTMLElement = event.target as HTMLElement;
         const nodeName: string = target.nodeName.toUpperCase();
         if ((' ' + target.className + ' ').indexOf(' mousetrap ') > -1) {
           shouldExecute = true;

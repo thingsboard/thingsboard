@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -25,11 +25,11 @@ import {
 } from '@angular/core';
 import { NotificationWebsocketService } from '@core/ws/notification-websocket.service';
 import { BehaviorSubject, ReplaySubject, Subscription } from 'rxjs';
-import { distinctUntilChanged, map, share, tap } from 'rxjs/operators';
+import { distinctUntilChanged, map, share, skip, tap } from 'rxjs/operators';
 import { MatButton } from '@angular/material/button';
 import { TbPopoverService } from '@shared/components/popover.service';
 import { ShowNotificationPopoverComponent } from '@home/components/notification/show-notification-popover.component';
-import { NotificationSubscriber } from '@shared/models/websocket/notification-ws.models';
+import { NotificationSubscriber } from '@shared/models/telemetry/telemetry.models';
 import { select, Store } from '@ngrx/store';
 import { selectIsAuthenticated } from '@core/auth/auth.selectors';
 import { AppState } from '@core/core.state';
@@ -77,11 +77,11 @@ export class NotificationBellComponent implements OnDestroy {
     if ($event) {
       $event.stopPropagation();
     }
-    this.unsubscribeSubscription();
     const trigger = createVersionButton._elementRef.nativeElement;
     if (this.popoverService.hasPopover(trigger)) {
       this.popoverService.hidePopover(trigger);
     } else {
+      this.unsubscribeSubscription();
       const showNotificationPopover = this.popoverService.displayPopover(trigger, this.renderer,
         this.viewContainerRef, ShowNotificationPopoverComponent, 'bottom', true, null,
         {
@@ -100,7 +100,9 @@ export class NotificationBellComponent implements OnDestroy {
 
   private initSubscription() {
     this.notificationSubscriber = NotificationSubscriber.createNotificationCountSubscription(this.notificationWsService, this.zone);
-    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.subscribe(value => this.countSubject.next(value));
+    this.notificationCountSubscriber = this.notificationSubscriber.notificationCount$.pipe(
+      skip(1),
+    ).subscribe(value => this.countSubject.next(value));
 
     this.notificationSubscriber.subscribe();
   }
@@ -108,5 +110,6 @@ export class NotificationBellComponent implements OnDestroy {
   private unsubscribeSubscription() {
     this.notificationCountSubscriber.unsubscribe();
     this.notificationSubscriber.unsubscribe();
+    this.notificationSubscriber = null;
   }
 }

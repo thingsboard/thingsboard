@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.thingsboard.server.service.ws.telemetry.cmd.v2;
 
 import lombok.Data;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.kv.IntervalType;
 
 import java.util.List;
 
@@ -26,7 +27,9 @@ public class EntityHistoryCmd implements GetTsCmd {
     private List<String> keys;
     private long startTs;
     private long endTs;
+    private IntervalType intervalType;
     private long interval;
+    private String timeZoneId;
     private int limit;
     private Aggregation agg;
     private boolean fetchLatestPreviousPoint;

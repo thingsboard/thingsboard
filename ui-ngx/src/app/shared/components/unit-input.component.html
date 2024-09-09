@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -20,13 +20,20 @@
          placeholder="{{ 'widget-config.set' | translate }}"
          (focusin)="onFocus()"
          [matAutocomplete]="unitsAutocomplete">
-  <button *ngIf="unitsFormControl.value && !disabled"
+  <button *ngIf="unitsFormControl.value && !disabled && unitsFormControl.valid"
           type="button"
           class="tb-icon-24"
           matSuffix mat-icon-button aria-label="Clear"
           (click)="clear()">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
+  <mat-icon matSuffix
+            matTooltipPosition="above"
+            matTooltipClass="tb-error-tooltip"
+            [matTooltip]="'widget-config.units-required' | translate"
+            *ngIf="unitsFormControl.hasError('required')" class="material-icons tb-suffix-show-always tb-error">
+    warning
+  </mat-icon>
   <mat-autocomplete
     #unitsAutocomplete="matAutocomplete"
     class="tb-autocomplete tb-unit-input-autocomplete"

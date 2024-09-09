@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.StringJoiner;
 import java.util.stream.Collectors;
 import java.util.stream.IntStream;
 
@@ -74,8 +75,8 @@ public class ThingsBoardDbInstaller {
                 new File("./../../docker/docker-compose.yml"),
                 new File("./../../docker/docker-compose.volumes.yml"),
                 IS_HYBRID_MODE
-                       ? new File("./../../docker/docker-compose.hybrid.yml")
-                       : new File("./../../docker/docker-compose.postgres.yml"),
+                        ? new File("./../../docker/docker-compose.hybrid.yml")
+                        : new File("./../../docker/docker-compose.postgres.yml"),
                 new File("./../../docker/docker-compose.postgres.volumes.yml"),
                 resolveRedisComposeFile(),
                 resolveRedisComposeVolumesFile()
@@ -156,7 +157,7 @@ public class ThingsBoardDbInstaller {
         return env;
     }
 
-    public void createVolumes()  {
+    public void createVolumes() {
         try {
 
             dockerCompose.withCommand("volume create " + postgresDataVolume);
@@ -200,7 +201,7 @@ public class ThingsBoardDbInstaller {
                 }
             } else if (IS_REDIS_SENTINEL) {
                 additionalServices.append(" redis-master");
-                dockerCompose.withCommand("volume create " + redisSentinelDataVolume +"-" + "master");
+                dockerCompose.withCommand("volume create " + redisSentinelDataVolume + "-" + "master");
                 dockerCompose.invokeDocker();
 
                 additionalServices.append(" redis-slave");
@@ -226,7 +227,8 @@ public class ThingsBoardDbInstaller {
             try {
                 dockerCompose.withCommand("down -v");
                 dockerCompose.invokeCompose();
-            } catch (Exception ignored) {}
+            } catch (Exception ignored) {
+            }
         }
     }
 
@@ -239,10 +241,23 @@ public class ThingsBoardDbInstaller {
         copyLogs(tbSnmpTransportLogVolume, "./target/tb-snmp-transport-logs/");
         copyLogs(tbVcExecutorLogVolume, "./target/tb-vc-executor-logs/");
 
-        dockerCompose.withCommand("volume rm -f " + postgresDataVolume + " " + tbLogVolume +
-                " " + tbCoapTransportLogVolume + " " + tbLwm2mTransportLogVolume + " " + tbHttpTransportLogVolume +
-                " " + tbMqttTransportLogVolume + " " + tbSnmpTransportLogVolume + " " + tbVcExecutorLogVolume + resolveRedisComposeVolumeLog());
-        dockerCompose.invokeDocker();
+        StringJoiner rmVolumesCommand = new StringJoiner(" ")
+                .add("volume rm -f")
+                .add(postgresDataVolume)
+                .add(tbLogVolume)
+                .add(tbCoapTransportLogVolume)
+                .add(tbLwm2mTransportLogVolume)
+                .add(tbHttpTransportLogVolume)
+                .add(tbMqttTransportLogVolume)
+                .add(tbSnmpTransportLogVolume)
+                .add(tbVcExecutorLogVolume)
+                .add(resolveRedisComposeVolumeLog());
+
+        if (IS_HYBRID_MODE) {
+            rmVolumesCommand.add(cassandraDataVolume);
+        }
+
+        dockerCompose.withCommand(rmVolumesCommand.toString());
     }
 
     private String resolveRedisComposeVolumeLog() {
@@ -266,7 +281,7 @@ public class ThingsBoardDbInstaller {
         dockerCompose.withCommand("run -d --rm --name " + logsContainerName + " -v " + volumeName + ":/root alpine tail -f /dev/null");
         dockerCompose.invokeDocker();
 
-        dockerCompose.withCommand("cp " + logsContainerName + ":/root/. "+tbLogsDir.getAbsolutePath());
+        dockerCompose.withCommand("cp " + logsContainerName + ":/root/. " + tbLogsDir.getAbsolutePath());
         dockerCompose.invokeDocker();
 
         dockerCompose.withCommand("rm -f " + logsContainerName);

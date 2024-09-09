@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -16,7 +16,9 @@
 
 export * from './admin.service';
 export * from './alarm.service';
+export * from './alarm-comment.service';
 export * from './asset.service';
+export * from './asset-profile.service';
 export * from './attribute.service';
 export * from './audit-log.service';
 export * from './component-descriptor.service';
@@ -24,12 +26,14 @@ export * from './customer.service';
 export * from './dashboard.service';
 export * from './device.service';
 export * from './device-profile.service';
+export * from './entities-version-control.service';
 export * from './entity.service';
 export * from './edge.service';
 export * from './entity-relation.service';
 export * from './entity-view.service';
 export * from './event.service';
 export * from './http-utils';
+export * from './image.service';
 export * from './notification.service';
 export * from './oauth2.service';
 export * from './ota-package.service';

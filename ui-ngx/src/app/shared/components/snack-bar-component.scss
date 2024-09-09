@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,6 +69,44 @@
     }
     &.success-toast {
       background: #008000;
+    }
+  }
+
+  .tb-modern-toast {
+    display: flex;
+    flex-direction: column;
+    z-index: 1;
+    &-panel {
+      display: flex;
+      padding: 4px 4px 4px 12px;
+      justify-content: center;
+      align-items: center;
+      gap: 4px;
+      border-radius: 4px;
+      box-shadow: -2px 2px 4px 0px rgba(0,0,0,0.2);
+      &.info-toast {
+        background: #e6e6e6;
+        color: rgba(50, 50, 50, 1);
+      }
+      &.warn-toast {
+        background: #fff3eb;
+        color: rgba(220, 109, 27, 1);
+
+      }
+      &.error-toast {
+        background-color: #fff2f3;
+        color: rgba(209, 39, 48, 1);
+      }
+      &.success-toast {
+        background: #ebfcec;
+        color: rgba(0, 128, 0, 1);
+      }
+    }
+    .toast-text {
+      font-size: 12px;
+      font-style: normal;
+      font-weight: 400;
+      line-height: 16px;
     }
   }
 }

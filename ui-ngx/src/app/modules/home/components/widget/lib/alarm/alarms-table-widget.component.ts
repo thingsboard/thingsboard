@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -204,6 +204,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnsWithCellClick: Array<number> = [];
 
   private rowStylesInfo: RowStyleInfo;
 
@@ -321,6 +322,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.ctx.detectChanges();
   }
 
+  public onEditModeChanged() {
+    if (this.textSearchMode || this.enableSelection && this.alarmsDatasource.selection.hasValue()) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
+  }
+
   public pageLinkSortDirection(): SortDirection {
     return entityDataPageLinkSortDirection(this.pageLink);
   }
@@ -351,6 +359,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.enableStickyAction = isDefined(this.settings.enableStickyAction) ? this.settings.enableStickyAction : false;
     this.showCellActionsMenu = isDefined(this.settings.showCellActionsMenu) ? this.settings.showCellActionsMenu : true;
     this.columnDisplayAction.show = isDefined(this.settings.enableSelectColumnDisplay) ? this.settings.enableSelectColumnDisplay : true;
+    this.columnsWithCellClick = this.ctx.actionsApi.getActionDescriptors('cellClick').map(action => action.columnIndex);
     let enableFilter;
     if (isDefined(this.settings.enableFilter)) {
       enableFilter = this.settings.enableFilter;
@@ -487,7 +496,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.alarmsDatasource = new AlarmsDatasource(this.subscription, latestDataKeys, this.ngZone, this.ctx, actionCellDescriptors);
     if (this.enableSelection) {
       this.alarmsDatasource.selectionModeChanged$.subscribe((selectionMode) => {
-        const hideTitlePanel = selectionMode || this.textSearchMode;
+        const hideTitlePanel = selectionMode || this.textSearchMode && !this.ctx.isEdit;
         if (this.ctx.hideTitlePanel !== hideTitlePanel) {
           this.ctx.hideTitlePanel = hideTitlePanel;
           this.ctx.detectChanges(true);
@@ -503,17 +512,16 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     const target = $event.target || $event.srcElement || $event.currentTarget;
-    const config = new OverlayConfig();
-    config.backdropClass = 'cdk-overlay-transparent-backdrop';
-    config.hasBackdrop = true;
-    const connectedPosition: ConnectedPosition = {
-      originX: 'end',
-      originY: 'bottom',
-      overlayX: 'end',
-      overlayY: 'top'
-    };
-    config.positionStrategy = this.overlay.position().flexibleConnectedTo(target as HTMLElement)
-      .withPositions([connectedPosition]);
+    const config = new OverlayConfig({
+      panelClass: 'tb-panel-container',
+      backdropClass: 'cdk-overlay-transparent-backdrop',
+      hasBackdrop: true,
+      height: 'fit-content',
+      maxHeight: '75vh'
+    });
+    config.positionStrategy = this.overlay.position()
+      .flexibleConnectedTo(target as HTMLElement)
+      .withPositions(DEFAULT_OVERLAY_POSITIONS);
 
     const overlayRef = this.overlay.create(config);
     overlayRef.backdropClick().subscribe(() => {
@@ -549,9 +557,18 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         useValue: overlayRef
       }
     ];
+
     const injector = Injector.create({parent: this.viewContainerRef.injector, providers});
-    overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
+    const componentRef = overlayRef.attach(new ComponentPortal(DisplayColumnsPanelComponent,
       this.viewContainerRef, injector));
+
+    const resizeWindows$ = fromEvent(window, 'resize').subscribe(() => {
+      overlayRef.updatePosition();
+    });
+    componentRef.onDestroy(() => {
+      resizeWindows$.unsubscribe();
+    });
+
     this.ctx.detectChanges();
   }
 
@@ -779,6 +796,33 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     return res;
   }
 
+  public onCellClick($event: Event, alarm: AlarmDataInfo, key: EntityColumn, columnIndex: number) {
+    this.alarmsDatasource.toggleCurrentAlarm(alarm);
+    const descriptors = this.ctx.actionsApi.getActionDescriptors('cellClick');
+    let descriptor;
+    if (descriptors.length) {
+      descriptor = descriptors.find(desc => desc.columnIndex === columnIndex);
+    }
+    if ($event && descriptor) {
+      $event.stopPropagation();
+      let entityId;
+      let entityName;
+      let entityLabel;
+      if (alarm && alarm.originator) {
+        entityId = alarm.originator;
+        entityName = alarm.entityName;
+        entityLabel = alarm.entityLabel;
+      }
+      this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, {alarm, key}, entityLabel);
+    }
+  }
+
+  public columnHasCellClick(columnIndex: number) {
+    if (this.columnsWithCellClick.length) {
+      return this.columnsWithCellClick.includes(columnIndex);
+    }
+  }
+
   public onRowClick($event: Event, alarm: AlarmDataInfo) {
     if ($event) {
       $event.stopPropagation();
@@ -888,12 +932,21 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     if (this.alarmsDatasource.selection.hasValue()) {
-      const alarmIds = this.alarmsDatasource.selection.selected.filter(
-        (alarmId) => alarmId !== NULL_UUID
+      const unacknowledgedAlarms = this.alarmsDatasource.selection.selected.filter(
+        alarm => alarm.id.id !== NULL_UUID && !alarm.acknowledged
       );
-      if (alarmIds.length) {
-        const title = this.translate.instant('alarm.aknowledge-alarms-title', {count: alarmIds.length});
-        const content = this.translate.instant('alarm.aknowledge-alarms-text', {count: alarmIds.length});
+      let title = '';
+      let content = '';
+      if (!unacknowledgedAlarms.length) {
+        title = this.translate.instant('alarm.selected-alarms', {count: unacknowledgedAlarms.length});
+        content = this.translate.instant('alarm.selected-alarms-are-acknowledged');
+        this.dialogService.alert(
+          title,
+          content
+        ).subscribe();
+      } else {
+        title = this.translate.instant('alarm.aknowledge-alarms-title', {count: unacknowledgedAlarms.length});
+        content = this.translate.instant('alarm.aknowledge-alarms-text', {count: unacknowledgedAlarms.length});
         this.dialogService.confirm(
           title,
           content,
@@ -901,16 +954,14 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           this.translate.instant('action.yes')
         ).subscribe((res) => {
           if (res) {
-            if (res) {
-              const tasks: Observable<AlarmInfo>[] = [];
-              for (const alarmId of alarmIds) {
-                tasks.push(this.alarmService.ackAlarm(alarmId));
-              }
-              forkJoin(tasks).subscribe(() => {
-                this.alarmsDatasource.clearSelection();
-                this.subscription.update();
-              });
+            const tasks: Observable<AlarmInfo>[] = [];
+            for (const alarm of unacknowledgedAlarms) {
+              tasks.push(this.alarmService.ackAlarm(alarm.id.id));
             }
+            forkJoin(tasks).subscribe(() => {
+              this.alarmsDatasource.clearSelection();
+              this.subscription.update();
+            });
           }
         });
       }
@@ -944,12 +995,21 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
       $event.stopPropagation();
     }
     if (this.alarmsDatasource.selection.hasValue()) {
-      const alarmIds = this.alarmsDatasource.selection.selected.filter(
-        (alarmId) => alarmId !== NULL_UUID
+      const activeAlarms = this.alarmsDatasource.selection.selected.filter(
+        alarm => alarm.id.id !== NULL_UUID && !alarm.cleared
       );
-      if (alarmIds.length) {
-        const title = this.translate.instant('alarm.clear-alarms-title', {count: alarmIds.length});
-        const content = this.translate.instant('alarm.clear-alarms-text', {count: alarmIds.length});
+      let title = '';
+      let content = '';
+      if (!activeAlarms.length) {
+        title = this.translate.instant('alarm.selected-alarms', {count: activeAlarms.length});
+        content = this.translate.instant('alarm.selected-alarms-are-cleared');
+        this.dialogService.alert(
+          title,
+          content
+        ).subscribe();
+      } else {
+        title = this.translate.instant('alarm.clear-alarms-title', {count: activeAlarms.length});
+        content = this.translate.instant('alarm.clear-alarms-text', {count: activeAlarms.length});
         this.dialogService.confirm(
           title,
           content,
@@ -957,16 +1017,14 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           this.translate.instant('action.yes')
         ).subscribe((res) => {
           if (res) {
-            if (res) {
-              const tasks: Observable<AlarmInfo>[] = [];
-              for (const alarmId of alarmIds) {
-                tasks.push(this.alarmService.clearAlarm(alarmId));
-              }
-              forkJoin(tasks).subscribe(() => {
-                this.alarmsDatasource.clearSelection();
-                this.subscription.update();
-              });
+            const tasks: Observable<AlarmInfo>[] = [];
+            for (const alarm of activeAlarms) {
+              tasks.push(this.alarmService.clearAlarm(alarm.id.id));
             }
+            forkJoin(tasks).subscribe(() => {
+              this.alarmsDatasource.clearSelection();
+              this.subscription.update();
+            });
           }
         });
       }
@@ -1124,7 +1182,8 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
   private alarmsSubject = new BehaviorSubject<AlarmDataInfo[]>([]);
   private pageDataSubject = new BehaviorSubject<PageData<AlarmDataInfo>>(emptyPageData<AlarmDataInfo>());
 
-  public selection = new SelectionModel<string>(true, [], false);
+  public selection = new SelectionModel<AlarmDataInfo>(true, [], false,
+    (alarm1: AlarmDataInfo, alarm2: AlarmDataInfo) => alarm1.id.id === alarm2.id.id);
 
   private selectionModeChanged = new EventEmitter<boolean>();
 
@@ -1202,7 +1261,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
     }
     if (this.selection.hasValue()) {
       const alarmIds = alarms.map((alarm) => alarm.id.id);
-      const toRemove = this.selection.selected.filter(alarmId => alarmIds.indexOf(alarmId) === -1);
+      const toRemove = this.selection.selected.filter(alarm => alarmIds.indexOf(alarm.id.id) === -1);
       this.selection.deselect(...toRemove);
       if (this.selection.isEmpty()) {
         isEmptySelection = true;
@@ -1276,14 +1335,14 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
 
   toggleSelection(alarm: AlarmDataInfo) {
     const hasValue = this.selection.hasValue();
-    this.selection.toggle(alarm.id.id);
+    this.selection.toggle(alarm);
     if (hasValue !== this.selection.hasValue()) {
       this.onSelectionModeChanged(this.selection.hasValue());
     }
   }
 
   isSelected(alarm: AlarmDataInfo): boolean {
-    return this.selection.isSelected(alarm.id.id);
+    return this.selection.isSelected(alarm);
   }
 
   clearSelection() {
@@ -1304,7 +1363,7 @@ class AlarmsDatasource implements DataSource<AlarmDataInfo> {
           }
         } else {
           alarms.forEach(row => {
-            this.selection.select(row.id.id);
+            this.selection.select(row);
           });
           if (numSelected === 0) {
             this.onSelectionModeChanged(true);

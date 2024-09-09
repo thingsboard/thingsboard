@@ -1,0 +1,72 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+:host {
+  .mat-mdc-dialog-content {
+    display: flex;
+    width: 780px;
+    flex-direction: column;
+    gap: 16px;
+    .tb-embed-image-text {
+      font-size: 14px;
+      font-weight: 400;
+      line-height: 20px;
+      color: rgba(0,0,0,0.54);
+      letter-spacing: 0.2px;
+    }
+    .tb-form-panel-title {
+      color: rgba(0, 0, 0, 0.87);
+    }
+  }
+}
+
+:host ::ng-deep {
+  .tb-markdown-view {
+    max-width: 700px;
+    .tb-embed-image-code {
+      .code-wrapper {
+        padding: 0;
+        pre[class*=language-] {
+          margin: 0;
+          padding: 9px 38px 9px 16px;
+        }
+        code[class*="language-"], pre[class*="language-"] {
+          font-size: 12px;
+          overflow: hidden;
+          white-space: normal;
+          word-break: break-word;
+        }
+        button.clipboard-btn {
+          right: 0;
+          height: 36px;
+          p, div {
+            background: transparent;
+          }
+          p {
+            margin: 0;
+            padding: 6px;
+            font-size: 14px;
+          }
+          div {
+            top: 0;
+            padding: 8px;
+            height: 38px;
+            width: 38px;
+          }
+        }
+      }
+    }
+  }
+}

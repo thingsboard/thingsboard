@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     Page<NotificationRequestEntity> findByTenantIdAndOriginatorEntityType(UUID tenantId, EntityType originatorType, Pageable pageable);
 
     @Query(REQUEST_INFO_QUERY + " WHERE r.tenantId = :tenantId AND r.originatorEntityType = :originatorType " +
-            "AND (:searchText = '' OR t.name IS NOT NULL AND lower(t.name) LIKE lower(concat('%', :searchText, '%')))")
+            "AND (:searchText is NULL OR (t.name IS NOT NULL AND ilike(t.name, concat('%', :searchText, '%')) = true))")
     Page<NotificationRequestInfoEntity> findInfosByTenantIdAndOriginatorEntityTypeAndSearchText(@Param("tenantId") UUID tenantId,
                                                                                                 @Param("originatorType") EntityType originatorType,
                                                                                                 @Param("searchText") String searchText,
@@ -70,9 +70,13 @@ public interface NotificationRequestRepository extends JpaRepository<Notificatio
     boolean existsByTenantIdAndStatusAndTemplateId(UUID tenantId, NotificationRequestStatus status, UUID templateId);
 
     @Transactional
-    int deleteAllByCreatedTimeBefore(long ts);
+    @Modifying
+    @Query("DELETE FROM NotificationRequestEntity r WHERE r.createdTime < :ts")
+    int deleteAllByCreatedTimeBefore(@Param("ts") long ts);
 
     @Transactional
-    void deleteByTenantId(UUID tenantId);
+    @Modifying
+    @Query("DELETE FROM NotificationRequestEntity r WHERE r.tenantId = :tenantId")
+    void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
 }

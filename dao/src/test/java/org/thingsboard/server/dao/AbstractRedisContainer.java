@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,7 +26,7 @@ import java.util.List;
 public class AbstractRedisContainer {
 
     @ClassRule(order = 0)
-    public static GenericContainer redis = new GenericContainer("redis:7.0")
+    public static GenericContainer redis = new GenericContainer("redis:7.2")
             .withExposedPorts(6379);
 
     @ClassRule(order = 1)

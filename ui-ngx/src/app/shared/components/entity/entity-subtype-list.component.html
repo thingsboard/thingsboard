@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -24,13 +24,14 @@
       *ngFor="let entitySubtype of entitySubtypeList"
       [removable]="!disabled"
       (removed)="remove(entitySubtype)">
-      {{entitySubtype}}
+      {{customTranslate(entitySubtype)}}
       <mat-icon matChipRemove *ngIf="!disabled">close</mat-icon>
     </mat-chip-row>
     <input matInput type="text" placeholder="{{ !disabled ? ((!entitySubtypeList || !entitySubtypeList.length) ? placeholder : secondaryPlaceholder) : '' }}"
            style="max-width: 200px;"
            #entitySubtypeInput
            (focusin)="onFocus()"
+           (blur)="addOnBlur($event)"
            formControlName="entitySubtype"
            matAutocompleteOrigin
            #origin="matAutocompleteOrigin"
@@ -46,11 +47,6 @@
                     [displayWith]="displayEntitySubtypeFn">
     <mat-option *ngFor="let entitySubtype of filteredEntitySubtypeList | async" [value]="entitySubtype">
       <span [innerHTML]="entitySubtype | highlight:searchText"></span>
-    </mat-option>
-    <mat-option *ngIf="!(filteredEntitySubtypeList | async)?.length" [value]="null">
-      <span>
-          {{ translate.get(noSubtypesMathingText, {entitySubtype: searchText}) | async }}
-      </span>
     </mat-option>
   </mat-autocomplete>
   <div matSuffix>

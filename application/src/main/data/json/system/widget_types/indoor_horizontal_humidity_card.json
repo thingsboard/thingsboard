@@ -1,0 +1,38 @@
+{
+  "fqn": "indoor_horizontal_humidity_card",
+  "name": "Indoor horizontal humidity card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAmVBMVEUAAADf39/f39/g4ODg4ODf39/////k5OQ/pxrg4ODz8/NXsja33qnOzs7IyMisrKyf04zz+vHn9ONLrCi2traHyHD5+fnb29vCwsKQkJDn9OJvvVPb79S8vLw9PT3n5+eTzn7V1dXP6cZYWFhjt0V0dHTD5LhmZmb19fXt7e2r2Jur2JqCgoJKSkp7wmGenp4vLy8hISH9/f1hfASuAAAABnRSTlMAIEDfv1C6kOEmAAADLUlEQVR42u3aa3OaQBiGYdukD6+7nJGDKApKtDGapv3/P64cYtFOqvmgDXGea0YHd794uy6DIwMiIiIiIiIiIiIiIiIiIiIiIiIiIiKi/+nLp9dkfL0zPrvh3beqw/iOT++78XVwr3ADvt8PhrgFv4Y3EgKG9A1D+oYhfcOQvrnxkKfSwwHHQJHhwBaA7dgO+nOd9maIK6J9dJY2nAelYMBonuEAhjMubHunDKgr1qxMH8DUbHhoeBvXPxPSdRyXLH/Y2wf7AUtjtp2t10vMsF3Pxs54PBu9qK2DazFFTAChNHzUUq1Lmb4nxJVG6XUhD+P1a0i1EPhZhbzAqUKMJcY/ZgauJNVtyEQ23Yq4gQcdVnOLMyFTeZUffbWOQ9RsH2LP1riWXHQTUgo6rq7KQuQaZ0K07C2O98hu/dKtyHi9q0LULsPSwZWkkk+aEAngYe9J/FTnqfhnQkyRcBNI8CyicUy98UIZO4Ur0dpvQjwJApFnHw2vrDewDnEmRIsAYTBFWS/JeT9GuBK3imhCUgnCXHef63SKJ+2fDGl3iLsqp3CbXfKBUgnRhsBLq0cgi24uMKeu658KWUglaDskxAfS4ppmKeEKrVBc7IVhGkxKmZ4ISV87njfBx66IJ680FqYPIO9CTPHzAND5iRAEIiu4AoT1QUvhDeoRx5TCJS1qpeTVhpDnZoUW+0btImxOwqdCXBGd1/vkYHeN2hiFxxiNKEI0tOqBISIAc2eOKI7biQi4WFJ71tISupPu7aw08BT41UY5FeJp2TMPQorCim3bqo4SJHGSRaPEKgrbyh6tLAKsucqyGMpqJiw7u2QI0omITHwc8CbViHcqBOm+ZIPDEGukbGtutSHzIq6Oq7F5bCV2EzKM4yrEHs1tVeUmChfl+R7+4vvnrrU8sxQJwin+cKw4sUaFnah6RawsTkZqZFvV2GM2ty3UIVG9IvPMqSeKJMEFXP+HVTzHvxV2jPfoQ0gUnZpUeI9ehPQRQ/qGIX3DkL65pZBfuAXDwf0N/M0OqPvbuWFg8O1uaHx2d19v6aYaIiIiIiIiIiIiIiIiIiIiIiIiIiIiov/kN5uj+TgHcSVHAAAAAElFTkSuQmCC",
+  "description": "Displays the latest indoor humidity telemetry in a scalable horizontal layout.",
+  "descriptor": {
+    "type": "latest",
+    "sizeX": 5,
+    "sizeY": 1,
+    "resources": [],
+    "templateHtml": "<tb-value-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-card-widget>",
+    "templateCss": "",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueCardWidget.onDataUpdated();\n};\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        horizontal: true,\n        previewWidth: '420px',\n        previewHeight: '90px',\n        embedTitlePanel: true,\n        defaultDataKeysFunction: function() {\n            return [{ name: 'humidity', label: 'Humidity', type: 'timeseries' }];\n        }\n    };\n};\n\nself.onDestroy = function() {\n};\n",
+    "settingsSchema": "",
+    "dataKeySettingsSchema": "",
+    "settingsDirective": "tb-value-card-widget-settings",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Humidity\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.2392660816082064,\"funcBody\":\"var value = prevValue + Math.random() * 7;\\nif (value < 0) {\\n\\tvalue = 0;\\n} else if (value > 100) {\\n\\tvalue = 0;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]}}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}},\"showTitle\":false,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"labelPosition\":\"top\",\"layout\":\"horizontal\",\"showLabel\":true,\"labelFont\":{\"family\":\"Roboto\",\"size\":16,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"labelColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"showIcon\":true,\"iconSize\":40,\"iconSizeUnit\":\"px\",\"icon\":\"mdi:water-percent\",\"iconColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":30,\"color\":\"#FFA600\"},{\"from\":30,\"to\":60,\"color\":\"#3FA71A\"},{\"from\":60,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"valueFont\":{\"size\":36,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\",\"rangeList\":[{\"from\":null,\"to\":30,\"color\":\"#FFA600\"},{\"from\":30,\"to\":60,\"color\":\"#3FA71A\"},{\"from\":60,\"to\":null,\"color\":\"#D81838\"}]},\"showDate\":true,\"dateFormat\":{\"format\":null,\"lastUpdateAgo\":true,\"custom\":false},\"dateFont\":{\"family\":\"Roboto\",\"size\":12,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\"},\"dateColor\":{\"type\":\"constant\",\"color\":\"rgba(0, 0, 0, 0.38)\",\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}},\"autoScale\":true},\"title\":\"Horizontal humidity card\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":{\"fontSize\":\"16px\",\"fontWeight\":400},\"units\":\"%\",\"decimals\":0,\"useDashboardTimewindow\":true,\"showLegend\":false,\"widgetStyle\":{},\"actions\":{},\"configMode\":\"basic\",\"displayTimewindow\":true,\"margin\":\"0px\",\"borderRadius\":\"0px\",\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"showTitleIcon\":false,\"titleTooltip\":\"\",\"titleFont\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1.6\"},\"titleIcon\":\"\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"iconSize\":\"14px\",\"timewindowStyle\":{\"showIcon\":true,\"iconSize\":\"14px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":null,\"weight\":null,\"style\":null,\"lineHeight\":\"1\"},\"color\":null}}"
+  },
+  "externalId": null,
+  "tags": [
+    "environment",
+    "humidity",
+    "indoor",
+    "moisture",
+    "dampness",
+    "wetness",
+    "humidness",
+    "moistness",
+    "dew",
+    "water vapor",
+    "condensation",
+    "dew point",
+    "steaminess"
+  ]
+}

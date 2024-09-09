@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,8 +47,8 @@ public abstract class ContextAwareActor extends AbstractTbActor {
     protected abstract boolean doProcess(TbActorMsg msg);
 
     @Override
-    public ProcessFailureStrategy onProcessFailure(Throwable t) {
-        log.debug("[{}] Processing failure: ", getActorRef().getActorId(), t);
+    public ProcessFailureStrategy onProcessFailure(TbActorMsg msg, Throwable t) {
+        log.debug("[{}] Processing failure for msg {}", getActorRef().getActorId(), msg, t);
         return doProcessFailure(t);
     }
 

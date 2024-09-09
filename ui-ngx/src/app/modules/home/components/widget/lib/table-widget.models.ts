@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -19,11 +19,13 @@ import { DataKey, FormattedData, WidgetActionDescriptor, WidgetConfig } from '@s
 import { getDescendantProp, isDefined, isNotEmptyStr } from '@core/utils';
 import { AlarmDataInfo, alarmFields } from '@shared/models/alarm.models';
 import tinycolor from 'tinycolor2';
-import { Direction, EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
+import { Direction } from '@shared/models/page/sort-order';
+import { EntityDataSortOrder, EntityKey } from '@shared/models/query/query.models';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
+import { EntityType } from '@shared/models/entity-type.models';
 
 type ColumnVisibilityOptions = 'visible' | 'hidden' | 'hidden-mobile';
 
@@ -64,7 +66,7 @@ export interface EntityData {
   id: EntityId;
   entityName: string;
   entityLabel?: string;
-  entityType?: string;
+  entityType?: EntityType;
   actionCellButtons?: TableCellButtonActionDescriptor[];
   hasActions?: boolean;
   [key: string]: any;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.ws.telemetry.cmd.v1;
 
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.service.ws.telemetry.TelemetryFeature;
+import org.thingsboard.server.service.ws.WsCmdType;
 
 /**
  * @author Andrew Shvayka
@@ -25,8 +25,8 @@ import org.thingsboard.server.service.ws.telemetry.TelemetryFeature;
 public class AttributesSubscriptionCmd extends SubscriptionCmd {
 
     @Override
-    public TelemetryFeature getType() {
-        return TelemetryFeature.ATTRIBUTES;
+    public WsCmdType getType() {
+        return WsCmdType.ATTRIBUTES;
     }
 
 }

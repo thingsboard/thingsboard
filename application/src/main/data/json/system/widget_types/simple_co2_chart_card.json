@@ -1,0 +1,43 @@
+{
+  "fqn": "simple_co2_chart_card",
+  "name": "Simple CO2 chart card",
+  "deprecated": false,
+  "image": "data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAMgAAACgCAMAAAB+IdObAAAAkFBMVEUAAAAAAAD19fUAAABvb2/9/f36+vrx8fHk5OTU1NT///+AwywhISHj4+N0dHTx8fGv2XtYWFjHx8eQy0bv9+Xf8Mq/4ZU8PDwvLy/3+/KQkJCCgoKIxzmsrKyQykbV1dWg0mCg0mGenp643Yi6urrP6bDn9NhKSkpmZmaYzlOdnZ2rq6vX7L3H5aPH5aKo1m5LZ5BzAAAACnRSTlMAH8cQMfHjso9z2hGKZwAABOpJREFUeNrsz0kRwCAQADBuKP4Fd+qgT9hJHCQBAAAAAAD8VvP16tdoq+/L9dlqymMHMFp6dggrlR3CjBIpIocROc3Lbr2s1goEURieL+pC1aQbm6ZBBEXf//2OtkJOSGBvCIQK9A+6QBz4DRQHJFoDEq0BidaARGtAovU+ZJayXFvv1UkK48oE3+TE+MXeh1guQjNQsmzXpjSlpMBfg1RiYMpwWs4ldWpo5MAN0Xlm+AK0Cvi8RIGI1H58VDIA9mepgp9n7RBOZpkrKTY7uVvagkCMF95c8JGk/5cmAJwEVyb9qhXNFXQoHXBqMSAr+wVhSw29zxClGdB1VQAdsiazbDBZSJ1WW6nGgBSZVeTQXRx3e1ZgMd3pXCe/SIyeCZK5e4Nn2dBodneNAXliq4o7zUVbsnO31lICSnZmBTpkyqx7g+Z8nCdhlVgQrZXxtCQiY4DvZboSoENUiFZ+PgktEZUgL/u3sd6riq8pf73z541flD/cgERrQKI1INEakGgNSLQGJFoD8hu5mBXHG4WGsFE2yySKl0WGcMrHtRMZXhYZItTQ26niVZEh/9gzt+VkYSAA328CgoRDOIhURWk9vP/b/etmmf50pgQbZ8yF30xhMbnYj81GikUITGwvicci9JLZUEprl3gsUkkYCeQHWPBYJI8Blq8t70TWYVwFpgpfAMvXlm8ipSximQfAv8csX1ueiaxliVkXebvaFyeAB9bWq0VWVS6PDTD820WbS/Mm+YG19WKRIC/CMpbH8VJW5rz/XP+YiKWaZUZEKz2NR5SCZ3Gidvgcswx/f4EfF4ExapqJo1Xk3Akhut5k3tVCJAcgLhjXkQY3pj0c5+ayCOdqV7bBOpZI3gBjFzlgtgmqpBhrDBJM/wJIZgY6eAZ72fLD1No0QjAjHUqkKINgf5QhT7SLJCLRoGpK+EI+O1FrACVERp8c4AmEBbd8XjRtUMlqvn77Zr3i1s/R3C5C+V7hnrzA4yAiPGpKPhM1IFtx+24enaZ6jFWach+Nse5TBb9wPI05niRSPbBJyI+FInTLMxJBKVOkHcANa0SGGyAyscFJIrlgHIkouse9mdxRfK7xFOm5FiHaplk9tG0vEaEqdNQcEUshdLElEWPIgRi2ppkijmuFk/G0xTjBE8bZTIu4YBfpsUmiWiTqW2T7i8gVqJlIpAdIhdhRjylamje6KwP8hFvEgrMI5YBcwS7CJ40iGzNvw+WDlCrFA1O4RSy4itAelR0iIS7LRM5YDMqXP7KL2J8E3UVMBufxRo8iw4wIZcz5HpaKVDIAC84inB856OmuNfCuNRX5Q0VaGYIFd5ELloILMyalxu8RDVSYiUg06ZFhiciXzFdgwVmEtx59E0JR8njcUdzTQEpSLJKhZMK71plW1s4mQh5Hq4e7CCWVdDVmyc9aXUIx+SQD/gGwiLkWir9H7mPKLlLaPNxFmAwzF/WVYnWjmAdQT2w1IFyRBAfPJt/dfUyBVaS0vwZ1Fxn5/xlJU8z0PWuMPdLjIOdLEy2QB9hxF1kOiTAksohSVvB3PBL5/AAHPBJx5/ki9D8H06c9vA6/3mu9Rd4iHvIW8Y23iG+8RXzjLfKvnTuoASCEASDYgyZw+BeMBZ7QzDhYA3sbIbdpMVYJLeYq4Y+sMUH6oud4f0s1s9cZhQEAAAAAAJzZz8keC0HEP5QAAAAASUVORK5CYII=",
+  "description": "Displays historical CO2 level values as a simplified chart. Optionally may display the corresponding latest CO2 level value.",
+  "descriptor": {
+    "type": "timeseries",
+    "sizeX": 4.5,
+    "sizeY": 2,
+    "resources": [],
+    "templateHtml": "<tb-value-chart-card-widget \n    [ctx]=\"ctx\"\n    [widgetTitlePanel]=\"widgetTitlePanel\">\n</tb-value-chart-card-widget>\n",
+    "templateCss": ".legend {\n    font-size: 13px;\n    line-height: 10px;\n}\n\n.legend table { \n    border-spacing: 0px;\n    border-collapse: separate;\n}\n\n.mouse-events .flot-overlay {\n    cursor: crosshair; \n}\n\n",
+    "controllerScript": "self.onInit = function() {\n    self.ctx.$scope.valueChartCardWidget.onInit();\n};\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onDataUpdated();\n};\n\nself.onLatestDataUpdated = function() {\n    self.ctx.$scope.valueChartCardWidget.onLatestDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.valueChartCardWidget.onEditModeChanged();\n}\n\nself.onDestroy = function() {\n    self.ctx.$scope.valueChartCardWidget.onDestroy();\n}\n\nself.typeParameters = function() {\n    return {\n        maxDatasources: 1,\n        maxDataKeys: 1,\n        singleEntity: true,\n        previewWidth: '300px',\n        previewHeight: '150px',\n        embedTitlePanel: true,\n        hasAdditionalLatestDataKeys: true,\n        defaultDataKeysFunction: function() {\n            return [\n                 { name: 'co2', label: 'CO2 level', type: 'timeseries', color: 'rgba(0, 0, 0, 0.87)'}\n            ];\n        },\n        defaultLatestDataKeysFunction: function(configComponent) {\n            return [{ name: 'co2', label: 'Latest', type: 'timeseries'}];\n        }\n    };\n}\n",
+    "settingsSchema": "{}",
+    "dataKeySettingsSchema": "{}",
+    "latestDataKeySettingsSchema": "{}",
+    "settingsDirective": "tb-value-chart-card-widget-settings",
+    "dataKeySettingsDirective": "",
+    "latestDataKeySettingsDirective": "",
+    "hasBasicMode": true,
+    "basicModeDirective": "tb-value-chart-card-basic-config",
+    "defaultConfig": "{\"datasources\":[{\"type\":\"function\",\"name\":\"\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"CO2 level\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 160 - 80;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 400) {\\n\\tvalue = 400;\\n} else if (value > 1600) {\\n\\tvalue = 1600;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}],\"alarmFilterConfig\":{\"statusList\":[\"ACTIVE\"]},\"latestDataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"Latest\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"settings\":{},\"_hash\":0.8587686344902596,\"funcBody\":\"var value = prevValue + Math.random() * 160 - 80;\\nvar multiplier = Math.pow(10, 2 || 0);\\nvar value = Math.round(value * multiplier) / multiplier;\\nif (value < 400) {\\n\\tvalue = 400;\\n} else if (value > 1600) {\\n\\tvalue = 1600;\\n}\\nreturn value;\",\"aggregationType\":null,\"units\":null,\"decimals\":null,\"usePostProcessing\":null,\"postFuncBody\":null}]}],\"showTitle\":true,\"backgroundColor\":\"rgba(0, 0, 0, 0)\",\"color\":null,\"padding\":\"0\",\"settings\":{\"layout\":\"left\",\"autoScale\":true,\"showValue\":true,\"valueFont\":{\"family\":\"Roboto\",\"size\":28,\"sizeUnit\":\"px\",\"style\":\"normal\",\"weight\":\"500\",\"lineHeight\":\"32px\"},\"valueColor\":{\"type\":\"range\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"rangeList\":[{\"from\":null,\"to\":600,\"color\":\"#3FA71A\"},{\"from\":600,\"to\":1000,\"color\":\"#80C32C\"},{\"from\":1000,\"to\":1500,\"color\":\"#F36900\"},{\"from\":1500,\"to\":null,\"color\":\"#D81838\"}],\"colorFunction\":\"var temperature = value;\\nif (typeof temperature !== undefined) {\\n  var percent = (temperature + 60)/120 * 100;\\n  return tinycolor.mix('blue', 'red', percent).toHexString();\\n}\\nreturn 'blue';\"},\"background\":{\"type\":\"color\",\"color\":\"#fff\",\"overlay\":{\"enabled\":false,\"color\":\"rgba(255,255,255,0.72)\",\"blur\":3}}},\"title\":\"CO2 level\",\"dropShadow\":true,\"enableFullscreen\":false,\"titleStyle\":null,\"mobileHeight\":null,\"configMode\":\"basic\",\"actions\":{},\"showTitleIcon\":true,\"titleIcon\":\"co2\",\"iconColor\":\"rgba(0, 0, 0, 0.87)\",\"titleFont\":{\"size\":16,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"500\",\"style\":\"normal\",\"lineHeight\":\"24px\"},\"iconSize\":\"18px\",\"titleTooltip\":\"\",\"widgetStyle\":{},\"widgetCss\":\"\",\"pageSize\":1024,\"noDataDisplayMessage\":\"\",\"useDashboardTimewindow\":true,\"decimals\":0,\"titleColor\":\"rgba(0, 0, 0, 0.87)\",\"borderRadius\":null,\"units\":\"ppm\",\"displayTimewindow\":true,\"timewindow\":{\"hideInterval\":false,\"hideLastInterval\":false,\"hideQuickInterval\":false,\"hideAggregation\":false,\"hideAggInterval\":false,\"hideTimezone\":false,\"selectedTab\":1,\"history\":{\"historyType\":2,\"timewindowMs\":60000,\"interval\":43200000,\"fixedTimewindow\":{\"startTimeMs\":1697382151041,\"endTimeMs\":1697468551041},\"quickInterval\":\"CURRENT_MONTH_SO_FAR\"},\"aggregation\":{\"type\":\"AVG\",\"limit\":25000}},\"timewindowStyle\":{\"showIcon\":false,\"iconSize\":\"24px\",\"icon\":\"query_builder\",\"iconPosition\":\"left\",\"font\":{\"size\":12,\"sizeUnit\":\"px\",\"family\":\"Roboto\",\"weight\":\"400\",\"style\":\"normal\",\"lineHeight\":\"16px\"},\"color\":\"rgba(0, 0, 0, 0.38)\",\"displayTypePrefix\":true}}"
+  },
+  "externalId": null,
+  "tags": [
+    "weather",
+    "environment",
+    "co2",
+    "carbon dioxide",
+    "carbon emission",
+    "carbon footprint",
+    "carbon output",
+    "carbon pollution",
+    "carbon capture",
+    "carbon offset",
+    "carbon reduction",
+    "carbon neutral",
+    "climate gas",
+    "fossil fuel emission",
+    "carbon cycle"
+  ]
+}

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,9 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonPrimitive;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Data;
 import lombok.SneakyThrows;
 import org.apache.commons.lang3.exception.ExceptionUtils;
@@ -29,9 +32,12 @@ import org.springframework.security.core.context.SecurityContextHolder;
 import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.HasAdditionalInfo;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
@@ -47,7 +53,7 @@ import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportColumn
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportRequest;
 import org.thingsboard.server.common.data.sync.ie.importing.csv.BulkImportResult;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
-import org.thingsboard.server.common.transport.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.util.TypeCastUtil;
 import org.thingsboard.server.controller.BaseController;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.service.action.EntityActionService;
@@ -58,11 +64,7 @@ import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 import org.thingsboard.server.utils.CsvUtils;
-import org.thingsboard.server.common.data.util.TypeCastUtil;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
@@ -146,6 +148,9 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         if (entity.getId() != null) {
             importedEntityInfo.setOldEntity((E) entity.getClass().getConstructor(entity.getClass()).newInstance(entity));
             importedEntityInfo.setUpdated(true);
+            if (entity instanceof HasVersion versionedEntity) {
+                versionedEntity.setVersion(null); // to overwrite the entity regardless of concurrent changes
+            }
         } else {
             setOwners(entity, user);
         }
@@ -230,19 +235,19 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         List<AttributeKvEntry> attributes = new ArrayList<>(JsonConverter.convertToAttributes(kvsEntry.getValue()));
 
         accessValidator.validateEntityAndCallback(user, Operation.WRITE_ATTRIBUTES, entity.getId(), (result, tenantId, entityId) -> {
-            tsSubscriptionService.saveAndNotify(tenantId, entityId, scope, attributes, new FutureCallback<>() {
+            tsSubscriptionService.saveAndNotify(tenantId, entityId, AttributeScope.valueOf(scope), attributes, new FutureCallback<>() {
 
                 @Override
                 public void onSuccess(Void unused) {
                     entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
-                            null, ActionType.ATTRIBUTES_UPDATED, null, scope, attributes);
+                            null, ActionType.ATTRIBUTES_UPDATED, null, AttributeScope.valueOf(scope), attributes);
                 }
 
                 @Override
                 public void onFailure(Throwable throwable) {
                     entityActionService.logEntityAction(user, (UUIDBased & EntityId) entityId, null,
                             null, ActionType.ATTRIBUTES_UPDATED, BaseController.toException(throwable),
-                            scope, attributes);
+                            AttributeScope.valueOf(scope), attributes);
                     throw new RuntimeException(throwable);
                 }
 
@@ -300,18 +305,13 @@ public abstract class AbstractBulkImportService<E extends HasId<? extends Entity
         private final DataType dataType;
 
         public JsonPrimitive toJsonPrimitive() {
-            switch (dataType) {
-                case STRING:
-                    return new JsonPrimitive((String) value);
-                case LONG:
-                    return new JsonPrimitive((Long) value);
-                case DOUBLE:
-                    return new JsonPrimitive((Double) value);
-                case BOOLEAN:
-                    return new JsonPrimitive((Boolean) value);
-                default:
-                    return null;
-            }
+            return switch (dataType) {
+                case STRING -> new JsonPrimitive((String) value);
+                case LONG -> new JsonPrimitive((Long) value);
+                case DOUBLE -> new JsonPrimitive((Double) value);
+                case BOOLEAN -> new JsonPrimitive((Boolean) value);
+                default -> null;
+            };
         }
 
         public String stringValue() {

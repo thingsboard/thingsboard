@@ -1,0 +1,38 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-comparison-keys-table tb-form-table">
+  <div class="tb-form-table-header">
+    <div class="tb-form-table-header-cell tb-show-header" translate>widgets.time-series-chart.comparison.show</div>
+    <div class="tb-form-table-header-cell tb-key-header" translate>datakey.key</div>
+    <div class="tb-form-table-header-cell tb-label-header" translate>datakey.label</div>
+    <div class="tb-form-table-header-cell tb-color-header" translate>datakey.color</div>
+  </div>
+  <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
+    <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
+      <tb-comparison-key-row
+          fxFlex
+          [datasourceType]="datasourceType"
+          [formControl]="keyControl">
+      </tb-comparison-key-row>
+    </div>
+  </div>
+</div>
+<ng-template #noKeys>
+  <span fxLayoutAlign="center center"
+        class="tb-prompt">{{ 'widgets.chart.no-series' | translate }}</span>
+</ng-template>

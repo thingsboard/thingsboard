@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,8 +15,37 @@
  */
 package org.thingsboard.server.service.subscription;
 
+import org.thingsboard.server.common.data.AttributeScope;
+
 public enum TbAttributeSubscriptionScope {
 
-    ANY_SCOPE, CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE
+    ANY_SCOPE(),
+    CLIENT_SCOPE(AttributeScope.CLIENT_SCOPE),
+    SHARED_SCOPE(AttributeScope.SHARED_SCOPE),
+    SERVER_SCOPE(AttributeScope.SERVER_SCOPE);
+
+    private final AttributeScope attributeScope;
+
+    TbAttributeSubscriptionScope() {
+        this.attributeScope = null;
+    }
+
+    TbAttributeSubscriptionScope(AttributeScope attributeScope) {
+        this.attributeScope = attributeScope;
+    }
+
+    public AttributeScope getAttributeScope() {
+        return attributeScope;
+    }
+
+    public static TbAttributeSubscriptionScope of(AttributeScope attributeScope) {
+        for (TbAttributeSubscriptionScope scope : TbAttributeSubscriptionScope.values()) {
+            if (attributeScope == scope.getAttributeScope()) {
+                return scope;
+            }
+        }
+        throw new IllegalArgumentException("Unknown AttributeScope: " + attributeScope.name());
+    }
+
 
 }

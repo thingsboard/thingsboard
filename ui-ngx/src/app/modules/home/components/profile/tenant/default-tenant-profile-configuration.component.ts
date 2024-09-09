@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -67,12 +67,19 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxRuleChains: [null, [Validators.required, Validators.min(0)]],
       maxResourcesInBytes: [null, [Validators.required, Validators.min(0)]],
       maxOtaPackagesInBytes: [null, [Validators.required, Validators.min(0)]],
+      maxResourceSize: [null, [Validators.required, Validators.min(0)]],
       transportTenantMsgRateLimit: [null, []],
       transportTenantTelemetryMsgRateLimit: [null, []],
       transportTenantTelemetryDataPointsRateLimit: [null, []],
       transportDeviceMsgRateLimit: [null, []],
       transportDeviceTelemetryMsgRateLimit: [null, []],
       transportDeviceTelemetryDataPointsRateLimit: [null, []],
+      transportGatewayMsgRateLimit: [null, []],
+      transportGatewayTelemetryMsgRateLimit: [null, []],
+      transportGatewayTelemetryDataPointsRateLimit: [null, []],
+      transportGatewayDeviceMsgRateLimit: [null, []],
+      transportGatewayDeviceTelemetryMsgRateLimit: [null, []],
+      transportGatewayDeviceTelemetryDataPointsRateLimit: [null, []],
       tenantEntityExportRateLimit: [null, []],
       tenantEntityImportRateLimit: [null, []],
       tenantNotificationRequestsRateLimit: [null, []],
@@ -81,6 +88,7 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxTransportDataPoints: [null, [Validators.required, Validators.min(0)]],
       maxREExecutions: [null, [Validators.required, Validators.min(0)]],
       maxJSExecutions: [null, [Validators.required, Validators.min(0)]],
+      maxTbelExecutions: [null, [Validators.required, Validators.min(0)]],
       maxDPStorageDays: [null, [Validators.required, Validators.min(0)]],
       maxRuleNodeExecutionsPerMessage: [null, [Validators.required, Validators.min(0)]],
       maxEmails: [null, [Validators.required, Validators.min(0)]],
@@ -90,6 +98,8 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       defaultStorageTtlDays: [null, [Validators.required, Validators.min(0)]],
       alarmsTtlDays: [null, [Validators.required, Validators.min(0)]],
       rpcTtlDays: [null, [Validators.required, Validators.min(0)]],
+      queueStatsTtlDays: [null, [Validators.required, Validators.min(0)]],
+      ruleEngineExceptionsTtlDays: [null, [Validators.required, Validators.min(0)]],
       tenantServerRestLimitsConfiguration: [null, []],
       customerServerRestLimitsConfiguration: [null, []],
       maxWsSessionsPerTenant: [null, [Validators.min(0)]],
@@ -102,7 +112,11 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
       maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
       wsUpdatesPerSessionRateLimit: [null, []],
-      cassandraQueryTenantRateLimitsConfiguration: [null, []]
+      cassandraQueryTenantRateLimitsConfiguration: [null, []],
+      edgeEventRateLimits: [null, []],
+      edgeEventRateLimitsPerEdge: [null, []],
+      edgeUplinkMessagesRateLimits: [null, []],
+      edgeUplinkMessagesRateLimitsPerEdge: [null, []]
     });
 
     this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(

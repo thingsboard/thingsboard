@@ -17,5 +17,10 @@
     "settingsDirective": "tb-gpio-panel-widget-settings",
     "defaultConfig": "{\"showTitle\":true,\"backgroundColor\":\"#fff\",\"color\":\"rgba(0, 0, 0, 0.87)\",\"padding\":\"0px\",\"settings\":{\"gpioList\":[{\"pin\":1,\"label\":\"GPIO 1\",\"row\":0,\"col\":0,\"color\":\"#008000\",\"_uniqueKey\":0},{\"pin\":2,\"label\":\"GPIO 2\",\"row\":0,\"col\":1,\"color\":\"#ffff00\",\"_uniqueKey\":1},{\"pin\":3,\"label\":\"GPIO 3\",\"row\":1,\"col\":0,\"color\":\"#cf006f\",\"_uniqueKey\":2}],\"ledPanelBackgroundColor\":\"#b71c1c\"},\"title\":\"Basic GPIO Panel\",\"datasources\":[{\"type\":\"function\",\"name\":\"function\",\"dataKeys\":[{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"1\",\"color\":\"#2196f3\",\"settings\":{},\"_hash\":0.22518255793320163,\"funcBody\":\"var period = time % 1500;\\nreturn period < 500;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"2\",\"color\":\"#4caf50\",\"settings\":{},\"_hash\":0.7008206860666621,\"funcBody\":\"var period = time % 1500;\\nreturn period >= 500 && period < 1000;\"},{\"name\":\"f(x)\",\"type\":\"function\",\"label\":\"3\",\"color\":\"#f44336\",\"settings\":{},\"_hash\":0.42600325102193426,\"funcBody\":\"var period = time % 1500;\\nreturn period >= 1000;\"}]}],\"timewindow\":{\"realtime\":{\"timewindowMs\":60000}}}"
   },
-  "externalId": null
+  "externalId": null,
+  "tags": [
+    "pin",
+    "pins",
+    "board"
+  ]
 }

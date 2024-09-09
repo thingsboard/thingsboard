@@ -1,6 +1,6 @@
 <!--
 
-    Copyright © 2016-2023 The Thingsboard Authors
+    Copyright © 2016-2024 The Thingsboard Authors
 
     Licensed under the Apache License, Version 2.0 (the "License");
     you may not use this file except in compliance with the License.
@@ -15,17 +15,12 @@
     limitations under the License.
 
 -->
-<mat-form-field class="tb-rule-select" subscriptSizing="dynamic">
+<mat-form-field class="tb-rule-select" subscriptSizing="dynamic" appearance="fill"
+                [class.cursor-pointer]="!disabled"
+                (click)="openRuleChainSelectPanel($event)">
   <mat-icon matPrefix>settings_ethernet</mat-icon>
-  <mat-select fxFlex
-              class="tb-rule-chain-select"
-              hideSingleSelectionIndicator="false"
-              [required]="required"
-              [disabled]="disabled"
-              [(ngModel)]="ruleChainId"
-              (ngModelChange)="ruleChainIdChanged()">
-    <mat-option *ngFor="let ruleChain of ruleChains$ | async" [value]="ruleChain.id.id">
-      {{ruleChain.name}}
-    </mat-option>
-  </mat-select>
+  <input matInput readonly disabled
+         [required]="required"
+         [value]="ruleChain?.name">
+  <mat-icon [class.disabled]="disabled || panelOpened" matSuffix>arrow_drop_down</mat-icon>
 </mat-form-field>

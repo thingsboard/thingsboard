@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -74,7 +74,7 @@ public class LwM2mCredentialsSecurityInfoValidator {
 
                     @Override
                     public void onError(Throwable e) {
-                        log.trace("[{}] [{}] Failed to process credentials ", credentialsId, e);
+                        log.info("[{}] [{}] Failed to process credentials ", credentialsId, e);
                         TbLwM2MSecurityInfo result = new TbLwM2MSecurityInfo();
                         result.setEndpoint(credentialsId);
                         resultSecurityStore[0] = result;

@@ -1,5 +1,5 @@
 /**
- * Copyright © 2016-2023 The Thingsboard Authors
+ * Copyright © 2016-2024 The Thingsboard Authors
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,9 +23,8 @@ import java.util.List;
 @Data
 public abstract class TransportMonitoringConfig implements MonitoringConfig<TransportMonitoringTarget> {
 
-    private int requestTimeoutMs;
-
     private List<TransportMonitoringTarget> targets;
+    private int requestTimeoutMs;
 
     public abstract TransportType getTransportType();
 

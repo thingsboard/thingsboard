@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -17,11 +17,13 @@
 import L, { LeafletMouseEvent } from 'leaflet';
 import { MarkerIconInfo, MarkerIconReadyFunction, MarkerImageInfo, WidgetMarkersSettings, } from './map-models';
 import { bindPopupActions, createTooltip } from './maps-utils';
-import { aspectCache, parseWithTranslation } from './common-maps-utils';
+import { loadImageWithAspect, parseWithTranslation } from './common-maps-utils';
 import tinycolor from 'tinycolor2';
 import { fillDataPattern, isDefined, isDefinedAndNotNull, processDataPattern, safeExecute } from '@core/utils';
 import LeafletMap from './leaflet-map';
 import { FormattedData } from '@shared/models/widget.models';
+import { ImagePipe } from '@shared/pipe/image.pipe';
+import { ReplaySubject } from 'rxjs';
 
 export class Marker {
 
@@ -32,6 +34,7 @@ export class Marker {
     tooltipOffset: L.LatLngTuple;
     markerOffset: L.LatLngTuple;
     tooltip: L.Popup;
+    createMarkerIconSubject = new ReplaySubject<MarkerIconInfo>();
 
   constructor(private map: LeafletMap,
               private location: L.LatLng,
@@ -147,12 +150,18 @@ export class Marker {
                 this.labelOffset = [0, -iconInfo.size[1] * this.markerOffset[1] + 10];
             }
             this.updateMarkerLabel(settings);
+            this.createMarkerIconSubject.next(iconInfo);
         });
     }
 
     private createMarkerIcon(onMarkerIconReady: MarkerIconReadyFunction) {
         if (this.settings.icon) {
           onMarkerIconReady(this.settings.icon);
+          return;
+        } else if (this.settings.icon$) {
+          this.settings.icon$.subscribe((res) => {
+            onMarkerIconReady(res);
+          });
           return;
         }
         const currentImage: MarkerImageInfo = this.settings.useMarkerImageFunction ?
@@ -167,16 +176,16 @@ export class Marker {
           }
         }
         if (currentImage && currentImage.url) {
-            aspectCache(currentImage.url).subscribe(
-                (aspect) => {
-                    if (aspect) {
+          loadImageWithAspect(this.map.ctx.$injector.get(ImagePipe), currentImage.url).subscribe(
+                (aspectImage) => {
+                    if (aspectImage?.aspect) {
                         let width;
                         let height;
-                        if (aspect > 1) {
+                        if (aspectImage.aspect > 1) {
                             width = currentImage.size;
-                            height = currentImage.size / aspect;
+                            height = currentImage.size / aspectImage.aspect;
                         } else {
-                            width = currentImage.size * aspect;
+                            width = currentImage.size * aspectImage.aspect;
                             height = currentImage.size;
                         }
                         let iconAnchor = currentImage.markerOffset;
@@ -188,7 +197,7 @@ export class Marker {
                             popupAnchor = [width * this.tooltipOffset[0], height * this.tooltipOffset[1]];
                         }
                         const icon = L.icon({
-                            iconUrl: currentImage.url,
+                            iconUrl: aspectImage.url,
                             iconSize: [width, height],
                             iconAnchor,
                             popupAnchor
@@ -237,7 +246,15 @@ export class Marker {
     }
 
     createColorIconURI(color: tinycolor.Instance): string {
-      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-191.35 -351.18 1083.58 1730.46"><path fill-rule="evenodd" clip-rule="evenodd" fill="#${color.toHex()}" stroke="#000" stroke-width="37" stroke-miterlimit="10" d="M351.833 1360.78c-38.766-190.3-107.116-348.665-189.903-495.44C100.523 756.469 29.386 655.978-36.434 550.404c-21.972-35.244-40.934-72.477-62.047-109.054-42.216-73.137-76.444-157.935-74.269-267.932 2.125-107.473 33.208-193.685 78.03-264.173C-21-206.69 102.481-301.745 268.164-326.724c135.466-20.425 262.475 14.082 352.543 66.747 73.6 43.038 130.596 100.528 173.92 168.28 45.22 70.716 76.36 154.26 78.971 263.233 1.337 55.83-7.805 107.532-20.684 150.417-13.034 43.41-33.996 79.695-52.646 118.455-36.406 75.659-82.049 144.981-127.855 214.345-136.437 206.606-264.496 417.31-320.58 706.028z"/><circle fill-rule="evenodd" clip-rule="evenodd" cx="352.891" cy="225.779" r="183.332"/></svg>`;
+      const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="-191.35 -351.18 1083.58 1730.46">` +
+                         `<path fill-rule="evenodd" clip-rule="evenodd" fill="#${color.toHex()}" stroke="#000" stroke-width="37" ` +
+                         `stroke-miterlimit="10" d="M351.833 1360.78c-38.766-190.3-107.116-348.665-189.903-495.44C100.523 756.469 ` +
+        `29.386 655.978-36.434 550.404c-21.972-35.244-40.934-72.477-62.047-109.054-42.216-73.137-76.444-157.935-74.269-267.932 ` +
+        `2.125-107.473 33.208-193.685 78.03-264.173C-21-206.69 102.481-301.745 268.164-326.724c135.466-20.425 262.475 14.082 ` +
+        `352.543 66.747 73.6 43.038 130.596 100.528 173.92 168.28 45.22 70.716 76.36 154.26 78.971 263.233 1.337 55.83-7.805 ` +
+        `107.532-20.684 150.417-13.034 43.41-33.996 79.695-52.646 118.455-36.406 75.659-82.049 144.981-127.855 214.345-136.437 ` +
+        `206.606-264.496 417.31-320.58 706.028z"/><circle fill-rule="evenodd" ` +
+        `clip-rule="evenodd" cx="352.891" cy="225.779" r="183.332"/></svg>`;
       return 'data:image/svg+xml;base64,' + btoa(svg);
     }
 

@@ -1,0 +1,193 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+$defaultMainColor: #3F52DD;
+$defaultBackgroundColor: #FFFFFF;
+$defaultBoxShadowColor: rgba(0, 0, 0, 0.08);
+$defaultDisabledBoxShadowColor: rgba(0, 0, 0, 0);
+
+$defaultMainColorDisabled: rgba(0, 0, 0, 0.38);
+$defaultBackgroundColorDisabled: rgba(0, 0, 0, 0.03);
+
+$mainColorEnabled: var(--tb-widget-button-main-color-enabled, $defaultMainColor);
+$backgroundColorEnabled: var(--tb-widget-button-background-color-enabled, $defaultBackgroundColor);
+$boxShadowColorEnabled: var(--tb-widget-button-box-shadow-color-enabled, $defaultBoxShadowColor);
+
+$mainColorHovered: var(--tb-widget-button-main-color-hovered, $defaultMainColor);
+$backgroundColorHovered: var(--tb-widget-button-background-color-hovered, $defaultBackgroundColor);
+$boxShadowColorHovered: var(--tb-widget-button-box-shadow-color-hovered, $defaultBoxShadowColor);
+$mainColorHoveredFilled: var(--tb-widget-button-main-color-hovered-filled, #3347db); // main.darken(6)
+
+$mainColorPressed: var(--tb-widget-button-main-color-pressed, $defaultMainColor);
+$backgroundColorPressed: var(--tb-widget-button-background-color-pressed, $defaultBackgroundColor);
+$boxShadowColorPressed: var(--tb-widget-button-box-shadow-color-pressed, $defaultBoxShadowColor);
+$mainColorPressedFilled: var(--tb-widget-button-main-color-pressed-filled, #273cd9); // main.darken(12)
+$mainColorPressedRipple: var(--tb-widget-button-main-color-pressed-ripple, rgba(63, 82, 221, 0.1)); // Alpha(Main, 0.1)
+$mainColorPressedRippleFilled: var(--tb-widget-button-main-color-pressed-ripple-filled, #2439cd); // main.darken(18)
+
+$mainColorActivated: var(--tb-widget-button-main-color-activated, $defaultMainColor);
+$backgroundColorActivated: var(--tb-widget-button-background-color-activated, $defaultBackgroundColor);
+$boxShadowColorActivated: var(--tb-widget-button-box-shadow-color-activated, $defaultBoxShadowColor);
+$mainColorActivatedFilled: var(--tb-widget-button-main-color-activated-filled, #273cd9); // main.darken(12)
+
+$mainColorDisabled: var(--tb-widget-button-main-color-disabled, $defaultMainColorDisabled);
+$backgroundColorDisabled: var(--tb-widget-button-background-color-disabled, $defaultBackgroundColorDisabled);
+$boxShadowColorDisabled: var(--tb-widget-button-box-shadow-color-disabled, $defaultBoxShadowColor);
+
+
+@mixin _tb-widget-button-styles($main, $background, $boxShadow) {
+  color: $main;
+  background-color: $background;
+  box-shadow: 0 4px 8px 0 $boxShadow;
+  &.tb-outlined {
+    border: 1px solid $main;
+  }
+  &.tb-filled {
+    color: $background;
+    background-color: $main;
+  }
+  &.tb-underlined {
+    border-bottom: 2px solid $main;
+  }
+  &.tb-basic {
+    background-color: transparent;
+  }
+}
+
+
+.mat-mdc-button.mat-mdc-button-base.tb-widget-button {
+  width: 100%;
+  height: 100%;
+  min-width: 0;
+  padding: 8px 12px;
+  &.tb-icon-only {
+    padding: 8px;
+  }
+  .mdc-button__label {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .tb-widget-button-content {
+    width: 100%;
+    display: flex;
+    flex-direction: row;
+    gap: 4px;
+    justify-content: center;
+    align-items: center;
+    .mat-icon {
+      margin: 0;
+    }
+    span.tb-widget-button-label {
+      line-height: normal;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+  }
+
+  .mat-mdc-button-persistent-ripple::before {
+    opacity: 0;
+  }
+
+  @include _tb-widget-button-styles($mainColorEnabled, $backgroundColorEnabled, $boxShadowColorEnabled);
+
+  &:not(:disabled):not(.tb-disabled-state) {
+    &:hover, &.tb-hover-state {
+      &:not(:active):not(.tb-active-state) {
+        &:not(.tb-filled) {
+          .mat-mdc-button-persistent-ripple::before {
+            opacity: 0.04;
+            background-color: $mainColorHovered;
+          }
+        }
+        &.tb-filled {
+          .mat-mdc-button-persistent-ripple::before {
+            opacity: 1;
+            background-color: $mainColorHoveredFilled;
+          }
+        }
+        @include _tb-widget-button-styles($mainColorHovered, $backgroundColorHovered, $boxShadowColorHovered);
+      }
+    }
+    &.tb-pressed-state {
+      &:not(.tb-filled) {
+        .mat-mdc-button-ripple {
+          background-color: $mainColorPressedRipple;
+        }
+      }
+      &.tb-filled {
+        .mat-mdc-button-ripple {
+          background-color: $mainColorPressedRippleFilled;
+        }
+      }
+    }
+    &.tb-pressed {
+      &:not(.tb-filled) {
+        .mat-ripple-element {
+          background-color: $mainColorPressedRipple;
+        }
+      }
+      &.tb-filled {
+        .mat-ripple-element {
+          background-color: $mainColorPressedRippleFilled;
+        }
+      }
+    }
+    &.tb-pressed, &.tb-pressed-state {
+      &:not(.tb-filled) {
+        .mat-mdc-button-persistent-ripple::before {
+          opacity: 0.12;
+          background-color: $mainColorPressed;
+        }
+      }
+      &.tb-filled {
+        .mat-mdc-button-persistent-ripple::before {
+          opacity: 1;
+          background-color: $mainColorPressedFilled;
+        }
+      }
+      @include _tb-widget-button-styles($mainColorPressed, $backgroundColorPressed, $boxShadowColorPressed);
+    }
+    &:active, &.tb-active-state {
+      &:not(.tb-pressed):not(.tb-pressed-state) {
+        &:not(.tb-filled) {
+          .mat-mdc-button-persistent-ripple::before {
+            opacity: 0.12;
+            background-color: $mainColorActivated;
+          }
+        }
+        &.tb-filled {
+          .mat-mdc-button-persistent-ripple::before {
+            opacity: 1;
+            background-color: $mainColorActivatedFilled;
+          }
+        }
+        @include _tb-widget-button-styles($mainColorActivated, $backgroundColorActivated, $boxShadowColorActivated);
+      }
+    }
+  }
+
+  &:disabled, &.tb-disabled-state {
+    &:not(.tb-filled) {
+      @include _tb-widget-button-styles($mainColorDisabled, $backgroundColorDisabled, $boxShadowColorDisabled);
+    }
+    &.tb-filled {
+      @include _tb-widget-button-styles($backgroundColorDisabled, $mainColorDisabled, $boxShadowColorDisabled);
+    }
+  }
+}

@@ -1,5 +1,5 @@
 ///
-/// Copyright © 2016-2023 The Thingsboard Authors
+/// Copyright © 2016-2024 The Thingsboard Authors
 ///
 /// Licensed under the Apache License, Version 2.0 (the "License");
 /// you may not use this file except in compliance with the License.
@@ -33,6 +33,7 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { getCurrentAuthUser } from '@core/auth/auth.selectors';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
+import { MenuId } from '@core/services/menu.models';
 
 @Injectable()
 export class DashboardResolver implements Resolve<Dashboard> {
@@ -66,8 +67,7 @@ const routes: Routes = [
     path: 'dashboards',
     data: {
       breadcrumb: {
-        label: 'dashboard.dashboards',
-        icon: 'dashboard'
+        menuId: MenuId.dashboards
       }
     },
     children: [

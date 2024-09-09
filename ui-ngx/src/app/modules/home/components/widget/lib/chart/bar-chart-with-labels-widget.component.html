@@ -1,0 +1,36 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-bar-chart-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-bar-chart-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  <div class="tb-bar-chart-content" [class]="legendClass">
+    <div #chartShape class="tb-bar-chart-shape">
+    </div>
+    <div *ngIf="showLegend" class="tb-bar-chart-legend">
+      <div class="tb-bar-chart-legend-item" *ngFor="let legendKey of legendKeys"
+           (mouseenter)="onLegendKeyEnter(legendKey)"
+           (mouseleave)="onLegendKeyLeave(legendKey)"
+           (click)="toggleLegendKey(legendKey)">
+        <div class="tb-bar-chart-legend-item-label">
+          <div class="tb-bar-chart-legend-item-label-circle" [style]="{background: !legendKey.hidden ? legendKey.color : null}"></div>
+          <div [style]="!legendKey.hidden ? legendLabelStyle : disabledLegendLabelStyle">{{ legendKey.label }}</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
