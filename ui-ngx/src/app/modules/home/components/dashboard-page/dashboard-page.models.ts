@@ -56,6 +56,7 @@ export interface DashboardContext {
 export interface IDashboardController {
   dashboardCtx: DashboardContext;
   dashboardContainer: ElementRef;
+  dashboardContent: ElementRef;
   elRef: ElementRef;
   openRightLayout();
   openDashboardState(stateId: string, openRightLayout: boolean);

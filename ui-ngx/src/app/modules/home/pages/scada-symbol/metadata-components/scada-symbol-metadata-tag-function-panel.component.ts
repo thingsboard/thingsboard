@@ -28,12 +28,10 @@ import { TbPopoverComponent } from '@shared/components/popover.component';
 import { UntypedFormBuilder, UntypedFormGroup } from '@angular/forms';
 import { WidgetService } from '@core/http/widget.service';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
-import { TbHighlightRule } from '@shared/models/ace/ace.models';
+import { AceHighlightRules } from '@shared/models/ace/ace.models';
 import {
   scadaSymbolClickActionHighlightRules,
-  scadaSymbolClickActionPropertiesHighlightRules,
-  scadaSymbolElementStateRenderHighlightRules,
-  scadaSymbolElementStateRenderPropertiesHighlightRules
+  scadaSymbolRenderFunctionHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { JsFuncComponent } from '@shared/components/js-func.component';
 
@@ -79,9 +77,7 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
 
   tagFunctionHelpId: string;
 
-  objectHighlightRules: TbHighlightRule[];
-
-  propertyHighlightRules: TbHighlightRule[];
+  highlightRules: AceHighlightRules;
 
   constructor(private fb: UntypedFormBuilder,
               private widgetService: WidgetService) {
@@ -99,14 +95,12 @@ export class ScadaSymbolMetadataTagFunctionPanelComponent implements OnInit, Aft
     if (this.tagFunctionType === 'renderFunction') {
       this.panelTitle = 'scada.state-render-function';
       this.tagFunctionArgs = ['ctx', 'element'];
-      this.objectHighlightRules = scadaSymbolElementStateRenderHighlightRules;
-      this.propertyHighlightRules = scadaSymbolElementStateRenderPropertiesHighlightRules;
+      this.highlightRules = scadaSymbolRenderFunctionHighlightRules;
       this.tagFunctionHelpId = 'scada/tag_state_render_fn';
     } else if (this.tagFunctionType === 'clickAction') {
       this.panelTitle = 'scada.tag.on-click-action';
       this.tagFunctionArgs = ['ctx', 'element', 'event'];
-      this.objectHighlightRules = scadaSymbolClickActionHighlightRules;
-      this.propertyHighlightRules = scadaSymbolClickActionPropertiesHighlightRules;
+      this.highlightRules = scadaSymbolClickActionHighlightRules;
       this.tagFunctionHelpId = 'scada/tag_click_action_fn';
     }
   }

@@ -69,8 +69,8 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
   constructor(private fb: FormBuilder,
               private attributeService: AttributeService,
               private deviceService: DeviceService,
-              private cd: ChangeDetectorRef,
-              private dialog: MatDialog) {
+              private cd: ChangeDetectorRef
+  ) {
 
     this.gatewayConfigGroup = this.fb.group({
       basicConfig: [],
@@ -361,7 +361,7 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
   }
 
   private updateFormControls(thingsboard: GatewayGeneralConfig): void {
-    const { type, accessToken, ...securityConfig } = thingsboard.security || {};
+    const { type, accessToken, ...securityConfig } = thingsboard.security ?? {};
 
     this.initialCredentials = {
       deviceId: this.device as DeviceId,

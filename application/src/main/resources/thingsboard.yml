@@ -1660,6 +1660,7 @@ queue:
     connection_timeout: "${TB_QUEUE_RABBIT_MQ_CONNECTION_TIMEOUT:60000}"
     # RabbitMQ has a timeout for connection handshake. When clients run in heavily constrained environments, it may be necessary to increase the timeout
     handshake_timeout: "${TB_QUEUE_RABBIT_MQ_HANDSHAKE_TIMEOUT:10000}"
+    max_poll_messages: "${TB_QUEUE_RABBIT_MQ_MAX_POLL_MESSAGES:1}"
     queue-properties:
       # RabbitMQ properties for Rule Engine queues
       rule-engine: "${TB_QUEUE_RABBIT_MQ_RE_QUEUE_PROPERTIES:x-max-length-bytes:1048576000;x-message-ttl:604800000}"

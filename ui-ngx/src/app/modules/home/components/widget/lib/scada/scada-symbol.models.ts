@@ -289,12 +289,23 @@ const updateScadaSymbolMetadataInDom = (svgDoc: Document, metadata: ScadaSymbolM
   metadataElement.appendChild(cdata);
 };
 
-const tbMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
+const tbMetadataRegex = /<tb:metadata[^>]*>.*<\/tb:metadata>/gs;
 
 export interface ScadaSymbolContentData {
   svgRootNode: string;
   innerSvg: string;
 }
+
+export const removeScadaSymbolMetadata = (svgContent: string): string => {
+  let result = svgContent;
+  tbMetadataRegex.lastIndex = 0;
+  const metadataMatch = tbMetadataRegex.exec(svgContent);
+  if (metadataMatch !== null && metadataMatch.length) {
+    const metadata = metadataMatch[0];
+    result = result.replace(metadata, '');
+  }
+  return result;
+};
 
 export const scadaSymbolContentData = (svgContent: string): ScadaSymbolContentData => {
   const result: ScadaSymbolContentData = {
@@ -517,10 +528,12 @@ export class ScadaSymbolObject {
     if (this.context) {
       for (const tag of this.metadata.tags) {
         const elements = this.context.tags[tag.tag];
-        elements.forEach(element => {
-          element.timeline().stop();
-          element.timeline(null);
-        });
+        if (elements) {
+          elements.forEach(element => {
+            element.timeline().stop();
+            element.timeline(null);
+          });
+        }
       }
     }
     if (this.svgShape) {

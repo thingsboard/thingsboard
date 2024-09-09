@@ -34,7 +34,7 @@ import {
 } from '@home/components/widget/lib/scada/scada-symbol.models';
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
-import { TbHighlightRule } from '@shared/models/ace/ace.models';
+import { AceHighlightRule, AceHighlightRules } from '@shared/models/ace/ace.models';
 import { ValueType } from '@shared/models/constants';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
@@ -54,6 +54,7 @@ export interface ScadaSymbolEditObjectCallbacks {
   tagsUpdated: (tags: string[]) => void;
   hasHiddenElements?: (hasHidden: boolean) => void;
   onSymbolEditObjectDirty: (dirty: boolean) => void;
+  onSymbolEditObjectValid: (valid: boolean) => void;
   onZoom?: () => void;
 }
 
@@ -915,91 +916,184 @@ export class ScadaSymbolElement {
 
 }
 
-const scadaSymbolCtxObjectHighlightRules: TbHighlightRule[] = [
-  {
-    class: 'scada-symbol-ctx',
-    regex: /(?<=\W|^)(ctx)(?=\W|$)\b/
-  }
-];
+const identifierRe = /[a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*/;
 
-export const scadaSymbolGeneralStateRenderHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxObjectHighlightRules.concat({
-    class: 'scada-symbol-svg',
-    regex: /(?<=\W|^)(svg)(?=\W|$)\b/
-  });
+const dotOperatorHighlightRule: AceHighlightRule = {
+  token: 'punctuation.operator',
+  regex: /[.](?![.])/,
+};
 
-export const scadaSymbolElementStateRenderHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxObjectHighlightRules.concat({
-    class: 'scada-symbol-element',
-    regex: /(?<=\W|^)(element)(?=\W|$)\b/
-  });
+const endGroupHighlightRule: AceHighlightRule = {
+  regex: '',
+  token: 'empty',
+  next: 'no_regex'
+};
 
-export const scadaSymbolClickActionHighlightRules: TbHighlightRule[] =
-  scadaSymbolElementStateRenderHighlightRules.concat({
-    class: 'scada-symbol-event',
-    regex: /(?<=\W|^)(event)(?=\W|$)\b/
-  });
+const scadaSymbolCtxObjectHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-ctx',
+  regex: /\bctx\b/,
+  next: 'scadaSymbolCtxApi'
+};
 
-const scadaSymbolCtxPropertyHighlightRules: TbHighlightRule[] = [
-  {
-    class: 'scada-symbol-ctx-properties',
-    regex: /(?<=ctx\.)(properties)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-tags',
-    regex: /(?<=ctx\.)(tags)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-values',
-    regex: /(?<=ctx\.)(values)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-api',
-    regex: /(?<=ctx\.)(api)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-svg',
-    regex: /(?<=ctx\.)(svg)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-property',
-    regex: /(?<=ctx\.properties\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-tag',
-    regex: /(?<=ctx\.tags\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-value',
-    regex: /(?<=ctx\.values\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-api-method',
-    regex: /(?<=ctx\.api\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  },
-  {
-    class: 'scada-symbol-ctx-svg-method',
-    regex: /(?<=ctx\.svg\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  }
-];
+const scadaSymbolSVGHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-svg',
+  regex: /\bsvg\b/,
+  next: 'scadaSymbolSVGApi'
+};
 
-export const scadaSymbolGeneralStateRenderPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxPropertyHighlightRules.concat({
-    class: 'scada-symbol-svg-properties',
-    regex: /(?<=svg\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  });
+const scadaSymbolElementHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-element',
+  regex: /\belement\b/,
+  next: 'scadaSymbolElementApi'
+};
 
-export const scadaSymbolElementStateRenderPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolCtxPropertyHighlightRules.concat({
-    class: 'scada-symbol-element-properties',
-    regex: /(?<=element\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  });
+const scadaSymbolEventHighlightRule: AceHighlightRule = {
+  token: 'tb.scada-symbol-event',
+  regex: /\bevent\b/,
+  next: 'scadaSymbolEventApi'
+};
 
-export const scadaSymbolClickActionPropertiesHighlightRules: TbHighlightRule[] =
-  scadaSymbolElementStateRenderPropertiesHighlightRules.concat({
-    class: 'scada-symbol-event-properties',
-    regex: /(?<=event\.)([a-zA-Z$_\u00a1-\uffff][a-zA-Z\d$_\u00a1-\uffff]*)\b/
-  });
+const scadaSymbolCtxApiHighlightRules: AceHighlightRules = {
+  scadaSymbolCtxApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-properties',
+      regex: /properties/,
+      next: 'scadaSymbolCtxPropertiesApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-tags',
+      regex: /tags/,
+      next: 'scadaSymbolCtxTagsApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-values',
+      regex: /values/,
+      next: 'scadaSymbolCtxValuesApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-api',
+      regex: /api/,
+      next: 'scadaSymbolCtxApiMethodApi'
+    },
+    {
+      token: 'tb.scada-symbol-ctx-svg',
+      regex: /svg/,
+      next: 'scadaSymbolCtxSVGMethodApi'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxPropertiesApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-property',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxTagsApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-tag',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxValuesApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-value',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxApiMethodApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-api-method',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ],
+  scadaSymbolCtxSVGMethodApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-ctx-svg-method',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
+
+const scadaSymbolSVGPropertyHighlightRules: AceHighlightRules = {
+  scadaSymbolSVGApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-svg-properties',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
+
+const scadaSymbolElementPropertyHighlightRules: AceHighlightRules = {
+  scadaSymbolElementApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-element-properties',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
+
+const scadaSymbolEventPropertyHighlightRules: AceHighlightRules = {
+  scadaSymbolEventApi: [
+    dotOperatorHighlightRule,
+    {
+      token: 'tb.scada-symbol-event-properties',
+      regex: identifierRe,
+      next: 'no_regex'
+    },
+    endGroupHighlightRule
+  ]
+};
+
+export const scadaSymbolGeneralStateHighlightRules: AceHighlightRules = {
+  start: [
+    scadaSymbolCtxObjectHighlightRule,
+    scadaSymbolSVGHighlightRule
+  ],
+  ...scadaSymbolCtxApiHighlightRules,
+  ...scadaSymbolSVGPropertyHighlightRules
+};
+
+export const scadaSymbolRenderFunctionHighlightRules: AceHighlightRules = {
+  no_regex: [
+    scadaSymbolCtxObjectHighlightRule,
+    scadaSymbolElementHighlightRule
+  ],
+  ...scadaSymbolCtxApiHighlightRules,
+  ...scadaSymbolElementPropertyHighlightRules
+};
+
+export const scadaSymbolClickActionHighlightRules: AceHighlightRules = {
+  start: [
+    scadaSymbolCtxObjectHighlightRule,
+    scadaSymbolElementHighlightRule,
+    scadaSymbolEventHighlightRule
+  ],
+  ...scadaSymbolCtxApiHighlightRules,
+  ...scadaSymbolElementPropertyHighlightRules,
+  ...scadaSymbolEventPropertyHighlightRules
+};
 
 export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCompletion): TbEditorCompletions => ({
     ctx: ctxCompletion,

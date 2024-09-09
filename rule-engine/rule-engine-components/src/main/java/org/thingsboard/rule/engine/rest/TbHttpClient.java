@@ -80,6 +80,8 @@ public class TbHttpClient {
     public static final String PROXY_USER = "tb.proxy.user";
     public static final String PROXY_PASSWORD = "tb.proxy.password";
 
+    public static final String MAX_IN_MEMORY_BUFFER_SIZE_IN_KB = "tb.http.maxInMemoryBufferSizeInKb";
+
     private final TbRestApiCallNodeConfiguration config;
 
     private EventLoopGroup eventLoopGroup;
@@ -120,7 +122,7 @@ public class TbHttpClient {
                     SslContext sslContext = config.getCredentials().initSslContext();
                     httpClient = httpClient.secure(t -> t.sslContext(sslContext));
                 }
-            } else if (!config.isUseSimpleClientHttpFactory()) {
+            } else if (config.isUseSimpleClientHttpFactory()) {
                 if (CredentialsType.CERT_PEM == config.getCredentials().getType()) {
                     throw new TbNodeException("Simple HTTP Factory does not support CERT PEM credentials!");
                 }
@@ -129,12 +131,31 @@ public class TbHttpClient {
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));
             }
 
+            validateMaxInMemoryBufferSize(config);
+
             this.webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(httpClient))
                     .defaultHeader(HttpHeaders.CONNECTION, "close") //In previous realization this header was present! (Added for hotfix "Connection reset")
+                    .codecs(configurer -> configurer.defaultCodecs().maxInMemorySize(
+                            (config.getMaxInMemoryBufferSizeInKb() > 0 ? config.getMaxInMemoryBufferSizeInKb() : 256) * 1024))
                     .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
+        }
+    }
+
+    private void validateMaxInMemoryBufferSize(TbRestApiCallNodeConfiguration config) throws TbNodeException {
+        int systemMaxInMemoryBufferSizeInKb = 25000;
+        try {
+            Properties properties = System.getProperties();
+            if (properties.containsKey(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB)) {
+                systemMaxInMemoryBufferSizeInKb = Integer.parseInt(properties.getProperty(MAX_IN_MEMORY_BUFFER_SIZE_IN_KB));
+            }
+        } catch (Exception ignored) {}
+        if (config.getMaxInMemoryBufferSizeInKb() > systemMaxInMemoryBufferSizeInKb) {
+            throw new TbNodeException("The configured maximum in-memory buffer size (in KB) exceeds the system limit for this parameter.\n" +
+                    "The system limit is " + systemMaxInMemoryBufferSizeInKb + " KB.\n" +
+                    "Please use the system variable '" + MAX_IN_MEMORY_BUFFER_SIZE_IN_KB + "' to override the system limit.");
         }
     }
 
@@ -207,11 +228,21 @@ public class TbHttpClient {
                             semaphore.release();
                         }
 
-                        onFailure.accept(processException(msg, throwable), throwable);
+                        onFailure.accept(processException(msg, throwable), processThrowable(throwable));
                     });
         } catch (InterruptedException e) {
             log.warn("Timeout during waiting for reply!", e);
         }
+    }
+
+    private Throwable processThrowable(Throwable origin) {
+        if (origin instanceof WebClientResponseException restClientResponseException
+                && restClientResponseException.getStatusCode().is2xxSuccessful()) {
+            // return cause instead of original exception in case 2xx status code
+            // this will provide meaningful error message to the user
+            return new RuntimeException(restClientResponseException.getCause());
+        }
+        return origin;
     }
 
     public URI buildEncodedUri(String endpointUrl) {
@@ -316,8 +347,7 @@ public class TbHttpClient {
         Properties properties = System.getProperties();
         if (properties.containsKey(HTTP_PROXY_HOST) || properties.containsKey(HTTPS_PROXY_HOST)) {
             createHttpProxyFrom(option, properties);
-        }
-        if (properties.containsKey(SOCKS_PROXY_HOST)) {
+        } else if (properties.containsKey(SOCKS_PROXY_HOST)) {
             createSocksProxyFrom(option, properties);
         }
     }
@@ -336,8 +366,8 @@ public class TbHttpClient {
         String hostname = properties.getProperty(hostProperty);
         int port = Integer.parseInt(properties.getProperty(portProperty));
 
-        checkProxyHost(config.getProxyHost());
-        checkProxyPort(config.getProxyPort());
+        checkProxyHost(hostname);
+        checkProxyPort(port);
 
         var proxy = option
                 .type(ProxyProvider.Proxy.HTTP)
@@ -362,8 +392,8 @@ public class TbHttpClient {
         ProxyProvider.Proxy type = SOCKS_VERSION_5.equals(version) ? ProxyProvider.Proxy.SOCKS5 : ProxyProvider.Proxy.SOCKS4;
         int port = Integer.parseInt(properties.getProperty(SOCKS_PROXY_PORT));
 
-        checkProxyHost(config.getProxyHost());
-        checkProxyPort(config.getProxyPort());
+        checkProxyHost(hostname);
+        checkProxyPort(port);
 
         ProxyProvider.Builder proxy = option
                 .type(type)
