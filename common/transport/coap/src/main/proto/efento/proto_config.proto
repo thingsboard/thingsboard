@@ -31,7 +31,7 @@ message ProtoOutputControlState {
   uint32 channel_state = 2;
 }
 
-/* Message containing request data for accesing calibration parameters                                                          */
+/* Message containing request data for accessing calibration parameters                                                         */
 message ProtoCalibrationParameters {
 
   /* Request details. Bitmask:                                                                                                  */
