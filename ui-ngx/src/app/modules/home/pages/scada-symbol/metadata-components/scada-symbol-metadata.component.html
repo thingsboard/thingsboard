@@ -80,8 +80,7 @@
               <tb-js-func formControlName="stateRenderFunction"
                           minHeight="300px"
                           [editorCompleter]="generalStateRenderFunctionCompleter"
-                          [objectHighlightRules]="scadaSymbolGeneralStateRenderHighlightRules"
-                          [propertyHighlightRules]="scadaSymbolGeneralStateRenderPropertiesHighlightRules"
+                          [highlightRules]="highlightRules"
                           [functionArgs]="['ctx', 'svg']"
                           helpId="scada/symbol_state_render_fn">
               </tb-js-func>

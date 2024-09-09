@@ -49,8 +49,7 @@ import {
   elementStateRenderFunctionCompletions,
   generalStateRenderFunctionCompletions,
   scadaSymbolContextCompletion,
-  scadaSymbolGeneralStateRenderHighlightRules,
-  scadaSymbolGeneralStateRenderPropertiesHighlightRules
+  scadaSymbolGeneralStateHighlightRules
 } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { IAliasController } from '@core/api/widget-api.models';
@@ -122,9 +121,7 @@ export class ScadaSymbolMetadataComponent extends PageComponent implements OnIni
   elementStateRenderFunctionCompleter: TbEditorCompleter;
   clickActionFunctionCompleter: TbEditorCompleter;
 
-  scadaSymbolGeneralStateRenderHighlightRules = scadaSymbolGeneralStateRenderHighlightRules;
-
-  scadaSymbolGeneralStateRenderPropertiesHighlightRules = scadaSymbolGeneralStateRenderPropertiesHighlightRules;
+  highlightRules = scadaSymbolGeneralStateHighlightRules;
 
   constructor(protected store: Store<AppState>,
               private fb: UntypedFormBuilder,

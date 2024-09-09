@@ -522,7 +522,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.translate,
       () => this.dashboardCtx.stateController,
       this.dashboardConfiguration.entityAliases,
-      this.dashboardConfiguration.filters);
+      this.dashboardConfiguration.filters,
+      this.parentDashboard?.aliasController.getUserFilters());
 
     this.updateDashboardCss();
 
@@ -1168,8 +1169,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           this.filtersUpdated();
           this.updateLayouts();
         }
-      } else if (!this.widgetEditMode) {
-        this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
       }
     }
   }
@@ -1216,6 +1215,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.setEditMode(false, false);
     } else {
       let reInitDashboard = false;
+      this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
       this.dashboardService.saveDashboard(this.dashboard).pipe(
         catchError((err) => {
           if (err.status === HttpStatusCode.Conflict) {
