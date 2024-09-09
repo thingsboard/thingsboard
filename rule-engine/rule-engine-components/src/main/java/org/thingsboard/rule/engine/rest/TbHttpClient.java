@@ -129,12 +129,9 @@ public class TbHttpClient {
                 httpClient = httpClient.secure(t -> t.sslContext(sslContext));
             }
 
-            WebClient.Builder webClientBuilder = WebClient.builder()
-                    .clientConnector(new ReactorClientHttpConnector(httpClient));
-            if (config.isCloseConnectionAfterEachRequest()) {
-                webClientBuilder.defaultHeader(HttpHeaders.CONNECTION, "close"); // Added for hotfix "Connection reset"
-            }
-            this.webClient = webClientBuilder.build();
+            this.webClient = WebClient.builder()
+                    .clientConnector(new ReactorClientHttpConnector(httpClient))
+                    .build();
         } catch (SSLException e) {
             throw new TbNodeException(e);
         }

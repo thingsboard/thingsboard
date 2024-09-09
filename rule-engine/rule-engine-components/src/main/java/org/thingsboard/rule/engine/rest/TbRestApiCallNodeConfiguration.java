@@ -47,7 +47,6 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
     private String proxyScheme;
     private ClientCredentials credentials;
     private boolean ignoreRequestBody;
-    private boolean closeConnectionAfterEachRequest;
 
     @Override
     public TbRestApiCallNodeConfiguration defaultConfiguration() {
@@ -63,7 +62,6 @@ public class TbRestApiCallNodeConfiguration implements NodeConfiguration<TbRestA
         configuration.setEnableProxy(false);
         configuration.setCredentials(new AnonymousCredentials());
         configuration.setIgnoreRequestBody(false);
-        configuration.setCloseConnectionAfterEachRequest(false);
         return configuration;
     }
 

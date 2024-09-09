@@ -105,32 +105,6 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
-    public void givenDefaultConfig_whenInit_verifyNoConnectionCloseHeaderPresentInWebClient() {
-        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        initWithConfig(config);
-        TbHttpClient httpClient = restNode.httpClient;
-        WebClient webClient = httpClient.getWebClient();
-        WebClient.Builder builder = webClient.mutate();
-        builder.defaultHeaders(httpHeaders -> assertThat(httpHeaders).isNullOrEmpty());
-    }
-
-    @Test
-    public void givenDefaultConfig_whenInit_verifyConnectionCloseHeaderPresentInWebClient() {
-        var config = new TbRestApiCallNodeConfiguration().defaultConfiguration();
-        config.setCloseConnectionAfterEachRequest(true);
-        initWithConfig(config);
-        TbHttpClient httpClient = restNode.httpClient;
-        WebClient webClient = httpClient.getWebClient();
-        WebClient.Builder builder = webClient.mutate();
-        builder.defaultHeaders(httpHeaders -> {
-            assertThat(httpHeaders).isNotNull();
-            var headers = httpHeaders.get(HttpHeaders.CONNECTION);
-            assertThat(headers).isNotNull().hasSize(1);
-            assertThat(headers.get(0)).isEqualTo("close");
-        });
-    }
-
-    @Test
     public void deleteRequestWithoutBody() throws IOException, InterruptedException {
         final CountDownLatch latch = new CountDownLatch(1);
         final String path = "/path/to/delete";
@@ -293,8 +267,7 @@ public class TbRestApiCallNodeTest extends AbstractRuleNodeUpgradeTest {
                                  "trimQueue":null,
                                  "maxQueueSize":null,
                                  "credentials":{"type":"anonymous"},
-                                 "parseToPlainText":false,
-                                 "closeConnectionAfterEachRequest":false
+                                 "parseToPlainText":false
                               }""")
         );
     }
