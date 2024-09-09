@@ -21,8 +21,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.collections4.ListUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.junit.jupiter.api.Assertions;
-import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
 import org.mockito.junit.jupiter.MockitoSettings;
 import org.mockito.quality.Strictness;
@@ -429,6 +429,8 @@ public class HashPartitionServiceTest {
         ReflectionTestUtils.setField(partitionService, "vcTopic", "tb.vc");
         ReflectionTestUtils.setField(partitionService, "vcPartitions", 10);
         ReflectionTestUtils.setField(partitionService, "hashFunctionName", hashFunctionName);
+        ReflectionTestUtils.setField(partitionService, "edgeTopic", "tb.edge");
+        ReflectionTestUtils.setField(partitionService, "edgePartitions", 10);
         partitionService.init();
         partitionService.partitionsInit();
         return partitionService;

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.security.sql;
 
+import jakarta.servlet.http.HttpServletResponse;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
 import org.junit.Test;
@@ -24,7 +25,6 @@ import org.thingsboard.server.common.data.device.credentials.lwm2m.PSKClientCred
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
-import jakarta.servlet.http.HttpServletResponse;
 import java.nio.charset.StandardCharsets;
 
 import static org.eclipse.leshan.client.object.Security.psk;

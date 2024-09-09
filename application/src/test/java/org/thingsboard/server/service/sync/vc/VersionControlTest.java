@@ -241,7 +241,7 @@ public class VersionControlTest extends AbstractControllerTest {
 
         checkImportedEntity(tenantId1, device, tenantId1, importedDevice);
         assertThat(importedDevice.getDeviceProfileId()).isEqualTo(device.getDeviceProfileId());
-        assertThat(findDeviceCredentials(device.getId())).isEqualTo(deviceCredentials);
+        assertThat(findDeviceCredentials(device.getId())).isEqualToIgnoringGivenFields(deviceCredentials, "version");
         assertThat(importedDevice.getFirmwareId()).isEqualTo(firmware.getId());
         assertThat(importedDevice.getSoftwareId()).isEqualTo(software.getId());
     }
@@ -937,8 +937,7 @@ public class VersionControlTest extends AbstractControllerTest {
         relation.setType(EntityRelation.MANAGES_TYPE);
         relation.setAdditionalInfo(JacksonUtil.newObjectNode().set("a", new TextNode("b")));
         relation.setTypeGroup(RelationTypeGroup.COMMON);
-        doPost("/api/relation", relation).andExpect(status().isOk());
-        return relation;
+        return doPost("/api/v2/relation", relation, EntityRelation.class);
     }
 
     protected void checkImportedRuleChainData(RuleChain initialRuleChain, RuleChainMetaData initialMetaData, RuleChain importedRuleChain, RuleChainMetaData importedMetaData) {

@@ -22,12 +22,11 @@
     [required]="required"
     [useAliasEntityTypes]="useAliasEntityTypes"
     [allowedEntityTypes]="allowedEntityTypes"
+    [additionEntityTypes]="additionEntityTypes"
     formControlName="entityType">
   </tb-entity-type-select>
   <tb-entity-autocomplete
-    *ngIf="modelValue.entityType && modelValue.entityType !== AliasEntityType.CURRENT_TENANT
-                                 && modelValue.entityType !== AliasEntityType.CURRENT_USER
-                                 && modelValue.entityType !== AliasEntityType.CURRENT_USER_OWNER"
+    *ngIf="modelValue.entityType && !entityTypeNullUUID.has(modelValue.entityType)"
     [required]="required"
     [entityType]="modelValue.entityType"
     formControlName="entityId">

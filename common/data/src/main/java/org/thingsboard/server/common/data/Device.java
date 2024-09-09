@@ -22,6 +22,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
+import lombok.ToString;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -38,8 +39,9 @@ import java.util.Optional;
 
 @Schema
 @EqualsAndHashCode(callSuper = true)
+@ToString(callSuper = true)
 @Slf4j
-public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, ExportableEntity<DeviceId> {
+public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasLabel, HasTenantId, HasCustomerId, HasOtaPackage, HasVersion, ExportableEntity<DeviceId> {
 
     private static final long serialVersionUID = 2807343040519543363L;
 
@@ -65,6 +67,8 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
 
     @Getter @Setter
     private DeviceId externalId;
+    @Getter @Setter
+    private Long version;
 
     public Device() {
         super();
@@ -86,6 +90,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.firmwareId = device.getFirmwareId();
         this.softwareId = device.getSoftwareId();
         this.externalId = device.getExternalId();
+        this.version = device.getVersion();
     }
 
     public Device updateDevice(Device device) {
@@ -100,6 +105,7 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
         this.setSoftwareId(device.getSoftwareId());
         Optional.ofNullable(device.getAdditionalInfo()).ifPresent(this::setAdditionalInfo);
         this.setExternalId(device.getExternalId());
+        this.setVersion(device.getVersion());
         return this;
     }
 
@@ -223,35 +229,6 @@ public class Device extends BaseDataWithAdditionalInfo<DeviceId> implements HasL
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
-    }
-
-    @Override
-    public String toString() {
-        StringBuilder builder = new StringBuilder();
-        builder.append("Device [tenantId=");
-        builder.append(tenantId);
-        builder.append(", customerId=");
-        builder.append(customerId);
-        builder.append(", name=");
-        builder.append(name);
-        builder.append(", type=");
-        builder.append(type);
-        builder.append(", label=");
-        builder.append(label);
-        builder.append(", deviceProfileId=");
-        builder.append(deviceProfileId);
-        builder.append(", deviceData=");
-        builder.append(firmwareId);
-        builder.append(", firmwareId=");
-        builder.append(deviceData);
-        builder.append(", additionalInfo=");
-        builder.append(getAdditionalInfo());
-        builder.append(", createdTime=");
-        builder.append(createdTime);
-        builder.append(", id=");
-        builder.append(id);
-        builder.append("]");
-        return builder.toString();
     }
 
 }

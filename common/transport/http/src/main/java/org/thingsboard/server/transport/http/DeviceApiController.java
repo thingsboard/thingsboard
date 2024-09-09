@@ -24,11 +24,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.core.io.ByteArrayResource;
 import org.springframework.http.HttpHeaders;
@@ -36,7 +34,6 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
-import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -44,7 +41,6 @@ import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.context.request.async.DeferredResult;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.adaptor.JsonConverter;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.DeviceTransportType;
@@ -53,7 +49,6 @@ import org.thingsboard.server.common.data.TbTransportService;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
-import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.common.transport.SessionMsgListener;
 import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportService;
@@ -76,7 +71,6 @@ import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcRequestMs
 import org.thingsboard.server.gen.transport.TransportProtos.ToServerRpcResponseMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ValidateDeviceTokenRequestMsg;
 
-import java.io.IOException;
 import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
@@ -135,9 +129,6 @@ public class DeviceApiController implements TbTransportService {
             MARKDOWN_CODE_BLOCK_END;
 
     private static final String ACCESS_TOKEN_PARAM_DESCRIPTION = "Your device access token.";
-
-    @Value("${transport.http.max_payload_size:65536}")
-    private int maxPayloadSize;
 
     @Autowired
     private HttpTransportContext transportContext;
@@ -202,8 +193,8 @@ public class DeviceApiController implements TbTransportService {
         return responseWriter;
     }
 
-    @Operation(summary = "Post time-series data (postTelemetry)",
-            description = "Post time-series data on behalf of device. "
+    @Operation(summary = "Post time series data (postTelemetry)",
+            description = "Post time series data on behalf of device. "
                     + "\n Example of the request: "
                     + TS_PAYLOAD
                     + REQUIRE_ACCESS_TOKEN)
@@ -289,7 +280,6 @@ public class DeviceApiController implements TbTransportService {
             @PathVariable("requestId") Integer requestId,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "Reply to the RPC request, JSON. For example: {\"status\":\"success\"}", required = true)
             @RequestBody String json, HttpServletRequest httpServletRequest) {
-        checkPayloadSize(httpServletRequest);
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -320,7 +310,6 @@ public class DeviceApiController implements TbTransportService {
             @PathVariable("deviceToken") String deviceToken,
             @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "The RPC request JSON", required = true)
             @RequestBody String json, HttpServletRequest httpServletRequest) {
-        checkPayloadSize(httpServletRequest);
         DeferredResult<ResponseEntity> responseWriter = new DeferredResult<ResponseEntity>();
         transportContext.getTransportService().process(DeviceTransportType.DEFAULT, ValidateDeviceTokenRequestMsg.newBuilder().setToken(deviceToken).build(),
                 new DeviceAuthCallback(transportContext, responseWriter, sessionInfo -> {
@@ -441,12 +430,6 @@ public class DeviceApiController implements TbTransportService {
         transportContext.getTransportService().process(JsonConverter.convertToProvisionRequestMsg(json),
                 new DeviceProvisionCallback(responseWriter));
         return responseWriter;
-    }
-
-    private void checkPayloadSize(HttpServletRequest httpServletRequest) {
-        if (httpServletRequest.getContentLength() > maxPayloadSize) {
-            throw new MaxPayloadSizeExceededException();
-        }
     }
 
     private DeferredResult<ResponseEntity> getOtaPackageCallback(String deviceToken, String title, String version, int size, int chunk, OtaPackageType firmwareType) {
@@ -635,20 +618,6 @@ public class DeviceApiController implements TbTransportService {
             responseWriter.setResult(new ResponseEntity<>("Device was deleted!", HttpStatus.FORBIDDEN));
         }
 
-    }
-
-    @ExceptionHandler(MaxPayloadSizeExceededException.class)
-    public void handle(MaxPayloadSizeExceededException exception, HttpServletRequest request, HttpServletResponse response) {
-        log.debug("Too large payload size. Url: {}, client ip: {}, content length: {}", request.getRequestURL(),
-                request.getRemoteAddr(), request.getContentLength());
-        if (!response.isCommitted()) {
-            try {
-                response.setStatus(HttpStatus.PAYLOAD_TOO_LARGE.value());
-                JacksonUtil.writeValue(response.getWriter(), exception.getMessage());
-            } catch (IOException e) {
-                log.error("Can't handle exception", e);
-            }
-        }
     }
 
     private static MediaType parseMediaType(String contentType) {

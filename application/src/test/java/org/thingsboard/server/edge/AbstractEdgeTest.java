@@ -17,6 +17,7 @@ package org.thingsboard.server.edge;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.protobuf.AbstractMessage;
 import com.google.protobuf.InvalidProtocolBufferException;
 import com.google.protobuf.MessageLite;
@@ -27,7 +28,6 @@ import org.junit.Before;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.AdminSettings;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -63,7 +63,6 @@ import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.OAuth2Info;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -83,10 +82,12 @@ import org.thingsboard.server.gen.edge.v1.AdminSettingsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.AssetUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.CustomerUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.EdgeConfiguration;
-import org.thingsboard.server.gen.edge.v1.OAuth2UpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2ClientUpdateMsg;
+import org.thingsboard.server.gen.edge.v1.OAuth2DomainUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.QueueUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataRequestMsg;
 import org.thingsboard.server.gen.edge.v1.RuleChainMetadataUpdateMsg;
@@ -96,6 +97,7 @@ import org.thingsboard.server.gen.edge.v1.TenantProfileUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.TenantUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
+import org.thingsboard.server.gen.edge.v1.UserCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 
 import java.util.ArrayList;
@@ -125,9 +127,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     @Autowired
     protected EdgeEventService edgeEventService;
 
-    @Autowired
-    protected TbClusterService clusterService;
-
     @Before
     public void setupEdgeTest() throws Exception {
         loginSysAdmin();
@@ -142,8 +141,9 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         installation();
 
         edgeImitator = new EdgeImitator("localhost", 7070, edge.getRoutingKey(), edge.getSecret());
-        edgeImitator.ignoreType(OAuth2UpdateMsg.class);
-        edgeImitator.expectMessageAmount(21);
+        edgeImitator.ignoreType(OAuth2ClientUpdateMsg.class);
+        edgeImitator.ignoreType(OAuth2DomainUpdateMsg.class);
+        edgeImitator.expectMessageAmount(24);
         edgeImitator.connect();
 
         requestEdgeRuleChainMetadata();
@@ -204,7 +204,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
                 + "/asset/" + savedAsset.getUuidId(), Asset.class);
 
         // wait until assign device and asset events are fully processed by edge notification service
-        TimeUnit.MILLISECONDS.sleep(500);
+        TimeUnit.MILLISECONDS.sleep(1000);
     }
 
     protected void extendDeviceProfileData(DeviceProfile deviceProfile) {
@@ -250,7 +250,7 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         UUID ruleChainUUID = validateRuleChains();
 
         // 1 from request message
-        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 1);
+        validateMsgsCnt(RuleChainMetadataUpdateMsg.class, 2);
         validateRuleChainMetadataUpdates(ruleChainUUID);
 
         // 4 messages ('general', 'mail', 'connectivity', 'jwt')
@@ -275,6 +275,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         validateMsgsCnt(DeviceUpdateMsg.class, 1);
         validateDevices();
 
+        validateMsgsCnt(DeviceCredentialsUpdateMsg.class, 1);
+
         // 1 from asset fetcher
         validateMsgsCnt(AssetUpdateMsg.class, 1);
         validateAssets();
@@ -286,6 +288,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // 1 message from user fetcher
         validateMsgsCnt(UserUpdateMsg.class, 1);
         validateUsers();
+
+        validateMsgsCnt(UserCredentialsUpdateMsg.class, 1);
 
         // 1 from tenant fetcher
         validateMsgsCnt(TenantUpdateMsg.class, 1);
@@ -541,18 +545,6 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         Assert.assertTrue(customer.isPublic());
     }
 
-    private void validateOAuth2() throws Exception {
-        Optional<OAuth2UpdateMsg> oAuth2UpdateMsgOpt = edgeImitator.findMessageByType(OAuth2UpdateMsg.class);
-        Assert.assertTrue(oAuth2UpdateMsgOpt.isPresent());
-        OAuth2UpdateMsg oAuth2UpdateMsg = oAuth2UpdateMsgOpt.get();
-        OAuth2Info oAuth2Info = JacksonUtil.fromString(oAuth2UpdateMsg.getEntity(), OAuth2Info.class, true);
-        Assert.assertNotNull(oAuth2Info);
-        OAuth2Info auth2Info = doGet("/api/oauth2/config", OAuth2Info.class);
-        Assert.assertNotNull(auth2Info);
-        Assert.assertEquals(oAuth2Info, auth2Info);
-        testAutoGeneratedCodeByProtobuf(oAuth2UpdateMsg);
-    }
-
     private void validateSyncCompleted() {
         Optional<SyncCompletedMsg> syncCompletedMsgOpt = edgeImitator.findMessageByType(SyncCompletedMsg.class);
         Assert.assertTrue(syncCompletedMsgOpt.isPresent());
@@ -700,6 +692,27 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
         // delete dashboard
         doDelete("/api/dashboard/" + dashboardId.getId())
                 .andExpect(status().isOk());
+    }
+
+
+    protected ObjectNode createDefaultRpc() {
+        return createDefaultRpc(1);
+    }
+
+    protected ObjectNode createDefaultRpc(Integer value) {
+        ObjectNode rpc = JacksonUtil.newObjectNode();
+        rpc.put("method", "setGpio");
+
+        ObjectNode params = JacksonUtil.newObjectNode();
+
+        params.put("pin", 7);
+        params.put("value", value);
+
+        rpc.set("params", params);
+        rpc.put("persistent", true);
+        rpc.put("timeout", 5000);
+
+        return rpc;
     }
 
 }

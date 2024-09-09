@@ -83,6 +83,12 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
     }
 
+    @Test
+    public void verifyDefaultConfig() {
+        assertThat(config.getRuleChainId()).isNull();
+        assertThat(config.isForwardMsgToDefaultRuleChain()).isFalse();
+    }
+
     @ParameterizedTest
     @MethodSource
     public void givenValidConfig_whenInit_thenOk(String ruleChainIdStr, boolean forwardMsgToDefaultRuleChain) throws TbNodeException {

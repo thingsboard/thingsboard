@@ -147,7 +147,7 @@ public class ImagesUpdater {
             try {
                 entity = dao.findById(TenantId.SYS_TENANT_ID, id.getId());
             } catch (Exception e) {
-                log.error("Failed to update {} images: error fetching {} by id [{}]: {}", type, type, id.getId(), StringUtils.abbreviate(e.toString(), 1000));
+                log.error("Failed to update {} images: error fetching entity by id [{}]: {}", type, id.getId(), StringUtils.abbreviate(e.toString(), 1000));
                 continue;
             }
             try {

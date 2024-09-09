@@ -187,8 +187,8 @@ public class BaseTimeseriesService implements TimeseriesService {
     }
 
     @Override
-    public ListenableFuture<List<Void>> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries) {
-        List<ListenableFuture<Void>> futures = new ArrayList<>(tsKvEntries.size());
+    public ListenableFuture<List<Long>> saveLatest(TenantId tenantId, EntityId entityId, List<TsKvEntry> tsKvEntries) {
+        List<ListenableFuture<Long>> futures = new ArrayList<>(tsKvEntries.size());
         for (TsKvEntry tsKvEntry : tsKvEntries) {
             futures.add(timeseriesLatestDao.saveLatest(tenantId, entityId, tsKvEntry));
         }

@@ -13,10 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-:host {
-  .mat-mdc-tab-body-wrapper {
-    min-height: 320px;
-  }
+
+:host ::ng-deep .mat-mdc-tab-body-wrapper {
+  min-height: 320px;
 }
 
 ::ng-deep .mdc-evolution-chip-set__chips {

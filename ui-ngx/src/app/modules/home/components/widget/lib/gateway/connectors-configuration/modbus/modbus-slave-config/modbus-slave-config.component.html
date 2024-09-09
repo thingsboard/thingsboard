@@ -16,16 +16,6 @@
 
 -->
 <div [formGroup]="slaveConfigFormGroup" class="slave-container">
-  <div class="tb-form-panel no-border no-padding padding-top">
-    <div class="tb-form-hint tb-primary-fill tb-flex center">{{ 'gateway.hints.modbus-server' | translate }}</div>
-    <div class="tb-form-row" fxLayoutAlign="space-between center">
-      <mat-slide-toggle class="mat-slide" formControlName="sendDataToThingsBoard">
-        <mat-label>
-          {{ 'gateway.enable' | translate }}
-        </mat-label>
-      </mat-slide-toggle>
-    </div>
-  </div>
   <div class="slave-content tb-form-panel no-border no-padding padding-top" >
     <div class="tb-flex row space-between align-center no-gap fill-width">
       <div class="fixed-title-width" translate>gateway.server-slave-config</div>
@@ -38,7 +28,7 @@
            class="tb-form-row column-xs"
            fxLayoutAlign="space-between center"
       >
-        <div class="fixed-title-width tb-required" translate>gateway.host</div>
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.host' | translate }}" translate>gateway.host</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput name="value" formControlName="host" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -58,7 +48,7 @@
            class="tb-form-row column-xs"
            fxLayoutAlign="space-between center"
       >
-        <div class="fixed-title-width tb-required" translate>gateway.port</div>
+        <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.port' | translate }}" translate>gateway.port</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
             <input matInput type="number" min="{{portLimits.MIN}}" max="{{portLimits.MAX}}"
@@ -79,7 +69,7 @@
       </div>
       <ng-template #serialPort>
         <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-          <div class="fixed-title-width tb-required" translate>gateway.port</div>
+          <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.serial-port' | translate }}" translate>gateway.port</div>
           <div class="tb-flex no-gap">
             <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
               <input matInput name="value" formControlName="serialPort" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -96,7 +86,7 @@
         </div>
       </ng-template>
       <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.framer-type' | translate }}" translate>
+        <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.framer-type' | translate }}" translate>
           gateway.method
         </div>
         <div class="tb-flex no-gap">
@@ -110,7 +100,7 @@
       </div>
     </div>
     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width tb-required" translate>gateway.unit-id</div>
+      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.unit-id' | translate }}" translate>gateway.unit-id</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <input matInput type="number" min="0" name="value" formControlName="unitId" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -161,7 +151,11 @@
       </div>
     </div>
     <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" translate>gateway.poll-period</div>
+      <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.poll-period' | translate }}">
+        <span tbTruncateWithTooltip translate>
+          gateway.poll-period
+        </span>
+      </div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <input matInput type="number" min="0" name="value" formControlName="pollPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
@@ -169,7 +163,7 @@
       </div>
     </div>
     <div *ngIf="protocolType === ModbusProtocolType.Serial" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-      <div class="fixed-title-width" translate>gateway.baudrate</div>
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.baudrate' | translate }}" translate>gateway.baudrate</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="baudrate">
@@ -177,6 +171,13 @@
           </mat-select>
         </mat-form-field>
       </div>
+    </div>
+    <div class="tb-form-row" fxLayoutAlign="space-between center">
+      <mat-slide-toggle class="mat-slide" formControlName="sendDataToThingsBoard">
+        <mat-label>
+          {{ 'gateway.send-data-TB' | translate }}
+        </mat-label>
+      </mat-slide-toggle>
     </div>
     <div class="tb-form-panel stroked">
       <mat-expansion-panel class="tb-settings">
@@ -187,7 +188,7 @@
         </mat-expansion-panel-header>
         <div class="tb-form-panel no-border no-padding padding-top">
           <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-            <div class="fixed-title-width" translate>gateway.byte-order</div>
+            <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.modbus.byte-order' | translate }}" translate>gateway.byte-order</div>
             <div class="tb-flex no-gap">
               <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
                 <mat-select formControlName="byteOrder">

@@ -45,6 +45,7 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 
+import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
@@ -105,7 +106,37 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     @Test
     public void testSaveDeviceName0x00_thenSomeDatabaseException() {
         Device device = getDevice(tenantId1, customerId1, "\u0000");
-        assertThatThrownBy(() -> deviceIds.add(deviceDao.save(TenantId.fromUUID(tenantId1), device).getUuidId()));
+        assertThatThrownBy(() -> deviceIds.add(saveDevice(tenantId1, device).getUuidId()));
+    }
+
+    @Test
+    public void testSaveDevice_versionIncrement() {
+        Device device = getDevice(tenantId1, customerId1, "1ewfewf2");
+        device = saveDevice(tenantId1, device);
+        deviceIds.add(device.getUuidId());
+        assertThat(device.getVersion()).isEqualTo(1);
+
+        device.setName(device.getName() + "x");
+        device = saveDevice(tenantId1, device);
+        assertThat(device.getVersion()).isEqualTo(2);
+
+        device.setName(device.getName() + "x");
+        device = saveDevice(tenantId1, device);
+        assertThat(device.getVersion()).isEqualTo(3);
+    }
+
+    @Test
+    public void testSaveDevice_versionIncrement_noChanges() {
+        Device device = getDevice(tenantId1, customerId1, "1ewfewf2");
+        device = saveDevice(tenantId1, device);
+        deviceIds.add(device.getUuidId());
+        assertThat(device.getVersion()).isEqualTo(1);
+
+        device = saveDevice(tenantId1, device);
+        assertThat(device.getVersion()).isEqualTo(2);
+
+        device = saveDevice(tenantId1, device);
+        assertThat(device.getVersion()).isEqualTo(3);
     }
 
     @Test
@@ -126,7 +157,7 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         UUID customerId = Uuids.timeBased();
         // send to method getDevice() number = 40, because make random name is bad and name "SEARCH_TEXT_40" don't used
         Device device = getDevice(tenantId, customerId, 40);
-        deviceIds.add(deviceDao.save(TenantId.fromUUID(tenantId), device).getUuidId());
+        deviceIds.add(saveDevice(tenantId, device).getUuidId());
 
         UUID uuid = device.getId().getId();
         Device entity = deviceDao.findById(TenantId.fromUUID(tenantId), uuid);
@@ -156,8 +187,8 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
     private List<UUID> createDevices(UUID tenantId1, UUID tenantId2, UUID customerId1, UUID customerId2, int count) {
         List<UUID> savedDevicesUUID = new ArrayList<>();
         for (int i = 0; i < count / 2; i++) {
-            savedDevicesUUID.add(deviceDao.save(TenantId.fromUUID(tenantId1), getDevice(tenantId1, customerId1, i)).getUuidId());
-            savedDevicesUUID.add(deviceDao.save(TenantId.fromUUID(tenantId2), getDevice(tenantId2, customerId2, i + count / 2)).getUuidId());
+            savedDevicesUUID.add(saveDevice(tenantId1, getDevice(tenantId1, customerId1, i)).getUuidId());
+            savedDevicesUUID.add(saveDevice(tenantId2, getDevice(tenantId2, customerId2, i + count / 2)).getUuidId());
         }
         return savedDevicesUUID;
     }
@@ -175,4 +206,9 @@ public class JpaDeviceDaoTest extends AbstractJpaDaoTest {
         device.setDeviceProfileId(savedDeviceProfile.getId());
         return device;
     }
+
+    private Device saveDevice(UUID tenantId, Device device) {
+        return deviceDao.save(TenantId.fromUUID(tenantId), device);
+    }
+
 }

@@ -1066,7 +1066,6 @@
         "maximum-upload-file-size": "Tamaño máximo de fichero: {{ size }}",
         "cannot-upload-file": "No es posible subir el fichero",
         "settings": "Ajustes",
-        "layout-settings": "Ajustes de diseño",
         "columns-count": "Número de columnas",
         "columns-count-required": "Número de columnas requerido.",
         "min-columns-count-message": "Solo se permite un número mínimo de 10 columnas.",

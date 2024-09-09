@@ -33,7 +33,6 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
-import { TranslateService } from '@ngx-translate/core';
 import { generateSecret } from '@core/utils';
 import { Subject } from 'rxjs';
 import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipes/gateway-port-tooltip.pipe';
@@ -74,10 +73,8 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder,
-              private cdr: ChangeDetectorRef,
-              private translate: TranslateService) {
+              private cdr: ChangeDetectorRef) {
     this.brokerConfigFormGroup = this.fb.group({
-      name: ['', []],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
       version: [5, []],
@@ -109,12 +106,13 @@ export class BrokerConfigControlComponent implements ControlValueAccessor, Valid
   }
 
   writeValue(brokerConfig: BrokerConfig): void {
-    const brokerConfigState = {
-      ...brokerConfig,
-      version: brokerConfig.version || 5,
-      clientId: brokerConfig.clientId || 'tb_gw_' + generateSecret(5),
-    };
-    this.brokerConfigFormGroup.reset(brokerConfigState, {emitEvent: false});
+    const {
+      version = 5,
+      clientId = `tb_gw_${generateSecret(5)}`,
+      security = {},
+    } = brokerConfig;
+
+    this.brokerConfigFormGroup.reset({ ...brokerConfig, version, clientId, security }, { emitEvent: false });
     this.cdr.markForCheck();
   }
 
