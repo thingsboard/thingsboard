@@ -64,9 +64,8 @@ export class ClientsTableConfigResolver implements Resolve<EntityTableConfig<OAu
 
     this.config.columns.push(
       new DateEntityTableColumn<OAuth2ClientInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
-      new EntityTableColumn<OAuth2ClientInfo>('title', 'admin.oauth2.title', '35%'),
-      new EntityTableColumn<OAuth2ClientInfo>('providerName', 'admin.oauth2.provider', '170px'),
-      new EntityTableColumn<OAuth2ClientInfo>('platforms', 'admin.oauth2.allowed-platforms', '170px',
+      new EntityTableColumn<OAuth2ClientInfo>('title', 'admin.oauth2.title', '350px'),
+      new EntityTableColumn<OAuth2ClientInfo>('platforms', 'admin.oauth2.allowed-platforms', '100%',
         (clientInfo) => {
           return clientInfo.platforms && clientInfo.platforms.length ?
             clientInfo.platforms.map(platform => this.translate.instant(platformTypeTranslations.get(platform))).join(', ') :
