@@ -3661,6 +3661,8 @@
         "update-symbol": "Update SCADA symbol",
         "edit-symbol": "Edit SCADA symbol",
         "symbol-details": "SCADA symbol details",
+        "mode-svg": "SVG",
+        "mode-xml": "XML",
         "no-symbols": "No symbols found",
         "show-hidden-elements": "Show hidden elements",
         "hide-hidden-elements": "Hide hidden elements",
