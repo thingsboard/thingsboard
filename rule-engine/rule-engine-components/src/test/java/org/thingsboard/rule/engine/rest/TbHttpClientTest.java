@@ -22,14 +22,10 @@ import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.params.ParameterizedTest;
-import org.junit.jupiter.params.provider.ValueSource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mockito;
 import org.mockserver.integration.ClientAndServer;
 import org.springframework.util.LinkedMultiValueMap;
-import org.springframework.web.client.AsyncRestTemplate;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -48,7 +44,6 @@ import static org.hamcrest.MatcherAssert.assertThat;
 import static org.hamcrest.Matchers.instanceOf;
 import static org.hamcrest.Matchers.is;
 import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.ArgumentMatchers.anyString;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.willCallRealMethod;
 import static org.mockito.Mockito.mock;
@@ -143,10 +138,7 @@ public class TbHttpClientTest {
         config.setRestEndpointUrlPattern(endpointUrl);
         config.setUseSimpleClientHttpFactory(true);
 
-        var asyncRestTemplate = new AsyncRestTemplate();
-
         var httpClient = new TbHttpClient(config, eventLoop);
-        httpClient.setHttpClient(asyncRestTemplate);
 
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, new DeviceId(EntityId.NULL_UUID), TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         var successMsg = TbMsg.newMsg(
@@ -226,16 +218,4 @@ public class TbHttpClientTest {
         Assertions.assertEquals(data.get("Set-Cookie"), "[\"sap-context=sap-client=075; path=/\",\"sap-token=sap-client=075; path=/\"]");
     }
 
-    @ParameterizedTest
-    @ValueSource(strings = { "false", "\"", "\"\"", "\"This is a string with double quotes\"", "Path: /home/developer/test.txt",
-            "First line\nSecond line\n\nFourth line", "Before\rAfter", "Tab\tSeparated\tValues", "Test\bbackspace", "[]",
-            "[1, 2, 3]", "{\"key\": \"value\"}", "{\n\"temperature\": 25.5,\n\"humidity\": 50.2\n\"}", "Expression: (a + b) * c",
-            "世界", "Україна", "\u1F1FA\u1F1E6", "🇺🇦"})
-    public void testParseJsonStringToPlainText(String original) {
-        Mockito.when(client.parseJsonStringToPlainText(anyString())).thenCallRealMethod();
-
-        String serialized = JacksonUtil.toString(original);
-        Assertions.assertNotNull(serialized);
-        Assertions.assertEquals(original, client.parseJsonStringToPlainText(serialized));
-    }
 }

@@ -16,6 +16,10 @@
 
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
+import { DialogComponent } from '@shared/components/dialog.component';
 
 export interface ErrorAlertDialogData {
   title: string;
@@ -29,15 +33,18 @@ export interface ErrorAlertDialogData {
   templateUrl: './error-alert-dialog.component.html',
   styleUrls: ['./error-alert-dialog.component.scss']
 })
-export class ErrorAlertDialogComponent {
+export class ErrorAlertDialogComponent extends DialogComponent<ErrorAlertDialogComponent, boolean>{
 
   title: string;
   message: string;
   errorMessage: string;
   errorDetails?: string;
 
-  constructor(public dialogRef: MatDialogRef<ErrorAlertDialogComponent>,
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              public dialogRef: MatDialogRef<ErrorAlertDialogComponent>,
               @Inject(MAT_DIALOG_DATA) public data: ErrorAlertDialogData) {
+    super(store, router, dialogRef);
     this.title = this.data.title;
     this.message = this.data.message;
     this.errorMessage = this.data.error.message ? this.data.error.message : JSON.stringify(this.data.error);

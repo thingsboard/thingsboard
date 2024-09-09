@@ -24,10 +24,11 @@ import org.junit.Test;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNode;
 import org.thingsboard.rule.engine.metadata.TbGetAttributesNodeConfiguration;
+import org.thingsboard.rule.engine.util.TbMsgSource;
 import org.thingsboard.server.actors.ActorSystemContext;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EventInfo;
@@ -134,7 +135,7 @@ public abstract class AbstractRuleEngineLifecycleIntegrationTest extends Abstrac
         device = doPost("/api/device", device, Device.class);
 
         log.warn("before update attr");
-        attributesService.save(device.getTenantId(), device.getId(), DataConstants.SERVER_SCOPE,
+        attributesService.save(device.getTenantId(), device.getId(), AttributeScope.SERVER_SCOPE,
                 Collections.singletonList(new BaseAttributeKvEntry(new StringDataEntry("serverAttributeKey", "serverAttributeValue"), System.currentTimeMillis())))
                 .get(TIMEOUT, TimeUnit.SECONDS);
         log.warn("attr updated");

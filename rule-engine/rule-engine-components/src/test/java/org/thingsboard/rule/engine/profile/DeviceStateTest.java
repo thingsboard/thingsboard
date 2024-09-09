@@ -16,12 +16,13 @@
 package org.thingsboard.rule.engine.profile;
 
 import com.google.common.util.concurrent.Futures;
-import org.junit.Before;
-import org.junit.Test;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
@@ -68,14 +69,14 @@ public class DeviceStateTest {
 
     private TbContext ctx;
 
-    @Before
+    @BeforeEach
     public void beforeEach() {
         ctx = mock(TbContext.class);
 
         when(ctx.getDeviceService()).thenReturn(mock(DeviceService.class));
 
         AttributesService attributesService = mock(AttributesService.class);
-        when(attributesService.find(any(), any(), any(), anyCollection())).thenReturn(Futures.immediateFuture(Collections.emptyList()));
+        when(attributesService.find(any(), any(), any(AttributeScope.class), anyCollection())).thenReturn(Futures.immediateFuture(Collections.emptyList()));
         when(ctx.getAttributesService()).thenReturn(attributesService);
 
         RuleEngineAlarmService alarmService = mock(RuleEngineAlarmService.class);

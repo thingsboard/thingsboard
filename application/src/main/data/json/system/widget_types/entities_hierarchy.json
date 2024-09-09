@@ -11,7 +11,7 @@
     "resources": [],
     "templateHtml": "<tb-entities-hierarchy-widget \n    [ctx]=\"ctx\">\n</tb-entities-hierarchy-widget>",
     "templateCss": "",
-    "controllerScript": "self.onInit = function() {\n}\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.entitiesHierarchyWidget.onDataUpdated();\n}\n\nself.typeParameters = function() {\n    return {\n        dataKeysOptional: true\n    };\n}\n\nself.actionSources = function() {\n    return {\n        'nodeSelected': {\n            name: 'widget-action.node-selected',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n}\n",
+    "controllerScript": "self.onInit = function() {\n}\n\nself.onDataUpdated = function() {\n    self.ctx.$scope.entitiesHierarchyWidget.onDataUpdated();\n}\n\nself.onEditModeChanged = function() {\n    self.ctx.$scope.entitiesHierarchyWidget.onEditModeChanged();\n}\n\nself.typeParameters = function() {\n    return {\n        dataKeysOptional: true\n    };\n}\n\nself.actionSources = function() {\n    return {\n        'nodeSelected': {\n            name: 'widget-action.node-selected',\n            multiple: false\n        }\n    };\n}\n\nself.onDestroy = function() {\n}\n",
     "settingsSchema": "",
     "dataKeySettingsSchema": "",
     "settingsDirective": "tb-entities-hierarchy-widget-settings",

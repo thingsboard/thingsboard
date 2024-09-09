@@ -27,8 +27,7 @@ import static org.eclipse.californium.core.config.CoapConfig.DEFAULT_BLOCKWISE_S
 
 public class LwM2MNetworkConfig {
 
-    public static Configuration getCoapConfig(Integer serverPortNoSec, Integer serverSecurePort, LwM2MTransportServerConfig config) {
-        Configuration coapConfig = new Configuration();
+    public static Configuration getCoapConfig(Configuration coapConfig, Integer serverPortNoSec, Integer serverSecurePort, LwM2MTransportServerConfig config) {
         coapConfig.set(CoapConfig.COAP_PORT, serverPortNoSec);
         coapConfig.set(CoapConfig.COAP_SECURE_PORT, serverSecurePort);
         /**

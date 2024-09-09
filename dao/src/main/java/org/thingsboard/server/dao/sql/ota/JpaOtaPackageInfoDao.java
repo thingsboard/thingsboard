@@ -19,6 +19,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
+import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
@@ -32,7 +33,6 @@ import org.thingsboard.server.dao.ota.OtaPackageInfoDao;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
-import java.util.Objects;
 import java.util.UUID;
 
 @Slf4j
@@ -58,6 +58,7 @@ public class JpaOtaPackageInfoDao extends JpaAbstractDao<OtaPackageInfoEntity, O
         return DaoUtil.getData(otaPackageInfoRepository.findOtaPackageInfoById(id));
     }
 
+    @Transactional
     @Override
     public OtaPackageInfo save(TenantId tenantId, OtaPackageInfo otaPackageInfo) {
         OtaPackageInfo savedOtaPackage = super.save(tenantId, otaPackageInfo);

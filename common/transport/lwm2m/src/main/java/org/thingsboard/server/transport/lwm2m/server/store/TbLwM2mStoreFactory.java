@@ -16,8 +16,8 @@
 package org.thingsboard.server.transport.lwm2m.server.store;
 
 import lombok.RequiredArgsConstructor;
-import org.eclipse.leshan.server.californium.registration.CaliforniumRegistrationStore;
-import org.eclipse.leshan.server.californium.registration.InMemoryRegistrationStore;
+import lombok.extern.slf4j.Slf4j;
+import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.springframework.context.annotation.Bean;
 import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Component;
@@ -25,9 +25,11 @@ import org.thingsboard.server.cache.TBRedisCacheConfiguration;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.secure.LwM2mCredentialsSecurityInfoValidator;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
 import java.util.Optional;
 
+@Slf4j
 @Component
 @TbLwM2mTransportComponent
 @RequiredArgsConstructor
@@ -36,11 +38,13 @@ public class TbLwM2mStoreFactory {
     private final Optional<TBRedisCacheConfiguration> redisConfiguration;
     private final LwM2MTransportServerConfig config;
     private final LwM2mCredentialsSecurityInfoValidator validator;
+    private final LwM2mVersionedModelProvider modelProvider;
 
     @Bean
-    private CaliforniumRegistrationStore registrationStore() {
+    private RegistrationStore registrationStore() {
         return redisConfiguration.isPresent() ?
-                new TbLwM2mRedisRegistrationStore(getConnectionFactory()) : new InMemoryRegistrationStore(config.getCleanPeriodInSec());
+                new TbLwM2mRedisRegistrationStore(config, getConnectionFactory(), modelProvider) :
+                new TbInMemoryRegistrationStore(config, config.getCleanPeriodInSec(), modelProvider);
     }
 
     @Bean

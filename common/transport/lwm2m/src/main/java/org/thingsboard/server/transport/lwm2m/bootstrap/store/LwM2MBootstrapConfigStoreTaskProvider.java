@@ -50,7 +50,7 @@ import java.util.stream.Collectors;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
 import static org.eclipse.leshan.server.bootstrap.BootstrapUtil.toWriteRequest;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.BOOTSTRAP_DEFAULT_SHORT_ID;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.BOOTSTRAP_DEFAULT_SHORT_ID_0;
 
 @Slf4j
 public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTaskProvider {
@@ -76,7 +76,8 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
 
     @Override
     public Tasks getTasks(BootstrapSession session, List<LwM2mResponse> previousResponse) {
-        BootstrapConfig config = store.get(session.getEndpoint(), session.getIdentity(), session);
+//        BootstrapConfig config = store.get(session.getEndpoint(), session.getClientTransportData().getIdentity(), session);
+        BootstrapConfig config = store.get(session);
         if (config == null) {
             return null;
         }
@@ -105,7 +106,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                                 "Bootstrap Discover return error {} : to continue bootstrap session without autoIdForSecurityObject mode. {}",
                                 discoverResponse, session);
                     }
-                    if (this.lwM2MBootstrapSessionClients.get(session.getEndpoint()).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID) == null) {
+                    if (this.lwM2MBootstrapSessionClients.get(session.getEndpoint()).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0) == null) {
                         log.error(
                                 "Unable to find bootstrap server instance in Security Object (0) in response {}: unable to continue bootstrap session with autoIdForSecurityObject mode. {}",
                                 discoverResponse, session);
@@ -150,7 +151,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
      * The values ID:0 and ID:65535 values MUST NOT be used for identifying the LwM2M Server.
      * "Short Server ID":
      * - Link Instance (lwm2m Server) hase linkParams with key = "ssid" value = "shortId" (ver lvm2m = 1.1).
-     * - Link Instance (bootstrap Server) hase not linkParams with key = "ssid" (ver lvm2m = 1.1).
+     * - Link Instance (bootstrap Server) hase not linkParams with key = "ssid" (ver lvm2m = 1.0).
      */
     protected void findSecurityInstanceId(Link[] objectLinks, String endpoint) {
         log.info("Object after discover: [{}]", objectLinks);
@@ -159,17 +160,17 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
                 try {
                     LwM2mPath path = new LwM2mPath(link.getUriReference());
                     if (path.isObjectInstance()) {
-                        if (link.getLinkParams().containsKey("ssid")) {
-                            int serverId = Integer.parseInt(link.getLinkParams().get("ssid").getUnquoted());
+                        if (link.getAttributes().get("ssid") != null) {
+                            int serverId = Integer.parseInt(link.getAttributes().get("ssid").getCoreLinkValue());
                             if (!lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(serverId)) {
                                 lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(serverId, path.getObjectInstanceId());
                             } else {
                                 log.error("Invalid lwm2mSecurityInstance by [{}]", path.getObjectInstanceId());
                             }
-                            lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(Integer.valueOf(link.getLinkParams().get("ssid").getUnquoted()), path.getObjectInstanceId());
+                            lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(serverId, path.getObjectInstanceId());
                         } else {
                             if (!this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().containsKey(0)) {
-                                this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(BOOTSTRAP_DEFAULT_SHORT_ID, path.getObjectInstanceId());
+                                this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().put(BOOTSTRAP_DEFAULT_SHORT_ID_0, path.getObjectInstanceId());
                             } else {
                                 log.error("Invalid bootstrapSecurityInstance by [{}]", path.getObjectInstanceId());
                             }
@@ -221,7 +222,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
             LwM2mPath path = new LwM2mPath(link.getUriReference());
             if (!path.isRoot() && path.getObjectId() < 3) {
                 if (path.isObject()) {
-                    String ver = link.getLinkParams().get("ver") != null ? link.getLinkParams().get("ver").getUnquoted() : "1.0";
+                    String ver = link.getAttributes().get("ver") != null ? link.getAttributes().get("ver").getCoreLinkValue() : "1.0";
                     this.supportedObjects.put(path.getObjectId(), ver);
                 }
             }
@@ -243,7 +244,7 @@ public class LwM2MBootstrapConfigStoreTaskProvider implements LwM2MBootstrapTask
         Integer bootstrapServerIdNew = null;
         // handle security
         int lwm2mSecurityInstanceId = 0;
-        int bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID);
+        int bootstrapSecurityInstanceId = this.lwM2MBootstrapSessionClients.get(endpoint).getSecurityInstances().get(BOOTSTRAP_DEFAULT_SHORT_ID_0);
         for (BootstrapConfig.ServerSecurity security : new TreeMap<>(bootstrapConfig.security).values()) {
             if (security.bootstrapServer) {
                 requestsWrite.add(toWriteRequest(bootstrapSecurityInstanceId, security, contentFormat));

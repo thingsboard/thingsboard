@@ -49,7 +49,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BehaviorSubject, fromEvent, merge, Observable, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { EntityId } from '@shared/models/id/entity-id';
-import { entityTypeTranslations } from '@shared/models/entity-type.models';
+import { EntityType, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { debounceTime, distinctUntilChanged, map, takeUntil } from 'rxjs/operators';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort, SortDirection } from '@angular/material/sort';
@@ -169,6 +169,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
   private columnWidth: {[key: string]: string} = {};
   private columnDefaultVisibility: {[key: string]: boolean} = {};
   private columnSelectionAvailability: {[key: string]: boolean} = {};
+  private columnsWithCellClick: Array<number> = [];
 
   private rowStylesInfo: RowStyleInfo;
 
@@ -230,6 +231,12 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   }
 
+  private isActionsConfigured(actionSourceIds: Array<string>): boolean {
+    let configured = false;
+    actionSourceIds.forEach(id => configured = configured || this.ctx.actionsApi.getActionDescriptors(id).length > 0 );
+    return configured;
+  }
+
   ngOnDestroy(): void {
     if (this.widgetResize$) {
       this.widgetResize$.disconnect();
@@ -266,6 +273,13 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     this.ctx.detectChanges();
   }
 
+  public onEditModeChanged() {
+    if (this.textSearchMode) {
+      this.ctx.hideTitlePanel = !this.ctx.isEdit;
+      this.ctx.detectChanges(true);
+    }
+  }
+
   public pageLinkSortDirection(): SortDirection {
     return entityDataPageLinkSortDirection(this.pageLink);
   }
@@ -277,6 +291,7 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
 
     this.hasRowAction = !!this.ctx.actionsApi.getActionDescriptors('rowClick').length ||
       !!this.ctx.actionsApi.getActionDescriptors('rowDoubleClick').length;
+    this.columnsWithCellClick = this.ctx.actionsApi.getActionDescriptors('cellClick').map(action => action.columnIndex);
 
     if (this.settings.entitiesTitle && this.settings.entitiesTitle.length) {
       this.ctx.widgetTitle = this.settings.entitiesTitle;
@@ -393,7 +408,9 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
         } as EntityColumn
       );
       this.contentsInfo.entityType = {
-        useCellContentFunction: false
+        useCellContentFunction: true,
+        cellContentFunction: (entityType: EntityType) =>
+          entityType ? this.translate.instant(entityTypeTranslations.get(entityType).type) : ''
       };
       this.stylesInfo.entityType = {
         useCellStyleFunction: false
@@ -687,6 +704,33 @@ export class EntitiesTableWidgetComponent extends PageComponent implements OnIni
     }
   }
 
+  public onCellClick($event: Event, entity: EntityData, key: EntityColumn, columnIndex: number) {
+    this.entityDatasource.toggleCurrentEntity(entity);
+    const descriptors = this.ctx.actionsApi.getActionDescriptors('cellClick');
+    let descriptor;
+    if (descriptors.length) {
+      descriptor = descriptors.find(desc => desc.columnIndex === columnIndex);
+    }
+    if ($event && descriptor) {
+      $event.stopPropagation();
+      let entityId;
+      let entityName;
+      let entityLabel;
+      if (entity) {
+        entityId = entity.id;
+        entityName = entity.entityName;
+        entityLabel = entity.entityLabel;
+      }
+      this.ctx.actionsApi.handleWidgetAction($event, descriptor, entityId, entityName, {entity, key}, entityLabel);
+    }
+  }
+
+  public columnHasCellClick(index: number) {
+    if (this.columnsWithCellClick.length) {
+      return this.columnsWithCellClick.includes(index);
+    }
+  }
+
   public onRowClick($event: Event, entity: EntityData, isDouble?: boolean) {
     if ($event) {
       $event.stopPropagation();
@@ -827,9 +871,9 @@ class EntityDatasource implements DataSource<EntityData> {
     }
     if (datasource.entityType) {
       entity.id.entityType = datasource.entityType;
-      entity.entityType = this.translate.instant(entityTypeTranslations.get(datasource.entityType).type);
+      entity.entityType = datasource.entityType;
     } else {
-      entity.entityType = '';
+      entity.entityType = null;
     }
     this.dataKeys.forEach((dataKey, index) => {
       const keyData = data[index].data;

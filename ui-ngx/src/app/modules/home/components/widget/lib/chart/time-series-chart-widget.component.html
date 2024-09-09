@@ -1,0 +1,124 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-time-series-chart-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-time-series-chart-overlay" [style]="overlayStyle"></div>
+  <ng-container *ngIf="widgetComponent.dashboardWidget.showWidgetTitlePanel">
+    <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
+  </ng-container>
+  <div class="tb-time-series-chart-content" [class]="legendClass">
+    <div #chartShape class="tb-time-series-chart-shape">
+    </div>
+    <div *ngIf="showLegend" class="tb-time-series-chart-legend" [class.tb-simple-legend]="!displayLegendValues">
+      <ng-container *ngIf="displayLegendValues; else simpleLegend">
+        <ng-container *ngIf="horizontalLegendPosition; else verticalLegend">
+          <ng-container *ngTemplateOutlet="horizontalLegend"></ng-container>
+        </ng-container>
+      </ng-container>
+    </div>
+    <ng-template #horizontalLegend>
+      <table class="tb-time-series-chart-legend-table">
+        <thead>
+        <tr>
+          <th></th>
+          <th *ngFor="let legendKey of legendKeys">
+            <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey}"></ng-container>
+          </th>
+        </tr>
+        </thead>
+        <tbody>
+        <ng-container *ngIf="legendConfig.showMin === true">
+          <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Min', type: 'min'}"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="legendConfig.showMax === true">
+          <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Max', type: 'max'}"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="legendConfig.showAvg === true">
+          <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Avg', type: 'avg'}"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="legendConfig.showTotal === true">
+          <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Total', type: 'total'}"></ng-container>
+        </ng-container>
+        <ng-container *ngIf="legendConfig.showLatest === true">
+          <ng-container *ngTemplateOutlet="legendDataRow; context:{label: 'legend.Latest', type: 'latest'}"></ng-container>
+        </ng-container>
+        </tbody>
+      </table>
+    </ng-template>
+    <ng-template #verticalLegend>
+      <table class="tb-time-series-chart-legend-table vertical">
+        <thead>
+        <tr>
+          <th></th>
+          <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle" *ngIf="legendConfig.showMin === true">{{ 'legend.Min' | translate }}</th>
+          <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle" *ngIf="legendConfig.showMax === true">{{ 'legend.Max' | translate }}</th>
+          <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle" *ngIf="legendConfig.showAvg === true">{{ 'legend.Avg' | translate }}</th>
+          <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle" *ngIf="legendConfig.showTotal === true">{{ 'legend.Total' | translate }}</th>
+          <th class="tb-time-series-chart-legend-type-label right" [style]="legendColumnTitleStyle" *ngIf="legendConfig.showLatest === true">{{ 'legend.Latest' | translate }}</th>
+        </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let legendKey of legendKeys">
+            <th>
+              <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey, left: true}"></ng-container>
+            </th>
+            <td *ngIf="legendConfig.showMin === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].min | safe: 'html'">
+            </td>
+            <td *ngIf="legendConfig.showMax === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].max | safe: 'html'">
+            </td>
+            <td *ngIf="legendConfig.showAvg === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].avg | safe: 'html'">
+            </td>
+            <td *ngIf="legendConfig.showTotal === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].total | safe: 'html'">
+            </td>
+            <td *ngIf="legendConfig.showLatest === true" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+                [innerHTML]="legendData.data[legendKey.dataIndex].latest | safe: 'html'">
+            </td>
+          </tr>
+        </tbody>
+      </table>
+    </ng-template>
+    <ng-template #simpleLegend>
+      <ng-container *ngFor="let legendKey of legendKeys">
+        <ng-container *ngTemplateOutlet="legendItem; context:{legendKey: legendKey}"></ng-container>
+      </ng-container>
+    </ng-template>
+    <ng-template #legendItem let-legendKey="legendKey" let-left="left">
+      <div class="tb-time-series-chart-legend-item"
+           [class.left]="left">
+        <div class="tb-time-series-chart-legend-item-label"
+             (mouseenter)="onLegendKeyEnter(legendKey)"
+             (mouseleave)="onLegendKeyLeave(legendKey)"
+             (click)="toggleLegendKey(legendKey)">
+          <div class="tb-time-series-chart-legend-item-label-circle" [style]="{background: !legendKey.dataKey.hidden ? legendKey.dataKey.color : null}"></div>
+          <div [style]="!legendKey.dataKey.hidden ? legendLabelStyle : disabledLegendLabelStyle" [innerHTML]="legendKey.dataKey.label | safe: 'html'"></div>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template #legendDataRow let-label="label" let-type="type">
+      <tr>
+        <th class="tb-time-series-chart-legend-type-label" [style]="legendColumnTitleStyle">{{ label | translate }}</th>
+        <td *ngFor="let legendKey of legendKeys" class="tb-time-series-chart-legend-value" [style]="legendValueStyle"
+            [innerHTML]="legendData.data[legendKey.dataIndex][type] | safe: 'html'">
+        </td>
+      </tr>
+    </ng-template>
+  </div>
+</div>

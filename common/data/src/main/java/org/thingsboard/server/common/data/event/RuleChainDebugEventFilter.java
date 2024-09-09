@@ -15,18 +15,17 @@
  */
 package org.thingsboard.server.common.data.event;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.StringUtils;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@ApiModel
+@Schema
 public class RuleChainDebugEventFilter extends DebugEventFilter {
 
-    @ApiModelProperty(position = 2, value = "String value representing the message")
+    @Schema(description = "String value representing the message")
     protected String message;
 
     @Override

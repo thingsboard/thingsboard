@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileCon
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
-import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.queue.discovery.PartitionService;
@@ -56,7 +55,6 @@ public class AlarmsCleanUpService {
     private final TenantService tenantService;
     private final AlarmDao alarmDao;
     private final AlarmService alarmService;
-    private final RelationService relationService;
     private final EntityActionService entityActionService;
     private final PartitionService partitionService;
     private final TbTenantProfileCache tenantProfileCache;

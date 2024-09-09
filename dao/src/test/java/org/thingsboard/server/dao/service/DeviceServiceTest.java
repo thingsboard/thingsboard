@@ -21,7 +21,9 @@ import org.junit.Assert;
 import org.junit.Before;
 import org.junit.Test;
 import org.junit.jupiter.api.Assertions;
+import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionStatus;
 import org.springframework.transaction.support.DefaultTransactionDefinition;
@@ -31,15 +33,18 @@ import org.thingsboard.server.common.data.DeviceInfo;
 import org.thingsboard.server.common.data.DeviceInfoFilter;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.EntitySubtype;
+import org.thingsboard.server.common.data.HasOtaPackage;
 import org.thingsboard.server.common.data.OtaPackage;
+import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
-import org.thingsboard.server.common.data.asset.Asset;
-import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceProfileId;
+import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.ota.ChecksumAlgorithm;
+import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.DeviceCredentials;
@@ -50,7 +55,9 @@ import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
+import org.thingsboard.server.dao.exception.DeviceCredentialsValidationException;
 import org.thingsboard.server.dao.ota.OtaPackageService;
+import org.thingsboard.server.dao.service.validator.DeviceCredentialsDataValidator;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 
 import java.nio.ByteBuffer;
@@ -59,7 +66,9 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
 import static org.thingsboard.server.common.data.ota.OtaPackageType.FIRMWARE;
+import static org.thingsboard.server.common.data.ota.OtaPackageType.SOFTWARE;
 import static org.thingsboard.server.dao.model.ModelConstants.NULL_UUID;
 
 @DaoSqlTest
@@ -79,6 +88,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
     TenantProfileService tenantProfileService;
     @Autowired
     private PlatformTransactionManager platformTransactionManager;
+    @SpyBean
+    private DeviceCredentialsDataValidator validator;
 
     private IdComparator<Device> idComparator = new IdComparator<>();
     private TenantId anotherTenantId;
@@ -130,6 +141,49 @@ public class DeviceServiceTest extends AbstractServiceTest {
     }
 
     @Test
+    public void testSaveDevicesWithTheSameAccessToken() {
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+        String accessToken = StringUtils.generateSafeToken(10);
+        Device savedDevice = deviceService.saveDeviceWithAccessToken(device, accessToken);
+
+        DeviceCredentials deviceCredentials = deviceCredentialsService.findDeviceCredentialsByDeviceId(tenantId, savedDevice.getId());
+        Assert.assertEquals(accessToken, deviceCredentials.getCredentialsId());
+
+        Device duplicatedDevice = new Device();
+        duplicatedDevice.setTenantId(tenantId);
+        duplicatedDevice.setName(StringUtils.randomAlphabetic(10));
+        duplicatedDevice.setType("default");
+        assertThatThrownBy(() -> deviceService.saveDeviceWithAccessToken(duplicatedDevice, accessToken))
+                .isInstanceOf(DeviceCredentialsValidationException.class)
+                .hasMessageContaining("Device credentials are already assigned to another device!");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, duplicatedDevice.getName());
+        Assertions.assertNull(deviceByName);
+    }
+
+    @Test
+    public void testShouldRollbackValidatedDeviceIfDeviceCredentialsValidationFailed() {
+        Mockito.reset(validator);
+        Mockito.doThrow(new DataValidationException("mock message"))
+                .when(validator).validate(any(), any());
+
+        Device device = new Device();
+        device.setTenantId(tenantId);
+        device.setName(StringUtils.randomAlphabetic(10));
+        device.setType("default");
+
+        assertThatThrownBy(() -> deviceService.saveDevice(device))
+                .isInstanceOf(DataValidationException.class)
+                .hasMessageContaining("mock message");
+
+        Device deviceByName = deviceService.findDeviceByTenantIdAndName(tenantId, device.getName());
+        Assertions.assertNull(deviceByName);
+    }
+
+    @Test
     public void testCountByTenantId() {
         Assert.assertEquals(0, deviceService.countByTenantId(tenantId));
         Assert.assertEquals(0, deviceService.countByTenantId(anotherTenantId));
@@ -152,6 +206,125 @@ public class DeviceServiceTest extends AbstractServiceTest {
 
         devices.forEach(device -> deleteDevice(tenantId, device));
         deleteDevice(anotherTenantId, anotherDevice);
+    }
+
+    @Test
+    public void testCountDevicesWithoutFirmware() {
+        testCountDevicesWithoutOta(FIRMWARE);
+    }
+
+    @Test
+    public void testCountDevicesWithoutSoftware() {
+        testCountDevicesWithoutOta(SOFTWARE);
+    }
+
+    public void testCountDevicesWithoutOta(OtaPackageType type) {
+        var defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId);
+        var deviceProfileId = defaultDeviceProfile.getId();
+        Assert.assertEquals(0, deviceService.countByTenantId(tenantId));
+        Assert.assertEquals(0, deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId, deviceProfileId, type));
+
+        int maxDevices = 8;
+        List<Device> devices = new ArrayList<>(maxDevices);
+
+        for (int i = 1; i <= maxDevices; i++) {
+            devices.add(this.saveDevice(tenantId, "My device " + i));
+            Assert.assertEquals(i, deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId, deviceProfileId, type));
+        }
+
+        Assert.assertEquals(maxDevices, deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId, deviceProfileId, type));
+
+        var otaPackageId = createOta(deviceProfileId, type);
+
+        int devicesWithOta = maxDevices / 2;
+
+        for (int i = 0; i < devicesWithOta; i++) {
+            var device = devices.get(i);
+            setOtaPackageId(device, type, otaPackageId);
+            deviceService.saveDevice(device);
+        }
+
+        Assert.assertEquals(maxDevices - devicesWithOta, deviceService.countDevicesByTenantIdAndDeviceProfileIdAndEmptyOtaPackage(tenantId, deviceProfileId, type));
+
+        devices.forEach(device -> deleteDevice(tenantId, device));
+    }
+
+    @Test
+    public void testFindDevicesWithoutFirmware() {
+        testFindDevicesWithoutOta(FIRMWARE);
+    }
+
+    @Test
+    public void testFindDevicesWithoutSoftware() {
+        testFindDevicesWithoutOta(SOFTWARE);
+    }
+
+    public void testFindDevicesWithoutOta(OtaPackageType type) {
+        var defaultDeviceProfile = deviceProfileService.findDefaultDeviceProfile(tenantId);
+        var deviceProfileId = defaultDeviceProfile.getId();
+
+        PageLink pageLink = new PageLink(100);
+
+        Assert.assertEquals(0, deviceService.countByTenantId(tenantId));
+        Assert.assertEquals(0, deviceService.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId, deviceProfileId, type, pageLink).getData().size());
+
+        int maxDevices = 8;
+        List<Device> devices = new ArrayList<>(maxDevices);
+
+        for (int i = 1; i <= maxDevices; i++) {
+            devices.add(this.saveDevice(tenantId, "My device " + i));
+        }
+
+        var foundDevices = deviceService.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId, deviceProfileId, type, pageLink).getData();
+        Assert.assertEquals(maxDevices, foundDevices.size());
+
+        devices.sort(idComparator);
+        foundDevices.sort(idComparator);
+
+        Assert.assertEquals(devices, foundDevices);
+
+        var otaPackageId = createOta(deviceProfileId, type);
+
+        int devicesWithOta = maxDevices / 2;
+
+        for (int i = 0; i < devicesWithOta; i++) {
+            var device = devices.get(i);
+            setOtaPackageId(device, type, otaPackageId);
+            deviceService.saveDevice(device);
+        }
+
+        foundDevices = deviceService.findDevicesByTenantIdAndTypeAndEmptyOtaPackage(tenantId, deviceProfileId, type, pageLink).getData();
+
+        Assert.assertEquals(maxDevices - devicesWithOta, foundDevices.size());
+
+        foundDevices.sort(idComparator);
+
+        for (int i = 0; i < foundDevices.size(); i++) {
+            Assert.assertEquals(devices.get(i + devicesWithOta), foundDevices.get(i));
+        }
+
+        devices.forEach(device -> deleteDevice(tenantId, device));
+    }
+
+    private <T extends HasOtaPackage> void setOtaPackageId(T obj, OtaPackageType type, OtaPackageId otaPackageId) {
+        switch (type) {
+            case FIRMWARE -> obj.setFirmwareId(otaPackageId);
+            case SOFTWARE -> obj.setSoftwareId(otaPackageId);
+        }
+    }
+
+    private OtaPackageId createOta(DeviceProfileId deviceProfileId, OtaPackageType type) {
+        OtaPackageInfo ota = new OtaPackageInfo();
+        ota.setTenantId(tenantId);
+        ota.setDeviceProfileId(deviceProfileId);
+        ota.setType(type);
+        ota.setTitle("Test_" + type);
+        ota.setVersion("v1.0");
+        ota.setUrl("http://ota.test.org");
+        ota.setDataSize(0L);
+        OtaPackageInfo savedOta = otaPackageService.saveOtaPackageInfo(ota, true);
+        Assert.assertNotNull(savedOta);
+        return savedOta.getId();
     }
 
     void deleteDevice(TenantId tenantId, Device device) {
@@ -320,7 +493,7 @@ public class DeviceServiceTest extends AbstractServiceTest {
         Device device = new Device();
         device.setType(deviceProfile.getName());
         device.setTenantId(tenantId);
-        device.setName("My device"+ StringUtils.randomAlphabetic(5));
+        device.setName("My device" + StringUtils.randomAlphabetic(5));
 
         DefaultTransactionDefinition def = new DefaultTransactionDefinition();
         TransactionStatus status = platformTransactionManager.getTransaction(def);
@@ -897,8 +1070,8 @@ public class DeviceServiceTest extends AbstractServiceTest {
                 deviceInfosWithLabel.stream()
                         .anyMatch(
                                 d -> d.getId().equals(savedDevice.getId())
-                                    && d.getTenantId().equals(tenantId)
-                                    && d.getLabel().equals(savedDevice.getLabel())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getLabel().equals(savedDevice.getLabel())
                         )
         );
 
@@ -956,9 +1129,9 @@ public class DeviceServiceTest extends AbstractServiceTest {
                 deviceInfosWithLabel.stream()
                         .anyMatch(
                                 d -> d.getId().equals(savedDevice.getId())
-                                    && d.getTenantId().equals(tenantId)
-                                    && d.getDeviceProfileName().equals(savedDevice.getType())
-                                    && d.getLabel().equals(savedDevice.getLabel())
+                                        && d.getTenantId().equals(tenantId)
+                                        && d.getDeviceProfileName().equals(savedDevice.getType())
+                                        && d.getLabel().equals(savedDevice.getLabel())
                         )
         );
 
@@ -1024,4 +1197,5 @@ public class DeviceServiceTest extends AbstractServiceTest {
                         )
         );
     }
+
 }

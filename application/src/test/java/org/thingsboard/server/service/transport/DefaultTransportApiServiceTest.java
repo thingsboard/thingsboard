@@ -47,7 +47,6 @@ import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.service.apiusage.TbApiUsageStateService;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
@@ -91,8 +90,6 @@ public class DefaultTransportApiServiceTest {
     protected DbCallbackExecutorService dbCallbackExecutorService;
     @MockBean
     protected TbClusterService tbClusterService;
-    @MockBean
-    protected DataDecodingEncodingService dataDecodingEncodingService;
     @MockBean
     protected DeviceProvisionService deviceProvisionService;
     @MockBean

@@ -17,26 +17,24 @@ package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import io.hypersistence.utils.hibernate.type.array.StringArrayType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.hibernate.annotations.Type;
-import org.hibernate.annotations.TypeDef;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.widget.BaseWidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.model.ModelConstants;
-import org.thingsboard.server.dao.util.mapping.JsonStringType;
+import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import javax.persistence.Column;
-import javax.persistence.Entity;
-import javax.persistence.Table;
 import java.util.UUID;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Entity
-@TypeDef(name = "json", typeClass = JsonStringType.class)
-@TypeDef(name = "string-array", typeClass = StringArrayType.class)
 @Table(name = ModelConstants.WIDGET_TYPE_TABLE_NAME)
 public class WidgetTypeDetailsEntity extends AbstractWidgetTypeEntity<WidgetTypeDetails> {
 
@@ -46,11 +44,11 @@ public class WidgetTypeDetailsEntity extends AbstractWidgetTypeEntity<WidgetType
     @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTION_PROPERTY)
     private String description;
 
-    @Type(type="string-array")
+    @Type(StringArrayType.class)
     @Column(name = ModelConstants.WIDGET_TYPE_TAGS_PROPERTY, columnDefinition = "text[]")
     private String[] tags;
 
-    @Type(type="json")
+    @Convert(converter = JsonConverter.class)
     @Column(name = ModelConstants.WIDGET_TYPE_DESCRIPTOR_PROPERTY)
     private JsonNode descriptor;
 

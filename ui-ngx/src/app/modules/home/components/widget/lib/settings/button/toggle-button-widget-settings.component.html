@@ -1,0 +1,125 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="toggleButtonWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.toggle-button.behavior</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    trueLabel="{{ 'widgets.toggle-button.checked' | translate }}"
+                                    falseLabel="{{ 'widgets.toggle-button.unchecked' | translate }}"
+                                    stateLabel="{{ 'widgets.toggle-button.checked' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.check-hint' | translate}}" translate>widgets.toggle-button.check</div>
+      <tb-set-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.toggle-button.check' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="checkState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.uncheck-hint' | translate}}" translate>widgets.toggle-button.uncheck</div>
+      <tb-set-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.toggle-button.uncheck' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="uncheckState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="disabledState"></tb-get-value-action-settings>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-panel stroked tb-slide-toggle">
+      <mat-expansion-panel class="tb-settings" [expanded]="!toggleButtonWidgetSettingsForm.get('autoScale').value" disabled>
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            <mat-slide-toggle class="mat-slide" formControlName="autoScale" (click)="$event.stopPropagation()"
+                              fxLayoutAlign="center">
+              {{ 'widgets.toggle-button.auto-scale' | translate }}
+            </mat-slide-toggle>
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="horizontalFill">
+              {{ 'widgets.toggle-button.horizontal-fill' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div class="tb-form-row">
+            <mat-slide-toggle class="mat-slide" formControlName="verticalFill">
+              {{ 'widgets.toggle-button.vertical-fill' | translate }}
+            </mat-slide-toggle>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div fxLayout="row" fxLayoutAlign="space-between center">
+      <div class="tb-form-panel-title" translate>widgets.toggle-button.button-appearance</div>
+      <tb-toggle-select [(ngModel)]="buttonAppearanceType" [ngModelOptions]="{standalone: true}">
+        <tb-toggle-option value="checked">{{ 'widgets.toggle-button.checked' | translate }}</tb-toggle-option>
+        <tb-toggle-option value="unchecked">{{ 'widgets.toggle-button.unchecked' | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <tb-widget-button-appearance
+        [fxShow]="buttonAppearanceType === 'checked'"
+        withBorderRadius
+        [withAutoScale]="false"
+        [autoScale]="toggleButtonWidgetSettingsForm.get('autoScale').value"
+        formControlName="checkedAppearance">
+    </tb-widget-button-appearance>
+    <tb-widget-button-appearance
+        [fxShow]="buttonAppearanceType === 'unchecked'"
+        withBorderRadius
+        [withAutoScale]="false"
+        [autoScale]="toggleButtonWidgetSettingsForm.get('autoScale').value"
+        formControlName="uncheckedAppearance">
+    </tb-widget-button-appearance>
+  </div>
+</ng-container>

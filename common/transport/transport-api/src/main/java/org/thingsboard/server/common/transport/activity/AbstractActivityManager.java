@@ -28,10 +28,9 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicLong;
-import java.util.concurrent.atomic.AtomicReference;
 
 @Slf4j
-public abstract class AbstractActivityManager<Key, Metadata> implements ActivityManager<Key> {
+public abstract class AbstractActivityManager<Key, Metadata> implements ActivityManager<Key, Metadata> {
 
     private final ConcurrentMap<Key, ActivityStateWrapper> states = new ConcurrentHashMap<>();
 
@@ -54,8 +53,6 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
 
     protected abstract long getReportingPeriodMillis();
 
-    protected abstract ActivityState<Metadata> createNewState(Key key);
-
     protected abstract ActivityStrategy getStrategy();
 
     protected abstract ActivityState<Metadata> updateState(Key key, ActivityState<Metadata> state);
@@ -67,7 +64,7 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
     protected abstract void reportActivity(Key key, Metadata metadata, long timeToReport, ActivityReportCallback<Key> callback);
 
     @Override
-    public void onActivity(Key key, long newLastRecordedTime) {
+    public void onActivity(Key key, Metadata metadata, long newLastRecordedTime) {
         if (key == null) {
             log.error("Failed to process activity event: provided activity key is null.");
             return;
@@ -77,36 +74,28 @@ public abstract class AbstractActivityManager<Key, Metadata> implements Activity
         var shouldReport = new AtomicBoolean(false);
         var lastRecordedTime = new AtomicLong();
         var lastReportedTime = new AtomicLong();
-        var metadata = new AtomicReference<Metadata>();
 
-        var activityStateWrapper = states.compute(key, (__, stateWrapper) -> {
+        states.compute(key, (__, stateWrapper) -> {
             if (stateWrapper == null) {
-                var newState = createNewState(key);
-                if (newState == null) {
-                    return null;
-                }
+                ActivityState<Metadata> newState = new ActivityState<>();
                 stateWrapper = new ActivityStateWrapper();
                 stateWrapper.setState(newState);
                 stateWrapper.setStrategy(getStrategy());
             }
             var state = stateWrapper.getState();
+            state.setMetadata(metadata);
             if (state.getLastRecordedTime() < newLastRecordedTime) {
                 state.setLastRecordedTime(newLastRecordedTime);
             }
             shouldReport.set(stateWrapper.getStrategy().onActivity());
             lastRecordedTime.set(state.getLastRecordedTime());
             lastReportedTime.set(stateWrapper.getLastReportedTime());
-            metadata.set(state.getMetadata());
             return stateWrapper;
         });
 
-        if (activityStateWrapper == null) {
-            return;
-        }
-
         if (shouldReport.get() && lastReportedTime.get() < lastRecordedTime.get()) {
             log.debug("Going to report first activity event for key: [{}].", key);
-            reportActivity(key, metadata.get(), lastRecordedTime.get(), new ActivityReportCallback<>() {
+            reportActivity(key, metadata, lastRecordedTime.get(), new ActivityReportCallback<>() {
                 @Override
                 public void onSuccess(Key key, long reportedTime) {
                     updateLastReportedTime(key, reportedTime);

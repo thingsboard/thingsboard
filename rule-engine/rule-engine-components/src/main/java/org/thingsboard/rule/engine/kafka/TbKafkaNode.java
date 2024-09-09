@@ -104,7 +104,7 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         addMetadataKeyValuesAsKafkaHeaders = BooleanUtils.toBooleanDefaultIfNull(config.isAddMetadataKeyValuesAsKafkaHeaders(), false);
         toBytesCharset = config.getKafkaHeadersCharset() != null ? Charset.forName(config.getKafkaHeadersCharset()) : StandardCharsets.UTF_8;
         try {
-            this.producer = new KafkaProducer<>(properties);
+            this.producer = getKafkaProducer(properties);
             Thread ioThread = (Thread) ReflectionUtils.getField(IO_THREAD_FIELD, producer);
             ioThread.setUncaughtExceptionHandler((thread, throwable) -> {
                 if (throwable instanceof ThingsboardKafkaClientError) {
@@ -115,6 +115,10 @@ public class TbKafkaNode extends TbAbstractExternalNode {
         } catch (Exception e) {
             throw new TbNodeException(e);
         }
+    }
+
+    KafkaProducer<String, String> getKafkaProducer(Properties properties) {
+        return new KafkaProducer<>(properties);
     }
 
     @Override

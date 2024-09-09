@@ -74,6 +74,12 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       transportDeviceMsgRateLimit: [null, []],
       transportDeviceTelemetryMsgRateLimit: [null, []],
       transportDeviceTelemetryDataPointsRateLimit: [null, []],
+      transportGatewayMsgRateLimit: [null, []],
+      transportGatewayTelemetryMsgRateLimit: [null, []],
+      transportGatewayTelemetryDataPointsRateLimit: [null, []],
+      transportGatewayDeviceMsgRateLimit: [null, []],
+      transportGatewayDeviceTelemetryMsgRateLimit: [null, []],
+      transportGatewayDeviceTelemetryDataPointsRateLimit: [null, []],
       tenantEntityExportRateLimit: [null, []],
       tenantEntityImportRateLimit: [null, []],
       tenantNotificationRequestsRateLimit: [null, []],
@@ -106,7 +112,11 @@ export class DefaultTenantProfileConfigurationComponent implements ControlValueA
       maxWsSubscriptionsPerRegularUser: [null, [Validators.min(0)]],
       maxWsSubscriptionsPerPublicUser: [null, [Validators.min(0)]],
       wsUpdatesPerSessionRateLimit: [null, []],
-      cassandraQueryTenantRateLimitsConfiguration: [null, []]
+      cassandraQueryTenantRateLimitsConfiguration: [null, []],
+      edgeEventRateLimits: [null, []],
+      edgeEventRateLimitsPerEdge: [null, []],
+      edgeUplinkMessagesRateLimits: [null, []],
+      edgeUplinkMessagesRateLimitsPerEdge: [null, []]
     });
 
     this.defaultTenantProfileConfigurationFormGroup.get('smsEnabled').valueChanges.pipe(

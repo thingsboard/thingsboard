@@ -22,10 +22,12 @@ import { FormControl } from '@angular/forms';
 import { Router } from '@angular/router';
 import { DialogComponent } from '@app/shared/components/dialog.component';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
+import { isDefinedAndNotNull } from '@core/utils';
 
 export interface ExportWidgetsBundleDialogData {
   widgetsBundle: WidgetsBundle;
   includeBundleWidgetsInExport: boolean;
+  ignoreLoading?: boolean;
 }
 
 export interface ExportWidgetsBundleDialogResult {
@@ -43,7 +45,9 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
 
   widgetsBundle: WidgetsBundle;
 
-  exportWidgetsFormControl = new FormControl(false);
+  ignoreLoading = false;
+
+  exportWidgetsFormControl = new FormControl(true);
 
   constructor(protected store: Store<AppState>,
               protected router: Router,
@@ -51,7 +55,8 @@ export class ExportWidgetsBundleDialogComponent extends DialogComponent<ExportWi
               public dialogRef: MatDialogRef<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogResult>) {
     super(store, router, dialogRef);
     this.widgetsBundle = data.widgetsBundle;
-    if (data.includeBundleWidgetsInExport) {
+    this.ignoreLoading = data.ignoreLoading;
+    if (isDefinedAndNotNull(data.includeBundleWidgetsInExport)) {
       this.exportWidgetsFormControl.patchValue(data.includeBundleWidgetsInExport, {emitEvent: false});
     }
   }

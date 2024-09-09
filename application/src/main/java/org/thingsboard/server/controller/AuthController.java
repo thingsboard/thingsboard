@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
-import io.swagger.annotations.ApiOperation;
-import io.swagger.annotations.ApiParam;
+import io.swagger.v3.oas.annotations.Parameter;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -34,8 +33,8 @@ import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.MailService;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
@@ -48,7 +47,7 @@ import org.thingsboard.server.common.data.security.event.UserSessionInvalidation
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
+import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.rest.RestAuthenticationDetails;
 import org.thingsboard.server.service.security.model.ActivateUserRequest;
@@ -60,7 +59,6 @@ import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.security.model.token.JwtTokenFactory;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import javax.servlet.http.HttpServletRequest;
 import java.net.URI;
 import java.net.URISyntaxException;
 
@@ -105,9 +103,8 @@ public class AuthController extends BaseController {
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
     @RequestMapping(value = "/auth/changePassword", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
-    public ObjectNode changePassword(
-            @ApiParam(value = "Change Password Request")
-            @RequestBody ChangePasswordRequest changePasswordRequest) throws ThingsboardException {
+    public JwtPair changePassword(@Parameter(description = "Change Password Request")
+                                  @RequestBody ChangePasswordRequest changePasswordRequest) throws ThingsboardException {
         String currentPassword = changePasswordRequest.getCurrentPassword();
         String newPassword = changePasswordRequest.getNewPassword();
         SecurityUser securityUser = getCurrentUser();
@@ -123,10 +120,7 @@ public class AuthController extends BaseController {
         userService.replaceUserCredentials(securityUser.getTenantId(), userCredentials);
 
         eventPublisher.publishEvent(new UserCredentialsInvalidationEvent(securityUser.getId()));
-        ObjectNode response = JacksonUtil.newObjectNode();
-        response.put("token", tokenFactory.createAccessJwtToken(securityUser).getToken());
-        response.put("refreshToken", tokenFactory.createRefreshToken(securityUser).getToken());
-        return response;
+        return tokenFactory.createTokenPair(securityUser);
     }
 
     @ApiOperation(value = "Get the current User password policy (getUserPasswordPolicy)",
@@ -145,7 +139,7 @@ public class AuthController extends BaseController {
                     "If token is not valid, returns '409 Conflict'.")
     @RequestMapping(value = "/noauth/activate", params = {"activateToken"}, method = RequestMethod.GET)
     public ResponseEntity<String> checkActivateToken(
-            @ApiParam(value = "The activate token string.")
+            @Parameter(description = "The activate token string.")
             @RequestParam(value = "activateToken") String activateToken) {
         HttpHeaders headers = new HttpHeaders();
         HttpStatus responseStatus;
@@ -172,7 +166,7 @@ public class AuthController extends BaseController {
     @RequestMapping(value = "/noauth/resetPasswordByEmail", method = RequestMethod.POST)
     @ResponseStatus(value = HttpStatus.OK)
     public void requestResetPasswordByEmail(
-            @ApiParam(value = "The JSON object representing the reset password email request.")
+            @Parameter(description = "The JSON object representing the reset password email request.")
             @RequestBody ResetPasswordEmailRequest resetPasswordByEmailRequest,
             HttpServletRequest request) throws ThingsboardException {
         try {
@@ -195,7 +189,7 @@ public class AuthController extends BaseController {
                     "If token is not valid, returns '409 Conflict'.")
     @RequestMapping(value = "/noauth/resetPassword", params = {"resetToken"}, method = RequestMethod.GET)
     public ResponseEntity<String> checkResetToken(
-            @ApiParam(value = "The reset token string.")
+            @Parameter(description = "The reset token string.")
             @RequestParam(value = "resetToken") String resetToken) {
         HttpHeaders headers = new HttpHeaders();
         HttpStatus responseStatus;
@@ -231,7 +225,7 @@ public class AuthController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
     public JwtPair activateUser(
-            @ApiParam(value = "Activate user request.")
+            @Parameter(description = "Activate user request.")
             @RequestBody ActivateUserRequest activateRequest,
             @RequestParam(required = false, defaultValue = "true") boolean sendActivationMail,
             HttpServletRequest request) throws ThingsboardException {
@@ -256,7 +250,9 @@ public class AuthController extends BaseController {
             }
         }
 
-        return tokenFactory.createTokenPair(securityUser);
+        var tokenPair = tokenFactory.createTokenPair(securityUser);
+        systemSecurityService.logLoginAction(user, new RestAuthenticationDetails(request), ActionType.LOGIN, null);
+        return tokenPair;
     }
 
     @ApiOperation(value = "Reset password (resetPassword)",
@@ -267,7 +263,7 @@ public class AuthController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     @ResponseBody
     public JwtPair resetPassword(
-            @ApiParam(value = "Reset password request.")
+            @Parameter(description = "Reset password request.")
             @RequestBody ResetPasswordRequest resetPasswordRequest,
             HttpServletRequest request) throws ThingsboardException {
         String resetToken = resetPasswordRequest.getResetToken();

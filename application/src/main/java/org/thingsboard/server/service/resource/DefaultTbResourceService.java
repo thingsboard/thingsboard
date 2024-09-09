@@ -65,11 +65,10 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
                 resource.setResourceKey(resource.getFileName());
             }
             TbResource savedResource = resourceService.saveResource(resource);
-            tbClusterService.onResourceChange(savedResource, null);
-            notificationEntityService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedResource.getId(), savedResource, actionType, user);
             return savedResource;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
                     resource, actionType, user, e);
             throw e;
         }
@@ -80,15 +79,15 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
         if (tbResource.getResourceType() == ResourceType.IMAGE) {
             throw new IllegalArgumentException("Image resource type is not supported");
         }
+        ActionType actionType = ActionType.DELETED;
         TbResourceId resourceId = tbResource.getId();
         TenantId tenantId = tbResource.getTenantId();
         try {
             resourceService.deleteResource(tenantId, resourceId);
-            tbClusterService.onResourceDeleted(tbResource, null);
-            notificationEntityService.logEntityAction(tenantId, resourceId, tbResource, ActionType.DELETED, user, resourceId.toString());
+            logEntityActionService.logEntityAction(tenantId, resourceId, tbResource, actionType, user, resourceId.toString());
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
-                    ActionType.DELETED, user, e, resourceId.toString());
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE),
+                    actionType, user, e, resourceId.toString());
             throw e;
         }
     }
@@ -96,7 +95,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     @Override
     public List<LwM2mObject> findLwM2mObject(TenantId tenantId, String sortOrder, String sortProperty, String[] objectIds) {
         log.trace("Executing findByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         List<TbResource> resources = resourceService.findTenantResourcesByResourceTypeAndObjectIds(tenantId, ResourceType.LWM2M_MODEL,
                 objectIds);
         return resources.stream()
@@ -108,7 +107,7 @@ public class DefaultTbResourceService extends AbstractTbEntityService implements
     @Override
     public List<LwM2mObject> findLwM2mObjectPage(TenantId tenantId, String sortProperty, String sortOrder, PageLink pageLink) {
         log.trace("Executing findByTenantId [{}]", tenantId);
-        validateId(tenantId, INCORRECT_TENANT_ID + tenantId);
+        validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         PageData<TbResource> resourcePageData = resourceService.findTenantResourcesByResourceTypeAndPageLink(tenantId, ResourceType.LWM2M_MODEL, pageLink);
         return resourcePageData.getData().stream()
                 .flatMap(s -> Stream.ofNullable(toLwM2mObject(s, false)))

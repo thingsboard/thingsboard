@@ -15,13 +15,12 @@
  */
 package org.thingsboard.server.dao.model.sqlts.ts;
 
+import jakarta.persistence.Entity;
+import jakarta.persistence.IdClass;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
-
-import javax.persistence.Entity;
-import javax.persistence.IdClass;
-import javax.persistence.Table;
 
 @EqualsAndHashCode(callSuper = true)
 @Data

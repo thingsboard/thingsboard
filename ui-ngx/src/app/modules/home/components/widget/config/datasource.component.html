@@ -42,14 +42,14 @@
                               style="height: 56px; margin-bottom: 22px;"
                               formControlName="alarmFilterConfig"></tb-alarm-filter-config>
       <tb-entity-autocomplete *ngIf="datasourceFormGroup.get('type').value === datasourceType.device"
-                              required
+                              [required]="!datasourcesOptional"
                               [entityType]="entityType.DEVICE"
                               formControlName="deviceId">
       </tb-entity-autocomplete>
       <tb-entity-alias-select
         *ngIf="datasourceFormGroup.get('type').value !== datasourceType.device && datasourceFormGroup.get('type').value !== datasourceType.alarmCount"
         [showLabel]="true"
-        [tbRequired]="true"
+        [tbRequired]="!datasourcesOptional"
         [aliasController]="aliasController"
         formControlName="entityAliasId"
         [callbacks]="entityAliasSelectCallbacks">
@@ -72,9 +72,10 @@
                   [aliasController]="aliasController"
                   [datakeySettingsSchema]="dataKeySettingsSchema"
                   [dataKeySettingsDirective]="dataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
-                  [callbacks]="dataKeysCallbacks"
+                  [callbacks]="callbacks"
                   [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
                   [deviceId]="datasourceFormGroup.get('deviceId').value"
                   formControlName="dataKeys">
@@ -82,13 +83,15 @@
     <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys" fxFlex
                   [widgetType]="widgetTypes.latest"
                   [datasourceType]="datasourceFormGroup.get('type').value"
+                  latestDataKeys
                   [optDataKeys]="true"
                   [aliasController]="aliasController"
                   [datakeySettingsSchema]="latestDataKeySettingsSchema"
                   [dataKeySettingsDirective]="latestDataKeySettingsDirective"
+                  [datakeySettingsFunction]="dataKeySettingsFunction"
                   [dashboard]="dashboard"
                   [widget]="widget"
-                  [callbacks]="dataKeysCallbacks"
+                  [callbacks]="callbacks"
                   [entityAliasId]="datasourceFormGroup.get('entityAliasId').value"
                   [deviceId]="datasourceFormGroup.get('deviceId').value"
                   formControlName="latestDataKeys">

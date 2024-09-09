@@ -30,10 +30,12 @@ import org.eclipse.leshan.client.californium.LeshanClientBuilder;
 import org.eclipse.leshan.client.engine.DefaultRegistrationEngineFactory;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.client.object.Server;
+import org.eclipse.leshan.client.observer.LwM2mClientObserver;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.resource.DummyInstanceEnabler;
 import org.eclipse.leshan.client.resource.ObjectsInitializer;
 import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.californium.EndpointFactory;
 import org.eclipse.leshan.core.model.InvalidDDFFileException;
 import org.eclipse.leshan.core.model.LwM2mModel;
@@ -42,6 +44,10 @@ import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
+import org.eclipse.leshan.core.request.BootstrapRequest;
+import org.eclipse.leshan.core.request.DeregisterRequest;
+import org.eclipse.leshan.core.request.RegisterRequest;
+import org.eclipse.leshan.core.request.UpdateRequest;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.thingsboard.monitoring.util.ResourceUtils;
 
@@ -51,6 +57,7 @@ import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 
 import static org.eclipse.leshan.client.object.Security.noSec;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
@@ -95,7 +102,7 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         LwM2mModel model = new StaticModel(models);
         ObjectsInitializer initializer = new ObjectsInitializer(model);
         initializer.setInstancesForObject(SECURITY, security);
-        initializer.setInstancesForObject(SERVER, new Server(123, 300));
+        initializer.setInstancesForObject(SERVER, new Server(123, TimeUnit.MINUTES.toSeconds(5)));
         initializer.setInstancesForObject(DEVICE, this);
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
         DtlsConnectorConfig.Builder dtlsConfig = new DtlsConnectorConfig.Builder();
@@ -137,6 +144,89 @@ public class Lwm2mClient extends BaseInstanceEnabler implements Destroyable {
         builder.setDecoder(new DefaultLwM2mDecoder(false));
         builder.setEncoder(new DefaultLwM2mEncoder(false));
         leshanClient = builder.build();
+
+        LwM2mClientObserver observer = new LwM2mClientObserver() {
+
+            @Override
+            public void onBootstrapStarted(ServerIdentity bsserver, BootstrapRequest request) {}
+
+            @Override
+            public void onBootstrapSuccess(ServerIdentity bsserver, BootstrapRequest request) {}
+
+            @Override
+            public void onBootstrapFailure(ServerIdentity bsserver, BootstrapRequest request,
+                                           ResponseCode responseCode, String errorMessage, Exception cause) {}
+
+            @Override
+            public void onBootstrapTimeout(ServerIdentity bsserver, BootstrapRequest request) {}
+
+            @Override
+            public void onRegistrationStarted(ServerIdentity server, RegisterRequest request) {
+                log.debug("onRegistrationStarted [{}]", request.getEndpointName());
+            }
+
+            @Override
+            public void onRegistrationSuccess(ServerIdentity server, RegisterRequest request, String registrationID) {
+                log.debug("onRegistrationSuccess [{}] [{}]", request.getEndpointName(), registrationID);
+            }
+
+            @Override
+            public void onRegistrationFailure(ServerIdentity server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+                log.debug("onRegistrationFailure [{}] [{}] [{}]", request.getEndpointName(), responseCode, errorMessage);
+            }
+
+            @Override
+            public void onRegistrationTimeout(ServerIdentity server, RegisterRequest request) {
+                log.debug("onRegistrationTimeout [{}]", request.getEndpointName());
+            }
+
+            @Override
+            public void onUpdateStarted(ServerIdentity server, UpdateRequest request) {
+                log.debug("onUpdateStarted [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onUpdateSuccess(ServerIdentity server, UpdateRequest request) {
+                log.debug("onUpdateSuccess [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onUpdateFailure(ServerIdentity server, UpdateRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+                log.debug("onUpdateFailure [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onUpdateTimeout(ServerIdentity server, UpdateRequest request) {
+                log.debug("onUpdateTimeout [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onDeregistrationStarted(ServerIdentity server, DeregisterRequest request) {
+                log.debug("onDeregistrationStarted [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onDeregistrationSuccess(ServerIdentity server, DeregisterRequest request) {
+                log.debug("onDeregistrationStarted [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onDeregistrationFailure(ServerIdentity server, DeregisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
+                log.debug("onDeregistrationFailure [{}] [{}] [{}]", request.getRegistrationId(), responseCode, errorMessage);
+            }
+
+            @Override
+            public void onDeregistrationTimeout(ServerIdentity server, DeregisterRequest request) {
+                log.debug("onDeregistrationTimeout [{}]", request.getRegistrationId());
+            }
+
+            @Override
+            public void onUnexpectedError(Throwable unexpectedError) {
+                log.debug("onUnexpectedError [{}]", unexpectedError.toString());
+            }
+
+        };
+        leshanClient.addObserver(observer);
 
         setLeshanClient(leshanClient);
 

@@ -14,8 +14,7 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnInit, SkipSelf } from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject, OnInit } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -23,10 +22,10 @@ import { UntypedFormBuilder, UntypedFormGroup, Validators } from '@angular/forms
 import { DialogComponent } from '@shared/components/dialog.component';
 import { Router } from '@angular/router';
 import { ImageService } from '@core/http/image.service';
-import { ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
+import { ImageResource, ImageResourceInfo, imageResourceType } from '@shared/models/resource.models';
 import {
   UploadImageDialogComponent,
-  UploadImageDialogData
+  UploadImageDialogData, UploadImageDialogResult
 } from '@shared/components/image/upload-image-dialog.component';
 import { UrlHolder } from '@shared/pipe/image.pipe';
 import { ImportExportService } from '@shared/import-export/import-export.service';
@@ -67,7 +66,7 @@ export class ImageDialogComponent extends
     this.image = data.image;
     this.readonly = data.readonly;
     this.imagePreviewData = {
-      url: this.image.public ? this.image.publicLink : this.image.link
+      url: this.image.link
     };
   }
 
@@ -143,19 +142,24 @@ export class ImageDialogComponent extends
       $event.stopPropagation();
     }
     this.dialog.open<UploadImageDialogComponent, UploadImageDialogData,
-      ImageResourceInfo>(UploadImageDialogComponent, {
+      UploadImageDialogResult>(UploadImageDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
+        imageSubType: this.image.resourceSubType,
         image: this.image
       }
     }).afterClosed().subscribe((result) => {
-      if (result) {
+      if (result?.image) {
         this.imageChanged = true;
-        this.image = result;
-        this.imagePreviewData = {
-          url: this.image.public ? this.image.publicLink : this.image.link
-        };
+        this.image = result.image;
+        let url;
+        if (result.image.base64) {
+          url = result.image.base64;
+        } else {
+          url = this.image.link;
+        }
+        this.imagePreviewData = {url};
       }
     });
   }

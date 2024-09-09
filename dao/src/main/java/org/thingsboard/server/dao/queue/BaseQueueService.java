@@ -57,16 +57,13 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     @Autowired
     private DataValidator<Queue> queueValidator;
 
-//    @Autowired
-//    private QueueStatsService queueStatsService;
-
     @Override
     public Queue saveQueue(Queue queue) {
         log.trace("Executing createOrUpdateQueue [{}]", queue);
         queueValidator.validate(queue, Queue::getTenantId);
         Queue savedQueue = queueDao.save(queue.getTenantId(), queue);
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(savedQueue.getTenantId())
-                .entityId(savedQueue.getId()).created(queue.getId() == null).build());
+                .entityId(savedQueue.getId()).entity(savedQueue).created(queue.getId() == null).build());
         return savedQueue;
     }
 
@@ -84,6 +81,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
                 throw t;
             }
         }
+    }
+
+    @Override
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteQueue(tenantId, (QueueId) id);
     }
 
     @Override
@@ -127,6 +129,11 @@ public class BaseQueueService extends AbstractEntityService implements QueueServ
     public void deleteQueuesByTenantId(TenantId tenantId) {
         Validator.validateId(tenantId, "Incorrect tenant id for delete queues request.");
         tenantQueuesRemover.removeEntities(tenantId, tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteQueuesByTenantId(tenantId);
     }
 
     @Override

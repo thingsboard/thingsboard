@@ -113,7 +113,7 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
             }
             switch (alarmCommentUpdateMsg.getMsgType()) {
                 case ENTITY_CREATED_RPC_MESSAGE:
-                    alarmCommentDao.createAlarmComment(tenantId, alarmComment);
+                    alarmCommentDao.save(tenantId, alarmComment);
                     break;
                 case ENTITY_UPDATED_RPC_MESSAGE:
                     alarmCommentService.createOrUpdateAlarmComment(tenantId, alarmComment);
@@ -144,22 +144,20 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
         AlarmId alarmId = new AlarmId(entityId);
         UpdateMsgType msgType = getUpdateMsgType(actionType);
         switch (actionType) {
-            case ADDED:
-            case UPDATED:
-            case ALARM_ACK:
-            case ALARM_CLEAR:
+            case ADDED, UPDATED, ALARM_ACK, ALARM_CLEAR -> {
                 Alarm alarm = alarmService.findAlarmById(tenantId, alarmId);
                 if (alarm != null) {
                     return ((AlarmMsgConstructor) alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
                             .constructAlarmUpdatedMsg(msgType, alarm, findOriginatorEntityName(tenantId, alarm));
                 }
-                break;
-            case DELETED:
+            }
+            case ALARM_DELETE, DELETED -> {
                 Alarm deletedAlarm = JacksonUtil.convertValue(body, Alarm.class);
                 if (deletedAlarm != null) {
                     return ((AlarmMsgConstructor) alarmMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion))
                             .constructAlarmUpdatedMsg(msgType, deletedAlarm, findOriginatorEntityName(tenantId, deletedAlarm));
                 }
+            }
         }
         return null;
     }
@@ -167,25 +165,26 @@ public abstract class BaseAlarmProcessor extends BaseEdgeProcessor {
     private String findOriginatorEntityName(TenantId tenantId, Alarm alarm) {
         String entityName = null;
         switch (alarm.getOriginator().getEntityType()) {
-            case DEVICE:
+            case DEVICE -> {
                 Device deviceById = deviceService.findDeviceById(tenantId, new DeviceId(alarm.getOriginator().getId()));
                 if (deviceById != null) {
                     entityName = deviceById.getName();
                 }
-                break;
-            case ASSET:
+            }
+            case ASSET -> {
                 Asset assetById = assetService.findAssetById(tenantId, new AssetId(alarm.getOriginator().getId()));
                 if (assetById != null) {
                     entityName = assetById.getName();
                 }
-                break;
-            case ENTITY_VIEW:
+            }
+            case ENTITY_VIEW -> {
                 EntityView entityViewById = entityViewService.findEntityViewById(tenantId, new EntityViewId(alarm.getOriginator().getId()));
                 if (entityViewById != null) {
                     entityName = entityViewById.getName();
                 }
-                break;
+            }
         }
         return entityName;
     }
+
 }

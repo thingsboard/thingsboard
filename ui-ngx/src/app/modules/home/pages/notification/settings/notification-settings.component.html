@@ -54,7 +54,7 @@
                                 (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
                                 [indeterminate]="getIndeterminate(deliveryMethods)"
                                 (click)="$event.stopPropagation()">
-                    <mat-label>{{ notificationDeliveryMethodTranslateMap.get(deliveryMethods) | translate }}</mat-label>
+                    <mat-label>{{ notificationDeliveryMethodInfoMap.get(deliveryMethods).name | translate }}</mat-label>
                   </mat-checkbox>
                 </div>
               </div>

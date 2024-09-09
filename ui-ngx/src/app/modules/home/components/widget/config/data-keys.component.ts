@@ -33,13 +33,15 @@ import {
 import {
   AbstractControl,
   ControlValueAccessor,
-  FormGroupDirective, NG_VALIDATORS,
+  FormGroupDirective,
+  NG_VALIDATORS,
   NG_VALUE_ACCESSOR,
   NgForm,
   UntypedFormBuilder,
   UntypedFormControl,
   UntypedFormGroup,
-  ValidationErrors, Validator
+  ValidationErrors,
+  Validator
 } from '@angular/forms';
 import { Observable, of } from 'rxjs';
 import { filter, map, mergeMap, publishReplay, refCount, share, tap } from 'rxjs/operators';
@@ -52,7 +54,7 @@ import { coerceBooleanProperty } from '@angular/cdk/coercion';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { DataKey, DatasourceType, JsonSettingsSchema, Widget, widgetType } from '@shared/models/widget.models';
 import { IAliasController } from '@core/api/widget-api.models';
-import { DataKeysCallbacks } from './data-keys.component.models';
+import { DataKeySettingsFunction } from './data-keys.component.models';
 import { alarmFields } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { ErrorStateMatcher } from '@angular/material/core';
@@ -71,6 +73,7 @@ import { coerceBoolean } from '@shared/decorators/coercion';
 import { DatasourceComponent } from '@home/components/widget/config/datasource.component';
 import { ColorPickerPanelComponent } from '@shared/components/color-picker/color-picker-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
+import { WidgetConfigCallbacks } from '@home/components/widget/config/widget-config.component.models';
 
 @Component({
   selector: 'tb-data-keys',
@@ -141,6 +144,10 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   @coerceBoolean()
+  latestDataKeys = false;
+
+  @Input()
+  @coerceBoolean()
   simpleDataKeysLabel = false;
 
   @Input()
@@ -148,6 +155,9 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
 
   @Input()
   datakeySettingsSchema: JsonSettingsSchema;
+
+  @Input()
+  datakeySettingsFunction: DataKeySettingsFunction;
 
   @Input()
   dataKeySettingsDirective: string;
@@ -159,7 +169,7 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   widget: Widget;
 
   @Input()
-  callbacks: DataKeysCallbacks;
+  callbacks: WidgetConfigCallbacks;
 
   @Input()
   entityAliasId: string;
@@ -361,7 +371,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
     if (this.widgetType === widgetType.alarm) {
       this.keys = this.utils.getDefaultAlarmDataKeys();
     } else if (this.isCountDatasource) {
-      this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count, this.datakeySettingsSchema)];
+      this.keys = [this.callbacks.generateDataKey('count', DataKeyType.count, this.datakeySettingsSchema,
+        this.latestDataKeys, this.datakeySettingsFunction)];
     } else {
       this.keys = [];
     }
@@ -447,7 +458,8 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
   }
 
   private addFromChipValue(chip: DataKey) {
-    const key = this.callbacks.generateDataKey(chip.name, chip.type, this.datakeySettingsSchema);
+    const key = this.callbacks.generateDataKey(chip.name, chip.type, this.datakeySettingsSchema, this.latestDataKeys,
+      this.datakeySettingsFunction);
     this.addKey(key);
   }
 
@@ -521,12 +533,13 @@ export class DataKeysComponent implements ControlValueAccessor, OnInit, OnChange
       this.popoverService.hidePopover(trigger);
     } else {
       const colorPickerPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, ColorPickerPanelComponent, 'left', true, null,
+        this.viewContainerRef, ColorPickerPanelComponent, ['leftTopOnly', 'leftOnly', 'leftBottomOnly'], true, null,
         {
-          color: key.color
+          color: key.color,
+          colorCancelButton: true
         },
         {},
-        {}, {}, true);
+        {}, {}, false, () => {}, {padding: '12px 4px 12px 12px'});
       colorPickerPopover.tbComponentRef.instance.popover = colorPickerPopover;
       colorPickerPopover.tbComponentRef.instance.colorSelected.subscribe((color) => {
         colorPickerPopover.hide();

@@ -1056,7 +1056,6 @@
         "maximum-upload-file-size": "Mida màxima del fitxer de pujada: {{ size }}",
         "cannot-upload-file": "No s'ha pogut pujar el fitxer",
         "settings": "Configuració",
-        "layout-settings": "Paràmetres de la disposició",
         "columns-count": "Número de columnes",
         "columns-count-required": "Cal número de columnes.",
         "min-columns-count-message": "Sol es permet un número mínim de 10 columnes.",
@@ -1632,7 +1631,7 @@
             "short-id": "Identificador curt del servidor",
             "short-id-tooltip": "Identificador curt del servidor. S'utilitza com a enllaç a la instància d'objecte del servidor associada.\nAquest identificador identifica de manera única cada servidor LwM2M configurat per al client LwM2M.\nEl recurs S'HA d'establir quan el recurs del servidor Bootstrap té un valor 'fals'.\nEls valors ID:0 i ID :65535 NO S'HAN d'utilitzar per identificar el servidor LwM2M.",
             "short-id-required": "Cal identificador curt del servidor.",
-            "short-id-range": "L'identificador de servidor curt hauria d'estar entre 1 i 65534.",
+            "short-id-range": "L'identificador de servidor curt hauria d'estar entre {{ min }} i {{ max }}.",
             "short-id-pattern": "L'identificador de servidor curt ha de ser un nombre enter positiu.",
             "lifetime": "Vida útil del registre del client",
             "lifetime-required": "Cal vida útil del registre del client.",
@@ -1710,8 +1709,7 @@
                 "step": "Pas",
                 "min-evaluation-period": "Període mínim d'avaluació",
                 "max-evaluation-period": "Període màxim d'avaluació"
-            },
-            "composite-operations-support": "Admet operacions compostes de lectura/escriptura/observació"
+            }
         },
         "snmp": {
             "add-communication-config": "Afegeix la configuració de comunicació",
@@ -4584,8 +4582,8 @@
         "popover-placement-leftBottom": "Esquerra inferior",
         "popover-hide-on-click-outside": "Amaga la finestra emergent al clic exterior",
         "popover-hide-dashboard-toolbar": "Amaga la barra d'eines del tauler a la finestra emergent",
-        "popover-width": "Amplada emergent en unitats del navegador (p. ex. 100 píxels, 25 vw)",
-        "popover-height": "Alçada emergent en unitats del navegador (p. ex. 100px, 25vh)",
+        "popover-width": "Amplada emergent",
+        "popover-height": "Alçada emergent",
         "popover-style": "Estil popover",
         "open-new-browser-tab": "Obrir en una nova pestanya",
         "mobile": {
@@ -4681,7 +4679,7 @@
         "action-source-required": "Cal origen de acció.",
         "action-name": "Nom",
         "action-name-required": "Cal nom de acció.",
-        "action-name-not-unique": "Existe una acció amb el mateix nom.<br/>El nom d'acció ha de ser únic dins de la mateixa font d'acció (origen).",
+        "action-name-not-unique": "Existe una acció amb el mateix nom.\nEl nom d'acció ha de ser únic dins de la mateixa font d'acció (origen).",
         "action-icon": "Icona",
         "show-hide-action-using-function": "Mostra/amaga l'acció mitjançant la funció",
         "action-type": "Tipus",

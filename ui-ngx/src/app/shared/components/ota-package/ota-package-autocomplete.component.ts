@@ -72,8 +72,12 @@ export class OtaPackageAutocompleteComponent implements ControlValueAccessor, On
 
   @Input()
   set deviceProfileId(value: string) {
-    this.deviceProfile = value;
-    this.reset();
+    if (this.deviceProfile !== value) {
+      if (this.deviceProfile) {
+        this.reset();
+      }
+      this.deviceProfile = value;
+    }
   }
 
   @Input()

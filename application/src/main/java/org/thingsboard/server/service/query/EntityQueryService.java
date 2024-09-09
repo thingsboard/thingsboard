@@ -38,6 +38,6 @@ public interface EntityQueryService {
     long countAlarmsByQuery(SecurityUser securityUser, AlarmCountQuery query);
 
     DeferredResult<ResponseEntity> getKeysByQuery(SecurityUser securityUser, TenantId tenantId, EntityDataQuery query,
-                                                  boolean isTimeseries, boolean isAttributes);
+                                                  boolean isTimeseries, boolean isAttributes, String attributesScope);
 
 }

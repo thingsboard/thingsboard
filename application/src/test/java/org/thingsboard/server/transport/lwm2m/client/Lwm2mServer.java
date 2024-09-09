@@ -18,11 +18,12 @@ package org.thingsboard.server.transport.lwm2m.client;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.resource.LwM2mInstanceEnabler;
-import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.request.BindingMode;
+import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.core.response.WriteResponse;
@@ -70,7 +71,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
     }
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceid) {
+    public ReadResponse read(LwM2mServer identity, int resourceid) {
         if (!identity.isSystem())
             LOG.debug("Read on Server resource /{}/{}/{}", getModel().id, getId(), resourceid);
 
@@ -108,7 +109,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
     }
 
     @Override
-    public WriteResponse write(ServerIdentity identity, boolean replace, int resourceid, LwM2mResource value) {
+    public WriteResponse write(LwM2mServer identity, boolean replace, int resourceid, LwM2mResource value) {
         if (!identity.isSystem())
             log.debug("Write on Server resource /{}/{}/{}", getModel().id, getId(), resourceid);
 
@@ -195,8 +196,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
         }
     }
 
-    @Override
-    public ExecuteResponse execute(ServerIdentity identity, int resourceid, String params) {
+    public ExecuteResponse execute(LwM2mServer identity, int resourceid, Arguments arguments) {
         log.info("Execute on Server resource /{}/{}/{}", getModel().id, getId(), resourceid);
         if (resourceid == 8) {
             getLwM2mClient().triggerRegistrationUpdate(identity);
@@ -210,7 +210,7 @@ public class Lwm2mServer extends BaseInstanceEnabler {
                 return ExecuteResponse.badRequest("probably no bootstrap server configured");
             }
         } else {
-            return super.execute(identity, resourceid, params);
+            return super.execute(identity, resourceid, arguments);
         }
     }
 

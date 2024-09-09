@@ -82,15 +82,27 @@ public abstract class AbstractCoapServerSideRpcIntegrationTest extends AbstractC
                 .until(() -> CoAP.ResponseCode.VALID.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null && 0 == callbackCoap.getObserve());
         validateCurrentStateNotification(callbackCoap);
-        int expectedObserveAfterRpcProcessed = callbackCoap.getObserve() + 1;
-        String setGpioRequest = "{\"method\":\"setGpio\",\"params\":{\"pin\": \"23\",\"value\": 1}}";
+
+        int expectedObserveAfterRpcProcessed1 = callbackCoap.getObserve() + 1;
+        String setGpioRequest = "{\"method\":\"setGpio1\",\"params\":{\"pin\": \"21\",\"value\": 1}}";
         String deviceId = savedDevice.getId().getId().toString();
         String result = doPostAsync("/api/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
         awaitAlias = "await One Way Rpc setGpio(method, params, value)";
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
                 .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
-                        callbackCoap.getObserve() != null && expectedObserveAfterRpcProcessed == callbackCoap.getObserve());
+                        callbackCoap.getObserve() != null && expectedObserveAfterRpcProcessed1 == callbackCoap.getObserve());
+        validateOneWayStateChangedNotification(callbackCoap, result);
+
+        int expectedObserveAfterRpcProcessed2 = callbackCoap.getObserve() + 1;
+        setGpioRequest = "{\"method\":\"setGpio2\",\"params\":{\"pin\": \"22\",\"value\": 2}}";
+        deviceId = savedDevice.getId().getId().toString();
+        result = doPostAsync("/api/rpc/oneway/" + deviceId, setGpioRequest, String.class, status().isOk());
+        awaitAlias = "await One Way Rpc setGpio(method, params, value)";
+        await(awaitAlias)
+                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
+                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                        callbackCoap.getObserve() != null && expectedObserveAfterRpcProcessed2 == callbackCoap.getObserve());
         validateOneWayStateChangedNotification(callbackCoap, result);
 
         observeRelation.proactiveCancel();

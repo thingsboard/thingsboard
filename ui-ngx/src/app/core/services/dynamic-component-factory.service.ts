@@ -17,7 +17,6 @@
 import {
   Compiler,
   Component,
-  ComponentFactory,
   Injectable,
   Injector,
   NgModule,
@@ -26,9 +25,9 @@ import {
   Type,
   ɵresetCompiledComponents
 } from '@angular/core';
-import { from, Observable } from 'rxjs';
+import { from, Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
-import { catchError, map, mergeMap } from 'rxjs/operators';
+import { mergeMap } from 'rxjs/operators';
 
 @NgModule()
 export abstract class DynamicComponentModule implements OnDestroy {
@@ -79,33 +78,32 @@ export class DynamicComponentFactoryService {
           declarations: [comp],
           imports: moduleImports
         })(class DynamicComponentInstanceModule extends DynamicComponentModule {});
-        return from(this.compiler.compileModuleAsync(dynamicComponentInstanceModule)).pipe(
-          map((module) => {
-            let moduleRef: NgModuleRef<any>;
-            try {
-              moduleRef = module.create(this.injector);
-            } catch (e) {
-              this.compiler.clearCacheFor(module.moduleType);
-              throw e;
-            }
-            this.dynamicComponentModulesMap.set(comp, {
-              moduleRef,
-              moduleType: module.moduleType
-            });
-            return {
-              componentType: comp,
-              componentModuleRef: moduleRef
-            };
-          }),
-          catchError((error) => {
-            if (compileAttempt === 1) {
-              ɵresetCompiledComponents();
-              return this.createDynamicComponent(componentType, template, modules, preserveWhitespaces, ++compileAttempt, styles);
-            } else {
-              throw error;
-            }
-          })
-        );
+        try {
+          const module = this.compiler.compileModuleSync(dynamicComponentInstanceModule);
+          let moduleRef: NgModuleRef<any>;
+          try {
+            moduleRef = module.create(this.injector);
+          } catch (e) {
+            this.compiler.clearCacheFor(module.moduleType);
+            throw e;
+          }
+          this.dynamicComponentModulesMap.set(comp, {
+            moduleRef,
+            moduleType: module.moduleType
+          });
+          return of( {
+            componentType: comp,
+            componentModuleRef: moduleRef
+          });
+        } catch (error) {
+          if (compileAttempt === 1) {
+            ɵresetCompiledComponents();
+            return this.createDynamicComponent(componentType, template, modules, preserveWhitespaces, ++compileAttempt, styles);
+          } else {
+            console.error(error);
+            throw error;
+          }
+        }
       })
     );
   }

@@ -23,13 +23,10 @@ import org.thingsboard.server.service.subscription.TbSubscription;
 import org.thingsboard.server.service.subscription.TbSubscriptionType;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsCountUpdate;
 
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.BiConsumer;
 
 @Getter
-public class NotificationsCountSubscription extends TbSubscription<NotificationsSubscriptionUpdate> {
-
-    private final AtomicInteger unreadCounter = new AtomicInteger();
+public class NotificationsCountSubscription extends AbstractNotificationSubscription<NotificationsSubscriptionUpdate> {
 
     @Builder
     public NotificationsCountSubscription(String serviceId, String sessionId, int subscriptionId, TenantId tenantId, EntityId entityId,
@@ -40,7 +37,7 @@ public class NotificationsCountSubscription extends TbSubscription<Notifications
     public UnreadNotificationsCountUpdate createUpdate() {
         return UnreadNotificationsCountUpdate.builder()
                 .cmdId(getSubscriptionId())
-                .totalUnreadCount(unreadCounter.get())
+                .totalUnreadCount(totalUnreadCounter.get())
                 .sequenceNumber(sequence.incrementAndGet())
                 .build();
     }

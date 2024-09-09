@@ -20,7 +20,6 @@ import {
   AggregationType,
   DAY,
   HistoryWindowType,
-  QuickTimeInterval,
   quickTimeIntervalPeriod,
   RealtimeWindowType,
   Timewindow,

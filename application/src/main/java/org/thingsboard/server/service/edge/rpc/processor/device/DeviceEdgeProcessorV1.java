@@ -16,11 +16,9 @@
 package org.thingsboard.server.service.edge.rpc.processor.device;
 
 import com.datastax.oss.driver.api.core.uuid.Uuids;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Component;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.device.data.DeviceData;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -30,18 +28,13 @@ import org.thingsboard.server.common.data.security.DeviceCredentials;
 import org.thingsboard.server.common.data.security.DeviceCredentialsType;
 import org.thingsboard.server.gen.edge.v1.DeviceCredentialsUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.DeviceUpdateMsg;
-import org.thingsboard.server.queue.util.DataDecodingEncodingService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 
-import java.util.Optional;
 import java.util.UUID;
 
 @Component
 @TbCoreComponent
 public class DeviceEdgeProcessorV1 extends DeviceEdgeProcessor {
-
-    @Autowired
-    private DataDecodingEncodingService dataDecodingEncodingService;
 
     @Override
     protected Device constructDeviceFromUpdateMsg(TenantId tenantId, DeviceId deviceId, DeviceUpdateMsg deviceUpdateMsg) {
@@ -57,8 +50,7 @@ public class DeviceEdgeProcessorV1 extends DeviceEdgeProcessor {
         UUID deviceProfileUUID = safeGetUUID(deviceUpdateMsg.getDeviceProfileIdMSB(), deviceUpdateMsg.getDeviceProfileIdLSB());
         device.setDeviceProfileId(deviceProfileUUID != null ? new DeviceProfileId(deviceProfileUUID) : null);
 
-        Optional<DeviceData> deviceDataOpt = dataDecodingEncodingService.decode(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
-        device.setDeviceData(deviceDataOpt.orElse(null));
+        device.setDeviceDataBytes(deviceUpdateMsg.getDeviceDataBytes().toByteArray());
 
         UUID firmwareUUID = safeGetUUID(deviceUpdateMsg.getFirmwareIdMSB(), deviceUpdateMsg.getFirmwareIdLSB());
         device.setFirmwareId(firmwareUUID != null ? new OtaPackageId(firmwareUUID) : null);

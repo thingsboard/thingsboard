@@ -22,29 +22,16 @@ option java_package = "org.thingsboard.server.gen.transport.coap";
 option java_outer_classname = "ConfigProtos";
 
 /* Message containing optional channels control parameters                                                                      */
-message ProtoChannelControl {
+message ProtoOutputControlState {
 
   /* Channel index                                                                                                              */
   uint32 channel_index = 1;
 
-  /* Control parameters. Maximal number equals 4. This field is channel specific:                                               */
-  /* IO_control channel:                                                                                                        */
-  /*        - control_params[0]:                                                                                                */
-  /*                      - Byte 0: On state configuration                                                                      */
-  /*                            0x01 - Low                                                                                      */
-  /*                            0x02 - High                                                                                     */
-  /*                            0x03 - High-Z (disconnected)                                                                    */
-  /*                      - Byte 1: Off state configuration                                                                     */
-  /*                            0x01 - Low                                                                                      */
-  /*                            0x02 - High                                                                                     */
-  /*                            0x03 - High-Z (disconnected)                                                                    */
-  /*                      - Byte 2: Power on channel state                                                                      */
-  /*                            0x01 - On                                                                                       */
-  /*                            0x02 - Off                                                                                      */
-  repeated uint32 control_params = 2;
+  /* Channel state ON/OFF. Range (1 - OFF; 2 - ON)                                                                              */
+  uint32 channel_state = 2;
 }
 
-/* Message containing request data for accesing calibration parameters                                                          */
+/* Message containing request data for accessing calibration parameters                                                         */
 message ProtoCalibrationParameters {
 
   /* Request details. Bitmask:                                                                                                  */
@@ -56,6 +43,39 @@ message ProtoCalibrationParameters {
 
   /* Table of calibration parameters. Max size = 8.                                                                             */
   repeated int32 parameters = 3;
+}
+
+enum BleAdvertisingPeriodMode {
+
+  /* Invalid value                                                                                                              */
+  BLE_ADVERTISING_PERIOD_MODE_UNSPECIFIED = 0;
+
+  /* Default behavior - faster advertising when measurement period is < 15s.                                                    */
+  BLE_ADVERTISING_PERIOD_MODE_DEFAULT = 1;
+
+  /* User-configured normal interval is used.                                                                                   */
+  BLE_ADVERTISING_PERIOD_MODE_NORMAL = 2;
+
+  /* User-configured fast interval is used.                                                                                     */
+  BLE_ADVERTISING_PERIOD_MODE_FAST = 3;
+}
+
+/* Message containing BLE advertising period configuration                                                                      */
+message ProtoBleAdvertisingPeriod {
+
+  /* BLE advertising mode:                                                                                                      */
+  /*   - 1: Default, BLE advertising interval is set to 1022.5ms or some lower value, based on continuous measurement period.   */
+  /*   - 2: Normal, uses user-configured value from 'normal' field.                                                             */
+  /*   - 3: Fast, uses user-configured value from 'fast' field (must be lower than or equal to 'normal' field).                 */
+  BleAdvertisingPeriodMode mode = 1;
+
+  /* BLE advertising interval when in normal mode, configured in 0.625ms steps.                                                 */
+  /* Range: [32:16384]                                                                                                          */
+  uint32 normal = 2;
+
+  /* BLE advertising interval when in fast mode, configured in 0.625ms steps.                                                   */
+  /* Range: [32:16384]                                                                                                          */
+  uint32 fast = 3;
 }
 
 /* Main message sent in the payload. Each field in this message is independent of the others - only parameters that should be   */
@@ -115,16 +135,26 @@ message ProtoConfig {
   /* 65535 - disable transfer limit function                                                                                    */
   uint32 transfer_limit_timer = 10;
 
-  /* Data (measurements) server IP address                                                                                      */
-  /* IP of the data server as string in form x.x.x.x. For example: 18.184.24.239                                                */
+  /* For firmware >= 6.07.00:                                                                                                   */
+  /* IP or URL address of the data (measurements) server                                                                        */
+  /* The IP or URL of the data server, provided as string with a maximum length of 31 characters                                */
+  /* For example, use "18.184.24.239" for an IP address or "efento.test.io" for a URL                                           */
+  /* For firmware < 6.07.00:                                                                                                    */
+  /* IP address of the data (measurements) server                                                                               */
+  /* For example, use "18.184.24.239"                                                                                           */
   string data_server_ip = 11;
 
   /* Data (measurements) server port                                                                                            */
   /* Range: [1:65535]                                                                                                           */
   uint32 data_server_port = 12;
 
-  /* Update server IP address                                                                                                   */
-  /* IP of data server as string in form x.x.x.x. For example: 18.184.24.239                                                    */
+  /* For firmware >= 6.07.00:                                                                                                   */
+  /* IP or URL address of the update server                                                                                     */
+  /* The IP or URL of the update server, provided as string with a maximum length of 31 characters                              */
+  /* For example, use "18.184.24.239" for an IP address or "efento.test.io" for a URL                                           */
+  /* For firmware < 6.07.00:                                                                                                    */
+  /* IP address of the update server                                                                                            */
+  /* For example, use "18.184.24.239"                                                                                           */
   string update_server_ip = 13;
 
   /* Update server port for UDP transmission                                                                                    */
@@ -144,7 +174,8 @@ message ProtoConfig {
   /* 0xFFFFFFFF or 1000000 - automatic selection                                                                                */
   uint32 plmn_selection = 17;
 
-  /* Device will power off its cellular modem for requested number of seconds. Maximum number of seconds 604800 (7 days)        */
+  /* Device will power off its cellular modem for requested number of seconds.                                                  */
+  /* Range: [60:604800] (1 minute : 7 days)                                                                                     */
   /* This field is only sent by server                                                                                          */
   uint32 disable_modem_request = 18;
 
@@ -263,9 +294,8 @@ message ProtoConfig {
   /* Calendar configuration. Up to 6 calendars are supported                                                                    */
   repeated ProtoCalendar calendars = 47;
 
-  /* Control parameters for channels. Maximal number of requests equals 6                                                       */
-  /* This field is only sent by server                                                                                          */
-  repeated ProtoChannelControl channels_control_request = 48;
+  /* DEPRECATED - Used for backward compatibility                                                                               */
+  reserved 48;
 
   /* Set/get calibration parameters for single channel.                                                                         */
   ProtoCalibrationParameters calibration_parameters_request = 49;
@@ -295,7 +325,7 @@ message ProtoConfig {
   reserved 52, 53;
 
   /* Encryption key configuration. Sensor sends in this field two last bytes of SHA256 hash calculated from its current         */
-  /* encryption_key configuration.                                                                                              */
+  /* encryption_key configuration. When encryption key is disabled one byte 0x7F (DEL) is sent.                                 */
   /* Max length: 16 bytes.                                                                                                      */
   /* 0x7F - encryption key disabled.                                                                                            */
   bytes encryption_key = 54;
@@ -309,4 +339,14 @@ message ProtoConfig {
   /* String with special character 0x7F (DEL) only indicates that automatic password is turn on                                 */
   /* Password can only be set to custom value if apn_user_name has been configured (is not automatic)                           */
   string apn_password = 56;
+
+  /* Reserved by versions above 06.20.00                                                                                        */
+  reserved 57;
+
+  /* Control output state on channel pin. Maximal number of requests equals 3                                                   */
+  /* This field is only sent by server                                                                                          */
+  repeated ProtoOutputControlState output_control_state_request = 58;
+
+  /* BLE advertising period configuration.                                                                                      */
+  ProtoBleAdvertisingPeriod ble_advertising_period = 59;
 }

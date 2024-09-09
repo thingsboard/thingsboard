@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.sql.rpc;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
@@ -32,7 +33,8 @@ public interface RpcRepository extends JpaRepository<RpcEntity, UUID> {
 
     Page<RpcEntity> findAllByTenantId(UUID tenantId, Pageable pageable);
 
-    @Query(value = "WITH deleted AS (DELETE FROM rpc WHERE (tenant_id = :tenantId AND created_time < :expirationTime) IS TRUE RETURNING *) SELECT count(*) FROM deleted",
+    @Modifying
+    @Query(value = "DELETE FROM rpc WHERE tenant_id = :tenantId AND created_time < :expirationTime",
             nativeQuery = true)
-    Long deleteOutdatedRpcByTenantId(@Param("tenantId") UUID tenantId, @Param("expirationTime") Long expirationTime);
+    int deleteOutdatedRpcByTenantId(@Param("tenantId") UUID tenantId, @Param("expirationTime") Long expirationTime);
 }

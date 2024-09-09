@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.service.security.auth.rest;
 
+import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.security.authentication.AuthenticationDetailsSource;
-
-import javax.servlet.http.HttpServletRequest;
 
 public class RestAuthenticationDetailsSource implements
         AuthenticationDetailsSource<HttpServletRequest, RestAuthenticationDetails> {

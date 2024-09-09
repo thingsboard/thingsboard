@@ -1,0 +1,55 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-unread-notification-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
+  <div class="tb-unread-notification-overlay" [style]="overlayStyle"></div>
+  <ng-template #counter>
+    <div *ngIf="showCounter" class="notification-counter" [style.background-color]="counterBackground">
+      <span class="notification-counter-value" [style]="counterValueStyle">{{ count$ | async }}</span>
+    </div>
+  </ng-template>
+  <ng-container *ngTemplateOutlet="widgetTitlePanel; context:{ titleSuffixTemplate: counter }"></ng-container>
+
+  <div class="tb-unread-notification-content">
+    <ng-container *ngIf="loadNotification; else loadingNotification">
+      <div *ngIf="notifications.length; else emptyNotification" style="overflow: auto; width: 100%;">
+        <section style="min-height: 100px; overflow: auto; padding: 6px 0;">
+          <div *ngFor="let notification of notifications; let last = last; trackBy: trackById">
+            <tb-notification [notification]="notification"
+                             (markAsRead)="markAsRead($event)">
+            </tb-notification>
+            <mat-divider *ngIf="!last" style="margin: 4px"></mat-divider>
+          </div>
+        </section>
+      </div>
+    </ng-container>
+    <ng-template #emptyNotification>
+      <div class="tb-no-notification-svg-color" style="height: 85%;">
+        <svg height="100%" preserveAspectRatio="xMidYMid meet" viewBox="0 0 149 156" width="100%">
+          <use [attr.xlink:href]="'assets/notification-bell.svg#CHECK_ICON'"></use>
+        </svg>
+      </div>
+      <span class="tb-no-notification-text" translate>notification.no-notifications-yet</span>
+    </ng-template>
+    <ng-template #loadingNotification>
+      <div class="tb-no-data-available" style="margin: 20px; gap: 16px;">
+        <mat-spinner color="accent" diameter="65" strokeWidth="4"></mat-spinner>
+        <div class="tb-no-data-text" translate>notification.loading-notifications</div>
+      </div>
+    </ng-template>
+  </div>
+</div>

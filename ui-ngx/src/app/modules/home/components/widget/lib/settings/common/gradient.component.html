@@ -1,0 +1,212 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="gradientFormGroup">
+
+  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="advancedMode">
+    <div fxFlex class="tb-form-panel-title" fxHide.xs translate>widgets.color.gradient-type</div>
+    <tb-toggle-select formControlName="advancedMode" fxFlex>
+      <tb-toggle-option [value]="false">
+        {{ 'widgets.color.basic-mode' | translate }}
+      </tb-toggle-option>
+      <tb-toggle-option [value]="true">
+        {{ 'widgets.color.advanced-mode' | translate}}
+      </tb-toggle-option>
+    </tb-toggle-select>
+  </div>
+
+  <div class="gradient-preview">
+    <div [style]="linearGradient" class="gradient-background" [innerHtml]="(generatePointers | safe: 'html')">
+    </div>
+  </div>
+
+  <div class="gradient-settings" [ngSwitch]="gradientFormGroup.get('advancedMode').value">
+    <ng-template [ngSwitchCase]="false">
+      <div class="gradient">
+        <div class="gradient-container gradient-container-start">
+          <div translate>widgets.color.gradient-start</div>
+          <div class="start-gradient-container">
+            <div class="tb-form-row no-border no-padding">
+              <div class="gradient-text" fxHide.xs translate>widgets.color.start-value</div>
+              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="minValue" placeholder="{{ 'widget-config.set' | translate }}">
+              </mat-form-field>
+            </div>
+            <ng-container formGroupName="gradient">
+              <tb-color-input asBoxInput
+                              formControlName="start">
+              </tb-color-input>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+
+      <div class="tb-colors-gradient" *ngIf="gradientListFormGroups.length">
+        <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+             (cdkDropListDropped)="gradientDrop($event)">
+          <div cdkDrag class="tb-form-row no-padding no-border tb-draggable"
+               [formGroup]="gradientFormGroup"
+               *ngFor="let gradientFormGroup of gradientListFormGroups; trackBy: trackByGradient; let $index = index; last as isLast;"
+               [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+            <div class="gradient">
+              <div class="gradient-container">
+                <div translate>widgets.color.gradient-color</div>
+                <tb-color-input asBoxInput
+                                formControlName="color">
+                </tb-color-input>
+              </div>
+              <button type="button"
+                      mat-icon-button
+                      class="tb-box-button"
+                      (click)="removeGradient($index)"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <button class="tb-box-button"
+                      fxHide.lt-lg
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="tb-add-gradient"
+              mat-stroked-button
+              (click)="addGradient()">
+        <mat-icon>add</mat-icon>
+      </button>
+
+      <div class="gradient">
+        <div class="gradient-container gradient-container-end">
+          <div translate>widgets.color.gradient-end</div>
+          <div class="end-gradient-container">
+            <div class="tb-form-row no-border no-padding">
+              <div class="gradient-text" fxHide.xs translate>widgets.color.end-value</div>
+              <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                <input matInput type="number" formControlName="maxValue" placeholder="{{ 'widget-config.set' | translate }}">
+              </mat-form-field>
+            </div>
+            <ng-container formGroupName="gradient">
+              <tb-color-input asBoxInput
+                              formControlName="end">
+              </tb-color-input>
+            </ng-container>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+    <ng-template [ngSwitchCase]="true">
+      <div class="gradient" formGroupName="gradientAdvanced">
+        <div class="gradient-container gradient-container-start" formGroupName="start">
+          <div class="tb-gradient-text">
+            <span fxHide.xs translate>widgets.color.gradient-start</span>
+            <span fxHide fxShow.xs translate>widgets.color.gradient-start-min</span>
+          </div>
+          <div class="tb-form-row no-border no-padding start-gradient-container start-gradient-container-advanced">
+            <tb-value-source-data-key fxFlex
+                                      formControlName="source"
+                                      [aliasController]="aliasController"
+                                      [dataKeyCallbacks]="dataKeyCallbacks"
+                                      [datasource]="datasource">
+            </tb-value-source-data-key>
+            <tb-color-input asBoxInput
+                            formControlName="color">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+
+      <div class="tb-colors-gradient" *ngIf="advancedGradientListFormGroups.length">
+        <div class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
+             (cdkDropListDropped)="gradientDrop($event, true)">
+          <div cdkDrag class="tb-form-row no-padding no-border tb-draggable"
+               [formGroup]="gradientFormGroup"
+               *ngFor="let gradientFormGroup of advancedGradientListFormGroups; trackBy: trackByGradient; let $index = index; last as isLast;"
+               [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+            <div class="gradient">
+              <div class="gradient-container">
+                <div class="tb-gradient-text">
+                  <span fxHide.xs translate>widgets.color.gradient-color</span>
+                  <span fxHide fxShow.xs translate>widgets.color.gradient-color-min</span>
+                </div>
+                <div class="list-gradient-container list-gradient-container-advanced">
+                  <tb-value-source-data-key fxFlex
+                                            formControlName="source"
+                                            [aliasController]="aliasController"
+                                            [dataKeyCallbacks]="dataKeyCallbacks"
+                                            [datasource]="datasource">
+                  </tb-value-source-data-key>
+                  <tb-color-input asBoxInput
+                                  formControlName="color">
+                  </tb-color-input>
+                </div>
+              </div>
+              <button type="button"
+                      mat-icon-button
+                      class="tb-box-button"
+                      (click)="removeGradient($index, true)"
+                      matTooltip="{{ 'action.remove' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>delete</mat-icon>
+              </button>
+              <button class="tb-box-button"
+                      fxHide.lt-lg
+                      mat-icon-button
+                      type="button"
+                      cdkDragHandle
+                      matTooltip="{{ 'action.drag' | translate }}"
+                      matTooltipPosition="above">
+                <mat-icon>drag_indicator</mat-icon>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <button class="tb-add-gradient"
+              mat-stroked-button
+              (click)="addGradient(true)">
+        <mat-icon>add</mat-icon>
+      </button>
+
+      <div class="gradient" formGroupName="gradientAdvanced">
+        <div class="gradient-container gradient-container-end" formGroupName="end">
+          <div class="tb-gradient-text">
+            <span fxHide.xs translate>widgets.color.gradient-end</span>
+            <span fxHide fxShow.xs translate>widgets.color.gradient-end-min</span>
+          </div>
+          <div class="tb-form-row no-border no-padding end-gradient-container end-gradient-container-advanced">
+            <tb-value-source-data-key fxFlex
+                                      formControlName="source"
+                                      [aliasController]="aliasController"
+                                      [dataKeyCallbacks]="dataKeyCallbacks"
+                                      [datasource]="datasource">
+            </tb-value-source-data-key>
+            <tb-color-input asBoxInput
+                            formControlName="color">
+            </tb-color-input>
+          </div>
+        </div>
+      </div>
+    </ng-template>
+  </div>
+</ng-container>

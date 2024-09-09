@@ -23,5 +23,5 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 public class TenantRoutingInfo {
     private final TenantId tenantId;
     private final TenantProfileId profileId;
-    private final boolean isolatedTbRuleEngine;
+    private final boolean isolated;
 }

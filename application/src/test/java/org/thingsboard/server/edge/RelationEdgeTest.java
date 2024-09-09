@@ -31,8 +31,6 @@ import org.thingsboard.server.gen.edge.v1.RelationUpdateMsg;
 import org.thingsboard.server.gen.edge.v1.UpdateMsgType;
 import org.thingsboard.server.gen.edge.v1.UplinkMsg;
 
-import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
-
 @DaoSqlTest
 public class RelationEdgeTest extends AbstractEdgeTest {
 
@@ -48,7 +46,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         relation.setTo(asset.getId());
         relation.setTypeGroup(RelationTypeGroup.COMMON);
         edgeImitator.expectMessageAmount(1);
-        doPost("/api/relation", relation);
+        relation = doPost("/api/v2/relation", relation, EntityRelation.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         AbstractMessage latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
@@ -60,21 +58,20 @@ public class RelationEdgeTest extends AbstractEdgeTest {
 
         // delete relation
         edgeImitator.expectMessageAmount(1);
-        doDelete("/api/relation?" +
+        var deletedRelation = doDelete("/api/v2/relation?" +
                 "fromId=" + relation.getFrom().getId().toString() +
                 "&fromType=" + relation.getFrom().getEntityType().name() +
                 "&relationType=" + relation.getType() +
                 "&relationTypeGroup=" + relation.getTypeGroup().name() +
                 "&toId=" + relation.getTo().getId().toString() +
-                "&toType=" + relation.getTo().getEntityType().name())
-                .andExpect(status().isOk());
+                "&toType=" + relation.getTo().getEntityType().name(), EntityRelation.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
         latestMessage = edgeImitator.getLatestMessage();
         Assert.assertTrue(latestMessage instanceof RelationUpdateMsg);
         relationUpdateMsg = (RelationUpdateMsg) latestMessage;
         entityRelation = JacksonUtil.fromString(relationUpdateMsg.getEntity(), EntityRelation.class, true);
         Assert.assertNotNull(entityRelation);
-        Assert.assertEquals(relation, entityRelation);
+        Assert.assertEquals(deletedRelation, entityRelation);
         Assert.assertEquals(UpdateMsgType.ENTITY_DELETED_RPC_MESSAGE, relationUpdateMsg.getMsgType());
     }
 
@@ -119,7 +116,7 @@ public class RelationEdgeTest extends AbstractEdgeTest {
         deviceToAssetRelation.setTypeGroup(RelationTypeGroup.COMMON);
 
         edgeImitator.expectMessageAmount(1);
-        doPost("/api/relation", deviceToAssetRelation);
+        deviceToAssetRelation = doPost("/api/v2/relation", deviceToAssetRelation, EntityRelation.class);
         Assert.assertTrue(edgeImitator.waitForMessages());
 
         EntityRelation assetToTenantRelation = new EntityRelation();

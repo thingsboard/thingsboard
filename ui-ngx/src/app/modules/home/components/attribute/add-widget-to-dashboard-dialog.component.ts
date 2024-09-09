@@ -126,9 +126,8 @@ export class AddWidgetToDashboardDialogComponent extends
         mergeMap((dashboard) => {
           dashboard = this.dashboardUtils.validateAndUpdateDashboard(dashboard);
           return this.selectTargetState(dashboard).pipe(
-            mergeMap((targetState) => {
-              return forkJoin([of(dashboard), of(targetState), this.selectTargetLayout(dashboard, targetState)]);
-            })
+            mergeMap((targetState) =>
+              forkJoin([of(dashboard), of(targetState), this.selectTargetLayout(dashboard, targetState)]))
           );
         })
       ).subscribe((res) => {
@@ -177,7 +176,7 @@ export class AddWidgetToDashboardDialogComponent extends
   private addWidgetToDashboard(dashboard: Dashboard, targetState: string, targetLayout: DashboardLayoutId) {
     const aliasesInfo: AliasesInfo = {
       datasourceAliases: {},
-      targetDeviceAliases: {}
+      targetDeviceAlias: null
     };
     aliasesInfo.datasourceAliases[0] = {
       alias: this.data.entityName,

@@ -119,7 +119,7 @@ export class FiltersEditComponent implements OnInit, OnDestroy {
     const filteredArray = Object.entries(this.filtersInfo);
 
     if (filteredArray.length === 1) {
-      const singleFilter: Filter = {id: filteredArray[0][0], ...filteredArray[0][1]};
+      const singleFilter: Filter = {id: filteredArray[0][0], ...deepClone(filteredArray[0][1])};
       this.dialog.open<UserFilterDialogComponent, UserFilterDialogData,
         Filter>(UserFilterDialogComponent, {
         disableClose: true,

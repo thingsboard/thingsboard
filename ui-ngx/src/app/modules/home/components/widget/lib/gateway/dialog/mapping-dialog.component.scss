@@ -1,0 +1,86 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+:host {
+  display: grid;
+  height: 100%;
+
+  .key-mapping {
+    max-width: 900px;
+    display: flex;
+    flex-direction: column;
+
+    .mat-toolbar {
+      min-height: 64px;
+    }
+
+    tb-toggle-select {
+      padding: 4px 0;
+    }
+  }
+
+  .mat-mdc-dialog-content {
+    height: 670px;
+  }
+
+  .ellipsis-chips-container {
+    max-width: 70%;
+  }
+}
+
+:host ::ng-deep {
+  .key-mapping {
+    .mat-mdc-chip-listbox {
+      .mdc-evolution-chip-set__chips {
+        justify-content: flex-end;
+        align-items: center;
+        flex-wrap: nowrap;
+      }
+    }
+  }
+  .tb-form-row {
+    .fixed-title-width {
+      min-width: 40px;
+      width: 35%;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .mat-mdc-form-field {
+      width: 0;
+    }
+  }
+
+  .see-example {
+    width: 32px;
+    height: 32px;
+    margin: 4px;
+  }
+
+  .mat-mdc-form-field-icon-suffix {
+    display: flex;
+  }
+
+  .device-config {
+    gap: 12px;
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+
+  .device-node-pattern-field {
+    flex-basis: 3%;
+  }
+}

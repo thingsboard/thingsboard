@@ -27,11 +27,11 @@ CREATE TABLE IF NOT EXISTS ts_kv
     CONSTRAINT ts_kv_pkey PRIMARY KEY (entity_id, key, ts)
 ) PARTITION BY RANGE (ts);
 
-CREATE TABLE IF NOT EXISTS ts_kv_dictionary
+CREATE TABLE IF NOT EXISTS key_dictionary
 (
     key    varchar(255) NOT NULL,
     key_id serial UNIQUE,
-    CONSTRAINT ts_key_id_pkey PRIMARY KEY (key)
+    CONSTRAINT key_dictionary_id_pkey PRIMARY KEY (key)
 );
 
 CREATE OR REPLACE PROCEDURE drop_partitions_by_system_ttl(IN partition_type varchar, IN system_ttl bigint, INOUT deleted bigint)
@@ -75,7 +75,7 @@ BEGIN
                                      WHERE schemaname = 'public'
                                        AND tablename like 'ts_kv_' || '%'
                                        AND tablename != 'ts_kv_latest'
-                                       AND tablename != 'ts_kv_dictionary'
+                                       AND tablename != 'key_dictionary'
                                        AND tablename != 'ts_kv_indefinite'
                                        AND tablename != partition_by_max_ttl_date
                         LOOP
@@ -96,7 +96,7 @@ BEGIN
                                              WHERE schemaname = 'public'
                                                AND tablename like 'ts_kv_' || '%'
                                                AND tablename != 'ts_kv_latest'
-                                               AND tablename != 'ts_kv_dictionary'
+                                               AND tablename != 'key_dictionary'
                                                AND tablename != 'ts_kv_indefinite'
                                                AND tablename != partition_by_max_ttl_date
                                 LOOP
@@ -138,7 +138,7 @@ BEGIN
                                                      WHERE schemaname = 'public'
                                                        AND tablename like 'ts_kv_' || '%'
                                                        AND tablename != 'ts_kv_latest'
-                                                       AND tablename != 'ts_kv_dictionary'
+                                                       AND tablename != 'key_dictionary'
                                                        AND tablename != 'ts_kv_indefinite'
                                                        AND tablename != partition_by_max_ttl_date
                                         LOOP
@@ -272,7 +272,7 @@ BEGIN
     WHILE FOUND
         LOOP
             EXECUTE format(
-                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                    'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from key_dictionary where key = %L)',
                     tenant_id_record, 'TTL') INTO tenant_ttl;
             if tenant_ttl IS NULL THEN
                 tenant_ttl := system_ttl;
@@ -290,7 +290,7 @@ BEGIN
                 SELECT customer.id AS customer_id FROM customer WHERE customer.tenant_id = tenant_id_record
                 LOOP
                     EXECUTE format(
-                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = %L',
+                            'select attribute_kv.long_v from attribute_kv where attribute_kv.entity_id = %L and attribute_kv.attribute_key = (select key_id from key_dictionary where key = %L)',
                             customer_id_record, 'TTL') INTO customer_ttl;
                     IF customer_ttl IS NULL THEN
                         customer_ttl_ts := tenant_ttl_ts;

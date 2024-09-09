@@ -15,21 +15,20 @@
  */
 package org.thingsboard.server.common.data.device.profile;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 import java.io.Serializable;
 
-@ApiModel
+@Schema
 @Data
 public class AlarmConditionFilterKey implements Serializable {
 
-    @ApiModelProperty(position = 1, value = "The key type", example = "TIME_SERIES")
+    @Schema(description = "The key type", example = "TIME_SERIES")
     private final AlarmConditionKeyType type;
     @NoXss
-    @ApiModelProperty(position = 2, value = "String value representing the key", example = "temp")
+    @Schema(description = "String value representing the key", example = "temp")
     private final String key;
 
 }

@@ -748,7 +748,6 @@
     "maximum-upload-file-size": "Maksimum yükleme dosyası boyutu: {{ size }}",
     "cannot-upload-file": "Dosya yüklenemiyor",
     "settings": "Ayarlar",
-    "layout-settings": "Görünüm ayarları",
     "columns-count": "Sütun sayısı",
     "columns-count-required": "Sütun sayısı gerekli.",
     "min-columns-count-message": "Yalnızca 10 minimum sütun sayısına izin verilir.",
@@ -1260,7 +1259,7 @@
       "mode": "Güvenlik yapılandırma modu",
       "short-id": "Kısa ID",
       "short-id-required": "Kısa ID gerekli.",
-      "short-id-range": "Kısa ID 1 ile 65534 aralığında olmalıdır.",
+      "short-id-range": "Kısa ID {{ min }} ile {{ max }} aralığında olmalıdır.",
       "short-id-pattern": "Kısa ID pozitif bir tam sayı olmalıdır.",
       "lifetime": "İstemci kayıt ömrü",
       "lifetime-required": "İstemci kayıt ömrü gerekli.",
@@ -1316,8 +1315,7 @@
         "step": "Adım",
         "min-evaluation-period": "Minimum değerlendirme süresi",
         "max-evaluation-period": "Maksimum değerlendirme süresi"
-      },
-      "composite-operations-support": "İç içe Okuma/Yazma/Gözlemleme işlemlerini destekler"
+      }
     },
     "snmp": {
       "add-communication-config": "İletişim yapılandırması ekle",
@@ -2951,7 +2949,7 @@
     "action-source-required": "Eylem kaynağı gerekli.",
     "action-name": "İsim",
     "action-name-required": "Eylem ismi gerekli.",
-    "action-name-not-unique": "Aynı ada sahip başka bir işlem zaten var.<br/>Eylem adı, aynı eylem kaynağı içinde emsalsiz olmalıdır.",
+    "action-name-not-unique": "Aynı ada sahip başka bir işlem zaten var.\nEylem adı, aynı eylem kaynağı içinde emsalsiz olmalıdır.",
     "action-icon": "İkon",
     "action-type": "Tür",
     "action-type-required": "Eylem türü gerekli.",

@@ -25,7 +25,7 @@ public interface SystemDataLoaderService {
 
     void createRandomJwtSettings() throws Exception;
 
-    void saveLegacyYmlSettings() throws Exception;
+    void updateSecuritySettings() throws Exception;
 
     void createOAuth2Templates() throws Exception;
 
@@ -37,6 +37,6 @@ public interface SystemDataLoaderService {
 
     void createDefaultNotificationConfigs();
 
-    void updateDefaultNotificationConfigs();
+    void updateDefaultNotificationConfigs(boolean updateTenants);
 
 }

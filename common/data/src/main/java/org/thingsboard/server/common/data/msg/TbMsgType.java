@@ -67,6 +67,7 @@ public enum TbMsgType {
     PROVISION_SUCCESS,
     PROVISION_FAILURE,
     SEND_EMAIL,
+    REST_API_REQUEST("REST API request"),
 
     // tellSelfOnly types
     GENERATOR_NODE_SELF_MSG(null, true),

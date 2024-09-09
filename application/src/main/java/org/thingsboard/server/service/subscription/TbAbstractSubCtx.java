@@ -22,6 +22,7 @@ import lombok.Data;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -151,7 +152,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
                         .scope(TbAttributeSubscriptionScope.SERVER_SCOPE)
                         .build();
                 subToDynamicValueKeySet.add(subIdx);
-                localSubscriptionService.addSubscription(sub);
+                localSubscriptionService.addSubscription(sub, sessionRef);
             }
         } catch (InterruptedException | ExecutionException e) {
             log.info("[{}][{}][{}] Failed to resolve dynamic values: {}", tenantId, customerId, userId, dynamicValues.keySet());
@@ -219,7 +220,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
 
     private ListenableFuture<DynamicValueKeySub> resolveEntityValue(TenantId tenantId, EntityId entityId, DynamicValueKey key) {
         ListenableFuture<Optional<AttributeKvEntry>> entry = attributesService.find(tenantId, entityId,
-                TbAttributeSubscriptionScope.SERVER_SCOPE.name(), key.getSourceAttribute());
+                AttributeScope.SERVER_SCOPE, key.getSourceAttribute());
         return Futures.transform(entry, attributeOpt -> {
             DynamicValueKeySub sub = new DynamicValueKeySub(key, entityId);
             if (attributeOpt.isPresent()) {
@@ -302,7 +303,7 @@ public abstract class TbAbstractSubCtx<T extends EntityCountQuery> {
     protected void clearDynamicValueSubscriptions() {
         if (subToDynamicValueKeySet != null) {
             for (Integer subId : subToDynamicValueKeySet) {
-                localSubscriptionService.cancelSubscription(sessionRef.getSessionId(), subId);
+                localSubscriptionService.cancelSubscription(getTenantId(), sessionRef.getSessionId(), subId);
             }
             subToDynamicValueKeySet.clear();
         }

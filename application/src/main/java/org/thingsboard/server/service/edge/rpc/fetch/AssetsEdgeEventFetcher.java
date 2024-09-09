@@ -35,7 +35,7 @@ public class AssetsEdgeEventFetcher extends BasePageableEdgeEventFetcher<Asset> 
     private final AssetService assetService;
 
     @Override
-    PageData<Asset> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<Asset> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return assetService.findAssetsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 

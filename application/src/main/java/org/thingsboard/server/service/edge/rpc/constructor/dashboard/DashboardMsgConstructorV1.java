@@ -33,6 +33,7 @@ public class DashboardMsgConstructorV1 extends BaseDashboardMsgConstructor {
 
     @Override
     public DashboardUpdateMsg constructDashboardUpdatedMsg(UpdateMsgType msgType, Dashboard dashboard) {
+        dashboard = JacksonUtil.clone(dashboard);
         imageService.inlineImagesForEdge(dashboard);
         DashboardUpdateMsg.Builder builder = DashboardUpdateMsg.newBuilder()
                 .setMsgType(msgType)
@@ -52,4 +53,5 @@ public class DashboardMsgConstructorV1 extends BaseDashboardMsgConstructor {
         }
         return builder.build();
     }
+
 }

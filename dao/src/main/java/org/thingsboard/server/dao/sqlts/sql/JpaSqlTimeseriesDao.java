@@ -27,6 +27,7 @@ import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.dao.dictionary.KeyDictionaryDao;
 import org.thingsboard.server.dao.model.sqlts.ts.TsKvEntity;
 import org.thingsboard.server.dao.sqlts.AbstractChunkedAggregationTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.insert.sql.SqlPartitioningRepository;
@@ -59,6 +60,8 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
 
     @Autowired
     private SqlPartitioningRepository partitioningRepository;
+    @Autowired
+    private KeyDictionaryDao keyDictionaryDao;
 
     private SqlTsPartitionDate tsFormat;
 
@@ -83,7 +86,7 @@ public class JpaSqlTimeseriesDao extends AbstractChunkedAggregationTimeseriesDao
         int dataPointDays = getDataPointDays(tsKvEntry, computeTtl(ttl));
         savePartitionIfNotExist(tsKvEntry.getTs());
         String strKey = tsKvEntry.getKey();
-        Integer keyId = getOrSaveKeyId(strKey);
+        Integer keyId = keyDictionaryDao.getOrSaveKeyId(strKey);
         TsKvEntity entity = new TsKvEntity();
         entity.setEntityId(entityId.getId());
         entity.setTs(tsKvEntry.getTs());

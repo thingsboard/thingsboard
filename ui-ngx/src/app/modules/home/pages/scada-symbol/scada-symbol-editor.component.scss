@@ -1,0 +1,232 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+.tb-scada-symbol-editor-shape {
+  width: 100%;
+  height: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tb-scada-symbol-editor-tooltips {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+.tb-scada-symbol-editor-svg-xml {
+  width: 100%;
+  height: 100%;
+  padding-top: 88px;
+}
+.tb-scada-symbol-editor-buttons {
+  pointer-events: none;
+  position: absolute;
+  left: 20px;
+  top: 20px;
+  right: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+
+  .tb-primary-fill {
+    background: #fff;
+    border-radius: 50%;
+    &:before {
+      opacity: 0.1;
+    }
+  }
+
+  .tb-scada-symbol-editor-view-buttons {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    z-index: 101;
+  }
+
+  .tb-scada-symbol-editor-zoom-buttons {
+    display: flex;
+    flex-direction: column;
+    z-index: 101;
+    background: #fff;
+    border-radius: 24px;
+    &.tb-primary-fill {
+      border-radius: 24px;
+      &:before {
+        opacity: 0.1;
+      }
+    }
+  }
+
+  .tb-scada-symbol-editor-right-buttons {
+    display: flex;
+    flex-direction: row;
+    gap: 8px;
+    z-index: 101;
+    tb-toggle-select {
+      pointer-events: auto;
+    }
+  }
+}
+
+.tooltipster-sidetip.scada-symbol {
+  position: fixed;
+  .tooltipster-box {
+    user-select: none;
+    background: rgba(0, 0, 0, 0.54);
+    border: 1px solid rgba(0, 0, 0, 0);
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    .tooltipster-content {
+      padding: 4px 8px;
+      font-size: 12px;
+      line-height: 12px;
+      font-weight: 500;
+      color: #ffffff;
+    }
+  }
+  &.tb-active {
+    .tooltipster-box {
+      background: #fff;
+      border: 1px solid rgba(0, 0, 0, 0.38);
+      box-shadow: 0 0 10px 6px rgba(0, 0, 0, .2);
+      .tooltipster-content {
+        color: rgba(0, 0, 0, 0.76);
+      }
+    }
+    .tooltipster-arrow {
+      .tooltipster-arrow-uncropped {
+        .tooltipster-arrow-background {
+          border-width: 12px;
+        }
+      }
+    }
+    &.tooltipster-top {
+      .tooltipster-arrow {
+        bottom: -1px;
+        .tooltipster-arrow-uncropped {
+          .tooltipster-arrow-border {
+            border-top-color: rgba(0, 0, 0, 0.38);
+          }
+          .tooltipster-arrow-background {
+            border-top-color: #fff;
+            left: -2px;
+          }
+        }
+      }
+    }
+    &.tooltipster-bottom {
+      .tooltipster-arrow {
+        top: -1px;
+        .tooltipster-arrow-uncropped {
+          .tooltipster-arrow-border {
+            border-bottom-color: rgba(0, 0, 0, 0.38);
+          }
+          .tooltipster-arrow-background {
+            border-bottom-color: #fff;
+            left: -2px;
+            top: -1px;
+          }
+        }
+      }
+    }
+    &.tooltipster-left {
+      .tooltipster-arrow {
+        right: -1px;
+        .tooltipster-arrow-uncropped {
+          .tooltipster-arrow-border {
+            border-left-color: rgba(0, 0, 0, 0.38);
+          }
+          .tooltipster-arrow-background {
+            border-left-color: #fff;
+            top: -2px;
+          }
+        }
+      }
+    }
+    &.tooltipster-right {
+      .tooltipster-arrow {
+        left: -1px;
+        .tooltipster-arrow-uncropped {
+          .tooltipster-arrow-border {
+            border-right-color: rgba(0, 0, 0, 0.38);
+          }
+          .tooltipster-arrow-background {
+            border-right-color: #fff;
+            top: -2px;
+            left: -1px;
+          }
+        }
+      }
+    }
+  }
+  &.tooltipster-left, &.tooltipster-right {
+    .tooltipster-box {
+      min-height: 36px;
+    }
+  }
+  &.tooltipster-top {
+    .tooltipster-arrow {
+      bottom: -2px;
+      .tooltipster-arrow-uncropped {
+        .tooltipster-arrow-border {
+          border-top-color: rgba(0, 0, 0, 0.54);
+        }
+        .tooltipster-arrow-background {
+          border-top-color: transparent;
+        }
+      }
+    }
+  }
+  &.tooltipster-bottom {
+    .tooltipster-arrow {
+      top: -2px;
+      .tooltipster-arrow-uncropped {
+        .tooltipster-arrow-border {
+          border-bottom-color: rgba(0, 0, 0, 0.54);
+        }
+        .tooltipster-arrow-background {
+          border-bottom-color: transparent;
+        }
+      }
+    }
+  }
+  &.tooltipster-left {
+    .tooltipster-arrow {
+      right: -2px;
+      .tooltipster-arrow-uncropped {
+        .tooltipster-arrow-border {
+          border-left-color: rgba(0, 0, 0, 0.54);
+        }
+        .tooltipster-arrow-background {
+          border-left-color: transparent;
+        }
+      }
+    }
+  }
+  &.tooltipster-right {
+    .tooltipster-arrow {
+      left: -2px;
+      .tooltipster-arrow-uncropped {
+        .tooltipster-arrow-border {
+          border-right-color: rgba(0, 0, 0, 0.54);
+        }
+        .tooltipster-arrow-background {
+          border-right-color: transparent;
+        }
+      }
+    }
+  }
+}

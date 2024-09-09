@@ -16,13 +16,13 @@
 package org.thingsboard.rule.engine.edge;
 
 import com.google.common.util.concurrent.SettableFuture;
-import org.junit.Before;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.ArgumentMatcher;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
@@ -49,8 +49,9 @@ import java.util.UUID;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.verify;
+import static org.thingsboard.server.dao.edge.BaseRelatedEdgesService.RELATED_EDGES_CACHE_ITEMS;
 
-@RunWith(MockitoJUnitRunner.class)
+@ExtendWith(MockitoExtension.class)
 public class TbMsgPushToEdgeNodeTest {
 
     private static final List<TbMsgType> MISC_EVENTS = List.of(TbMsgType.CONNECT_EVENT, TbMsgType.DISCONNECT_EVENT,
@@ -71,7 +72,7 @@ public class TbMsgPushToEdgeNodeTest {
     @Mock
     private ListeningExecutor dbCallbackExecutor;
 
-    @Before
+    @BeforeEach
     public void setUp() throws TbNodeException {
         node = new TbMsgPushToEdgeNode();
         TbMsgPushToEdgeNodeConfiguration config = new TbMsgPushToEdgeNodeConfiguration().defaultConfiguration();
@@ -82,7 +83,7 @@ public class TbMsgPushToEdgeNodeTest {
     public void ackMsgInCaseNoEdgeRelated() {
         Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
         Mockito.when(ctx.getEdgeService()).thenReturn(edgeService);
-        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(new PageData<>());
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, deviceId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(new PageData<>());
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);
@@ -103,7 +104,7 @@ public class TbMsgPushToEdgeNodeTest {
         UserId userId = new UserId(UUID.randomUUID());
         EdgeId edgeId = new EdgeId(UUID.randomUUID());
         PageData<EdgeId> edgePageData = new PageData<>(List.of(edgeId), 1, 1, false);
-        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(TbMsgPushToEdgeNode.DEFAULT_PAGE_SIZE))).thenReturn(edgePageData);
+        Mockito.when(edgeService.findRelatedEdgeIdsByEntityId(tenantId, userId, new PageLink(RELATED_EDGES_CACHE_ITEMS))).thenReturn(edgePageData);
 
         TbMsg msg = TbMsg.newMsg(TbMsgType.ATTRIBUTES_UPDATED, userId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, null, null);

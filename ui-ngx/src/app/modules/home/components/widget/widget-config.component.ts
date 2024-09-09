@@ -30,12 +30,15 @@ import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import {
+  CellClickColumnInfo,
   DataKey,
   datasourcesHasAggregation,
   datasourcesHasOnlyComparisonAggregation,
   GroupInfo,
   JsonSchema,
   JsonSettingsSchema,
+  TargetDevice,
+  targetDeviceValid,
   Widget,
   WidgetConfigMode,
   widgetType
@@ -60,7 +63,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { TranslateService } from '@ngx-translate/core';
 import { EntityType } from '@shared/models/entity-type.models';
-import { Observable, of, Subject, Subscription } from 'rxjs';
+import { merge, Observable, of, Subject, Subscription } from 'rxjs';
 import {
   IBasicWidgetConfigComponent,
   WidgetConfigCallbacks
@@ -81,6 +84,7 @@ import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { TimewindowConfigData } from '@home/components/widget/config/timewindow-config-panel.component';
+import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import Timeout = NodeJS.Timeout;
 
 const emptySettingsSchema: JsonSchema = {
@@ -146,6 +150,14 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   @coerceBoolean()
   isAdd = false;
 
+  @Input()
+  @coerceBoolean()
+  showLayoutConfig = true;
+
+  @Input()
+  @coerceBoolean()
+  isDefaultBreakpoint = true;
+
   @Input() disabled: boolean;
 
   widgetConfigMode = WidgetConfigMode.advanced;
@@ -158,7 +170,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     generateDataKey: this.generateDataKey.bind(this),
     fetchEntityKeysForDevice: this.fetchEntityKeysForDevice.bind(this),
     fetchEntityKeys: this.fetchEntityKeys.bind(this),
-    fetchDashboardStates: this.fetchDashboardStates.bind(this)
+    fetchDashboardStates: this.fetchDashboardStates.bind(this),
+    fetchCellClickColumns: this.fetchCellClickColumns.bind(this)
   };
 
   widgetEditMode = this.utils.widgetEditMode;
@@ -235,19 +248,24 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       noDataDisplayMessage: [null, []]
     });
 
-    this.widgetSettings.get('showTitle').valueChanges.subscribe(() => {
-      this.updateWidgetSettingsEnabledState();
-    });
-    this.widgetSettings.get('showTitleIcon').valueChanges.subscribe(() => {
+    merge(this.widgetSettings.get('showTitle').valueChanges,
+          this.widgetSettings.get('showTitleIcon').valueChanges).subscribe(() => {
       this.updateWidgetSettingsEnabledState();
     });
 
     this.layoutSettings = this.fb.group({
+      resizable: [true],
+      preserveAspectRatio: [false],
       mobileOrder: [null, [Validators.pattern(/^-?[0-9]+$/)]],
       mobileHeight: [null, [Validators.min(1), Validators.pattern(/^\d*$/)]],
       mobileHide: [false],
       desktopHide: [false]
     });
+
+    this.layoutSettings.get('resizable').valueChanges.subscribe(() => {
+      this.updateLayoutEnabledState();
+    });
+
     this.actionsSettings = this.fb.group({
       actions: [null, []]
     });
@@ -338,8 +356,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     );
     this.headerOptions.push(
       {
-        name: this.translate.instant('widget-config.mobile'),
-        value: 'mobile'
+        name: this.translate.instant('widget-config.layout'),
+        value: 'layout'
       }
     );
     if (!this.selectedOption || !this.headerOptions.find(o => o.value === this.selectedOption)) {
@@ -368,9 +386,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
         this.widgetType !== widgetType.static) {
         this.dataSettings.addControl('datasources', this.fb.control(null));
       } else if (this.widgetType === widgetType.rpc) {
-        this.targetDeviceSettings.addControl('targetDeviceAliasId',
-          this.fb.control(null,
-            this.widgetEditMode ? [] : [Validators.required]));
+        this.targetDeviceSettings.addControl('targetDevice',
+          this.fb.control(null, []));
       } else if (this.widgetType === widgetType.alarm) {
         this.dataSettings.addControl('alarmSource', this.fb.control(null));
       }
@@ -534,20 +551,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           this.dataSettings.patchValue({ datasources: config.datasources},
             {emitEvent: false});
         } else if (this.widgetType === widgetType.rpc) {
-          let targetDeviceAliasId: string;
-          if (config.targetDeviceAliasIds && config.targetDeviceAliasIds.length > 0) {
-            const aliasId = config.targetDeviceAliasIds[0];
-            const entityAliases = this.aliasController.getEntityAliases();
-            if (entityAliases[aliasId]) {
-              targetDeviceAliasId = entityAliases[aliasId].id;
-            } else {
-              targetDeviceAliasId = null;
-            }
-          } else {
-            targetDeviceAliasId = null;
-          }
+          const targetDevice: TargetDevice = config.targetDevice;
           this.targetDeviceSettings.patchValue({
-            targetDeviceAliasId
+            targetDevice
           }, {emitEvent: false});
         } else if (this.widgetType === widgetType.alarm) {
           this.dataSettings.patchValue(
@@ -564,6 +570,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       if (layout) {
         this.layoutSettings.patchValue(
           {
+            resizable: isDefined(layout.resizable) ? layout.resizable : true,
+            preserveAspectRatio: layout.preserveAspectRatio,
             mobileOrder: layout.mobileOrder,
             mobileHeight: layout.mobileHeight,
             mobileHide: layout.mobileHide,
@@ -574,6 +582,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       } else {
         this.layoutSettings.patchValue(
           {
+            resizable: true,
+            preserveAspectRatio: false,
             mobileOrder: null,
             mobileHeight: null,
             mobileHide: false,
@@ -582,6 +592,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
           {emitEvent: false}
         );
       }
+      this.updateLayoutEnabledState();
     }
     this.createChangeSubscriptions();
   }
@@ -612,6 +623,15 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       this.widgetSettings.get('titleIcon').disable({emitEvent: false});
       this.widgetSettings.get('iconColor').disable({emitEvent: false});
       this.widgetSettings.get('iconSize').disable({emitEvent: false});
+    }
+  }
+
+  private updateLayoutEnabledState() {
+    const resizable: boolean = this.layoutSettings.get('resizable').value;
+    if (resizable) {
+      this.layoutSettings.get('preserveAspectRatio').enable({emitEvent: false});
+    } else {
+      this.layoutSettings.get('preserveAspectRatio').disable({emitEvent: false});
     }
   }
 
@@ -650,12 +670,7 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
   private updateTargetDeviceSettings() {
     if (this.modelValue) {
       if (this.modelValue.config) {
-        const targetDeviceAliasId: string = this.targetDeviceSettings.get('targetDeviceAliasId').value;
-        if (targetDeviceAliasId) {
-          this.modelValue.config.targetDeviceAliasIds = [targetDeviceAliasId];
-        } else {
-          this.modelValue.config.targetDeviceAliasIds = [];
-        }
+        this.modelValue.config.targetDevice = this.targetDeviceSettings.get('targetDevice').value;
       }
       this.propagateChange(this.modelValue);
     }
@@ -749,7 +764,8 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
-  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema): DataKey {
+  public generateDataKey(chip: any, type: DataKeyType, datakeySettingsSchema: JsonSettingsSchema,
+                         isLatestDataKey: boolean, dataKeySettingsFunction: DataKeySettingsFunction): DataKey {
     if (isObject(chip)) {
       (chip as DataKey)._hash = Math.random();
       return chip;
@@ -782,6 +798,11 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
       }
       if (datakeySettingsSchema && isDefined(datakeySettingsSchema.schema)) {
         result.settings = this.utils.generateObjectFromJsonSchema(datakeySettingsSchema.schema);
+      } else if (dataKeySettingsFunction) {
+        const settings = dataKeySettingsFunction(result, isLatestDataKey);
+        if (settings) {
+          result.settings = settings;
+        }
       }
       return result;
     }
@@ -878,6 +899,30 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     }
   }
 
+  private fetchCellClickColumns(): Array<CellClickColumnInfo> {
+    if (this.modelValue) {
+      const configuredColumns = new Array<CellClickColumnInfo>();
+      if (this.modelValue.config?.datasources[0]?.dataKeys?.length) {
+        configuredColumns.push(...this.keysToCellClickColumns(this.modelValue.config.datasources[0].dataKeys));
+      }
+      if (this.modelValue.config?.alarmSource?.dataKeys?.length) {
+        configuredColumns.push(...this.keysToCellClickColumns(this.modelValue.config.alarmSource.dataKeys));
+      }
+      return configuredColumns;
+    }
+  }
+
+  private keysToCellClickColumns(dataKeys: Array<DataKey>): Array<CellClickColumnInfo> {
+    const result: Array<CellClickColumnInfo> = [];
+    for (const dataKey of dataKeys) {
+      result.push({
+        name: dataKey.name,
+        label: dataKey?.label
+      });
+    }
+    return result;
+  }
+
   private createFilterForDashboardState(query: string): (stateId: string) => boolean {
     const lowercaseQuery = query.toLowerCase();
     return stateId => stateId.toLowerCase().indexOf(lowercaseQuery) === 0;
@@ -944,9 +989,9 @@ export class WidgetConfigComponent extends PageComponent implements OnInit, OnDe
     if (this.modelValue) {
       const config = this.modelValue.config;
       if (this.widgetType === widgetType.rpc && this.modelValue.isDataEnabled) {
-        if (!this.widgetEditMode && (!config.targetDeviceAliasIds || !config.targetDeviceAliasIds.length)) {
+        if ((!this.widgetEditMode && !this.modelValue?.typeParameters.targetDeviceOptional) && !targetDeviceValid(config.targetDevice)) {
           return {
-            targetDeviceAliasIds: {
+            targetDevice: {
               valid: false
             }
           };

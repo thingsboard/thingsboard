@@ -96,6 +96,7 @@ import { NotificationType } from '@shared/models/notification.models';
 import { UserId } from '@shared/models/id/user-id';
 import { AlarmService } from '@core/http/alarm.service';
 import { ResourceService } from '@core/http/resource.service';
+import { OAuth2Service } from '@core/http/oauth2.service';
 
 @Injectable({
   providedIn: 'root'
@@ -125,7 +126,8 @@ export class EntityService {
     private queueService: QueueService,
     private notificationService: NotificationService,
     private alarmService: AlarmService,
-    private resourceService: ResourceService
+    private resourceService: ResourceService,
+    private oauth2Service: OAuth2Service
   ) { }
 
   private getEntityObservable(entityType: EntityType, entityId: string,
@@ -169,6 +171,8 @@ export class EntityService {
       case EntityType.QUEUE:
         observable = this.queueService.getQueueById(entityId, config);
         break;
+      case EntityType.QUEUE_STATS:
+        observable = this.queueService.getQueueStatisticsById(entityId, config);
     }
     return observable;
   }
@@ -266,6 +270,12 @@ export class EntityService {
         break;
       case EntityType.NOTIFICATION_TARGET:
         observable = this.notificationService.getNotificationTargetsByIds(entityIds, config);
+        break;
+      case EntityType.QUEUE_STATS:
+        observable = this.queueService.getQueueStatisticsByIds(entityIds, config);
+        break;
+      case EntityType.OAUTH2_CLIENT:
+        observable = this.oauth2Service.findTenantOAuth2ClientInfosByIds(entityIds, config);
         break;
     }
     return observable;
@@ -422,11 +432,11 @@ export class EntityService {
         break;
       case EntityType.WIDGETS_BUNDLE:
         pageLink.sortOrder.property = 'title';
-        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, true, config);
+        entitiesObservable = this.widgetService.getWidgetBundles(pageLink, false, true, false, config);
         break;
       case EntityType.WIDGET_TYPE:
         pageLink.sortOrder.property = 'name';
-        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, true, false, DeprecatedFilter.ALL, null, config);
+        entitiesObservable = this.widgetService.getWidgetTypes(pageLink, true, false, false, DeprecatedFilter.ALL, null, config);
         break;
       case EntityType.NOTIFICATION_TARGET:
         pageLink.sortOrder.property = 'name';
@@ -443,6 +453,14 @@ export class EntityService {
       case EntityType.TB_RESOURCE:
         pageLink.sortOrder.property = 'title';
         entitiesObservable = this.resourceService.getTenantResources(pageLink, config);
+        break;
+      case EntityType.QUEUE_STATS:
+        pageLink.sortOrder.property = 'createdTime';
+        entitiesObservable = this.queueService.getQueueStatistics(pageLink, config);
+        break;
+      case EntityType.OAUTH2_CLIENT:
+        pageLink.sortOrder.property = 'title';
+        entitiesObservable = this.oauth2Service.findTenantOAuth2ClientInfos(pageLink, config);
         break;
     }
     return entitiesObservable;
@@ -501,9 +519,13 @@ export class EntityService {
   }
 
   public findEntityKeysByQuery(query: EntityDataQuery, attributes = true, timeseries = true,
-                               config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+                               scope?: AttributeScope, config?: RequestConfig): Observable<EntitiesKeysByQuery> {
+    let url = `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`;
+    if (scope) {
+      url += `&scope=${scope}`;
+    }
     return this.http.post<EntitiesKeysByQuery>(
-      `/api/entitiesQuery/find/keys?attributes=${attributes}&timeseries=${timeseries}`,
+      url,
       query, defaultHttpOptionsFromConfig(config));
   }
 
@@ -716,6 +738,8 @@ export class EntityService {
           entityTypes.push(EntityType.EDGE);
         }
         if (useAliasEntityTypes) {
+          entityTypes.push(EntityType.QUEUE_STATS);
+
           entityTypes.push(AliasEntityType.CURRENT_CUSTOMER);
           entityTypes.push(AliasEntityType.CURRENT_TENANT);
         }
@@ -761,6 +785,8 @@ export class EntityService {
         entityFieldKeys.push(entityFields.firstName.keyName);
         entityFieldKeys.push(entityFields.lastName.keyName);
         entityFieldKeys.push(entityFields.phone.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.TENANT:
       case EntityType.CUSTOMER:
@@ -777,6 +803,8 @@ export class EntityService {
       case EntityType.ENTITY_VIEW:
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.DEVICE:
       case EntityType.EDGE:
@@ -784,12 +812,20 @@ export class EntityService {
         entityFieldKeys.push(entityFields.name.keyName);
         entityFieldKeys.push(entityFields.type.keyName);
         entityFieldKeys.push(entityFields.label.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.DASHBOARD:
         entityFieldKeys.push(entityFields.title.keyName);
+        entityFieldKeys.push(entityFields.ownerName.keyName);
+        entityFieldKeys.push(entityFields.ownerType.keyName);
         break;
       case EntityType.API_USAGE_STATE:
         entityFieldKeys.push(entityFields.name.keyName);
+        break;
+      case EntityType.QUEUE_STATS:
+        entityFieldKeys.push(entityFields.queueName.keyName);
+        entityFieldKeys.push(entityFields.serviceId.keyName);
         break;
     }
     return query ? entityFieldKeys.filter((entityField) => entityField.toLowerCase().indexOf(query) === 0) : entityFieldKeys;
@@ -831,7 +867,14 @@ export class EntityService {
   }
 
   public getEntityKeysByEntityFilter(filter: EntityFilter, types: DataKeyType[],
-                                     entityTypes?: EntityType[], config?: RequestConfig): Observable<Array<DataKey>> {
+                                     entityTypes?: EntityType[],
+                                     config?: RequestConfig): Observable<Array<DataKey>> {
+    return this.getEntityKeysByEntityFilterAndScope(filter, types, entityTypes, null, config);
+  }
+
+  public getEntityKeysByEntityFilterAndScope(filter: EntityFilter, types: DataKeyType[],
+                                             entityTypes?: EntityType[], scope?: AttributeScope,
+                                             config?: RequestConfig): Observable<Array<DataKey>> {
     if (!types.length) {
       return of([]);
     }
@@ -842,7 +885,7 @@ export class EntityService {
         pageLink: createDefaultEntityDataPageLink(100),
       };
       entitiesKeysByQuery$ = this.findEntityKeysByQuery(dataQuery, types.includes(DataKeyType.attribute),
-        types.includes(DataKeyType.timeseries), config);
+        types.includes(DataKeyType.timeseries), scope, config);
     } else {
       entitiesKeysByQuery$ = of({
         attribute: [],
@@ -1518,5 +1561,32 @@ export class EntityService {
         break;
     }
     return entityObservable;
+  }
+
+  public getEntitySubtypesObservable(entityType: EntityType): Observable<Array<string>> {
+    let observable: Observable<Array<string>>;
+    switch (entityType) {
+      case EntityType.ASSET:
+        observable = this.assetProfileService.getAssetProfileNames(false, {ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.DEVICE:
+        observable = this.deviceProfileService.getDeviceProfileNames(false,{ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.name))
+        );
+        break;
+      case EntityType.EDGE:
+        observable = this.edgeService.getEdgeTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+      case EntityType.ENTITY_VIEW:
+        observable = this.entityViewService.getEntityViewTypes({ignoreLoading: true}).pipe(
+          map(subTypes => subTypes.map(subType => subType.type))
+        );
+        break;
+    }
+    return observable;
   }
 }

@@ -41,7 +41,12 @@ public enum EdgeEventType {
     ADMIN_SETTINGS(true, null),
     OTA_PACKAGE(true, EntityType.OTA_PACKAGE),
     QUEUE(true, EntityType.QUEUE),
-    TB_RESOURCE(true, EntityType.TB_RESOURCE);
+    NOTIFICATION_RULE (true, EntityType.NOTIFICATION_RULE),
+    NOTIFICATION_TARGET (true, EntityType.NOTIFICATION_TARGET),
+    NOTIFICATION_TEMPLATE (true, EntityType.NOTIFICATION_TEMPLATE),
+    TB_RESOURCE(true, EntityType.TB_RESOURCE),
+    OAUTH2_CLIENT(true, EntityType.OAUTH2_CLIENT),
+    DOMAIN(true, EntityType.DOMAIN);
 
     private final boolean allEdgesRelated;
 

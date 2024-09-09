@@ -16,6 +16,10 @@
 
 import { Component, Inject } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
+import { DialogComponent } from '@shared/components/dialog.component';
+import { AppState } from '@core/core.state';
+import { Router } from '@angular/router';
+import { Store } from '@ngrx/store';
 
 export interface AlertDialogData {
   title: string;
@@ -29,7 +33,11 @@ export interface AlertDialogData {
   templateUrl: './alert-dialog.component.html',
   styleUrls: ['./alert-dialog.component.scss']
 })
-export class AlertDialogComponent {
-  constructor(public dialogRef: MatDialogRef<AlertDialogComponent>,
-              @Inject(MAT_DIALOG_DATA) public data: AlertDialogData) {}
+export class AlertDialogComponent extends DialogComponent<AlertDialogComponent, boolean>{
+  constructor(protected store: Store<AppState>,
+              protected router: Router,
+              public dialogRef: MatDialogRef<AlertDialogComponent, boolean>,
+              @Inject(MAT_DIALOG_DATA) public data: AlertDialogData) {
+    super(store,  router, dialogRef);
+  }
 }

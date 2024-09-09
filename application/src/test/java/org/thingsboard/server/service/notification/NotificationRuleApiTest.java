@@ -26,6 +26,7 @@ import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.springframework.data.util.Pair;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
@@ -93,7 +94,6 @@ import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.notification.DefaultNotificationDeduplicationService;
 import org.thingsboard.server.service.notification.rule.cache.DefaultNotificationRulesCache;
 import org.thingsboard.server.service.state.DeviceStateService;
@@ -139,8 +139,6 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
     private RuleChainService ruleChainService;
     @Autowired
     private NotificationRuleProcessor notificationRuleProcessor;
-    @Autowired
-    private DefaultNotifications defaultNotifications;
     @Autowired
     private DefaultNotificationRulesCache notificationRulesCache;
     @Autowired
@@ -782,7 +780,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
 
         assertThat(getMyNotifications(false, 100)).size().isZero();
         createDevice("Device 1", "default", "111");
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(1);
                 });
@@ -800,7 +798,7 @@ public class NotificationRuleApiTest extends AbstractNotificationApiTest {
         notificationRulesCache.evict(tenantId);
 
         createDevice("Device 3", "default", "333");
-        await().atMost(30, TimeUnit.SECONDS)
+        await().atMost(TIMEOUT, TimeUnit.SECONDS)
                 .untilAsserted(() -> {
                     assertThat(getMyNotifications(false, 100)).size().isEqualTo(2);
                 });

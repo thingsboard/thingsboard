@@ -38,9 +38,9 @@ public interface AssetProfileService extends EntityDaoService {
 
     AssetProfileInfo findAssetProfileInfoById(TenantId tenantId, AssetProfileId assetProfileId);
 
-    AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate);
-
     AssetProfile saveAssetProfile(AssetProfile assetProfile);
+
+    AssetProfile saveAssetProfile(AssetProfile assetProfile, boolean doValidate, boolean publishSaveEvent);
 
     void deleteAssetProfile(TenantId tenantId, AssetProfileId assetProfileId);
 

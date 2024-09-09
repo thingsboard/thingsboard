@@ -1897,7 +1897,7 @@
     "action-source-required": "A fonte da ação é obrigatória.",
     "action-name": "Nome",
     "action-name-required": "O nome da ação é obrigatório!",
-    "action-name-not-unique": "Já existe outra ação com o mesmo nome.<br/>O nome da ação na mesma fonte de ação deve ser exclusivo.",
+    "action-name-not-unique": "Já existe outra ação com o mesmo nome.\nO nome da ação na mesma fonte de ação deve ser exclusivo.",
     "action-icon": "Ícone",
     "action-type": "Tipo",
     "action-type-required": "O tipo de ação é obrigatório.",

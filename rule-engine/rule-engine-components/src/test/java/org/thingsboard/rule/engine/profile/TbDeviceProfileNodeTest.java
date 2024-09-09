@@ -18,21 +18,24 @@ package org.thingsboard.rule.engine.profile;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
-import org.junit.Test;
-import org.junit.runner.RunWith;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.provider.Arguments;
 import org.mockito.Mock;
 import org.mockito.Mockito;
-import org.mockito.junit.MockitoJUnitRunner;
+import org.mockito.Spy;
+import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.rule.engine.AbstractRuleNodeUpgradeTest;
 import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.RuleEngineDeviceProfileCache;
 import org.thingsboard.rule.engine.api.TbContext;
+import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
-import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.alarm.AlarmApiCallResult;
 import org.thingsboard.server.common.data.alarm.AlarmInfo;
@@ -59,7 +62,6 @@ import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
 import org.thingsboard.server.common.data.query.DynamicValue;
 import org.thingsboard.server.common.data.query.DynamicValueSourceType;
-import org.thingsboard.server.common.data.query.EntityKeyType;
 import org.thingsboard.server.common.data.query.EntityKeyValueType;
 import org.thingsboard.server.common.data.query.FilterPredicateValue;
 import org.thingsboard.server.common.data.query.NumericFilterPredicate;
@@ -82,15 +84,17 @@ import java.util.Optional;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Stream;
 
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
-@RunWith(MockitoJUnitRunner.class)
-public class TbDeviceProfileNodeTest {
+@ExtendWith(MockitoExtension.class)
+public class TbDeviceProfileNodeTest extends AbstractRuleNodeUpgradeTest {
 
+    @Spy
     private TbDeviceProfileNode node;
 
     @Mock
@@ -211,7 +215,7 @@ public class TbDeviceProfileNodeTest {
 
         registerCreateAlarmMock(alarmService.updateAlarm(any()), false);
 
-
+        Thread.sleep(1);
         TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
         node.onMsg(ctx, msg2);
@@ -321,12 +325,13 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarmEnabled"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
         attributeKvEntity.setBooleanValue(Boolean.TRUE);
+        attributeKvEntity.setStrKey("alarmEnabled");
         attributeKvEntity.setLastUpdateTs(System.currentTimeMillis());
 
         AttributeKvEntry entry = attributeKvEntity.toData();
@@ -372,7 +377,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(attrListListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -403,11 +408,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, tenantId.getId(), "SERVER_SCOPE", "alarmEnabled"
+                tenantId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("alarmEnabled");
         attributeKvEntity.setBooleanValue(Boolean.TRUE);
         attributeKvEntity.setLastUpdateTs(System.currentTimeMillis());
 
@@ -455,11 +461,11 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(Futures.immediateFuture(Collections.emptyList()));
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(Futures.immediateFuture(Optional.empty()));
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(attrListListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -486,11 +492,12 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -528,7 +535,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -555,20 +562,22 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long alarmDelayInSeconds = 5L;
         alarmDelayAttributeKvEntity.setLongValue(alarmDelayInSeconds);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -622,7 +631,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -644,7 +653,7 @@ public class TbDeviceProfileNodeTest {
 
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
-        Thread.sleep(halfOfAlarmDelay);
+        Thread.sleep(halfOfAlarmDelay + 1);
 
         TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -669,20 +678,22 @@ public class TbDeviceProfileNodeTest {
 
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long alarmDelayInSeconds = 5L;
         alarmDelayAttributeKvEntity.setLongValue(alarmDelayInSeconds);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -740,13 +751,13 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(emptyOptional);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -768,7 +779,7 @@ public class TbDeviceProfileNodeTest {
 
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
-        Thread.sleep(halfOfAlarmDelay);
+        Thread.sleep(halfOfAlarmDelay + 1);
 
         TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -788,20 +799,22 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long alarmRepeating = 2;
         alarmDelayAttributeKvEntity.setLongValue(alarmRepeating);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -855,7 +868,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -891,7 +904,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         Device device = new Device();
@@ -900,15 +913,17 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
         AttributeKvCompositeKey alarmDelayCompositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "alarm_delay"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 11
         );
 
         AttributeKvEntity alarmDelayAttributeKvEntity = new AttributeKvEntity();
         alarmDelayAttributeKvEntity.setId(alarmDelayCompositeKey);
+        alarmDelayAttributeKvEntity.setStrKey("alarm_delay");
         long repeatingCondition = 2;
         alarmDelayAttributeKvEntity.setLongValue(repeatingCondition);
         alarmDelayAttributeKvEntity.setLastUpdateTs(0L);
@@ -965,13 +980,13 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(optionalDurationAttribute);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(emptyOptional);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listNoDurationAttribute);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1012,11 +1027,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1067,7 +1083,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1089,7 +1105,7 @@ public class TbDeviceProfileNodeTest {
 
         verify(ctx, Mockito.never()).tellNext(theMsg, "Alarm Created");
 
-        Thread.sleep(halfOfAlarmDelay);
+        Thread.sleep(halfOfAlarmDelay + 1);
 
         TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, deviceId, TbMsgMetaData.EMPTY,
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
@@ -1113,11 +1129,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "greaterAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("greaterAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1165,7 +1182,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFuture);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1196,11 +1213,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKeyActiveSchedule = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "dynamicValueActiveSchedule"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntityActiveSchedule = new AttributeKvEntity();
         attributeKvEntityActiveSchedule.setId(compositeKeyActiveSchedule);
+        attributeKvEntityActiveSchedule.setStrKey("dynamicValueActiveSchedule");
         attributeKvEntityActiveSchedule.setJsonValue(
                 "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":true,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":8.64e+7},{\"enabled\":true,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":8.64e+7}],\"dynamicValue\":null}"
         );
@@ -1247,7 +1265,7 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureActiveSchedule);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1280,11 +1298,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKeyInactiveSchedule = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "dynamicValueInactiveSchedule"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntityInactiveSchedule = new AttributeKvEntity();
         attributeKvEntityInactiveSchedule.setId(compositeKeyInactiveSchedule);
+        attributeKvEntityInactiveSchedule.setStrKey("dynamicValueInactiveSchedule");
         attributeKvEntityInactiveSchedule.setJsonValue(
                 "{\"timezone\":\"Europe/Kiev\",\"items\":[{\"enabled\":false,\"dayOfWeek\":1,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":2,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":3,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":4,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":5,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":6,\"startsOn\":0,\"endsOn\":0},{\"enabled\":false,\"dayOfWeek\":7,\"startsOn\":0,\"endsOn\":0}],\"dynamicValue\":null}"
         );
@@ -1343,7 +1362,7 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(alarmService.findLatestActiveByOriginatorAndType(tenantId, deviceId, "highTemperatureAlarm"))
                 .thenReturn(null);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureInactiveSchedule);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1372,11 +1391,12 @@ public class TbDeviceProfileNodeTest {
         device.setCustomerId(customerId);
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.CUSTOMER, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("lessAttribute");
         attributeKvEntity.setLongValue(30L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1417,11 +1437,11 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1447,11 +1467,12 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "lessAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("lessAttribute");
         attributeKvEntity.setLongValue(50L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1492,9 +1513,9 @@ public class TbDeviceProfileNodeTest {
                 .thenReturn(null);
         registerCreateAlarmMock(alarmService.createAlarm(any()), true);
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1520,7 +1541,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.TENANT, deviceId.getId(), "SERVER_SCOPE", "tenantAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         Device device = new Device();
@@ -1529,6 +1550,7 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("tenantAttribute");
         attributeKvEntity.setLongValue(100L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1573,11 +1595,11 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId),  Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1605,7 +1627,7 @@ public class TbDeviceProfileNodeTest {
         DeviceProfileData deviceProfileData = new DeviceProfileData();
 
         AttributeKvCompositeKey compositeKey = new AttributeKvCompositeKey(
-                EntityType.DEVICE, deviceId.getId(), EntityKeyType.SERVER_ATTRIBUTE.name(), "tenantAttribute"
+                deviceId.getId(), AttributeScope.SERVER_SCOPE.getId(), 10
         );
 
         Device device = new Device();
@@ -1614,6 +1636,7 @@ public class TbDeviceProfileNodeTest {
 
         AttributeKvEntity attributeKvEntity = new AttributeKvEntity();
         attributeKvEntity.setId(compositeKey);
+        attributeKvEntity.setStrKey("tenantAttribute");
         attributeKvEntity.setLongValue(100L);
         attributeKvEntity.setLastUpdateTs(0L);
 
@@ -1658,11 +1681,11 @@ public class TbDeviceProfileNodeTest {
         Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
         Mockito.when(ctx.getDeviceService().findDeviceById(tenantId, deviceId))
                 .thenReturn(device);
-        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.anyString(), Mockito.anySet()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(deviceId), Mockito.any(AttributeScope.class), Mockito.anySet()))
                 .thenReturn(listListenableFutureWithLess);
-        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.anyString(), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(customerId), Mockito.any(AttributeScope.class), Mockito.anyString()))
                 .thenReturn(emptyOptionalFuture);
-        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(DataConstants.SERVER_SCOPE), Mockito.anyString()))
+        Mockito.when(attributesService.find(eq(tenantId), eq(tenantId), eq(AttributeScope.SERVER_SCOPE), Mockito.anyString()))
                 .thenReturn(optionalListenableFutureWithLess);
 
         TbMsg theMsg = TbMsg.newMsg(TbMsgType.ALARM, deviceId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
@@ -1683,10 +1706,10 @@ public class TbDeviceProfileNodeTest {
     private void init() throws TbNodeException {
         Mockito.when(ctx.getTenantId()).thenReturn(tenantId);
         Mockito.when(ctx.getDeviceProfileCache()).thenReturn(cache);
-        Mockito.when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
-        Mockito.when(ctx.getAlarmService()).thenReturn(alarmService);
+        Mockito.lenient().when(ctx.getTimeseriesService()).thenReturn(timeseriesService);
+        Mockito.lenient().when(ctx.getAlarmService()).thenReturn(alarmService);
         Mockito.when(ctx.getDeviceService()).thenReturn(deviceService);
-        Mockito.when(ctx.getAttributesService()).thenReturn(attributesService);
+        Mockito.lenient().when(ctx.getAttributesService()).thenReturn(attributesService);
         TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.newObjectNode());
         node = new TbDeviceProfileNode();
         node.init(ctx, nodeConfiguration);
@@ -1704,6 +1727,37 @@ public class TbDeviceProfileNodeTest {
                     .alarm(alarm)
                     .build();
         });
+    }
+
+    private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
+        return Stream.of(
+                // default config for version 1 with upgrade from version 0
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}",
+                        true,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}"),
+                // config for version 1 with upgrade from version 0 (persistAlarmRulesState and fetchAlarmRulesStateOnStart - true)
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":true}",
+                        false,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":true}"),
+                // config for version 1 with upgrade from version 0 (persistAlarmRulesState - true, fetchAlarmRulesStateOnStart - false)
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":false}",
+                        false,
+                        "{\"persistAlarmRulesState\":true,\"fetchAlarmRulesStateOnStart\":false}"),
+                // config for version 1 with upgrade from version 0 (persistAlarmRulesState - false, fetchAlarmRulesStateOnStart - true)
+                Arguments.of(0,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":true}",
+                        true,
+                        "{\"persistAlarmRulesState\":false,\"fetchAlarmRulesStateOnStart\":false}")
+        );
+
+    }
+
+    @Override
+    protected TbNode getTestNode() {
+        return node;
     }
 
 }

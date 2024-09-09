@@ -40,6 +40,11 @@
                 "output": "/"
               },
               {
+                "glob": "worker-xml.js",
+                "input": "./node_modules/ace-builds/src-noconflict/",
+                "output": "/"
+              },
+              {
                 "glob": "worker-css.js",
                 "input": "./node_modules/ace-builds/src-noconflict/",
                 "output": "/"
@@ -158,7 +163,8 @@
               "ace-builds",
               "diff-match-patch",
               "tv4",
-              "@messageformat/parser"
+              "@messageformat/parser",
+              "sorted-btree"
             ]
           },
           "configurations": {

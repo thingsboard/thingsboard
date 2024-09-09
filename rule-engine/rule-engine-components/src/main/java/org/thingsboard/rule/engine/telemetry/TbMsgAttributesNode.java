@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.adaptor.JsonConverter;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
@@ -43,7 +44,6 @@ import java.util.Objects;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static org.thingsboard.server.common.data.DataConstants.CLIENT_SCOPE;
 import static org.thingsboard.server.common.data.DataConstants.NOTIFY_DEVICE_METADATA_KEY;
 import static org.thingsboard.server.common.data.DataConstants.SCOPE;
 import static org.thingsboard.server.common.data.msg.TbMsgType.POST_ATTRIBUTES_REQUEST;
@@ -89,7 +89,7 @@ public class TbMsgAttributesNode implements TbNode {
             ctx.tellSuccess(msg);
             return;
         }
-        String scope = getScope(msg.getMetaData().getValue(SCOPE));
+        AttributeScope scope = getScope(msg.getMetaData().getValue(SCOPE));
         boolean sendAttributesUpdateNotification = checkSendNotification(scope);
 
         if (!config.isUpdateAttributesOnlyOnValueChange()) {
@@ -109,7 +109,7 @@ public class TbMsgAttributesNode implements TbNode {
                 MoreExecutors.directExecutor());
     }
 
-    void saveAttr(List<AttributeKvEntry> attributes, TbContext ctx, TbMsg msg, String scope, boolean sendAttributesUpdateNotification) {
+    void saveAttr(List<AttributeKvEntry> attributes, TbContext ctx, TbMsg msg, AttributeScope scope, boolean sendAttributesUpdateNotification) {
         if (attributes.isEmpty()) {
             ctx.tellSuccess(msg);
             return;
@@ -121,7 +121,7 @@ public class TbMsgAttributesNode implements TbNode {
                 attributes,
                 config.isNotifyDevice() || checkNotifyDeviceMdValue(msg.getMetaData().getValue(NOTIFY_DEVICE_METADATA_KEY)),
                 sendAttributesUpdateNotification ?
-                        new AttributesUpdateNodeCallback(ctx, msg, scope, attributes) :
+                        new AttributesUpdateNodeCallback(ctx, msg, scope.name(), attributes) :
                         new TelemetryNodeCallback(ctx, msg)
         );
     }
@@ -144,8 +144,8 @@ public class TbMsgAttributesNode implements TbNode {
                 .collect(Collectors.toList());
     }
 
-    private boolean checkSendNotification(String scope) {
-        return config.isSendAttributesUpdatedNotification() && !CLIENT_SCOPE.equals(scope);
+    private boolean checkSendNotification(AttributeScope scope) {
+        return config.isSendAttributesUpdatedNotification() && AttributeScope.CLIENT_SCOPE != scope;
     }
 
     private boolean checkNotifyDeviceMdValue(String notifyDeviceMdValue) {
@@ -153,11 +153,11 @@ public class TbMsgAttributesNode implements TbNode {
         return StringUtils.isEmpty(notifyDeviceMdValue) || Boolean.parseBoolean(notifyDeviceMdValue);
     }
 
-    private String getScope(String mdScopeValue) {
+    private AttributeScope getScope(String mdScopeValue) {
         if (StringUtils.isNotEmpty(mdScopeValue)) {
-            return mdScopeValue;
+            return AttributeScope.valueOf(mdScopeValue);
         }
-        return config.getScope();
+        return AttributeScope.valueOf(config.getScope());
     }
 
     @Override

@@ -28,4 +28,5 @@ public abstract class BaseDashboardMsgConstructor implements DashboardMsgConstru
                 .setIdMSB(dashboardId.getId().getMostSignificantBits())
                 .setIdLSB(dashboardId.getId().getLeastSignificantBits()).build();
     }
+
 }

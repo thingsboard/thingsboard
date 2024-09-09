@@ -1,0 +1,148 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="powerButtonWidgetSettingsForm">
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.power-button.behavior</div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    trueLabel="{{ 'widgets.rpc-state.on' | translate }}"
+                                    falseLabel="{{ 'widgets.rpc-state.off' | translate }}"
+                                    stateLabel="{{ 'widgets.rpc-state.on' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="initialState"></tb-get-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-on-hint' | translate}}" translate>widgets.power-button.power-on</div>
+      <tb-set-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.power-button.power-on' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="onUpdateState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-off-hint' | translate}}" translate>widgets.power-button.power-off</div>
+      <tb-set-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.power-button.power-off' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="offUpdateState"></tb-set-value-action-settings>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
+      <tb-get-value-action-settings fxFlex
+                                    panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
+                                    [valueType]="valueType.BOOLEAN"
+                                    stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="disabledState"></tb-get-value-action-settings>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widget-config.card-style</div>
+    <tb-image-cards-select rowHeight="1:1"
+                           [cols]="{columns: 3,
+                                    breakpoints: {
+                                      'lt-sm': 1,
+                                      'lt-md': 2
+                                    }}"
+                           label="{{ 'widgets.power-button.layout' | translate }}" formControlName="layout">
+      <tb-image-cards-select-option *ngFor="let layout of powerButtonLayouts"
+                                    [value]="layout"
+                                    [image]="powerButtonLayoutImageMap.get(layout)">
+        {{ powerButtonLayoutTranslationMap.get(layout) | translate }}
+      </tb-image-cards-select-option>
+    </tb-image-cards-select>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widgets.background.background' | translate }}</div>
+      <tb-background-settings formControlName="background">
+      </tb-background-settings>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+  </div>
+  <div class="tb-form-panel">
+    <div class="tb-form-panel-title" translate>widgets.power-button.button</div>
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.power-button.power-on-colors' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div translate>widgets.power-button.main</div>
+          <tb-color-input asBoxInput
+                          formControlName="mainColorOn">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical></mat-divider>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div translate>widgets.power-button.background</div>
+          <tb-color-input asBoxInput
+                          formControlName="backgroundColorOn">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.power-button.power-off-colors' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div translate>widgets.power-button.main</div>
+          <tb-color-input asBoxInput
+                          formControlName="mainColorOff">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical></mat-divider>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div translate>widgets.power-button.background</div>
+          <tb-color-input asBoxInput
+                          formControlName="backgroundColorOff">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+    <div class="tb-form-row space-between column-xs">
+      <div>{{ 'widgets.power-button.disabled-colors' | translate }}</div>
+      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div translate>widgets.power-button.main</div>
+          <tb-color-input asBoxInput
+                          formControlName="mainColorDisabled">
+          </tb-color-input>
+        </div>
+        <mat-divider vertical></mat-divider>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div translate>widgets.power-button.background</div>
+          <tb-color-input asBoxInput
+                          formControlName="backgroundColorDisabled">
+          </tb-color-input>
+        </div>
+      </div>
+    </div>
+  </div>
+</ng-container>

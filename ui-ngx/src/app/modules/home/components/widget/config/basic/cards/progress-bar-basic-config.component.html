@@ -86,7 +86,7 @@
         </tb-color-input>
       </div>
     </div>
-    <div class="tb-form-row">
+    <div class="tb-form-row column-xs">
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValue">
         {{ 'widgets.progress-bar.value' | translate }}
       </mat-slide-toggle>
@@ -100,11 +100,13 @@
                           [previewText]="valuePreviewFn">
         </tb-font-settings>
         <tb-color-settings formControlName="valueColor"
+                           [minValue]="progressBarWidgetConfigForm.get('tickMin').value"
+                           [maxValue]="progressBarWidgetConfigForm.get('tickMax').value"
                            settingsKey="{{'widgets.progress-bar.value' | translate }}">
         </tb-color-settings>
       </div>
     </div>
-    <div class="tb-form-row space-between">
+    <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.progress-bar.range' | translate }}</div>
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <div class="tb-small-label" translate>widgets.progress-bar.min</div>
@@ -137,6 +139,8 @@
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.progress-bar.bar-color' | translate }}</div>
       <tb-color-settings formControlName="barColor"
+                         [minValue]="progressBarWidgetConfigForm.get('tickMin').value"
+                         [maxValue]="progressBarWidgetConfigForm.get('tickMax').value"
                          settingsKey="{{'widgets.progress-bar.bar-color' | translate }}">
       </tb-color-settings>
     </div>
@@ -165,6 +169,12 @@
       <div>{{ 'widget-config.card-border-radius' | translate }}</div>
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="borderRadius" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div>{{ 'widget-config.card-padding' | translate }}</div>
+      <mat-form-field appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="padding" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
   </div>

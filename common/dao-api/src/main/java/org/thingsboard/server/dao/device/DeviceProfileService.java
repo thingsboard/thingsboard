@@ -38,9 +38,9 @@ public interface DeviceProfileService extends EntityDaoService {
 
     DeviceProfileInfo findDeviceProfileInfoById(TenantId tenantId, DeviceProfileId deviceProfileId);
 
-    DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate);
-
     DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile);
+
+    DeviceProfile saveDeviceProfile(DeviceProfile deviceProfile, boolean doValidate, boolean publishSaveEvent);
 
     void deleteDeviceProfile(TenantId tenantId, DeviceProfileId deviceProfileId);
 

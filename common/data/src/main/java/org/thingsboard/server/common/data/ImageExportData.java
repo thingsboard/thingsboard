@@ -15,14 +15,14 @@
  */
 package org.thingsboard.server.common.data;
 
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
-@ApiModel
+@Schema
 @Slf4j
 @Data
 @NoArgsConstructor
@@ -33,6 +33,7 @@ public class ImageExportData {
     private String mediaType;
     private String fileName;
     private String title;
+    private String subType;
     private String resourceKey;
     private boolean isPublic;
     private String publicResourceKey;

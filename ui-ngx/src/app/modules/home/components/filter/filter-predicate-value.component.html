@@ -41,7 +41,7 @@
         </mat-checkbox>
       </ng-template>
     </div>
-    <div class="tb-hint" translate>filter.default-value</div>
+    <div class="tb-hint">{{ hintText | translate }}</div>
   </div>
   <div fxFlex fxLayout="column" [fxShow]="dynamicMode || onlyUserDynamicSource">
     <div formGroupName="dynamicValue" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">

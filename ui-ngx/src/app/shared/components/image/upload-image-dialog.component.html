@@ -17,7 +17,7 @@
 -->
 <form [formGroup]="uploadImageFormGroup" (ngSubmit)="upload()" style="width: 560px;">
   <mat-toolbar color="primary">
-    <h2>{{ ( uploadImage ? 'image.upload-image' : 'image.update-image' ) | translate }}</h2>
+    <h2>{{ ( uploadImage ? (isScada ? 'scada.upload-symbol' : 'image.upload-image') : (isScada ? 'scada.update-symbol' : 'image.update-image') ) | translate }}</h2>
     <span fxFlex></span>
     <button mat-icon-button
             (click)="cancel()"
@@ -32,7 +32,9 @@
     <fieldset [disabled]="isLoading$ | async">
       <tb-image-input resultAsFile
                       processImageApiLink
-                      label="{{'image.image-preview' | translate}}"
+                      label="{{(isScada ? 'scada.symbol-preview' : 'image.image-preview') | translate}}"
+                      [accept]="isScada ? 'image/svg+xml' : 'image/*'"
+                      [allowedExtensions]="isScada ? 'svg' : null"
                       formControlName="file"
                       showFileName
                       [maxSizeByte]="maxResourceSize"

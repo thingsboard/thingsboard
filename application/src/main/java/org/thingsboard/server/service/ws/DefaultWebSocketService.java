@@ -21,17 +21,20 @@ import com.google.common.util.concurrent.FutureCallback;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.socket.CloseStatus;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
-import org.thingsboard.server.common.data.DataConstants;
+import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -46,6 +49,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
+import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.timeseries.TimeseriesService;
@@ -80,9 +84,6 @@ import org.thingsboard.server.service.ws.telemetry.cmd.v2.EntityDataUpdate;
 import org.thingsboard.server.service.ws.telemetry.cmd.v2.UnsubscribeCmd;
 import org.thingsboard.server.service.ws.telemetry.sub.TelemetrySubscriptionUpdate;
 
-import javax.annotation.Nullable;
-import javax.annotation.PostConstruct;
-import javax.annotation.PreDestroy;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -143,6 +144,7 @@ public class DefaultWebSocketService implements WebSocketService {
     private final ConcurrentMap<CustomerId, Set<String>> customerSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<UserId, Set<String>> regularUserSubscriptionsMap = new ConcurrentHashMap<>();
     private final ConcurrentMap<UserId, Set<String>> publicUserSubscriptionsMap = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, Map<Integer, Integer>> sessionCmdMap = new ConcurrentHashMap<>();
 
     private ExecutorService executor;
     private ScheduledExecutorService pingExecutor;
@@ -191,18 +193,18 @@ public class DefaultWebSocketService implements WebSocketService {
     @Override
     public void handleSessionEvent(WebSocketSessionRef sessionRef, SessionEvent event) {
         String sessionId = sessionRef.getSessionId();
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
         log.debug(PROCESSING_MSG, sessionId, event);
         switch (event.getEventType()) {
             case ESTABLISHED:
                 wsSessionsMap.put(sessionId, new WsSessionMetaData(sessionRef));
                 break;
             case ERROR:
-                log.debug("[{}] Unknown websocket session error: {}. ", sessionId, event.getError().orElse(null));
+                log.debug("[{}][{}] Unknown websocket session error: ", tenantId, sessionId,
+                        event.getError().orElse(new RuntimeException("No error specified")));
                 break;
             case CLOSED:
-                wsSessionsMap.remove(sessionId);
-                oldSubService.cancelAllSessionSubscriptions(sessionId);
-                entityDataSubService.cancelAllSessionSubscriptions(sessionId);
+                cleanupSessionById(tenantId, sessionId);
                 processSessionClose(sessionRef);
                 break;
         }
@@ -223,9 +225,10 @@ public class DefaultWebSocketService implements WebSocketService {
             try {
                 Optional.ofNullable(cmdsHandlers.get(cmd.getType()))
                         .ifPresent(cmdHandler -> cmdHandler.handle(sessionRef, cmd));
+            } catch (TbRateLimitsException e) {
+                log.debug("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
             } catch (Exception e) {
-                log.error("[sessionId: {}, tenantId: {}, userId: {}] Failed to handle WS cmd: {}", sessionId,
-                        sessionRef.getSecurityCtx().getTenantId(), sessionRef.getSecurityCtx().getId(), cmd, e);
+                log.error("{} Failed to handle WS cmd: {}", sessionRef, cmd, e);
             }
         }
     }
@@ -259,13 +262,14 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     @Override
-    public void sendUpdate(String sessionId, TelemetrySubscriptionUpdate update) {
-        sendUpdate(sessionId, update.getSubscriptionId(), update);
+    public void sendUpdate(String sessionId, int cmdId, TelemetrySubscriptionUpdate update) {
+        // We substitute the subscriptionId with cmdId for old-style subscriptions.
+        doSendUpdate(sessionId, cmdId, update.copyWithNewSubscriptionId(cmdId));
     }
 
     @Override
     public void sendUpdate(String sessionId, CmdUpdate update) {
-        sendUpdate(sessionId, update.getCmdId(), update);
+        doSendUpdate(sessionId, update.getCmdId(), update);
     }
 
     @Override
@@ -274,7 +278,7 @@ public class DefaultWebSocketService implements WebSocketService {
         sendUpdate(sessionRef, update);
     }
 
-    private <T> void sendUpdate(String sessionId, int cmdId, T update) {
+    private <T> void doSendUpdate(String sessionId, int cmdId, T update) {
         WsSessionMetaData md = wsSessionsMap.get(sessionId);
         if (md != null) {
             sendUpdate(md.getSessionRef(), cmdId, update);
@@ -288,8 +292,16 @@ public class DefaultWebSocketService implements WebSocketService {
             try {
                 msgEndpoint.close(md.getSessionRef(), status);
             } catch (IOException e) {
-                log.warn("[{}] Failed to send session close: {}", sessionId, e);
+                log.warn("[{}] Failed to send session close", sessionId, e);
             }
+        }
+    }
+
+    @Override
+    public void cleanupIfStale(TenantId tenantId, String sessionId) {
+        if (!msgEndpoint.isOpen(sessionId)) {
+            log.info("[{}] Cleaning up stale session ", sessionId);
+            cleanupSessionById(tenantId, sessionId);
         }
     }
 
@@ -439,7 +451,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .queryTs(queryTs)
@@ -449,7 +461,7 @@ public class DefaultWebSocketService implements WebSocketService {
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -458,7 +470,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
                 subLock.lock();
                 try {
-                    oldSubService.addSubscription(sub);
+                    oldSubService.addSubscription(sub, sessionRef);
                     sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
                 } finally {
                     subLock.unlock();
@@ -486,6 +498,13 @@ public class DefaultWebSocketService implements WebSocketService {
         } else {
             accessValidator.validate(sessionRef.getSecurityCtx(), Operation.READ_ATTRIBUTES, entityId, getAttributesFetchCallback(sessionRef.getSecurityCtx().getTenantId(), entityId, cmd.getScope(), keys, callback));
         }
+    }
+
+    private int registerNewSessionSubId(String sessionId, WebSocketSessionRef sessionRef, int cmdId) {
+        var cmdMap = sessionCmdMap.computeIfAbsent(sessionId, id -> new ConcurrentHashMap<>());
+        var subId = sessionRef.getSessionSubIdSeq().incrementAndGet();
+        cmdMap.put(cmdId, subId);
+        return subId;
     }
 
     private void handleWsHistoryCmd(WebSocketSessionRef sessionRef, GetHistoryCmd cmd) {
@@ -545,7 +564,7 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbAttributeSubscription sub = TbAttributeSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .queryTs(queryTs)
@@ -554,7 +573,7 @@ public class DefaultWebSocketService implements WebSocketService {
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -564,7 +583,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
                 subLock.lock();
                 try {
-                    oldSubService.addSubscription(sub);
+                    oldSubService.addSubscription(sub, sessionRef);
                     sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), attributesData));
                 } finally {
                     subLock.unlock();
@@ -643,13 +662,13 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -661,7 +680,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
                 subLock.lock();
                 try {
-                    oldSubService.addSubscription(sub);
+                    oldSubService.addSubscription(sub, sessionRef);
                     sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
                 } finally {
                     subLock.unlock();
@@ -698,13 +717,13 @@ public class DefaultWebSocketService implements WebSocketService {
                 TbTimeSeriesSubscription sub = TbTimeSeriesSubscription.builder()
                         .serviceId(serviceId)
                         .sessionId(sessionId)
-                        .subscriptionId(cmd.getCmdId())
+                        .subscriptionId(registerNewSessionSubId(sessionId, sessionRef, cmd.getCmdId()))
                         .tenantId(sessionRef.getSecurityCtx().getTenantId())
                         .entityId(entityId)
                         .updateProcessor((subscription, update) -> {
                             subLock.lock();
                             try {
-                                sendUpdate(subscription.getSessionId(), update);
+                                sendUpdate(subscription.getSessionId(), cmd.getCmdId(), update);
                             } finally {
                                 subLock.unlock();
                             }
@@ -716,7 +735,7 @@ public class DefaultWebSocketService implements WebSocketService {
 
                 subLock.lock();
                 try {
-                    oldSubService.addSubscription(sub);
+                    oldSubService.addSubscription(sub, sessionRef);
                     sendUpdate(sessionRef, new TelemetrySubscriptionUpdate(cmd.getCmdId(), data));
                 } finally {
                     subLock.unlock();
@@ -736,11 +755,25 @@ public class DefaultWebSocketService implements WebSocketService {
     }
 
     private void unsubscribe(WebSocketSessionRef sessionRef, SubscriptionCmd cmd, String sessionId) {
+        TenantId tenantId = sessionRef.getSecurityCtx().getTenantId();
         if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty()) {
-            oldSubService.cancelAllSessionSubscriptions(sessionId);
+            log.warn("[{}][{}][{}] Cleanup session due to empty entity id.", tenantId, sessionId, cmd.getCmdId());
+            cleanupSessionById(tenantId, sessionId);
         } else {
-            oldSubService.cancelSubscription(sessionId, cmd.getCmdId());
+            Integer subId = sessionCmdMap.getOrDefault(sessionId, Collections.emptyMap()).remove(cmd.getCmdId());
+            if (subId == null) {
+                log.trace("[{}][{}][{}] Failed to lookup subscription id mapping", tenantId, sessionId, cmd.getCmdId());
+                subId = cmd.getCmdId();
+            }
+            oldSubService.cancelSubscription(tenantId, sessionId, subId);
         }
+    }
+
+    private void cleanupSessionById(TenantId tenantId, String sessionId) {
+        wsSessionsMap.remove(sessionId);
+        oldSubService.cancelAllSessionSubscriptions(tenantId, sessionId);
+        sessionCmdMap.remove(sessionId);
+        entityDataSubService.cancelAllSessionSubscriptions(sessionId);
     }
 
     private boolean validateSubscriptionCmd(WebSocketSessionRef sessionRef, EntityDataCmd cmd) {
@@ -836,7 +869,7 @@ public class DefaultWebSocketService implements WebSocketService {
                     try {
                         msgEndpoint.sendPing(md.getSessionRef(), currentTime);
                     } catch (IOException e) {
-                        log.warn("[{}] Failed to send ping: {}", md.getSessionRef().getSessionId(), e);
+                        log.warn("[{}] Failed to send ping:", md.getSessionRef().getSessionId(), e);
                     }
                 }));
     }
@@ -867,7 +900,7 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
                 List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (String scope : DataConstants.allScopes()) {
+                for (AttributeScope scope : AttributeScope.values()) {
                     futures.add(attributesService.find(tenantId, entityId, scope, keys));
                 }
 
@@ -886,7 +919,7 @@ public class DefaultWebSocketService implements WebSocketService {
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.find(tenantId, entityId, scope, keys), callback, MoreExecutors.directExecutor());
+                Futures.addCallback(attributesService.find(tenantId, entityId, AttributeScope.valueOf(scope), keys), callback, MoreExecutors.directExecutor());
             }
 
             @Override
@@ -901,7 +934,7 @@ public class DefaultWebSocketService implements WebSocketService {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
                 List<ListenableFuture<List<AttributeKvEntry>>> futures = new ArrayList<>();
-                for (String scope : DataConstants.allScopes()) {
+                for (AttributeScope scope : AttributeScope.values()) {
                     futures.add(attributesService.findAll(tenantId, entityId, scope));
                 }
 
@@ -920,7 +953,7 @@ public class DefaultWebSocketService implements WebSocketService {
         return new FutureCallback<ValidationResult>() {
             @Override
             public void onSuccess(@Nullable ValidationResult result) {
-                Futures.addCallback(attributesService.findAll(tenantId, entityId, scope), callback, MoreExecutors.directExecutor());
+                Futures.addCallback(attributesService.findAll(tenantId, entityId, AttributeScope.valueOf(scope)), callback, MoreExecutors.directExecutor());
             }
 
             @Override

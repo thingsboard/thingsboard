@@ -21,6 +21,8 @@ import { defaultHttpOptionsFromConfig, RequestConfig } from './http-utils';
 import { Observable } from 'rxjs';
 import { PageData } from '@shared/models/page/page-data';
 import { AssetProfile, AssetProfileInfo } from '@shared/models/asset.models';
+import { EntityInfoData } from '@shared/models/entity.models';
+import { isDefinedAndNotNull } from '@core/utils';
 
 @Injectable({
   providedIn: 'root'
@@ -66,6 +68,14 @@ export class AssetProfileService {
 
   public getAssetProfileInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<AssetProfileInfo>> {
     return this.http.get<PageData<AssetProfileInfo>>(`/api/assetProfileInfos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getAssetProfileNames(activeOnly: boolean = false, config?: RequestConfig): Observable<Array<EntityInfoData>> {
+    let url = '/api/assetProfile/names';
+    if (isDefinedAndNotNull(activeOnly)) {
+      url += `?activeOnly=${activeOnly}`;
+    }
+    return this.http.get<Array<EntityInfoData>>(url, defaultHttpOptionsFromConfig(config));
   }
 
 }

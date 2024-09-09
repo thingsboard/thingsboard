@@ -18,9 +18,10 @@ version: '3.0'
 
 services:
 # Redis standalone
+# The latest version of Redis compatible with ThingsBoard is 7.2
   redis:
     restart: always
-    image: bitnami/redis:7.0
+    image: bitnami/redis:7.2
     environment:
       # ALLOW_EMPTY_PASSWORD is recommended only for development.
       ALLOW_EMPTY_PASSWORD: "yes"

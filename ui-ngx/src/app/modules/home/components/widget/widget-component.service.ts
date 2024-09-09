@@ -55,6 +55,7 @@ import { HOME_COMPONENTS_MODULE_TOKEN } from '@home/components/tokens';
 import { widgetSettingsComponentsMap } from '@home/components/widget/lib/settings/widget-settings.module';
 import { basicWidgetConfigComponentsMap } from '@home/components/widget/config/basic/basic-widget-config.module';
 import { IBasicWidgetConfigComponent } from '@home/components/widget/config/widget-config.component.models';
+import { TbTimeSeriesChart } from '@home/components/widget/lib/chart/time-series-chart';
 
 @Injectable()
 export class WidgetComponentService {
@@ -95,6 +96,7 @@ export class WidgetComponentService {
             widgetName: this.utils.editWidgetInfo.widgetName,
             fullFqn: 'system.customWidget',
             deprecated: false,
+            scada: false,
             type: this.utils.editWidgetInfo.type,
             sizeX: this.utils.editWidgetInfo.sizeX,
             sizeY: this.utils.editWidgetInfo.sizeY,
@@ -111,7 +113,7 @@ export class WidgetComponentService {
             hasBasicMode: this.utils.editWidgetInfo.hasBasicMode,
             basicModeDirective: this.utils.editWidgetInfo.basicModeDirective,
             defaultConfig: this.utils.editWidgetInfo.defaultConfig
-          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), undefined
+          }, new WidgetTypeId('1'), new TenantId( NULL_UUID ), undefined, undefined
         );
       }
       const initSubject = new ReplaySubject<void>();
@@ -146,6 +148,11 @@ export class WidgetComponentService {
       widgetModulesTasks.push(from(import('@home/components/widget/lib/flot-widget')).pipe(
         tap((mod) => {
           (window as any).TbFlot = mod.TbFlot;
+        }))
+      );
+      widgetModulesTasks.push(from(import('@home/components/widget/lib/chart/time-series-chart')).pipe(
+        tap((mod) => {
+          (window as any).TbTimeSeriesChart = mod.TbTimeSeriesChart;
         }))
       );
       widgetModulesTasks.push(from(import('@home/components/widget/lib/analogue-compass')).pipe(
@@ -565,6 +572,9 @@ export class WidgetComponentService {
       if (isUndefined(result.typeParameters.embedTitlePanel)) {
         result.typeParameters.embedTitlePanel = false;
       }
+      if (isUndefined(result.typeParameters.overflowVisible)) {
+        result.typeParameters.overflowVisible = false;
+      }
       if (isUndefined(result.typeParameters.hideDataSettings)) {
         result.typeParameters.hideDataSettings = false;
       }
@@ -573,6 +583,15 @@ export class WidgetComponentService {
       }
       if (!isFunction(result.typeParameters.defaultLatestDataKeysFunction)) {
         result.typeParameters.defaultLatestDataKeysFunction = null;
+      }
+      if (!isFunction(result.typeParameters.dataKeySettingsFunction)) {
+        result.typeParameters.dataKeySettingsFunction = null;
+      }
+      if (isUndefined(result.typeParameters.displayRpcMessageToast)) {
+        result.typeParameters.displayRpcMessageToast = true;
+      }
+      if (isUndefined(result.typeParameters.targetDeviceOptional)) {
+        result.typeParameters.targetDeviceOptional = false;
       }
       if (isFunction(widgetTypeInstance.actionSources)) {
         result.actionSources = widgetTypeInstance.actionSources();

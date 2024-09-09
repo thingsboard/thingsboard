@@ -35,7 +35,7 @@ public class AssetProfilesEdgeEventFetcher extends BasePageableEdgeEventFetcher<
     private final AssetProfileService assetProfileService;
 
     @Override
-    PageData<AssetProfile> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<AssetProfile> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return assetProfileService.findAssetProfiles(tenantId, pageLink);
     }
 
@@ -44,4 +44,5 @@ public class AssetProfilesEdgeEventFetcher extends BasePageableEdgeEventFetcher<
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ASSET_PROFILE,
                 EdgeEventActionType.ADDED, assetProfile.getId(), null);
     }
+
 }

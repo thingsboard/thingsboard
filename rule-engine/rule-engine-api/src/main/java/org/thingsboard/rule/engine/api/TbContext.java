@@ -18,7 +18,7 @@ package org.thingsboard.rule.engine.api;
 import io.netty.channel.EventLoopGroup;
 import org.thingsboard.common.util.ExecutorProvider;
 import org.thingsboard.common.util.ListeningExecutor;
-import org.thingsboard.rule.engine.api.slack.SlackService;
+import org.thingsboard.rule.engine.api.notification.SlackService;
 import org.thingsboard.rule.engine.api.sms.SmsSenderFactory;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
@@ -31,7 +31,6 @@ import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
@@ -56,19 +55,23 @@ import org.thingsboard.server.dao.dashboard.DashboardService;
 import org.thingsboard.server.dao.device.DeviceCredentialsService;
 import org.thingsboard.server.dao.device.DeviceProfileService;
 import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.edge.EdgeEventService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.entity.EntityService;
 import org.thingsboard.server.dao.entityview.EntityViewService;
 import org.thingsboard.server.dao.event.EventService;
+import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.dao.nosql.CassandraStatementTask;
 import org.thingsboard.server.dao.nosql.TbResultSetFuture;
 import org.thingsboard.server.dao.notification.NotificationRequestService;
 import org.thingsboard.server.dao.notification.NotificationRuleService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
 import org.thingsboard.server.dao.notification.NotificationTemplateService;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientService;
 import org.thingsboard.server.dao.ota.OtaPackageService;
 import org.thingsboard.server.dao.queue.QueueService;
+import org.thingsboard.server.dao.queue.QueueStatsService;
 import org.thingsboard.server.dao.relation.RelationService;
 import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
@@ -238,8 +241,6 @@ public interface TbContext {
 
     TbMsg attributesDeletedActionMsg(EntityId originator, RuleNodeId ruleNodeId, String scope, List<String> keys);
 
-    void onEdgeEventUpdate(TenantId tenantId, EdgeId edgeId);
-
     /*
      *
      *  METHODS TO PROCESS THE MESSAGES
@@ -280,6 +281,10 @@ public interface TbContext {
 
     DeviceCredentialsService getDeviceCredentialsService();
 
+    RuleEngineDeviceStateManager getDeviceStateManager();
+
+    String getDeviceStateNodeRateLimitConfig();
+
     TbClusterService getClusterService();
 
     DashboardService getDashboardService();
@@ -314,6 +319,8 @@ public interface TbContext {
 
     QueueService getQueueService();
 
+    QueueStatsService getQueueStatsService();
+
     ListeningExecutor getMailExecutor();
 
     ListeningExecutor getSmsExecutor();
@@ -341,6 +348,12 @@ public interface TbContext {
     NotificationRequestService getNotificationRequestService();
 
     NotificationRuleService getNotificationRuleService();
+
+    OAuth2ClientService getOAuth2ClientService();
+
+    DomainService getDomainService();
+
+    MobileAppService getMobileAppService();
 
     SlackService getSlackService();
 

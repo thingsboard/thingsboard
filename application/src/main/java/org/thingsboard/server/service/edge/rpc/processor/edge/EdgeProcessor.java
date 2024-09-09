@@ -50,8 +50,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
         EdgeId edgeId = new EdgeId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ASSIGNED_TO_CUSTOMER:
-            case UNASSIGNED_FROM_CUSTOMER:
+            case ASSIGNED_TO_CUSTOMER, UNASSIGNED_FROM_CUSTOMER -> {
                 Edge edge = edgeService.findEdgeById(edgeEvent.getTenantId(), edgeId);
                 if (edge != null) {
                     EdgeConfiguration edgeConfigMsg =
@@ -61,7 +60,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                             .setEdgeConfiguration(edgeConfigMsg)
                             .build();
                 }
-                break;
+            }
         }
         return downlinkMsg;
     }
@@ -80,7 +79,7 @@ public class EdgeProcessor extends BaseEdgeProcessor {
                     List<ListenableFuture<Void>> futures = new ArrayList<>();
                     futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.CUSTOMER, EdgeEventActionType.ADDED, customerId, null));
                     futures.add(saveEdgeEvent(edge.getTenantId(), edge.getId(), EdgeEventType.EDGE, EdgeEventActionType.ASSIGNED_TO_CUSTOMER, edgeId, null));
-                    PageLink pageLink = new PageLink(DEFAULT_PAGE_SIZE);
+                    PageLink pageLink = new PageLink(1000);
                     PageData<User> pageData;
                     do {
                         pageData = userService.findCustomerUsers(tenantId, customerId, pageLink);
@@ -112,4 +111,5 @@ public class EdgeProcessor extends BaseEdgeProcessor {
             return Futures.immediateFailedFuture(e);
         }
     }
+
 }

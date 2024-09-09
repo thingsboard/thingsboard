@@ -106,6 +106,11 @@ message ProtoModem
   /*   parameters[32] - Rx_time - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                             */
   /*   parameters[33] - Tx_time - [0.1s] - Range: [0:2147483647]. Unknown value: -1                                             */
   repeated sint32 parameters = 2;
+
+  /* ICCID of inserted/soldered sim card. String up to 22 characters long.                                                      */
+  /* 0x7F if sim card is not detected, empty (not sent) if device does not have modem.                                          */
+  /* This field is only sent by device                                                                                          */
+  string sim_card_identification = 3;
 }
 
 message ProtoUpdateInfo
@@ -115,16 +120,16 @@ message ProtoUpdateInfo
   uint32 timestamp = 1;
 
   /* Update status, possible values:                                                                                            */
-  /*    - 0x1 - No update yet                                                                                                   */
-  /*    - 0x2 - No error                                                                                                        */
-  /*    - 0x3 - UDP socekt error                                                                                                */
-  /*    - 0x4 - Hash error                                                                                                      */
-  /*    - 0x5 - Missing packet error                                                                                            */
-  /*    - 0x6 - Invalid data error                                                                                              */
-  /*    - 0x7 - Sending timeout error                                                                                           */
-  /*    - 0x8 - No SW to update error                                                                                           */
-  /*    - 0x9 - Sending unexpected error                                                                                        */
-  /*    - 0x10 - Unexpected error                                                                                               */
+  /*    - 1 - No update yet                                                                                                     */
+  /*    - 2 - No error                                                                                                          */
+  /*    - 3 - UDP socekt error                                                                                                  */
+  /*    - 4 - Hash error                                                                                                        */
+  /*    - 5 - Missing packet error                                                                                              */
+  /*    - 6 - Invalid data error                                                                                                */
+  /*    - 7 - Sending timeout error                                                                                             */
+  /*    - 8 - No SW to update error                                                                                             */
+  /*    - 9 - Sending unexpected error                                                                                          */
+  /*    - 10 - Unexpected error                                                                                                 */
   uint32 status = 2;
 }
 

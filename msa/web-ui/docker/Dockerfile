@@ -34,7 +34,7 @@ COPY src/server.js ./
 RUN chmod a+x /tmp/*.sh \
     && mv /tmp/start-web-ui.sh /usr/bin \
     && chown -R node:node ${pkg.installFolder} \
-    && yarn install --production && yarn cache clean --all
+    && yarn install --production --non-interactive --network-concurrency 4 --network-timeout 100000 --mutex network && yarn cache clean --all
 
 USER node
 

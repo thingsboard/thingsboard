@@ -17,10 +17,7 @@ package org.thingsboard.server.transport.mqtt.mqttv5.claim;
 
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.ClaimRequest;
-import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Device;
-import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.device.claim.ClaimResponse;
 import org.thingsboard.server.dao.device.claim.ClaimResult;
 import org.thingsboard.server.transport.mqtt.mqttv5.AbstractMqttV5Test;
@@ -33,10 +30,6 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVIC
 
 @Slf4j
 public abstract class AbstractMqttV5ClaimTest extends AbstractMqttV5Test {
-    protected static final String CUSTOMER_USER_PASSWORD = "customerUser123!";
-
-    protected User customerAdmin;
-    protected Customer savedCustomer;
 
     protected void processTestClaimingDevice() throws Exception {
         MqttV5TestClient client = new MqttV5TestClient();
@@ -50,8 +43,9 @@ public abstract class AbstractMqttV5ClaimTest extends AbstractMqttV5Test {
 
     protected void validateClaimResponse(MqttV5TestClient client, byte[] payloadBytes, byte[] failurePayloadBytes) throws Exception {
         client.publishAndWait(DEVICE_CLAIM_TOPIC, failurePayloadBytes);
+        awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
-        loginUser(customerAdmin.getName(), CUSTOMER_USER_PASSWORD);
+        loginCustomerUser();
         ClaimRequest claimRequest = new ClaimRequest("value");
 
         ClaimResponse claimResponse = doExecuteWithRetriesAndInterval(
@@ -64,6 +58,7 @@ public abstract class AbstractMqttV5ClaimTest extends AbstractMqttV5Test {
 
         client.publishAndWait(DEVICE_CLAIM_TOPIC, payloadBytes);
         client.disconnect();
+        awaitForClaimingInfoToBeRegistered(savedDevice.getId());
 
         ClaimResult claimResult = doExecuteWithRetriesAndInterval(
                 () -> doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResult.class, status().isOk()),
@@ -74,28 +69,10 @@ public abstract class AbstractMqttV5ClaimTest extends AbstractMqttV5Test {
         Device claimedDevice = claimResult.getDevice();
         assertNotNull(claimedDevice);
         assertNotNull(claimedDevice.getCustomerId());
-        assertEquals(customerAdmin.getCustomerId(), claimedDevice.getCustomerId());
+        assertEquals(customerId, claimedDevice.getCustomerId());
 
         claimResponse = doPostClaimAsync("/api/customer/device/" + savedDevice.getName() + "/claim", claimRequest, ClaimResponse.class, status().isBadRequest());
         assertEquals(claimResponse, ClaimResponse.CLAIMED);
     }
 
-    protected void createCustomerAndUser() throws Exception {
-        Customer customer = new Customer();
-        customer.setTenantId(tenantId);
-        customer.setTitle("Test Claiming Customer");
-        savedCustomer = doPost("/api/customer", customer, Customer.class);
-        assertNotNull(savedCustomer);
-        assertEquals(tenantId, savedCustomer.getTenantId());
-
-        User user = new User();
-        user.setAuthority(Authority.CUSTOMER_USER);
-        user.setTenantId(tenantId);
-        user.setCustomerId(savedCustomer.getId());
-        user.setEmail("customer@thingsboard.org");
-
-        customerAdmin = createUser(user, CUSTOMER_USER_PASSWORD);
-        assertNotNull(customerAdmin);
-        assertEquals(customerAdmin.getCustomerId(), savedCustomer.getId());
-    }
 }

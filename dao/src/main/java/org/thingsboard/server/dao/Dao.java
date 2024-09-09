@@ -39,9 +39,11 @@ public interface Dao<T> {
 
     T saveAndFlush(TenantId tenantId, T t);
 
-    boolean removeById(TenantId tenantId, UUID id);
+    void removeById(TenantId tenantId, UUID id);
 
     void removeAllByIds(Collection<UUID> ids);
+
+    List<UUID> findIdsByTenantIdAndIdOffset(TenantId tenantId, UUID idOffset, int limit);
 
     default EntityType getEntityType() { return null; }
 

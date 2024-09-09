@@ -29,6 +29,8 @@ export abstract class PageComponent implements OnDestroy {
   loadingSubscription: Subscription;
   disabledOnLoadFormControls: Array<AbstractControl> = [];
 
+  showMainLoadingBar = true;
+
   protected constructor(protected store: Store<AppState>) {
     this.isLoading$ = this.store.pipe(delay(0), select(selectIsLoading), share());
   }

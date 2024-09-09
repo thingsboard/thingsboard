@@ -33,7 +33,9 @@ public enum Resource {
     USER(EntityType.USER),
     WIDGETS_BUNDLE(EntityType.WIDGETS_BUNDLE),
     WIDGET_TYPE(EntityType.WIDGET_TYPE),
-    OAUTH2_CONFIGURATION_INFO(),
+    OAUTH2_CLIENT(EntityType.OAUTH2_CLIENT),
+    DOMAIN(EntityType.DOMAIN),
+    MOBILE_APP(EntityType.MOBILE_APP),
     OAUTH2_CONFIGURATION_TEMPLATE(),
     TENANT_PROFILE(EntityType.TENANT_PROFILE),
     DEVICE_PROFILE(EntityType.DEVICE_PROFILE),
@@ -46,8 +48,8 @@ public enum Resource {
     QUEUE(EntityType.QUEUE),
     VERSION_CONTROL,
     NOTIFICATION(EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_TEMPLATE,
-            EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE);
-
+            EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
+    MOBILE_APP_SETTINGS;
     private final Set<EntityType> entityTypes;
 
     Resource() {

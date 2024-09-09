@@ -15,10 +15,9 @@
  */
 package org.thingsboard.server.service.telemetry;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-@ApiModel
+@Schema
 public class TsData implements Comparable<TsData>{
 
     private final long ts;
@@ -30,12 +29,12 @@ public class TsData implements Comparable<TsData>{
         this.value = value;
     }
 
-    @ApiModelProperty(position = 1, value = "Timestamp last updated timeseries, in milliseconds", example = "1609459200000", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Timestamp last updated timeseries, in milliseconds", example = "1609459200000", accessMode = Schema.AccessMode.READ_ONLY)
     public long getTs() {
         return ts;
     }
 
-    @ApiModelProperty(position = 2, value = "Object representing value of timeseries key", example = "20", accessMode = ApiModelProperty.AccessMode.READ_ONLY)
+    @Schema(description = "Object representing value of timeseries key", example = "20", accessMode = Schema.AccessMode.READ_ONLY)
     public Object getValue() {
         return value;
     }

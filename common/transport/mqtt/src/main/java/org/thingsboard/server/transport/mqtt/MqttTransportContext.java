@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt;
 
 import io.netty.handler.ssl.SslHandler;
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -24,10 +25,10 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.transport.TransportContext;
+import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 
-import javax.annotation.PostConstruct;
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -52,6 +53,10 @@ public class MqttTransportContext extends TransportContext {
     private ProtoMqttAdaptor protoMqttAdaptor;
 
     @Getter
+    @Autowired
+    private TransportTenantProfileCache tenantProfileCache;
+
+    @Getter
     @Value("${transport.mqtt.netty.max_payload_size}")
     private Integer maxPayloadSize;
 
@@ -70,6 +75,10 @@ public class MqttTransportContext extends TransportContext {
     @Getter
     @Value("${transport.mqtt.timeout:10000}")
     private long timeout;
+
+    @Getter
+    @Value("${transport.mqtt.disconnect_timeout:1000}")
+    private long disconnectTimeout;
 
     @Getter
     @Value("${transport.mqtt.proxy_enabled:false}")

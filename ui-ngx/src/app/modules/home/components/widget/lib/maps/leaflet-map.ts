@@ -32,7 +32,7 @@ import {
   WidgetUnitedMapSettings
 } from './map-models';
 import { Marker } from './markers';
-import { map, Observable, of, switchMap } from 'rxjs';
+import { map, Observable, of } from 'rxjs';
 import { Polyline } from './polyline';
 import { Polygon } from './polygon';
 import { Circle } from './circle';
@@ -64,6 +64,7 @@ import { MatDialog } from '@angular/material/dialog';
 import { FormattedData, ReplaceInfo } from '@shared/models/widget.models';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import { ImagePipe } from '@shared/pipe/image.pipe';
+import { take, tap } from 'rxjs/operators';
 
 export default abstract class LeafletMap {
 
@@ -940,7 +941,12 @@ export default abstract class LeafletMap {
       this.markersData = markersData;
       if (this.options.useClusterMarkers) {
         if (createdMarkers.length) {
-          this.markersCluster.addLayers(createdMarkers.map(marker => marker.leafletMarker));
+          createdMarkers.forEach((marker) => {
+            marker.createMarkerIconSubject.pipe(
+              tap(() => this.markersCluster.addLayer(marker.leafletMarker)),
+              take(1)
+            ).subscribe();
+          });
         }
         if (updatedMarkers.length) {
           this.markersCluster.refreshClusters(updatedMarkers.map(marker => marker.leafletMarker));
@@ -971,10 +977,15 @@ export default abstract class LeafletMap {
       }
       this.markers.set(key, newMarker);
       if (!this.options.useClusterMarkers) {
-        this.map.addLayer(newMarker.leafletMarker);
-        if (this.map.pm.globalDragModeEnabled() && newMarker.leafletMarker.pm) {
-          newMarker.leafletMarker.pm.enableLayerDrag();
-        }
+        newMarker.createMarkerIconSubject.pipe(
+          tap(() => {
+            this.map.addLayer(newMarker.leafletMarker);
+            if (this.map.pm.globalDragModeEnabled() && newMarker.leafletMarker.pm) {
+              newMarker.leafletMarker.pm.enableLayerDrag();
+            }
+          }),
+          take(1)
+        ).subscribe();
       }
       return newMarker;
     }

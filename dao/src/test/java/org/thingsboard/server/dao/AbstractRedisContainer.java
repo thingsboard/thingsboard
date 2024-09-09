@@ -26,7 +26,7 @@ import java.util.List;
 public class AbstractRedisContainer {
 
     @ClassRule(order = 0)
-    public static GenericContainer redis = new GenericContainer("redis:7.0")
+    public static GenericContainer redis = new GenericContainer("redis:7.2")
             .withExposedPorts(6379);
 
     @ClassRule(order = 1)

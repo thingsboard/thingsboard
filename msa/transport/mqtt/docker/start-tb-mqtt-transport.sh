@@ -30,4 +30,4 @@ cd ${pkg.installFolder}/bin
 exec java -cp ${jarfile} $JAVA_OPTS -Dloader.main=org.thingsboard.server.mqtt.ThingsboardMqttTransportApplication \
                     -Dspring.jpa.hibernate.ddl-auto=none \
                     -Dlogging.config=/config/logback.xml \
-                    org.springframework.boot.loader.PropertiesLauncher
+                    org.springframework.boot.loader.launch.PropertiesLauncher

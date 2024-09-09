@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.transport.lwm2m.utils;
 
-import com.google.api.client.util.Base64;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.model.ResourceModel.Type;
 import org.eclipse.leshan.core.node.LwM2mPath;
@@ -28,6 +27,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import java.math.BigInteger;
 import java.text.DateFormat;
 import java.text.SimpleDateFormat;
+import java.util.Base64;
 import java.util.Date;
 
 import static org.eclipse.leshan.core.model.ResourceModel.Type.OPAQUE;
@@ -172,7 +172,7 @@ public class LwM2mValueConverterImpl implements LwM2mValueConverter {
                         return Hex.decodeHex(((String)value).toCharArray());
                     } catch (IllegalArgumentException e) {
                         try {
-                            return Base64.decodeBase64(((String) value).getBytes());
+                            return Base64.getDecoder().decode(((String) value).getBytes());
                         } catch (IllegalArgumentException ea) {
                             throw new CodecException("Unable to convert hexastring or base64 [%s] to byte array for resource %s",
                                     value, resourcePath);

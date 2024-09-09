@@ -36,6 +36,9 @@ import java.io.Serializable;
         @Type(value = EntitiesLimitNotificationRuleTriggerConfig.class, name = "ENTITIES_LIMIT"),
         @Type(value = ApiUsageLimitNotificationRuleTriggerConfig.class, name = "API_USAGE_LIMIT"),
         @Type(value = RateLimitsNotificationRuleTriggerConfig.class, name = "RATE_LIMITS"),
+        @Type(value = EdgeConnectionNotificationRuleTriggerConfig.class, name = "EDGE_CONNECTION"),
+        @Type(value = EdgeCommunicationFailureNotificationRuleTriggerConfig.class, name = "EDGE_COMMUNICATION_FAILURE"),
+        @Type(value = TaskProcessingFailureNotificationRuleTriggerConfig.class, name = "TASK_PROCESSING_FAILURE")
 })
 public interface NotificationRuleTriggerConfig extends Serializable {
 

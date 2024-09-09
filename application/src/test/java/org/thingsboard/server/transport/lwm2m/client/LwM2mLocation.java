@@ -17,7 +17,7 @@ package org.thingsboard.server.transport.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
-import org.eclipse.leshan.client.servers.ServerIdentity;
+import org.eclipse.leshan.client.servers.LwM2mServer;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.response.ReadResponse;
 
@@ -85,7 +85,7 @@ public class LwM2mLocation extends BaseInstanceEnabler implements Destroyable {
     }
 
     @Override
-    public ReadResponse read(ServerIdentity identity, int resourceId) {
+    public ReadResponse read(LwM2mServer identity, int resourceId) {
         log.info("Read on Location resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 0:

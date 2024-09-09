@@ -25,6 +25,7 @@ import org.awaitility.Awaitility;
 import org.eclipse.californium.core.CoapObserveRelation;
 import org.eclipse.californium.core.CoapResponse;
 import org.eclipse.californium.core.coap.CoAP;
+import org.eclipse.californium.core.coap.CoAP.ResponseCode;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.DynamicProtoUtils;
@@ -238,7 +239,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         String awaitAlias = "await Json Test Subscribe To AttributesUpdates (client.getObserveRelation)";
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                .until(() -> ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         0 == callbackCoap.getObserve().intValue());
         if (emptyCurrentStateNotification) {
@@ -285,7 +286,7 @@ public abstract class AbstractCoapAttributesIntegrationTest extends AbstractCoap
         CoapObserveRelation observeRelation = client.getObserveRelation(callbackCoap);
         await(awaitAlias)
                 .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> CoAP.ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
+                .until(() -> ResponseCode.CONTENT.equals(callbackCoap.getResponseCode()) &&
                         callbackCoap.getObserve() != null &&
                         0 == callbackCoap.getObserve().intValue());
 

@@ -17,11 +17,11 @@ package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.annotations.ApiModel;
+import io.swagger.v3.oas.annotations.media.Schema;
 
 import java.util.UUID;
 
-@ApiModel
+@Schema
 public class AlarmCommentId extends UUIDBased {
 
     private static final long serialVersionUID = 1L;

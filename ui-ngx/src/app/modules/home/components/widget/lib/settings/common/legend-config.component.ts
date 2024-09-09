@@ -25,6 +25,7 @@ import {
   legendPositionTranslationMap
 } from '@shared/models/widget.models';
 import { Subscription } from 'rxjs';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 // @dynamic
 @Component({
@@ -43,6 +44,10 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   @Input() disabled: boolean;
 
+  @Input()
+  @coerceBoolean()
+  hideDirection = false;
+
   legendConfigForm: UntypedFormGroup;
   legendDirection = LegendDirection;
   legendDirections = Object.keys(LegendDirection);
@@ -60,15 +65,17 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   ngOnInit(): void {
     this.legendConfigForm = this.fb.group({
-      direction: [null, []],
       position: [null, []],
       showValues: [[], []],
       sortDataKeys: [null, []]
     });
-    this.legendSettingsFormDirectionChanges$ = this.legendConfigForm.get('direction').valueChanges
+    if (!this.hideDirection) {
+      this.legendConfigForm.addControl('direction', this.fb.control([null, []]));
+      this.legendSettingsFormDirectionChanges$ = this.legendConfigForm.get('direction').valueChanges
       .subscribe((direction: LegendDirection) => {
         this.onDirectionChanged(direction);
       });
+    }
     this.legendSettingsFormChanges$ = this.legendConfigForm.valueChanges.subscribe(
       () => this.legendConfigUpdated()
     );
@@ -114,23 +121,30 @@ export class LegendConfigComponent implements OnInit, OnDestroy, ControlValueAcc
 
   writeValue(legendConfig: LegendConfig): void {
     if (legendConfig) {
-      this.legendConfigForm.patchValue({
-        direction: legendConfig.direction,
+      const value: any = {
         position: legendConfig.position,
         showValues: this.getShowValues(legendConfig),
         sortDataKeys: isDefined(legendConfig.sortDataKeys) ? legendConfig.sortDataKeys : false
-      }, {emitEvent: false});
+      };
+      if (!this.hideDirection) {
+        value.direction = legendConfig.direction;
+      }
+      this.legendConfigForm.patchValue(value, {emitEvent: false});
     }
-    this.onDirectionChanged(legendConfig.direction);
+    if (!this.hideDirection) {
+      this.onDirectionChanged(legendConfig?.direction);
+    }
   }
 
   private legendConfigUpdated() {
     const configValue = this.legendConfigForm.value;
     const legendConfig: Partial<LegendConfig> = {
-      direction: configValue.direction,
       position: configValue.position,
       sortDataKeys: configValue.sortDataKeys
     };
+    if (!this.hideDirection) {
+      legendConfig.direction = configValue.direction;
+    }
     this.setShowValues(configValue.showValues, legendConfig);
     this.propagateChange(legendConfig);
   }

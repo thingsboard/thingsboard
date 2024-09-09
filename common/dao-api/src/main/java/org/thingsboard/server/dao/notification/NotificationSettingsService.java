@@ -26,6 +26,8 @@ public interface NotificationSettingsService {
 
     NotificationSettings findNotificationSettings(TenantId tenantId);
 
+    void deleteNotificationSettings(TenantId tenantId);
+
     UserNotificationSettings saveUserNotificationSettings(TenantId tenantId, UserId userId, UserNotificationSettings settings);
 
     UserNotificationSettings getUserNotificationSettings(TenantId tenantId, UserId userId, boolean format);

@@ -31,11 +31,19 @@ public enum LimitedApi {
     REST_REQUESTS_PER_CUSTOMER(DefaultTenantProfileConfiguration::getCustomerServerRestLimitsConfiguration, "REST API requests per customer", false),
     WS_UPDATES_PER_SESSION(DefaultTenantProfileConfiguration::getWsUpdatesPerSessionRateLimit, "WS updates per session", true),
     CASSANDRA_QUERIES(DefaultTenantProfileConfiguration::getCassandraQueryTenantRateLimitsConfiguration, "Cassandra queries", true),
+    EDGE_EVENTS(DefaultTenantProfileConfiguration::getEdgeEventRateLimits, "Edge events", true),
+    EDGE_EVENTS_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeEventRateLimitsPerEdge, "Edge events per edge", false),
+    EDGE_UPLINK_MESSAGES(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimits, "Edge uplink messages", true),
+    EDGE_UPLINK_MESSAGES_PER_EDGE(DefaultTenantProfileConfiguration::getEdgeUplinkMessagesRateLimitsPerEdge, "Edge uplink messages per edge", false),
     PASSWORD_RESET(false, true),
     TWO_FA_VERIFICATION_CODE_SEND(false, true),
     TWO_FA_VERIFICATION_CODE_CHECK(false, true),
     TRANSPORT_MESSAGES_PER_TENANT("transport messages", true),
-    TRANSPORT_MESSAGES_PER_DEVICE("transport messages per device", false);
+    TRANSPORT_MESSAGES_PER_DEVICE("transport messages per device", false),
+    TRANSPORT_MESSAGES_PER_GATEWAY("transport messages per gateway", false),
+    TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE("transport messages per gateway device", false),
+    EMAILS("emails sending", true),
+    WS_SUBSCRIPTIONS("WS subscriptions", false);
 
     private Function<DefaultTenantProfileConfiguration, String> configExtractor;
     @Getter

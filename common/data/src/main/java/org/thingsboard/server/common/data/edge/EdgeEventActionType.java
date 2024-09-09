@@ -35,6 +35,7 @@ public enum EdgeEventActionType {
     RPC_CALL(ActionType.RPC_CALL),
     ALARM_ACK(ActionType.ALARM_ACK),
     ALARM_CLEAR(ActionType.ALARM_CLEAR),
+    ALARM_DELETE(ActionType.ALARM_DELETE),
     ALARM_ASSIGNED(ActionType.ALARM_ASSIGNED),
     ALARM_UNASSIGNED(ActionType.ALARM_UNASSIGNED),
     ADDED_COMMENT(ActionType.ADDED_COMMENT),
@@ -42,7 +43,7 @@ public enum EdgeEventActionType {
     DELETED_COMMENT(ActionType.DELETED_COMMENT),
     ASSIGNED_TO_EDGE(ActionType.ASSIGNED_TO_EDGE),
     UNASSIGNED_FROM_EDGE(ActionType.UNASSIGNED_FROM_EDGE),
-    CREDENTIALS_REQUEST(null),
+    CREDENTIALS_REQUEST(null), // deprecated
     ENTITY_MERGE_REQUEST(null); // deprecated
 
     private final ActionType actionType;

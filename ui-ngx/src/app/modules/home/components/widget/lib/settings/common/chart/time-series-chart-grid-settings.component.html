@@ -1,0 +1,54 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="gridSettingsFormGroup">
+  <div class="tb-form-panel stroked tb-slide-toggle">
+    <mat-expansion-panel class="tb-settings" [(expanded)]="settingsExpanded"
+                         [disabled]="!gridSettingsFormGroup.get('show').value">
+      <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-panel-title>
+          <mat-slide-toggle class="mat-slide" formControlName="show" (click)="$event.stopPropagation()"
+                            fxLayoutAlign="center">
+            {{ 'widgets.time-series-chart.grid.grid' | translate }}
+          </mat-slide-toggle>
+        </mat-panel-title>
+      </mat-expansion-panel-header>
+      <ng-template matExpansionPanelContent>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widgets.time-series-chart.grid.background-color' | translate }}</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
+                          formControlName="backgroundColor">
+          </tb-color-input>
+        </div>
+        <div class="tb-form-row space-between">
+          <div>{{ 'widgets.time-series-chart.grid.border' | translate }}</div>
+          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="borderWidth" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
+              <span matSuffix>px</span>
+            </mat-form-field>
+            <tb-color-input asBoxInput
+                            colorClearButton
+                            formControlName="borderColor">
+            </tb-color-input>
+          </div>
+        </div>
+      </ng-template>
+    </mat-expansion-panel>
+  </div>
+</ng-container>

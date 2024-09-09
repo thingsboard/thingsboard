@@ -39,6 +39,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { deepClone, isUndefined } from '@core/utils';
 import { Filter, Filters, KeyFilterInfo } from '@shared/models/query/query.models';
 import { FilterDialogComponent, FilterDialogData } from '@home/components/filter/filter-dialog.component';
+import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 
 export interface FiltersDialogData {
   filters: Filters;
@@ -77,6 +78,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
               public dialogRef: MatDialogRef<FiltersDialogComponent, Filters>,
               private fb: UntypedFormBuilder,
               private utils: UtilsService,
+              private dashboardUtils: DashboardUtilsService,
               private translate: TranslateService,
               private dialogs: DialogService,
               private dialog: MatDialog) {
@@ -94,7 +96,7 @@ export class FiltersDialogComponent extends DialogComponent<FiltersDialogCompone
         }
       } else {
         this.data.widgets.forEach((widget) => {
-          const datasources = this.utils.validateDatasources(widget.config.datasources);
+          const datasources = this.dashboardUtils.validateAndUpdateDatasources(widget.config.datasources);
           datasources.forEach((datasource) => {
             if (datasource.type === DatasourceType.entity && datasource.filterId) {
               widgetsTitleList = this.filterToWidgetsMap[datasource.filterId];

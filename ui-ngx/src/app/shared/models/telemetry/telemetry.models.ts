@@ -38,7 +38,7 @@ import { entityFields } from '@shared/models/entity.models';
 import { isDefinedAndNotNull, isUndefined } from '@core/utils';
 import { CmdWrapper, WsService, WsSubscriber } from '@shared/models/websocket/websocket.models';
 import { TelemetryWebsocketService } from '@core/ws/telemetry-websocket.service';
-import { Notification } from '@shared/models/notification.models';
+import { Notification, NotificationType } from '@shared/models/notification.models';
 import { WebsocketService } from '@core/ws/websocket.service';
 
 export const NOT_SUPPORTED = 'Not supported!';
@@ -87,6 +87,16 @@ export const telemetryTypeTranslations = new Map<TelemetryType, string>(
     [AttributeScope.SHARED_SCOPE, 'attribute.scope-shared']
   ]
 );
+
+export const telemetryTypeTranslationsShort = new Map<TelemetryType, string>(
+  [
+    [LatestTelemetry.LATEST_TELEMETRY, 'attribute.scope-telemetry-short'],
+    [AttributeScope.CLIENT_SCOPE, 'attribute.scope-client-short'],
+    [AttributeScope.SERVER_SCOPE, 'attribute.scope-server-short'],
+    [AttributeScope.SHARED_SCOPE, 'attribute.scope-shared-short']
+  ]
+);
+
 
 export const isClientSideTelemetryType = new Map<TelemetryType, boolean>(
   [
@@ -294,11 +304,14 @@ export class UnreadCountSubCmd implements WebsocketCmd {
 
 export class UnreadSubCmd implements WebsocketCmd {
   limit: number;
+  types: Array<NotificationType>;
   cmdId: number;
   type = WsCmdType.NOTIFICATIONS;
 
-  constructor(limit = 10) {
+  constructor(limit = 10,
+              types: Array<NotificationType> = []) {
     this.limit = limit;
+    this.types = types;
   }
 }
 
@@ -901,6 +914,8 @@ export class NotificationSubscriber extends WsSubscriber {
 
   public messageLimit = 10;
 
+  public notificationType = [];
+
   public notificationCount$ = this.notificationCountSubject.asObservable().pipe(map(msg => msg.totalUnreadCount));
   public notifications$ = this.notificationsSubject.asObservable().pipe(map(msg => msg.notifications ));
 
@@ -913,8 +928,8 @@ export class NotificationSubscriber extends WsSubscriber {
   }
 
   public static createNotificationsSubscription(websocketService: WebsocketService<WsSubscriber>,
-                                                zone: NgZone, limit = 10): NotificationSubscriber {
-    const subscriptionCommand = new UnreadSubCmd(limit);
+                                                zone: NgZone, limit = 10, types: Array<NotificationType> = []): NotificationSubscriber {
+    const subscriptionCommand = new UnreadSubCmd(limit, types);
     const subscriber = new NotificationSubscriber(websocketService, zone);
     subscriber.messageLimit = limit;
     subscriber.subscriptionCommands.push(subscriptionCommand);

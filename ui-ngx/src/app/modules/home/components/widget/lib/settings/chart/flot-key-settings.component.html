@@ -209,7 +209,6 @@
       <div cdkDrag class="tb-draggable" *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold;
                  let $index = index;">
         <tb-flot-threshold [formControl]="thresholdControl"
-                           [expanded]="thresholdControl.new"
                            [aliasController]="aliasController"
                            (removeThreshold)="removeThreshold($index)">
         </tb-flot-threshold>

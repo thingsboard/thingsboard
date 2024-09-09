@@ -18,6 +18,12 @@ package org.thingsboard.server.controller.plugin;
 import com.github.benmanes.caffeine.cache.Cache;
 import com.github.benmanes.caffeine.cache.Caffeine;
 import com.github.benmanes.caffeine.cache.RemovalCause;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
+import jakarta.websocket.RemoteEndpoint;
+import jakarta.websocket.SendHandler;
+import jakarta.websocket.SendResult;
+import jakarta.websocket.Session;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
@@ -34,6 +40,7 @@ import org.springframework.web.socket.WebSocketSession;
 import org.springframework.web.socket.adapter.NativeWebSocketSession;
 import org.springframework.web.socket.handler.TextWebSocketHandler;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.cache.limits.RateLimitService;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -43,9 +50,9 @@ import org.thingsboard.server.common.data.limit.LimitedApi;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.config.WebSocketConfiguration;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
-import org.thingsboard.server.dao.util.limits.RateLimitService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.JwtAuthenticationProvider;
+import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 import org.thingsboard.server.service.security.model.UserPrincipal;
 import org.thingsboard.server.service.subscription.SubscriptionErrorCode;
@@ -59,11 +66,6 @@ import org.thingsboard.server.service.ws.WsCommandsWrapper;
 import org.thingsboard.server.service.ws.notification.cmd.NotificationCmdsWrapper;
 import org.thingsboard.server.service.ws.telemetry.cmd.TelemetryCmdsWrapper;
 
-import javax.annotation.PostConstruct;
-import javax.websocket.RemoteEndpoint;
-import javax.websocket.SendHandler;
-import javax.websocket.SendResult;
-import javax.websocket.Session;
 import java.io.IOException;
 import java.security.InvalidParameterException;
 import java.util.Optional;
@@ -131,6 +133,11 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
                     }
                 })
                 .build();
+    }
+
+    @PreDestroy
+    private void stop() {
+        internalSessionMap.clear();
     }
 
     @Override
@@ -232,6 +239,9 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         } catch (InvalidParameterException e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.BAD_DATA.withReason(e.getMessage()));
+        } catch (JwtExpiredTokenException e) {
+            log.trace("[{}] Failed to start session", session.getId(), e);
+            session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
         } catch (Exception e) {
             log.warn("[{}] Failed to start session", session.getId(), e);
             session.close(CloseStatus.SERVER_ERROR.withReason(e.getMessage()));
@@ -533,6 +543,18 @@ public class TbWebSocketHandler extends TextWebSocketHandler implements WebSocke
         } else {
             log.warn("[{}] Failed to find session by external id", externalId);
         }
+    }
+
+    @Override
+    public boolean isOpen(String externalId) {
+        String internalId = externalSessionMap.get(externalId);
+        if (internalId != null) {
+            SessionMetaData sessionMd = getSessionMd(internalId);
+            if (sessionMd != null) {
+                return sessionMd.session.isOpen();
+            }
+        }
+        return false;
     }
 
     private boolean checkLimits(WebSocketSession session, WebSocketSessionRef sessionRef) throws IOException {

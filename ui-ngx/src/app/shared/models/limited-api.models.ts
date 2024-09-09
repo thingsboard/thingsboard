@@ -24,7 +24,13 @@ export enum LimitedApi {
   WS_UPDATES_PER_SESSION = 'WS_UPDATES_PER_SESSION',
   CASSANDRA_QUERIES = 'CASSANDRA_QUERIES',
   TRANSPORT_MESSAGES_PER_TENANT = 'TRANSPORT_MESSAGES_PER_TENANT',
-  TRANSPORT_MESSAGES_PER_DEVICE = 'TRANSPORT_MESSAGES_PER_DEVICE'
+  TRANSPORT_MESSAGES_PER_DEVICE = 'TRANSPORT_MESSAGES_PER_DEVICE',
+  TRANSPORT_MESSAGES_PER_GATEWAY = 'TRANSPORT_MESSAGES_PER_GATEWAY',
+  TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE = 'TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE',
+  EDGE_EVENTS = 'EDGE_EVENTS',
+  EDGE_EVENTS_PER_EDGE = 'EDGE_EVENTS_PER_EDGE',
+  EDGE_UPLINK_MESSAGES = 'EDGE_UPLINK_MESSAGES',
+  EDGE_UPLINK_MESSAGES_PER_EDGE = 'EDGE_UPLINK_MESSAGES_PER_EDGE'
 }
 
 export const LimitedApiTranslationMap = new Map<LimitedApi, string>(
@@ -38,6 +44,12 @@ export const LimitedApiTranslationMap = new Map<LimitedApi, string>(
     [LimitedApi.WS_UPDATES_PER_SESSION, 'api-limit.ws-updates-per-session'],
     [LimitedApi.CASSANDRA_QUERIES, 'api-limit.cassandra-queries'],
     [LimitedApi.TRANSPORT_MESSAGES_PER_TENANT, 'api-limit.transport-messages'],
-    [LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE, 'api-limit.transport-messages-per-device']
+    [LimitedApi.TRANSPORT_MESSAGES_PER_DEVICE, 'api-limit.transport-messages-per-device'],
+    [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY, 'api-limit.transport-messages-per-gateway'],
+    [LimitedApi.TRANSPORT_MESSAGES_PER_GATEWAY_DEVICE, 'api-limit.transport-messages-per-gateway-device'],
+    [LimitedApi.EDGE_EVENTS, 'api-limit.edge-events'],
+    [LimitedApi.EDGE_EVENTS_PER_EDGE, 'api-limit.edge-events-per-edge'],
+    [LimitedApi.EDGE_UPLINK_MESSAGES, 'api-limit.edge-uplink-messages'],
+    [LimitedApi.EDGE_UPLINK_MESSAGES_PER_EDGE, 'api-limit.edge-uplink-messages-per-edge']
   ]
 );

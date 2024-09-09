@@ -15,52 +15,86 @@
  */
 @import '../../../../../../../../scss/constants';
 
-.tb-form-table-header-cell {
-  &.tb-source-header {
-    width: 108px;
-    min-width: 108px;
-  }
-  &.tb-key-header {
-    flex: 1;
-    min-width: 150px;
-    @media #{$mat-gt-sm} {
-      flex: 1 1 60%;
+.tb-data-keys-panel {
+  .tb-form-table-header-cell {
+    &.tb-source-header {
+      width: 108px;
+      min-width: 108px;
     }
-  }
-  &.tb-label-header {
-    flex: 1 1 40%;
-    min-width: 100px;
-  }
-  &.tb-units-header {
-    width: 80px;
-    min-width: 80px;
-  }
-  &.tb-color-header {
-    width: 40px;
-    min-width: 40px;
-  }
-  &.tb-decimals-header {
-    width: 60px;
-    min-width: 60px;
-  }
-  &.tb-actions-header {
-    width: 40px;
-    min-width: 40px;
-    @media #{$mat-gt-md} {
-      width: 120px;
-      min-width: 120px;
-    }
-  }
-  &.tb-label-header, &.tb-units-header, &.tb-color-header, &.tb-decimals-header {
-    display: none;
-    @media #{$mat-gt-sm} {
-      display: block;
-    }
-  }
-}
 
-.tb-form-table-body {
-  tb-data-key-row {
-    overflow: hidden;
+    &.tb-key-header {
+      flex: 1;
+      min-width: 150px;
+      @media #{$mat-gt-sm} {
+        flex: 1 1 60%;
+      }
+    }
+
+    &.tb-label-header {
+      flex: 1 1 40%;
+      min-width: 100px;
+    }
+
+    &.tb-units-header {
+      width: 80px;
+      min-width: 80px;
+    }
+
+    &.tb-color-header {
+      width: 40px;
+      min-width: 40px;
+    }
+
+    &.tb-decimals-header {
+      width: 60px;
+      min-width: 60px;
+    }
+
+    &.tb-y-axis-header {
+      width: 100px;
+      min-width: 100px;
+    }
+
+    &.tb-time-series-type-header {
+      width: 60px;
+      min-width: 60px;
+    }
+
+    &.tb-actions-header {
+      width: 40px;
+      min-width: 40px;
+      @media #{$mat-gt-md} {
+        width: 120px;
+        min-width: 120px;
+      }
+    }
+
+    &.tb-label-header, &.tb-units-header, &.tb-color-header, &.tb-decimals-header {
+      display: none;
+      @media #{$mat-gt-sm} {
+        display: block;
+      }
+    }
+
+    &.tb-y-axis-header {
+      @media #{$mat-md} {
+        display: none;
+      }
+    }
+
+    &.tb-time-series-type-header {
+      @media #{$mat-xs} {
+        display: none;
+      }
+      @media #{$mat-md} {
+        display: none;
+      }
+    }
+  }
+
+  .tb-form-table-body {
+    tb-data-key-row {
+      overflow: hidden;
+    }
   }
 }

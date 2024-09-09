@@ -22,12 +22,16 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.EntityViewId;
 import org.thingsboard.server.common.data.id.TenantId;
 
+import java.io.Serial;
 import java.io.Serializable;
 
 @Getter
 @EqualsAndHashCode
 @Builder
 public class EntityViewCacheKey implements Serializable {
+
+    @Serial
+    private static final long serialVersionUID = 5986277528222738163L;
 
     private final TenantId tenantId;
     private final String name;

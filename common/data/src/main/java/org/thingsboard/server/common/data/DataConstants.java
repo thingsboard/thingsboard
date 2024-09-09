@@ -44,6 +44,8 @@ public class DataConstants {
     public static final String EDGE_ID = "edgeId";
     public static final String DEVICE_ID = "deviceId";
     public static final String GATEWAY_PARAMETER = "gateway";
+
+    public static final String OVERWRITE_ACTIVITY_TIME_PARAMETER = "overwriteActivityTime";
     public static final String COAP_TRANSPORT_NAME = "COAP";
     public static final String LWM2M_TRANSPORT_NAME = "LWM2M";
     public static final String MQTT_TRANSPORT_NAME = "MQTT";
@@ -53,7 +55,7 @@ public class DataConstants {
     public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
-    public static final String[] allScopes() {
+    public static String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
     }
 
@@ -137,5 +139,7 @@ public class DataConstants {
     public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
     public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
     public static final String QUEUE_NAME = "queueName";
+
+    public static final String EDGE_QUEUE_NAME = "Edge";
 
 }

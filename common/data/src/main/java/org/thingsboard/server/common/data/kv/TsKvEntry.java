@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.kv;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import org.thingsboard.server.common.data.HasVersion;
 import org.thingsboard.server.common.data.query.TsValue;
 
 /**
@@ -24,7 +25,7 @@ import org.thingsboard.server.common.data.query.TsValue;
  * @author ashvayka
  *
  */
-public interface TsKvEntry extends KvEntry {
+public interface TsKvEntry extends KvEntry, HasVersion {
 
     long getTs();
 

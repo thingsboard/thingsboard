@@ -35,7 +35,7 @@ public class EntityViewsEdgeEventFetcher extends BasePageableEdgeEventFetcher<En
     private final EntityViewService entityViewService;
 
     @Override
-    PageData<EntityView> fetchPageData(TenantId tenantId, Edge edge, PageLink pageLink) {
+    PageData<EntityView> fetchEntities(TenantId tenantId, Edge edge, PageLink pageLink) {
         return entityViewService.findEntityViewsByTenantIdAndEdgeId(tenantId, edge.getId(), pageLink);
     }
 
@@ -44,4 +44,5 @@ public class EntityViewsEdgeEventFetcher extends BasePageableEdgeEventFetcher<En
         return EdgeUtils.constructEdgeEvent(tenantId, edge.getId(), EdgeEventType.ENTITY_VIEW,
                 EdgeEventActionType.ADDED, entityView.getId(), null);
     }
+
 }

@@ -15,11 +15,9 @@
  */
 package org.thingsboard.server.queue.discovery.event;
 
-import com.google.protobuf.ProtocolStringList;
 import lombok.Getter;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 import java.util.stream.Collectors;

@@ -30,7 +30,7 @@ import {
 import { WidgetConfigComponent } from '@home/components/widget/widget-config.component';
 import {
   Datasource,
-  DatasourceType,
+  DatasourceType, datasourceValid,
   JsonSettingsSchema,
   WidgetConfigMode,
   widgetType
@@ -39,7 +39,7 @@ import { CdkDragDrop } from '@angular/cdk/drag-drop';
 import { deepClone } from '@core/utils';
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
-import { DataKeysCallbacks } from '@home/components/widget/config/data-keys.component.models';
+import { DataKeysCallbacks, DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { TranslateService } from '@ngx-translate/core';
 import { coerceBoolean } from '@shared/decorators/coercion';
 
@@ -317,6 +317,9 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
   }
 
   private datasourcesUpdated(datasources: Datasource[]) {
+    if (this.datasourcesOptional) {
+      datasources = datasources ? datasources.filter(d => datasourceValid(d)) : [];
+    }
     this.propagateChange(datasources);
   }
 
@@ -334,7 +337,8 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
     let newDatasource: Datasource;
     if (this.widgetConfigComponent.functionsOnly) {
       newDatasource = deepClone(this.utils.getDefaultDatasource(this.dataKeySettingsSchema.schema));
-      newDatasource.dataKeys = [this.dataKeysCallbacks.generateDataKey('Sin', DataKeyType.function, this.dataKeySettingsSchema)];
+      newDatasource.dataKeys = [this.dataKeysCallbacks.generateDataKey('Sin', DataKeyType.function, this.dataKeySettingsSchema,
+        false, this.dataKeySettingsFunction)];
     } else {
       const type = this.basicMode ? this.datasourcesMode : DatasourceType.entity;
       newDatasource = { type,
@@ -349,6 +353,10 @@ export class DatasourcesComponent implements ControlValueAccessor, OnInit, Valid
 
   private get dataKeySettingsSchema(): JsonSettingsSchema {
     return this.widgetConfigComponent.modelValue?.dataKeySettingsSchema;
+  }
+
+  private get dataKeySettingsFunction(): DataKeySettingsFunction {
+    return this.widgetConfigComponent.modelValue?.dataKeySettingsFunction;
   }
 
   private get dataKeysCallbacks(): DataKeysCallbacks {

@@ -24,6 +24,7 @@ import { baseDetailsPageByEntityType, EntityType } from '@shared/models/entity-t
 import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
+import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -216,6 +217,23 @@ export const blobToBase64 = (blob: Blob): Observable<string> => from(new Promise
     }
   ));
 
+export const blobToText = (blob: Blob): Observable<string> => from(new Promise<string>((resolve) => {
+    const reader = new FileReader();
+    reader.onloadend = () => resolve(reader.result as string);
+    reader.readAsText(blob);
+  }
+));
+
+export const updateFileContent = (file: File, newContent: string): File => {
+  const blob = new Blob([newContent], { type: file.type });
+  return new File([blob], file.name, {type: file.type});
+};
+
+export const createFileFromContent = (content: string, name: string, type: string): File => {
+  const blob = new Blob([content], { type });
+  return new File([blob], name, { type });
+};
+
 const scrollRegex = /(auto|scroll)/;
 
 function parentNodes(node: Node, nodes: Node[]): Node[] {
@@ -337,6 +355,8 @@ export const isEmpty = (a: any): boolean => _.isEmpty(a);
 
 export const unset = (object: any, path: string | symbol): boolean => _.unset(object, path);
 
+export const setByPath = <T extends object>(object: T, path: string | number | symbol, value: any): T => _.set(object, path, value);
+
 export const isEqualIgnoreUndefined = (a: any, b: any): boolean => {
   if (a === b) {
     return true;
@@ -359,6 +379,16 @@ export const isArraysEqualIgnoreUndefined = (a: any[], b: any[]): boolean => {
 
 export function mergeDeep<T>(target: T, ...sources: T[]): T {
   return _.merge(target, ...sources);
+}
+
+function ignoreArrayMergeFunc(target: any, sources: any) {
+  if (_.isArray(target)) {
+    return sources;
+  }
+}
+
+export function mergeDeepIgnoreArray<T>(target: T, ...sources: T[]): T {
+  return _.mergeWith(target, ...sources, ignoreArrayMergeFunc);
 }
 
 export function guid(): string {
@@ -420,6 +450,33 @@ export const createLabelFromDatasource = (datasource: Datasource, pattern: strin
       label = label.replace(variable, datasource.aliasName);
     } else if (variableName === 'entityDescription') {
       label = label.replace(variable, datasource.entityDescription);
+    }
+    match = varsRegex.exec(pattern);
+  }
+  return label;
+};
+
+export const createLabelFromSubscriptionEntityInfo = (entityInfo: SubscriptionEntityInfo, pattern: string): string => {
+  let label = pattern;
+  if (!entityInfo) {
+    return label;
+  }
+  let match = varsRegex.exec(pattern);
+  while (match !== null) {
+    const variable = match[0];
+    const variableName = match[1];
+    if (variableName === 'dsName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'deviceName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityLabel') {
+      label = label.replace(variable, entityInfo.entityLabel || entityInfo.entityName);
+    } else if (variableName === 'aliasName') {
+      label = label.replace(variable, entityInfo.entityName);
+    } else if (variableName === 'entityDescription') {
+      label = label.replace(variable, entityInfo.entityDescription);
     }
     match = varsRegex.exec(pattern);
   }
@@ -711,7 +768,7 @@ export function randomAlphanumeric(length: number): string {
 }
 
 export function getEntityDetailsPageURL(id: string, entityType: EntityType): string {
-  return `${baseDetailsPageByEntityType.get(entityType)}/${id}`;
+  return baseDetailsPageByEntityType.has(entityType) ? `${baseDetailsPageByEntityType.get(entityType)}/${id}` : '';
 }
 
 export function parseHttpErrorMessage(errorResponse: HttpErrorResponse,

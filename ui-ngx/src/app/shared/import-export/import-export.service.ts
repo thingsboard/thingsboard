@@ -20,7 +20,7 @@ import { TranslateService } from '@ngx-translate/core';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
-import { Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
+import { BreakpointId, Dashboard, DashboardLayoutId } from '@shared/models/dashboard.models';
 import { deepClone, guid, isDefined, isNotEmptyStr, isObject, isString, isUndefined } from '@core/utils';
 import { WINDOW } from '@core/services/window.service';
 import { DOCUMENT } from '@angular/common';
@@ -55,7 +55,11 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import { ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
+import {
+  EntityInfoData,
+  ImportEntitiesResultInfo,
+  ImportEntityData
+} from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -198,11 +202,13 @@ export class ImportExportService {
     );
   }
 
-  public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget) {
-    const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget);
-    let name = widgetItem.widget.config.title;
-    name = name.toLowerCase().replace(/\W/g, '_');
-    this.exportToPc(this.prepareExport(widgetItem), name);
+  public exportWidget(dashboard: Dashboard, sourceState: string, sourceLayout: DashboardLayoutId, widget: Widget,
+                      widgetTitle: string, breakpoint: BreakpointId) {
+    const widgetItem = this.itembuffer.prepareWidgetItem(dashboard, sourceState, sourceLayout, widget, breakpoint);
+    const widgetDefaultName = this.widgetService.getWidgetInfoFromCache(widget.typeFullFqn).widgetName;
+    let fileName = widgetDefaultName + (isNotEmptyStr(widgetTitle) ? `_${widgetTitle}` : '');
+    fileName = fileName.toLowerCase().replace(/\W/g, '_');
+    this.exportToPc(this.prepareExport(widgetItem), fileName);
   }
 
   public importWidget(dashboard: Dashboard, targetState: string,
@@ -229,11 +235,10 @@ export class ImportExportService {
           const originalSize = widgetItem.originalSize;
 
           const datasourceAliases = aliasesInfo.datasourceAliases;
-          const targetDeviceAliases = aliasesInfo.targetDeviceAliases;
-          if (datasourceAliases || targetDeviceAliases) {
+          if (datasourceAliases || aliasesInfo.targetDeviceAlias) {
             const entityAliases: EntityAliases = {};
             const datasourceAliasesMap: {[aliasId: string]: number} = {};
-            const targetDeviceAliasesMap: {[aliasId: string]: number} = {};
+            let targetDeviceAliasId: string;
             let aliasId: string;
             let datasourceIndex: number;
             if (datasourceAliases) {
@@ -244,13 +249,10 @@ export class ImportExportService {
                 entityAliases[aliasId] = {id: aliasId, ...datasourceAliases[datasourceIndex]};
               }
             }
-            if (targetDeviceAliases) {
-              for (const strIndex of Object.keys(targetDeviceAliases)) {
-                datasourceIndex = Number(strIndex);
-                aliasId = this.utils.guid();
-                targetDeviceAliasesMap[aliasId] = datasourceIndex;
-                entityAliases[aliasId] = {id: aliasId, ...targetDeviceAliases[datasourceIndex]};
-              }
+            if (aliasesInfo.targetDeviceAlias) {
+              aliasId = this.utils.guid();
+              targetDeviceAliasId = aliasId;
+              entityAliases[aliasId] = {id: aliasId, ...aliasesInfo.targetDeviceAlias};
             }
             const aliasIds = Object.keys(entityAliases);
             if (aliasIds.length > 0) {
@@ -267,9 +269,8 @@ export class ImportExportService {
                             if (isDefined(datasourceAliasesMap[id])) {
                               index = datasourceAliasesMap[id];
                               datasourceAliases[index] = entityAlias;
-                            } else if (isDefined(targetDeviceAliasesMap[id])) {
-                              index = targetDeviceAliasesMap[id];
-                              targetDeviceAliases[index] = entityAlias;
+                            } else if (targetDeviceAliasId === id) {
+                              aliasesInfo.targetDeviceAlias = entityAlias;
                             }
                           }
                           return this.addImportedWidget(dashboard, targetState, targetLayoutFunction, widget,
@@ -355,33 +356,82 @@ export class ImportExportService {
 
     forkJoin(tasks).subscribe({
       next: ({includeBundleWidgetsInExport, widgetsBundle}) => {
-        this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
-          ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
-          disableClose: true,
-          panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-          data: {
-            widgetsBundle,
-            includeBundleWidgetsInExport
-          }
-        }).afterClosed().subscribe(
-          (result) => {
-            if (result) {
-              if (includeBundleWidgetsInExport !== result.exportWidgets) {
-                this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
-              }
-              if (result.exportWidgets) {
-                this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
-              } else {
-                this.exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle);
-              }
-            }
-          }
-        );
+        this.handleExportWidgetsBundle(widgetsBundle, includeBundleWidgetsInExport);
       },
       error: (e) => {
         this.handleExportError(e, 'widgets-bundle.export-failed-error');
       }
     });
+  }
+
+  public exportEntity(entityData: EntityInfoData | RuleChainMetaData): void {
+    const id = (entityData as EntityInfoData).id ?? (entityData as RuleChainMetaData).ruleChainId;
+    let preparedData;
+    switch (id.entityType) {
+      case EntityType.DEVICE_PROFILE:
+      case EntityType.ASSET_PROFILE:
+        preparedData = this.prepareProfileExport(entityData as DeviceProfile | AssetProfile);
+        break;
+      case EntityType.RULE_CHAIN:
+        forkJoin([this.ruleChainService.getRuleChainMetadata(id.id), this.ruleChainService.getRuleChain(id.id)])
+          .pipe(
+            take(1),
+            map(([ruleChainMetaData, ruleChain]) => {
+              const ruleChainExport: RuleChainImport = {
+                ruleChain: this.prepareRuleChain(ruleChain),
+                metadata: this.prepareRuleChainMetaData(ruleChainMetaData)
+              };
+              return ruleChainExport;
+            }))
+          .subscribe(this.onRuleChainExported());
+        return;
+      case EntityType.WIDGETS_BUNDLE:
+        this.exportSelectedWidgetsBundle(entityData as WidgetsBundle);
+        return;
+      case EntityType.DASHBOARD:
+        preparedData = this.prepareDashboardExport(entityData as Dashboard);
+        break;
+      default:
+        preparedData = this.prepareExport(entityData);
+    }
+    this.exportToPc(preparedData, (entityData as EntityInfoData).name);
+  }
+
+  private exportSelectedWidgetsBundle(widgetsBundle: WidgetsBundle): void {
+    this.store.pipe(select(selectUserSettingsProperty( 'includeBundleWidgetsInExport'))).pipe(take(1)).subscribe({
+      next: (includeBundleWidgetsInExport) => {
+        this.handleExportWidgetsBundle(widgetsBundle, includeBundleWidgetsInExport, true);
+      },
+      error: (e) => {
+        this.handleExportError(e, 'widgets-bundle.export-failed-error');
+      }
+    });
+  }
+
+  private handleExportWidgetsBundle(widgetsBundle: WidgetsBundle, includeBundleWidgetsInExport: boolean, ignoreLoading?: boolean): void {
+    this.dialog.open<ExportWidgetsBundleDialogComponent, ExportWidgetsBundleDialogData,
+      ExportWidgetsBundleDialogResult>(ExportWidgetsBundleDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        widgetsBundle,
+        includeBundleWidgetsInExport,
+        ignoreLoading
+      }
+    }).afterClosed().subscribe(
+      (result) => {
+        if (result) {
+          if (includeBundleWidgetsInExport !== result.exportWidgets) {
+            this.store.dispatch(new ActionPreferencesPutUserSettings({includeBundleWidgetsInExport: result.exportWidgets}));
+          }
+          if (result.exportWidgets) {
+            this.exportWidgetsBundleWithWidgetTypes(widgetsBundle);
+          } else {
+            this.exportWidgetsBundleWithWidgetTypeFqns(widgetsBundle);
+          }
+        }
+      }
+    );
   }
 
   private exportWidgetsBundleWithWidgetTypes(widgetsBundle: WidgetsBundle) {
@@ -539,8 +589,12 @@ export class ImportExportService {
           return ruleChainExport;
         })
       ))
-    ).subscribe({
-      next: (ruleChainExport) => {
+    ).subscribe(this.onRuleChainExported());
+  }
+
+  private onRuleChainExported() {
+    return {
+      next: (ruleChainExport: RuleChainImport) => {
         let name = ruleChainExport.ruleChain.name;
         name = name.toLowerCase().replace(/\W/g, '_');
         this.exportToPc(ruleChainExport, name);
@@ -548,7 +602,7 @@ export class ImportExportService {
       error: (e) => {
         this.handleExportError(e, 'rulechain.export-failed-error');
       }
-    });
+    };
   }
 
   public importRuleChain(expectedRuleChainType: RuleChainType): Observable<RuleChainImport> {
@@ -965,19 +1019,15 @@ export class ImportExportService {
 
   private prepareAliasesInfo(aliasesInfo: AliasesInfo): AliasesInfo {
     const datasourceAliases = aliasesInfo.datasourceAliases;
-    const targetDeviceAliases = aliasesInfo.targetDeviceAliases;
-    if (datasourceAliases || targetDeviceAliases) {
+    if (datasourceAliases || aliasesInfo.targetDeviceAlias) {
       if (datasourceAliases) {
         for (const strIndex of Object.keys(datasourceAliases)) {
           const datasourceIndex = Number(strIndex);
           datasourceAliases[datasourceIndex] = this.prepareEntityAlias(datasourceAliases[datasourceIndex]);
         }
       }
-      if (targetDeviceAliases) {
-        for (const strIndex of Object.keys(targetDeviceAliases)) {
-          const datasourceIndex = Number(strIndex);
-          targetDeviceAliases[datasourceIndex] = this.prepareEntityAlias(targetDeviceAliases[datasourceIndex]);
-        }
+      if (aliasesInfo.targetDeviceAlias) {
+        aliasesInfo.targetDeviceAlias = this.prepareEntityAlias(aliasesInfo.targetDeviceAlias);
       }
     }
     return aliasesInfo;
@@ -1115,6 +1165,9 @@ export class ImportExportService {
     }
     if (isDefined(exportedData.externalId)) {
       delete exportedData.externalId;
+    }
+    if (isDefined(exportedData.version)) {
+      delete exportedData.version;
     }
     return exportedData;
   }

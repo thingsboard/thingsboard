@@ -51,13 +51,13 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, NONE));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509, false);
         this.basicTestConnection(security,
+                null,
                 deviceCredentials,
-                COAP_CONFIG,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (X509_Trust_Lwm2m)",
                 expectedStatusesRegistrationLwm2mSuccess,
-                false,
+                true,
                 ON_REGISTRATION_SUCCESS,
                 true);
     }
@@ -78,13 +78,13 @@ public class X509_TrustLwM2MIntegrationTest extends AbstractSecurityLwM2MIntegra
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITHOUT_PARAMS, getBootstrapServerCredentialsSecure(X509, BOTH));
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsSecure(clientCredentials, privateKey, certificate, X509, false);
         this.basicTestConnection(security,
+                null,
                 deviceCredentials,
-                COAP_CONFIG_BS,
                 clientEndpoint,
                 transportConfiguration,
                 "await on client state (X509Trust two section)",
                 expectedStatusesRegistrationBsSuccess,
-                true,
+                false,
                 ON_REGISTRATION_SUCCESS,
                 true);
     }

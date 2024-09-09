@@ -1,0 +1,53 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="fillSettingsFormGroup">
+  <div class="tb-form-row column">
+    <div class="tb-form-row no-border no-padding space-between">
+      <div>{{ titleText | translate }}</div>
+      <tb-toggle-select formControlName="type">
+        <tb-toggle-option *ngFor="let type of chartFillTypes" [value]="type">{{ chartFillTypeTranslationMap.get(type) | translate }}</tb-toggle-option>
+      </tb-toggle-select>
+    </div>
+    <ng-container *ngIf="fillSettingsFormGroup.get('type').value === ChartFillType.opacity">
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.chart.opacity</div>
+        <mat-form-field class="medium-width number" appearance="outline" subscriptSizing="dynamic">
+          <input matInput type="number" formControlName="opacity" min="0" max="1"
+                 step="0.1" placeholder="{{ 'widget-config.set' | translate }}"/>
+        </mat-form-field>
+      </div>
+    </ng-container>
+    <ng-container *ngIf="fillSettingsFormGroup.get('type').value === ChartFillType.gradient" formGroupName="gradient">
+      <div class="tb-form-row space-between column-xs">
+        <div translate>widgets.chart.gradient-stops</div>
+        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="tb-small-label" translate>widgets.chart.gradient-start</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="start" min="0" max="100" step="1"
+                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+          <div class="tb-small-label" translate>widgets.chart.gradient-end</div>
+          <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="end" min="0" max="100" step="1"
+                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+      </div>
+    </ng-container>
+  </div>
+</ng-container>

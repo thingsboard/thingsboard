@@ -21,7 +21,6 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 import org.thingsboard.server.dao.tenant.TbTenantProfileCache;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
 import org.thingsboard.server.dao.tenant.TenantService;
@@ -45,9 +44,6 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
     public TenantProfile save(TenantId tenantId, TenantProfile tenantProfile, TenantProfile oldTenantProfile) throws ThingsboardException {
         TenantProfile savedTenantProfile = checkNotNull(tenantProfileService.saveTenantProfile(tenantId, tenantProfile));
         tenantProfileCache.put(savedTenantProfile);
-        tbClusterService.onTenantProfileChange(savedTenantProfile, null);
-        tbClusterService.broadcastEntityStateChangeEvent(TenantId.SYS_TENANT_ID, savedTenantProfile.getId(),
-                tenantProfile.getId() == null ? ComponentLifecycleEvent.CREATED : ComponentLifecycleEvent.UPDATED);
 
         List<TenantId> tenantIds = tenantService.findTenantIdsByTenantProfileId(savedTenantProfile.getId());
         tbQueueService.updateQueuesByTenants(tenantIds, savedTenantProfile, oldTenantProfile);
@@ -58,6 +54,5 @@ public class DefaultTbTenantProfileService extends AbstractTbEntityService imple
     @Override
     public void delete(TenantId tenantId, TenantProfile tenantProfile) throws ThingsboardException {
         tenantProfileService.deleteTenantProfile(tenantId, tenantProfile.getId());
-        tbClusterService.onTenantProfileDelete(tenantProfile, null);
     }
 }

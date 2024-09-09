@@ -26,15 +26,13 @@ import {
 import { PageComponent } from '@shared/components/page.component';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
-import { TranslateService } from '@ngx-translate/core';
-import { isNumber } from '@core/utils';
 import { IAliasController } from '@core/api/widget-api.models';
 import { TbFlotKeyThreshold } from '@home/components/widget/lib/flot-widget.models';
 
 @Component({
   selector: 'tb-flot-threshold',
   templateUrl: './flot-threshold.component.html',
-  styleUrls: ['./flot-threshold.component.scss'],
+  styleUrls: [],
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
@@ -50,9 +48,6 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
   disabled: boolean;
 
   @Input()
-  expanded = false;
-
-  @Input()
   aliasController: IAliasController;
 
   @Output()
@@ -65,7 +60,6 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
   public thresholdFormGroup: UntypedFormGroup;
 
   constructor(protected store: Store<AppState>,
-              private translate: TranslateService,
               private fb: UntypedFormBuilder) {
     super(store);
   }
@@ -110,26 +104,8 @@ export class FlotThresholdComponent extends PageComponent implements OnInit, Con
     );
   }
 
-  thresholdText(): string {
-    const value: ValueSourceProperty = this.thresholdFormGroup.get('valueSource').value;
-    return this.valueSourcePropertyText(value);
-  }
-
-  private valueSourcePropertyText(source?: ValueSourceProperty): string {
-    if (source) {
-      if (source.valueSource === 'predefinedValue') {
-        return `${isNumber(source.value) ? source.value : 0}`;
-      } else if (source.valueSource === 'entityAttribute') {
-        const alias = source.entityAlias || 'Undefined';
-        const key = source.attribute || 'Undefined';
-        return `${alias}.${key}`;
-      }
-    }
-    return 'Undefined';
-  }
-
   private updateModel() {
-    const value: {valueSource: ValueSourceProperty, lineWidth: number, color: string} = this.thresholdFormGroup.value;
+    const value: {valueSource: ValueSourceProperty; lineWidth: number; color: string} = this.thresholdFormGroup.value;
     this.modelValue = {
       thresholdValueSource: value?.valueSource?.valueSource,
       thresholdEntityAlias: value?.valueSource?.entityAlias,

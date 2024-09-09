@@ -745,7 +745,6 @@
         "maximum-upload-file-size": "Maximální velikost souboru: {{ size }}",
         "cannot-upload-file": "Soubor nelze nahrát",
         "settings": "Nastavení",
-        "layout-settings": "Nastavení rozložení",
         "columns-count": "Počet sloupců",
         "columns-count-required": "Počet sloupců je povinný.",
         "min-columns-count-message": "Minimální povolený počet sloupců je 10.",
@@ -1247,7 +1246,7 @@
           "mode": "Režim konfigurace bezpečnosti",
           "short-id": "Krátké ID",
           "short-id-required": "Krátké ID je povinné.",
-          "short-id-range": "Krátké ID by mělo být v rozsahu od 1 do 65534.",
+          "short-id-range": "Krátké ID by mělo být v rozsahu od {{ min }} do {{ max }}.",
           "short-id-pattern": "Krátké ID musí být kladné celé číslo.",
           "lifetime": "Doba platnosti registrace klienta",
           "lifetime-required": "Doba platnosti registrace klienta je povinná.",
@@ -1301,8 +1300,7 @@
               "step": "Krok",
               "min-evaluation-period": "Minimální interval evaluace",
               "max-evaluation-period": "Maximální interval evaluace"
-          },
-          "composite-operations-support": "Podporuje kompozitní Read/Write/Observe operace"
+          }
       },
       "snmp": {
           "add-communication-config": "Přidat konfiguraci komunikace",
@@ -2931,7 +2929,7 @@
         "action-source-required": "Zdroj akce je povinný.",
         "action-name": "Název",
         "action-name-required": "Název akce je povinný.",
-        "action-name-not-unique": "Jiná akce s identickým názvem již existuje.<br/>Název akce by měl být v rámci zdroje akce unikátní.",
+        "action-name-not-unique": "Jiná akce s identickým názvem již existuje.\nNázev akce by měl být v rámci zdroje akce unikátní.",
         "action-icon": "Ikona",
         "action-type": "Typ",
         "action-type-required": "Typ akce je povinný.",

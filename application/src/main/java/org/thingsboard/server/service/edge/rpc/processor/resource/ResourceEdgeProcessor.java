@@ -74,8 +74,7 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
         TbResourceId tbResourceId = new TbResourceId(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         switch (edgeEvent.getAction()) {
-            case ADDED:
-            case UPDATED:
+            case ADDED, UPDATED -> {
                 TbResource tbResource = resourceService.findResourceById(edgeEvent.getTenantId(), tbResourceId);
                 if (tbResource != null) {
                     UpdateMsgType msgType = getUpdateMsgType(edgeEvent.getAction());
@@ -86,16 +85,17 @@ public abstract class ResourceEdgeProcessor extends BaseResourceProcessor implem
                             .addResourceUpdateMsg(resourceUpdateMsg)
                             .build() : null;
                 }
-                break;
-            case DELETED:
+            }
+            case DELETED -> {
                 ResourceUpdateMsg resourceUpdateMsg = ((ResourceMsgConstructor)
                         resourceMsgConstructorFactory.getMsgConstructorByEdgeVersion(edgeVersion)).constructResourceDeleteMsg(tbResourceId);
                 downlinkMsg = DownlinkMsg.newBuilder()
                         .setDownlinkMsgId(EdgeUtils.nextPositiveInt())
                         .addResourceUpdateMsg(resourceUpdateMsg)
                         .build();
-                break;
+            }
         }
         return downlinkMsg;
     }
+
 }

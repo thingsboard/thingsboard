@@ -15,19 +15,18 @@
  */
 package org.thingsboard.server.common.data.sms.config;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 
-@ApiModel
+@Schema
 @Data
 public class TestSmsRequest {
 
-    @ApiModelProperty(position = 1, value = "The SMS provider configuration")
+    @Schema(description = "The SMS provider configuration")
     private SmsProviderConfiguration providerConfiguration;
-    @ApiModelProperty(position = 2, value = "The phone number or other identifier to specify as a recipient of the SMS.")
+    @Schema(description = "The phone number or other identifier to specify as a recipient of the SMS.")
     private String numberTo;
-    @ApiModelProperty(position = 3, value = "The test message")
+    @Schema(description = "The test message")
     private String message;
 
 }

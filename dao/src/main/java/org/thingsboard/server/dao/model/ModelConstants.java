@@ -49,6 +49,7 @@ public class ModelConstants {
     public static final String SEARCH_TEXT_PROPERTY = "search_text";
     public static final String ADDITIONAL_INFO_PROPERTY = "additional_info";
     public static final String ENTITY_TYPE_PROPERTY = "entity_type";
+    public static final String VERSION_PROPERTY = "version";
 
     public static final String ENTITY_TYPE_COLUMN = ENTITY_TYPE_PROPERTY;
     public static final String TENANT_ID_COLUMN = "tenant_id";
@@ -56,6 +57,7 @@ public class ModelConstants {
     public static final String ATTRIBUTE_TYPE_COLUMN = "attribute_type";
     public static final String ATTRIBUTE_KEY_COLUMN = "attribute_key";
     public static final String LAST_UPDATE_TS_COLUMN = "last_update_ts";
+    public static final String VERSION_COLUMN = "version";
 
     /**
      * User constants.
@@ -135,6 +137,7 @@ public class ModelConstants {
     public static final String CUSTOMER_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
     public static final String CUSTOMER_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String CUSTOMER_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
+    public static final String CUSTOMER_IS_PUBLIC_PROPERTY = "is_public";
 
     /**
      * Device constants.
@@ -301,6 +304,7 @@ public class ModelConstants {
     public static final String WIDGETS_BUNDLE_ALIAS_PROPERTY = ALIAS_PROPERTY;
     public static final String WIDGETS_BUNDLE_TITLE_PROPERTY = TITLE_PROPERTY;
     public static final String WIDGETS_BUNDLE_IMAGE_PROPERTY = "image";
+    public static final String WIDGETS_BUNDLE_SCADA_PROPERTY = "scada";
     public static final String WIDGETS_BUNDLE_DESCRIPTION = "description";
     public static final String WIDGETS_BUNDLE_ORDER = "widgets_bundle_order";
 
@@ -318,6 +322,8 @@ public class ModelConstants {
     public static final String WIDGET_TYPE_DESCRIPTOR_PROPERTY = "descriptor";
 
     public static final String WIDGET_TYPE_DEPRECATED_PROPERTY = "deprecated";
+
+    public static final String WIDGET_TYPE_SCADA_PROPERTY = "scada";
 
     public static final String WIDGET_TYPE_WIDGET_TYPE_PROPERTY = "widget_type";
 
@@ -423,23 +429,37 @@ public class ModelConstants {
     public static final String RULE_NODE_STATE_DATA_PROPERTY = "state_data";
 
     /**
-     * OAuth2 client registration constants.
+     * Domain constants.
      */
-    public static final String OAUTH2_PARAMS_TABLE_NAME = "oauth2_params";
-    public static final String OAUTH2_PARAMS_ENABLED_PROPERTY = "enabled";
-    public static final String OAUTH2_PARAMS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String DOMAIN_TABLE_NAME = "domain";
+    public static final String DOMAIN_NAME_PROPERTY = "name";
+    public static final String DOMAIN_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+    public static final String DOMAIN_PROPAGATE_TO_EDGE_PROPERTY = "edge_enabled";
 
-    public static final String OAUTH2_REGISTRATION_TABLE_NAME = "oauth2_registration";
-    public static final String OAUTH2_DOMAIN_TABLE_NAME = "oauth2_domain";
-    public static final String OAUTH2_MOBILE_TABLE_NAME = "oauth2_mobile";
-    public static final String OAUTH2_PARAMS_ID_PROPERTY = "oauth2_params_id";
-    public static final String OAUTH2_PKG_NAME_PROPERTY = "pkg_name";
-    public static final String OAUTH2_APP_SECRET_PROPERTY = "app_secret";
+    public static final String DOMAIN_OAUTH2_CLIENT_TABLE_NAME = "domain_oauth2_client";
+    public static final String DOMAIN_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
+    public static final String DOMAIN_OAUTH2_CLIENT_DOMAIN_ID_PROPERTY = "domain_id";
 
+    /**
+     * Mobile application constants.
+     */
+    public static final String MOBILE_APP_TABLE_NAME = "mobile_app";
+    public static final String MOBILE_APP_PKG_NAME_PROPERTY = "pkg_name";
+    public static final String MOBILE_APP_APP_SECRET_PROPERTY = "app_secret";
+    public static final String MOBILE_APP_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
+
+    public static final String MOBILE_APP_OAUTH2_CLIENT_TABLE_NAME = "mobile_app_oauth2_client";
+    public static final String MOBILE_APP_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
+    public static final String MOBILE_APP_OAUTH2_CLIENT_MOBILE_APP_ID_PROPERTY = "mobile_app_id";
+
+
+    /**
+     * OAuth2 client constants.
+     */
+    public static final String OAUTH2_CLIENT_TABLE_NAME = "oauth2_client";
     public static final String OAUTH2_CLIENT_REGISTRATION_TEMPLATE_TABLE_NAME = "oauth2_client_registration_template";
     public static final String OAUTH2_TEMPLATE_PROVIDER_ID_PROPERTY = "provider_id";
-    public static final String OAUTH2_DOMAIN_NAME_PROPERTY = "domain_name";
-    public static final String OAUTH2_DOMAIN_SCHEME_PROPERTY = "domain_scheme";
+    public static final String OAUTH2_CLIENT_TITLE_PROPERTY = "title";
     public static final String OAUTH2_CLIENT_ID_PROPERTY = "client_id";
     public static final String OAUTH2_CLIENT_SECRET_PROPERTY = "client_secret";
     public static final String OAUTH2_AUTHORIZATION_URI_PROPERTY = "authorization_uri";
@@ -496,6 +516,7 @@ public class ModelConstants {
     public static final String RESOURCE_TABLE_NAME = "resource";
     public static final String RESOURCE_TENANT_ID_COLUMN = TENANT_ID_COLUMN;
     public static final String RESOURCE_TYPE_COLUMN = "resource_type";
+    public static final String RESOURCE_SUB_TYPE_COLUMN = "resource_sub_type";
     public static final String RESOURCE_KEY_COLUMN = "resource_key";
     public static final String RESOURCE_TITLE_COLUMN = TITLE_PROPERTY;
     public static final String RESOURCE_FILE_NAME_COLUMN = "file_name";
@@ -611,6 +632,14 @@ public class ModelConstants {
     public static final String QUEUE_ADDITIONAL_INFO_PROPERTY = ADDITIONAL_INFO_PROPERTY;
 
     /**
+     * Tenant queue stats constants.
+     */
+    public static final String QUEUE_STATS_TABLE_NAME = "queue_stats";
+    public static final String QUEUE_STATS_TENANT_ID_PROPERTY = TENANT_ID_PROPERTY;
+    public static final String QUEUE_STATS_QUEUE_NAME_PROPERTY = "queue_name";
+    public static final String QUEUE_STATS_SERVICE_ID_PROPERTY = "service_id";
+
+    /**
      * Notification constants
      */
     public static final String NOTIFICATION_TARGET_TABLE_NAME = "notification_target";
@@ -620,6 +649,7 @@ public class ModelConstants {
     public static final String NOTIFICATION_REQUEST_ID_PROPERTY = "request_id";
     public static final String NOTIFICATION_RECIPIENT_ID_PROPERTY = "recipient_id";
     public static final String NOTIFICATION_TYPE_PROPERTY = "type";
+    public static final String NOTIFICATION_DELIVERY_METHOD_PROPERTY = "delivery_method";
     public static final String NOTIFICATION_SUBJECT_PROPERTY = "subject";
     public static final String NOTIFICATION_TEXT_PROPERTY = "body";
     public static final String NOTIFICATION_ADDITIONAL_CONFIG_PROPERTY = "additional_config";
@@ -648,6 +678,15 @@ public class ModelConstants {
     public static final String NOTIFICATION_TEMPLATE_TABLE_NAME = "notification_template";
     public static final String NOTIFICATION_TEMPLATE_NOTIFICATION_TYPE_PROPERTY = "notification_type";
     public static final String NOTIFICATION_TEMPLATE_CONFIGURATION_PROPERTY = "configuration";
+
+    /**
+     * Mobile application settings constants.
+     */
+    public static final String MOBILE_APP_SETTINGS_TABLE_NAME = "mobile_app_settings";
+    public static final String MOBILE_APP_SETTINGS_USE_DEFAULT_APP_PROPERTY = "use_default_app";
+    public static final String MOBILE_APP_SETTINGS_ANDROID_CONFIG_PROPERTY = "android_config";
+    public static final String MOBILE_APP_SETTINGS_IOS_CONFIG_PROPERTY = "ios_config";
+    public static final String MOBILE_APP_SETTINGS_QR_CODE_CONFIG_PROPERTY = "qr_code_config";
 
     protected static final String[] NONE_AGGREGATION_COLUMNS = new String[]{LONG_VALUE_COLUMN, DOUBLE_VALUE_COLUMN, BOOLEAN_VALUE_COLUMN, STRING_VALUE_COLUMN, JSON_VALUE_COLUMN, KEY_COLUMN, TS_COLUMN};
 

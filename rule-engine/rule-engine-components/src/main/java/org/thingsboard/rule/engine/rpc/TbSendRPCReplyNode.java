@@ -109,7 +109,6 @@ public class TbSendRPCReplyNode implements TbNode {
         Futures.addCallback(future, new FutureCallback<>() {
             @Override
             public void onSuccess(Void result) {
-                ctx.onEdgeEventUpdate(ctx.getTenantId(), edgeId);
                 ctx.tellSuccess(msg);
             }
 

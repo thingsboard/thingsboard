@@ -15,8 +15,7 @@
  */
 package org.thingsboard.server.common.data.alarm;
 
-import io.swagger.annotations.ApiModel;
-import io.swagger.annotations.ApiModelProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.Setter;
@@ -24,24 +23,24 @@ import lombok.ToString;
 
 @EqualsAndHashCode(callSuper = true)
 @ToString(callSuper = true)
-@ApiModel
+@Schema
 public class AlarmInfo extends Alarm {
 
     private static final long serialVersionUID = 2807343093519543363L;
 
     @Getter
     @Setter
-    @ApiModelProperty(position = 19, value = "Alarm originator name", example = "Thermostat")
+    @Schema(description = "Alarm originator name", example = "Thermostat")
     private String originatorName;
 
     @Getter
     @Setter
-    @ApiModelProperty(position = 20, value = "Alarm originator label", example = "Thermostat label")
+    @Schema(description = "Alarm originator label", example = "Thermostat label")
     private String originatorLabel;
 
     @Getter
     @Setter
-    @ApiModelProperty(position = 21, value = "Alarm assignee")
+    @Schema(description = "Alarm assignee")
     private AlarmAssignee assignee;
 
     public AlarmInfo() {

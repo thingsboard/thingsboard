@@ -29,7 +29,7 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityDataPageLink } from '@shared/models/query/query.models';
-import { providerClass } from '@home/components/widget/lib/maps/providers';
+import { providerClass } from '@home/components/widget/lib/maps/providers/public-api';
 import { isDefined, isDefinedAndNotNull, parseFunction } from '@core/utils';
 import L from 'leaflet';
 import { forkJoin, Observable, of } from 'rxjs';
@@ -298,6 +298,6 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 }
 
-export let TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
+export const TbMapWidgetV2: MapWidgetStaticInterface = MapWidgetController;
 
 

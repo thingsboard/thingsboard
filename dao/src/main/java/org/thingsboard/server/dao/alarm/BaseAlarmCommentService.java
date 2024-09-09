@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.alarm;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -34,8 +33,6 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.service.DataValidator;
-
-import java.util.UUID;
 
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
@@ -68,7 +65,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
 
     @Override
     public AlarmComment saveAlarmComment(TenantId tenantId, AlarmComment alarmComment) {
-        log.debug("Deleting Alarm Comment: {}", alarmComment);
+        log.debug("Saving Alarm Comment: {}", alarmComment);
         alarmCommentDataValidator.validate(alarmComment, c -> tenantId);
         AlarmComment result = alarmCommentDao.save(tenantId, alarmComment);
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entity(result)
@@ -85,14 +82,14 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
     @Override
     public ListenableFuture<AlarmComment> findAlarmCommentByIdAsync(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.trace("Executing findAlarmCommentByIdAsync by alarmCommentId [{}]", alarmCommentId);
-        validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+        validateId(alarmCommentId, id -> "Incorrect alarmCommentId " + id);
         return alarmCommentDao.findAlarmCommentByIdAsync(tenantId, alarmCommentId.getId());
     }
 
     @Override
     public AlarmComment findAlarmCommentById(TenantId tenantId, AlarmCommentId alarmCommentId) {
         log.trace("Executing findAlarmCommentByIdAsync by alarmCommentId [{}]", alarmCommentId);
-        validateId(alarmCommentId, "Incorrect alarmCommentId " + alarmCommentId);
+        validateId(alarmCommentId, id -> "Incorrect alarmCommentId " + id);
         return alarmCommentDao.findById(tenantId, alarmCommentId.getId());
     }
 
@@ -101,12 +98,7 @@ public class BaseAlarmCommentService extends AbstractEntityService implements Al
         if (alarmComment.getType() == null) {
             alarmComment.setType(AlarmCommentType.OTHER);
         }
-        if (alarmComment.getId() == null) {
-            UUID uuid = Uuids.timeBased();
-            alarmComment.setId(new AlarmCommentId(uuid));
-            alarmComment.setCreatedTime(Uuids.unixTimestamp(uuid));
-        }
-        return alarmCommentDao.createAlarmComment(tenantId, alarmComment);
+        return alarmCommentDao.save(tenantId, alarmComment);
     }
 
     private AlarmComment updateAlarmComment(TenantId tenantId, AlarmComment newAlarmComment) {

@@ -18,6 +18,7 @@ package org.thingsboard.server.dao;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Slice;
 import org.springframework.util.CollectionUtils;
 import org.thingsboard.server.common.data.EntityInfo;
 import org.thingsboard.server.common.data.EntitySubtype;
@@ -51,16 +52,33 @@ public abstract class DaoUtil {
         return new PageData<>(data, page.getTotalPages(), page.getTotalElements(), page.hasNext());
     }
 
-    public static <T> PageData<T> pageToPageData(Page<T> page) {
-        return new PageData<>(page.getContent(), page.getTotalPages(), page.getTotalElements(), page.hasNext());
+    public static <T> PageData<T> pageToPageData(Slice<T> slice) {
+        int totalPages;
+        long totalElements;
+        if (slice instanceof Page<T> page) {
+            totalPages = page.getTotalPages();
+            totalElements = page.getTotalElements();
+        } else {
+            totalPages = 0;
+            totalElements = 0;
+        }
+        return new PageData<>(slice.getContent(), totalPages, totalElements, slice.hasNext());
     }
 
     public static Pageable toPageable(PageLink pageLink) {
-        return toPageable(pageLink, Collections.emptyMap());
+        return toPageable(pageLink, true);
+    }
+
+    public static Pageable toPageable(PageLink pageLink, boolean addDefaultSorting) {
+        return toPageable(pageLink, Collections.emptyMap(), addDefaultSorting);
     }
 
     public static Pageable toPageable(PageLink pageLink, Map<String, String> columnMap) {
-        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(pageLink.getSortOrder(), columnMap));
+        return toPageable(pageLink, columnMap, true);
+    }
+
+    public static Pageable toPageable(PageLink pageLink, Map<String, String> columnMap, boolean addDefaultSorting) {
+        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(pageLink.getSortOrder(), columnMap, addDefaultSorting));
     }
 
     public static Pageable toPageable(PageLink pageLink, List<SortOrder> sortOrders) {
@@ -68,7 +86,11 @@ public abstract class DaoUtil {
     }
 
     public static Pageable toPageable(PageLink pageLink, Map<String, String> columnMap, List<SortOrder> sortOrders) {
-        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(sortOrders, columnMap));
+        return toPageable(pageLink, columnMap, sortOrders, true);
+    }
+
+    public static Pageable toPageable(PageLink pageLink, Map<String, String> columnMap, List<SortOrder> sortOrders, boolean addDefaultSorting) {
+        return PageRequest.of(pageLink.getPage(), pageLink.getPageSize(), pageLink.toSort(sortOrders, columnMap, addDefaultSorting));
     }
 
     public static <T> List<T> convertDataList(Collection<? extends ToData<T>> toDataList) {

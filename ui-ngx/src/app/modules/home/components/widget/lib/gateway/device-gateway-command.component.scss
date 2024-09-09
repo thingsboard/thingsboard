@@ -34,6 +34,8 @@
           padding-right: 38px;
           overflow: scroll;
           padding-bottom: 4px;
+          min-height: 42px;
+          scrollbar-width: thin;
 
           &::-webkit-scrollbar {
             width: 4px;
@@ -61,7 +63,9 @@
             height: 18px;
             background: #305680;
             mask-image: url(/assets/copy-code-icon.svg);
+            -webkit-mask-image: url(/assets/copy-code-icon.svg);
             mask-repeat: no-repeat;
+            -webkit-mask-repeat: no-repeat;
           }
         }
       }

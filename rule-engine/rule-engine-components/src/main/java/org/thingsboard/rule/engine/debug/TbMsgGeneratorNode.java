@@ -29,6 +29,7 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.EntityId;
@@ -42,6 +43,8 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.queue.PartitionChangeMsg;
 
+import java.util.EnumSet;
+import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -54,7 +57,7 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
         type = ComponentType.ACTION,
         name = "generator",
         configClazz = TbMsgGeneratorNodeConfiguration.class,
-        version = 1,
+        version = 2,
         hasQueueName = true,
         nodeDescription = "Periodically generates messages",
         nodeDetails = "Generates messages with configurable period. Javascript function used for message generation.",
@@ -65,6 +68,9 @@ import static org.thingsboard.server.common.data.DataConstants.QUEUE_NAME;
 )
 
 public class TbMsgGeneratorNode implements TbNode {
+
+    private static final Set<EntityType> supportedEntityTypes = EnumSet.of(EntityType.DEVICE, EntityType.ASSET, EntityType.ENTITY_VIEW,
+            EntityType.TENANT, EntityType.CUSTOMER, EntityType.USER, EntityType.DASHBOARD, EntityType.EDGE, EntityType.RULE_NODE);
 
     private TbMsgGeneratorNodeConfiguration config;
     private ScriptEngine scriptEngine;
@@ -79,28 +85,26 @@ public class TbMsgGeneratorNode implements TbNode {
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
-        log.trace("init generator with config {}", configuration);
         this.config = TbNodeUtils.convert(configuration, TbMsgGeneratorNodeConfiguration.class);
         this.delay = TimeUnit.SECONDS.toMillis(config.getPeriodInSeconds());
         this.currentMsgCount = 0;
         this.queueName = ctx.getQueueName();
-        if (!StringUtils.isEmpty(config.getOriginatorId())) {
-            originatorId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
-            ctx.checkTenantEntity(originatorId);
-        } else {
-            originatorId = ctx.getSelfId();
+        if (!supportedEntityTypes.contains(config.getOriginatorType())) {
+            throw new TbNodeException("Originator type '" + config.getOriginatorType() + "' is not supported.", true);
         }
+        originatorId = getOriginatorId(ctx);
+        log.debug("[{}] Initializing generator with config {}", originatorId, configuration);
         updateGeneratorState(ctx);
     }
 
     @Override
     public void onPartitionChangeMsg(TbContext ctx, PartitionChangeMsg msg) {
-        log.trace("onPartitionChangeMsg, PartitionChangeMsg {}, config {}", msg, config);
+        log.debug("[{}] Handling partition change msg: {}", originatorId, msg);
         updateGeneratorState(ctx);
     }
 
     private void updateGeneratorState(TbContext ctx) {
-        log.trace("updateGeneratorState, config {}", config);
+        log.trace("[{}] Updating generator state, config {}", originatorId, config);
         if (ctx.isLocalEntity(originatorId)) {
             if (initialized.compareAndSet(false, true)) {
                 this.scriptEngine = ctx.createScriptEngine(config.getScriptLang(),
@@ -114,7 +118,7 @@ public class TbMsgGeneratorNode implements TbNode {
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) {
-        log.trace("onMsg, config {}, msg {}", config, msg);
+        log.trace("[{}] onMsg. Expected msg id: {}, msg: {}, config: {}", originatorId, nextTickId, msg, config);
         if (initialized.get() && msg.isTypeOf(TbMsgType.GENERATOR_NODE_SELF_MSG) && msg.getId().equals(nextTickId)) {
             TbStopWatch sw = TbStopWatch.create();
             withCallback(generate(ctx, msg),
@@ -138,7 +142,6 @@ public class TbMsgGeneratorNode implements TbNode {
     }
 
     private void scheduleTickMsg(TbContext ctx, TbMsg msg) {
-        log.trace("scheduleTickMsg, config {}", config);
         long curTs = System.currentTimeMillis();
         if (lastScheduledTs == 0L) {
             lastScheduledTs = curTs;
@@ -149,6 +152,7 @@ public class TbMsgGeneratorNode implements TbNode {
                 getCustomerIdFromMsg(msg), TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
         nextTickId = tickMsg.getId();
         ctx.tellSelf(tickMsg, curDelay);
+        log.trace("[{}] Scheduled tick msg with delay {}, msg: {}, config: {}", originatorId, curDelay, tickMsg, config);
     }
 
     private ListenableFuture<TbMsg> generate(TbContext ctx, TbMsg msg) {
@@ -173,10 +177,28 @@ public class TbMsgGeneratorNode implements TbNode {
         return msg != null ? msg.getCustomerId() : null;
     }
 
+    private EntityId getOriginatorId(TbContext ctx) throws TbNodeException {
+        if (EntityType.RULE_NODE.equals(config.getOriginatorType())) {
+            return ctx.getSelfId();
+        }
+        if (EntityType.TENANT.equals(config.getOriginatorType())) {
+            return ctx.getTenantId();
+        }
+        if (StringUtils.isBlank(config.getOriginatorId())) {
+            throw new TbNodeException("Originator entity must be selected.", true);
+        }
+        var entityId = EntityIdFactory.getByTypeAndUuid(config.getOriginatorType(), config.getOriginatorId());
+        ctx.checkTenantEntity(entityId);
+        return entityId;
+    }
+
     @Override
     public void destroy() {
-        log.trace("destroy, config {}", config);
+        log.debug("[{}] Stopping generator", originatorId);
+        initialized.set(false);
         prevMsg = null;
+        nextTickId = null;
+        lastScheduledTs = 0;
         if (scriptEngine != null) {
             scriptEngine.destroy();
             scriptEngine = null;
@@ -191,6 +213,17 @@ public class TbMsgGeneratorNode implements TbNode {
                 if (oldConfiguration.has(QUEUE_NAME)) {
                     hasChanges = true;
                     ((ObjectNode) oldConfiguration).remove(QUEUE_NAME);
+                }
+            case 1:
+                String originatorType = "originatorType";
+                String originatorId = "originatorId";
+                boolean hasType = oldConfiguration.hasNonNull(originatorType);
+                boolean hasOriginatorId = oldConfiguration.hasNonNull(originatorId) &&
+                        StringUtils.isNotBlank(oldConfiguration.get(originatorId).asText());
+                boolean hasOriginatorFields = hasType && hasOriginatorId;
+                if (!hasOriginatorFields) {
+                    hasChanges = true;
+                    ((ObjectNode) oldConfiguration).put(originatorType, EntityType.RULE_NODE.name());
                 }
                 break;
             default:

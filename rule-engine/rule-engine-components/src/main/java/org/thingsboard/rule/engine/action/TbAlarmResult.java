@@ -37,10 +37,11 @@ public class TbAlarmResult {
     }
 
     public static TbAlarmResult fromAlarmResult(AlarmApiCallResult result) {
+        boolean isSeverityChanged = result.isSeverityChanged();
         return new TbAlarmResult(
                 result.isCreated(),
-                result.isModified() && !result.isSeverityChanged(),
-                result.isSeverityChanged(),
+                result.isModified() && !isSeverityChanged,
+                isSeverityChanged,
                 result.isCleared(),
                 result.getAlarm());
     }

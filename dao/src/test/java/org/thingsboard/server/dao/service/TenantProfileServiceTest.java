@@ -24,7 +24,6 @@ import org.junit.jupiter.api.Assertions;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.EntityInfo;
-import org.thingsboard.server.common.data.FSTUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.TenantProfile;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -38,12 +37,15 @@ import org.thingsboard.server.common.data.queue.SubmitStrategyType;
 import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileData;
 import org.thingsboard.server.common.data.tenant.profile.TenantProfileQueueConfiguration;
+import org.thingsboard.server.common.util.ProtoUtils;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.tenant.TenantProfileService;
+import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -300,23 +302,18 @@ public class TenantProfileServiceTest extends AbstractServiceTest {
     }
 
     @Test
-    public void testTenantProfileSerialization_fst() {
+    public void testTenantProfileSerialization_proto() {
         TenantProfile tenantProfile = new TenantProfile();
+        tenantProfile.setId(new TenantProfileId(UUID.randomUUID()));
+        tenantProfile.setName("testProfile");
         TenantProfileData profileData = new TenantProfileData();
         tenantProfile.setProfileData(profileData);
         profileData.setConfiguration(new DefaultTenantProfileConfiguration());
         addMainQueueConfig(tenantProfile);
 
-        byte[] serialized = assertDoesNotThrow(() -> {
-            return FSTUtils.encode(tenantProfile);
-        });
-        assertDoesNotThrow(() -> {
-            FSTUtils.encode(profileData);
-        });
+        byte[] serialized = assertDoesNotThrow(() -> ProtoUtils.toProto(tenantProfile).toByteArray());
 
-        TenantProfile deserialized = assertDoesNotThrow(() -> {
-            return FSTUtils.decode(serialized);
-        });
+        TenantProfile deserialized = assertDoesNotThrow(() -> ProtoUtils.fromProto(TransportProtos.TenantProfileProto.parseFrom(serialized)));
         assertThat(deserialized).isEqualTo(tenantProfile);
         assertThat(deserialized.getProfileData()).isNotNull();
         assertThat(deserialized.getProfileData().getQueueConfiguration()).isNotEmpty();

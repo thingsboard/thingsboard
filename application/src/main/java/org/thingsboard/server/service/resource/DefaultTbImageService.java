@@ -96,7 +96,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
                 }
             }
             TbResourceInfo savedImage = imageService.saveImage(image);
-            notificationEntityService.logEntityAction(tenantId, savedImage.getId(), savedImage, actionType, user);
+            logEntityActionService.logEntityAction(tenantId, savedImage.getId(), savedImage, actionType, user);
 
             List<ImageCacheKey> toEvict = new ArrayList<>();
             if (oldEtag.isPresent()) {
@@ -117,7 +117,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             return savedImage;
         } catch (Exception e) {
             image.setData(null);
-            notificationEntityService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), image, actionType, user, e);
+            logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.TB_RESOURCE), image, actionType, user, e);
             throw e;
         }
     }
@@ -139,14 +139,14 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         TbResourceId imageId = imageInfo.getId();
         try {
             imageInfo = imageService.saveImageInfo(imageInfo);
-            notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user);
+            logEntityActionService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user);
 
             if (imageInfo.isPublic() != oldImageInfo.isPublic()) {
                 evictFromCache(tenantId, List.of(ImageCacheKey.forPublicImage(imageInfo.getPublicResourceKey())));
             }
             return imageInfo;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user, e);
+            logEntityActionService.logEntityAction(tenantId, imageId, imageInfo, ActionType.UPDATED, user, e);
             throw e;
         }
     }
@@ -158,7 +158,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         try {
             TbImageDeleteResult result = imageService.deleteImage(imageInfo, force);
             if (result.isSuccess()) {
-                notificationEntityService.logEntityAction(tenantId, imageId, imageInfo, ActionType.DELETED, user, imageId.toString());
+                logEntityActionService.logEntityAction(tenantId, imageId, imageInfo, ActionType.DELETED, user, imageId.toString());
 
                 List<ImageCacheKey> toEvict = new ArrayList<>();
                 toEvict.add(ImageCacheKey.forImage(tenantId, imageInfo.getResourceKey()));
@@ -169,7 +169,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             }
             return result;
         } catch (Exception e) {
-            notificationEntityService.logEntityAction(tenantId, imageId, ActionType.DELETED, user, e, imageId.toString());
+            logEntityActionService.logEntityAction(tenantId, imageId, ActionType.DELETED, user, e, imageId.toString());
             throw e;
         }
     }

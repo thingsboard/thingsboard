@@ -16,7 +16,7 @@
 
 import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
-import { HTTP_INTERCEPTORS, HttpClient, HttpClientModule } from '@angular/common/http';
+import { HTTP_INTERCEPTORS, HttpClientModule } from '@angular/common/http';
 import { StoreModule } from '@ngrx/store';
 import { EffectsModule } from '@ngrx/effects';
 import { StoreDevtoolsModule } from '@ngrx/store-devtools';
@@ -31,7 +31,6 @@ import {
   TranslateModule,
   TranslateParser
 } from '@ngx-translate/core';
-import { TranslateHttpLoader } from '@ngx-translate/http-loader';
 import { TbMissingTranslationHandler } from './translate/missing-translate-handler';
 import { MatButtonModule } from '@angular/material/button';
 import { MAT_DIALOG_DEFAULT_OPTIONS, MatDialogConfig, MatDialogModule } from '@angular/material/dialog';
@@ -41,10 +40,8 @@ import { TranslateDefaultCompiler } from '@core/translate/translate-default-comp
 import { WINDOW_PROVIDERS } from '@core/services/window.service';
 import { HotkeyModule } from 'angular2-hotkeys';
 import { TranslateDefaultParser } from '@core/translate/translate-default-parser';
-
-export function HttpLoaderFactory(http: HttpClient) {
-  return new TranslateHttpLoader(http, './assets/locale/locale.constant-', '.json');
-}
+import { TranslateDefaultLoader } from '@core/translate/translate-default-loader';
+import { EntityConflictInterceptor } from '@core/interceptors/entity-conflict.interceptor';
 
 @NgModule({
   imports: [
@@ -59,8 +56,7 @@ export function HttpLoaderFactory(http: HttpClient) {
     TranslateModule.forRoot({
       loader: {
         provide: TranslateLoader,
-        useFactory: HttpLoaderFactory,
-        deps: [HttpClient]
+        useClass: TranslateDefaultLoader
       },
       missingTranslationHandler: {
         provide: MissingTranslationHandler,
@@ -98,6 +94,11 @@ export function HttpLoaderFactory(http: HttpClient) {
     {
       provide: HTTP_INTERCEPTORS,
       useClass: GlobalHttpInterceptor,
+      multi: true
+    },
+    {
+      provide: HTTP_INTERCEPTORS,
+      useClass: EntityConflictInterceptor,
       multi: true
     },
     {

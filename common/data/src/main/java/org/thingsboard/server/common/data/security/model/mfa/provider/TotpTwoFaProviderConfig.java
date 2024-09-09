@@ -15,9 +15,8 @@
  */
 package org.thingsboard.server.common.data.security.model.mfa.provider;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.Data;
-
-import javax.validation.constraints.NotBlank;
 
 @Data
 public class TotpTwoFaProviderConfig implements TwoFaProviderConfig {

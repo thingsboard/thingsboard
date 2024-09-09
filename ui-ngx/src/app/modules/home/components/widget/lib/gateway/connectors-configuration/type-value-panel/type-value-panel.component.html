@@ -1,0 +1,103 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-form-panel no-border no-padding">
+  <div class="tb-form-panel no-border no-padding key-panel" *ngIf="valueListFormArray.controls.length; else noKeys">
+    <div class="tb-form-panel no-border no-padding tb-flex no-flex row center fill-width"
+         *ngFor="let keyControl of valueListFormArray.controls; trackBy: trackByKey; let $index = index; let last = last;">
+      <div class="tb-form-panel stroked tb-flex">
+        <ng-container [formGroup]="keyControl">
+          <mat-expansion-panel class="tb-settings" [expanded]="last">
+            <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-panel-title>
+                <div class="title-container" tbTruncateWithTooltip>{{ valueTitle(keyControl.get(keyControl.get('type').value).value) }}</div>
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                  <div class="fixed-title-width tb-required" translate>gateway.type</div>
+                  <div class="tb-flex no-gap">
+                    <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
+                      <mat-select formControlName="type">
+                        <mat-select-trigger>
+                          <div class="tb-flex align-center">
+                            <mat-icon class="tb-mat-18" [svgIcon]="valueTypes.get(keyControl.get('type').value)?.icon">
+                            </mat-icon>
+                            <span>
+                              {{ valueTypes.get(keyControl.get('type').value)?.name | translate}}
+                            </span>
+                          </div>
+                        </mat-select-trigger>
+                        <mat-option *ngFor="let valueType of valueTypeKeys" [value]="valueType">
+                          <mat-icon class="tb-mat-20" svgIcon="{{ valueTypes.get(valueType).icon }}">
+                          </mat-icon>
+                          <span>{{ valueTypes.get(valueType).name | translate }}</span>
+                        </mat-option>
+                      </mat-select>
+                    </mat-form-field>
+                  </div>
+                </div>
+                <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                  <div class="fixed-title-width tb-required" translate>gateway.value</div>
+                  <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+                    <ng-container [ngSwitch]="keyControl.get('type').value">
+                      <input *ngSwitchCase="MappingValueType.STRING" matInput required formControlName="string"
+                             placeholder="{{ 'gateway.set' | translate }}" />
+                      <input *ngSwitchCase="MappingValueType.INTEGER" matInput required formControlName="integer" type="number"
+                             placeholder="{{ 'gateway.set' | translate }}" />
+                      <input *ngSwitchCase="MappingValueType.DOUBLE" matInput required formControlName="double" type="number"
+                             placeholder="{{ 'gateway.set' | translate }}" />
+                      <mat-select *ngSwitchCase="MappingValueType.BOOLEAN" formControlName="boolean">
+                        <mat-option [value]="true">true</mat-option>
+                        <mat-option [value]="false">false</mat-option>
+                      </mat-select>
+                    </ng-container>
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="('gateway.value-required') | translate"
+                              *ngIf="keyControl.get(keyControl.get('type').value).hasError('required')
+                              && keyControl.get(keyControl.get('type').value).touched"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                </div>
+            </ng-template>
+          </mat-expansion-panel>
+        </ng-container>
+      </div>
+      <button type="button"
+              mat-icon-button
+              (click)="deleteKey($event, $index)"
+              [matTooltip]="'gateway.delete-value' | translate"
+              matTooltipPosition="above">
+        <mat-icon>delete</mat-icon>
+      </button>
+    </div>
+  </div>
+  <div>
+    <button type="button" mat-stroked-button color="primary" (click)="addKey()">
+      {{ 'gateway.add-value' | translate }}
+    </button>
+  </div>
+</div>
+<ng-template #noKeys>
+  <div class="tb-flex no-flex center align-center key-panel">
+    <span class="tb-prompt" translate>{{ 'gateway.no-value' }}</span>
+  </div>
+</ng-template>

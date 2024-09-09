@@ -23,4 +23,9 @@
           *ngIf="dateFormatFormControl.value?.custom" matSuffix mat-icon-button (click)="openDateFormatSettingsPopup($event, customFormatButton)">
     <tb-icon>edit</tb-icon>
   </button>
+  <button #autoFormatButton
+          *ngIf="dateFormatFormControl.value?.auto && !dateFormatFormControl.value?.custom"
+          matSuffix mat-icon-button (click)="openAutoFormatSettingsPopup($event, autoFormatButton)">
+    <tb-icon>edit</tb-icon>
+  </button>
 </mat-form-field>

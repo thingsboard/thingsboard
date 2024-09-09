@@ -35,4 +35,5 @@ public class CustomerUsersEdgeEventFetcher extends BaseUsersEdgeEventFetcher {
     protected PageData<User> findUsers(TenantId tenantId, PageLink pageLink) {
         return userService.findCustomerUsers(tenantId, customerId, pageLink);
     }
+
 }

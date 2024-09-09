@@ -33,6 +33,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
 
     private boolean cleanSession;
     private boolean ssl;
+    private boolean parseToPlainText;
     private ClientCredentials credentials;
 
     @Override
@@ -44,6 +45,7 @@ public class TbMqttNodeConfiguration implements NodeConfiguration<TbMqttNodeConf
         configuration.setCleanSession(true);
         configuration.setSsl(false);
         configuration.setRetainedMessage(false);
+        configuration.setParseToPlainText(false);
         configuration.setCredentials(new AnonymousCredentials());
         return configuration;
     }

@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.provider;
 
+import jakarta.annotation.PreDestroy;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnExpression;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -31,8 +32,6 @@ import org.thingsboard.server.queue.sqs.TbAwsSqsProducerTemplate;
 import org.thingsboard.server.queue.sqs.TbAwsSqsQueueAttributes;
 import org.thingsboard.server.queue.sqs.TbAwsSqsSettings;
 
-import javax.annotation.PreDestroy;
-
 @Component
 @ConditionalOnExpression("'${queue.type:null}'=='aws-sqs' && '${service.type:null}'=='tb-vc-executor'")
 public class AwsSqsTbVersionControlQueueFactory implements TbVersionControlQueueFactory {
@@ -41,7 +40,6 @@ public class AwsSqsTbVersionControlQueueFactory implements TbVersionControlQueue
     private final TbQueueCoreSettings coreSettings;
     private final TbQueueVersionControlSettings vcSettings;
     private final TopicService topicService;
-
 
     private final TbQueueAdmin coreAdmin;
     private final TbQueueAdmin notificationAdmin;
@@ -78,6 +76,11 @@ public class AwsSqsTbVersionControlQueueFactory implements TbVersionControlQueue
         return new TbAwsSqsConsumerTemplate<>(vcAdmin, sqsSettings, topicService.buildTopicName(vcSettings.getTopic()),
                 msg -> new TbProtoQueueMsg<>(msg.getKey(), TransportProtos.ToVersionControlServiceMsg.parseFrom(msg.getData()), msg.getHeaders())
         );
+    }
+
+    @Override
+    public TbQueueProducer<TbProtoQueueMsg<TransportProtos.ToHousekeeperServiceMsg>> createHousekeeperMsgProducer() {
+        return new TbAwsSqsProducerTemplate<>(coreAdmin, sqsSettings, topicService.buildTopicName(coreSettings.getHousekeeperTopic()));
     }
 
     @PreDestroy

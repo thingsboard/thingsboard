@@ -1,0 +1,202 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-action-settings-panel" [formGroup]="setValueSettingsFormGroup">
+  <div class="tb-action-settings-title">{{ panelTitle }}</div>
+  <div class="tb-action-settings-panel-content">
+    <div class="tb-form-row">
+      <div class="fixed-title-width" >{{ 'widgets.value-action.action' | translate }}</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="action">
+          <mat-option *ngFor="let action of setValueActions" [value]="action">
+            {{ setValueActionTranslationsMap.get(action) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <ng-container [ngSwitch]="setValueSettingsFormGroup.get('action').value">
+      <ng-template [ngSwitchCase]="setValueAction.EXECUTE_RPC">
+        <div class="tb-form-row" formGroupName="executeRpc">
+          <div class="fixed-title-width" >{{ 'widgets.value-action.method' | translate }}*</div>
+          <mat-form-field class="flex tb-suffix-absolute" appearance="outline" subscriptSizing="dynamic">
+            <input matInput required formControlName="method" placeholder="{{ 'widget-config.set' | translate }}">
+            <mat-icon matSuffix
+                      matTooltipPosition="above"
+                      matTooltipClass="tb-error-tooltip"
+                      [matTooltip]="'widgets.value-action.method-name-required' | translate"
+                      *ngIf="setValueSettingsFormGroup.get('executeRpc').get('method').hasError('required')
+                              && setValueSettingsFormGroup.get('executeRpc').get('method').touched"
+                      class="tb-error">
+              warning
+            </mat-icon>
+          </mat-form-field>
+        </div>
+      </ng-template>
+      <ng-template [ngSwitchCase]="setValueAction.SET_ATTRIBUTE">
+        <ng-container formGroupName="setAttribute">
+          <div class="tb-form-row">
+            <div class="fixed-title-width">{{ 'widgets.value-action.attribute-scope' | translate }}</div>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="scope">
+                <mat-option *ngFor="let scope of attributeScopes" [value]="scope">
+                  {{ telemetryTypeTranslationsMap.get(scope) | translate }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <div class="fixed-title-width" >{{ 'widgets.value-action.attribute-key' | translate }}*</div>
+            <tb-device-key-autocomplete
+              fxFlex
+              formControlName="key"
+              required
+              requiredText="widgets.value-action.attribute-key-required"
+              inlineField
+              [aliasController]="aliasController"
+              [targetDevice]="targetDevice"
+              [keyType]="dataKeyType.attribute"
+              [attributeScope]="setValueSettingsFormGroup.get('setAttribute').get('scope').value">
+            </tb-device-key-autocomplete>
+          </div>
+        </ng-container>
+      </ng-template>
+      <ng-template [ngSwitchCase]="setValueAction.ADD_TIME_SERIES">
+        <ng-container formGroupName="putTimeSeries">
+          <div class="tb-form-row">
+            <div class="fixed-title-width" >{{ 'widgets.value-action.time-series-key' | translate }}*</div>
+            <tb-device-key-autocomplete
+              fxFlex
+              formControlName="key"
+              required
+              requiredText="widgets.value-action.time-series-key-required"
+              inlineField
+              [aliasController]="aliasController"
+              [targetDevice]="targetDevice"
+              [keyType]="dataKeyType.timeseries">
+            </tb-device-key-autocomplete>
+          </div>
+        </ng-container>
+      </ng-template>
+    </ng-container>
+    <div class="tb-form-panel stroked" formGroupName="valueToData">
+      <div class="tb-form-row no-padding no-border column-xs">
+        <div class="fixed-title-width">{{ (setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC ?
+          'widgets.value-action.parameters' : 'widgets.value-action.value') | translate }}</div>
+        <tb-toggle-select fxFlex formControlName="type">
+          <tb-toggle-option *ngIf="valueType !== ValueType.BOOLEAN" [value]="valueToDataType.VALUE">{{ 'widgets.value-action.converter-value' | translate }}</tb-toggle-option>
+          <tb-toggle-option *ngIf="valueType === ValueType.BOOLEAN" [value]="valueToDataType.CONSTANT">{{ 'widgets.value-action.converter-constant' | translate }}</tb-toggle-option>
+          <tb-toggle-option [value]="valueToDataType.FUNCTION">{{ 'widgets.value-action.converter-function' | translate }}</tb-toggle-option>
+          <tb-toggle-option *ngIf="setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC"
+                              [value]="valueToDataType.NONE">{{ 'widgets.value-action.converter-none' | translate }}</tb-toggle-option>
+        </tb-toggle-select>
+      </div>
+      <tb-value-input *ngIf="setValueSettingsFormGroup.get('valueToData').get('type').value === valueToDataType.CONSTANT"
+                      fxFlex
+                      [layout]="{
+                              layout: 'row',
+                              breakpoints: {xs: 'column'}
+                          }"
+                      formControlName="constantValue">
+      </tb-value-input>
+      <tb-js-func *ngIf="setValueSettingsFormGroup.get('valueToData').get('type').value === valueToDataType.FUNCTION"
+                  formControlName="valueToDataFunction"
+                  required
+                  [globalVariables]="functionScopeVariables"
+                  [functionArgs]="['value']"
+                  functionTitle="{{ 'widgets.value-action.convert-value-function' | translate }}"
+                  helpId="widget/lib/rpc/convert_value_fn">
+      </tb-js-func>
+    </div>
+    <div *ngIf="setValueSettingsFormGroup.get('action').value === setValueAction.EXECUTE_RPC"
+         class="tb-form-panel no-border tb-slide-toggle" formGroupName="executeRpc">
+      <mat-expansion-panel class="tb-settings no-padding">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+          </mat-panel-title>
+          <mat-panel-description fxLayoutAlign="end center" translate>
+            widget-config.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div class="tb-form-row space-between">
+            <div>{{ 'widgets.value-action.request-timeout-ms' | translate }}</div>
+            <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+              <input matInput formControlName="requestTimeout" type="number" required min="5000" step="1" placeholder="{{ 'widget-config.set' | translate }}">
+              <mat-icon matSuffix
+                        matTooltipPosition="above"
+                        matTooltipClass="tb-error-tooltip"
+                        [matTooltip]="(setValueSettingsFormGroup.get('executeRpc').get('requestTimeout').hasError('required')
+                                        ? 'widgets.value-action.request-timeout-required' : 'widgets.value-action.min-request-timeout-error') | translate"
+                        *ngIf="setValueSettingsFormGroup.get('executeRpc').get('requestTimeout').touched &&
+                               setValueSettingsFormGroup.get('executeRpc').get('requestTimeout').invalid"
+                        class="tb-error">
+                warning
+              </mat-icon>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-panel stroked tb-slide-toggle">
+            <mat-expansion-panel class="tb-settings"
+                                 [expanded]="setValueSettingsFormGroup.get('executeRpc').get('requestPersistent').value"
+                                 [disabled]="!setValueSettingsFormGroup.get('executeRpc').get('requestPersistent').value">
+              <mat-expansion-panel-header fxLayout="row wrap">
+                <mat-panel-title>
+                  <mat-slide-toggle class="mat-slide" formControlName="requestPersistent" (click)="$event.stopPropagation()"
+                                    fxLayoutAlign="center">
+                    {{ 'widgets.value-action.request-persistent' | translate }}
+                  </mat-slide-toggle>
+                </mat-panel-title>
+              </mat-expansion-panel-header>
+              <ng-template matExpansionPanelContent>
+                <div class="tb-form-row space-between">
+                  <div tb-hint-tooltip-icon="{{'widgets.value-action.persistent-polling-interval-hint' | translate}}">{{ 'widgets.value-action.persistent-polling-interval' | translate }}</div>
+                  <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
+                    <input matInput formControlName="persistentPollingInterval" type="number" required min="1000" placeholder="{{ 'widget-config.set' | translate }}">
+                    <mat-icon matSuffix
+                              matTooltipPosition="above"
+                              matTooltipClass="tb-error-tooltip"
+                              [matTooltip]="(setValueSettingsFormGroup.get('executeRpc').get('persistentPollingInterval').hasError('required')
+                                            ? 'widgets.value-action.persistent-polling-interval-required' : 'widgets.value-action.min-persistent-polling-interval-error') | translate"
+                              *ngIf="setValueSettingsFormGroup.get('executeRpc').get('persistentPollingInterval').touched &&
+                                     setValueSettingsFormGroup.get('executeRpc').get('persistentPollingInterval').invalid"
+                              class="tb-error">
+                      warning
+                    </mat-icon>
+                  </mat-form-field>
+                </div>
+              </ng-template>
+            </mat-expansion-panel>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </div>
+  <div class="tb-action-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applySetValueSettings()"
+            [disabled]="setValueSettingsFormGroup.invalid || !setValueSettingsFormGroup.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</div>

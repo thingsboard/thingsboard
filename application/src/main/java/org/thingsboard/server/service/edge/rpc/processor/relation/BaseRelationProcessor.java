@@ -58,4 +58,5 @@ public abstract class BaseRelationProcessor extends BaseEdgeProcessor {
     }
 
     protected abstract EntityRelation constructEntityRelationFromUpdateMsg(RelationUpdateMsg relationUpdateMsg);
+
 }

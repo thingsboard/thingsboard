@@ -62,7 +62,7 @@ public class RestJsonConverter {
                                 KvEntry entry = parseValue(key, ts.get(VALUE));
                                 return new BasicTsKvEntry(ts.get(TS).asLong(), entry);
                             }
-                    ).collect(Collectors.toList()))
+                    ).toList())
             );
             return result;
         } else {
