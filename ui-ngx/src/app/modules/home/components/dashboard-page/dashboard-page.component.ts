@@ -522,7 +522,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.translate,
       () => this.dashboardCtx.stateController,
       this.dashboardConfiguration.entityAliases,
-      this.dashboardConfiguration.filters);
+      this.dashboardConfiguration.filters,
+      this.parentDashboard?.aliasController.userFilters);
 
     this.updateDashboardCss();
 

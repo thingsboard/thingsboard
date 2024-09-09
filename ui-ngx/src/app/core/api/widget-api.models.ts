@@ -127,6 +127,7 @@ export interface IAliasController {
   entityAliasesChanged: Observable<Array<string>>;
   entityAliasResolved: Observable<string>;
   filtersChanged: Observable<Array<string>>;
+  userFilters: Filters;
   getAliasInfo(aliasId: string): Observable<AliasInfo>;
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
