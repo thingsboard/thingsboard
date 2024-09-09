@@ -19,13 +19,9 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.utils.ColorUtils;
 
-import javax.imageio.ImageIO;
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
 import java.util.ArrayList;
-import java.util.Base64;
 import java.util.List;
 
 /**
@@ -65,26 +61,11 @@ public class TeamsMessage {
         private String url;
         private final String fillMode = "repeat";
 
-        public BackgroundImage(String hexColor) {
-            url = getEmbeddedBase64EncodedImg(hexColor);
+        public BackgroundImage(String color) {
+            // This is the only one way how to specify color the custom color for the card
+            url = ColorUtils.getEmbeddedBase64EncodedImg(color);
         }
 
-        private String getEmbeddedBase64EncodedImg(String hexColor) {
-            try {
-                Color color = Color.decode(hexColor);
-                BufferedImage image = new BufferedImage(1, 1, BufferedImage.TYPE_INT_RGB);
-                image.setRGB(0, 0, color.getRGB());
-
-                ByteArrayOutputStream outputStream = new ByteArrayOutputStream();
-                ImageIO.write(image, "png", outputStream);
-                byte[] imageBytes = outputStream.toByteArray();
-                String base64String = Base64.getEncoder().encodeToString(imageBytes);
-
-                return "data:image/png;base64," + base64String;
-            } catch (Exception e) {
-                return null;
-            }
-        }
     }
 
     @Data
@@ -108,5 +89,7 @@ public class TeamsMessage {
         private String title;
         private String url;
     }
+
+
 
 }
