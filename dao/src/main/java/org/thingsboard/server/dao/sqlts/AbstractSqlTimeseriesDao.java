@@ -88,6 +88,24 @@ public abstract class AbstractSqlTimeseriesDao extends BaseAbstractSqlTimeseries
         }
     }
 
+    protected ListenableFuture<List<ReadTsKvQueryResult>> processFindAllAsync(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        List<ListenableFuture<ReadTsKvQueryResult>> futures = entitiesId.stream()
+                .map(entityId -> queries.stream()
+                        .map(query -> findAllAsync(tenantId, entityId, query)).collect(Collectors.toList())).flatMap(List::stream)
+                .collect(Collectors.toList());
+
+        return Futures.transform(Futures.allAsList(futures), new Function<>() {
+            @javax.annotation.Nullable
+            @Override
+            public List<ReadTsKvQueryResult> apply(@javax.annotation.Nullable List<ReadTsKvQueryResult> results) {
+                if (results == null || results.isEmpty()) {
+                    return null;
+                }
+                return results.stream().filter(Objects::nonNull).collect(Collectors.toList());
+            }
+        }, service);
+    }
+
     protected ListenableFuture<List<ReadTsKvQueryResult>> processFindAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
         List<ListenableFuture<ReadTsKvQueryResult>> futures = queries
                 .stream()

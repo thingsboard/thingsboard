@@ -170,6 +170,18 @@ public class CassandraBaseTimeseriesDao extends AbstractCassandraBaseTimeseriesD
     }
 
     @Override
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+
+        List<ListenableFuture<ReadTsKvQueryResult>> collect = entitiesId.stream()
+                .map(entityId -> queries.stream()
+                        .map(query -> findAllAsync(tenantId, entityId, query)).collect(Collectors.toList())).flatMap(List::stream)
+                .collect(Collectors.toList());
+
+
+        return Futures.allAsList(collect);
+    }
+
+    @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         List<ListenableFuture<Void>> futures = new ArrayList<>();
         ttl = computeTtl(ttl);

@@ -84,6 +84,7 @@ import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.security.permission.Operation;
 import org.thingsboard.server.service.security.permission.Resource;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.function.BiConsumer;
@@ -168,6 +169,18 @@ public class AccessValidator {
         return validateEntityAndCallback(currentUser, operation, entityType, entityIdStr, onSuccess, (result, t) -> handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR));
     }
 
+    public DeferredResult<ResponseEntity> validateEntitiesAndCallback(SecurityUser currentUser, Operation operation, String entityType, String[] entityIdsStr,
+                                                                      ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, List<EntityId>> onSuccess) throws ThingsboardException {
+        return validateEntitiesAndCallback(currentUser, operation, entityType, entityIdsStr, onSuccess, (result, t) -> handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR));
+    }
+
+    public DeferredResult<ResponseEntity> validateEntitiesAndCallback(SecurityUser currentUser, Operation operation, String entityType, String[] entityIdsStr,
+                                                                      ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, List<EntityId>> onSuccess,
+                                                                      BiConsumer<DeferredResult<ResponseEntity>, Throwable> onFailure) throws ThingsboardException {
+        return validateEntitiesAndCallback(currentUser, operation, EntityIdFactory.getByTypeAndIds(entityType, entityIdsStr),
+                onSuccess, onFailure);
+    }
+
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, Operation operation, String entityType, String entityIdStr,
                                                                     ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, EntityId> onSuccess,
                                                                     BiConsumer<DeferredResult<ResponseEntity>, Throwable> onFailure) throws ThingsboardException {
@@ -178,6 +191,32 @@ public class AccessValidator {
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, Operation operation, EntityId entityId,
                                                                     ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, EntityId> onSuccess) throws ThingsboardException {
         return validateEntityAndCallback(currentUser, operation, entityId, onSuccess, (result, t) -> handleError(t, result, HttpStatus.INTERNAL_SERVER_ERROR));
+    }
+
+    public DeferredResult<ResponseEntity> validateEntitiesAndCallback(SecurityUser currentUser, Operation operation, List<EntityId> entitiesId,
+                                                                      ThreeConsumer<DeferredResult<ResponseEntity>, TenantId, List<EntityId>> onSuccess,
+                                                                      BiConsumer<DeferredResult<ResponseEntity>, Throwable> onFailure) throws ThingsboardException {
+
+        final DeferredResult<ResponseEntity> response = new DeferredResult<>();
+
+        validate(currentUser, operation, entitiesId, new HttpValidationCallback(response,
+                new FutureCallback<DeferredResult<ResponseEntity>>() {
+                    @Override
+                    public void onSuccess(@javax.annotation.Nullable DeferredResult<ResponseEntity> result) {
+                        try {
+                            onSuccess.accept(response, currentUser.getTenantId(), entitiesId);
+                        } catch (Exception e) {
+                            onFailure(e);
+                        }
+                    }
+
+                    @Override
+                    public void onFailure(Throwable t) {
+                        onFailure.accept(response, t);
+                    }
+                }));
+
+        return response;
     }
 
     public DeferredResult<ResponseEntity> validateEntityAndCallback(SecurityUser currentUser, Operation operation, EntityId entityId,
@@ -226,6 +265,19 @@ public class AccessValidator {
             default ->
                 //TODO: add support of other entities
                 throw new IllegalStateException("Not Implemented!");
+        }
+    }
+
+    public void validate(SecurityUser currentUser, Operation operation, List<EntityId> entitiesId, FutureCallback<ValidationResult> callback) {
+        for(EntityId item : entitiesId) {
+            switch (item.getEntityType()) {
+                case DEVICE:
+                    validateDevice(currentUser, operation, item, callback);
+                    return;
+                default:
+                    //TODO: add support of other entities
+                    throw new IllegalStateException("Not Implemented!");
+            }
         }
     }
 
