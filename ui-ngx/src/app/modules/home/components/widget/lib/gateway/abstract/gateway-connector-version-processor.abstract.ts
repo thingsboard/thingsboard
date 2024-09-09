@@ -28,7 +28,7 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   }
 
   private isVersionUpgradeNeeded(): boolean {
-    return (!this.configVersion || this.configVersion < this.gatewayVersion) && this.gatewayVersionStr === GatewayVersion.Current;
+    return this.gatewayVersionStr === GatewayVersion.Current && (!this.configVersion || this.configVersion < this.gatewayVersion);
   }
 
   private parseVersion(version: string): number {
