@@ -25,6 +25,7 @@ import org.junit.Test;
 import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.http.HttpEntity;
 import org.springframework.test.web.servlet.ResultActions;
 import org.springframework.web.client.RestTemplate;
 import org.thingsboard.common.util.JacksonUtil;
@@ -88,6 +89,7 @@ import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotifi
 import org.thingsboard.server.service.notification.channels.TeamsMessage;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -771,7 +773,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         String templateParams = "${recipientTitle} - ${entityType}";
         template.setSubject("Subject: " + templateParams);
         template.setBody("Body: " + templateParams);
-        template.setThemeColor("ff0000");
+        template.setThemeColor("#ff0000");
         var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
         button.setEnabled(true);
         button.setText("Button: " + templateParams);
@@ -804,12 +806,14 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         assertThat(preview.getRecipientsCountByTarget().get(target.getName())).isEqualTo(1);
         assertThat(preview.getRecipientsPreview()).containsOnly(targetConfig.getChannelName());
 
-        ArgumentCaptor<TeamsMessage> messageCaptor = ArgumentCaptor.forClass(TeamsMessage.class);
+        ArgumentCaptor<HttpEntity<String>> messageCaptor = ArgumentCaptor.forClass(HttpEntity.class);
         notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
-        verify(restTemplate, timeout(20000)).postForEntity(eq(webhookUrl), messageCaptor.capture(), any());
+        verify(restTemplate, timeout(20000)).postForEntity(eq(new URI(webhookUrl)), messageCaptor.capture(), any());
 
-        TeamsMessage message = messageCaptor.getValue();
+        HttpEntity<String> value = messageCaptor.getValue();
+        TeamsMessage message = JacksonUtil.fromString(value.getBody(), TeamsMessage.class);
         String expectedParams = "My channel - Device";
+        assertThat(message).isNotNull();
         assertThat(message.getAttachments().get(0).getContent().getBackgroundImage().getUrl()).isNotEmpty();
         assertThat(message.getAttachments().get(0).getContent().getTextBlocks().get(0).getText()).isEqualTo("Subject: " + expectedParams);
         assertThat(message.getAttachments().get(0).getContent().getTextBlocks().get(1).getText()).isEqualTo("Body: " + expectedParams);
