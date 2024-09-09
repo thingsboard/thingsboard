@@ -75,6 +75,7 @@ public class MqttTopics {
     public static final String GATEWAY_RPC_TOPIC = BASE_GATEWAY_API_TOPIC + RPC;
     public static final String GATEWAY_ATTRIBUTES_REQUEST_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_REQUEST;
     public static final String GATEWAY_ATTRIBUTES_RESPONSE_TOPIC = BASE_GATEWAY_API_TOPIC + ATTRIBUTES_RESPONSE;
+    public static final String GATEWAY_LATENCY_TOPIC = BASE_GATEWAY_API_TOPIC + "/latency";
     // v2 topics
     public static final String BASE_DEVICE_API_TOPIC_V2 = "v2";
     public static final String REQUEST_ID_PATTERN = "(?<requestId>\\d+)";

@@ -419,6 +419,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
+                case MqttTopics.GATEWAY_LATENCY_TOPIC:
+                    gatewaySessionHandler.onGatewayLatency(mqttMsg);
+                    break;
                 default:
                     ack(ctx, msgId, MqttReasonCodes.PubAck.TOPIC_NAME_INVALID);
             }
@@ -1187,7 +1190,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
-                gatewaySessionHandler.onDevicesDisconnect();
+                gatewaySessionHandler.onGatewayDisconnect();
             }
             if (sparkplugSessionHandler != null) {
                 // add Msg Telemetry node: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()
@@ -1418,7 +1421,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
         if (gatewaySessionHandler != null) {
-            gatewaySessionHandler.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+            gatewaySessionHandler.onGatewayUpdate(sessionInfo, device, deviceProfileOpt);
         }
     }
 
@@ -1427,6 +1430,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         context.onAuthFailure(address);
         ChannelHandlerContext ctx = deviceSessionCtx.getChannel();
         closeCtx(ctx, MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION);
+        if (gatewaySessionHandler != null) {
+            gatewaySessionHandler.onGatewayDelete(deviceId);
+        }
     }
 
     public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {
