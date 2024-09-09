@@ -97,8 +97,15 @@ export class AddConnectorDialogComponent
     this.submitted = true;
     const value = this.connectorForm.getRawValue();
     if (value.useDefaults) {
-      this.getDefaultConfig(value.type).subscribe(({current, legacy, ...defaultConfig}: GatewayVersionedDefaultConfig) => {
-        value.configurationJson = (this.data.gatewayVersion ? current : legacy) ?? defaultConfig;
+      this.getDefaultConfig(value.type).subscribe((defaultConfig: GatewayVersionedDefaultConfig) => {
+        const gatewayVersion = this.data.gatewayVersion;
+        if (gatewayVersion) {
+          value.configVersion = gatewayVersion;
+        }
+        value.configurationJson = (gatewayVersion
+          ? defaultConfig[this.data.gatewayVersion]
+          : defaultConfig.legacy)
+          ?? defaultConfig;
         if (this.connectorForm.valid) {
           this.dialogRef.close(value);
         }

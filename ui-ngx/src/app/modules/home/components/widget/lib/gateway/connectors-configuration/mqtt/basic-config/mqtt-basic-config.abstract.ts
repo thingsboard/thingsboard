@@ -17,24 +17,23 @@
 import { ControlValueAccessor, FormBuilder, FormGroup, ValidationErrors, Validator } from '@angular/forms';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { isObject } from 'lodash';
 import {
   MappingType,
   MQTTBasicConfig,
-  MQTTLegacyBasicConfig,
   RequestMappingData,
   RequestMappingValue,
   RequestType
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Directive, OnDestroy } from '@angular/core';
+import { isObject } from '@core/utils';
 
 @Directive()
-export abstract class AbstractMqttBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export abstract class AbstractMqttBasicConfigComponent<BasicConfig> implements ControlValueAccessor, Validator, OnDestroy {
 
   basicFormGroup: FormGroup;
   mappingTypes = MappingType;
   private destroy$ = new Subject<void>();
-  private onChange: (value: MQTTBasicConfig | MQTTLegacyBasicConfig) => void;
+  private onChange: (value: BasicConfig) => void;
   private onTouched: () => void;
 
   constructor(protected fb: FormBuilder) {
@@ -58,7 +57,7 @@ export abstract class AbstractMqttBasicConfigComponent implements ControlValueAc
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: MQTTBasicConfig | MQTTLegacyBasicConfig) => void): void {
+  registerOnChange(fn: (value: BasicConfig) => void): void {
     this.onChange = fn;
   }
 
@@ -102,6 +101,6 @@ export abstract class AbstractMqttBasicConfigComponent implements ControlValueAc
     });
   }
 
-  abstract writeValue(basicConfig: MQTTBasicConfig | MQTTLegacyBasicConfig): void;
-  protected abstract getMappedMQTTConfig(basicConfig: MQTTBasicConfig): MQTTBasicConfig | MQTTLegacyBasicConfig;
+  abstract writeValue(basicConfig: BasicConfig): void;
+  protected abstract getMappedMQTTConfig(basicConfig: MQTTBasicConfig): BasicConfig;
 }

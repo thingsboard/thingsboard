@@ -65,7 +65,9 @@ import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway
 import { debounceTime, filter, switchMap, take, takeUntil, tap } from 'rxjs/operators';
 import { ErrorStateMatcher } from '@angular/material/core';
 import { PageData } from '@shared/models/page/page-data';
-import { GatewayConnectorVersionMappingUtil } from './utils/gateway-connector-version-mapping.util';
+import {
+  GatewayConnectorVersionMappingUtil
+} from '@home/components/widget/lib/gateway/utils/gateway-connector-version-mapping.util';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null): boolean {
@@ -247,7 +249,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
     value.ts = Date.now();
 
-    return GatewayConnectorVersionMappingUtil.getMappedByVersion(value, this.gatewayVersion);
+    return value;
   }
 
   private updateData(reload: boolean = false): void {
@@ -741,7 +743,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       ...connector,
     };
 
-    connectorState.basicConfig = connectorState.configurationJson;
+    connectorState.basicConfig = GatewayConnectorVersionMappingUtil.getConfig(connectorState, this.gatewayVersion);
     this.initialConnector = connectorState;
     this.updateConnector(connectorState);
   }

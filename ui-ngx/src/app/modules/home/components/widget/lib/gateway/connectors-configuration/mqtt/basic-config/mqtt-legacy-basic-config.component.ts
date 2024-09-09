@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 import {
-  MQTTBasicConfig,
+  MQTTBasicConfig_v3_5_2,
   MQTTLegacyBasicConfig,
   RequestMappingData,
   RequestMappingValue,
@@ -70,7 +70,7 @@ import {
     MappingTableComponent,
   ],
 })
-export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigComponent {
+export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigComponent<MQTTLegacyBasicConfig> {
 
   @Input()
   generalTabContent: TemplateRef<any>;
@@ -85,7 +85,7 @@ export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigCompo
       attributeUpdates = [],
       serverSideRpc = []
     } = basicConfig;
-    const updatedRequestMapping = MqttVersionMappingUtil.mapRequestsToNewestVersion({
+    const updatedRequestMapping = MqttVersionMappingUtil.mapRequestsToUpgradedVersion({
       connectRequests,
       disconnectRequests,
       attributeRequests,
@@ -97,7 +97,7 @@ export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigCompo
         maxNumberOfWorkers: broker.maxNumberOfWorkers,
         maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
       } : {},
-      mapping: MqttVersionMappingUtil.mapMappingToNewestVersion(mapping) || [],
+      mapping: MqttVersionMappingUtil.mapMappingToUpgradedVersion(mapping) || [],
       broker: broker || {},
       requestsMapping: this.getRequestDataArray(updatedRequestMapping),
     };
@@ -105,7 +105,7 @@ export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigCompo
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
   }
 
-  protected getMappedMQTTConfig(basicConfig: MQTTBasicConfig): MQTTLegacyBasicConfig {
+  protected getMappedMQTTConfig(basicConfig: MQTTBasicConfig_v3_5_2): MQTTLegacyBasicConfig {
     let { broker, workers, mapping, requestsMapping  } = basicConfig || {};
 
     if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {
@@ -121,8 +121,8 @@ export class MqttLegacyBasicConfigComponent extends AbstractMqttBasicConfigCompo
 
     return {
       broker,
-      mapping: MqttVersionMappingUtil.mapMappingToLegacyVersion(mapping),
-      ...(MqttVersionMappingUtil.mapRequestsToLegacyVersion(requestsMapping as Record<RequestType, RequestMappingData[]>))
+      mapping: MqttVersionMappingUtil.mapMappingToDowngradedVersion(mapping),
+      ...(MqttVersionMappingUtil.mapRequestsToDowngradedVersion(requestsMapping as Record<RequestType, RequestMappingData[]>))
     };
   }
 }

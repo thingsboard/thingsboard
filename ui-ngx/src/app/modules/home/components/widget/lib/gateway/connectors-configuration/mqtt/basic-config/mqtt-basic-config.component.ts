@@ -17,7 +17,7 @@
 import { Component, forwardRef, Input, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 import {
-  MQTTBasicConfig,
+  MQTTBasicConfig_v3_5_2,
   RequestMappingData,
   RequestMappingValue,
   RequestType
@@ -68,12 +68,12 @@ import {
     MappingTableComponent,
   ],
 })
-export class MqttBasicConfigComponent extends AbstractMqttBasicConfigComponent {
+export class MqttBasicConfigComponent extends AbstractMqttBasicConfigComponent<MQTTBasicConfig_v3_5_2> {
 
   @Input()
   generalTabContent: TemplateRef<any>;
 
-  writeValue(basicConfig: MQTTBasicConfig): void {
+  writeValue(basicConfig: MQTTBasicConfig_v3_5_2): void {
     const { broker, mapping = [], requestsMapping } = basicConfig;
     const editedBase = {
       workers: broker && (broker.maxNumberOfWorkers || broker.maxMessageNumberPerWorker) ? {
@@ -88,7 +88,7 @@ export class MqttBasicConfigComponent extends AbstractMqttBasicConfigComponent {
     this.basicFormGroup.setValue(editedBase, {emitEvent: false});
   }
 
-  protected getMappedMQTTConfig(basicConfig: MQTTBasicConfig): MQTTBasicConfig {
+  protected getMappedMQTTConfig(basicConfig: MQTTBasicConfig_v3_5_2): MQTTBasicConfig_v3_5_2 {
     let { broker, workers, mapping, requestsMapping  } = basicConfig || {};
 
     if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {

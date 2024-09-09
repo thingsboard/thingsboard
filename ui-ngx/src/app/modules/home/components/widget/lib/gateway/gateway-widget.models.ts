@@ -124,21 +124,14 @@ export interface GatewayConnectorBase {
   configVersion?: string;
 }
 
-export type GatewayConnector = CurrentGatewayConnector | LegacyGatewayConnector;
-
-export interface CurrentGatewayConnector extends GatewayConnectorBase {
+export interface GatewayConnector extends GatewayConnectorBase {
   configurationJson: ConnectorBaseConfig;
   basicConfig?: ConnectorBaseConfig;
 }
 
-export interface LegacyGatewayConnector extends GatewayConnectorBase {
-  configurationJson: ConnectorLegacyBaseConfig;
-  basicConfig?: ConnectorLegacyBaseConfig;
-}
-
 export interface GatewayVersionedDefaultConfig {
-  legacy: LegacyGatewayConnector;
-  current: GatewayConnector;
+  legacy: GatewayConnector;
+  '3.5.1': GatewayConnector;
 }
 
 export interface DataMapping {
@@ -201,8 +194,6 @@ export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingF
 
 export type ConnectorBaseConfig = ConnectorBaseInfo | MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
 
-export type ConnectorLegacyBaseConfig = ConnectorBaseInfo | MQTTLegacyBasicConfig;
-
 export interface ConnectorBaseInfo {
   name: string;
   id: string;
@@ -210,7 +201,9 @@ export interface ConnectorBaseInfo {
   logLevel: GatewayLogLevel;
 }
 
-export interface MQTTBasicConfig {
+export type MQTTBasicConfig = MQTTBasicConfig_v3_5_2 | MQTTLegacyBasicConfig;
+
+export interface MQTTBasicConfig_v3_5_2 {
   mapping: ConverterConnectorMapping[];
   requestsMapping: Record<RequestType, RequestMappingData[] | RequestMappingValue[]> | RequestMappingData[] | RequestMappingValue[];
   broker: BrokerConfig;
