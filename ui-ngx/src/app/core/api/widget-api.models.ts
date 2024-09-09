@@ -127,7 +127,6 @@ export interface IAliasController {
   entityAliasesChanged: Observable<Array<string>>;
   entityAliasResolved: Observable<string>;
   filtersChanged: Observable<Array<string>>;
-  userFilters: Filters;
   getAliasInfo(aliasId: string): Observable<AliasInfo>;
   getEntityAliasId(aliasName: string): string;
   getInstantAliasInfo(aliasId: string): AliasInfo;
@@ -138,6 +137,7 @@ export interface IAliasController {
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
+  getUserFilters(): Filters;
   getFilterInfo(filterId: string): FilterInfo;
   getKeyFilters(filterId: string): Array<KeyFilter>;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo): void;

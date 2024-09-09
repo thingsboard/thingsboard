@@ -167,6 +167,10 @@ export class AliasController implements IAliasController {
     return this.filters;
   }
 
+  getUserFilters(): Filters {
+    return this.userFilters;
+  }
+
   getFilterInfo(filterId: string): FilterInfo {
     if (this.userFilters[filterId]) {
       return this.userFilters[filterId];
