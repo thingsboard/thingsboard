@@ -16,17 +16,17 @@
 
 -->
 <form [formGroup]="timezoneForm">
-  <section class="tb-form-panel no-border">
-    <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
+  <section class="tb-form-row column-xs space-between">
+    <div>{{ 'timezone.timezone' | translate }}</div>
     <tb-timezone-select [localBrowserTimezonePlaceholderOnEmpty]="localBrowserTimezonePlaceholderOnEmpty"
                         formControlName="timezone"
                         subscriptSizing="dynamic"
                         appearance="outline"
-                        displayLabel="false">
+                        displayLabel="false" class="flex">
     </tb-timezone-select>
   </section>
 </form>
-<div class="tb-panel-actions tb-flex flex-end no-gap">
+<div class="tb-timezone-panel-actions tb-flex flex-end no-gap">
   <button type="button"
           mat-button
           [disabled]="(isLoading$ | async)"

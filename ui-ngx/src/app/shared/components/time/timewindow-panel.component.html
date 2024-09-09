@@ -20,7 +20,7 @@
     <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
                       [options]="timewindowTypeOptions" formControlName="selectedTab">
     </tb-toggle-select>
-    <button mat-icon-button type="button" class="tb-box-button"
+    <button mat-icon-button type="button" class="tb-timewindow-form-settings-btn tb-mat-24"
             *ngIf="isEdit"
             (click)="openTimewindowConfig()">
       <mat-icon>settings</mat-icon>
@@ -44,7 +44,7 @@
           </ng-container>
         </div>
 
-        <ng-container formGroupName="realtime">
+        <div class="tb-form-row no-border no-padding" formGroupName="realtime">
           <tb-timeinterval
             *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL"
             formControlName="timewindowMs"
@@ -65,7 +65,7 @@
             [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
                               timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
           </tb-quick-time-interval>
-        </ng-container>
+        </div>
       </section>
     </ng-container>
 
@@ -85,7 +85,8 @@
           </ng-container>
         </div>
 
-        <ng-container formGroupName="history" *ngIf="historyIntervalSelectionAvailable &&
+        <div class="tb-form-row no-border no-padding"
+             formGroupName="history" *ngIf="historyIntervalSelectionAvailable &&
                                   timewindowForm.get('history.historyType').value !== historyTypes.FOR_ALL_TIME">
           <tb-timeinterval
             *ngIf="timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL"
@@ -116,14 +117,14 @@
             [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
           </tb-quick-time-interval>
-        </ng-container>
+        </div>
       </section>
     </ng-container>
 
     <ng-container *ngIf="aggregationOptionsAvailable">
       <ng-container formGroupName="aggregation">
         <section class="tb-form-row column-xs space-between same-padding" *ngIf="isEdit || !timewindow.hideAggregation">
-          <div class="fixed-title-width">{{ 'aggregation.aggregation' | translate }}</div>
+          <div>{{ 'aggregation.aggregation' | translate }}</div>
           <mat-form-field subscriptSizing="dynamic" appearance="outline">
             <mat-select formControlName="type">
               <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
@@ -152,9 +153,9 @@
         </section>
       </ng-container>
 
-      <section class="tb-form-row column-xs space-between same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
+      <section class="tb-form-row column same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
        && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
-        <div class="fixed-title-width">{{ 'aggregation.group-interval' | translate }}</div>
+        <div>{{ 'aggregation.group-interval' | translate }}</div>
         <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"

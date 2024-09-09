@@ -174,7 +174,7 @@ export class TimezoneComponent implements ControlValueAccessor, OnInit {
           }
         },
         {},
-        {}, {}, true);
+        {}, {}, false);
       timezoneSelectionPopover.tbComponentRef.instance.popoverComponent = timezoneSelectionPopover;
     }
     this.cd.detectChanges();

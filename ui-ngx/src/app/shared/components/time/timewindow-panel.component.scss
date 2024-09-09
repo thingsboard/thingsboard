@@ -27,8 +27,14 @@
       align-items: center;
     }
 
-    &-type-options {
+    &-type-options,
+    tb-quick-time-interval,
+    tb-timeinterval{
       flex: 1;
+    }
+
+    &-settings-btn {
+      color: rgba(0, 0, 0, 0.54);
     }
   }
 }

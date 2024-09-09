@@ -16,7 +16,7 @@
 
 -->
 <section class="tb-form-panel no-border no-padding" [formGroup]="timeintervalFormGroup">
-  <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+  <mat-form-field fxFlex class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
     <mat-select formControlName="interval">
       <mat-option *ngFor="let interval of intervals" [value]="interval.value">

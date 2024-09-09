@@ -22,9 +22,12 @@
   max-width: 100%;
   background-color: #fff;
 
-  .tb-form-panel {
-    padding: 12px;
-    gap: 24px;
+  tb-timezone-select {
+    flex: 1;
+  }
+
+  .tb-timezone-panel-actions {
+    padding-top: 12px;
   }
 
 }
