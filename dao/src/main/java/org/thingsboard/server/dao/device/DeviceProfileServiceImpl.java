@@ -271,8 +271,9 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
         log.trace("Executing findOrCreateDefaultDeviceProfile");
         DeviceProfile deviceProfile = findDeviceProfileByName(tenantId, name, false);
         if (deviceProfile == null) {
+            boolean isDefault = "default".equals(name) && findDefaultDeviceProfile(tenantId) == null;
             try {
-                deviceProfile = this.doCreateDefaultDeviceProfile(tenantId, name, name.equals("default"), true);
+                deviceProfile = this.doCreateDeviceProfile(tenantId, name, isDefault, true);
             } catch (DataValidationException e) {
                 if (DEVICE_PROFILE_WITH_SUCH_NAME_ALREADY_EXISTS.equals(e.getMessage())) {
                     deviceProfile = findDeviceProfileByName(tenantId, name, false);
@@ -287,10 +288,10 @@ public class DeviceProfileServiceImpl extends CachedVersionedEntityService<Devic
     @Override
     public DeviceProfile createDefaultDeviceProfile(TenantId tenantId) {
         log.trace("Executing createDefaultDeviceProfile tenantId [{}]", tenantId);
-        return doCreateDefaultDeviceProfile(tenantId, "default", true, false);
+        return doCreateDeviceProfile(tenantId, "default", true, false);
     }
 
-    private DeviceProfile doCreateDefaultDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile, boolean publishSaveEvent) {
+    private DeviceProfile doCreateDeviceProfile(TenantId tenantId, String profileName, boolean defaultProfile, boolean publishSaveEvent) {
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
         DeviceProfile deviceProfile = new DeviceProfile();
         deviceProfile.setTenantId(tenantId);
