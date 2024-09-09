@@ -1,15 +1,14 @@
-import {
-  GatewayConnectorVersionProcessor
-} from '@home/components/widget/lib/gateway/abstract/gateway-connector-version-processor.abstract';
+import { isEqual } from '@core/utils';
 import {
   GatewayConnector,
-  MQTTBasicConfig, MQTTBasicConfig_v3_5_2,
+  MQTTBasicConfig,
+  MQTTBasicConfig_v3_5_2,
   MQTTLegacyBasicConfig,
   RequestMappingData,
   RequestType,
-} from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isEqual } from '@core/utils';
-import { MqttVersionMappingUtil } from '@home/components/widget/lib/gateway/utils/mqtt-version-mapping.util';
+} from '../gateway-widget.models';
+import { MqttVersionMappingUtil } from '../utils/mqtt-version-mapping.util';
+import { GatewayConnectorVersionProcessor } from './gateway-connector-version-processor.abstract';
 
 export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTBasicConfig> {
   private readonly mqttRequestTypeKeys = Object.values(RequestType);
@@ -20,7 +19,7 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
   ) {
     super(gatewayVersionStr, connector);
   }
-  getUpgradedVersion(): MQTTBasicConfig {
+  getUpgradedVersion(): MQTTBasicConfig_v3_5_2 {
     const {
       connectRequests,
       disconnectRequests,
@@ -41,13 +40,13 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
     };
 
     this.mqttRequestTypeKeys.forEach((key: RequestType) => {
-      const { [key]: removedKey, ...rest } = configurationJson as MQTTLegacyBasicConfig;
+      const { [key]: removedValue, ...rest } = configurationJson as MQTTLegacyBasicConfig;
       configurationJson = { ...rest } as any;
     });
 
     this.cleanUpConfigJson(configurationJson as MQTTBasicConfig_v3_5_2);
 
-    return configurationJson as MQTTBasicConfig;
+    return configurationJson as MQTTBasicConfig_v3_5_2;
   }
 
   getDowngradedVersion(): MQTTLegacyBasicConfig {

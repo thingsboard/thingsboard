@@ -80,8 +80,8 @@ export class MqttBasicConfigComponent extends AbstractMqttBasicConfigComponent<M
         maxNumberOfWorkers: broker.maxNumberOfWorkers,
         maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
       } : {},
-      mapping: mapping || [],
-      broker: broker || {},
+      mapping: mapping ?? [],
+      broker: broker ?? {},
       requestsMapping: this.getRequestDataArray(requestsMapping as Record<RequestType, RequestMappingData[]>),
     };
 

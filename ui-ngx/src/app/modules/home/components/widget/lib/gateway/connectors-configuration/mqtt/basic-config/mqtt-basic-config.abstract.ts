@@ -32,7 +32,9 @@ export abstract class AbstractMqttBasicConfigComponent<BasicConfig> implements C
 
   basicFormGroup: FormGroup;
   mappingTypes = MappingType;
+
   private destroy$ = new Subject<void>();
+
   private onChange: (value: BasicConfig) => void;
   private onTouched: () => void;
 

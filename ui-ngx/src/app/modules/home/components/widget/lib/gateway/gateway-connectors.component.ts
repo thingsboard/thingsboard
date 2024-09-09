@@ -243,10 +243,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       delete value.class;
     }
 
-    if (this.gatewayVersion && !value.configVersion) {
-      value.configVersion = this.gatewayVersion;
-    }
-
     value.ts = Date.now();
 
     return value;
@@ -482,7 +478,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           value.configurationJson = {} as ConnectorBaseConfig;
         }
         value.basicConfig = value.configurationJson;
-        this.updateConnector({...value, configVersion: this.gatewayVersion ?? ''});
+        this.updateConnector(value);
         this.generate('basicConfig.broker.clientId');
         setTimeout(() => this.saveConnector());
     });

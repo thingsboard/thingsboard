@@ -40,7 +40,7 @@ export class MqttVersionMappingUtil {
     ['attributeNameExpressionSource', 'responseTopicQoS', 'extensionConfig'];
 
   static mapMappingToUpgradedVersion(
-    mapping: LegacyConverterConnectorMapping[] | ConverterConnectorMapping[]
+    mapping: LegacyConverterConnectorMapping[]
   ): ConverterConnectorMapping[] {
     return mapping?.map(({ converter, topicFilter, subscriptionQos = 1 }) => {
       const deviceInfo = converter.deviceInfo ?? this.extractConverterDeviceInfo(converter);
@@ -54,12 +54,12 @@ export class MqttVersionMappingUtil {
       this.cleanUpOldFields(newConverter);
 
       return { converter: newConverter, topicFilter, subscriptionQos };
-    });
+    }) as ConverterConnectorMapping[];
   }
 
   static mapRequestsToUpgradedVersion(
     requestMapping: Record<RequestType,
-      RequestMappingData[] | LegacyRequestMappingData[]>
+      LegacyRequestMappingData[]>
   ): Record<RequestType, RequestMappingData[]> {
     return this.mqttRequestTypeKeys.reduce((acc, key: RequestType) => {
       if (!requestMapping[key]) {

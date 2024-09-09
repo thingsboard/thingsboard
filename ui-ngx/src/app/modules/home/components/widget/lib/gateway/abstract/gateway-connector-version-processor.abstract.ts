@@ -11,9 +11,9 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
 
   getProcessedByVersion(): BasicConfig {
     if (this.isVersionUpdateNeeded()) {
-      return this.configVersion > this.gatewayVersion
-        ? this.getDowngradedVersion()
-        : this.getUpgradedVersion();
+      return this.configVersion < this.gatewayVersion
+        ? this.getUpgradedVersion()
+        : this.getDowngradedVersion();
     }
 
     return this.connector.configurationJson as unknown as BasicConfig;
