@@ -15,9 +15,9 @@
 ///
 
 import {
-  ConnectorBaseConfig,
   ConnectorType,
-  GatewayConnector, MQTTBasicConfig,
+  GatewayConnector,
+  MQTTBasicConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { MqttVersionProcessor } from '@home/components/widget/lib/gateway/abstract/mqtt-version-processor.abstract';
 

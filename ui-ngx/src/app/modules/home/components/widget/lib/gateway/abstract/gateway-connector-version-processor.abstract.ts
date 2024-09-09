@@ -31,6 +31,6 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
     return Number(version?.replace(/\./g, ''));
   }
 
-  abstract getDowngradedVersion(): GatewayConnector<BasicConfig>;
-  abstract getUpgradedVersion(): GatewayConnector<BasicConfig>;
+  protected abstract getDowngradedVersion(): GatewayConnector<BasicConfig>;
+  protected abstract getUpgradedVersion(): GatewayConnector<BasicConfig>;
 }

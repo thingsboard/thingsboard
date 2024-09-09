@@ -31,7 +31,7 @@ import { isObject } from '@core/utils';
 export abstract class AbstractMqttBasicConfigComponent<BasicConfig> implements ControlValueAccessor, Validator, OnDestroy {
 
   basicFormGroup: FormGroup;
-  mappingTypes = MappingType;
+  MappingType = MappingType;
 
   private destroy$ = new Subject<void>();
 
