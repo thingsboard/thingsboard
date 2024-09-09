@@ -222,6 +222,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
+  @ViewChild('dashboardContent', {read: ElementRef}) dashboardContent: ElementRef<HTMLElement>;
+
   prevDashboard: Dashboard;
 
   iframeMode = this.utils.iframeMode;

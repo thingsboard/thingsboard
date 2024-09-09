@@ -173,6 +173,7 @@ gridster-item:hover {
 }
 
 .tooltipster-sidetip.tb-widget-edit-actions-tooltip {
+  position: absolute !important;
   .tooltipster-box {
     user-select: none;
     background: #fff;
