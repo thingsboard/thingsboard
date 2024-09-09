@@ -124,14 +124,14 @@ export interface GatewayConnectorBase {
   configVersion?: string;
 }
 
-export interface GatewayConnector extends GatewayConnectorBase {
-  configurationJson: ConnectorBaseConfig;
-  basicConfig?: ConnectorBaseConfig;
+export interface GatewayConnector<BaseConfig = ConnectorBaseConfig> extends GatewayConnectorBase {
+  configurationJson: BaseConfig;
+  basicConfig?: BaseConfig;
 }
 
 export interface GatewayVersionedDefaultConfig {
-  legacy: GatewayConnector;
-  '3.5.1': GatewayConnector;
+  legacy: GatewayConnector<ConnectorLegacyConfig>;
+  '3.5.1': GatewayConnector<ConnectorBaseConfig_v_3_5_2>;
 }
 
 export interface DataMapping {
@@ -192,7 +192,11 @@ export type ConnectorMapping = DeviceConnectorMapping | RequestMappingValue | Co
 
 export type ConnectorMappingFormValue = DeviceConnectorMapping | RequestMappingFormValue | ConverterMappingFormValue;
 
-export type ConnectorBaseConfig = ConnectorBaseInfo | MQTTBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+export type ConnectorBaseConfig = ConnectorBaseConfig_v_3_5_2 | ConnectorLegacyConfig;
+
+export type ConnectorLegacyConfig = ConnectorBaseInfo | MQTTLegacyBasicConfig | OPCBasicConfig | ModbusBasicConfig;
+
+export type ConnectorBaseConfig_v_3_5_2 = ConnectorBaseInfo | MQTTBasicConfig_v3_5_2;
 
 export interface ConnectorBaseInfo {
   name: string;

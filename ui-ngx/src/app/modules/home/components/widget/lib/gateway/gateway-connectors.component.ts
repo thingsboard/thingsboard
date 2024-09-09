@@ -732,14 +732,14 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       this.connectorForm.enable();
     }
 
-    const connectorState = {
+    const connectorState = GatewayConnectorVersionMappingUtil.getConfig({
       configuration: '',
       key: 'auto',
       configurationJson: {} as ConnectorBaseConfig,
       ...connector,
-    };
+    }, this.gatewayVersion);
 
-    connectorState.basicConfig = GatewayConnectorVersionMappingUtil.getConfig(connectorState, this.gatewayVersion);
+    connectorState.basicConfig = connectorState.configurationJson;
     this.initialConnector = connectorState;
     this.updateConnector(connectorState);
   }

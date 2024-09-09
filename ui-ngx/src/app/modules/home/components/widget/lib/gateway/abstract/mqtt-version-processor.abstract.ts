@@ -15,11 +15,11 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
 
   constructor(
     protected gatewayVersionStr: string,
-    protected connector: GatewayConnector
+    protected connector: GatewayConnector<MQTTBasicConfig>
   ) {
     super(gatewayVersionStr, connector);
   }
-  getUpgradedVersion(): MQTTBasicConfig_v3_5_2 {
+  getUpgradedVersion(): GatewayConnector<MQTTBasicConfig_v3_5_2> {
     const {
       connectRequests,
       disconnectRequests,
@@ -46,10 +46,14 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
 
     this.cleanUpConfigJson(configurationJson as MQTTBasicConfig_v3_5_2);
 
-    return configurationJson as MQTTBasicConfig_v3_5_2;
+    return {
+      ...this.connector,
+      configurationJson,
+      configVersion: this.gatewayVersionStr
+    } as GatewayConnector<MQTTBasicConfig_v3_5_2>;
   }
 
-  getDowngradedVersion(): MQTTLegacyBasicConfig {
+  getDowngradedVersion(): GatewayConnector<MQTTLegacyBasicConfig> {
     const { requestsMapping, mapping, ...restConfig } = this.connector.configurationJson as MQTTBasicConfig_v3_5_2;
 
     const updatedRequestsMapping =
@@ -57,10 +61,14 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
     const updatedMapping = MqttVersionMappingUtil.mapMappingToDowngradedVersion(mapping);
 
     return {
-      ...restConfig,
-      ...updatedRequestsMapping,
-      mapping: updatedMapping,
-    };
+      ...this.connector,
+      configurationJson: {
+        ...restConfig,
+        ...updatedRequestsMapping,
+        mapping: updatedMapping,
+      },
+      configVersion: this.gatewayVersionStr
+    } as GatewayConnector<MQTTLegacyBasicConfig>;
   }
 
   private cleanUpConfigJson(configurationJson: MQTTBasicConfig_v3_5_2): void {

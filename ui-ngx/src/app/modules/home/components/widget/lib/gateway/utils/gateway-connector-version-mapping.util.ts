@@ -17,18 +17,18 @@
 import {
   ConnectorBaseConfig,
   ConnectorType,
-  GatewayConnector,
+  GatewayConnector, MQTTBasicConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { MqttVersionProcessor } from '@home/components/widget/lib/gateway/abstract/mqtt-version-processor.abstract';
 
 export abstract class GatewayConnectorVersionMappingUtil {
 
-  static getConfig(connector: GatewayConnector, gatewayVersion: string): ConnectorBaseConfig {
+  static getConfig(connector: GatewayConnector, gatewayVersion: string): GatewayConnector {
     switch(connector.type) {
       case ConnectorType.MQTT:
-        return new MqttVersionProcessor(gatewayVersion, connector).getProcessedByVersion();
+        return new MqttVersionProcessor(gatewayVersion, connector as GatewayConnector<MQTTBasicConfig>).getProcessedByVersion();
       default:
-        return connector.configurationJson as ConnectorBaseConfig;
+        return connector;
     }
   }
 }
