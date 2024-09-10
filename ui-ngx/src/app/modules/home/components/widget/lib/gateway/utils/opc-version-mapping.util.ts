@@ -15,11 +15,21 @@
 ///
 
 import {
+  Attribute,
+  AttributesUpdate,
   DeviceConnectorMapping,
+  LegacyAttribute,
+  LegacyDeviceAttributeUpdate,
   LegacyDeviceConnectorMapping,
+  LegacyRpcMethod,
   LegacyServerConfig,
+  LegacyTimeseries,
   OPCBasicConfig_v3_5_2,
-  ServerConfig
+  OPCUaSourceType,
+  RpcArgument,
+  RpcMethod,
+  ServerConfig,
+  Timeseries
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 export class OpcVersionMappingUtil {
@@ -42,62 +52,72 @@ export class OpcVersionMappingUtil {
   }
 
   static mapMappingToUpgradedVersion(mapping: LegacyDeviceConnectorMapping[]): DeviceConnectorMapping[] {
-    return mapping?.map((oldMapping: any) => ({
-      ...oldMapping,
-      deviceNodeSource: 'path',
+    return mapping.map((legacyMapping: LegacyDeviceConnectorMapping) => ({
+      ...legacyMapping,
+      deviceNodeSource: this.getTypeSourceByValue(legacyMapping.deviceNodePattern),
       deviceInfo: {
-        deviceNameExpression: oldMapping.deviceNamePattern,
-        deviceNameExpressionSource: 'path',
-        deviceProfileExpression: oldMapping.deviceTypePattern ?? 'default',
-        deviceProfileExpressionSource: 'path',
+        deviceNameExpression: legacyMapping.deviceNamePattern,
+        deviceNameExpressionSource: this.getTypeSourceByValue(legacyMapping.deviceNamePattern),
+        deviceProfileExpression: legacyMapping.deviceTypePattern ?? 'default',
+        deviceProfileExpressionSource: this.getTypeSourceByValue(legacyMapping.deviceTypePattern ?? 'default'),
       },
-      attributes: oldMapping.attributes.map(attribute => ({
+      attributes: legacyMapping.attributes.map((attribute: LegacyAttribute) => ({
         key: attribute.key,
-        type: 'path',
+        type: this.getTypeSourceByValue(attribute.path),
         value: attribute.path,
       })),
-      attributes_updates: oldMapping.attributes_updates.map(attributeUpdate => ({
+      attributes_updates: legacyMapping.attributes_updates.map((attributeUpdate: LegacyDeviceAttributeUpdate) => ({
         key: attributeUpdate.attributeOnThingsBoard,
-        type: 'path',
+        type: this.getTypeSourceByValue(attributeUpdate.attributeOnDevice),
         value: attributeUpdate.attributeOnDevice,
       })),
-      timeseries: oldMapping.timeseries.map(timeseries => ({
+      timeseries: legacyMapping.timeseries.map((timeseries: LegacyTimeseries) => ({
         key: timeseries.key,
-        type: 'path',
+        type: this.getTypeSourceByValue(timeseries.path),
         value: timeseries.path,
       })),
-      rpc_methods: oldMapping.rpc_methods.map(rpcMethod => ({
+      rpc_methods: legacyMapping.rpc_methods.map((rpcMethod: LegacyRpcMethod) => ({
         method: rpcMethod.method,
         arguments: rpcMethod.arguments.map(arg => ({
           value: arg,
           type: this.getArgumentType(arg),
-        }))
+        } as RpcArgument))
       }))
     }));
   }
 
   static mapMappingToDowngradedVersion(mapping: DeviceConnectorMapping[]): LegacyDeviceConnectorMapping[] {
-    return mapping?.map((newMapping: DeviceConnectorMapping) => ({
-      ...newMapping,
-      deviceNamePattern: newMapping.deviceInfo.deviceNameExpression,
-      deviceTypePattern: newMapping.deviceInfo.deviceProfileExpression,
-      attributes: newMapping.attributes.map((attribute: any) => ({
+    return mapping.map((upgradedMapping: DeviceConnectorMapping) => ({
+      ...upgradedMapping,
+      deviceNamePattern: upgradedMapping.deviceInfo.deviceNameExpression,
+      deviceTypePattern: upgradedMapping.deviceInfo.deviceProfileExpression,
+      attributes: upgradedMapping.attributes.map((attribute: Attribute) => ({
         key: attribute.key,
         path: attribute.value,
       })),
-      attributes_updates: newMapping.attributes_updates.map((attributeUpdate: any) => ({
+      attributes_updates: upgradedMapping.attributes_updates.map((attributeUpdate: AttributesUpdate) => ({
         attributeOnThingsBoard: attributeUpdate.key,
         attributeOnDevice: attributeUpdate.value,
       })),
-      timeseries: newMapping.timeseries.map((timeseries: any) => ({
+      timeseries: upgradedMapping.timeseries.map((timeseries: Timeseries) => ({
         key: timeseries.key,
         path: timeseries.value,
       })),
-      rpc_methods: newMapping.rpc_methods.map((rpcMethod: any) => ({
+      rpc_methods: upgradedMapping.rpc_methods.map((rpcMethod: RpcMethod) => ({
         method: rpcMethod.method,
-        arguments: rpcMethod.arguments.map((arg: any) => arg.value)
+        arguments: rpcMethod.arguments.map((arg: RpcArgument) => arg.value)
       }))
     }));
+  }
+
+  private static getTypeSourceByValue(value: string): OPCUaSourceType {
+    if (value.includes('${')) {
+      return OPCUaSourceType.IDENTIFIER;
+    }
+    if (value.includes(`/`) || value.includes('\\')) {
+      return OPCUaSourceType.PATH;
+    }
+    return OPCUaSourceType.CONST;
   }
 
   private static getArgumentType(arg: unknown): string {

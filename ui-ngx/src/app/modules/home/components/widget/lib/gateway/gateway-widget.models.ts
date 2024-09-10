@@ -265,9 +265,9 @@ export interface WorkersConfig {
 
 export interface ConnectorDeviceInfo {
   deviceNameExpression: string;
-  deviceNameExpressionSource: SourceType;
+  deviceNameExpressionSource: SourceType | OPCUaSourceType;
   deviceProfileExpression: string;
-  deviceProfileExpressionSource: SourceType;
+  deviceProfileExpressionSource: SourceType | OPCUaSourceType;
 }
 
 export interface Attribute {
@@ -292,7 +292,7 @@ export interface LegacyTimeseries {
   path: string;
 }
 
-interface RpcArgument {
+export interface RpcArgument {
   type: string;
   value: number;
 }
@@ -363,7 +363,7 @@ export type ConverterMappingFormValue = Omit<ConverterConnectorMapping, 'convert
 
 export interface DeviceConnectorMapping {
   deviceNodePattern: string;
-  deviceNodeSource: SourceType;
+  deviceNodeSource: OPCUaSourceType;
   deviceInfo: ConnectorDeviceInfo;
   attributes?: Attribute[];
   timeseries?: Timeseries[];
@@ -373,6 +373,7 @@ export interface DeviceConnectorMapping {
 
 export interface LegacyDeviceConnectorMapping {
   deviceNamePattern: string;
+  deviceNodePattern: string;
   deviceTypePattern: string;
   attributes?: LegacyAttribute[];
   timeseries?: LegacyTimeseries[];
