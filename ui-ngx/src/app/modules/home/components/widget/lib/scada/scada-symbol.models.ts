@@ -255,8 +255,17 @@ const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata 
     if (elements.length) {
       return JSON.parse(elements[0].textContent);
     } else {
-      const viewBox = svgDoc.getElementsByTagName('svg')[0].viewBox.baseVal;
-      return emptyMetadata(viewBox.width, viewBox.height);
+      const svg = svgDoc.getElementsByTagName('svg')[0];
+      let width = null;
+      let height = null;
+      if (svg.viewBox.baseVal.width && svg.viewBox.baseVal.height) {
+        width = svg.viewBox.baseVal.width;
+        height = svg.viewBox.baseVal.height;
+      } else if (svg.width.baseVal.value && svg.height.baseVal.value) {
+        width = svg.width.baseVal.value;
+        height = svg.height.baseVal.value;
+      }
+      return emptyMetadata(width, height);
     }
   } catch (_e) {
     console.error(_e);

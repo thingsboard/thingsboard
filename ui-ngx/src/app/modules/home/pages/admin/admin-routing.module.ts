@@ -114,8 +114,7 @@ const routes: Routes = [
             data: {
               auth: [Authority.TENANT_ADMIN, Authority.SYS_ADMIN],
               title: 'scada.symbols',
-              imageSubType: ResourceSubType.SCADA_SYMBOL,
-              editOnRowClick: true
+              imageSubType: ResourceSubType.SCADA_SYMBOL
             }
           },
           {

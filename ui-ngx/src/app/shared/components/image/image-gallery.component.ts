@@ -181,8 +181,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     return this.imageSubType === ResourceSubType.SCADA_SYMBOL;
   }
 
-  private editOnRowClick = false;
-
   private updateDataSubscription: Subscription;
 
   private widgetResize$: ResizeObserver;
@@ -219,7 +217,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     const routerQueryParams: PageQueryParam = this.route.snapshot.queryParams;
     if (this.pageMode) {
       this.imageSubType = this.route.snapshot.data.imageSubType || ResourceSubType.IMAGE;
-      this.editOnRowClick = this.route.snapshot.data.editOnRowClick || false;
       if (routerQueryParams.hasOwnProperty('direction')
         || routerQueryParams.hasOwnProperty('property')) {
         sortOrder = {
@@ -642,9 +639,8 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   rowClick($event, image: ImageResourceInfo) {
-    if (this.editOnRowClick) {
+    if (this.isScada) {
       this.editImage($event, image);
-
     } else {
       if (this.selectionMode) {
         this.selectImage($event, image);
