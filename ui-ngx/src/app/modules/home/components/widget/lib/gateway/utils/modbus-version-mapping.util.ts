@@ -20,11 +20,14 @@ import {
   ModbusLegacySlave,
   ModbusMasterConfig,
   ModbusRegisterValues,
-  ModbusSlave, ModbusValue, ModbusValues,
+  ModbusSlave,
+  ModbusValue,
+  ModbusValues,
   SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 export class ModbusVersionMappingUtil {
+
   static mapMasterToUpgradedVersion(master: ModbusMasterConfig): ModbusMasterConfig {
     return {
       slaves: master.slaves.map((slave: SlaveConfig) => ({

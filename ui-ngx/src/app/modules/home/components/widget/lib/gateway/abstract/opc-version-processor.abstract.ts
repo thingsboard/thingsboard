@@ -31,6 +31,7 @@ export class OpcVersionProcessor extends GatewayConnectorVersionProcessor<OPCBas
   ) {
     super(gatewayVersionStr, connector);
   }
+
   getUpgradedVersion(): GatewayConnector<OPCBasicConfig_v3_5_2> {
     const server = this.connector.configurationJson.server as LegacyServerConfig;
     return {

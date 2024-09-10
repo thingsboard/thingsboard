@@ -34,6 +34,7 @@ export class ModbusVersionProcessor extends GatewayConnectorVersionProcessor<any
   ) {
     super(gatewayVersionStr, connector);
   }
+
   getUpgradedVersion(): GatewayConnector<ModbusBasicConfig_v3_5_2> {
     const configurationJson = this.connector.configurationJson;
     return {

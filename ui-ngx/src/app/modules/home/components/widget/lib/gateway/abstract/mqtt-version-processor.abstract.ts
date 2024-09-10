@@ -27,6 +27,7 @@ import { MqttVersionMappingUtil } from '../utils/mqtt-version-mapping.util';
 import { GatewayConnectorVersionProcessor } from './gateway-connector-version-processor.abstract';
 
 export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTBasicConfig> {
+
   private readonly mqttRequestTypeKeys = Object.values(RequestType);
 
   constructor(
@@ -35,6 +36,7 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
   ) {
     super(gatewayVersionStr, connector);
   }
+
   getUpgradedVersion(): GatewayConnector<MQTTBasicConfig_v3_5_2> {
     const {
       connectRequests,

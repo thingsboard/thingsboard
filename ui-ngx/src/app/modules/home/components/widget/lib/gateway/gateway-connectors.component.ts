@@ -245,6 +245,10 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       delete value.class;
     }
 
+    if (this.gatewayVersion && !value.configVersion) {
+      value.configVersion = this.gatewayVersion;
+    }
+
     value.ts = Date.now();
 
     return value;

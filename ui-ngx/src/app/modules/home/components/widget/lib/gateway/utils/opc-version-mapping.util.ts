@@ -33,6 +33,7 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 export class OpcVersionMappingUtil {
+
   static mapServerToUpgradedVersion(server: LegacyServerConfig): ServerConfig {
     const { mapping, disableSubscriptions, ...restServer } = server;
     return {
