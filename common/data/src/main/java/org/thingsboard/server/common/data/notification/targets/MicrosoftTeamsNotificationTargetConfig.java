@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.notification.targets;
 
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 
@@ -28,7 +29,8 @@ public class MicrosoftTeamsNotificationTargetConfig extends NotificationTargetCo
     private String webhookUrl;
     @NotEmpty
     private String channelName;
-    private boolean useOldApi;
+    @NotNull
+    private Boolean useOldApi = Boolean.TRUE;
 
     @Override
     public NotificationTargetType getType() {
