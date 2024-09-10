@@ -29,6 +29,12 @@
 
     &-content {
       overflow: auto;
+
+      tb-timeinterval,
+      tb-quick-time-interval,
+      tb-datetime-period {
+        flex: 1;
+      }
     }
   }
 

@@ -15,7 +15,7 @@
  */
 
 :host {
-  width: 500px;
+  width: 450px;
 
   .tb-timewindow-form {
     display: flex;
@@ -27,9 +27,7 @@
       align-items: center;
     }
 
-    &-type-options,
-    tb-quick-time-interval,
-    tb-timeinterval{
+    &-type-options {
       flex: 1;
     }
 
