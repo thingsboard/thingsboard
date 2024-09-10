@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @Slf4j
-public abstract class VersionedRedisTbCache<K extends Serializable, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
+public abstract class VersionedRedisTbCache<K extends CacheKey, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
 
     private static final int VERSION_SIZE = 8;
     private static final int VALUE_END_OFFSET = -1;
@@ -79,15 +79,20 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     @Override
-    protected byte[] doGet(RedisConnection connection, byte[] rawKey, boolean transactionMode) {
-        if (transactionMode) {
-            return super.doGet(connection, rawKey, true);
+    protected byte[] doGet(K key, RedisConnection connection) {
+        if (!key.isVersioned()) {
+            return super.doGet(key, connection);
         }
+        byte[] rawKey = getRawKey(key);
         return connection.stringCommands().getRange(rawKey, VERSION_SIZE, VALUE_END_OFFSET);
     }
 
     @Override
     public void put(K key, V value) {
+        if (!key.isVersioned()) {
+            super.put(key, value);
+            return;
+        }
         Long version = getVersion(value);
         if (version == null) {
             return;
@@ -96,9 +101,9 @@ public abstract class VersionedRedisTbCache<K extends Serializable, V extends Se
     }
 
     @Override
-    public void put(K key, V value, RedisConnection connection, boolean transactionMode) {
-        if (transactionMode) {
-            super.put(key, value, connection, true); // because scripting commands are not supported in transaction mode
+    public void put(K key, V value, RedisConnection connection) {
+        if (!key.isVersioned()) {
+            super.put(key, value, connection); // because scripting commands are not supported in transaction mode
             return;
         }
         Long version = getVersion(value);

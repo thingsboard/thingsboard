@@ -16,15 +16,15 @@
 package org.thingsboard.server.dao.device;
 
 import lombok.Data;
+import org.thingsboard.server.cache.CacheKey;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
-import java.io.Serializable;
 
 @Data
-public class DeviceProfileCacheKey implements Serializable {
+public class DeviceProfileCacheKey implements CacheKey {
 
     @Serial
     private static final long serialVersionUID = 8220455917177676472L;
@@ -72,6 +72,11 @@ public class DeviceProfileCacheKey implements Serializable {
             return provisionDeviceKey;
         }
         return tenantId + "_" + name;
+    }
+
+    @Override
+    public boolean isVersioned() {
+        return deviceProfileId != null;
     }
 
 }
