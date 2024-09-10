@@ -15,6 +15,7 @@
 ///
 
 import { GatewayConnector, GatewayVersion } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import { isString } from '@core/utils';
 
 export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   gatewayVersion: number;
@@ -48,7 +49,7 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   }
 
   private parseVersion(version: string): number {
-    return Number(version?.replace(/\./g, ''));
+    return isString(version) ? Number(version.replace(/\./g, '')) : 0;
   }
 
   protected abstract getDowngradedVersion(): GatewayConnector<BasicConfig>;

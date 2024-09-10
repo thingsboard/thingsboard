@@ -14,63 +14,33 @@
 /// limitations under the License.
 ///
 
-import { ControlValueAccessor, FormBuilder, FormGroup, ValidationErrors, Validator } from '@angular/forms';
-import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { Directive } from '@angular/core';
+import { FormGroup } from '@angular/forms';
 import {
   MappingType,
-  MQTTBasicConfig,
+  MQTTBasicConfig, MQTTBasicConfig_v3_5_2,
   RequestMappingData,
   RequestMappingValue,
   RequestType
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { Directive, OnDestroy } from '@angular/core';
 import { isObject } from '@core/utils';
+import {
+  GatewayConnectorBasicConfigDirective
+} from '@home/components/widget/lib/gateway/abstract/gateway-connector-basic-config.abstract';
 
 @Directive()
-export abstract class AbstractMqttBasicConfigComponent<BasicConfig> implements ControlValueAccessor, Validator, OnDestroy {
+export abstract class MqttBasicConfigDirective<BasicConfig>
+  extends GatewayConnectorBasicConfigDirective<MQTTBasicConfig_v3_5_2, BasicConfig> {
 
-  basicFormGroup: FormGroup;
   MappingType = MappingType;
 
-  private destroy$ = new Subject<void>();
-
-  private onChange: (value: BasicConfig) => void;
-  private onTouched: () => void;
-
-  constructor(protected fb: FormBuilder) {
-    this.basicFormGroup = this.fb.group({
+  protected override initBasicFormGroup(): FormGroup {
+    return this.fb.group({
       mapping: [],
       requestsMapping: [],
       broker: [],
       workers: [],
     });
-
-    this.basicFormGroup.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(value => {
-        this.onChange(this.getMappedMQTTConfig(value));
-        this.onTouched();
-      });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  registerOnChange(fn: (value: BasicConfig) => void): void {
-    this.onChange = fn;
-  }
-
-  registerOnTouched(fn: () => void): void {
-    this.onTouched = fn;
-  }
-
-  validate(): ValidationErrors | null {
-    return this.basicFormGroup.valid ? null : {
-      basicFormGroup: {valid: false}
-    };
   }
 
   protected getRequestDataArray(value: Record<RequestType, RequestMappingData[]>): RequestMappingData[] {
@@ -103,6 +73,10 @@ export abstract class AbstractMqttBasicConfigComponent<BasicConfig> implements C
     });
   }
 
-  abstract writeValue(basicConfig: BasicConfig): void;
-  protected abstract getMappedMQTTConfig(basicConfig: MQTTBasicConfig): BasicConfig;
+  writeValue(basicConfig: BasicConfig): void {
+    this.basicFormGroup.setValue(this.mapConfigToFormValue(basicConfig), { emitEvent: false });
+  }
+
+  protected abstract override mapConfigToFormValue(config: BasicConfig): MQTTBasicConfig_v3_5_2;
+  protected abstract override getMappedValue(config: MQTTBasicConfig): BasicConfig;
 }

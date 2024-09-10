@@ -14,16 +14,17 @@
 /// limitations under the License.
 ///
 
-import { Component, forwardRef, Input, TemplateRef, ChangeDetectionStrategy } from '@angular/core';
+import { Component, forwardRef, ChangeDetectionStrategy } from '@angular/core';
 import { NG_VALUE_ACCESSOR, NG_VALIDATORS } from '@angular/forms';
 import {
+  BrokerConfig,
   MQTTBasicConfig_v3_5_2,
   RequestMappingData,
   RequestMappingValue,
-  RequestType
+  RequestType, WorkersConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import {
-  AbstractMqttBasicConfigComponent
+  MqttBasicConfigDirective
 } from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-basic-config.abstract';
 import { isDefinedAndNotNull } from '@core/utils';
 import { CommonModule } from '@angular/common';
@@ -33,7 +34,7 @@ import {
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
 import {
   WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/workers-config-control/workers-config-control.component';
 import {
   BrokerConfigControlComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/broker-config-control/broker-config-control.component';
@@ -68,27 +69,22 @@ import {
     MappingTableComponent,
   ],
 })
-export class MqttBasicConfigComponent extends AbstractMqttBasicConfigComponent<MQTTBasicConfig_v3_5_2> {
+export class MqttBasicConfigComponent extends MqttBasicConfigDirective<MQTTBasicConfig_v3_5_2> {
 
-  @Input()
-  generalTabContent: TemplateRef<any>;
-
-  writeValue(basicConfig: MQTTBasicConfig_v3_5_2): void {
+  protected override mapConfigToFormValue(basicConfig: MQTTBasicConfig_v3_5_2): MQTTBasicConfig_v3_5_2 {
     const { broker, mapping = [], requestsMapping } = basicConfig;
-    const editedBase = {
+    return{
       workers: broker && (broker.maxNumberOfWorkers || broker.maxMessageNumberPerWorker) ? {
         maxNumberOfWorkers: broker.maxNumberOfWorkers,
         maxMessageNumberPerWorker: broker.maxMessageNumberPerWorker,
-      } : {},
+      } : {} as WorkersConfig,
       mapping: mapping ?? [],
-      broker: broker ?? {},
+      broker: broker ?? {} as BrokerConfig,
       requestsMapping: this.getRequestDataArray(requestsMapping as Record<RequestType, RequestMappingData[]>),
     };
-
-    this.basicFormGroup.setValue(editedBase, {emitEvent: false});
   }
 
-  protected getMappedMQTTConfig(basicConfig: MQTTBasicConfig_v3_5_2): MQTTBasicConfig_v3_5_2 {
+  protected override getMappedValue(basicConfig: MQTTBasicConfig_v3_5_2): MQTTBasicConfig_v3_5_2 {
     let { broker, workers, mapping, requestsMapping  } = basicConfig || {};
 
     if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {

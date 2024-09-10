@@ -186,14 +186,26 @@
               <tb-mqtt-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
             </ng-template>
           </ng-container>
-          <tb-opc-ua-basic-config *ngSwitchCase="ConnectorType.OPCUA"
-                                  formControlName="basicConfig"
-                                  [generalTabContent]="generalTabContent">
-          </tb-opc-ua-basic-config>
-          <tb-modbus-basic-config *ngSwitchCase="ConnectorType.MODBUS"
-                                  formControlName="basicConfig"
-                                  [generalTabContent]="generalTabContent">
-          </tb-modbus-basic-config>
+          <ng-container *ngSwitchCase="ConnectorType.OPCUA">
+            <tb-opc-ua-basic-config
+              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+            />
+            <ng-template #legacy>
+              <tb-opc-ua-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
+            </ng-template>
+          </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.MODBUS">
+            <tb-modbus-basic-config
+              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+            />
+            <ng-template #legacy>
+              <tb-modbus-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
+            </ng-template>
+          </ng-container>
         </ng-container>
       </ng-container>
       <ng-template #defaultConfig>

@@ -17,9 +17,13 @@
 import {
   ConnectorType,
   GatewayConnector,
+  ModbusBasicConfig,
   MQTTBasicConfig,
+  OPCBasicConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { MqttVersionProcessor } from '@home/components/widget/lib/gateway/abstract/mqtt-version-processor.abstract';
+import { OpcVersionProcessor } from '@home/components/widget/lib/gateway/abstract/opc-version-processor.abstract';
+import { ModbusVersionProcessor } from '@home/components/widget/lib/gateway/abstract/modbus-version-processor.abstract';
 
 export abstract class GatewayConnectorVersionMappingUtil {
 
@@ -27,6 +31,10 @@ export abstract class GatewayConnectorVersionMappingUtil {
     switch(connector.type) {
       case ConnectorType.MQTT:
         return new MqttVersionProcessor(gatewayVersion, connector as GatewayConnector<MQTTBasicConfig>).getProcessedByVersion();
+      case ConnectorType.OPCUA:
+        return new OpcVersionProcessor(gatewayVersion, connector as GatewayConnector<OPCBasicConfig>).getProcessedByVersion();
+      case ConnectorType.MODBUS:
+        return new ModbusVersionProcessor(gatewayVersion, connector as GatewayConnector<ModbusBasicConfig>).getProcessedByVersion();
       default:
         return connector;
     }
