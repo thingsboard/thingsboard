@@ -28,7 +28,8 @@
     }
 
     &-content {
-      overflow: auto;
+      overflow-x: hidden;
+      overflow-y: auto;
 
       tb-timeinterval,
       tb-quick-time-interval,

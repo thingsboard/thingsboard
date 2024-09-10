@@ -235,6 +235,10 @@
     .fixed-title-width {
       min-width: 200px;
 
+      &-180 {
+        min-width: 180px;
+      }
+
       &-230 {
         min-width: 230px;
       }

@@ -16,14 +16,17 @@
 
 -->
 <section class="tb-form-panel no-border no-padding" [formGroup]="timeintervalFormGroup">
-  <mat-form-field fxFlex class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
-    <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
-    <mat-select formControlName="interval">
-      <mat-option *ngFor="let interval of intervals" [value]="interval.value">
-        {{ interval.name | translate:interval.translateParams }}
-      </mat-option>
-    </mat-select>
-  </mat-form-field>
+  <section class="tb-form-row column-xs no-border no-padding tb-standard-fields">
+    <ng-content></ng-content>
+    <mat-form-field fxFlex class="flex" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+      <mat-label *ngIf="predefinedName" translate>{{ predefinedName }}</mat-label>
+      <mat-select formControlName="interval">
+        <mat-option *ngFor="let interval of intervals" [value]="interval.value">
+          {{ interval.name | translate:interval.translateParams }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+  </section>
   <section class="tb-form-row column-xs no-border no-padding tb-standard-fields advanced-input"
            formGroupName="customInterval"
            [fxShow]="advanced">

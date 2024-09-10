@@ -124,8 +124,8 @@
     <ng-container *ngIf="aggregationOptionsAvailable">
       <ng-container formGroupName="aggregation">
         <section class="tb-form-row column-xs space-between same-padding" *ngIf="isEdit || !timewindow.hideAggregation">
-          <div>{{ 'aggregation.aggregation' | translate }}</div>
-          <mat-form-field subscriptSizing="dynamic" appearance="outline">
+          <div class="fixed-title-width-180">{{ 'aggregation.aggregation' | translate }}</div>
+          <mat-form-field class="flex" subscriptSizing="dynamic" appearance="outline">
             <mat-select formControlName="type">
               <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
                 {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
@@ -155,7 +155,6 @@
 
       <section class="tb-form-row column same-padding" [fxShow]="(isEdit || !timewindow.hideAggInterval)
        && timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
-        <div>{{ 'aggregation.group-interval' | translate }}</div>
         <ng-container formGroupName="realtime" *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
           <tb-timeinterval
             formControlName="interval"
@@ -164,6 +163,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindow.realtime.disableCustomGroupInterval">
+            <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>
         <ng-container formGroupName="history" *ngIf="timewindow.selectedTab === timewindowTypes.HISTORY">
@@ -174,6 +174,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindow.history.disableCustomGroupInterval">
+            <div class="fixed-title-width-180">{{ 'aggregation.group-interval' | translate }}</div>
           </tb-timeinterval>
         </ng-container>
       </section>
