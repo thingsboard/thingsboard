@@ -19,7 +19,7 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
-import org.thingsboard.server.cache.CacheKey;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
@@ -29,7 +29,7 @@ import java.io.Serial;
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Builder
-public class DeviceCacheKey implements CacheKey {
+public class DeviceCacheKey implements VersionedCacheKey {
 
     @Serial
     private static final long serialVersionUID = 6366389552842340207L;

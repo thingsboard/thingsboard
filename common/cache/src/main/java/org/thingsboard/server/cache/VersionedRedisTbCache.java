@@ -30,7 +30,7 @@ import java.io.Serializable;
 import java.util.Arrays;
 
 @Slf4j
-public abstract class VersionedRedisTbCache<K extends CacheKey, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
+public abstract class VersionedRedisTbCache<K extends VersionedCacheKey, V extends Serializable & HasVersion> extends RedisTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
 
     private static final int VERSION_SIZE = 8;
     private static final int VALUE_END_OFFSET = -1;

@@ -22,7 +22,7 @@ import java.util.Collection;
 import java.util.Optional;
 import java.util.function.Supplier;
 
-public interface VersionedTbCache<K extends CacheKey, V extends Serializable & HasVersion> extends TbTransactionalCache<K, V> {
+public interface VersionedTbCache<K extends VersionedCacheKey, V extends Serializable & HasVersion> extends TbTransactionalCache<K, V> {
 
     TbCacheValueWrapper<V> get(K key);
 

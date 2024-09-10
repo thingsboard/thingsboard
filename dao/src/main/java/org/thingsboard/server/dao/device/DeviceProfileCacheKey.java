@@ -16,7 +16,7 @@
 package org.thingsboard.server.dao.device;
 
 import lombok.Data;
-import org.thingsboard.server.cache.CacheKey;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -24,7 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import java.io.Serial;
 
 @Data
-public class DeviceProfileCacheKey implements CacheKey {
+public class DeviceProfileCacheKey implements VersionedCacheKey {
 
     @Serial
     private static final long serialVersionUID = 8220455917177676472L;
