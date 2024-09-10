@@ -26,7 +26,7 @@ import java.util.Base64;
 
 @Slf4j
 @UtilityClass
-public class ColorUtils {
+public class ImageUtils {
 
     public static String getEmbeddedBase64EncodedImg(String colorStr) {
         try {

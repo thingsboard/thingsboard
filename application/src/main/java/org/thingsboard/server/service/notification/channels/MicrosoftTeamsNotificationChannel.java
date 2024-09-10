@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -15,7 +15,9 @@
  */
 package org.thingsboard.server.service.notification.channels;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.google.common.base.Strings;
 import lombok.RequiredArgsConstructor;
 import lombok.Setter;
 import org.apache.commons.codec.binary.Base64;
@@ -37,6 +39,7 @@ import org.thingsboard.server.service.notification.NotificationProcessingContext
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.time.Duration;
 import java.time.temporal.ChronoUnit;
 import java.util.List;
@@ -56,23 +59,31 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
-        TeamsMessage teamsMessage = new TeamsMessage();
-        TeamsMessage.Attachment attachment = new TeamsMessage.Attachment();
-        teamsMessage.setAttachments(List.of(attachment));
-        TeamsMessage.AdaptiveCard adaptiveCard = new TeamsMessage.AdaptiveCard();
+        if (Boolean.TRUE.equals(targetConfig.getUseOldApi())) {
+            sendTeamsMessageCard(targetConfig, processedTemplate, ctx);
+        } else {
+            sendTeamsAdaptiveCard(targetConfig, processedTemplate, ctx);
+        }
+    }
+
+    private void sendTeamsAdaptiveCard(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws URISyntaxException, JsonProcessingException {
+        TeamsAdaptiveCard teamsAdaptiveCard = new TeamsAdaptiveCard();
+        TeamsAdaptiveCard.Attachment attachment = new TeamsAdaptiveCard.Attachment();
+        teamsAdaptiveCard.setAttachments(List.of(attachment));
+        TeamsAdaptiveCard.AdaptiveCard adaptiveCard = new TeamsAdaptiveCard.AdaptiveCard();
         attachment.setContent(adaptiveCard);
-        TeamsMessage.BackgroundImage backgroundImage = new TeamsMessage.BackgroundImage(processedTemplate.getThemeColor());
+        TeamsAdaptiveCard.BackgroundImage backgroundImage = new TeamsAdaptiveCard.BackgroundImage(processedTemplate.getThemeColor());
         adaptiveCard.setBackgroundImage(backgroundImage);
 
         if (StringUtils.isEmpty(processedTemplate.getSubject())) {
-            TeamsMessage.TextBlock textBlock = new TeamsMessage.TextBlock();
+            TeamsAdaptiveCard.TextBlock textBlock = new TeamsAdaptiveCard.TextBlock();
             textBlock.setText(processedTemplate.getBody());
             textBlock.setWeight("Normal");
             textBlock.setSize("Medium");
             textBlock.setColor(processedTemplate.getThemeColor());
             adaptiveCard.getTextBlocks().add(textBlock);
         } else {
-            TeamsMessage.TextBlock subjectTextBlock = new TeamsMessage.TextBlock();
+            TeamsAdaptiveCard.TextBlock subjectTextBlock = new TeamsAdaptiveCard.TextBlock();
             subjectTextBlock.setText(processedTemplate.getSubject());
             subjectTextBlock.setWeight("Bolder");
             subjectTextBlock.setSize("Large");
@@ -80,7 +91,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
             adaptiveCard.getTextBlocks().add(subjectTextBlock);
 
-            TeamsMessage.TextBlock bodyTextBlock = new TeamsMessage.TextBlock();
+            TeamsAdaptiveCard.TextBlock bodyTextBlock = new TeamsAdaptiveCard.TextBlock();
             bodyTextBlock.setText(processedTemplate.getBody());
             bodyTextBlock.setWeight("Lighter");
             bodyTextBlock.setSize("Medium");
@@ -89,6 +100,52 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             adaptiveCard.getTextBlocks().add(bodyTextBlock);
         }
 
+        String uri = getUri(processedTemplate, ctx);
+
+        if (StringUtils.isNotBlank(uri) && processedTemplate.getButton().getText() != null) {
+            TeamsAdaptiveCard.ActionOpenUrl actionOpenUrl = new TeamsAdaptiveCard.ActionOpenUrl();
+            actionOpenUrl.setTitle(processedTemplate.getButton().getText());
+            actionOpenUrl.setUrl(uri);
+            adaptiveCard.getActions().add(actionOpenUrl);
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsAdaptiveCard), headers);
+        restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
+    }
+
+    private void sendTeamsMessageCard(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException, URISyntaxException {
+        TeamsMessageCard teamsMessageCard = new TeamsMessageCard();
+        teamsMessageCard.setThemeColor(Strings.emptyToNull(processedTemplate.getThemeColor()));
+        if (StringUtils.isEmpty(processedTemplate.getSubject())) {
+            teamsMessageCard.setText(processedTemplate.getBody());
+        } else {
+            teamsMessageCard.setSummary(processedTemplate.getSubject());
+            TeamsMessageCard.Section section = new TeamsMessageCard.Section();
+            section.setActivityTitle(processedTemplate.getSubject());
+            section.setActivitySubtitle(processedTemplate.getBody());
+            teamsMessageCard.setSections(List.of(section));
+        }
+        var button = processedTemplate.getButton();
+        String uri = getUri(processedTemplate, ctx);
+
+        if (StringUtils.isNotBlank(uri) && button.getText() != null) {
+            TeamsMessageCard.ActionCard actionCard = new TeamsMessageCard.ActionCard();
+            actionCard.setType("OpenUri");
+            actionCard.setName(button.getText());
+            var target = new TeamsMessageCard.ActionCard.Target("default", uri);
+            actionCard.setTargets(List.of(target));
+            teamsMessageCard.setPotentialAction(List.of(actionCard));
+        }
+
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentType(MediaType.APPLICATION_JSON);
+        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsMessageCard), headers);
+        restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
+    }
+
+    private String getUri(MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException {
         var button = processedTemplate.getButton();
         if (button != null && button.isEnabled()) {
             String uri;
@@ -121,18 +178,9 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             } else {
                 uri = button.getLink();
             }
-            if (StringUtils.isNotBlank(uri) && button.getText() != null) {
-                TeamsMessage.ActionOpenUrl actionOpenUrl = new TeamsMessage.ActionOpenUrl();
-                actionOpenUrl.setTitle(button.getText());
-                actionOpenUrl.setUrl(uri);
-                adaptiveCard.getActions().add(actionOpenUrl);
-            }
+            return uri;
         }
-
-        HttpHeaders headers = new HttpHeaders();
-        headers.setContentType(MediaType.APPLICATION_JSON);
-        HttpEntity<String> request = new HttpEntity<>(JacksonUtil.toString(teamsMessage), headers);
-        restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
+        return null;
     }
 
     @Override

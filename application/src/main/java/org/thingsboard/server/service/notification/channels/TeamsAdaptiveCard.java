@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.utils.ColorUtils;
+import org.thingsboard.server.utils.ImageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,7 +30,7 @@ import java.util.List;
 @Data
 @NoArgsConstructor
 @AllArgsConstructor
-public class TeamsMessage {
+public class TeamsAdaptiveCard {
     private String type = "message";
     private List<Attachment> attachments;
 
@@ -63,7 +63,7 @@ public class TeamsMessage {
 
         public BackgroundImage(String color) {
             // This is the only one way how to specify color the custom color for the card
-            url = ColorUtils.getEmbeddedBase64EncodedImg(color);
+            url = ImageUtils.getEmbeddedBase64EncodedImg(color);
         }
 
     }
