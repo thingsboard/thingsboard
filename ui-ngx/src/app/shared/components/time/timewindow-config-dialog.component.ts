@@ -314,7 +314,9 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   private onTimewindowTypeChange(selectedTab: TimewindowType) {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     if (selectedTab === TimewindowType.REALTIME) {
-      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
+      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
+        && !(this.quickIntervalOnly && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)) {
+
         this.timewindowForm.get('realtime').patchValue({
           realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
             RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :

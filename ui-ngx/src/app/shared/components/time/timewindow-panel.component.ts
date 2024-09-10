@@ -325,7 +325,11 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   private onTimewindowTypeChange(selectedTab: TimewindowType) {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     if (selectedTab === TimewindowType.REALTIME) {
-      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED) {
+      if (timewindowFormValue.history.historyType !== HistoryWindowType.FIXED
+        && !((this.quickIntervalOnly || this.timewindow.realtime.hideLastInterval)
+          && timewindowFormValue.history.historyType === HistoryWindowType.LAST_INTERVAL)
+        && !(this.timewindow.realtime.hideQuickInterval && timewindowFormValue.history.historyType === HistoryWindowType.INTERVAL)) {
+
         this.timewindowForm.get('realtime').patchValue({
           realtimeType: Object.keys(RealtimeWindowType).includes(HistoryWindowType[timewindowFormValue.history.historyType]) ?
             RealtimeWindowType[HistoryWindowType[timewindowFormValue.history.historyType]] :
@@ -336,7 +340,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         });
         setTimeout(() => this.timewindowForm.get('realtime.interval').patchValue(timewindowFormValue.history.interval));
       }
-    } else {
+    } else if (!(this.timewindow.history.hideLastInterval && timewindowFormValue.realtime.realtimeType === RealtimeWindowType.LAST_INTERVAL)
+      && !(this.timewindow.history.hideQuickInterval && timewindowFormValue.realtime.realtimeType === RealtimeWindowType.INTERVAL)) {
+
       this.timewindowForm.get('history').patchValue({
         historyType: HistoryWindowType[RealtimeWindowType[timewindowFormValue.realtime.realtimeType]],
         timewindowMs: timewindowFormValue.realtime.timewindowMs,
