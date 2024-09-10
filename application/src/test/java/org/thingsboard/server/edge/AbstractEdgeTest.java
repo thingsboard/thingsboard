@@ -103,6 +103,7 @@ import org.thingsboard.server.gen.edge.v1.UserUpdateMsg;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.Random;
 import java.util.TreeMap;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -123,6 +124,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
     protected EdgeImitator edgeImitator;
     protected Edge edge;
+
+    private Random random = new Random();
 
     @Autowired
     protected EdgeEventService edgeEventService;
@@ -163,15 +166,10 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
     }
 
     private RuleChainId getEdgeRootRuleChainId() throws Exception {
-        List<RuleChain> edgeRuleChains = doGetTypedWithPageLink("/api/edge/" + edge.getUuidId() + "/ruleChains?",
-                new TypeReference<PageData<RuleChain>>() {
-                }, new PageLink(100)).getData();
-        for (RuleChain edgeRuleChain : edgeRuleChains) {
-            if (edgeRuleChain.isRoot()) {
-                return edgeRuleChain.getId();
-            }
-        }
-        throw new RuntimeException("Root rule chain not found");
+        return doGetTypedWithPageLink("/api/ruleChains?type={type}&", new TypeReference<PageData<RuleChain>>() {},
+                new PageLink(100, 0, "Edge Root Rule Chain"),
+                "EDGE")
+                .getData().get(0).getId();
     }
 
     @After
@@ -196,6 +194,8 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
         Asset savedAsset = saveAsset("Edge Asset 1");
 
+        updateRootRuleChainMetadata();
+
         edge = doPost("/api/edge", constructEdge("Test Edge", "test"), Edge.class);
 
         doPost("/api/edge/" + edge.getUuidId()
@@ -205,6 +205,13 @@ abstract public class AbstractEdgeTest extends AbstractControllerTest {
 
         // wait until assign device and asset events are fully processed by edge notification service
         TimeUnit.MILLISECONDS.sleep(1000);
+    }
+
+    protected void updateRootRuleChainMetadata() throws Exception {
+        RuleChainId rootRuleChainId = getEdgeRootRuleChainId();
+        RuleChainMetaData rootRuleChainMetadata = doGet("/api/ruleChain/" + rootRuleChainId.getId().toString() + "/metadata", RuleChainMetaData.class);
+        rootRuleChainMetadata.getNodes().forEach(n -> n.setDebugMode(random.nextBoolean()));
+        doPost("/api/ruleChain/metadata", rootRuleChainMetadata, RuleChainMetaData.class);
     }
 
     protected void extendDeviceProfileData(DeviceProfile deviceProfile) {
