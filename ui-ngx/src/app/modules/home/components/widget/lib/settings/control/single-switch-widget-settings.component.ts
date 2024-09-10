@@ -102,7 +102,8 @@ export class SingleSwitchWidgetSettingsComponent extends WidgetSettingsComponent
       offLabelFont: [settings.offLabelFont, []],
       offLabelColor: [settings.offLabelColor, []],
 
-      background: [settings.background, []]
+      background: [settings.background, []],
+      padding: [settings.padding, []]
     });
   }
 
