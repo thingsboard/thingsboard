@@ -833,6 +833,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         var targetConfig = new MicrosoftTeamsNotificationTargetConfig();
         targetConfig.setWebhookUrl(webhookUrl);
         targetConfig.setChannelName("My channel");
+        targetConfig.setUseOldApi(false);
         NotificationTarget target = new NotificationTarget();
         target.setName("Microsoft Teams channel");
         target.setConfiguration(targetConfig);
