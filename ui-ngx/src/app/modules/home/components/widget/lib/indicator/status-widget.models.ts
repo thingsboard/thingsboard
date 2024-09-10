@@ -202,5 +202,5 @@ export const statusWidgetDefaultSettings: StatusWidgetSettings = {
       }
     }
   },
-  padding: '16px'
+  padding: ''
 };

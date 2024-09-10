@@ -47,6 +47,8 @@ import { ValueType } from '@shared/models/constants';
 import { UtilsService } from '@core/services/utils.service';
 
 const initialSwitchHeight = 60;
+const horizontalLayoutPadding = 48;
+const verticalLayoutPadding = 36;
 
 @Component({
   selector: 'tb-single-switch-widget',
@@ -239,8 +241,8 @@ export class SingleSwitchWidgetComponent extends
     const computedStyle = getComputedStyle(this.singleSwitchPanel.nativeElement);
     const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
       .map(side => resolveCssSize(computedStyle[side])[0]);
-    const panelWidth = widgetBoundingClientRect.width - (pLeft + pRight);
-    const panelHeight = widgetBoundingClientRect.height - (pTop + pBottom);
+    const panelWidth = widgetBoundingClientRect.width - ((pLeft + pRight) || horizontalLayoutPadding * paddingScale);
+    const panelHeight = widgetBoundingClientRect.height - ((pTop + pBottom) || verticalLayoutPadding * paddingScale);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'transform', `scale(1)`);
     this.renderer.setStyle(this.singleSwitchContent.nativeElement, 'width', 'auto');
     let contentWidth = this.singleSwitchToggleRow.nativeElement.getBoundingClientRect().width;

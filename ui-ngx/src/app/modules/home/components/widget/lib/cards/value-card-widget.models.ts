@@ -132,5 +132,5 @@ export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSe
       blur: 3
     }
   },
-  padding: '24px'
+  padding: ''
 });

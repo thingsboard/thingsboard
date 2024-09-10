@@ -102,5 +102,5 @@ export const windSpeedDirectionDefaultSettings: WindSpeedDirectionWidgetSettings
       blur: 3
     }
   },
-  padding: '20px 24px 24px'
+  padding: ''
 };

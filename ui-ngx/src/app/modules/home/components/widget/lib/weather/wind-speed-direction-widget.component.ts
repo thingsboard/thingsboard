@@ -42,7 +42,6 @@ import {
   getSingleTsValueByDataKey,
   overlayStyle
 } from '@shared/models/widget-settings.models';
-import { WidgetComponent } from '@home/components/widget/widget.component';
 import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
 import { ResizeObserver } from '@juggle/resize-observer';
 import { Path, Svg, SVG, Text } from '@svgdotjs/svg.js';
@@ -112,8 +111,7 @@ export class WindSpeedDirectionWidgetComponent implements OnInit, OnDestroy, Aft
   private windDirection = 0;
   private centerValueText = 'N/A';
 
-  constructor(private widgetComponent: WidgetComponent,
-              private imagePipe: ImagePipe,
+  constructor(private imagePipe: ImagePipe,
               private sanitizer: DomSanitizer,
               private renderer: Renderer2,
               private cd: ChangeDetectorRef) {
