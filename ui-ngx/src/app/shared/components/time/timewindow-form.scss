@@ -23,6 +23,10 @@
   background-color: #fff;
 
   .tb-timewindow-form {
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+
     .tb-flex {
       gap: 16px;
     }
