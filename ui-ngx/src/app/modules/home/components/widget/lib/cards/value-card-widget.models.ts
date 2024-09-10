@@ -19,8 +19,10 @@ import {
   BackgroundType,
   ColorSettings,
   constantColor,
-  cssUnit, DateFormatSettings,
-  Font, lastUpdateAgoDateFormat
+  cssUnit,
+  DateFormatSettings,
+  Font,
+  lastUpdateAgoDateFormat
 } from '@shared/models/widget-settings.models';
 
 export enum ValueCardLayout {
@@ -130,5 +132,5 @@ export const valueCardDefaultSettings = (horizontal: boolean): ValueCardWidgetSe
       blur: 3
     }
   },
-  padding: '12px'
+  padding: '24px'
 });

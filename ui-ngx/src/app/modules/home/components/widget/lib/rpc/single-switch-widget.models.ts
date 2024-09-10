@@ -219,5 +219,5 @@ export const singleSwitchDefaultSettings: SingleSwitchWidgetSettings = {
       blur: 3
     }
   },
-  padding: '12px'
+  padding: '18px 24px'
 };

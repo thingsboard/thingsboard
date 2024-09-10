@@ -37,7 +37,8 @@ import {
   getLabel,
   getSingleTsValue,
   iconStyle,
-  overlayStyle, resolveCssSize,
+  overlayStyle,
+  resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { valueCardDefaultSettings, ValueCardLayout, ValueCardWidgetSettings } from './value-card-widget.models';
@@ -48,7 +49,6 @@ import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 
 const squareLayoutSize = 160;
-const squareLayoutPadding = 48;
 const horizontalLayoutHeight = 80;
 
 @Component({
@@ -201,16 +201,13 @@ export class ValueCardWidgetComponent implements OnInit, AfterViewInit, OnDestro
   }
 
   private onResize() {
-    const paddingLeft = getComputedStyle(this.valueCardPanel.nativeElement).paddingLeft;
-    const paddingRight = getComputedStyle(this.valueCardPanel.nativeElement).paddingRight;
-    const paddingTop = getComputedStyle(this.valueCardPanel.nativeElement).paddingTop;
-    const paddingBottom = getComputedStyle(this.valueCardPanel.nativeElement).paddingBottom;
-    const pLeft = resolveCssSize(paddingLeft)[0];
-    const pRight = resolveCssSize(paddingRight)[0];
-    const pTop = resolveCssSize(paddingTop)[0];
-    const pBottom = resolveCssSize(paddingBottom)[0];
-    const panelWidth = this.valueCardPanel.nativeElement.getBoundingClientRect().width - (pLeft + pRight);
-    const panelHeight = this.valueCardPanel.nativeElement.getBoundingClientRect().height - (pTop + pBottom);
+    const computedStyle = getComputedStyle(this.valueCardPanel.nativeElement);
+    const [pLeft, pRight, pTop, pBottom] = ['paddingLeft', 'paddingRight', 'paddingTop', 'paddingBottom']
+      .map(side => resolveCssSize(computedStyle[side])[0]);
+
+    const widgetBoundingClientRect = this.valueCardPanel.nativeElement.getBoundingClientRect();
+    const panelWidth = widgetBoundingClientRect.width - (pLeft + pRight);
+    const panelHeight = widgetBoundingClientRect.height - (pTop + pBottom);
     let scale: number;
     if (!this.horizontal) {
       const size = Math.min(panelWidth, panelHeight);

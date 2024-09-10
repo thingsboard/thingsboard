@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { BatteryLevelLayout } from '@home/components/widget/lib/indicator/battery-level-widget.models';
 import {
   BackgroundSettings,
   BackgroundType,
@@ -103,5 +102,5 @@ export const windSpeedDirectionDefaultSettings: WindSpeedDirectionWidgetSettings
       blur: 3
     }
   },
-  padding: '12px'
+  padding: '20px 24px 24px'
 };
