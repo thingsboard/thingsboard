@@ -59,7 +59,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
 
     @Override
     public void sendNotification(MicrosoftTeamsNotificationTargetConfig targetConfig, MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws Exception {
-        if (targetConfig.isUseOldApi()) {
+        if (targetConfig.getUseOldApi() == null || Boolean.TRUE.equals(targetConfig.getUseOldApi())) {
             sendTeamsMessageCard(targetConfig, processedTemplate, ctx);
         } else {
             sendTeamsAdaptiveCard(targetConfig, processedTemplate, ctx);
