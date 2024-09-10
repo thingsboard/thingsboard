@@ -35,7 +35,7 @@ import {
   backgroundStyle,
   ComponentStyle,
   iconStyle,
-  overlayStyle,
+  overlayStyle, resolveCssSize,
   textStyle
 } from '@shared/models/widget-settings.models';
 import { ResizeObserver } from '@juggle/resize-observer';
@@ -65,6 +65,7 @@ export class StatusWidgetComponent extends
 
   backgroundStyle$: Observable<ComponentStyle>;
   overlayStyle: ComponentStyle = {};
+  padding: string;
 
   overlayInset = '12px';
   borderRadius = '';
@@ -191,8 +192,16 @@ export class StatusWidgetComponent extends
   }
 
   private onResize() {
-    const panelWidth = this.statusWidgetPanel.nativeElement.getBoundingClientRect().width;
-    const panelHeight = this.statusWidgetPanel.nativeElement.getBoundingClientRect().height;
+    const paddingLeft = getComputedStyle(this.statusWidgetPanel.nativeElement).paddingLeft;
+    const paddingRight = getComputedStyle(this.statusWidgetPanel.nativeElement).paddingRight;
+    const paddingTop = getComputedStyle(this.statusWidgetPanel.nativeElement).paddingTop;
+    const paddingBottom = getComputedStyle(this.statusWidgetPanel.nativeElement).paddingBottom;
+    const pLeft = resolveCssSize(paddingLeft)[0];
+    const pRight = resolveCssSize(paddingRight)[0];
+    const pTop = resolveCssSize(paddingTop)[0];
+    const pBottom = resolveCssSize(paddingBottom)[0];
+    const panelWidth = this.statusWidgetPanel.nativeElement.getBoundingClientRect().width - (pLeft + pRight);
+    const panelHeight = this.statusWidgetPanel.nativeElement.getBoundingClientRect().height - (pTop + pBottom);
     const targetSize = Math.min(panelWidth, panelHeight);
     const scale = targetSize / initialStatusWidgetSize;
     const width = initialStatusWidgetSize;
@@ -220,6 +229,7 @@ export class StatusWidgetComponent extends
     this.showLabel = stateSettings.showLabel && this.layout !== StatusWidgetLayout.icon;
     this.showStatus = stateSettings.showStatus && this.layout !== StatusWidgetLayout.icon;
     this.icon = stateSettings.icon;
+    this.padding = stateSettings.backgroundDisabled.overlay.enabled || stateSettings.background.overlay.enabled  ? undefined : this.settings.padding;
 
     const primaryColor = disabled ? stateSettings.primaryColorDisabled : stateSettings.primaryColor;
     const secondaryColor = disabled ? stateSettings.secondaryColorDisabled : stateSettings.secondaryColor;

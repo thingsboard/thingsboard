@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div #statusWidgetPanel class="tb-status-widget-panel" [style]="backgroundStyle$ | async">
+<div #statusWidgetPanel class="tb-status-widget-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-status-widget-overlay" [style]="overlayStyle" [style.inset]="overlayInset"></div>
   <div class="tb-status-widget-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
