@@ -160,7 +160,7 @@ export class TbMarkdownComponent implements OnChanges {
         },
         template,
         compileModules,
-        true, 1, styles
+        true, styles
       ).subscribe((componentData) => {
           this.tbMarkdownInstanceComponentType = componentData.componentType;
           const injector: Injector = Injector.create({providers: [], parent: this.markdownContainer.injector});
