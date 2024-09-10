@@ -86,7 +86,7 @@ import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
-import org.thingsboard.server.service.notification.channels.TeamsMessage;
+import org.thingsboard.server.service.notification.channels.TeamsAdaptiveCard;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
 import java.net.URI;
@@ -811,7 +811,7 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
         verify(restTemplate, timeout(20000)).postForEntity(eq(new URI(webhookUrl)), messageCaptor.capture(), any());
 
         HttpEntity<String> value = messageCaptor.getValue();
-        TeamsMessage message = JacksonUtil.fromString(value.getBody(), TeamsMessage.class);
+        TeamsAdaptiveCard message = JacksonUtil.fromString(value.getBody(), TeamsAdaptiveCard.class);
         String expectedParams = "My channel - Device";
         assertThat(message).isNotNull();
         assertThat(message.getAttachments().get(0).getContent().getBackgroundImage().getUrl()).isNotEmpty();
