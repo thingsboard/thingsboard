@@ -87,9 +87,11 @@ import org.thingsboard.server.dao.notification.DefaultNotifications;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.service.notification.channels.MicrosoftTeamsNotificationChannel;
 import org.thingsboard.server.service.notification.channels.TeamsAdaptiveCard;
+import org.thingsboard.server.service.notification.channels.TeamsMessageCard;
 import org.thingsboard.server.service.ws.notification.cmd.UnreadNotificationsUpdate;
 
 import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -755,7 +757,75 @@ public class NotificationApiTest extends AbstractNotificationApiTest {
     }
 
     @Test
-    public void testMicrosoftTeamsNotifications() throws Exception {
+    public void testMicrosoftTeamsNotificationsWithOfficeConnector() throws URISyntaxException {
+        RestTemplate restTemplate = mock(RestTemplate.class);
+        microsoftTeamsNotificationChannel.setRestTemplate(restTemplate);
+
+        String webhookUrl = "https://webhook.com/webhookb2/9628fa60-d873-11ed-913c-a196b1f9b445";
+        var targetConfig = new MicrosoftTeamsNotificationTargetConfig();
+        targetConfig.setWebhookUrl(webhookUrl);
+        targetConfig.setChannelName("My channel");
+        targetConfig.setUseOldApi(true);
+        NotificationTarget target = new NotificationTarget();
+        target.setName("Microsoft Teams channel");
+        target.setConfiguration(targetConfig);
+        target = saveNotificationTarget(target);
+
+        var template = new MicrosoftTeamsDeliveryMethodNotificationTemplate();
+        template.setEnabled(true);
+        String templateParams = "${recipientTitle} - ${entityType}";
+        template.setSubject("Subject: " + templateParams);
+        template.setBody("Body: " + templateParams);
+        template.setThemeColor("#ff0000");
+        var button = new MicrosoftTeamsDeliveryMethodNotificationTemplate.Button();
+        button.setEnabled(true);
+        button.setText("Button: " + templateParams);
+        button.setLinkType(LinkType.LINK);
+        button.setLink("https://" + templateParams);
+        template.setButton(button);
+        NotificationTemplate notificationTemplate = new NotificationTemplate();
+        notificationTemplate.setName("Notification to Teams");
+        notificationTemplate.setNotificationType(NotificationType.GENERAL);
+        NotificationTemplateConfig templateConfig = new NotificationTemplateConfig();
+        templateConfig.setDeliveryMethodsTemplates(Map.of(
+                NotificationDeliveryMethod.MICROSOFT_TEAMS, template
+        ));
+        notificationTemplate.setConfiguration(templateConfig);
+        notificationTemplate = saveNotificationTemplate(notificationTemplate);
+
+        NotificationRequest notificationRequest = NotificationRequest.builder()
+                .tenantId(tenantId)
+                .originatorEntityId(tenantAdminUserId)
+                .templateId(notificationTemplate.getId())
+                .targets(List.of(target.getUuidId()))
+                .info(EntityActionNotificationInfo.builder()
+                        .entityId(new DeviceId(UUID.randomUUID()))
+                        .actionType(ActionType.ADDED)
+                        .userId(tenantAdminUserId.getId())
+                        .build())
+                .build();
+
+        NotificationRequestPreview preview = doPost("/api/notification/request/preview", notificationRequest, NotificationRequestPreview.class);
+        assertThat(preview.getRecipientsCountByTarget().get(target.getName())).isEqualTo(1);
+        assertThat(preview.getRecipientsPreview()).containsOnly(targetConfig.getChannelName());
+
+        ArgumentCaptor<HttpEntity<String>> messageCaptor = ArgumentCaptor.forClass(HttpEntity.class);
+        notificationCenter.processNotificationRequest(tenantId, notificationRequest, null);
+        verify(restTemplate, timeout(20000)).postForEntity(eq(new URI(webhookUrl)), messageCaptor.capture(), any());
+
+        HttpEntity<String> value = messageCaptor.getValue();
+        TeamsMessageCard message = JacksonUtil.fromString(value.getBody(), TeamsMessageCard.class);
+
+        String expectedParams = "My channel - Device";
+        assertThat(message.getThemeColor()).isEqualTo(template.getThemeColor());
+        assertThat(message.getSections().get(0).getActivityTitle()).isEqualTo("Subject: " + expectedParams);
+        assertThat(message.getSections().get(0).getActivitySubtitle()).isEqualTo("Body: " + expectedParams);
+        assertThat(message.getPotentialAction().get(0).getName()).isEqualTo("Button: " + expectedParams);
+        assertThat(message.getPotentialAction().get(0).getTargets().get(0).getUri()).isEqualTo("https://" + expectedParams);
+    }
+
+    @Test
+    public void testMicrosoftTeamsNotificationsWithWorkflow() throws Exception {
         RestTemplate restTemplate = mock(RestTemplate.class);
         microsoftTeamsNotificationChannel.setRestTemplate(restTemplate);
 
