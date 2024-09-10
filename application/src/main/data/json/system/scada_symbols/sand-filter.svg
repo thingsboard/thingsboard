@@ -1,9 +1,10 @@
 <svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="600" height="1e3" fill="none" version="1.1" viewBox="0 0 600 1e3">
 <tb:metadata xmlns=""><![CDATA[{
-  "title": "Stand filter",
-  "description": "Stand filter with configurable filtration mode option and various states.",
+  "title": "Sand filter",
+  "description": "Sand filter with configurable filtration mode option and various states.",
   "searchTags": [
-    "filter"
+    "filter",
+    "sand"
   ],
   "widgetSizeX": 3,
   "widgetSizeY": 5,
