@@ -352,8 +352,15 @@ export class Range implements Ace.Range {
 
 }
 
-export interface TbHighlightRule {
-  class: string;
-  regex: RegExp;
+export interface AceHighlightRules {
+  [group: string]: Array<AceHighlightRule>;
 }
+
+export interface AceHighlightRule {
+  regex: RegExp | string;
+  token: string;
+  next?: string;
+}
+
+
 

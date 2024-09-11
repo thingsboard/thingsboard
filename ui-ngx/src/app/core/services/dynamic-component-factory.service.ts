@@ -22,7 +22,7 @@ import {
   NgModule,
   NgModuleRef,
   OnDestroy,
-  Type,
+  Type, ɵNG_COMP_DEF,
   ɵresetCompiledComponents
 } from '@angular/core';
 import { from, Observable, of } from 'rxjs';
@@ -64,7 +64,6 @@ export class DynamicComponentFactoryService {
                      template: string,
                      modules?: Type<any>[],
                      preserveWhitespaces?: boolean,
-                     compileAttempt = 1,
                      styles?: string[]): Observable<DynamicComponentData<T>> {
     return from(import('@angular/compiler')).pipe(
       mergeMap(() => {
@@ -78,32 +77,26 @@ export class DynamicComponentFactoryService {
           declarations: [comp],
           imports: moduleImports
         })(class DynamicComponentInstanceModule extends DynamicComponentModule {});
+
+        const module = this.compiler.compileModuleSync(dynamicComponentInstanceModule);
+        let moduleRef: NgModuleRef<any>;
         try {
-          const module = this.compiler.compileModuleSync(dynamicComponentInstanceModule);
-          let moduleRef: NgModuleRef<any>;
-          try {
-            moduleRef = module.create(this.injector);
-          } catch (e) {
-            this.compiler.clearCacheFor(module.moduleType);
-            throw e;
-          }
-          this.dynamicComponentModulesMap.set(comp, {
-            moduleRef,
-            moduleType: module.moduleType
-          });
-          return of( {
-            componentType: comp,
-            componentModuleRef: moduleRef
-          });
-        } catch (error) {
-          if (compileAttempt === 1) {
-            ɵresetCompiledComponents();
-            return this.createDynamicComponent(componentType, template, modules, preserveWhitespaces, ++compileAttempt, styles);
-          } else {
-            console.error(error);
-            throw error;
-          }
+          moduleRef = module.create(this.injector);
+          // eslint-disable-next-line
+          comp[ɵNG_COMP_DEF];
+        } catch (e) {
+          this.compiler.clearCacheFor(module.moduleType);
+          ɵresetCompiledComponents();
+          throw e;
         }
+        this.dynamicComponentModulesMap.set(comp, {
+          moduleRef,
+          moduleType: module.moduleType
+        });
+        return of( {
+          componentType: comp,
+          componentModuleRef: moduleRef
+        });
       })
     );
   }

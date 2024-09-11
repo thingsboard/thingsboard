@@ -16,7 +16,9 @@
 package org.thingsboard.server.common.transport.activity.strategy;
 
 import lombok.EqualsAndHashCode;
+import lombok.ToString;
 
+@ToString
 @EqualsAndHashCode
 public final class FirstAndLastEventActivityStrategy implements ActivityStrategy {
 

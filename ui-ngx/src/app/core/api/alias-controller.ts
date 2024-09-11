@@ -68,10 +68,11 @@ export class AliasController implements IAliasController {
               private translate: TranslateService,
               private stateControllerHolder: StateControllerHolder,
               private origEntityAliases: EntityAliases,
-              private origFilters: Filters) {
+              private origFilters: Filters,
+              private origUserFilters?: Filters) {
     this.entityAliases = deepClone(this.origEntityAliases) || {};
     this.filters = deepClone(this.origFilters) || {};
-    this.userFilters = {};
+    this.userFilters = deepClone(this.origUserFilters) || {};
   }
 
   updateEntityAliases(newEntityAliases: EntityAliases) {
@@ -164,6 +165,10 @@ export class AliasController implements IAliasController {
 
   getFilters(): Filters {
     return this.filters;
+  }
+
+  getUserFilters(): Filters {
+    return this.userFilters;
   }
 
   getFilterInfo(filterId: string): FilterInfo {

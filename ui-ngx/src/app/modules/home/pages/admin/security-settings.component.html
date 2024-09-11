@@ -46,6 +46,44 @@
             <input matInput type="email"
                    formControlName="userLockoutNotificationEmail"/>
           </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.user-activation-token-ttl</mat-label>
+            <input matInput type="number"
+                   formControlName="userActivationTokenTtl"
+                   step="1"
+                   min="1"
+                   max="24"/>
+            <mat-error *ngIf="securitySettingsFormGroup.get('userActivationTokenTtl').hasError('min')">
+              {{ 'admin.user-activation-token-ttl-range' | translate }}
+            </mat-error>
+            <mat-error *ngIf="securitySettingsFormGroup.get('userActivationTokenTtl').hasError('max')">
+              {{ 'admin.user-activation-token-ttl-range' | translate }}
+            </mat-error>
+          </mat-form-field>
+           <mat-form-field class="mat-block">
+            <mat-label translate>admin.password-reset-token-ttl</mat-label>
+            <input matInput type="number"
+                  formControlName="passwordResetTokenTtl"
+                  step="1"
+                  min="1"
+                  max="24"/>
+            <mat-error *ngIf="securitySettingsFormGroup.get('passwordResetTokenTtl').hasError('min')">
+              {{ 'admin.password-reset-token-ttl-range' | translate }}
+            </mat-error>
+            <mat-error *ngIf="securitySettingsFormGroup.get('passwordResetTokenTtl').hasError('max')">
+              {{ 'admin.password-reset-token-ttl-range' | translate }}
+            </mat-error>
+          </mat-form-field>
+          <mat-form-field class="mat-block">
+            <mat-label translate>admin.mobile-secret-key-length</mat-label>
+            <input matInput type="number"
+                   formControlName="mobileSecretKeyLength"
+                   step="1"
+                   min="1"/>
+            <mat-error *ngIf="securitySettingsFormGroup.get('mobileSecretKeyLength').hasError('min')">
+              {{ 'admin.mobile-secret-key-length-range' | translate }}
+            </mat-error>
+          </mat-form-field>
         </fieldset>
 
         <fieldset class="fields-group">
