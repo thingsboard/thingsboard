@@ -76,6 +76,10 @@
       <tb-value-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.switch"
                       [valueType]="ValueType.BOOLEAN"
                       formControlName="default"></tb-value-input>
+      <tb-material-icon-select *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.icon"
+                               asBoxInput
+                               formControlName="default">
+      </tb-material-icon-select>
     </div>
     <div *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number" class="tb-form-row space-between">
       <div translate>scada.property.number-settings</div>

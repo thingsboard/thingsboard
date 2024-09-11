@@ -3746,6 +3746,7 @@
             "type-color-settings": "Color settings",
             "type-font": "Font",
             "type-units": "Units",
+            "type-icon": "Icon",
             "no-properties": "No properties configured",
             "add-property": "Add property",
             "property-settings": "Property settings",
