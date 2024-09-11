@@ -25,6 +25,7 @@ import org.mockito.ArgumentCaptor;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.TransportPayloadType;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
@@ -57,6 +58,7 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVIC
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CONNECT_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_LATENCY_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_TELEMETRY_TOPIC;
+import static org.thingsboard.server.transport.mqtt.mqttv3.credentials.BasicMqttCredentialsTest.CLIENT_ID;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqttIntegrationTest {
@@ -132,6 +134,11 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     @Test
     public void testPushLatencyGateway() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName("Test latency gateway")
+                .build();
+        processBeforeTest(configProperties);
+
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(gatewayAccessToken);
 

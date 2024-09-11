@@ -96,8 +96,8 @@ public class GatewaySessionHandler extends AbstractGatewaySessionHandler<Gateway
         try {
             latencyService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), JacksonUtil.fromString(payload, new TypeReference<>() {}), ts);
             ack(msgId, MqttReasonCodes.PubAck.SUCCESS);
-        } catch (IllegalArgumentException e) {
-            throw new AdaptorException(e);
+        } catch (Throwable t) {
+            ackOrClose(msgId);
         }
     }
 
