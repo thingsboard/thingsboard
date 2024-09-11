@@ -97,7 +97,7 @@ public class TbHttpClient {
             }
 
             ConnectionProvider connectionProvider = ConnectionProvider
-                    .builder("http")
+                    .builder("rule-engine-http-client")
                     .maxConnections(getPoolMaxConnections())
                     .build();
 
@@ -150,7 +150,7 @@ public class TbHttpClient {
     }
 
     private int getPoolMaxConnections() {
-        String poolMaxConnectionsEnv = System.getenv("TB_HTTP_POOL_MAX_CONNECTIONS");
+        String poolMaxConnectionsEnv = System.getenv("TB_RE_HTTP_CLIENT_POOL_MAX_CONNECTIONS");
 
         int poolMaxConnections;
         if (poolMaxConnectionsEnv != null) {
