@@ -100,7 +100,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             adaptiveCard.getTextBlocks().add(bodyTextBlock);
         }
 
-        String uri = getUri(processedTemplate, ctx);
+        String uri = getButtonUri(processedTemplate, ctx);
 
         if (StringUtils.isNotBlank(uri) && processedTemplate.getButton().getText() != null) {
             TeamsAdaptiveCard.ActionOpenUrl actionOpenUrl = new TeamsAdaptiveCard.ActionOpenUrl();
@@ -128,7 +128,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
             teamsMessageCard.setSections(List.of(section));
         }
         var button = processedTemplate.getButton();
-        String uri = getUri(processedTemplate, ctx);
+        String uri = getButtonUri(processedTemplate, ctx);
 
         if (StringUtils.isNotBlank(uri) && button.getText() != null) {
             TeamsMessageCard.ActionCard actionCard = new TeamsMessageCard.ActionCard();
@@ -145,7 +145,7 @@ public class MicrosoftTeamsNotificationChannel implements NotificationChannel<Mi
         restTemplate.postForEntity(new URI(targetConfig.getWebhookUrl()), request, String.class);
     }
 
-    private String getUri(MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException {
+    private String getButtonUri(MicrosoftTeamsDeliveryMethodNotificationTemplate processedTemplate, NotificationProcessingContext ctx) throws JsonProcessingException {
         var button = processedTemplate.getButton();
         if (button != null && button.isEnabled()) {
             String uri;
