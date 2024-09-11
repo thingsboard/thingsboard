@@ -77,7 +77,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
     if (this.disabledAdvancedState !== disabledAdvanced) {
       this.disabledAdvancedState = disabledAdvanced;
       this.updateIntervalValue();
-      this.boundInterval();
+      if (!this.disabledAdvancedState) {
+        this.boundInterval();
+      }
     }
   }
 

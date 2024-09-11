@@ -32,7 +32,7 @@
       <section class="tb-form-panel stroked" *ngIf="realtimeIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
              [ngClass]="{'align-end': realtimeTypeSelectionAvailable, 'align-center': !realtimeTypeSelectionAvailable }">
-          <div class="tb-flex column no-flex flex-xs">
+          <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="realtime" *ngIf="realtimeTypeSelectionAvailable">
               <tb-toggle-select appearance="stroked" [options]="realtimeTimewindowOptions" formControlName="realtimeType">
@@ -73,7 +73,7 @@
       <section class="tb-form-panel stroked" *ngIf="historyIntervalSelectionAvailable; else timezoneSelectionPanel">
         <div class="tb-flex space-between"
              [ngClass]="{'align-end': historyTypeSelectionAvailable, 'align-center': !historyTypeSelectionAvailable }">
-          <div class="tb-flex column no-flex flex-xs">
+          <div class="tb-flex-xs column">
             <div class="tb-form-panel-title">{{ 'timewindow.timewindow' | translate }}</div>
             <ng-container formGroupName="history" *ngIf="historyTypeSelectionAvailable">
               <tb-toggle-select appearance="stroked" [options]="historyTimewindowOptions" formControlName="historyType">
@@ -182,8 +182,8 @@
   </div>
 
   <ng-template #timezoneSelectionPanel>
-    <section class="tb-form-panel stroked tb-flex row align-center space-between">
-      <div class="tb-form-panel-title">{{ 'timezone.timezone' | translate }}</div>
+    <section class="tb-form-row space-between same-padding">
+      <div>{{ 'timezone.timezone' | translate }}</div>
       <ng-container *ngTemplateOutlet="timezoneSelection">
       </ng-container>
     </section>

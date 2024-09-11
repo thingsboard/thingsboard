@@ -264,18 +264,21 @@
   }
 
   .tb-flex {
-    display: flex;
     flex: 1;
-    gap: 8px;
+
     &.no-flex {
       flex: none;
-      &.flex-xs {
-        @media #{$mat-xs} {
-          width: auto;
-          flex: 1;
-        }
+    }
+
+    &-xs {
+      @media #{$mat-xs} {
+        flex: 1;
       }
     }
+  }
+  [class*="tb-flex"] {
+    display: flex;
+    gap: 8px;
     &.row {
       flex-direction: row;
     }
