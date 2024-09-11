@@ -18,6 +18,8 @@
   width: 450px;
 
   .tb-timewindow-form {
+    max-height: 100%;
+
     &-header {
       flex-direction: row;
       align-items: center;

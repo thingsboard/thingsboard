@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<mat-toolbar color="primary">
-  <h2>{{ 'timewindow.timewindow-settings' | translate }}</h2>
-  <span fxFlex></span>
-<!--  <div tb-help="#"></div>-->
-  <button mat-icon-button
-          (click)="cancel()"
-          type="button">
-    <mat-icon class="material-icons">close</mat-icon>
-  </button>
-</mat-toolbar>
 <form [formGroup]="timewindowForm" mat-dialog-content  class="tb-timewindow-form">
+  <mat-toolbar color="primary">
+    <h2>{{ 'timewindow.timewindow-settings' | translate }}</h2>
+    <span fxFlex></span>
+    <!--  <div tb-help="#"></div>-->
+    <button mat-icon-button
+            (click)="cancel()"
+            type="button">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+  </mat-toolbar>
   <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom">
     <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
                       [options]="timewindowTypeOptions" formControlName="selectedTab">
@@ -258,20 +258,20 @@
       </div>
     </section>
   </div>
+  <mat-divider></mat-divider>
+  <div mat-dialog-actions class="tb-dialog-actions tb-flex flex-end no-gap">
+    <button type="button"
+            mat-button
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="button"
+            mat-raised-button
+            color="primary"
+            (click)="update()"
+            [disabled]="(isLoading$ | async) || timewindowForm.invalid || !timewindowForm.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
 </form>
-<mat-divider></mat-divider>
-<div mat-dialog-actions class="tb-dialog-actions tb-flex flex-end no-gap">
-  <button type="button"
-          mat-button
-          [disabled]="(isLoading$ | async)"
-          (click)="cancel()">
-    {{ 'action.cancel' | translate }}
-  </button>
-  <button type="button"
-          mat-raised-button
-          color="primary"
-          (click)="update()"
-          [disabled]="(isLoading$ | async) || timewindowForm.invalid || !timewindowForm.dirty">
-    {{ 'action.apply' | translate }}
-  </button>
-</div>

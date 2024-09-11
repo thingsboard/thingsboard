@@ -16,10 +16,6 @@
 @import "../../../../scss/constants";
 
 :host {
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  max-width: 100%;
   background-color: #fff;
 
   .tb-timewindow-form {
@@ -32,7 +28,6 @@
     }
 
     &-content {
-      overflow-x: hidden;
       overflow-y: auto;
 
       tb-timeinterval,

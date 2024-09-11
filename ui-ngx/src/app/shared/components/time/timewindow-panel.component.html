@@ -195,20 +195,20 @@
                  formControlName="timezone">
     </tb-timezone>
   </ng-template>
+  <mat-divider></mat-divider>
+  <div class="tb-panel-actions tb-flex flex-end no-gap">
+    <button type="button"
+            mat-button
+            [disabled]="(isLoading$ | async)"
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="button"
+            mat-raised-button
+            color="primary"
+            (click)="update()"
+            [disabled]="(isLoading$ | async) || timewindowForm.invalid || !timewindowForm.dirty">
+      {{ 'action.update' | translate }}
+    </button>
+  </div>
 </form>
-<mat-divider></mat-divider>
-<div class="tb-panel-actions tb-flex flex-end no-gap">
-  <button type="button"
-          mat-button
-          [disabled]="(isLoading$ | async)"
-          (click)="cancel()">
-    {{ 'action.cancel' | translate }}
-  </button>
-  <button type="button"
-          mat-raised-button
-          color="primary"
-          (click)="update()"
-          [disabled]="(isLoading$ | async) || timewindowForm.invalid || !timewindowForm.dirty">
-    {{ 'action.update' | translate }}
-  </button>
-</div>
