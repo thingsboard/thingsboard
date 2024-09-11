@@ -40,6 +40,7 @@ import { WidgetComponent } from '@home/components/widget/widget.component';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { catchError, share } from 'rxjs/operators';
+import { MatIconRegistry } from '@angular/material/icon';
 
 @Component({
   selector: 'tb-scada-symbol-widget',
@@ -75,6 +76,7 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
               protected imagePipe: ImagePipe,
               protected sanitizer: DomSanitizer,
               private imageService: ImageService,
+              private iconRegistry: MatIconRegistry,
               protected cd: ChangeDetectorRef) {
   }
 
@@ -139,7 +141,7 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
       this.cd.markForCheck();
     } else {
       this.scadaSymbolObject = new ScadaSymbolObject(rootElement, this.ctx, content,
-        this.settings.scadaSymbolObjectSettings, this, simulated);
+        this.settings.scadaSymbolObjectSettings, this, this.iconRegistry, simulated);
     }
   }
 

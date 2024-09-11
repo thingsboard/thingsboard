@@ -79,6 +79,13 @@
                          [class]="property.fieldClass"
                          [required]="property.required"
                          formControlName="{{ property.id }}"></tb-unit-input>
+          <tb-material-icon-select *ngIf="property.type === ScadaSymbolPropertyType.icons"
+                                   [required]="property.required"
+                                   [class]="property.fieldClass"
+                                   asBoxInput
+                                   iconClearButton
+                                   formControlName="{{ property.id }}">
+          </tb-material-icon-select>
           <mat-divider *ngIf="property.divider" vertical></mat-divider>
         </ng-container>
       </div>

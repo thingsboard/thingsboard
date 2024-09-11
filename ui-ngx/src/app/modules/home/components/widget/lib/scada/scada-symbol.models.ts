@@ -42,13 +42,16 @@ import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
 import { ResizeObserver } from '@juggle/resize-observer';
-import { takeUntil } from 'rxjs/operators';
+import { take, takeUntil } from 'rxjs/operators';
+import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
+import { MatIconRegistry } from '@angular/material/icon';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
+  icon: (element: Element | Element[], icon: string, color: string, size: number) => void;
   animate: (element: Element, duration: number) => Runner;
   resetAnimation: (element: Element) => void;
   finishAnimation: (element: Element) => void;
@@ -133,7 +136,8 @@ export enum ScadaSymbolPropertyType {
   color = 'color',
   color_settings = 'color_settings',
   font = 'font',
-  units = 'units'
+  units = 'units',
+  icons = 'icons'
 }
 
 export const scadaSymbolPropertyTypes = Object.keys(ScadaSymbolPropertyType) as ScadaSymbolPropertyType[];
@@ -146,7 +150,8 @@ export const scadaSymbolPropertyTypeTranslations = new Map<ScadaSymbolPropertyTy
     [ScadaSymbolPropertyType.color, 'scada.property.type-color'],
     [ScadaSymbolPropertyType.color_settings, 'scada.property.type-color-settings'],
     [ScadaSymbolPropertyType.font, 'scada.property.type-font'],
-    [ScadaSymbolPropertyType.units, 'scada.property.type-units']
+    [ScadaSymbolPropertyType.units, 'scada.property.type-units'],
+    [ScadaSymbolPropertyType.icons, 'scada.property.type-icons']
   ]
 );
 
@@ -509,6 +514,7 @@ export class ScadaSymbolObject {
               private svgContent: string,
               private inputSettings: ScadaSymbolObjectSettings,
               private callbacks: ScadaSymbolObjectCallbacks,
+              private iconRegistry: MatIconRegistry,
               private simulated: boolean) {
     this.shapeResize$ = new ResizeObserver(() => {
       this.resize();
@@ -609,6 +615,7 @@ export class ScadaSymbolObject {
         formatValue,
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
+        icon: this.setElementIcon.bind(this),
         animate: this.animate.bind(this),
         resetAnimation: this.resetAnimation.bind(this),
         finishAnimation: this.finishAnimation.bind(this),
@@ -865,6 +872,38 @@ export class ScadaSymbolObject {
         if (color) {
           textElement.fill(color);
         }
+      }
+    });
+  }
+
+  private setElementIcon(e: Element | Element[], icon: string, color: string, size: number) {
+    this.elements(e).forEach(element => {
+      if (element) {
+        const g = SVG().group();
+        if (isSvgIcon(icon)) {
+          const [namespace, iconName] = splitIconName(icon);
+          // this.iconRegistry
+          //   .getNamedSvgIcon(iconName, namespace)
+          //   .pipe(take(1))
+          //   .subscribe({
+          //     next: (svg) => {
+          //       // @ts-ignore
+          //       g.add(svg);
+          //       g.insertAfter(element);
+          //     },
+          //   });
+        } else {
+          const icons = SVG().text(icon)
+            .attr({ x: element.x(), y: element.y(), 'dominant-baseline': 'hanging'})
+            .font({
+              size: size+'px',
+              family: 'Material Icons'
+            })
+            .fill(color);
+          icons.addTo(g);
+          g.insertAfter(element);
+        }
+        element.remove();
       }
     });
   }
