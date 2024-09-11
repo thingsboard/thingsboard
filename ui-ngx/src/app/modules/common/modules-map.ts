@@ -335,6 +335,8 @@ import * as AssetProfileAutocompleteComponent from '@home/components/profile/ass
 import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-chain-select.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
+import { TimezoneComponent } from '@shared/components/time/timezone.component';
+import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
 
 declare const System;
 
@@ -466,6 +468,8 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/datetime-period.component': DatetimePeriodComponent,
     '@shared/components/time/datetime.component': DatetimeComponent,
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,
+    '@shared/components/time/timezone.component': TimezoneComponent,
+    '@shared/components/time/timezone-panel.component': TimezonePanelComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
     '@shared/components/entity/entity-subtype-autocomplete.component': EntitySubTypeAutocompleteComponent,
