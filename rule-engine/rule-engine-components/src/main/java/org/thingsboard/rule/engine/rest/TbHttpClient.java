@@ -150,7 +150,7 @@ public class TbHttpClient {
     }
 
     private int getPoolMaxConnections() {
-        String poolMaxConnectionsEnv = System.getenv("TB_POOL_MAX_CONNECTIONS");
+        String poolMaxConnectionsEnv = System.getenv("TB_HTTP_POOL_MAX_CONNECTIONS");
 
         int poolMaxConnections;
         if (poolMaxConnectionsEnv != null) {
