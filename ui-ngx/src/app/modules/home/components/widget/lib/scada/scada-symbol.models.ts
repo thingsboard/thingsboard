@@ -883,16 +883,27 @@ export class ScadaSymbolObject {
                          center = true) {
     this.elements(e).forEach(element => {
       if (element.type === 'g') {
-        element.clear();
-        this.createIconElement(icon, size, color).subscribe((iconElement) => {
-          if (iconElement) {
-            element.add(iconElement);
-            if (center) {
-              const box = iconElement.bbox();
-              iconElement.translate(-box.cx, -box.cy);
-            }
+        let skip = false;
+        const firstChild = element.first();
+        if (firstChild) {
+          const iconData: {icon: string; size: number; color: string} = firstChild.remember('iconData');
+          if (iconData && iconData.icon === icon && iconData.size === size && iconData.color === color) {
+            skip = true;
           }
-        });
+        }
+        if (!skip) {
+          element.clear();
+          this.createIconElement(icon, size, color).subscribe((iconElement) => {
+            if (iconElement) {
+              iconElement.remember('iconData', {icon, size, color});
+              element.add(iconElement);
+              if (center) {
+                const box = iconElement.bbox();
+                iconElement.translate(-box.cx, -box.cy);
+              }
+            }
+          });
+        }
       }
     });
   }
