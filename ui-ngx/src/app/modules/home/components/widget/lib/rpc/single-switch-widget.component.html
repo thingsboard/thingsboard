@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div #singleSwitchPanel class="tb-single-switch-panel" [class.auto-scale]="autoScale" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style]="backgroundStyle$ | async">
+<div #singleSwitchPanel class="tb-single-switch-panel" [class.auto-scale]="autoScale" [style.pointer-events]="ctx.isEdit ? 'none' : 'all'" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-single-switch-overlay" [style]="overlayStyle" [style.inset]="overlayInset"></div>
   <div class="tb-single-switch-title-panel">
     <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>

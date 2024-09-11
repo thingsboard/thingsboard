@@ -164,6 +164,7 @@ public class SystemInfoController extends BaseController {
         } else {
             infoObject.put("version", "unknown");
         }
+        infoObject.put("type", "CE");
         return infoObject;
     }
 }

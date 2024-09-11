@@ -60,11 +60,10 @@ export class CustomDialogService {
     }
     return this.dynamicComponentFactoryService.createDynamicComponent(
       class CustomDialogComponentInstance extends CustomDialogComponent {}, template, modules).pipe(
-      mergeMap((componentData) => {
+      mergeMap((componentType) => {
           const dialogData: CustomDialogContainerData = {
             controller,
-            customComponentType: componentData.componentType,
-            customComponentModuleRef: componentData.componentModuleRef,
+            customComponentType: componentType,
             data
           };
           let dialogConfig: MatDialogConfig = {
@@ -79,7 +78,7 @@ export class CustomDialogService {
             CustomDialogContainerComponent,
             dialogConfig).afterClosed().pipe(
             tap(() => {
-              this.dynamicComponentFactoryService.destroyDynamicComponent(componentData.componentType);
+              this.dynamicComponentFactoryService.destroyDynamicComponent(componentType);
             })
           );
         }

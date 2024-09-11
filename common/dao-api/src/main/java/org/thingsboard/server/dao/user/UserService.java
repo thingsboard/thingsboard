@@ -59,6 +59,10 @@ public interface UserService extends EntityDaoService {
 
     UserCredentials requestExpiredPasswordReset(TenantId tenantId, UserCredentialsId userCredentialsId);
 
+    UserCredentials generatePasswordResetToken(UserCredentials userCredentials);
+
+    UserCredentials generateUserActivationToken(UserCredentials userCredentials);
+
     UserCredentials replaceUserCredentials(TenantId tenantId, UserCredentials userCredentials);
 
     void deleteUser(TenantId tenantId, User user);
