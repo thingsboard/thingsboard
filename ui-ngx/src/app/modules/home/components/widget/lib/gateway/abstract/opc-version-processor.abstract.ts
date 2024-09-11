@@ -26,10 +26,10 @@ import { OpcVersionMappingUtil } from '@home/components/widget/lib/gateway/utils
 export class OpcVersionProcessor extends GatewayConnectorVersionProcessor<OPCBasicConfig> {
 
   constructor(
-    protected gatewayVersionStr: string,
+    protected gatewayVersionIn: string,
     protected connector: GatewayConnector<OPCBasicConfig>
   ) {
-    super(gatewayVersionStr, connector);
+    super(gatewayVersionIn, connector);
   }
 
   getUpgradedVersion(): GatewayConnector<OPCBasicConfig_v3_5_2> {
@@ -40,7 +40,7 @@ export class OpcVersionProcessor extends GatewayConnectorVersionProcessor<OPCBas
         server: server ? OpcVersionMappingUtil.mapServerToUpgradedVersion(server) : {},
         mapping: server.mapping ? OpcVersionMappingUtil.mapMappingToUpgradedVersion(server.mapping) : [],
       },
-      configVersion: this.gatewayVersionStr
+      configVersion: this.gatewayVersionIn
     } as GatewayConnector<OPCBasicConfig_v3_5_2>;
   }
 
@@ -50,7 +50,7 @@ export class OpcVersionProcessor extends GatewayConnectorVersionProcessor<OPCBas
       configurationJson: {
         server: OpcVersionMappingUtil.mapServerToDowngradedVersion(this.connector.configurationJson as OPCBasicConfig_v3_5_2)
       },
-      configVersion: this.gatewayVersionStr
+      configVersion: this.gatewayVersionIn
     } as GatewayConnector<OPCLegacyBasicConfig>;
   }
 }

@@ -20,7 +20,7 @@
     <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
   </mat-tab>
   <mat-tab label="{{ 'gateway.server' | translate }}*">
-    <tb-opc-server-config formControlName="server"></tb-opc-server-config>
+    <tb-opc-server-config formControlName="server" [hideNewFields]="isLegacy"></tb-opc-server-config>
   </mat-tab>
   <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
     <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">

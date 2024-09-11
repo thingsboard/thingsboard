@@ -29,10 +29,10 @@ import { ModbusVersionMappingUtil } from '@home/components/widget/lib/gateway/ut
 export class ModbusVersionProcessor extends GatewayConnectorVersionProcessor<any> {
 
   constructor(
-    protected gatewayVersionStr: string,
+    protected gatewayVersionIn: string,
     protected connector: GatewayConnector<ModbusBasicConfig>
   ) {
-    super(gatewayVersionStr, connector);
+    super(gatewayVersionIn, connector);
   }
 
   getUpgradedVersion(): GatewayConnector<ModbusBasicConfig_v3_5_2> {
@@ -47,7 +47,7 @@ export class ModbusVersionProcessor extends GatewayConnectorVersionProcessor<any
           ? ModbusVersionMappingUtil.mapSlaveToUpgradedVersion(configurationJson.slave as ModbusLegacySlave)
           : {} as ModbusSlave,
       },
-      configVersion: this.gatewayVersionStr
+      configVersion: this.gatewayVersionIn
     } as GatewayConnector<ModbusBasicConfig_v3_5_2>;
   }
 
@@ -62,7 +62,7 @@ export class ModbusVersionProcessor extends GatewayConnectorVersionProcessor<any
           : {} as ModbusLegacySlave,
         master: configurationJson.master,
       },
-      configVersion: this.gatewayVersionStr
+      configVersion: this.gatewayVersionIn
     } as GatewayConnector<ModbusLegacyBasicConfig>;
   }
 }

@@ -31,10 +31,10 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
   private readonly mqttRequestTypeKeys = Object.values(RequestType);
 
   constructor(
-    protected gatewayVersionStr: string,
+    protected gatewayVersionIn: string,
     protected connector: GatewayConnector<MQTTBasicConfig>
   ) {
-    super(gatewayVersionStr, connector);
+    super(gatewayVersionIn, connector);
   }
 
   getUpgradedVersion(): GatewayConnector<MQTTBasicConfig_v3_5_2> {
@@ -67,7 +67,7 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
     return {
       ...this.connector,
       configurationJson,
-      configVersion: this.gatewayVersionStr
+      configVersion: this.gatewayVersionIn
     } as GatewayConnector<MQTTBasicConfig_v3_5_2>;
   }
 
@@ -85,7 +85,7 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
         ...updatedRequestsMapping,
         mapping: updatedMapping,
       },
-      configVersion: this.gatewayVersionStr
+      configVersion: this.gatewayVersionIn
     } as GatewayConnector<MQTTLegacyBasicConfig>;
   }
 

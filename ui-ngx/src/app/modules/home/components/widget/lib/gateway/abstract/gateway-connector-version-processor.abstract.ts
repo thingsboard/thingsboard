@@ -15,14 +15,14 @@
 ///
 
 import { GatewayConnector, GatewayVersion } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isString } from '@core/utils';
+import { isNumber, isString } from '@core/utils';
 
 export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   gatewayVersion: number;
   configVersion: number;
 
-  protected constructor(protected gatewayVersionStr: string, protected connector: GatewayConnector<BasicConfig>) {
-    this.gatewayVersion = this.parseVersion(this.gatewayVersionStr);
+  protected constructor(protected gatewayVersionIn: string | number, protected connector: GatewayConnector<BasicConfig>) {
+    this.gatewayVersion = this.parseVersion(this.gatewayVersionIn);
     this.configVersion = this.parseVersion(connector.configVersion);
   }
 
@@ -45,11 +45,15 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   }
 
   private isVersionUpgradeNeeded(): boolean {
-    return this.gatewayVersionStr === GatewayVersion.Current && (!this.configVersion || this.configVersion < this.gatewayVersion);
+    return this.gatewayVersionIn === GatewayVersion.Current && (!this.configVersion || this.configVersion < this.gatewayVersion);
   }
 
-  private parseVersion(version: string): number {
-    return isString(version) ? Number(version.replace(/\./g, '')) : 0;
+  private parseVersion(version: string | number): number {
+    if (isNumber(version)) {
+      return version as number;
+    }
+
+    return isString(version) ? parseFloat((version as string).replace(/\./g, '').slice(0, 3)) / 100 : 0;
   }
 
   protected abstract getDowngradedVersion(): GatewayConnector<BasicConfig>;

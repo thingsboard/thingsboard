@@ -64,6 +64,7 @@ import { OpcVersionMappingUtil } from '@home/components/widget/lib/gateway/utils
 export class OpcUaLegacyBasicConfigComponent extends GatewayConnectorBasicConfigDirective<OPCBasicConfig_v3_5_2, OPCLegacyBasicConfig> {
 
   mappingTypes = MappingType;
+  isLegacy = true;
 
   protected override initBasicFormGroup(): FormGroup {
     return this.fb.group({

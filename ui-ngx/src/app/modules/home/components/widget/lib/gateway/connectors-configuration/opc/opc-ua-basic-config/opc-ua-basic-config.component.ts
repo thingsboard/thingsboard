@@ -63,6 +63,7 @@ import {
 export class OpcUaBasicConfigComponent extends GatewayConnectorBasicConfigDirective<OPCBasicConfig_v3_5_2, OPCBasicConfig_v3_5_2> {
 
   mappingTypes = MappingType;
+  isLegacy = false;
 
   protected override initBasicFormGroup(): FormGroup {
     return this.fb.group({
