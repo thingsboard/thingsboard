@@ -222,6 +222,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   @ViewChild('dashboardContainer') dashboardContainer: ElementRef<HTMLElement>;
 
+  @ViewChild('dashboardContent', {read: ElementRef}) dashboardContent: ElementRef<HTMLElement>;
+
   prevDashboard: Dashboard;
 
   iframeMode = this.utils.iframeMode;
@@ -450,7 +452,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         }),
         skip(1)
       ).subscribe(() => {
-          this.layouts.main.layoutCtx.ctrl.updatedCurrentBreakpoint();
+          this.dashboardUtils.updatedLayoutForBreakpoint(this.layouts.main, this.dashboardCtx.breakpoint);
           this.updateLayoutSizes();
         }
       )
@@ -520,7 +522,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.translate,
       () => this.dashboardCtx.stateController,
       this.dashboardConfiguration.entityAliases,
-      this.dashboardConfiguration.filters);
+      this.dashboardConfiguration.filters,
+      this.parentDashboard?.aliasController.getUserFilters());
 
     this.updateDashboardCss();
 
@@ -759,6 +762,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     const prevMainLayoutWidth = this.mainLayoutSize.width;
     const prevMainLayoutHeight = this.mainLayoutSize.height;
     const prevMainLayoutMaxWidth = this.mainLayoutSize.maxWidth;
+    const prevMainLayoutMinWidth = this.mainLayoutSize.minWidth;
     if (this.isEditingWidget && this.editingLayoutCtx.id === 'main') {
       this.mainLayoutSize.width = '100%';
     } else {
@@ -773,18 +777,18 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       const xOffset = this.dashboardContainer.nativeElement.getBoundingClientRect().x;
       const breakpoint = this.dashboardUtils.getBreakpointInfoById(this.layouts.main.layoutCtx.breakpoint);
 
-      let maxWidth: string;
-      if (breakpoint?.maxWidth) {
-        if (this.isMobileSize(breakpoint)) {
-          maxWidth = `${breakpoint.maxWidth}px`;
-        } else {
-          maxWidth = `${breakpoint.maxWidth - xOffset}px`;
-        }
-      } else {
-        maxWidth = '100%';
-      }
+      let maxWidth = '100%';
+      let minWidth: string;
 
-      const minWidth = breakpoint?.minWidth ? `${breakpoint.minWidth}px` : undefined;
+      if (breakpoint) {
+        const isMobile = this.isMobileSize(breakpoint);
+        if (breakpoint.maxWidth) {
+          maxWidth = isMobile ? `${breakpoint.maxWidth}px` : `${breakpoint.maxWidth - xOffset}px`;
+        }
+        if (breakpoint.minWidth) {
+          minWidth = isMobile ? `${breakpoint.minWidth}px` : `${breakpoint.minWidth - xOffset}px`;
+        }
+      }
 
       this.mainLayoutSize.maxWidth = maxWidth;
       this.mainLayoutSize.minWidth = minWidth;
@@ -793,7 +797,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.mainLayoutSize.minWidth = undefined;
     }
     return prevMainLayoutWidth !== this.mainLayoutSize.width || prevMainLayoutHeight !== this.mainLayoutSize.height ||
-      prevMainLayoutMaxWidth !== this.mainLayoutSize.maxWidth;
+      prevMainLayoutMaxWidth !== this.mainLayoutSize.maxWidth || prevMainLayoutMinWidth !== this.mainLayoutSize.minWidth;
   }
 
   private updateRightLayoutSize(): boolean {
@@ -920,7 +924,10 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     let gridSettings: GridSettings = null;
     const layoutKeys = this.dashboardUtils.isSingleLayoutDashboard(this.dashboard);
     if (layoutKeys) {
-      gridSettings = deepClone(this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout].gridSettings);
+      const layouts = this.dashboardUtils.getDashboardLayoutConfig(
+        this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout],
+        this.layouts[layoutKeys.layout].layoutCtx.breakpoint);
+      gridSettings = deepClone(layouts.gridSettings);
     }
     this.dialog.open<DashboardSettingsDialogComponent, DashboardSettingsDialogData,
       DashboardSettingsDialogData>(DashboardSettingsDialogComponent, {
@@ -938,9 +945,11 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         this.updateDashboardCss();
         const newGridSettings = data.gridSettings;
         if (newGridSettings) {
-          const layout = this.dashboard.configuration.states[layoutKeys.state].layouts[layoutKeys.layout];
-          this.dashboardUtils.updateLayoutSettings(layout, newGridSettings);
-          this.updateLayouts();
+          const layouts = deepClone(this.dashboard.configuration.states[layoutKeys.state].layouts);
+          const layoutConfig = this.dashboardUtils.getDashboardLayoutConfig(
+            layouts[layoutKeys.layout], this.layouts[layoutKeys.layout].layoutCtx.breakpoint);
+          this.dashboardUtils.updateLayoutSettings(layoutConfig, newGridSettings);
+          this.updateDashboardLayouts(layouts);
        }
       }
     });
@@ -988,7 +997,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     });
   }
 
-  private moveWidgets($event: Event, layoutId: DashboardLayoutId) {
+  private moveWidgets($event: Event, layoutId: DashboardLayoutId, breakpointId: BreakpointId) {
     if ($event) {
       $event.stopPropagation();
     }
@@ -1001,7 +1010,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
     }).afterClosed().subscribe((result) => {
       this.layouts[layoutId].layoutCtx.displayGrid = 'onDrag&Resize';
       if (result) {
-        const targetLayout = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts[layoutId];
+        const dashboardLayout = this.dashboardConfiguration.states[this.dashboardCtx.state].layouts[layoutId];
+        const targetLayout = this.dashboardUtils.getDashboardLayoutConfig(dashboardLayout, breakpointId);
         this.dashboardUtils.moveWidgets(targetLayout, result.cols, result.rows);
         this.updateLayouts();
       } else {
@@ -1129,7 +1139,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   private updateLayout(layout: DashboardPageLayout, layoutInfo: DashboardLayoutInfo) {
     layout.layoutCtx.layoutData = layoutInfo;
     layout.layoutCtx.layoutDataChanged.next();
-    layout.layoutCtx.ctrl?.updatedCurrentBreakpoint(this.isEdit ? layout.layoutCtx.breakpoint : null, layout.show);
+    this.dashboardUtils.updatedLayoutForBreakpoint(layout, this.isEdit ? layout.layoutCtx.breakpoint : this.dashboardCtx.breakpoint);
     this.updateLayoutSizes();
   }
 
@@ -1159,8 +1169,6 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
           this.filtersUpdated();
           this.updateLayouts();
         }
-      } else if (!this.widgetEditMode) {
-        this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
       }
     }
   }
@@ -1207,6 +1215,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       this.setEditMode(false, false);
     } else {
       let reInitDashboard = false;
+      this.dashboard.configuration.timewindow = this.dashboardCtx.dashboardTimewindow;
       this.dashboardService.saveDashboard(this.dashboard).pipe(
         catchError((err) => {
           if (err.status === HttpStatusCode.Conflict) {
@@ -1344,7 +1353,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
         }
         const scada = this.isAddingToScadaLayout();
         if (scada) {
-          newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget);
+          newWidget = this.dashboardUtils.prepareWidgetForScadaLayout(newWidget, widgetTypeInfo.scada);
         }
         let showLayoutConfig = true;
         if (scada || this.layouts.right.show || !this.showLayoutConfigInEdit(this.layouts.main.layoutCtx)) {
@@ -1582,7 +1591,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       dashboardContextActions.push(
         {
           action: ($event) => {
-            this.moveWidgets($event, layoutCtx.id);
+            this.moveWidgets($event, layoutCtx.id, layoutCtx.breakpoint);
           },
           enabled: true,
           value: 'dashboard.move-all-widgets',

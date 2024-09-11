@@ -31,7 +31,7 @@ import {
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
-  GridSettings,
+  GridSettings, LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
@@ -59,6 +59,7 @@ import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { BackgroundType, colorBackground, isBackgroundSettings } from '@shared/models/widget-settings.models';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { TranslateService } from '@ngx-translate/core';
+import { DashboardPageLayout } from '@home/components/dashboard-page/dashboard-page.models';
 
 @Injectable({
   providedIn: 'root'
@@ -344,10 +345,12 @@ export class DashboardUtilsService {
     return widgetConfig;
   }
 
-  public prepareWidgetForScadaLayout(widget: Widget): Widget {
+  public prepareWidgetForScadaLayout(widget: Widget, isScada: boolean): Widget {
     const config = widget.config;
     config.showTitle = false;
     config.dropShadow = false;
+    config.resizable = !isScada;
+    config.preserveAspectRatio = isScada;
     config.padding = '0';
     config.margin = '0';
     config.backgroundColor = 'rgba(0,0,0,0)';
@@ -403,6 +406,7 @@ export class DashboardUtilsService {
 
   private createDefaultGridSettings(): GridSettings {
     return {
+      layoutType: LayoutType.default,
       backgroundColor: '#eeeeee',
       columns: 24,
       margin: 10,
@@ -488,12 +492,15 @@ export class DashboardUtilsService {
     if (!layout.gridSettings) {
       layout.gridSettings = this.createDefaultGridSettings();
     }
-    if (layout.gridSettings.margins && layout.gridSettings.margins.length === 2) {
-      layout.gridSettings.margin = layout.gridSettings.margins[0];
-      delete layout.gridSettings.margins;
+    if ((layout.gridSettings as any).margins && (layout.gridSettings as any).margins.length === 2) {
+      layout.gridSettings.margin = (layout.gridSettings as any).margins[0];
+      delete (layout.gridSettings as any).margins;
     }
     layout.gridSettings.outerMargin = isDefined(layout.gridSettings.outerMargin) ? layout.gridSettings.outerMargin : true;
     layout.gridSettings.margin = isDefined(layout.gridSettings.margin) ? layout.gridSettings.margin : 10;
+    if (!layout.gridSettings.layoutType) {
+      layout.gridSettings.layoutType = LayoutType.default;
+    }
   }
 
   public setLayouts(dashboard: Dashboard, targetState: string, newLayouts: DashboardStateLayouts) {
@@ -653,7 +660,9 @@ export class DashboardUtilsService {
       mobileOrder: widget.config.mobileOrder,
       mobileHeight: widget.config.mobileHeight,
       mobileHide: widget.config.mobileHide,
-      desktopHide: widget.config.desktopHide
+      desktopHide: widget.config.desktopHide,
+      preserveAspectRatio: widget.config.preserveAspectRatio,
+      resizable: widget.config.resizable
     };
     if (isUndefined(originalColumns)) {
       originalColumns = 24;
@@ -752,10 +761,25 @@ export class DashboardUtilsService {
   public moveWidgets(layout: DashboardLayout, cols: number, rows: number) {
     cols = isDefinedAndNotNull(cols) ? Math.round(cols) : 0;
     rows = isDefinedAndNotNull(rows) ? Math.round(rows) : 0;
+    if (cols < 0 || rows < 0) {
+      let widgetMinCol = Infinity;
+      let widgetMinRow = Infinity;
+      for (const w of Object.keys(layout.widgets)) {
+        const widget = layout.widgets[w];
+        widgetMinCol = Math.min(widgetMinCol, widget.col);
+        widgetMinRow = Math.min(widgetMinRow, widget.row);
+      }
+      if ((cols + widgetMinCol) < 0 ){
+        cols = -widgetMinCol;
+      }
+      if ((rows + widgetMinRow) < 0 ){
+        rows = -widgetMinRow;
+      }
+    }
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
-      widget.col = Math.max(0, widget.col + cols);
-      widget.row = Math.max(0, widget.row + rows);
+      widget.col += cols;
+      widget.row += rows;
     }
   }
 
@@ -1065,5 +1089,23 @@ export class DashboardUtilsService {
     const minStr = isDefined(currentData?.minWidth) ? `min ${currentData.minWidth}px` : '';
     const maxStr = isDefined(currentData?.maxWidth) ? `max ${currentData.maxWidth}px` : '';
     return minStr && maxStr ? `${minStr} - ${maxStr}` : `${minStr}${maxStr}`;
+  }
+
+  updatedLayoutForBreakpoint(layout: DashboardPageLayout, breakpointId: BreakpointId) {
+    let selectBreakpointId: BreakpointId = 'default';
+    if (layout.layoutCtx.layoutData[breakpointId]) {
+      selectBreakpointId = breakpointId;
+    }
+    layout.layoutCtx.breakpoint = selectBreakpointId;
+    const layoutInfo = layout.layoutCtx.layoutData[selectBreakpointId];
+    if (layoutInfo.gridSettings) {
+      layout.layoutCtx.gridSettings = layoutInfo.gridSettings;
+    }
+    layout.layoutCtx.widgets.setWidgetIds(layoutInfo.widgetIds);
+    layout.layoutCtx.widgetLayouts = layoutInfo.widgetLayouts;
+    if (layout.show && layout.layoutCtx.ctrl) {
+      layout.layoutCtx.ctrl.reload();
+    }
+    layout.layoutCtx.ignoreLoading = true;
   }
 }

@@ -61,13 +61,10 @@ export class ClientsTableConfigResolver implements Resolve<EntityTableConfig<OAu
     this.config.headerComponent = ClientTableHeaderComponent;
     this.config.addDialogStyle = {width: '850px', maxHeight: '100vh'};
     this.config.defaultSortOrder = {property: 'createdTime', direction: Direction.DESC};
-    this.config.displayPagination = false;
-    this.config.pageMode = false;
 
     this.config.columns.push(
       new DateEntityTableColumn<OAuth2ClientInfo>('createdTime', 'common.created-time', this.datePipe, '170px'),
-      new EntityTableColumn<OAuth2ClientInfo>('title', 'admin.oauth2.title', '170px'),
-      new EntityTableColumn<OAuth2ClientInfo>('providerName', 'admin.oauth2.provider', '170px'),
+      new EntityTableColumn<OAuth2ClientInfo>('title', 'admin.oauth2.title', '350px'),
       new EntityTableColumn<OAuth2ClientInfo>('platforms', 'admin.oauth2.allowed-platforms', '100%',
         (clientInfo) => {
           return clientInfo.platforms && clientInfo.platforms.length ?

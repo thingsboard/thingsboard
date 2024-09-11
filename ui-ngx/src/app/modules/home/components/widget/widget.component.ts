@@ -105,7 +105,7 @@ import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
 import { AlarmDataService } from '@core/api/alarm-data.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
@@ -760,7 +760,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
       try {
         this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentType,
-          {index: 0, injector, ngModuleRef: this.widgetInfo.componentModuleRef});
+          {index: 0, injector});
         this.cd.detectChanges();
       } catch (e) {
         if (this.dynamicWidgetComponentRef) {
@@ -1365,7 +1365,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private openDashboardStateInSeparateDialog(targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
-                                             hideDashboardToolbar = true, dialogWidth?: number, dialogHeight?: number) {
+                                             hideDashboardToolbar = true, dialogWidth?: number, dialogHeight?: number): MatDialogRef<any> {
     const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
     const stateObject: StateObject = {};
     stateObject.params = params;
@@ -1413,6 +1413,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
     });
     this.cd.markForCheck();
+    return dashboard.dialogRef;
   }
 
   private elementClick($event: Event) {

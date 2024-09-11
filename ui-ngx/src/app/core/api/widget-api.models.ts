@@ -63,6 +63,7 @@ import { PopoverPlacement } from '@shared/components/popover.models';
 import { PersistentRpc } from '@shared/models/rpc.models';
 import { EventEmitter } from '@angular/core';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
+import { MatDialogRef } from '@angular/material/dialog';
 
 export interface TimewindowFunctions {
   onUpdateTimewindow: (startTimeMs: number, endTimeMs: number, interval?: number) => void;
@@ -101,7 +102,7 @@ export interface WidgetActionsApi {
   click: ($event: Event) => void;
   getActiveEntityInfo: () => SubscriptionEntityInfo;
   openDashboardStateInSeparateDialog: (targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
-                                       hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => void;
+                                       hideDashboardToolbar?: boolean, dialogWidth?: number, dialogHeight?: number) => MatDialogRef<any>;
   openDashboardStateInPopover: ($event: Event, targetDashboardStateId: string, params?: StateParams,
                                 hideDashboardToolbar?: boolean, preferredPlacement?: PopoverPlacement,
                                 hideOnClickOutside?: boolean, popoverWidth?: string,
@@ -136,6 +137,7 @@ export interface IAliasController {
   resolveAlarmSource(alarmSource: Datasource): Observable<Datasource>;
   getEntityAliases(): EntityAliases;
   getFilters(): Filters;
+  getUserFilters(): Filters;
   getFilterInfo(filterId: string): FilterInfo;
   getKeyFilters(filterId: string): Array<KeyFilter>;
   updateCurrentAliasEntity(aliasId: string, currentEntity: EntityInfo): void;

@@ -277,7 +277,7 @@
            'tb-dashboard-toolbar-animated': isToolbarOpenedAnimate,
            'tb-dashboard-toolbar-closed': !toolbarOpened }">
     <mat-drawer-container hasBackdrop="false" class="tb-absolute-fill tb-dashboard-drawer-container">
-      <mat-drawer-content fxLayout="column" fxLayoutAlign="center start">
+      <mat-drawer-content #dashboardContent fxLayout="column" fxLayoutAlign="center start">
         <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
                  [ngStyle]="{'color': dashboard.configuration.settings.titleColor}">
           <h3 [fxShow]="!isEdit && displayTitle()">{{ translatedDashboardTitle }}</h3>

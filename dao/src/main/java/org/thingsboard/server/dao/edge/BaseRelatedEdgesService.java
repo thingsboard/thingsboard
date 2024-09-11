@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.dao.edge;
 
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
@@ -30,6 +31,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 
 @Service
+@Slf4j
 public class BaseRelatedEdgesService extends AbstractCachedEntityService<RelatedEdgesCacheKey, RelatedEdgesCacheValue, RelatedEdgesEvictEvent> implements RelatedEdgesService {
 
     public static final int RELATED_EDGES_CACHE_ITEMS = 1000;
@@ -47,6 +49,7 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
 
     @Override
     public PageData<EdgeId> findEdgeIdsByEntityId(TenantId tenantId, EntityId entityId, PageLink pageLink) {
+        log.trace("Executing findEdgeIdsByEntityId, tenantId [{}], entityId [{}], pageLink [{}]", tenantId, entityId, pageLink);
         if (!pageLink.equals(FIRST_PAGE)) {
             return edgeService.findEdgeIdsByTenantIdAndEntityId(tenantId, entityId, pageLink);
         }
@@ -56,6 +59,7 @@ public class BaseRelatedEdgesService extends AbstractCachedEntityService<Related
 
     @Override
     public void publishRelatedEdgeIdsEvictEvent(TenantId tenantId, EntityId entityId) {
+        log.trace("Executing publishRelatedEdgeIdsEvictEvent, tenantId [{}], entityId [{}]", tenantId, entityId);
         publishEvictEvent(new RelatedEdgesEvictEvent(tenantId, entityId));
     }
 

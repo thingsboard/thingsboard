@@ -205,6 +205,12 @@
         "max-failed-login-attempts": "Maximum number of failed login attempts, before account is locked",
         "minimum-max-failed-login-attempts-range": "Maximum number of failed login attempts can't be negative",
         "user-lockout-notification-email": "In case user account lockout, send notification to email",
+        "user-activation-token-ttl": "User activation link TTL in hours",
+        "user-activation-token-ttl-range": "User activation link TTL must be in range from 1 to 24 hours",
+        "password-reset-token-ttl": "Password reset link TTL in hours",
+        "password-reset-token-ttl-range": "Password reset link TTL must be in range from 1 to 24 hours",
+        "mobile-secret-key-length": "Mobile secret key length",
+        "mobile-secret-key-length-range": "Mobile secret key length must be positive",
         "domain-name": "Domain name",
         "domain-name-unique": "Domain name and protocol need to unique.",
         "domain-name-max-length": "Domain name should be less than 256",
@@ -234,14 +240,15 @@
           "delete-mobile-app-text": "Be careful, after the confirmation the mobile application and all related data will become unrecoverable.",
           "title": "Title",
           "client-title-required": "Title is required",
+          "client-title-max-length": "Title should be less than 100",
           "advanced-settings": "Advanced settings",
           "domain-details": "Domain details",
           "no-domains": "No domains found",
           "search-domains": "Search domains",
           "mobile-app-details": "Mobile application details",
           "add-mobile-app": "Add mobile application",
-          "no-mobile-apps": "Search mobile applications",
-          "search-mobile-apps": "No mobile applications found",
+          "no-mobile-apps": "No mobile applications found",
+          "search-mobile-apps": "Search mobile applications",
           "send-token": "Send token",
           "create-new": "Create new",
           "client-authentication-method": "Client authentication method",
@@ -315,6 +322,7 @@
           "mobile-package-placeholder": "Ex.: my.example.app",
           "mobile-package-hint": "For Android: your own unique Application ID. For iOS: Product bundle identifier.",
           "mobile-package-unique": "Application package must be unique.",
+          "mobile-package-max-length": "Application package should be less than 256",
           "mobile-app-secret": "Application secret",
           "mobile-app-secret-hint": "Base64 encoded string representing at least 512 bits of data.",
           "mobile-app-secret-required": "Application secret is required.",
@@ -992,6 +1000,7 @@
     },
     "contact": {
         "country": "Country",
+        "country-required": "Country is required.",
         "city": "City",
         "state": "State / Province",
         "postal-code": "Zip / Postal Code",
@@ -1001,6 +1010,8 @@
         "phone": "Phone",
         "email": "Email",
         "no-address": "No address",
+        "no-country-found": "No countries found.",
+        "no-country-matching": "No country matching '{{country}}' were found.",
         "state-max-length": "State length should be less than 256",
         "phone-max-length": "Phone number should be less than 256",
         "city-max-length": "Specified city should be less than 256"
@@ -3658,6 +3669,8 @@
         "update-symbol": "Update SCADA symbol",
         "edit-symbol": "Edit SCADA symbol",
         "symbol-details": "SCADA symbol details",
+        "mode-svg": "SVG",
+        "mode-xml": "XML",
         "no-symbols": "No symbols found",
         "show-hidden-elements": "Show hidden elements",
         "hide-hidden-elements": "Hide hidden elements",
@@ -3735,6 +3748,7 @@
             "type-color-settings": "Color settings",
             "type-font": "Font",
             "type-units": "Units",
+            "type-icon": "Icon",
             "no-properties": "No properties configured",
             "add-property": "Add property",
             "property-settings": "Property settings",
@@ -3832,6 +3846,8 @@
             "open-hint": "Action invoked when user clicks to open component.",
             "close": "Close",
             "close-hint": "Action invoked when user clicks to close component.",
+            "close-state-animation": "Closed state animation",
+            "close-state-animation-hint": "Whether to enable blinking animation when component is in closed state.",
             "opened-color": "Opened color",
             "closed-color": "Closed color",
             "opened-rotation-angle": "Opened rotation angle",
@@ -3877,7 +3893,14 @@
             "stand-filter-color": "Stand filter color",
             "mode-box-background": "Mode box background",
             "border-color": "Border color",
-            "label-color": "Label color"
+            "label-color": "Label color",
+            "water-leak-hint": "Indicates whether a leak.",
+            "default-color": "Default color",
+            "leak-color": "Leak color",
+            "full-value": "Full value",
+            "full-value-hint": "Double value indicating full value.",
+            "label": "Label",
+            "icon": "Icon"
         }
     },
     "item": {
@@ -4000,7 +4023,11 @@
         "email-auth-description": "A security code has been sent to your email address at {{contact}}.",
         "email-auth-placeholder": "Email code",
         "backup-code-auth-description": "Please enter one of your backup codes.",
-        "backup-code-auth-placeholder": "Backup code"
+        "backup-code-auth-placeholder": "Backup code",
+        "activation-link-expired": "Activation link has expired",
+        "activation-link-expired-message": "The link to activate your profile has expired. You can return to the login page to receive a new email.",
+        "reset-password-link-expired": "Password reset link has expired",
+        "reset-password-link-expired-message": "The link to reset your password has expired. You can return to the login page to receive a new email."
     },
     "markdown": {
         "edit": "Edit",
@@ -5626,7 +5653,7 @@
         "display-activation-link": "Display activation link",
         "send-activation-mail": "Send activation mail",
         "activation-link": "User activation link",
-        "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> :",
+        "activation-link-text": "In order to activate user use the following <a href='{{activationLink}}' target='_blank'>activation link</a> (expires in {{activationLinkTtl}}) :",
         "copy-activation-link": "Copy activation link",
         "activation-link-copied-message": "User activation link has been copied to clipboard",
         "details": "Details",
@@ -5943,7 +5970,8 @@
         "search": "Search widget bundles",
         "selected-widgets-bundles": "{ count, plural, =1 {1 widgets bundle} other {# widgets bundles} } selected",
         "open-widgets-bundle": "Open widgets bundle",
-        "loading-widgets-bundles": "Loading widgets bundles..."
+        "loading-widgets-bundles": "Loading widgets bundles...",
+        "create-new": "Create new widget bundle"
     },
     "widget-config": {
         "data": "Data",
@@ -6048,7 +6076,11 @@
         "color": "Color",
         "tooltip": "Tooltip",
         "units-required": "Unit is required.",
-        "list-layout": "List layout"
+        "list-layout": "List layout",
+        "layout": "Layout",
+        "resize-options": "Resize options",
+        "resizable": "Resizable",
+        "preserve-aspect-ratio": "Preserve aspect ratio"
     },
     "widget-type": {
         "import": "Import widget type",

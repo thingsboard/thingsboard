@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-wind-speed-direction-panel" [style]="backgroundStyle$ | async" [class.tb-wind-speed-direction-pointer]="hasCardClickAction" (click)="cardClick($event)">
+<div class="tb-wind-speed-direction-panel" [style.padding]="padding" [style]="backgroundStyle$ | async" [class.tb-wind-speed-direction-pointer]="hasCardClickAction" (click)="cardClick($event)">
   <div class="tb-wind-speed-direction-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div class="tb-wind-speed-direction-content">

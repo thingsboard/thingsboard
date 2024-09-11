@@ -205,7 +205,7 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
         property: 'createdTime',
         direction: Direction.DESC
       });
-      return this.imageService.getImages(pageLink, this.imageSubType, filter.includeSystemImages);
+      return this.imageService.getImages(pageLink, filter.includeSystemImages, this.imageSubType);
     };
   }
 
@@ -639,11 +639,15 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
   }
 
   rowClick($event, image: ImageResourceInfo) {
-    if (this.selectionMode) {
-      this.selectImage($event, image);
+    if (this.isScada) {
+      this.editImage($event, image);
     } else {
-      if (this.deleteEnabled(image)) {
-        this.dataSource.selection.toggle(image);
+      if (this.selectionMode) {
+        this.selectImage($event, image);
+      } else {
+        if (this.deleteEnabled(image)) {
+          this.dataSource.selection.toggle(image);
+        }
       }
     }
   }

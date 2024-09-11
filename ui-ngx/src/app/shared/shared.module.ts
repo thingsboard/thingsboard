@@ -225,6 +225,9 @@ import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.c
 import { TimewindowConfigDialogComponent } from '@shared/components/time/timewindow-config-dialog.component';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol-input.component';
+import { CountryAutocompleteComponent } from '@shared/components/country-autocomplete.component';
+import { CountryData } from '@shared/models/country.models';
+import { SvgXmlComponent } from '@shared/components/svg-xml.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -281,7 +284,8 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
         disableTooltipInteractivity: true
       }
     },
-    TbBreakPointsProvider
+    TbBreakPointsProvider,
+    CountryData
   ],
   declarations: [
     FooterComponent,
@@ -341,6 +345,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     JsFuncComponent,
     CssComponent,
     HtmlComponent,
+    SvgXmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
     FabToolbarComponent,
@@ -389,6 +394,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
+    CountryAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,
@@ -549,6 +555,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     JsFuncComponent,
     CssComponent,
     HtmlComponent,
+    SvgXmlComponent,
     FabTriggerDirective,
     FabActionsDirective,
     TbJsonToStringDirective,
@@ -649,6 +656,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TogglePasswordComponent,
     ProtobufContentComponent,
     BranchAutocompleteComponent,
+    CountryAutocompleteComponent,
     PhoneInputComponent,
     TbScriptLangComponent,
     NotificationComponent,

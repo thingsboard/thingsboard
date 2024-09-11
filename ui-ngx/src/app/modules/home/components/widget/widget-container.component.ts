@@ -148,9 +148,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
     $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
-    const dashboardElement = this.widget.widgetContext.dashboardPageElement;
-    if (dashboardElement) {
-      this.initEditWidgetActionTooltip(dashboardElement);
+    const dashboardContentElement = this.widget.widgetContext.dashboardContentElement;
+    if (dashboardContentElement) {
+      this.initEditWidgetActionTooltip(dashboardContentElement);
     }
   }
 
