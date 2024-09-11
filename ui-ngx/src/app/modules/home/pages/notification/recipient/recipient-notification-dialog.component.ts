@@ -100,6 +100,7 @@ export class RecipientNotificationDialogComponent extends
         conversation: [{value: '', disabled: true}, Validators.required],
         webhookUrl: [{value: '', disabled: true}, Validators.required],
         channelName: [{value: '', disabled: true}, Validators.required],
+        useOldApi: [{value: !this.isAdd, disabled: true}],
         description: [null]
       })
     });
@@ -120,6 +121,7 @@ export class RecipientNotificationDialogComponent extends
         case NotificationTargetType.MICROSOFT_TEAMS:
           this.targetNotificationForm.get('configuration.webhookUrl').enable({emitEvent: false});
           this.targetNotificationForm.get('configuration.channelName').enable({emitEvent: false});
+          this.targetNotificationForm.get('configuration.useOldApi').enable({emitEvent: false});
           break;
       }
       this.targetNotificationForm.get('configuration.type').enable({emitEvent: false});

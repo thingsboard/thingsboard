@@ -4294,6 +4294,8 @@
         "type": "Type",
         "unread": "Unread",
         "updated": "Updated",
+        "use-deprecated-webhook-connectors": "Use deprecated Webhook connectors",
+        "use-old-api": "Use old API",
         "use-template": "Use template",
         "view-all": "View all",
         "warning": "Warning",
