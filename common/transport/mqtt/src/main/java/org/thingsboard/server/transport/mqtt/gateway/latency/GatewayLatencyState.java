@@ -54,13 +54,16 @@ public class GatewayLatencyState {
         }
     }
 
-    public void clear() {
-        connectors.clear();
-    }
-
     public Map<String, ConnectorLatencyResult> getLatencyStateResult() {
         Map<String, ConnectorLatencyResult> result = new HashMap<>();
-        connectors.forEach((name, state) -> result.put(name, state.getResult()));
+        updateLock.lock();
+        try {
+            connectors.forEach((name, state) -> result.put(name, state.getResult()));
+            connectors.clear();
+        } finally {
+            updateLock.unlock();
+        }
+
         return result;
     }
 

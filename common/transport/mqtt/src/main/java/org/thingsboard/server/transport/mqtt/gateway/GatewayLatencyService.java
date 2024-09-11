@@ -67,10 +67,7 @@ public class GatewayLatencyService {
     }
 
     public void onDeviceDelete(DeviceId deviceId) {
-        var state = states.remove(deviceId);
-        if (state != null) {
-            state.clear();
-        }
+        states.remove(deviceId);
     }
 
     public void onDeviceDisconnect(DeviceId deviceId) {
@@ -100,7 +97,6 @@ public class GatewayLatencyService {
             return;
         }
         var result = state.getLatencyStateResult();
-        state.clear();
         var kvProto = TransportProtos.KeyValueProto.newBuilder()
                 .setKey("latencyCheck")
                 .setType(TransportProtos.KeyValueType.JSON_V)
