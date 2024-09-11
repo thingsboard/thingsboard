@@ -22,7 +22,7 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { Resolve, Router } from '@angular/router';
-import { Resource, ResourceInfo, ResourceTypeTranslationMap } from '@shared/models/resource.models';
+import { Resource, ResourceInfo, ResourceType, ResourceTypeTranslationMap } from '@shared/models/resource.models';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { DatePipe } from '@angular/common';
@@ -150,6 +150,9 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
   }
 
   private isResourceEditable(resource: ResourceInfo, authority: Authority): boolean {
+    if (resource && resource.resourceType === ResourceType.LWM2M_MODEL) {
+      return false;
+    }
     if (authority === Authority.TENANT_ADMIN) {
       return resource && resource.tenantId && resource.tenantId.id !== NULL_UUID;
     } else {

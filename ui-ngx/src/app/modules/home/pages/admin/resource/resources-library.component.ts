@@ -88,16 +88,17 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   updateForm(entity: Resource): void {
     const { resourceType, fileName, title, data } = entity;
-    this.updateTableReadonlyConfig();
+    this.entityForm.patchValue({ resourceType, fileName, title, data });
+  }
 
-    if (this.isEdit) {
+  override updateFormState(): void {
+    super.updateFormState();
+    if (this.isEdit && this.entityForm) {
       this.entityForm.get('resourceType').disable({ emitEvent: false });
-      if (resourceType !== ResourceType.JS_MODULE) {
+      if (this.entityForm.get('resourceType').value !== ResourceType.JS_MODULE) {
         this.entityForm.get('fileName').disable({ emitEvent: false });
       }
     }
-
-    this.entityForm.patchValue({ resourceType, fileName, title, data });
   }
 
   prepareFormValue(formValue: Resource): Resource {
@@ -136,11 +137,6 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
         verticalPosition: 'bottom',
         horizontalPosition: 'right'
       }));
-  }
-
-  private updateTableReadonlyConfig(): void {
-    this.entitiesTableConfigValue.detailsReadonly = () =>
-      this.resourceType.LWM2M_MODEL === this.entityForm.get('resourceType').value;
   }
 
   private observeResourceTypeChange(): void {
