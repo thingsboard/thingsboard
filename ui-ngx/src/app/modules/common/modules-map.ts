@@ -337,6 +337,7 @@ import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-ch
 import { IModulesMap } from '@modules/common/modules-map.models';
 import { TimezoneComponent } from '@shared/components/time/timezone.component';
 import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
+import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 
 declare const System;
 
@@ -470,6 +471,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,
     '@shared/components/time/timezone.component': TimezoneComponent,
     '@shared/components/time/timezone-panel.component': TimezonePanelComponent,
+    '@shared/components/time/datapoints-limit': DatapointsLimitComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
     '@shared/components/entity/entity-subtype-autocomplete.component': EntitySubTypeAutocompleteComponent,

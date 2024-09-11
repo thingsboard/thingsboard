@@ -137,19 +137,9 @@
         <section class="tb-form-row column-xs space-between same-padding"
                  *ngIf="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE && (isEdit || !timewindow.hideAggInterval)">
           <div>{{ 'aggregation.limit' | translate }}</div>
-          <div class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center">
-            <mat-slider fxFlex
-                        min="{{minDatapointsLimit()}}"
-                        max="{{maxDatapointsLimit()}}">
-              <input matSliderThumb formControlName="limit"/>
-            </mat-slider>
-            <mat-form-field class="limit-slider-value" subscriptSizing="dynamic" appearance="outline">
-              <input matInput formControlName="limit" type="number" step="1"
-                     [value]="timewindowForm.get('aggregation.limit').value"
-                     min="{{minDatapointsLimit()}}"
-                     max="{{maxDatapointsLimit()}}"/>
-            </mat-form-field>
-          </div>
+          <tb-datapoints-limit formControlName="limit"
+                               [required]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
+          </tb-datapoints-limit>
         </section>
       </ng-container>
 

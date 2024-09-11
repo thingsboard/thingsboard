@@ -173,19 +173,11 @@
           <mat-slide-toggle class="mat-slide" formControlName="hideAggInterval">
             {{ 'timewindow.hide' | translate }}
           </mat-slide-toggle>
-          <div formGroupName="aggregation" class="limit-slider-container" fxLayout="row" fxLayoutAlign="start center">
-            <mat-slider fxFlex
-                        min="{{minDatapointsLimit()}}"
-                        max="{{maxDatapointsLimit()}}">
-              <input matSliderThumb formControlName="limit"/>
-            </mat-slider>
-            <mat-form-field class="limit-slider-value" subscriptSizing="dynamic" appearance="outline">
-              <input matInput formControlName="limit" type="number" step="1"
-                     [value]="timewindowForm.get('aggregation.limit').value"
-                     min="{{minDatapointsLimit()}}"
-                     max="{{maxDatapointsLimit()}}"/>
-            </mat-form-field>
-          </div>
+          <ng-container formGroupName="aggregation">
+            <tb-datapoints-limit formControlName="limit"
+                                 [required]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
+            </tb-datapoints-limit>
+          </ng-container>
         </div>
       </section>
 

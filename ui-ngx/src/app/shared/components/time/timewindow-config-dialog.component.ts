@@ -191,7 +191,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       }),
       aggregation: this.fb.group({
         type: [ isDefined(aggregation?.type) ? this.timewindow.aggregation.type : null ],
-        limit: [ isDefined(aggregation?.limit) ? this.checkLimit(this.timewindow.aggregation.limit) : null ]
+        limit: [ isDefined(aggregation?.limit) ? this.timewindow.aggregation.limit : null ]
       }),
       timezone: [ isDefined(this.timewindow.timezone) ? this.timewindow.timezone : null ],
       hideAggregation: [ isDefinedAndNotNull(this.timewindow.hideAggregation)
@@ -290,15 +290,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  private checkLimit(limit?: number): number {
-    if (!limit || limit < this.minDatapointsLimit()) {
-      return this.minDatapointsLimit();
-    } else if (limit > this.maxDatapointsLimit()) {
-      return this.maxDatapointsLimit();
-    }
-    return limit;
   }
 
   private updateValidators(aggType: AggregationType) {

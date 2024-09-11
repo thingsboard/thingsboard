@@ -275,7 +275,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
           disabled: hideAggregation
         }],
         limit: [{
-          value: isDefined(aggregation?.limit) ? this.checkLimit(aggregation.limit) : null,
+          value: isDefined(aggregation?.limit) ? aggregation.limit : null,
           disabled: hideAggInterval
         }, []]
       }),
@@ -301,15 +301,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
-  }
-
-  private checkLimit(limit?: number): number {
-    if (!limit || limit < this.minDatapointsLimit()) {
-      return this.minDatapointsLimit();
-    } else if (limit > this.maxDatapointsLimit()) {
-      return this.maxDatapointsLimit();
-    }
-    return limit;
   }
 
   private updateValidators(aggType: AggregationType) {

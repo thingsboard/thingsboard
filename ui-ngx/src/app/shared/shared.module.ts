@@ -228,6 +228,7 @@ import { ScadaSymbolInputComponent } from '@shared/components/image/scada-symbol
 import { CountryAutocompleteComponent } from '@shared/components/country-autocomplete.component';
 import { CountryData } from '@shared/models/country.models';
 import { SvgXmlComponent } from '@shared/components/svg-xml.component';
+import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 
 export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService) {
   return markedOptionsService;
@@ -317,6 +318,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimezoneComponent,
     TimezonePanelComponent,
     QuickTimeIntervalComponent,
+    DatapointsLimitComponent,
     DashboardSelectComponent,
     DashboardSelectPanelComponent,
     DatetimePeriodComponent,
@@ -529,6 +531,7 @@ export function MarkedOptionsFactory(markedOptionsService: MarkedOptionsService)
     TimezoneComponent,
     TimezonePanelComponent,
     QuickTimeIntervalComponent,
+    DatapointsLimitComponent,
     DashboardSelectComponent,
     DatetimePeriodComponent,
     DatetimeComponent,
