@@ -557,7 +557,7 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
         ObjectNode additionalInfoNode = JacksonUtil.newObjectNode();
-        if (provisionRequest.getGateway()) {
+        if (provisionRequest.getGateway() != null && provisionRequest.getGateway()) {
             additionalInfoNode.put(DataConstants.GATEWAY_PARAMETER, true);
         }
         device.setAdditionalInfo(additionalInfoNode);
