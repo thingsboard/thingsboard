@@ -113,6 +113,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       pollPeriod: [5000, [Validators.required]],
       sendDataToThingsBoard: [false],
       byteOrder:[ModbusOrderType.BIG],
+      wordOrder: [ModbusOrderType.BIG],
       security: [],
       identity: this.fb.group({
         vendorName: ['', [Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -243,6 +244,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       pollPeriod = 5000,
       sendDataToThingsBoard = false,
       byteOrder = ModbusOrderType.BIG,
+      wordOrder = ModbusOrderType.BIG,
       security = {},
       identity = {
         vendorName: '',
@@ -266,6 +268,7 @@ export class ModbusSlaveConfigComponent implements ControlValueAccessor, Validat
       pollPeriod,
       sendDataToThingsBoard: !!sendDataToThingsBoard,
       byteOrder,
+      wordOrder,
       security,
       identity,
       values,

@@ -62,7 +62,9 @@ export class ModbusLegacyBasicConfigComponent extends ModbusBasicConfigDirective
 
   protected override mapConfigToFormValue(config: ModbusLegacyBasicConfig): ModbusBasicConfig_v3_5_2 {
     return {
-      master: config.master ? ModbusVersionMappingUtil.mapMasterToUpgradedVersion(config.master) : {} as ModbusMasterConfig,
+      master: config.master?.slaves
+        ? ModbusVersionMappingUtil.mapMasterToUpgradedVersion(config.master)
+        : { slaves: [] } as ModbusMasterConfig,
       slave: config.slave ? ModbusVersionMappingUtil.mapSlaveToUpgradedVersion(config.slave) : {} as ModbusSlave,
     };
   }

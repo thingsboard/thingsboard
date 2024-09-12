@@ -778,7 +778,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
           JSON.parse(clientConnectorData.value) : clientConnectorData.value;
 
         if (this.isConnectorSynced(clientConnectorData) && clientConnectorData.value.configurationJson) {
-          this.setFormValue(clientConnectorData.value);
+          this.setFormValue({...clientConnectorData.value, mode: this.connectorForm.get('mode').value ?? clientConnectorData.value.mode});
         }
       }
     }

@@ -38,6 +38,9 @@ export class ModbusVersionMappingUtil {
   }
 
   static mapSlaveToDowngradedVersion(slave: ModbusSlave): ModbusLegacySlave {
+    if (!slave?.values) {
+      return slave as Omit<ModbusLegacySlave, 'values'>;
+    }
     const values = Object.keys(slave.values).reduce((acc, valueKey) => {
       acc = {
         ...acc,
@@ -54,6 +57,9 @@ export class ModbusVersionMappingUtil {
   }
 
   static mapSlaveToUpgradedVersion(slave: ModbusLegacySlave): ModbusSlave {
+    if (!slave?.values) {
+      return slave as Omit<ModbusSlave, 'values'>;
+    }
     const values = Object.keys(slave.values).reduce((acc, valueKey) => {
       acc = {
         ...acc,
