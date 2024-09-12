@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, OnDestroy } from '@angular/core';
+import { AfterViewInit, ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy } from '@angular/core';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -39,6 +39,7 @@ import {
   SecurityConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/security-config/security-config.component';
 import { HOUR } from '@shared/models/time/time.models';
+import { coerceBoolean } from '@shared/decorators/coercion';
 
 @Component({
   selector: 'tb-opc-server-config',
@@ -64,7 +65,11 @@ import { HOUR } from '@shared/models/time/time.models';
     SecurityConfigComponent,
   ]
 })
-export class OpcServerConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
+export class OpcServerConfigComponent implements ControlValueAccessor, Validator, AfterViewInit, OnDestroy {
+
+  @Input()
+  @coerceBoolean()
+  hideNewFields: boolean = false;
 
   securityPolicyTypes = SecurityPolicyTypes;
   serverConfigFormGroup: UntypedFormGroup;
@@ -93,6 +98,12 @@ export class OpcServerConfigComponent implements ControlValueAccessor, Validator
       this.onChange(value);
       this.onTouched();
     });
+  }
+
+  ngAfterViewInit(): void {
+    if (this.hideNewFields) {
+      this.serverConfigFormGroup.get('pollPeriodInMillis').disable({emitEvent: false});
+    }
   }
 
   ngOnDestroy(): void {

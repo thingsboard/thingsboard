@@ -933,7 +933,7 @@ export class ScadaSymbolObject {
         this.iconRegistry.getDefaultFontSetClass()
       ).filter(className => className.length > 0);
       fontSetClasses.forEach(className => textElement.addClass(className));
-      textElement.font({size});
+      textElement.font({size: `${size}px`});
       textElement.attr({
         'text-anchor': 'start',
         'dominant-baseline': 'hanging',

@@ -36,7 +36,7 @@ import { CommonModule } from '@angular/common';
 import { generateSecret } from '@core/utils';
 import { Subject } from 'rxjs';
 import { GatewayPortTooltipPipe } from '@home/components/widget/lib/gateway/pipes/gateway-port-tooltip.pipe';
-import { SecurityConfigComponent } from '../security-config/security-config.component';
+import { SecurityConfigComponent } from '../../security-config/security-config.component';
 
 @Component({
   selector: 'tb-broker-config-control',

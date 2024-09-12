@@ -14,28 +14,21 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectionStrategy, Component, forwardRef, Input, OnDestroy, TemplateRef } from '@angular/core';
+import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
+import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
-  ControlValueAccessor,
-  FormBuilder,
-  FormControl,
-  FormGroup,
-  NG_VALIDATORS,
-  NG_VALUE_ACCESSOR,
-  UntypedFormControl,
-  ValidationErrors,
-  Validator,
-} from '@angular/forms';
-import { ModbusBasicConfig } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { SharedModule } from '@shared/shared.module';
+  ModbusBasicConfig_v3_5_2,
+  ModbusMasterConfig,
+  ModbusSlave
+} from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CommonModule } from '@angular/common';
-import { takeUntil } from 'rxjs/operators';
-import { Subject } from 'rxjs';
-
-import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
+import { SharedModule } from '@shared/shared.module';
 import { ModbusSlaveConfigComponent } from '../modbus-slave-config/modbus-slave-config.component';
 import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master-table.component';
-import { isEqual } from '@core/utils';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
+import {
+  ModbusBasicConfigDirective
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.abstract';
 
 @Component({
   selector: 'tb-modbus-basic-config',
@@ -63,80 +56,19 @@ import { isEqual } from '@core/utils';
   ],
   styleUrls: ['./modbus-basic-config.component.scss'],
 })
+export class ModbusBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig_v3_5_2> {
 
-export class ModbusBasicConfigComponent implements ControlValueAccessor, Validator, OnDestroy {
-
-  @Input() generalTabContent: TemplateRef<any>;
-
-  basicFormGroup: FormGroup;
-  enableSlaveControl: FormControl<boolean>;
-
-  onChange: (value: ModbusBasicConfig) => void;
-  onTouched: () => void;
-
-  private destroy$ = new Subject<void>();
-
-  constructor(private fb: FormBuilder) {
-    this.basicFormGroup = this.fb.group({
-      master: [],
-      slave: [],
-    });
-    this.enableSlaveControl = new FormControl(false);
-
-    this.basicFormGroup.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(({ master, slave }) => {
-        this.onChange({ master, slave: slave ?? {} });
-        this.onTouched();
-      });
-
-    this.enableSlaveControl.valueChanges
-      .pipe(takeUntil(this.destroy$))
-      .subscribe(enable => {
-        this.updateSlaveEnabling(enable);
-        this.basicFormGroup.get('slave').updateValueAndValidity({emitEvent: !!this.onChange});
-      });
-  }
-
-  ngOnDestroy(): void {
-    this.destroy$.next();
-    this.destroy$.complete();
-  }
-
-  registerOnChange(fn: (value: ModbusBasicConfig) => void): void {
-    this.onChange = fn;
-  }
-
-  registerOnTouched(fn: () => void): void {
-    this.onTouched = fn;
-  }
-
-  writeValue(basicConfig: ModbusBasicConfig): void {
-    const editedBase = {
-      slave: basicConfig.slave ?? {},
-      master: basicConfig.master ?? {},
+  protected override mapConfigToFormValue({ master, slave }: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
+    return {
+      master: master?.slaves ? master : { slaves: [] } as ModbusMasterConfig,
+      slave: slave ?? {} as ModbusSlave,
     };
-
-    this.basicFormGroup.setValue(editedBase, {emitEvent: false});
-    this.enableSlaveControl.setValue(!!basicConfig.slave && !isEqual(basicConfig.slave, {}));
   }
 
-  validate(basicFormControl: UntypedFormControl): ValidationErrors | null {
-    const { master, slave } = basicFormControl.value;
-    const isEmpty = !master?.slaves?.length && (isEqual(slave, {}) || !slave);
-    if (!this.basicFormGroup.valid || isEmpty) {
-      return {
-        basicFormGroup: {valid: false}
-      };
-    }
-    return null;
-  }
-
-  private updateSlaveEnabling(isEnabled: boolean): void {
-    if (isEnabled) {
-      this.basicFormGroup.get('slave').enable({emitEvent: false});
-    } else {
-      this.basicFormGroup.get('slave').disable({emitEvent: false});
-    }
+  protected override getMappedValue(value: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
+    return {
+      master: value.master,
+      slave: value.slave,
+    };
   }
 }
