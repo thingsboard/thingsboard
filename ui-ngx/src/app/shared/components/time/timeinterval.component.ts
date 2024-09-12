@@ -76,10 +76,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
   set disabledAdvanced(disabledAdvanced: boolean) {
     if (this.disabledAdvancedState !== disabledAdvanced) {
       this.disabledAdvancedState = disabledAdvanced;
-      this.updateIntervalValue();
-      if (!this.disabledAdvancedState) {
-        this.boundInterval();
-      }
+      this.updateIntervalValue(true);
     }
   }
 
@@ -183,7 +180,7 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
     this.updateIntervalValue();
   }
 
-  private updateIntervalValue() {
+  private updateIntervalValue(forceBoundInterval = false) {
     if (typeof this.modelValue !== 'undefined') {
       const min = this.timeService.boundMinInterval(this.minValue);
       const max = this.timeService.boundMaxInterval(this.maxValue);
@@ -196,6 +193,9 @@ export class TimeintervalComponent implements OnInit, ControlValueAccessor, OnDe
         } else {
           this.advanced = advanced;
           this.setInterval(this.modelValue);
+          if (forceBoundInterval) {
+            this.boundInterval();
+          }
         }
       } else {
         this.boundInterval();

@@ -217,11 +217,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       takeUntil(this.destroy$)
     ).subscribe((value: boolean) => {
       if (value) {
-        this.timewindowForm.get('realtime.hideLastInterval').disable();
-        this.timewindowForm.get('realtime.hideQuickInterval').disable();
+        this.timewindowForm.get('realtime.hideLastInterval').disable({emitEvent: false});
+        this.timewindowForm.get('realtime.hideQuickInterval').disable({emitEvent: false});
       } else {
-        this.timewindowForm.get('realtime.hideLastInterval').enable();
-        this.timewindowForm.get('realtime.hideQuickInterval').enable();
+        this.timewindowForm.get('realtime.hideLastInterval').enable({emitEvent: false});
+        this.timewindowForm.get('realtime.hideQuickInterval').enable({emitEvent: false});
       }
     });
     this.timewindowForm.get('realtime.hideLastInterval').valueChanges.pipe(
@@ -243,13 +243,13 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       takeUntil(this.destroy$)
     ).subscribe((value: boolean) => {
       if (value) {
-        this.timewindowForm.get('history.hideLastInterval').disable();
-        this.timewindowForm.get('history.hideQuickInterval').disable();
-        this.timewindowForm.get('history.hideFixedInterval').disable();
+        this.timewindowForm.get('history.hideLastInterval').disable({emitEvent: false});
+        this.timewindowForm.get('history.hideQuickInterval').disable({emitEvent: false});
+        this.timewindowForm.get('history.hideFixedInterval').disable({emitEvent: false});
       } else {
-        this.timewindowForm.get('history.hideLastInterval').enable();
-        this.timewindowForm.get('history.hideQuickInterval').enable();
-        this.timewindowForm.get('history.hideFixedInterval').enable();
+        this.timewindowForm.get('history.hideLastInterval').enable({emitEvent: false});
+        this.timewindowForm.get('history.hideQuickInterval').enable({emitEvent: false});
+        this.timewindowForm.get('history.hideFixedInterval').enable({emitEvent: false});
       }
     });
     this.timewindowForm.get('history.hideLastInterval').valueChanges.pipe(
