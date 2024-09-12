@@ -227,7 +227,7 @@ export class TimewindowComponent implements ControlValueAccessor, OnInit, OnChan
       panelClass: 'tb-timewindow-panel',
       backdropClass: 'cdk-overlay-transparent-backdrop',
       hasBackdrop: true,
-      maxHeight: '80vh',
+      maxHeight: '70vh',
       height: 'min-content'
     });
 
