@@ -62,11 +62,6 @@ export abstract class ModbusBasicConfigDirective<BasicConfig>
     });
   }
 
-  protected override onBasicFormGroupChange(value: ModbusBasicConfig_v3_5_2): void {
-    super.onBasicFormGroupChange(value);
-    this.basicFormGroup.get('slave').updateValueAndValidity({ emitEvent: !!this.onChange });
-  }
-
   private updateSlaveEnabling(isEnabled: boolean): void {
     if (isEnabled) {
       this.basicFormGroup.get('slave').enable({ emitEvent: false });

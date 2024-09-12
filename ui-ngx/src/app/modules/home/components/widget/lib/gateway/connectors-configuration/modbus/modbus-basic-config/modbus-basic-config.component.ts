@@ -58,10 +58,10 @@ import {
 })
 export class ModbusBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig_v3_5_2> {
 
-  protected override mapConfigToFormValue(config: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
+  protected override mapConfigToFormValue({ master, slave }: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
     return {
-      master: config.master ?? {} as ModbusMasterConfig,
-      slave: config.slave ?? {} as ModbusSlave,
+      master: master?.slaves ? master : { slaves: [] } as ModbusMasterConfig,
+      slave: slave ?? {} as ModbusSlave,
     };
   }
 
