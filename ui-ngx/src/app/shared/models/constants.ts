@@ -183,8 +183,10 @@ export const HelpLinks = {
     templateNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#templates`,
     recipientNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#recipients`,
     ruleNotifications: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/notifications/#rules`,
-    jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings/`,
-    gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation/`,
+    jwtSecuritySettings: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/jwt-security-settings`,
+    gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation`,
+    scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
+    scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/symbols-dev-guide`,
   }
 };
 /* eslint-enable max-len */
