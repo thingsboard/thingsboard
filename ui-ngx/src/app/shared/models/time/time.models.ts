@@ -139,18 +139,6 @@ export interface Aggregation {
 export interface Timewindow {
   displayValue?: string;
   displayTimezoneAbbr?: string;
-  /**
-   * @deprecated
-   */
-  hideInterval?: boolean;
-  /**
-   * @deprecated
-   */
-  hideQuickInterval?: boolean;
-  /**
-   * @deprecated
-   */
-  hideLastInterval?: boolean;
   hideAggregation?: boolean;
   hideAggInterval?: boolean;
   hideTimezone?: boolean;
@@ -319,15 +307,18 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
     model.selectedTab = getTimewindowType(value);
 
     // for backward compatibility
-    if (isDefinedAndNotNull(value.hideInterval)) {
-      model.realtime.hideInterval = value.hideInterval;
-      model.history.hideInterval = value.hideInterval;
+    if (isDefinedAndNotNull((value as any).hideInterval)) {
+      model.realtime.hideInterval = (value as any).hideInterval;
+      model.history.hideInterval = (value as any).hideInterval;
+      delete (value as any).hideInterval;
     }
-    if (isDefinedAndNotNull(value.hideLastInterval)) {
-      model.realtime.hideLastInterval = value.hideLastInterval;
+    if (isDefinedAndNotNull((value as any).hideLastInterval)) {
+      model.realtime.hideLastInterval = (value as any).hideLastInterval;
+      delete (value as any).hideLastInterval;
     }
-    if (isDefinedAndNotNull(value.hideQuickInterval)) {
-      model.realtime.hideQuickInterval = value.hideQuickInterval;
+    if (isDefinedAndNotNull((value as any).hideQuickInterval)) {
+      model.realtime.hideQuickInterval = (value as any).hideQuickInterval;
+      delete (value as any).hideQuickInterval;
     }
 
     if (isDefined(value.realtime)) {
