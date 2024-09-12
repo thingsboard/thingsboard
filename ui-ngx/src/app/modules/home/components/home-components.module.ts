@@ -287,7 +287,7 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
       AwsSnsProviderConfigurationComponent,
-      AliyunSmsProviderConfigurationComponent
+      AliyunSmsProviderConfigurationComponent,
       SmppSmsProviderConfigurationComponent,
       TwilioSmsProviderConfigurationComponent,
       AliyunSmsProviderConfigurationComponent,
@@ -425,7 +425,7 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
     DeviceProfileProvisionConfigurationComponent,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
-    AliyunSmsProviderConfigurationComponent
+    AliyunSmsProviderConfigurationComponent,
     SmppSmsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent,
     AliyunSmsProviderConfigurationComponent,    
