@@ -57,7 +57,7 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVIC
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CONNECT_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_METRICS_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_TELEMETRY_TOPIC;
-import static org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService.METRICS_CHECK;
+import static org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService.GATEWAY_METRICS;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqttIntegrationTest {
@@ -148,13 +148,13 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
         gatewayMetricsService.reportMetrics();
 
-        List<String> actualKeys = getActualKeysList(savedGateway.getId(), List.of(METRICS_CHECK));
-        assertEquals(METRICS_CHECK, actualKeys.get(0));
+        List<String> actualKeys = getActualKeysList(savedGateway.getId(), List.of(GATEWAY_METRICS));
+        assertEquals(GATEWAY_METRICS, actualKeys.get(0));
 
-        String telemetryUrl = String.format("/api/plugins/telemetry/DEVICE/%s/values/timeseries?startTs=%d&endTs=%d&keys=%s", savedGateway.getId(), 0, System.currentTimeMillis(), METRICS_CHECK);
+        String telemetryUrl = String.format("/api/plugins/telemetry/DEVICE/%s/values/timeseries?startTs=%d&endTs=%d&keys=%s", savedGateway.getId(), 0, System.currentTimeMillis(), GATEWAY_METRICS);
 
         Map<String, List<Map<String, Object>>> gatewayTelemetry = doGetAsyncTyped(telemetryUrl, new TypeReference<>() {});
-        Map<String, Object> latencyCheckTelemetry = gatewayTelemetry.get(METRICS_CHECK).get(0);
+        Map<String, Object> latencyCheckTelemetry = gatewayTelemetry.get(GATEWAY_METRICS).get(0);
         Map<String, GatewayMetricsState.ConnectorMetricsResult> latencyCheckValue = JacksonUtil.fromString((String) latencyCheckTelemetry.get("value"), new TypeReference<>() {});
         assertNotNull(latencyCheckValue);
 

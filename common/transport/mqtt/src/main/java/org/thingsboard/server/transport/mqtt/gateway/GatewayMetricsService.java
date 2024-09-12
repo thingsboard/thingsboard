@@ -39,7 +39,7 @@ import java.util.concurrent.TimeUnit;
 @TbMqttTransportComponent
 public class GatewayMetricsService {
 
-    public static final String METRICS_CHECK = "metricsCheck";
+    public static final String GATEWAY_METRICS = "gatewayMetrics";
 
     @Value("${transport.mqtt.gateway_metrics_report_interval_sec:3600}")
     private int metricsReportIntervalSec;
@@ -100,7 +100,7 @@ public class GatewayMetricsService {
         }
         var result = state.getStateResult();
         var kvProto = TransportProtos.KeyValueProto.newBuilder()
-                .setKey(METRICS_CHECK)
+                .setKey(GATEWAY_METRICS)
                 .setType(TransportProtos.KeyValueType.JSON_V)
                 .setJsonV(JacksonUtil.toString(result))
                 .build();

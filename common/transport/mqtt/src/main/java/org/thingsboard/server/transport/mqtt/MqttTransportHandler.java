@@ -424,7 +424,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
                 case MqttTopics.GATEWAY_METRICS_TOPIC:
-                    gatewaySessionHandler.onGatewayLatency(mqttMsg);
+                    gatewaySessionHandler.onGatewayMetrics(mqttMsg);
                     break;
                 default:
                     ack(ctx, msgId, MqttReasonCodes.PubAck.TOPIC_NAME_INVALID);

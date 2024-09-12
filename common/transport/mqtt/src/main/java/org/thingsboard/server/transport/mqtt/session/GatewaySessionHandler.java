@@ -84,7 +84,7 @@ public class GatewaySessionHandler extends AbstractGatewaySessionHandler<Gateway
         gatewayMetricsService.onDeviceDelete(deviceId);
     }
 
-    public void onGatewayLatency(MqttPublishMessage mqttMsg) throws AdaptorException {
+    public void onGatewayMetrics(MqttPublishMessage mqttMsg) throws AdaptorException {
         int msgId = getMsgId(mqttMsg);
         ByteBuf payloadData = mqttMsg.payload();
         String payload = payloadData.toString(UTF8);
