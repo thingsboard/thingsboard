@@ -30,6 +30,7 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
 import java.util.EnumSet;
 import java.util.List;
@@ -38,6 +39,9 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
 @Slf4j
 @RuleNode(
@@ -57,7 +61,7 @@ import java.util.concurrent.TimeUnit;
 public class TbMsgDelayNode implements TbNode {
 
     private static final Set<TimeUnit> supportedTimeUnits = EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
-    private static final String supportedTimeUnitsStr = String.join(",", TimeUnit.SECONDS.name(), TimeUnit.MINUTES.name(), TimeUnit.HOURS.name());
+    private static final String supportedTimeUnitsStr = supportedTimeUnits.stream().map(TimeUnit::name).collect(Collectors.joining(", "));
 
     private TbMsgDelayNodeConfiguration config;
     private ConcurrentMap<UUID, TbMsg> pendingMsgs;
@@ -65,7 +69,12 @@ public class TbMsgDelayNode implements TbNode {
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
-        validateConfig();
+        String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
+        try {
+            validateFields(config, errorPrefix);
+        } catch (DataValidationException e) {
+            throw new TbNodeException(e, true);
+        }
         this.pendingMsgs = new ConcurrentHashMap<>();
     }
 
@@ -113,18 +122,6 @@ public class TbMsgDelayNode implements TbNode {
             throw new NumberFormatException("Can't parse period value : " + periodPattern);
         } catch (IllegalArgumentException e) {
             throw new IllegalArgumentException("Invalid value for period time unit : " + timeUnitPattern);
-        }
-    }
-
-    private void validateConfig() throws TbNodeException {
-        if (config.getMaxPendingMsgs() < 1 || config.getMaxPendingMsgs() > 100000) {
-            throw new TbNodeException("Maximum pending messages should be in a range from 1 to 100000.", true);
-        }
-        if (config.getPeriod() == null) {
-            throw new TbNodeException("Period should be specified.", true);
-        }
-        if (config.getTimeUnit() == null) {
-            throw new TbNodeException("Time unit should be specified.", true);
         }
     }
 

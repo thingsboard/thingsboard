@@ -15,6 +15,9 @@
  */
 package org.thingsboard.rule.engine.delay;
 
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
@@ -23,8 +26,12 @@ import java.util.concurrent.TimeUnit;
 @Data
 public class TbMsgDelayNodeConfiguration implements NodeConfiguration<TbMsgDelayNodeConfiguration> {
 
+    @NotNull
     private String period;
+    @NotNull
     private String timeUnit;
+    @Min(1)
+    @Max(100000)
     private int maxPendingMsgs;
 
     @Override

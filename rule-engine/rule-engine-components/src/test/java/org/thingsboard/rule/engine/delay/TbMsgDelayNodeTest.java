@@ -37,6 +37,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -46,6 +47,7 @@ import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -65,13 +67,15 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     private final RuleNodeId RULE_NODE_ID = new RuleNodeId(UUID.fromString("1be24225-b669-4b26-ab7e-083aaa82d0a0"));
 
     private final Set<TimeUnit> supportedTimeUnits = EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
-    private final String supportedTimeUnitsStr = String.join(",", TimeUnit.SECONDS.name(), TimeUnit.MINUTES.name(), TimeUnit.HOURS.name());
+    private final String supportedTimeUnitsStr = supportedTimeUnits.stream().map(TimeUnit::name).collect(Collectors.joining(", "));
 
     private TbMsgDelayNode node;
     private TbMsgDelayNodeConfiguration config;
 
     @Mock
     private TbContext ctxMock;
+    @Mock
+    private RuleNode ruleNodeMock;
 
     @BeforeEach
     public void setUp() {
@@ -88,6 +92,7 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
 
     @Test
     public void givenDefaultConfig_whenInit_thenOk() {
+        given(ctxMock.getSelf()).willReturn(ruleNodeMock);
         assertThatNoException().isThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))));
     }
 
@@ -95,34 +100,19 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     @ValueSource(ints = {-1, 0, 5000000})
     public void givenInvalidMaxPendingMsgsValue_whenInit_thenThrowsException(int maxPendingMsgs) {
         config.setMaxPendingMsgs(maxPendingMsgs);
-
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Maximum pending messages should be in a range from 1 to 100000.")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyValidationExceptionOnInit();
     }
 
     @Test
     public void givenPeriodIsNull_whenInit_thenThrowsException() {
         config.setPeriod(null);
-
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Period should be specified.")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyValidationExceptionOnInit();
     }
 
     @Test
     public void givenTimeUnitIsNull_whenInit_thenThrowsException() {
         config.setTimeUnit(null);
-
-        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
-                .isInstanceOf(TbNodeException.class)
-                .hasMessage("Time unit should be specified.")
-                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
-                .isEqualTo(true);
+        verifyValidationExceptionOnInit();
     }
 
     @ParameterizedTest
@@ -131,6 +121,7 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
             String periodPattern, String timeUnitPattern, TbMsgMetaData metaData, String data, long expectedDelay) throws TbNodeException {
         config.setPeriod(periodPattern);
         config.setTimeUnit(timeUnitPattern);
+        given(ctxMock.getSelf()).willReturn(ruleNodeMock);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
 
@@ -170,8 +161,9 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     @EnumSource(TimeUnit.class)
     public void givenTimeUnit_whenOnMsg_thenVerify(TimeUnit timeUnit) throws TbNodeException {
         config.setTimeUnit(timeUnit.name());
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getSelf()).willReturn(ruleNodeMock);
 
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         if (supportedTimeUnits.contains(timeUnit)) {
             assertThatNoException().isThrownBy(() -> node.onMsg(ctxMock, msg));
@@ -185,8 +177,9 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenPeriodIsUnparsable_whenOnMsg_thenThrowsException() throws TbNodeException {
         config.setPeriod("five");
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getSelf()).willReturn(ruleNodeMock);
 
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(NumberFormatException.class)
@@ -196,8 +189,9 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenInvalidTimeUnit_whenOnMsg_thenThrowsException() throws TbNodeException {
         config.setTimeUnit("sec");
-        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        given(ctxMock.getSelf()).willReturn(ruleNodeMock);
 
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
         assertThatThrownBy(() -> node.onMsg(ctxMock, msg))
                 .isInstanceOf(IllegalArgumentException.class)
@@ -207,6 +201,7 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
     @Test
     public void givenMaxLimitOfPendingMsgsReached_whenOnMsg_thenTellFailure() throws TbNodeException {
         config.setMaxPendingMsgs(1);
+        given(ctxMock.getSelf()).willReturn(ruleNodeMock);
 
         node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
         var msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
@@ -231,6 +226,18 @@ public class TbMsgDelayNodeTest extends AbstractRuleNodeUpgradeTest {
         node.destroy();
 
         assertThat(actualPendingMsgs).isEmpty();
+    }
+
+    private void verifyValidationExceptionOnInit() {
+        RuleNode ruleNode = new RuleNode();
+        ruleNode.setName("test");
+        given(ctxMock.getSelf()).willReturn(ruleNode);
+        String errorPrefix = "'test' node configuration is invalid: ";
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(TbNodeException.class)
+                .hasMessageContaining(errorPrefix)
+                .extracting(e -> ((TbNodeException) e).isUnrecoverable())
+                .isEqualTo(true);
     }
 
     private static Stream<Arguments> givenFromVersionAndConfig_whenUpgrade_thenVerifyHasChangesAndConfig() {
