@@ -40,5 +40,5 @@ export const POSITION_MAP: { [key: string]: ConnectionPositionPair } = {
   )
 };
 
-export const DEFAULT_OVERLAY_POSITIONS = [POSITION_MAP.bottom, POSITION_MAP.bottomLeft, POSITION_MAP.bottomRight, POSITION_MAP.topLeft,
-  POSITION_MAP.topRight, POSITION_MAP.left, POSITION_MAP.right];
+export const DEFAULT_OVERLAY_POSITIONS = [POSITION_MAP.bottomLeft, POSITION_MAP.bottomRight, POSITION_MAP.topLeft,
+  POSITION_MAP.topRight, POSITION_MAP.left, POSITION_MAP.right, POSITION_MAP.bottom];
