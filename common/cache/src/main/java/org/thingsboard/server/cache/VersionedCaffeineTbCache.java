@@ -22,7 +22,7 @@ import org.thingsboard.server.common.data.util.TbPair;
 
 import java.io.Serializable;
 
-public abstract class VersionedCaffeineTbCache<K extends Serializable, V extends Serializable & HasVersion> extends CaffeineTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
+public abstract class VersionedCaffeineTbCache<K extends VersionedCacheKey, V extends Serializable & HasVersion> extends CaffeineTbTransactionalCache<K, V> implements VersionedTbCache<K, V> {
 
     public VersionedCaffeineTbCache(CacheManager cacheManager, String cacheName) {
         super(cacheManager, cacheName);

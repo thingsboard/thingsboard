@@ -13,18 +13,14 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.entity;
-
-import org.springframework.beans.factory.annotation.Autowired;
-import org.thingsboard.server.cache.VersionedCacheKey;
-import org.thingsboard.server.cache.VersionedTbCache;
-import org.thingsboard.server.common.data.HasVersion;
+package org.thingsboard.server.cache;
 
 import java.io.Serializable;
 
-public abstract class CachedVersionedEntityService<K extends VersionedCacheKey, V extends Serializable & HasVersion, E> extends AbstractCachedEntityService<K, V, E> {
+public interface VersionedCacheKey extends Serializable {
 
-    @Autowired
-    protected VersionedTbCache<K, V> cache;
+    default boolean isVersioned() {
+        return false;
+    }
 
 }

@@ -381,9 +381,8 @@ export class WidgetComponentService {
               widgetInfo.templateHtml,
               resolvedModules.modules
             ).pipe(
-              map((componentData) => {
-                widgetInfo.componentType = componentData.componentType;
-                widgetInfo.componentModuleRef = componentData.componentModuleRef;
+              map((componentType) => {
+                widgetInfo.componentType = componentType;
                 return null;
               }),
               catchError(e => {

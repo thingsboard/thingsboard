@@ -19,7 +19,7 @@ import com.fasterxml.jackson.annotation.JsonProperty;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.utils.ImageUtils;
+import org.thingsboard.server.dao.util.ImageUtils;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -89,7 +89,5 @@ public class TeamsAdaptiveCard {
         private String title;
         private String url;
     }
-
-
 
 }

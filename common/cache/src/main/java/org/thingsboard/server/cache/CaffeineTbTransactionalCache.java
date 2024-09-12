@@ -55,11 +55,6 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
     }
 
     @Override
-    public TbCacheValueWrapper<V> get(K key, boolean transactionMode) {
-        return get(key);
-    }
-
-    @Override
     public void put(K key, V value) {
         lock.lock();
         try {
