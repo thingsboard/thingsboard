@@ -29,16 +29,13 @@ import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import io.swagger.v3.oas.annotations.Parameter;
-import io.swagger.v3.oas.annotations.media.Content;
-import io.swagger.v3.oas.annotations.responses.ApiResponse;
 import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.context.annotation.Lazy;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -76,6 +73,7 @@ import org.thingsboard.server.common.data.sync.vc.VcUtils;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
@@ -112,6 +110,7 @@ public class AdminController extends BaseController {
     private final SmsService smsService;
     private final AdminSettingsService adminSettingsService;
     private final SystemSecurityService systemSecurityService;
+    private final SecuritySettingsService securitySettingsService;
     private final JwtSettingsService jwtSettingsService;
     private final JwtTokenFactory tokenFactory;
     private final EntitiesVersionControlService versionControlService;
@@ -119,6 +118,9 @@ public class AdminController extends BaseController {
     private final UpdateService updateService;
     private final SystemInfoService systemInfoService;
     private final AuditLogService auditLogService;
+
+    @Value("${queue.vc.request-timeout:180000}")
+    private int vcRequestTimeout;
 
     @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
             notes = "Get the Administration Settings object using specified string key. Referencing non-existing key will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -137,7 +139,7 @@ public class AdminController extends BaseController {
         return adminSettings;
     }
 
-    @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
+    @ApiOperation(value = "Creates or Updates the Administration Settings (saveAdminSettings)",
             notes = "Creates or Updates the Administration Settings. Platform generates random Administration Settings Id during settings creation. " +
                     "The Administration Settings Id will be present in the response. Specify the Administration Settings Id when you would like to update the Administration Settings. " +
                     "Referencing non-existing Administration Settings Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -160,14 +162,14 @@ public class AdminController extends BaseController {
         return adminSettings;
     }
 
-    @ApiOperation(value = "Get the Security Settings object",
+    @ApiOperation(value = "Get the Security Settings object (getSecuritySettings)",
             notes = "Get the Security Settings object that contains password policy, etc." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
     @ResponseBody
     public SecuritySettings getSecuritySettings() throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        return checkNotNull(systemSecurityService.getSecuritySettings());
+        return checkNotNull(securitySettingsService.getSecuritySettings());
     }
 
     @ApiOperation(value = "Update Security Settings (saveSecuritySettings)",
@@ -179,7 +181,7 @@ public class AdminController extends BaseController {
             @Parameter(description = "A JSON value representing the Security Settings.")
             @RequestBody SecuritySettings securitySettings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-        securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(securitySettings));
+        securitySettings = checkNotNull(securitySettingsService.saveSecuritySettings(securitySettings));
         return securitySettings;
     }
 
@@ -237,7 +239,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Send test sms (sendTestMail)",
+    @ApiOperation(value = "Send test sms (sendTestSms)",
             notes = "Attempts to send test sms to the System Administrator User using SMS Settings and phone number provided as a parameters of the request. "
                     + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
@@ -301,13 +303,14 @@ public class AdminController extends BaseController {
     @PostMapping("/repositorySettings")
     public DeferredResult<RepositorySettings> saveRepositorySettings(@RequestBody RepositorySettings settings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.WRITE);
+        settings.setLocalOnly(false); // only to be used in tests
         ListenableFuture<RepositorySettings> future = versionControlService.saveVersionControlSettings(getTenantId(), settings);
         return wrapFuture(Futures.transform(future, savedSettings -> {
             savedSettings.setPassword(null);
             savedSettings.setPrivateKey(null);
             savedSettings.setPrivateKeyPassword(null);
             return savedSettings;
-        }, MoreExecutors.directExecutor()));
+        }, MoreExecutors.directExecutor()), vcRequestTimeout);
     }
 
     @ApiOperation(value = "Delete repository settings (deleteRepositorySettings)",
@@ -318,7 +321,7 @@ public class AdminController extends BaseController {
     @ResponseStatus(value = HttpStatus.OK)
     public DeferredResult<Void> deleteRepositorySettings() throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.DELETE);
-        return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()));
+        return wrapFuture(versionControlService.deleteVersionControlSettings(getTenantId()), vcRequestTimeout);
     }
 
     @ApiOperation(value = "Check repository access (checkRepositoryAccess)",
@@ -329,8 +332,8 @@ public class AdminController extends BaseController {
             @Parameter(description = "A JSON value representing the Repository Settings.")
             @RequestBody RepositorySettings settings) throws Exception {
         accessControlService.checkPermission(getCurrentUser(), Resource.VERSION_CONTROL, Operation.READ);
-        settings = checkNotNull(settings);
-        return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings));
+        settings.setLocalOnly(false); // only to be used in tests
+        return wrapFuture(versionControlService.checkVersionControlAccess(getTenantId(), settings), vcRequestTimeout);
     }
 
     @ApiOperation(value = "Get auto commit settings (getAutoCommitSettings)",
@@ -482,4 +485,5 @@ public class AdminController extends BaseController {
         adminSettingsService.saveAdminSettings(TenantId.SYS_TENANT_ID, adminSettings);
         response.sendRedirect(prevUri);
     }
+
 }

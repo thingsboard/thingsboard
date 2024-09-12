@@ -37,6 +37,10 @@
     outline: none;
     overflow-y: auto;
 
+    #gridster-background {
+      height: 100%;
+    }
+
     gridster-item {
       transition: none;
       overflow: visible;
@@ -47,6 +51,30 @@
       overflow-y: hidden;
       gridster.mobile {
         overflow-y: hidden;
+      }
+    }
+
+    &.center-vertical, &.center-horizontal {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      #gridster-child {
+        width: 100%;
+        height: 100%;
+      }
+    }
+    &.center-vertical {
+      #gridster-background {
+        height: auto;
+        max-height: 100%;
+        width: 100%;
+      }
+    }
+    &.center-horizontal {
+      #gridster-background {
+        width: auto;
+        max-width: 100%;
+        height: 100%;
       }
     }
   }

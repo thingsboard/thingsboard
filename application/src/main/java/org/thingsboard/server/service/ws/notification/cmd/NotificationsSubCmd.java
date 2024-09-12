@@ -18,8 +18,11 @@ package org.thingsboard.server.service.ws.notification.cmd;
 import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.notification.NotificationType;
 import org.thingsboard.server.service.ws.WsCmd;
 import org.thingsboard.server.service.ws.WsCmdType;
+
+import java.util.Set;
 
 @Data
 @NoArgsConstructor
@@ -27,6 +30,7 @@ import org.thingsboard.server.service.ws.WsCmdType;
 public class NotificationsSubCmd implements WsCmd {
     private int cmdId;
     private int limit;
+    private Set<NotificationType> types;
 
     @Override
     public WsCmdType getType() {

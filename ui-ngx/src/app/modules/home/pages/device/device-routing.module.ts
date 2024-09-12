@@ -26,14 +26,14 @@ import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages
 import { BreadCrumbConfig } from '@shared/components/breadcrumb';
 import { assetRoutes } from '@home/pages/asset/asset-routing.module';
 import { entityViewRoutes } from '@home/pages/entity-view/entity-view-routing.module';
+import { MenuId } from '@core/services/menu.models';
 
 export const deviceRoutes: Routes = [
   {
     path: 'devices',
     data: {
       breadcrumb: {
-        label: 'device.devices',
-        icon: 'devices_other'
+        menuId: MenuId.devices
       }
     },
     children: [

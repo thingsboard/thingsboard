@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
+import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.common.data.widget.WidgetsBundleWidget;
 import org.thingsboard.server.dao.AbstractJpaDaoTest;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
@@ -42,6 +43,8 @@ import java.util.stream.Collectors;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
 
 public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
 
@@ -113,11 +116,11 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         assertEquals(30, widgetsBundles.size());
         // Get first page
         PageLink pageLink = new PageLink(10, 0, "WB");
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(TenantId.SYS_TENANT_ID, false, pageLink);
+        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(WidgetsBundleFilter.fromTenantId(TenantId.SYS_TENANT_ID), pageLink);
         assertEquals(10, widgetsBundles1.getData().size());
         // Get next page
         pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(TenantId.SYS_TENANT_ID, false, pageLink);
+        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(WidgetsBundleFilter.fromTenantId(TenantId.SYS_TENANT_ID), pageLink);
         assertEquals(10, widgetsBundles2.getData().size());
     }
 
@@ -142,19 +145,19 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(widgetsBundle3.getId(), widgetType2.getId(), 1));
 
         PageLink pageLink = new PageLink(10, 0, "widget type 1", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(TenantId.SYS_TENANT_ID, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findSystemWidgetsBundles(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), pageLink);
         assertEquals(2, widgetsBundles1.getData().size());
         assertEquals(widgetsBundle1, widgetsBundles1.getData().get(0));
         assertEquals(widgetsBundle3, widgetsBundles1.getData().get(1));
 
         pageLink = new PageLink(10, 0, "Test widget type 2", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(TenantId.SYS_TENANT_ID, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findSystemWidgetsBundles(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), pageLink);
         assertEquals(2, widgetsBundles2.getData().size());
         assertEquals(widgetsBundle2, widgetsBundles2.getData().get(0));
         assertEquals(widgetsBundle3, widgetsBundles2.getData().get(1));
 
         pageLink = new PageLink(10, 0, "ppp Fd v TAG1 tt", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findSystemWidgetsBundles(TenantId.SYS_TENANT_ID, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findSystemWidgetsBundles(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), pageLink);
         assertEquals(2, widgetsBundles3.getData().size());
         assertEquals(widgetsBundle1, widgetsBundles3.getData().get(0));
         assertEquals(widgetsBundle3, widgetsBundles3.getData().get(1));
@@ -171,7 +174,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
 
             PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findSystemWidgetsBundles(
-                    TenantId.SYS_TENANT_ID, true, new PageLink(10, 0, searchText)
+                    WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), new PageLink(10, 0, searchText)
             );
 
             assertThat(widgetTypes.getData()).hasSize(1);
@@ -191,7 +194,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
 
             PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findSystemWidgetsBundles(
-                    TenantId.SYS_TENANT_ID, true, new PageLink(10, 0, searchText)
+                    WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), new PageLink(10, 0, searchText)
             );
 
             assertThat(widgetTypes.getData()).hasSize(0);
@@ -245,19 +248,19 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         assertEquals(100, widgetsBundleDao.find(TenantId.SYS_TENANT_ID).size());
 
         PageLink pageLink = new PageLink(30, 0, "WB");
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, false, pageLink);
+        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fromTenantId(TenantId.fromUUID(tenantId1)), pageLink);
         assertEquals(30, widgetsBundles1.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, false, pageLink);
+        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fromTenantId(TenantId.fromUUID(tenantId1)), pageLink);
         assertEquals(30, widgetsBundles2.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, false, pageLink);
+        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fromTenantId(TenantId.fromUUID(tenantId1)), pageLink);
         assertEquals(10, widgetsBundles3.getData().size());
 
         pageLink = pageLink.nextPageLink();
-        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, false, pageLink);
+        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fromTenantId(TenantId.fromUUID(tenantId1)), pageLink);
         assertEquals(0, widgetsBundles4.getData().size());
     }
 
@@ -287,27 +290,73 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(widgetsBundle3.getId(), widgetType2.getId(), 1));
 
         PageLink pageLink = new PageLink(10, 0, "widget type 1", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, true,  pageLink);
+        PageData<WidgetsBundle> widgetsBundles1 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.fromUUID(tenantId1)),  pageLink);
         assertEquals(1, widgetsBundles1.getData().size());
         assertEquals(widgetsBundle1, widgetsBundles1.getData().get(0));
 
         pageLink = new PageLink(10, 0, "Test widget type 2", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles2 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.fromUUID(tenantId1)), pageLink);
         assertEquals(0, widgetsBundles2.getData().size());
 
-        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId2, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles3 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.fromUUID(tenantId2)), pageLink);
         assertEquals(2, widgetsBundles3.getData().size());
         assertEquals(widgetsBundle2, widgetsBundles3.getData().get(0));
         assertEquals(widgetsBundle3, widgetsBundles3.getData().get(1));
 
         pageLink = new PageLink(10, 0, "ttt Tag2 ffff hhhh", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.fromUUID(tenantId1)), pageLink);
         assertEquals(1, widgetsBundles4.getData().size());
         assertEquals(widgetsBundle1, widgetsBundles4.getData().get(0));
 
-        PageData<WidgetsBundle> widgetsBundles5 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId2, true, pageLink);
+        PageData<WidgetsBundle> widgetsBundles5 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.fromUUID(tenantId2)), pageLink);
         assertEquals(1, widgetsBundles5.getData().size());
         assertEquals(widgetsBundle3, widgetsBundles5.getData().get(0));
+    }
+
+    @Test
+    public void testFindAllWidgetsBundlesByTenantIdFullSearchScadaFirst() {
+        UUID tenantId1 = Uuids.timeBased();
+        UUID tenantId2 = Uuids.timeBased();
+        for (int i = 0; i < 10; i++) {
+            createWidgetBundles(5, tenantId1, "WB1_" + i + "_");
+            createWidgetBundles(2, tenantId1, "WB1_SCADA_" + i + "_", true);
+            createWidgetBundles(3, tenantId2, "WB2_" + i + "_");
+            createWidgetBundles(3, tenantId2, "WB2_SCADA_" + i + "_", true);
+            createSystemWidgetBundles(2, "WB_SYS_" + i + "_");
+            createSystemWidgetBundles(1, "WB_SYS_SCADA_" + i + "_", true);
+        }
+        widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID).stream().sorted(Comparator.comparing(WidgetsBundle::getTitle)).collect(Collectors.toList());;
+        assertEquals(160, widgetsBundles.size());
+
+        PageLink pageLink = new PageLink(50, 0, "WB", new SortOrder("title"));
+        PageData<WidgetsBundle> widgetsBundles1 =
+                widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
+                        WidgetsBundleFilter.builder().tenantId(TenantId.fromUUID(tenantId1)).fullSearch(true).scadaFirst(true).build(),  pageLink);
+
+        for (int i =0; i < 30; i++) {
+            var widgetsBundle = widgetsBundles1.getData().get(i);
+            assertTrue(widgetsBundle.isScada());
+        }
+
+        for (int i = 30; i < 50; i++) {
+            var widgetsBundle = widgetsBundles1.getData().get(i);
+            assertFalse(widgetsBundle.isScada());
+        }
+
+        pageLink = new PageLink(50, 0, "WB", new SortOrder("title"));
+        PageData<WidgetsBundle> widgetsBundles2 =
+                widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
+                        WidgetsBundleFilter.builder().tenantId(TenantId.fromUUID(tenantId2)).fullSearch(true).scadaFirst(true).build(), pageLink);
+
+        for (int i =0; i < 40; i++) {
+            var widgetsBundle = widgetsBundles2.getData().get(i);
+            assertTrue(widgetsBundle.isScada());
+        }
+
+        for (int i = 40; i < 50; i++) {
+            var widgetsBundle = widgetsBundles2.getData().get(i);
+            assertFalse(widgetsBundle.isScada());
+        }
     }
 
     @Test
@@ -321,7 +370,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
 
             PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
-                    TenantId.SYS_TENANT_ID.getId(), true, new PageLink(10, 0, searchText)
+                    WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), new PageLink(10, 0, searchText)
             );
 
             assertThat(widgetTypes.getData()).hasSize(1);
@@ -341,7 +390,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
             widgetTypeDao.saveWidgetsBundleWidget(new WidgetsBundleWidget(systemWidgetBundle.getId(), widgetType.getId(), 0));
 
             PageData<WidgetsBundle> widgetTypes = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(
-                    TenantId.SYS_TENANT_ID.getId(), true, new PageLink(10, 0, searchText)
+                    WidgetsBundleFilter.fullSearchFromTenantId(TenantId.SYS_TENANT_ID), new PageLink(10, 0, searchText)
             );
 
             assertThat(widgetTypes.getData()).hasSize(0);
@@ -378,7 +427,7 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         }).collect(Collectors.toList());;
         assertEquals(20, widgetsBundles.size());
         PageLink pageLink = new PageLink(100, 0, "", new SortOrder("title"));
-        PageData<WidgetsBundle> widgetsBundlesData = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId1, true,  pageLink);
+        PageData<WidgetsBundle> widgetsBundlesData = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fullSearchFromTenantId(TenantId.fromUUID(tenantId1)),  pageLink);
         assertEquals(20, widgetsBundlesData.getData().size());
         assertEquals(widgetsBundles, widgetsBundlesData.getData());
     }
@@ -391,19 +440,27 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
         widgetsBundles = widgetsBundleDao.find(TenantId.SYS_TENANT_ID);
         assertEquals(10, widgetsBundleDao.find(TenantId.SYS_TENANT_ID).size());
         PageLink textPageLink = new PageLink(30, 0, "TEXT_NOT_FOUND");
-        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(tenantId, false, textPageLink);
+        PageData<WidgetsBundle> widgetsBundles4 = widgetsBundleDao.findAllTenantWidgetsBundlesByTenantId(WidgetsBundleFilter.fromTenantId(TenantId.fromUUID(tenantId)), textPageLink);
         assertEquals(0, widgetsBundles4.getData().size());
     }
 
     private void createWidgetBundles(int count, UUID tenantId, String prefix) {
+        createWidgetBundles(count, tenantId, prefix, false);
+    }
+
+    private void createWidgetBundles(int count, UUID tenantId, String prefix, boolean scada) {
         for (int i = 0; i < count; i++) {
-            createWidgetsBundle(TenantId.fromUUID(tenantId), prefix + i, prefix + i, null);
+            createWidgetsBundle(TenantId.fromUUID(tenantId), prefix + i, prefix + i, null, scada);
         }
     }
 
     private void createSystemWidgetBundles(int count, String prefix) {
+        createSystemWidgetBundles(count, prefix, false);
+    }
+
+    private void createSystemWidgetBundles(int count, String prefix, boolean scada) {
         for (int i = 0; i < count; i++) {
-            createWidgetsBundle(TenantId.SYS_TENANT_ID, prefix + i, prefix + i, null);
+            createWidgetsBundle(TenantId.SYS_TENANT_ID, prefix + i, prefix + i, null, scada);
         }
     }
 
@@ -412,12 +469,17 @@ public class JpaWidgetsBundleDaoTest extends AbstractJpaDaoTest {
     }
 
     private WidgetsBundle createWidgetsBundle(TenantId tenantId, String alias, String title, Integer order) {
+        return createWidgetsBundle(tenantId, alias, title, order, false);
+    }
+
+    private WidgetsBundle createWidgetsBundle(TenantId tenantId, String alias, String title, Integer order, boolean scada) {
         WidgetsBundle widgetsBundle = new WidgetsBundle();
         widgetsBundle.setAlias(alias);
         widgetsBundle.setTitle(title);
         widgetsBundle.setTenantId(tenantId);
         widgetsBundle.setId(new WidgetsBundleId(Uuids.timeBased()));
         widgetsBundle.setOrder(order);
+        widgetsBundle.setScada(scada);
         return widgetsBundleDao.save(TenantId.SYS_TENANT_ID, widgetsBundle);
     }
 

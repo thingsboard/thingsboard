@@ -27,129 +27,183 @@
   </mat-toolbar>
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
   </mat-progress-bar>
-  <div mat-dialog-content>
-    <fieldset [disabled]="isLoading$ | async">
-      <div *ngIf="settings" [formGroup]="settingsFormGroup" fxLayout="column">
-        <mat-form-field class="mat-block">
-          <mat-label translate>dashboard.state-controller</mat-label>
+  <div mat-dialog-content class="tb-form-panel no-border no-padding">
+    <div *ngIf="settings" class="tb-form-panel no-border no-padding" [formGroup]="settingsFormGroup">
+      <div class="tb-form-row space-between">
+        <div>{{ 'dashboard.state-controller' | translate }}</div>
+        <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
           <mat-select required formControlName="stateControllerId">
             <mat-option *ngFor="let stateControllerId of stateControllerIds" [value]="stateControllerId">
               {{ getStatesControllerTranslation(stateControllerId) }}
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <fieldset class="fields-group" fxLayout="column" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px">
-          <legend class="group-title" translate>dashboard.title-settings</legend>
-          <mat-slide-toggle fxFlex formControlName="showTitle">
-            {{ 'dashboard.display-title' | translate }}
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>dashboard.title-settings</div>
+        <div class="tb-form-row space-between">
+          <mat-slide-toggle class="mat-slide" formControlName="showTitle">
+            {{ 'dashboard.title' | translate }}
           </mat-slide-toggle>
-          <tb-color-input fxFlex
-                          label="{{'dashboard.title-color' | translate}}"
-                          icon="format_color_fill"
-                          openOnInput
+          <tb-color-input asBoxInput
+                          colorClearButton
                           formControlName="titleColor">
           </tb-color-input>
-        </fieldset>
-        <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
-          <legend class="group-title" translate>dashboard.dashboard-logo-settings</legend>
-          <mat-slide-toggle formControlName="showDashboardLogo">
+        </div>
+      </div>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>dashboard.dashboard-logo-settings</div>
+        <div class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="showDashboardLogo">
             {{ 'dashboard.display-dashboard-logo' | translate }}
           </mat-slide-toggle>
-          <tb-gallery-image-input fxFlex
-                          label="{{'dashboard.dashboard-logo-image' | translate}}"
-                          formControlName="dashboardLogoUrl">
-          </tb-gallery-image-input>
-        </fieldset>
-        <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
-          <legend class="group-title" translate>dashboard.toolbar-settings</legend>
-          <mat-slide-toggle formControlName="hideToolbar">
-            {{ 'dashboard.hide-toolbar' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="toolbarAlwaysOpen">
-            {{ 'dashboard.toolbar-always-open' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="showDashboardsSelect">
-            {{ 'dashboard.display-dashboards-selection' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="showEntitiesSelect">
-            {{ 'dashboard.display-entities-selection' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="showFilters">
-            {{ 'dashboard.display-filters' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="showDashboardTimewindow">
-            {{ 'dashboard.display-dashboard-timewindow' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="showDashboardExport">
-            {{ 'dashboard.display-dashboard-export' | translate }}
-          </mat-slide-toggle>
-          <mat-slide-toggle formControlName="showUpdateDashboardImage">
-            {{ 'dashboard.display-update-dashboard-image' | translate }}
-          </mat-slide-toggle>
-        </fieldset>
-        <mat-expansion-panel class="tb-settings">
-          <mat-expansion-panel-header>
-            <mat-panel-description fxLayoutAlign="end" translate>
-              dashboard.advanced-settings
-            </mat-panel-description>
-          </mat-expansion-panel-header>
-          <ng-template matExpansionPanelContent>
-            <tb-css
-              label="{{ 'dashboard.dashboard-css' | translate }}"
-              formControlName="dashboardCss"
-            ></tb-css>
-          </ng-template>
-        </mat-expansion-panel>
+        </div>
+        <tb-gallery-image-input fxFlex
+                                label="{{'dashboard.dashboard-logo-image' | translate}}"
+                                formControlName="dashboardLogoUrl">
+        </tb-gallery-image-input>
       </div>
-      <div *ngIf="gridSettings" [formGroup]="gridSettingsFormGroup" fxLayout="column">
-        <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
-          <legend class="group-title" translate>dashboard.layout-settings</legend>
-          <mat-form-field class="mat-block">
-            <mat-label translate>dashboard.columns-count</mat-label>
-            <input matInput formControlName="columns" type="number" step="any" min="10"
-                   max="1000" required>
-            <mat-error *ngIf="gridSettingsFormGroup.get('columns').hasError('required')">
-              {{ 'dashboard.columns-count-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="gridSettingsFormGroup.get('columns').hasError('min')">
-              {{ 'dashboard.min-columns-count-message' | translate }}
-            </mat-error>
-            <mat-error *ngIf="gridSettingsFormGroup.get('columns').hasError('max')">
-              {{ 'dashboard.max-columns-count-message' | translate }}
-            </mat-error>
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>dashboard.toolbar-settings</div>
+        <mat-slide-toggle class="mat-slide" formControlName="hideToolbar">
+          {{ 'dashboard.hide-toolbar' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="toolbarAlwaysOpen">
+          {{ 'dashboard.toolbar-always-open' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="showDashboardsSelect">
+          {{ 'dashboard.display-dashboards-selection' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="showEntitiesSelect">
+          {{ 'dashboard.display-entities-selection' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="showFilters">
+          {{ 'dashboard.display-filters' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="showDashboardTimewindow">
+          {{ 'dashboard.display-dashboard-timewindow' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="showDashboardExport">
+          {{ 'dashboard.display-dashboard-export' | translate }}
+        </mat-slide-toggle>
+        <mat-slide-toggle class="mat-slide" formControlName="showUpdateDashboardImage">
+          {{ 'dashboard.display-update-dashboard-image' | translate }}
+        </mat-slide-toggle>
+      </div>
+      <mat-expansion-panel class="tb-settings">
+        <mat-expansion-panel-header>
+          <mat-panel-description fxLayoutAlign="end" translate>
+            dashboard.advanced-settings
+          </mat-panel-description>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <tb-css
+            label="{{ 'dashboard.dashboard-css' | translate }}"
+            formControlName="dashboardCss"
+          ></tb-css>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+    <div *ngIf="gridSettings" class="tb-form-panel no-border no-padding" [formGroup]="gridSettingsFormGroup">
+      <div class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate [translateParams]="{type: layoutSettingsType}">dashboard.layout-settings-type</div>
+        <div *ngIf="isDefaultLayout && !isDefaultBreakpoint" class="tb-form-row space-between">
+          <div class="fixed-title-width" translate>dashboard.view-format</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select formControlName="viewFormat">
+              <mat-option *ngFor="let type of viewFormatTypes" [value]="type">
+                {{ viewFormatTypeTranslationMap.get(type) | translate }}
+              </mat-option>
+            </mat-select>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
-            <mat-label translate>dashboard.widgets-margins</mat-label>
-            <input matInput formControlName="margin" type="number" step="any" min="0"
-                   max="50" required>
-            <mat-error *ngIf="gridSettingsFormGroup.get('margin').hasError('required')">
-              {{ 'dashboard.margin-required' | translate }}
-            </mat-error>
-            <mat-error *ngIf="gridSettingsFormGroup.get('margin').hasError('min')">
-              {{ 'dashboard.min-margin-message' | translate }}
-            </mat-error>
-            <mat-error *ngIf="gridSettingsFormGroup.get('margin').hasError('max')">
-              {{ 'dashboard.max-margin-message' | translate }}
-            </mat-error>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>dashboard.columns-count</div>
+          <mat-form-field *ngIf="!isScada()" appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltipDisabled]="!(gridSettingsFormGroup.get('columns').invalid && gridSettingsFormGroup.get('columns').touched)"
+                          [matTooltip]="(gridSettingsFormGroup.get('columns').hasError('required') ? 'dashboard.columns-count-required' :
+                                     (gridSettingsFormGroup.get('columns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate">
+            <input matInput formControlName="columns" type="number" min="10" max="1008" step="1"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
-          <mat-slide-toggle fxFlex formControlName="outerMargin" style="display: block; padding-bottom: 12px;">
+          <mat-form-field *ngIf="isScada()"
+                          class="medium-width" appearance="outline" subscriptSizing="dynamic">
+            <mat-select required formControlName="columns">
+              <mat-option *ngFor="let columns of scadaColumns" [value]="columns">
+                {{ columns }}
+              </mat-option>
+            </mat-select>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>dashboard.min-layout-width</div>
+          <mat-form-field appearance="outline" class="number medium-width" subscriptSizing="dynamic"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltipDisabled]="!(gridSettingsFormGroup.get('minColumns').invalid && gridSettingsFormGroup.get('minColumns').touched)"
+                          [matTooltip]="(gridSettingsFormGroup.get('minColumns').hasError('required') ? 'dashboard.columns-count-required' :
+                                     (gridSettingsFormGroup.get('minColumns').hasError('min') ? 'dashboard.min-columns-count-message' : 'dashboard.max-columns-count-message')) | translate">
+            <input matInput formControlName="minColumns" type="number" min="10" max="1008" step="1"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
+            <span translate matSuffix>dashboard.columns-suffix</span>
+          </mat-form-field>
+        </div>
+        <div *ngIf="!isScada()" class="tb-form-row space-between">
+          <div translate>dashboard.widgets-margins</div>
+          <mat-form-field appearance="outline" class="number medium-width tb-suffix-absolute" subscriptSizing="dynamic"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltipDisabled]="!(gridSettingsFormGroup.get('margin').invalid && gridSettingsFormGroup.get('margin').touched)"
+                          [matTooltip]="(gridSettingsFormGroup.get('margin').hasError('required') ? 'dashboard.margin-required' :
+                                     (gridSettingsFormGroup.get('margin').hasError('min') ? 'dashboard.min-margin-message' : 'dashboard.max-margin-message')) | translate">
+            <input matInput formControlName="margin" type="number" min="0" max="50" step="any"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+        <div *ngIf="!isScada()" class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="outerMargin">
             {{ 'dashboard.apply-outer-margin' | translate }}
           </mat-slide-toggle>
-          <mat-slide-toggle fxFlex formControlName="autoFillHeight" style="display: block; padding-bottom: 12px;">
+        </div>
+        <div *ngIf="!isScada()" class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="autoFillHeight">
             {{ 'dashboard.autofill-height' | translate }}
           </mat-slide-toggle>
-          <tb-color-input fxFlex
-                          label="{{'dashboard.background-color' | translate}}"
-                          icon="format_color_fill"
-                          openOnInput
+        </div>
+        <div *ngIf="isDefaultLayout && !isDefaultBreakpoint" class="tb-form-row space-between">
+          <div translate>dashboard.row-height</div>
+          <mat-form-field appearance="outline" class="number medium-width" subscriptSizing="dynamic"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltipDisabled]="!(gridSettingsFormGroup.get('rowHeight').invalid && gridSettingsFormGroup.get('rowHeight').touched)"
+                          [matTooltip]="(gridSettingsFormGroup.get('rowHeight').hasError('required') ? 'dashboard.row-height-required' :
+                                     (gridSettingsFormGroup.get('rowHeight').hasError('min') ?
+                                       'dashboard.min-row-height-message' : 'dashboard.max-row-height-message')) | translate">
+            <input matInput formControlName="rowHeight" type="number" min="5" max="200" step="any"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
+            <span matSuffix>px</span>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row space-between">
+          <div translate>dashboard.background-color</div>
+          <tb-color-input asBoxInput
+                          colorClearButton
                           formControlName="backgroundColor">
           </tb-color-input>
-          <tb-gallery-image-input fxFlex
-                          label="{{'dashboard.background-image' | translate}}"
-                          formControlName="backgroundImageUrl">
-          </tb-gallery-image-input>
-          <mat-form-field class="mat-block">
-            <mat-label translate>dashboard.background-size-mode</mat-label>
+        </div>
+        <tb-gallery-image-input fxFlex
+                                label="{{'dashboard.background-image' | translate}}"
+                                formControlName="backgroundImageUrl">
+        </tb-gallery-image-input>
+        <div class="tb-form-row space-between">
+          <div>{{ 'dashboard.background-size-mode' | translate }}</div>
+          <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="backgroundSizeMode">
               <mat-option value="100%">Fit width</mat-option>
               <mat-option value="auto 100%">Fit height</mat-option>
@@ -158,34 +212,37 @@
               <mat-option value="auto">Original size</mat-option>
             </mat-select>
           </mat-form-field>
-        </fieldset>
-        <fieldset class="fields-group" fxLayout="column" fxLayoutGap="8px">
-          <legend class="group-title" translate>dashboard.mobile-layout</legend>
-          <mat-slide-toggle *ngIf="isRightLayout" fxFlex formControlName="mobileDisplayLayoutFirst" style="display: block;">
+        </div>
+      </div>
+      <div *ngIf="!isScada() && isDefaultBreakpoint" class="tb-form-panel stroked">
+        <div class="tb-form-panel-title" translate>dashboard.mobile-layout</div>
+        <div *ngIf="isRightLayout" class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="mobileDisplayLayoutFirst">
             {{ 'dashboard.display-first-in-mobile-view' | translate }}
           </mat-slide-toggle>
-          <div fxLayout="column" fxLayout.gt-sm="row" fxLayoutAlign.gt-sm="start center" fxLayoutGap="8px" >
-            <mat-slide-toggle fxFlex formControlName="mobileAutoFillHeight">
-              {{ 'dashboard.autofill-height' | translate }}
-            </mat-slide-toggle>
-            <mat-form-field fxFlex class="mat-block">
-              <mat-label translate>dashboard.mobile-row-height</mat-label>
-              <input matInput formControlName="mobileRowHeight" type="number" step="any" min="5"
-                     max="200" required>
-              <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('required')">
-                {{ 'dashboard.mobile-row-height-required' | translate }}
-              </mat-error>
-              <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('min')">
-                {{ 'dashboard.min-mobile-row-height-message' | translate }}
-              </mat-error>
-              <mat-error *ngIf="gridSettingsFormGroup.get('mobileRowHeight').hasError('max')">
-                {{ 'dashboard.max-mobile-row-height-message' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-        </fieldset>
+        </div>
+        <div *ngIf="!isScada()" class="tb-form-row">
+          <mat-slide-toggle class="mat-slide" formControlName="mobileAutoFillHeight">
+            {{ 'dashboard.autofill-height' | translate }}
+          </mat-slide-toggle>
+        </div>
+        <div *ngIf="!isScada()" class="tb-form-row space-between">
+          <div translate>dashboard.mobile-row-height</div>
+          <mat-form-field appearance="outline" class="number medium-width" subscriptSizing="dynamic"
+                          matTooltipPosition="above"
+                          matTooltipClass="tb-error-tooltip"
+                          [matTooltipDisabled]="!(gridSettingsFormGroup.get('mobileRowHeight').invalid && gridSettingsFormGroup.get('mobileRowHeight').touched)"
+                          [matTooltip]="(gridSettingsFormGroup.get('mobileRowHeight').hasError('required') ? 'dashboard.mobile-row-height-required' :
+                                     (gridSettingsFormGroup.get('mobileRowHeight').hasError('min') ?
+                                       'dashboard.min-mobile-row-height-message' : 'dashboard.max-mobile-row-height-message')) | translate">
+            <input matInput formControlName="mobileRowHeight" type="number" min="5" max="200" step="any"
+                   required
+                   placeholder="{{ 'widget-config.set' | translate }}">
+            <span matSuffix>px</span>
+          </mat-form-field>
+        </div>
       </div>
-    </fieldset>
+    </div>
   </div>
   <div mat-dialog-actions fxLayoutAlign="end center">
     <button mat-button color="primary"

@@ -17,6 +17,7 @@ package org.thingsboard.server.service.component;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import jakarta.annotation.PostConstruct;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +42,6 @@ import org.thingsboard.server.common.data.plugin.ComponentType;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.dao.component.ComponentDescriptorService;
 
-import jakarta.annotation.PostConstruct;
 import java.lang.annotation.Annotation;
 import java.util.ArrayList;
 import java.util.Arrays;

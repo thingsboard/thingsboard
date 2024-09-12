@@ -1,0 +1,114 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-scada-symbol-metadata tb-absolute-fill">
+  <div class="tb-scada-symbol-metadata-header">
+    <tb-toggle-select appearance="fill" [options]="headerOptions" [(ngModel)]="selectedOption">
+    </tb-toggle-select>
+    <div class="tb-scada-symbol-metadata-header-components">
+      <ng-content select=".tb-scada-symbol-metadata-header-prefix"></ng-content>
+      <ng-content select=".tb-scada-symbol-metadata-header-suffix"></ng-content>
+    </div>
+  </div>
+  <div [formGroup]="metadataFormGroup" class="tb-scada-symbol-metadata-content">
+    <div [fxShow]="selectedOption === 'general'" class="mat-content">
+      <div class="tb-form-panel">
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.title</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <input matInput required formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.description</div>
+          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+            <textarea matInput
+                      formControlName="description"
+                      rows="2"></textarea>
+          </mat-form-field>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.search-tags</div>
+          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+            <tb-string-items-list fxFlex
+                                  style="display: flex;"
+                                  formControlName="searchTags"
+                                  appearance="outline"
+                                  subscriptSizing="dynamic">
+            </tb-string-items-list>
+          </div>
+        </div>
+        <div class="tb-form-row">
+          <div class="fixed-title-width" translate>scada.widget-size</div>
+          <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
+            <div class="tb-small-label">{{ 'scada.cols' | translate }}</div>
+            <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+              <input matInput formControlName="widgetSizeX" required
+                     [min]="1" [max]="24" [step]="1"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+            <div class="tb-small-label">{{ 'scada.rows' | translate }}</div>
+            <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+              <input matInput formControlName="widgetSizeY" required
+                     [min]="1" [max]="24" [step]="1"
+                     type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+        </div>
+        <div class="tb-form-panel stroked">
+          <mat-expansion-panel class="tb-settings" expanded>
+            <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-panel-title>
+                {{ 'scada.state-render-function' | translate }}
+              </mat-panel-title>
+            </mat-expansion-panel-header>
+            <ng-template matExpansionPanelContent>
+              <tb-js-func formControlName="stateRenderFunction"
+                          minHeight="300px"
+                          [editorCompleter]="generalStateRenderFunctionCompleter"
+                          [highlightRules]="highlightRules"
+                          [functionArgs]="['ctx', 'svg']"
+                          helpId="scada/symbol_state_render_fn">
+              </tb-js-func>
+            </ng-template>
+          </mat-expansion-panel>
+        </div>
+      </div>
+    </div>
+    <div [fxShow]="selectedOption === 'tags'" class="mat-content overflow-hidden">
+      <tb-scada-symbol-metadata-tags
+        #symbolMetadataTags
+        [tags]="tags"
+        [clickActionFunctionCompleter]="clickActionFunctionCompleter"
+        [elementStateRenderFunctionCompleter]="elementStateRenderFunctionCompleter"
+        formControlName="tags">
+      </tb-scada-symbol-metadata-tags>
+    </div>
+    <div [fxShow]="selectedOption === 'behavior'" class="mat-content overflow-hidden">
+      <tb-scada-symbol-metadata-behaviors
+        formControlName="behavior"
+        [aliasController]="aliasController"
+        [callbacks]="callbacks">
+      </tb-scada-symbol-metadata-behaviors>
+    </div>
+    <div [fxShow]="selectedOption === 'properties'" class="mat-content overflow-hidden">
+      <tb-scada-symbol-metadata-properties
+        formControlName="properties">
+      </tb-scada-symbol-metadata-properties>
+    </div>
+  </div>
+</div>

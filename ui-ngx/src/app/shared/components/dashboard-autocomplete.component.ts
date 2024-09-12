@@ -276,4 +276,7 @@ export class DashboardAutocompleteComponent implements ControlValueAccessor, OnI
     }, 0);
   }
 
+  textIsNotEmpty(text: string): boolean {
+    return (text && text.length > 0);
+  }
 }

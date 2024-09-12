@@ -44,6 +44,11 @@ export const activationMethodTranslations = new Map<ActivationMethod, string>(
   ]
 );
 
+export interface ActivationLinkInfo {
+  value: string;
+  ttlMs: number;
+}
+
 export interface AuthUser {
   sub: string;
   scopes: string[];

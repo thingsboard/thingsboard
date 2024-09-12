@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.queue.discovery;
 
+import jakarta.annotation.PostConstruct;
 import lombok.Getter;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -29,10 +30,8 @@ import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.util.AfterContextReady;
 
-import jakarta.annotation.PostConstruct;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
@@ -89,7 +88,7 @@ public class DefaultTbServiceInfoProvider implements TbServiceInfoProvider {
             assignedTenantProfiles = Collections.emptySet();
         }
 
-       generateNewServiceInfoWithCurrentSystemInfo();
+        generateNewServiceInfoWithCurrentSystemInfo();
     }
 
     @AfterContextReady

@@ -25,7 +25,7 @@ public interface SystemDataLoaderService {
 
     void createRandomJwtSettings() throws Exception;
 
-    void updateJwtSettings() throws Exception;
+    void updateSecuritySettings() throws Exception;
 
     void createOAuth2Templates() throws Exception;
 

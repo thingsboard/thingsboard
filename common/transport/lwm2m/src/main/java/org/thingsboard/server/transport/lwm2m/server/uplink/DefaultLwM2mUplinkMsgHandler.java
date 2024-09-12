@@ -36,6 +36,7 @@ import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.LwM2mResource;
 import org.eclipse.leshan.core.node.LwM2mResourceInstance;
 import org.eclipse.leshan.core.node.LwM2mSingleResource;
+import org.eclipse.leshan.core.node.TimestampedLwM2mNodes;
 import org.eclipse.leshan.core.node.codec.LwM2mValueConverter;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CreateRequest;
@@ -102,6 +103,7 @@ import org.thingsboard.server.transport.lwm2m.server.store.TbLwM2mSecurityStore;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil;
 import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 
+import java.time.Instant;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -145,7 +147,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fr
 public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService implements LwM2mUplinkMsgHandler {
 
     @Getter
-    private final LwM2mValueConverter converter = LwM2mValueConverterImpl.getInstance();;
+    private final LwM2mValueConverter converter = LwM2mValueConverterImpl.getInstance();
 
     private final TransportService transportService;
     private final LwM2mTransportContext context;
@@ -360,29 +362,33 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * Sending updated value to thingsboard from SendListener.dataReceived: object, instance, SingleResource or MultipleResource
      *
      * @param registration - Registration LwM2M Client
-     * @param sendRequest  - sendRequest
+     * @param data  - TimestampedLwM2mNodes (send From Client CollectedValue)
      */
     @Override
-    public void onUpdateValueWithSendRequest(Registration registration, SendRequest sendRequest) {
-        for(var entry : sendRequest.getTimestampedNodes().getNodes().entrySet()) {
-            LwM2mPath path = entry.getKey();
-            LwM2mNode node = entry.getValue();
-            LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
-            String stringPath = convertObjectIdToVersionedId(path.toString(), lwM2MClient);
-            ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
-            if (objectModelVersion != null) {
-                if (node instanceof LwM2mObject) {
-                    LwM2mObject lwM2mObject = (LwM2mObject) node;
-                    this.updateObjectResourceValue(lwM2MClient, lwM2mObject, stringPath, 0);
-                } else if (node instanceof LwM2mObjectInstance) {
-                    LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) node;
-                    this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, stringPath, 0);
-                } else if (node instanceof LwM2mResource) {
-                    LwM2mResource lwM2mResource = (LwM2mResource) node;
-                    this.updateResourcesValue(lwM2MClient, lwM2mResource, stringPath, Mode.UPDATE, 0);
+    public void onUpdateValueWithSendRequest(Registration registration, TimestampedLwM2mNodes data) {
+        for (Instant ts : data.getTimestamps()) {
+            Map<LwM2mPath, LwM2mNode> nodesAt = data.getNodesAt(ts);
+            for (var instant : nodesAt.entrySet()) {
+                LwM2mPath path = instant.getKey();
+                LwM2mNode node = instant.getValue();
+                LwM2mClient lwM2MClient = clientContext.getClientByEndpoint(registration.getEndpoint());
+                String stringPath = convertObjectIdToVersionedId(path.toString(), lwM2MClient);
+                ObjectModel objectModelVersion = lwM2MClient.getObjectModel(stringPath, modelProvider);
+                if (objectModelVersion != null) {
+                    if (node instanceof LwM2mObject) {
+                        LwM2mObject lwM2mObject = (LwM2mObject) node;
+                        this.updateObjectResourceValue(lwM2MClient, lwM2mObject, stringPath, 0);
+                    } else if (node instanceof LwM2mObjectInstance) {
+                        LwM2mObjectInstance lwM2mObjectInstance = (LwM2mObjectInstance) node;
+                        this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, stringPath, 0);
+                    } else if (node instanceof LwM2mResource) {
+                        LwM2mResource lwM2mResource = (LwM2mResource) node;
+                        this.updateResourcesValue(lwM2MClient, lwM2mResource, stringPath, Mode.UPDATE, 0);
+                    }
                 }
+
+                tryAwake(lwM2MClient);
             }
-            tryAwake(lwM2MClient);
         }
     }
 
@@ -969,9 +975,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
         }
     }
 
-    public LwM2mClientContext getClientContext(){
+    public LwM2mClientContext getClientContext() {
         return this.clientContext;
-    };
+    }
 
     private Map<String, String> getNamesFromProfileForSharedAttributes(LwM2mClient lwM2MClient) {
         Lwm2mDeviceProfileTransportConfiguration profile = clientContext.getProfile(lwM2MClient.getProfileId());

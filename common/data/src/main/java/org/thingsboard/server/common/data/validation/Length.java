@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.validation;
 
 import jakarta.validation.Constraint;
 import jakarta.validation.Payload;
+
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;
 import java.lang.annotation.RetentionPolicy;
@@ -31,6 +32,8 @@ public @interface Length {
     String fieldName() default "";
 
     int max() default 255;
+
+    int min() default 0;
 
     Class<?>[] groups() default {};
 

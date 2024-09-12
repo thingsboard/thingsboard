@@ -26,6 +26,7 @@ import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.CollectionUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -68,6 +69,7 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
+import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.page.PageDataIterable;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.query.BooleanFilterPredicate;
@@ -98,6 +100,7 @@ import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.notification.NotificationSettingsService;
 import org.thingsboard.server.dao.notification.NotificationTargetService;
+import org.thingsboard.server.dao.mobile.MobileAppDao;
 import org.thingsboard.server.dao.queue.QueueService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
@@ -120,7 +123,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 
 import static org.thingsboard.server.common.data.DataConstants.DEFAULT_DEVICE_TYPE;
 import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.isSigningKeyDefault;
-import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateTokenSigningKeyLength;
+import static org.thingsboard.server.service.security.auth.jwt.settings.DefaultJwtSettingsService.validateKeyLength;
 
 @Service
 @Profile("install")
@@ -146,6 +149,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
     private final DeviceConnectivityConfiguration connectivityConfiguration;
     private final QueueService queueService;
     private final JwtSettingsService jwtSettingsService;
+    private final MobileAppDao mobileAppDao;
     private final NotificationSettingsService notificationSettingsService;
     private final NotificationTargetService notificationTargetService;
 
@@ -269,21 +273,20 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
 
     @Override
     public void createRandomJwtSettings() throws Exception {
-            if (jwtSettingsService.getJwtSettings() == null) {
-                log.info("Creating JWT admin settings...");
-                var jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
-                if (isSigningKeyDefault(jwtSettings) || !validateTokenSigningKeyLength(jwtSettings)) {
-                    jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                            RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
-                }
-                jwtSettingsService.saveJwtSettings(jwtSettings);
-            } else {
-                log.info("Skip creating JWT admin settings because they already exist.");
+        if (jwtSettingsService.getJwtSettings() == null) {
+            log.info("Creating JWT admin settings...");
+            var jwtSettings = new JwtSettings(this.tokenExpirationTime, this.refreshTokenExpTime, this.tokenIssuer, this.tokenSigningKey);
+            if (isSigningKeyDefault(jwtSettings) || !validateKeyLength(jwtSettings.getTokenSigningKey())) {
+                jwtSettings.setTokenSigningKey(generateRandomKey());
             }
+            jwtSettingsService.saveJwtSettings(jwtSettings);
+        } else {
+            log.info("Skip creating JWT admin settings because they already exist.");
+        }
     }
 
     @Override
-    public void updateJwtSettings() {
+    public void updateSecuritySettings() {
         JwtSettings jwtSettings = jwtSettingsService.getJwtSettings();
         boolean invalidSignKey = false;
         String warningMessage = null;
@@ -291,7 +294,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
         if (isSigningKeyDefault(jwtSettings)) {
             warningMessage = "The platform is using the default JWT Signing Key, which is a security risk.";
             invalidSignKey = true;
-        } else if (!validateTokenSigningKeyLength(jwtSettings)) {
+        } else if (!validateKeyLength(jwtSettings.getTokenSigningKey())) {
             warningMessage = "The JWT Signing Key is shorter than 512 bits, which is a security risk.";
             invalidSignKey = true;
         }
@@ -301,10 +304,28 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                     "You can change the JWT Signing Key using the Web UI: " +
                     "Navigate to \"System settings -> Security settings\" while logged in as a System Administrator.", warningMessage);
 
-            jwtSettings.setTokenSigningKey(Base64.getEncoder().encodeToString(
-                    RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8)));
+            jwtSettings.setTokenSigningKey(generateRandomKey());
             jwtSettingsService.saveJwtSettings(jwtSettings);
         }
+
+        List<MobileApp> mobiles = mobileAppDao.findByTenantId(TenantId.SYS_TENANT_ID, new PageLink(Integer.MAX_VALUE,0)).getData();
+        if (CollectionUtils.isNotEmpty(mobiles)) {
+            mobiles.stream()
+                    .filter(mobileApp -> !validateKeyLength(mobileApp.getAppSecret()))
+                    .forEach(mobileApp -> {
+                        log.warn("WARNING: The App secret is shorter than 512 bits, which is a security risk. " +
+                                "A new Application Secret has been added automatically for Mobile Application [{}]. " +
+                                "You can change the Application Secret using the Web UI: " +
+                                "Navigate to \"Security settings -> OAuth2 -> Mobile applications\" while logged in as a System Administrator.", mobileApp.getPkgName());
+                        mobileApp.setAppSecret(generateRandomKey());
+                        mobileAppDao.save(TenantId.SYS_TENANT_ID, mobileApp);
+                    });
+        }
+    }
+
+    private String generateRandomKey() {
+        return Base64.getEncoder().encodeToString(
+                RandomStringUtils.randomAlphanumeric(64).getBytes(StandardCharsets.UTF_8));
     }
 
     @Override
@@ -556,7 +577,7 @@ public class DefaultSystemDataLoaderService implements SystemDataLoaderService {
                     Collections.singletonList(new BasicTsKvEntry(System.currentTimeMillis(), new BooleanDataEntry(key, value))), 0L);
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));
         } else {
-            ListenableFuture<List<String>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
+            ListenableFuture<List<Long>> saveFuture = attributesService.save(TenantId.SYS_TENANT_ID, deviceId, AttributeScope.SERVER_SCOPE,
                     Collections.singletonList(new BaseAttributeKvEntry(new BooleanDataEntry(key, value)
                             , System.currentTimeMillis())));
             addTsCallback(saveFuture, new TelemetrySaveCallback<>(deviceId, key, value));

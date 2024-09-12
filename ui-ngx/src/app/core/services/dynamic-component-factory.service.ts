@@ -14,49 +14,17 @@
 /// limitations under the License.
 ///
 
-import {
-  Compiler,
-  Component,
-  Injectable,
-  Injector,
-  NgModule,
-  NgModuleRef,
-  OnDestroy,
-  Type,
-  ɵresetCompiledComponents
-} from '@angular/core';
+import { Component, Injectable, Type, ɵComponentDef, ɵNG_COMP_DEF } from '@angular/core';
 import { from, Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { mergeMap } from 'rxjs/operators';
-
-@NgModule()
-export abstract class DynamicComponentModule implements OnDestroy {
-
-  // eslint-disable-next-line @angular-eslint/contextual-lifecycle
-  ngOnDestroy(): void {
-  }
-
-}
-
-interface DynamicComponentData<T> {
-  componentType: Type<T>;
-  componentModuleRef: NgModuleRef<DynamicComponentModule>;
-}
-
-interface DynamicComponentModuleData {
-  moduleRef: NgModuleRef<DynamicComponentModule>;
-  moduleType: Type<DynamicComponentModule>;
-}
 
 @Injectable({
     providedIn: 'root'
 })
 export class DynamicComponentFactoryService {
 
-  private dynamicComponentModulesMap = new Map<Type<any>, DynamicComponentModuleData>();
-
-  constructor(private compiler: Compiler,
-              private injector: Injector) {
+  constructor() {
   }
 
   public createDynamicComponent<T>(
@@ -64,66 +32,38 @@ export class DynamicComponentFactoryService {
                      template: string,
                      modules?: Type<any>[],
                      preserveWhitespaces?: boolean,
-                     compileAttempt = 1,
-                     styles?: string[]): Observable<DynamicComponentData<T>> {
+                     styles?: string[]): Observable<Type<T>> {
     return from(import('@angular/compiler')).pipe(
       mergeMap(() => {
-        const comp = this._createDynamicComponent(componentType, template, preserveWhitespaces, styles);
-        let moduleImports: Type<any>[] = [CommonModule];
+        let componentImports: Type<any>[] = [CommonModule];
         if (modules) {
-          moduleImports = [...moduleImports, ...modules];
+          componentImports = [...componentImports, ...modules];
         }
-        // noinspection AngularInvalidImportedOrDeclaredSymbol
-        const dynamicComponentInstanceModule = NgModule({
-          declarations: [comp],
-          imports: moduleImports
-        })(class DynamicComponentInstanceModule extends DynamicComponentModule {});
-        try {
-          const module = this.compiler.compileModuleSync(dynamicComponentInstanceModule);
-          let moduleRef: NgModuleRef<any>;
-          try {
-            moduleRef = module.create(this.injector);
-          } catch (e) {
-            this.compiler.clearCacheFor(module.moduleType);
-            throw e;
-          }
-          this.dynamicComponentModulesMap.set(comp, {
-            moduleRef,
-            moduleType: module.moduleType
-          });
-          return of( {
-            componentType: comp,
-            componentModuleRef: moduleRef
-          });
-        } catch (error) {
-          if (compileAttempt === 1) {
-            ɵresetCompiledComponents();
-            return this.createDynamicComponent(componentType, template, modules, preserveWhitespaces, ++compileAttempt, styles);
-          } else {
-            console.error(error);
-            throw error;
-          }
-        }
+        const comp = this.createAndCompileDynamicComponent(componentType, template, componentImports, preserveWhitespaces, styles);
+        return of(comp.type);
       })
     );
   }
 
-  public destroyDynamicComponent<T>(componentType: Type<T>) {
-    const moduleData = this.dynamicComponentModulesMap.get(componentType);
-    if (moduleData) {
-      moduleData.moduleRef.destroy();
-      this.compiler.clearCacheFor(moduleData.moduleType);
-      this.dynamicComponentModulesMap.delete(componentType);
-    }
+  public destroyDynamicComponent<T>(_componentType: Type<T>) {
   }
 
-  private _createDynamicComponent<T>(componentType: Type<T>, template: string, preserveWhitespaces?: boolean, styles?: string[]): Type<T> {
+  public getComponentDef<T>(componentType: Type<T>): ɵComponentDef<T> {
+    return componentType[ɵNG_COMP_DEF];
+  }
+
+  private createAndCompileDynamicComponent<T>(componentType: Type<T>, template: string, imports: Type<any>[],
+                                              preserveWhitespaces?: boolean, styles?: string[]): ɵComponentDef<T> {
     // noinspection AngularMissingOrInvalidDeclarationInModule
-    return Component({
+    const comp = Component({
       template,
+      imports,
       preserveWhitespaces,
-      styles
+      styles,
+      standalone: true
     })(componentType);
+    // Trigger component compilation
+    return comp[ɵNG_COMP_DEF];
   }
 
 }

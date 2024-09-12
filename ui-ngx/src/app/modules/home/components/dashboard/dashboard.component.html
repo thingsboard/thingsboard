@@ -23,7 +23,10 @@
   </mat-spinner>
 </div>
 <div id="gridster-parent"
-     fxFlex class="tb-dashboard-content layout-wrap" [class]="{'autofill-height': isAutofillHeight()}"
+     fxFlex class="tb-dashboard-content" [class.autofill-height]="isAutofillHeight()"
+                [class.center-vertical]="centerVertical"
+                [class.center-horizontal]="centerHorizontal"
+                (mousedown)="onDashboardMouseDown($event)"
                 (contextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"
@@ -55,13 +58,13 @@
                 [disabled]="!item.enabled"
                 (click)="item.action(widgetContextMenuEvent, widget)">
           <span *ngIf="item.shortcut" class="tb-alt-text"> {{ item.shortcut | keyboardShortcut }}</span>
-          <mat-icon *ngIf="item.icon">{{item.icon}}</mat-icon>
+          <tb-icon matMenuItemIcon *ngIf="item.icon">{{item.icon}}</tb-icon>
           <span translate>{{item.value}}</span>
         </button>
       </div>
     </ng-template>
   </mat-menu>
-  <div [class]="dashboardClass" id="gridster-background" style="height: 100%;">
+  <div [class]="dashboardClass" id="gridster-background">
     <gridster #gridster id="gridster-child" [options]="gridsterOpts">
       <gridster-item #gridsterItem [item]="widget" [class]="{'tb-noselect': isEdit}" *ngFor="let widget of dashboardWidgets">
         <tb-widget-container
@@ -71,6 +74,7 @@
           [dashboardStyle]="dashboardStyle"
           [backgroundImage]="backgroundImage"
           [isEdit]="isEdit"
+          [isEditingWidget]="isEditingWidget"
           [isPreview]="isPreview"
           [isMobile]="isMobileSize"
           [isEditActionEnabled]="isEditActionEnabled"

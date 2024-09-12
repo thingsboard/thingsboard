@@ -17,6 +17,8 @@ package org.thingsboard.server.service.system;
 
 import com.google.common.util.concurrent.FutureCallback;
 import com.google.protobuf.ProtocolStringList;
+import jakarta.annotation.Nullable;
+import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -38,7 +40,7 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.stats.TbApiUsageStateClient;
-import org.thingsboard.server.dao.oauth2.OAuth2Service;
+import org.thingsboard.server.dao.domain.DomainService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
 import org.thingsboard.server.gen.transport.TransportProtos.ServiceInfo;
 import org.thingsboard.server.queue.discovery.DiscoveryService;
@@ -49,8 +51,6 @@ import org.thingsboard.server.queue.discovery.event.PartitionChangeEvent;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.telemetry.TelemetrySubscriptionService;
 
-import jakarta.annotation.Nullable;
-import jakarta.annotation.PreDestroy;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
@@ -89,7 +89,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
     private final TelemetrySubscriptionService telemetryService;
     private final TbApiUsageStateClient apiUsageStateClient;
     private final AdminSettingsService adminSettingsService;
-    private final OAuth2Service oAuth2Service;
+    private final DomainService domainService;
     private final MailService mailService;
     private final SmsService smsService;
     private volatile ScheduledExecutorService scheduler;
@@ -143,7 +143,7 @@ public class DefaultSystemInfoService extends TbApplicationEventListener<Partiti
         FeaturesInfo featuresInfo = new FeaturesInfo();
         featuresInfo.setEmailEnabled(isEmailEnabled());
         featuresInfo.setSmsEnabled(smsService.isConfigured(TenantId.SYS_TENANT_ID));
-        featuresInfo.setOauthEnabled(oAuth2Service.findOAuth2Info().isEnabled());
+        featuresInfo.setOauthEnabled(domainService.isOauth2Enabled(TenantId.SYS_TENANT_ID));
         featuresInfo.setTwoFaEnabled(isTwoFaEnabled());
         featuresInfo.setNotificationEnabled(isSlackEnabled());
         return featuresInfo;

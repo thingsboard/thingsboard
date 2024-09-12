@@ -55,7 +55,7 @@ public class DataConstants {
     public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
-    public static final String[] allScopes() {
+    public static String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
     }
 
@@ -139,5 +139,7 @@ public class DataConstants {
     public static final String SQ_QUEUE_NAME = "SequentialByOriginator";
     public static final String SQ_QUEUE_TOPIC = "tb_rule_engine.sq";
     public static final String QUEUE_NAME = "queueName";
+
+    public static final String EDGE_QUEUE_NAME = "Edge";
 
 }

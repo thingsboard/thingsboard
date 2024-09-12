@@ -15,65 +15,59 @@
     limitations under the License.
 
 -->
-<ng-container [formGroup]="valueSourceFormGroup">
-  <div style="display: flex;">
-    <tb-toggle-select formControlName="valueSource" style="width: 300px;" selectMediaBreakpoint="xs">
-      <tb-toggle-option [value]="'predefinedValue'">
+
+<div class="tb-form-row no-border no-padding column-xs" style="gap: 10px;" [formGroup]="valueSourceFormGroup">
+  <mat-form-field fxFlex="33" fxFlex.xs appearance="outline" subscriptSizing="dynamic">
+    <mat-select formControlName="valueSource">
+      <mat-option [value]="'predefinedValue'">
         {{ 'widgets.value-source.predefined-value' | translate }}
-      </tb-toggle-option>
-      <tb-toggle-option [value]="'entityAttribute'">
+      </mat-option>
+      <mat-option [value]="'entityAttribute'">
         {{ 'widgets.value-source.entity-attribute' | translate }}
-      </tb-toggle-option>
-    </tb-toggle-select>
-  </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'predefinedValue'" class="tb-form-row space-between">
-    <div translate>widgets.value-source.value</div>
-    <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
-      <input matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
-    </mat-form-field>
-  </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between column-xs">
-    <div translate>widgets.value-source.source-entity-alias</div>
-    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-      <input matInput type="text" placeholder="{{ 'widget-config.set' | translate }}"
-             #entityAliasInput
-             formControlName="entityAlias"
-             [matAutocomplete]="entityAliasAutocomplete">
-      <button *ngIf="valueSourceFormGroup.get('entityAlias').value && !valueSourceFormGroup.get('entityAlias').disabled"
-              type="button"
-              matSuffix mat-icon-button aria-label="Clear"
-              (click)="clearEntityAlias()">
-        <mat-icon class="material-icons">close</mat-icon>
-      </button>
-      <mat-autocomplete
-        class="tb-autocomplete"
-        #entityAliasAutocomplete="matAutocomplete">
-        <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
-          <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-  </div>
-  <div [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'" class="tb-form-row space-between column-xs">
-    <div translate>widgets.value-source.source-entity-attribute</div>
-    <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
-      <input matInput type="text" placeholder="{{ 'widget-config.set' | translate }}"
-             #keyInput
-             formControlName="attribute"
-             [matAutocomplete]="keyAutocomplete">
-      <button *ngIf="valueSourceFormGroup.get('attribute').value && !valueSourceFormGroup.get('attribute').disabled"
-              type="button"
-              matSuffix mat-icon-button aria-label="Clear"
-              (click)="clearKey()">
-        <mat-icon class="material-icons">close</mat-icon>
-      </button>
-      <mat-autocomplete
-        class="tb-autocomplete"
-        #keyAutocomplete="matAutocomplete">
-        <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
-          <span [innerHTML]="key | highlight:keySearchText"></span>
-        </mat-option>
-      </mat-autocomplete>
-    </mat-form-field>
-  </div>
-</ng-container>
+      </mat-option>
+    </mat-select>
+  </mat-form-field>
+  <mat-form-field [fxShow]="valueSourceFormGroup.get('valueSource').value === 'predefinedValue'"
+                  appearance="outline"
+                  class="number flex"
+                  subscriptSizing="dynamic">
+    <input matInput formControlName="value" type="number" placeholder="{{ 'widgets.value-source.value' | translate }}">
+  </mat-form-field>
+  <mat-form-field [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'"
+                  appearance="outline"
+                  class="flex"
+                  subscriptSizing="dynamic">
+    <input matInput type="text" placeholder="{{ entityAliasPlaceholder | translate }}"
+           #entityAliasInput
+           formControlName="entityAlias"
+           [matAutocomplete]="entityAliasAutocomplete">
+    <button *ngIf="valueSourceFormGroup.get('entityAlias').value && !valueSourceFormGroup.get('entityAlias').disabled"
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clearEntityAlias()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+    <mat-autocomplete class="tb-autocomplete" #entityAliasAutocomplete="matAutocomplete">
+      <mat-option *ngFor="let entityAlias of filteredEntityAliases | async" [value]="entityAlias">
+        <span [innerHTML]="entityAlias | highlight:aliasSearchText"></span>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+  <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic" [fxShow]="valueSourceFormGroup.get('valueSource').value === 'entityAttribute'">
+    <input matInput type="text" placeholder="{{ entityAttributePlaceholder | translate }}"
+           #keyInput
+           formControlName="attribute"
+           [matAutocomplete]="keyAutocomplete">
+    <button *ngIf="valueSourceFormGroup.get('attribute').value && !valueSourceFormGroup.get('attribute').disabled"
+            type="button"
+            matSuffix mat-icon-button aria-label="Clear"
+            (click)="clearKey()">
+      <mat-icon class="material-icons">close</mat-icon>
+    </button>
+    <mat-autocomplete class="tb-autocomplete" #keyAutocomplete="matAutocomplete">
+      <mat-option *ngFor="let key of filteredKeys | async" [value]="key">
+        <span [innerHTML]="key | highlight:keySearchText"></span>
+      </mat-option>
+    </mat-autocomplete>
+  </mat-form-field>
+</div>

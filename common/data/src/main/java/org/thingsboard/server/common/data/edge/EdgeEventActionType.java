@@ -43,7 +43,7 @@ public enum EdgeEventActionType {
     DELETED_COMMENT(ActionType.DELETED_COMMENT),
     ASSIGNED_TO_EDGE(ActionType.ASSIGNED_TO_EDGE),
     UNASSIGNED_FROM_EDGE(ActionType.UNASSIGNED_FROM_EDGE),
-    CREDENTIALS_REQUEST(null),
+    CREDENTIALS_REQUEST(null), // deprecated
     ENTITY_MERGE_REQUEST(null); // deprecated
 
     private final ActionType actionType;

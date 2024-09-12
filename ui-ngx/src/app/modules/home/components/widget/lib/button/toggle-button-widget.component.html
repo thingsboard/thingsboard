@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-toggle-button-panel" [style]="backgroundStyle$ | async">
+<div class="tb-toggle-button-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-toggle-button-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div class="tb-toggle-button-container"

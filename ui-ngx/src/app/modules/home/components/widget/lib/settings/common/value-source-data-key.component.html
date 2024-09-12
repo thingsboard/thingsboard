@@ -1,0 +1,77 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div [formGroup]="valueSourceFormGroup" class="tb-value-source tb-form-row no-padding no-border">
+  <div class="tb-source-field">
+    <mat-form-field class="tb-type-field" appearance="outline" subscriptSizing="dynamic">
+      <mat-select formControlName="type">
+        <mat-option *ngFor="let type of valueSourceDataKeyTypes" [value]="type">
+          {{ valueSourceDataKeyTypeTranslation.get(type) | translate }}
+        </mat-option>
+      </mat-select>
+    </mat-form-field>
+    <tb-entity-alias-input
+      class="tb-entity-alias-field"
+      *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.entity"
+      [aliasController]="aliasController"
+      required
+      formControlName="entityAlias">
+    </tb-entity-alias-input>
+  </div>
+  <div class="tb-key-value-field">
+    <mat-form-field *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.constant"
+                    appearance="outline" class="tb-constant-field number" subscriptSizing="dynamic"
+                    [class.tb-suffix-absolute]="!valueSourceFormGroup.get('value').value">
+      <input required matInput formControlName="value" type="number" placeholder="{{ 'widget-config.set' | translate }}">
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="'widgets.value-source.value-required' | translate"
+                *ngIf="valueSourceFormGroup.get('value').hasError('required')
+                       && valueSourceFormGroup.get('value').touched"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
+    <tb-data-key-input
+      *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.latestKey"
+      required
+      requiredText="widgets.value-source.key-required"
+      [datasourceType]="datasource?.type"
+      [entityAliasId]="datasource?.entityAliasId"
+      [deviceId]="datasource?.deviceId"
+      [aliasController]="aliasController"
+      [dataKeyType]="datasource?.type === datasourceType.function ? dataKeyType.function : null"
+      [dataKeyTypes]="[dataKeyType.attribute, dataKeyType.timeseries]"
+      [callbacks]="dataKeyCallbacks"
+      [editable]="false"
+      [formControl]="latestKeyFormControl">
+    </tb-data-key-input>
+    <tb-data-key-input
+      *ngIf="valueSourceFormGroup.get('type').value === valueSourceDataKeyType.entity"
+      required
+      requiredText="widgets.value-source.entity-key-required"
+      [datasourceType]="datasourceType.entity"
+      [aliasController]="aliasController"
+      [entityAlias]="valueSourceFormGroup.get('entityAlias').value"
+      [dataKeyTypes]="[dataKeyType.attribute, dataKeyType.timeseries]"
+      [callbacks]="dataKeyCallbacks"
+      [editable]="false"
+      [formControl]="entityKeyFormControl">
+    </tb-data-key-input>
+  </div>
+</div>

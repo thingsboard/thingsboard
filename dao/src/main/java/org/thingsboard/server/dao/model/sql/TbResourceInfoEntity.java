@@ -16,9 +16,13 @@
 package org.thingsboard.server.dao.model.sql;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import jakarta.persistence.Column;
 import jakarta.persistence.Convert;
+import jakarta.persistence.Entity;
+import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import org.thingsboard.server.common.data.ResourceSubType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.id.TbResourceId;
@@ -27,18 +31,16 @@ import org.thingsboard.server.dao.model.BaseEntity;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
 import org.thingsboard.server.dao.util.mapping.JsonConverter;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import java.util.UUID;
 
 import static org.thingsboard.server.dao.model.ModelConstants.EXTERNAL_ID_PROPERTY;
+import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_DESCRIPTOR_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_ETAG_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_FILE_NAME_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_IS_PUBLIC_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_KEY_COLUMN;
-import static org.thingsboard.server.dao.model.ModelConstants.PUBLIC_RESOURCE_KEY_COLUMN;
+import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_SUB_TYPE_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TABLE_NAME;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TENANT_ID_COLUMN;
 import static org.thingsboard.server.dao.model.ModelConstants.RESOURCE_TITLE_COLUMN;
@@ -59,6 +61,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
 
     @Column(name = RESOURCE_TYPE_COLUMN)
     private String resourceType;
+
+    @Column(name = RESOURCE_SUB_TYPE_COLUMN)
+    private String resourceSubType;
 
     @Column(name = RESOURCE_KEY_COLUMN)
     private String resourceKey;
@@ -96,6 +101,9 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         this.tenantId = resource.getTenantId().getId();
         this.title = resource.getTitle();
         this.resourceType = resource.getResourceType().name();
+        if (resource.getResourceSubType() != null) {
+            this.resourceSubType = resource.getResourceSubType().name();
+        }
         this.resourceKey = resource.getResourceKey();
         this.searchText = resource.getSearchText();
         this.etag = resource.getEtag();
@@ -113,6 +121,7 @@ public class TbResourceInfoEntity extends BaseSqlEntity<TbResourceInfo> implemen
         resource.setTenantId(TenantId.fromUUID(tenantId));
         resource.setTitle(title);
         resource.setResourceType(ResourceType.valueOf(resourceType));
+        resource.setResourceSubType(resourceSubType != null ? ResourceSubType.valueOf(resourceSubType) : null);
         resource.setResourceKey(resourceKey);
         resource.setSearchText(searchText);
         resource.setEtag(etag);

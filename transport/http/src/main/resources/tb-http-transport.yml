@@ -170,6 +170,8 @@ transport:
     request_timeout: "${HTTP_REQUEST_TIMEOUT:60000}"
     # HTTP maximum request processing timeout in milliseconds
     max_request_timeout: "${HTTP_MAX_REQUEST_TIMEOUT:300000}"
+    # Semi-colon-separated list of urlPattern=maxPayloadSize pairs that define max http request size for specified url pattern. After first match all other will be skipped
+    max_payload_size: "${HTTP_TRANSPORT_MAX_PAYLOAD_SIZE_LIMIT_CONFIGURATION:/api/v1/*/rpc/**=65536;/api/v1/**=52428800}"
   sessions:
     # Session inactivity timeout is a global configuration parameter that defines how long the device transport session will be opened after the last message arrives from the device.
     # The parameter value is in milliseconds.

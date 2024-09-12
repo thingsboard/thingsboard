@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-value-chart-card-panel" [style]="backgroundStyle$ | async">
+<div class="tb-value-chart-card-panel" [style.padding]="padding" [style]="backgroundStyle$ | async">
   <div class="tb-value-chart-card-overlay" [style]="overlayStyle"></div>
   <ng-container *ngTemplateOutlet="widgetTitlePanel"></ng-container>
   <div #valueChartCardContent class="tb-value-chart-card-content" [class]="layout" [class.auto-scale]="autoScale && showValue">

@@ -21,6 +21,9 @@
   grid-template-columns: min-content minmax(auto, 1fr) min-content;
   .tb-toggle-header-pagination-button {
     display: none;
+    &.fill-height {
+      height: 100%;
+    }
   }
   &.tb-toggle-header-pagination-controls-enabled {
     .tb-toggle-header-pagination-button {
@@ -43,6 +46,25 @@
 }
 
 :host ::ng-deep {
+  .tb-toggle-container {
+    &.fill-height {
+      .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
+        height: 100%;
+        .mat-button-toggle.mat-button-toggle-appearance-standard {
+          .mat-button-toggle-button {
+            height: 100%;
+          }
+        }
+      }
+    }
+    &.extra-padding {
+      .mat-button-toggle.mat-button-toggle-appearance-standard {
+        .mat-button-toggle-label-content {
+          padding: 0 20px;
+        }
+      }
+    }
+  }
   .mat-button-toggle-group.mat-button-toggle-group-appearance-standard.tb-toggle-header {
     overflow: visible;
     width: 100%;
@@ -51,6 +73,12 @@
     padding: 2px;
     border: none;
     background: rgba(0, 0, 0, 0.06);
+    &.tb-primary-fill {
+      background: none;
+      &:before {
+        border-radius: 100px;
+      }
+    }
     .mat-button-toggle + .mat-button-toggle {
       border-left: none;
     }
@@ -161,6 +189,16 @@
     &.mat-mdc-form-field {
       line-height: 16px;
       font-size: 12px;
+      &.fill-height {
+        .mat-mdc-text-field-wrapper {
+          .mat-mdc-form-field-flex {
+            margin: auto;
+          }
+        }
+        .mat-mdc-form-field-subscript-wrapper {
+          display: none;
+        }
+      }
     }
     .mat-mdc-text-field-wrapper.mdc-text-field--outlined .mat-mdc-form-field-infix {
       min-height: 0;

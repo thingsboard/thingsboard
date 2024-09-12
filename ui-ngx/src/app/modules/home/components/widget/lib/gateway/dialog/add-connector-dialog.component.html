@@ -44,7 +44,7 @@
         <div class="fixed-title-width tb-required" translate>gateway.name</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-            <input matInput name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
+            <input matInput autocomplete="off" name="value" formControlName="name" placeholder="{{ 'gateway.set' | translate }}"/>
             <mat-icon matSuffix
                       matTooltipPosition="above"
                       matTooltipClass="tb-error-tooltip"
@@ -58,6 +58,22 @@
           </mat-form-field>
         </div>
       </div>
+      <div *ngIf="connectorForm.get('type').value === connectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput name="value" formControlName="class" placeholder="{{ 'gateway.set' | translate }}"/>
+          </mat-form-field>
+        </div>
+      </div>
+      <div *ngIf="connectorForm.get('type').value === connectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+        <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
+        <div class="tb-flex no-gap">
+          <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+            <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
+          </mat-form-field>
+        </div>
+      </div>
       <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
         <div class="fixed-title-width" translate>gateway.remote-logging-level</div>
         <div class="tb-flex no-gap">
@@ -68,7 +84,8 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+      <div *ngIf="connectorForm.get('type').value !== connectorType.GRPC && connectorForm.get('type').value !== connectorType.CUSTOM"
+           class="tb-form-row column-xs" fxLayoutAlign="space-between center">
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="useDefaults">
           <mat-label tb-hint-tooltip-icon="{{ 'gateway.fill-connector-defaults-hint' | translate }}">
             {{ 'gateway.fill-connector-defaults' | translate }}

@@ -105,17 +105,35 @@ public class DefaultDataUpdateService implements DataUpdateService {
             var configurationOpt = tenantProfile.getProfileConfiguration();
             configurationOpt.ifPresent(configuration -> {
                 boolean updated = false;
-                if (configuration.getTransportDeviceMsgRateLimit() != null && configuration.getTransportGatewayMsgRateLimit() == null) {
-                    configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
-                    updated = true;
+                if (configuration.getTransportDeviceMsgRateLimit() != null) {
+                    if (configuration.getTransportGatewayMsgRateLimit() == null) {
+                        configuration.setTransportGatewayMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceMsgRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceMsgRateLimit(configuration.getTransportDeviceMsgRateLimit());
+                        updated = true;
+                    }
                 }
-                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null && configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
-                    configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
-                    updated = true;
+                if (configuration.getTransportDeviceTelemetryMsgRateLimit() != null) {
+                    if (configuration.getTransportGatewayTelemetryMsgRateLimit() == null) {
+                        configuration.setTransportGatewayTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceTelemetryMsgRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceTelemetryMsgRateLimit(configuration.getTransportDeviceTelemetryMsgRateLimit());
+                        updated = true;
+                    }
                 }
-                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null && configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
-                    configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
-                    updated = true;
+                if (configuration.getTransportDeviceTelemetryDataPointsRateLimit() != null) {
+                    if (configuration.getTransportGatewayTelemetryDataPointsRateLimit() == null) {
+                        configuration.setTransportGatewayTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                        updated = true;
+                    }
+                    if (configuration.getTransportGatewayDeviceTelemetryDataPointsRateLimit() == null) {
+                        configuration.setTransportGatewayDeviceTelemetryDataPointsRateLimit(configuration.getTransportDeviceTelemetryDataPointsRateLimit());
+                        updated = true;
+                    }
                 }
                 if (updated) {
                     try {
@@ -203,14 +221,14 @@ public class DefaultDataUpdateService implements DataUpdateService {
 
     @Override
     public void upgradeRuleNodes() {
-        try {
-            int totalRuleNodesUpgraded = 0;
-            log.info("Starting rule nodes upgrade ...");
-            var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
-            log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
-            for (var ruleNodeClassInfo : nodeClassToVersionMap) {
-                var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
-                var toVersion = ruleNodeClassInfo.getCurrentVersion();
+        int totalRuleNodesUpgraded = 0;
+        log.info("Starting rule nodes upgrade ...");
+        var nodeClassToVersionMap = componentDiscoveryService.getVersionedNodes();
+        log.debug("Found {} versioned nodes to check for upgrade!", nodeClassToVersionMap.size());
+        for (var ruleNodeClassInfo : nodeClassToVersionMap) {
+            var ruleNodeTypeForLogs = ruleNodeClassInfo.getSimpleName();
+            var toVersion = ruleNodeClassInfo.getCurrentVersion();
+            try {
                 log.debug("Going to check for nodes with type: {} to upgrade to version: {}.", ruleNodeTypeForLogs, toVersion);
                 var ruleNodesIdsToUpgrade = getRuleNodesIdsWithTypeAndVersionLessThan(ruleNodeClassInfo.getClassName(), toVersion);
                 if (ruleNodesIdsToUpgrade.isEmpty()) {
@@ -222,11 +240,11 @@ public class DefaultDataUpdateService implements DataUpdateService {
                     totalRuleNodesUpgraded += processRuleNodePack(ruleNodePack, ruleNodeClassInfo);
                     log.info("{} upgraded rule nodes so far ...", totalRuleNodesUpgraded);
                 }
+            } catch (Exception e) {
+                log.error("Unexpected error during {} rule nodes upgrade: ", ruleNodeTypeForLogs, e);
             }
-            log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}", totalRuleNodesUpgraded);
-        } catch (Exception e) {
-            log.error("Unexpected error during rule nodes upgrade: ", e);
         }
+        log.info("Finished rule nodes upgrade. Upgraded rule nodes count: {}", totalRuleNodesUpgraded);
     }
 
     private int processRuleNodePack(List<RuleNodeId> ruleNodeIdsBatch, RuleNodeClassInfo ruleNodeClassInfo) {

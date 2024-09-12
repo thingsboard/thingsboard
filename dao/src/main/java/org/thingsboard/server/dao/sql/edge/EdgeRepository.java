@@ -120,6 +120,16 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
                                                @Param("textSearch") String textSearch,
                                                Pageable pageable);
 
+    @Query("SELECT ee.id FROM EdgeEntity ee, RelationEntity re WHERE ee.tenantId = :tenantId " +
+            "AND ee.id = re.fromId AND re.fromType = 'EDGE' AND re.relationTypeGroup = 'EDGE' " +
+            "AND re.relationType = 'Contains' AND re.toId = :entityId AND re.toType = :entityType " +
+            "AND (:textSearch IS NULL OR ilike(ee.name, CONCAT('%', :textSearch, '%')) = true)")
+    Page<UUID> findIdsByTenantIdAndEntityId(@Param("tenantId") UUID tenantId,
+                                              @Param("entityId") UUID entityId,
+                                              @Param("entityType") String entityType,
+                                              @Param("textSearch") String textSearch,
+                                              Pageable pageable);
+
     @Query("SELECT ee FROM EdgeEntity ee, TenantEntity te WHERE ee.tenantId = te.id AND te.tenantProfileId = :tenantProfileId ")
     Page<EdgeEntity> findByTenantProfileId(@Param("tenantProfileId") UUID tenantProfileId,
                                            Pageable pageable);
@@ -134,4 +144,5 @@ public interface EdgeRepository extends JpaRepository<EdgeEntity, UUID> {
     List<EdgeEntity> findEdgesByTenantIdAndIdIn(UUID tenantId, List<UUID> edgeIds);
 
     EdgeEntity findByRoutingKey(String routingKey);
+
 }

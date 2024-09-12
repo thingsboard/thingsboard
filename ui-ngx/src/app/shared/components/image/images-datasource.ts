@@ -15,7 +15,7 @@
 ///
 
 import { CollectionViewer, DataSource, SelectionModel } from '@angular/cdk/collections';
-import { ImageResourceInfo } from '@shared/models/resource.models';
+import { ImageResourceInfo, ResourceSubType } from '@shared/models/resource.models';
 import { BehaviorSubject, Observable, of, ReplaySubject, Subject } from 'rxjs';
 import { emptyPageData, PageData } from '@shared/models/page/page-data';
 import { ImageService } from '@core/http/image.service';
@@ -64,10 +64,10 @@ export class ImagesDatasource implements DataSource<ImageResourceInfo> {
     }
   }
 
-  loadEntities(pageLink: PageLink, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
+  loadEntities(pageLink: PageLink, imageSubType: ResourceSubType, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
     this.dataLoading = true;
     const result = new ReplaySubject<PageData<ImageResourceInfo>>();
-    this.fetchEntities(pageLink, includeSystemImages).pipe(
+    this.fetchEntities(pageLink, imageSubType, includeSystemImages).pipe(
       tap(() => {
         this.selection.clear();
       }),
@@ -83,8 +83,8 @@ export class ImagesDatasource implements DataSource<ImageResourceInfo> {
     return result;
   }
 
-  fetchEntities(pageLink: PageLink, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
-    return this.imageService.getImages(pageLink, includeSystemImages);
+  fetchEntities(pageLink: PageLink, imageSubType: ResourceSubType, includeSystemImages = false): Observable<PageData<ImageResourceInfo>> {
+    return this.imageService.getImages(pageLink, includeSystemImages, imageSubType);
   }
 
   isAllSelected(): Observable<boolean> {

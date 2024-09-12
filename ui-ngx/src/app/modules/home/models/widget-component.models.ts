@@ -47,7 +47,7 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, Injector, NgModuleRef, NgZone, Type } from '@angular/core';
+import { ChangeDetectorRef, Injector, NgZone, Type } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -101,7 +101,6 @@ import { AlarmQuery, AlarmSearchStatus, AlarmStatus } from '@app/shared/models/a
 import { ImagePipe, MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/public-api';
 import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
-import { DynamicComponentModule } from '@core/services/dynamic-component-factory.service';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
 
@@ -178,6 +177,14 @@ export class WidgetContext {
     } else {
       return null;
     }
+  }
+
+  get dashboardPageElement(): HTMLElement {
+    return this.dashboard?.stateController?.dashboardCtrl?.elRef?.nativeElement;
+  }
+
+  get dashboardContentElement(): HTMLElement {
+    return this.dashboard?.stateController?.dashboardCtrl?.dashboardContent?.nativeElement;
   }
 
   authService: AuthService;
@@ -449,6 +456,8 @@ export class WidgetContext {
       labelPattern.destroy();
     }
     this.labelPatterns.clear();
+    this.width = undefined;
+    this.height = undefined;
     this.destroyed = true;
   }
 
@@ -531,6 +540,7 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   widgetName: string;
   fullFqn: string;
   deprecated: boolean;
+  scada: boolean;
   typeSettingsSchema?: string | any;
   typeDataKeySettingsSchema?: string | any;
   typeLatestDataKeySettingsSchema?: string | any;
@@ -538,7 +548,6 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   description?: string;
   tags?: string[];
   componentType?: Type<IDynamicWidgetComponent>;
-  componentModuleRef?: NgModuleRef<DynamicComponentModule>;
 }
 
 export interface WidgetConfigComponentData {
@@ -565,6 +574,7 @@ export const MissingWidgetType: WidgetInfo = {
   widgetName: 'Widget type not found',
   fullFqn: 'undefined',
   deprecated: false,
+  scada: false,
   sizeX: 8,
   sizeY: 6,
   resources: [],
@@ -590,6 +600,7 @@ export const ErrorWidgetType: WidgetInfo = {
   widgetName: 'Error loading widget',
   fullFqn: 'error',
   deprecated: false,
+  scada: false,
   sizeX: 8,
   sizeY: 6,
   resources: [],
@@ -632,6 +643,7 @@ export const toWidgetInfo = (widgetTypeEntity: WidgetType): WidgetInfo => ({
   widgetName: widgetTypeEntity.name,
   fullFqn: fullWidgetTypeFqn(widgetTypeEntity),
   deprecated: widgetTypeEntity.deprecated,
+  scada: widgetTypeEntity.scada,
   type: widgetTypeEntity.descriptor.type,
   sizeX: widgetTypeEntity.descriptor.sizeX,
   sizeY: widgetTypeEntity.descriptor.sizeY,
@@ -659,7 +671,7 @@ export const detailsToWidgetInfo = (widgetTypeDetailsEntity: WidgetTypeDetails):
 };
 
 export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                             createdTime: number): WidgetType => {
+                             createdTime: number, version: number): WidgetType => {
   const descriptor: WidgetTypeDescriptor = {
     type: widgetInfo.type,
     sizeX: widgetInfo.sizeX,
@@ -682,16 +694,18 @@ export const toWidgetType = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId:
     id,
     tenantId,
     createdTime,
+    version,
     fqn: widgetTypeFqn(widgetInfo.fullFqn),
     name: widgetInfo.widgetName,
     deprecated: widgetInfo.deprecated,
+    scada: widgetInfo.scada,
     descriptor
   };
 };
 
 export const toWidgetTypeDetails = (widgetInfo: WidgetInfo, id: WidgetTypeId, tenantId: TenantId,
-                                    createdTime: number): WidgetTypeDetails => {
-  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, createdTime);
+                                    createdTime: number, version: number): WidgetTypeDetails => {
+  const widgetTypeEntity = toWidgetType(widgetInfo, id, tenantId, createdTime, version);
   return {
     ...widgetTypeEntity,
     description: widgetInfo.description,
