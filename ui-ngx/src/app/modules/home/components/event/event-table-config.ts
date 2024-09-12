@@ -40,7 +40,7 @@ import {
   EventContentDialogData
 } from '@home/components/event/event-content-dialog.component';
 import { isEqual, sortObjectKeys } from '@core/utils';
-import { historyInterval, HOUR, MINUTE } from '@shared/models/time/time.models';
+import { historyInterval, MINUTE } from '@shared/models/time/time.models';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ChangeDetectorRef, EventEmitter, Injector, StaticProvider, ViewContainerRef } from '@angular/core';
 import { ComponentPortal } from '@angular/cdk/portal';
@@ -94,7 +94,7 @@ export class EventTableConfig extends EntityTableConfig<Event, TimePageLink> {
     this.loadDataOnInit = false;
     this.tableTitle = '';
     this.useTimePageLink = true;
-    this.defaultTimewindowInterval = historyInterval(HOUR);
+    this.defaultTimewindowInterval = historyInterval(MINUTE * 15);
     this.detailsPanelEnabled = false;
     this.selectionEnabled = false;
     this.searchEnabled = false;
