@@ -556,11 +556,11 @@ public class DeviceServiceImpl extends CachedVersionedEntityService<DeviceCacheK
         device.setName(provisionRequest.getDeviceName());
         device.setType(profile.getName());
         device.setTenantId(profile.getTenantId());
-        ObjectNode additionalInfoNode = JacksonUtil.newObjectNode();
         if (provisionRequest.getGateway() != null && provisionRequest.getGateway()) {
+            ObjectNode additionalInfoNode = JacksonUtil.newObjectNode();
             additionalInfoNode.put(DataConstants.GATEWAY_PARAMETER, true);
+            device.setAdditionalInfo(additionalInfoNode);
         }
-        device.setAdditionalInfo(additionalInfoNode);
         Device savedDevice = saveDevice(device);
         if (!StringUtils.isEmpty(provisionRequest.getCredentialsData().getToken()) ||
                 !StringUtils.isEmpty(provisionRequest.getCredentialsData().getX509CertHash()) ||
