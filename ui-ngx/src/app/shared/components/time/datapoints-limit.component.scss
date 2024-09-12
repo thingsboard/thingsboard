@@ -13,9 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+@import "../../../../scss/constants";
 
-:host {
-  .tb-form-row {
-    gap: 8px;
+.limit-slider-container {
+  width: 100%;
+  .limit-slider-value {
+    margin-left: 16px;
+    min-width: 25px;
+    max-width: 106px;
+  }
+  mat-form-field input[type=number] {
+    text-align: center;
+  }
+}
+
+@media #{$mat-gt-sm} {
+  .limit-slider-container {
+    > label {
+      margin-right: 16px;
+      width: min-content;
+      max-width: 40%;
+    }
   }
 }

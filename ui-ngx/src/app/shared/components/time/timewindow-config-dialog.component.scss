@@ -15,7 +15,23 @@
  */
 
 :host {
-  .tb-form-row {
-    gap: 8px;
+  .tb-timewindow-form {
+    width: 600px;
+
+    &.mat-mdc-dialog-content {
+      overflow: hidden;
+      padding: 0;
+    }
+
+    tb-timezone-select {
+      flex: 1;
+    }
+  }
+}
+
+:host-context(.mat-mdc-dialog-container) {
+  .tb-timewindow-form {
+    display: grid;
+    grid-template-rows: min-content min-content minmax(auto, 1fr) min-content min-content;
   }
 }

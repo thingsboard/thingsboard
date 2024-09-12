@@ -15,7 +15,19 @@
  */
 
 :host {
-  .tb-form-row {
-    gap: 8px;
+  display: flex;
+  flex-direction: column;
+  width: 380px;
+  max-height: 100%;
+  max-width: 100%;
+  background-color: #fff;
+
+  tb-timezone-select {
+    flex: 1;
   }
+
+  .tb-timezone-panel-actions {
+    padding-top: 12px;
+  }
+
 }
