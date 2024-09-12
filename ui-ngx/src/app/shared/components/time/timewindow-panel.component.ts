@@ -307,8 +307,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     if (aggType !== AggregationType.NONE) {
       this.timewindowForm.get('aggregation.limit').clearValidators();
     } else {
-      this.timewindowForm.get('aggregation.limit').setValidators([Validators.min(this.minDatapointsLimit()),
-        Validators.max(this.maxDatapointsLimit())]);
+      this.timewindowForm.get('aggregation.limit').setValidators([Validators.required]);
     }
     this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
   }
@@ -454,14 +453,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
 
   cancel() {
     this.overlayRef.dispose();
-  }
-
-  minDatapointsLimit() {
-    return this.timeService.getMinDatapointsLimit();
-  }
-
-  maxDatapointsLimit() {
-    return this.timeService.getMaxDatapointsLimit();
   }
 
   minRealtimeAggInterval() {

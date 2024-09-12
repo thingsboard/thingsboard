@@ -15,9 +15,17 @@
 ///
 
 import { Component, forwardRef, Input, OnDestroy, OnInit } from '@angular/core';
-import { ControlValueAccessor, FormBuilder, NG_VALUE_ACCESSOR, UntypedFormGroup, Validators } from '@angular/forms';
+import {
+  ControlValueAccessor,
+  FormBuilder,
+  FormGroup,
+  NG_VALIDATORS,
+  NG_VALUE_ACCESSOR,
+  ValidationErrors,
+  Validator,
+  Validators
+} from '@angular/forms';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { getTimezoneInfo } from '@shared/models/time/time.models';
 import { TimeService } from '@core/services/time.service';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
@@ -26,15 +34,22 @@ import { Subject } from 'rxjs';
   selector: 'tb-datapoints-limit',
   templateUrl: './datapoints-limit.component.html',
   styleUrls: ['./datapoints-limit.component.scss'],
-  providers: [{
+  providers: [
+    {
     provide: NG_VALUE_ACCESSOR,
     useExisting: forwardRef(() => DatapointsLimitComponent),
     multi: true
-  }]
+    },
+    {
+      provide: NG_VALIDATORS,
+      useExisting: forwardRef(() => DatapointsLimitComponent),
+      multi: true
+    }
+  ]
 })
-export class DatapointsLimitComponent implements ControlValueAccessor, OnInit, OnDestroy {
+export class DatapointsLimitComponent implements ControlValueAccessor, Validator, OnInit, OnDestroy {
 
-  datapointsLimitFormGroup: UntypedFormGroup;
+  datapointsLimitFormGroup: FormGroup;
 
   modelValue: number | null;
 
@@ -71,7 +86,7 @@ export class DatapointsLimitComponent implements ControlValueAccessor, OnInit, O
 
   ngOnInit() {
     this.datapointsLimitFormGroup = this.fb.group({
-      limit: [null]
+      limit: [null, [Validators.min(this.minDatapointsLimit()), Validators.max(this.maxDatapointsLimit())]]
     });
     this.datapointsLimitFormGroup.get('limit').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -82,10 +97,11 @@ export class DatapointsLimitComponent implements ControlValueAccessor, OnInit, O
 
   updateValidators() {
     if (this.datapointsLimitFormGroup) {
-      this.datapointsLimitFormGroup.get('limit').setValidators(this.required
-        ? [Validators.required, Validators.min(this.minDatapointsLimit()),
-          Validators.max(this.maxDatapointsLimit())]
-        : []);
+      if (this.required) {
+        this.datapointsLimitFormGroup.get('limit').addValidators(Validators.required);
+      } else {
+        this.datapointsLimitFormGroup.get('limit').removeValidators(Validators.required);
+      }
       this.datapointsLimitFormGroup.get('limit').updateValueAndValidity();
     }
   }
@@ -120,6 +136,12 @@ export class DatapointsLimitComponent implements ControlValueAccessor, OnInit, O
       this.modelValue = value;
       this.propagateChange(this.modelValue);
     }
+  }
+
+  validate(): ValidationErrors {
+    return this.datapointsLimitFormGroup.get('limit').valid ? null : {
+      datapointsLimitFormGroup: false,
+    };
   }
 
   minDatapointsLimit() {

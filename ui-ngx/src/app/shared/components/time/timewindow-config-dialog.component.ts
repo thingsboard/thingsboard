@@ -296,8 +296,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     if (aggType !== AggregationType.NONE) {
       this.timewindowForm.get('aggregation.limit').clearValidators();
     } else {
-      this.timewindowForm.get('aggregation.limit').setValidators([Validators.min(this.minDatapointsLimit()),
-        Validators.max(this.maxDatapointsLimit())]);
+      this.timewindowForm.get('aggregation.limit').setValidators([Validators.required]);
     }
     this.timewindowForm.get('aggregation.limit').updateValueAndValidity({emitEvent: false});
   }
@@ -349,14 +348,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   cancel() {
     this.dialogRef.close();
-  }
-
-  minDatapointsLimit() {
-    return this.timeService.getMinDatapointsLimit();
-  }
-
-  maxDatapointsLimit() {
-    return this.timeService.getMaxDatapointsLimit();
   }
 
   minRealtimeAggInterval() {
