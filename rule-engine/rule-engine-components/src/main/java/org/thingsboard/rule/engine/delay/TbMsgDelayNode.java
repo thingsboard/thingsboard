@@ -15,8 +15,9 @@
  */
 package org.thingsboard.rule.engine.delay;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.math.NumberUtils;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNode;
@@ -26,18 +27,27 @@ import org.thingsboard.rule.engine.api.util.TbNodeUtils;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
+import org.thingsboard.server.dao.exception.DataValidationException;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.EnumSet;
+import java.util.List;
+import java.util.Set;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
+
+import static org.thingsboard.server.dao.service.ConstraintValidator.validateFields;
 
 @Slf4j
 @RuleNode(
         type = ComponentType.ACTION,
         name = "delay (deprecated)",
+        version = 1,
         configClazz = TbMsgDelayNodeConfiguration.class,
         nodeDescription = "Delays incoming message (deprecated)",
         nodeDetails = "Delays messages for a configurable period. " +
@@ -50,13 +60,22 @@ import java.util.concurrent.TimeUnit;
 )
 public class TbMsgDelayNode implements TbNode {
 
+    private static final Set<TimeUnit> supportedTimeUnits = EnumSet.of(TimeUnit.SECONDS, TimeUnit.MINUTES, TimeUnit.HOURS);
+    private static final String supportedTimeUnitsStr = supportedTimeUnits.stream().map(TimeUnit::name).collect(Collectors.joining(", "));
+
     private TbMsgDelayNodeConfiguration config;
-    private Map<UUID, TbMsg> pendingMsgs;
+    private ConcurrentMap<UUID, TbMsg> pendingMsgs;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbMsgDelayNodeConfiguration.class);
-        this.pendingMsgs = new HashMap<>();
+        String errorPrefix = "'" + ctx.getSelf().getName() + "' node configuration is invalid: ";
+        try {
+            validateFields(config, errorPrefix);
+        } catch (DataValidationException e) {
+            throw new TbNodeException(e, true);
+        }
+        this.pendingMsgs = new ConcurrentHashMap<>();
     }
 
     @Override
@@ -67,7 +86,7 @@ public class TbMsgDelayNode implements TbNode {
                 ctx.enqueueForTellNext(
                         TbMsg.newMsg(
                                 pendingMsg.getQueueName(),
-                                pendingMsg.getType(),
+                                pendingMsg.getInternalType(),
                                 pendingMsg.getOriginator(),
                                 pendingMsg.getCustomerId(),
                                 pendingMsg.getMetaData(),
@@ -89,25 +108,69 @@ public class TbMsgDelayNode implements TbNode {
     }
 
     private long getDelay(TbMsg msg) {
-        int periodInSeconds;
-        if (config.isUseMetadataPeriodInSecondsPatterns()) {
-            if (isParsable(msg, config.getPeriodInSecondsPattern())) {
-                periodInSeconds = Integer.parseInt(TbNodeUtils.processPattern(config.getPeriodInSecondsPattern(), msg));
-            } else {
-                throw new RuntimeException("Can't parse period in seconds from metadata using pattern: " + config.getPeriodInSecondsPattern());
+        String timeUnitPattern = TbNodeUtils.processPattern(config.getTimeUnit(), msg);
+        String periodPattern = TbNodeUtils.processPattern(config.getPeriod(), msg);
+        try {
+            TimeUnit timeUnit = TimeUnit.valueOf(timeUnitPattern.toUpperCase());
+            if (!supportedTimeUnits.contains(timeUnit)) {
+                throw new RuntimeException("Time unit '" + timeUnit + "' is not supported! " +
+                        "Only " + supportedTimeUnitsStr + " are supported.");
             }
-        } else {
-            periodInSeconds = config.getPeriodInSeconds();
+            int period = Integer.parseInt(periodPattern);
+            return timeUnit.toMillis(period);
+        } catch (NumberFormatException e) {
+            throw new NumberFormatException("Can't parse period value : " + periodPattern);
+        } catch (IllegalArgumentException e) {
+            throw new IllegalArgumentException("Invalid value for period time unit : " + timeUnitPattern);
         }
-        return TimeUnit.SECONDS.toMillis(periodInSeconds);
-    }
-
-    private boolean isParsable(TbMsg msg, String pattern) {
-        return NumberUtils.isParsable(TbNodeUtils.processPattern(pattern, msg));
     }
 
     @Override
     public void destroy() {
         pendingMsgs.clear();
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0:
+                var periodInSeconds = "periodInSeconds";
+                var periodInSecondsPattern = "periodInSecondsPattern";
+                var useMetadataPeriodInSecondsPatterns = "useMetadataPeriodInSecondsPatterns";
+                var period = "period";
+                if (oldConfiguration.has(useMetadataPeriodInSecondsPatterns)) {
+                    var isUsedPattern = oldConfiguration.get(useMetadataPeriodInSecondsPatterns).booleanValue();
+                    if (isUsedPattern) {
+                        if (!oldConfiguration.has(periodInSecondsPattern)) {
+                            throw new TbNodeException("Property to update: '" + periodInSecondsPattern + "' does not exist in configuration.");
+                        }
+                        ((ObjectNode) oldConfiguration).set(period, oldConfiguration.get(periodInSecondsPattern));
+                    } else {
+                        if (!oldConfiguration.has(periodInSeconds)) {
+                            throw new TbNodeException("Property to update: '" + periodInSeconds + "' does not exist in configuration.");
+                        }
+                        ((ObjectNode) oldConfiguration).put(period, oldConfiguration.get(periodInSeconds).asText());
+                    }
+                    hasChanges = true;
+                } else if (oldConfiguration.has(periodInSeconds)) {
+                    ((ObjectNode) oldConfiguration).put(period, oldConfiguration.get(periodInSeconds).asText());
+                    hasChanges = true;
+                }
+                if (!oldConfiguration.has(period)) {
+                    ((ObjectNode) oldConfiguration).put(period, "60");
+                    hasChanges = true;
+                }
+                var timeUnit = "timeUnit";
+                if (!oldConfiguration.has(timeUnit)) {
+                    ((ObjectNode) oldConfiguration).put(timeUnit, TimeUnit.SECONDS.name());
+                    hasChanges = true;
+                }
+                ((ObjectNode) oldConfiguration).remove(List.of(periodInSeconds, periodInSecondsPattern, useMetadataPeriodInSecondsPatterns));
+                break;
+            default:
+                break;
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 }
