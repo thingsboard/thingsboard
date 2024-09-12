@@ -87,8 +87,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
   }
 
   updateForm(entity: Resource): void {
-    const { resourceType, fileName, title, data } = entity;
-    this.entityForm.patchValue({ resourceType, fileName, title, data });
+    this.entityForm.patchValue(entity);
   }
 
   override updateFormState(): void {

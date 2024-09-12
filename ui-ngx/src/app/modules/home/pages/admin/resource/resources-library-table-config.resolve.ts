@@ -118,7 +118,7 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     const authUser = getCurrentAuthUser(this.store);
     this.config.deleteEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
     this.config.entitySelectionEnabled = (resource) => this.isResourceEditable(resource, authUser.authority);
-    this.config.detailsReadonly = (resource) => !this.isResourceEditable(resource, authUser.authority, true);
+    this.config.detailsReadonly = (resource) => this.detailsReadonly(resource, authUser.authority);
     return this.config;
   }
 
@@ -149,10 +149,14 @@ export class ResourcesLibraryTableConfigResolver implements Resolve<EntityTableC
     return false;
   }
 
-  private isResourceEditable(resource: ResourceInfo, authority: Authority, isDetails = false): boolean {
-    if (isDetails && resource && resource.resourceType === ResourceType.LWM2M_MODEL) {
-      return false;
+  private detailsReadonly(resource: ResourceInfo, authority: Authority): boolean {
+    if (resource?.resourceType === ResourceType.LWM2M_MODEL) {
+      return true;
     }
+    return !this.isResourceEditable(resource, authority);
+  }
+
+  private isResourceEditable(resource: ResourceInfo, authority: Authority): boolean {
     if (authority === Authority.TENANT_ADMIN) {
       return resource && resource.tenantId && resource.tenantId.id !== NULL_UUID;
     } else {
