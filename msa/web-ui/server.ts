@@ -99,7 +99,12 @@ let connections: Socket[] = [];
 
         const root = path.join(webDir, 'public');
 
-        app.use(express.static(root));
+        const staticServe = express.static(root);
+
+        app.use(staticServe);
+        app.use((req, res, next) => {
+           res.sendFile(path.join(root, 'index.html'));
+        });
 
         server.listen(bindPort, bindAddress, () => {
             logger.info('==> 🌎  Listening on port %s.', bindPort);
