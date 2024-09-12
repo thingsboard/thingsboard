@@ -42,7 +42,7 @@ import {
   MappingValueType,
   mappingValueTypesMap,
   noLeadTrailSpacesRegex,
-  OPCUaSourceTypes,
+  OPCUaSourceType,
   RpcMethodsMapping,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
@@ -73,7 +73,7 @@ export class MappingDataKeysPanelComponent extends PageComponent implements OnIn
   keysType: MappingKeysType;
 
   @Input()
-  valueTypeKeys: Array<MappingValueType | OPCUaSourceTypes> = Object.values(MappingValueType);
+  valueTypeKeys: Array<MappingValueType | OPCUaSourceType> = Object.values(MappingValueType);
 
   @Input()
   valueTypeEnum = MappingValueType;

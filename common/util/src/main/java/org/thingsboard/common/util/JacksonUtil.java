@@ -38,6 +38,7 @@ import org.thingsboard.server.common.data.kv.KvEntry;
 
 import java.io.File;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.Reader;
 import java.io.Writer;
 import java.nio.file.Files;
@@ -256,6 +257,15 @@ public class JacksonUtil {
         } catch (IOException e) {
             throw new IllegalArgumentException("The given File object value: "
                     + value + " cannot be transformed to a JsonNode", e);
+        }
+    }
+
+    public static JsonNode toJsonNode(InputStream value) {
+        try {
+            return value != null ? OBJECT_MAPPER.readTree(value) : null;
+        } catch (IOException e) {
+            throw new IllegalArgumentException("The given InputStream value: "
+                                               + value + " cannot be transformed to a JsonNode", e);
         }
     }
 

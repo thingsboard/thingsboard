@@ -30,7 +30,7 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content tb-toast toastTarget="activationLinkDialogContent">
     <div class="mat-content" fxLayout="column">
-      <span [innerHTML]="'user.activation-link-text' | translate: {activationLink: activationLink}"></span>
+      <span [innerHTML]="'user.activation-link-text' | translate: {activationLink: activationLink, activationLinkTtl: activationLinkTtl}"></span>
       <div fxLayout="row" fxLayoutAlign="start center">
         <pre class="tb-highlight" fxFlex><code>{{ activationLink }}</code></pre>
         <button mat-icon-button

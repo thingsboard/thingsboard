@@ -43,7 +43,7 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
 import { DeviceService } from '@core/http/device.service';
 import { Subject } from 'rxjs';
-import { takeUntil } from 'rxjs/operators';
+import { take, takeUntil } from 'rxjs/operators';
 import { DeviceCredentials, DeviceCredentialsType } from '@shared/models/device.models';
 import {
   GatewayLogLevel,
@@ -61,7 +61,9 @@ import { CommonModule } from '@angular/common';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import {
   GatewayConfigCommand,
-  GatewayConfigValue, LogConfig
+  GatewayConfigSecurity,
+  GatewayConfigValue,
+  LogConfig
 } from '@home/components/widget/lib/gateway/configuration/models/gateway-configuration.models';
 
 @Component({
@@ -99,13 +101,14 @@ export class GatewayBasicConfigurationComponent implements OnDestroy, ControlVal
   initialCredentialsUpdated = new EventEmitter<DeviceCredentials>();
 
   StorageTypes = StorageTypes;
-  storageTypes = Object.values(StorageTypes) as StorageTypes[];
+  storageTypes = Object.values(StorageTypes);
   storageTypesTranslationMap = StorageTypesTranslationMap;
   logSavingPeriods = LogSavingPeriodTranslations;
   localLogsConfigs = Object.keys(LocalLogsConfigs) as LocalLogsConfigs[];
   localLogsConfigTranslateMap = LocalLogsConfigTranslateMap;
   securityTypes = GecurityTypesTranslationsMap;
   gatewayLogLevel = Object.values(GatewayLogLevel);
+
   logSelector: FormControl;
   basicFormGroup: FormGroup;
 
@@ -119,6 +122,7 @@ export class GatewayBasicConfigurationComponent implements OnDestroy, ControlVal
               private cd: ChangeDetectorRef,
               private dialog: MatDialog) {
     this.initBasicFormGroup();
+    this.observeFormChanges();
     this.basicFormGroup.valueChanges
       .pipe(takeUntil(this.destroy$))
       .subscribe(value => {
@@ -142,14 +146,12 @@ export class GatewayBasicConfigurationComponent implements OnDestroy, ControlVal
 
   writeValue(basicConfig: GatewayConfigValue): void {
     this.basicFormGroup.patchValue(basicConfig, {emitEvent: false});
-    if (basicConfig?.thingsboard?.security) {
-      this.checkAndFetchCredentials(basicConfig.thingsboard.security);
-    }
+    this.checkAndFetchCredentials(basicConfig?.thingsboard?.security ?? {} as GatewayConfigSecurity);
     if (basicConfig?.grpc) {
       this.toggleRpcFields(basicConfig.grpc.enabled);
     }
-    const commands = basicConfig?.thingsboard?.statistics?.commands || [];
-    commands.forEach(command => this.addCommand(command, false));
+    const commands = basicConfig?.thingsboard?.statistics?.commands ?? [];
+    commands.forEach((command: GatewayConfigCommand) => this.addCommand(command, false));
   }
 
   validate(): ValidationErrors | null {
@@ -251,7 +253,7 @@ export class GatewayBasicConfigurationComponent implements OnDestroy, ControlVal
         data: {
           gatewayName: gateway.name
         }
-      }).afterClosed().subscribe(
+      }).afterClosed().pipe(take(1)).subscribe(
         (res) => {
           if (!res) {
             this.basicFormGroup.get('thingsboard.remoteConfiguration').setValue(true, {emitEvent: false});
@@ -273,214 +275,294 @@ export class GatewayBasicConfigurationComponent implements OnDestroy, ControlVal
     this.commandFormArray().push(commandFormGroup, { emitEvent });
   }
 
-
   private initBasicFormGroup(): void {
     this.basicFormGroup = this.fb.group({
-      thingsboard: this.fb.group({
-        host: [window.location.hostname, [Validators.required, Validators.pattern(/^[^\s]+$/)]],
-        port: [1883, [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern(/^-?[0-9]+$/)]],
-        remoteShell: [false, []],
-        remoteConfiguration: [true, []],
-        checkConnectorsConfigurationInSeconds: [60, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        statistics: this.fb.group({
-          enable: [true, []],
-          statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(60), Validators.pattern(/^-?[0-9]+$/)]],
-          commands: this.fb.array([], [])
-        }),
-        maxPayloadSizeBytes: [8196, [Validators.required, Validators.min(100), Validators.pattern(/^-?[0-9]+$/)]],
-        minPackSendDelayMS: [50, [Validators.required, Validators.min(10), Validators.pattern(/^-?[0-9]+$/)]],
-        minPackSizeToSend: [500, [Validators.required, Validators.min(100), Validators.pattern(/^-?[0-9]+$/)]],
-        handleDeviceRenaming: [true, []],
-        checkingDeviceActivity: this.fb.group({
-          checkDeviceInactivity: [false, []],
-          inactivityTimeoutSeconds: [200, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-          inactivityCheckPeriodSeconds: [500, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]]
-        }),
-        security: this.fb.group({
-          type: [SecurityTypes.ACCESS_TOKEN, [Validators.required]],
-          accessToken: [null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
-          clientId: [null, [Validators.pattern(/^[^.\s]+$/)]],
-          username: [null, [Validators.pattern(/^[^.\s]+$/)]],
-          password: [null, [Validators.pattern(/^[^.\s]+$/)]],
-          caCert: [null, []],
-          cert: [null, []],
-          privateKey: [null, []],
-        }),
-        qos: [1, [Validators.min(0), Validators.max(1), Validators.required, Validators.pattern(/^[^.\s]+$/)]]
-      }),
-      storage: this.fb.group({
-        type: [StorageTypes.MEMORY, [Validators.required]],
-        read_records_count: [
-          100, [Validators.min(1),
-            Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]
-        ],
-        max_records_count: [
-          100000,
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required, Validators.pattern(/^[^.\s]+$/)]
-        ],
-        data_folder_path: ['./data/', [Validators.required]],
-        max_file_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        max_read_records_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        max_records_per_file: [10000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        data_file_path: ['./data/data.db', [Validators.required]],
-        messages_ttl_check_in_hours: [1, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        messages_ttl_in_days: [7, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-
-      }),
-      grpc: this.fb.group({
-        enabled: [false, []],
-        serverPort: [9595, [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern(/^-?[0-9]+$/)]],
-        keepAliveTimeMs: [10000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        keepAliveTimeoutMs: [5000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        keepalivePermitWithoutCalls: [true, []],
-        maxPingsWithoutData: [0, [Validators.required, Validators.min(0), Validators.pattern(/^-?[0-9]+$/)]],
-        minTimeBetweenPingsMs: [10000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-        minPingIntervalWithoutDataMs: [5000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
-      }),
+      thingsboard: this.initThingsboardFormGroup(),
+      storage: this.initStorageFormGroup(),
+      grpc: this.initGrpcFormGroup(),
       connectors: this.fb.array([]),
-      logs: this.fb.group({
-        dateFormat: ['%Y-%m-%d %H:%M:%S', [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
-        logFormat: ['%(asctime)s - |%(levelname)s| - [%(filename)s] - %(module)s - %(funcName)s - %(lineno)d - %(message)s',
-          [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
-        type: ['remote', [Validators.required]],
-        remote: this.fb.group({
-          enabled: [false],
-          logLevel: [GatewayLogLevel.INFO, [Validators.required]],
-        }),
-        local: this.fb.group({})
-      })
+      logs: this.initLogsFormGroup(),
     });
+  }
 
-    this.basicFormGroup.get('thingsboard.security.password').valueChanges.subscribe(password => {
+  private initThingsboardFormGroup(): FormGroup {
+    return this.fb.group({
+      host: [window.location.hostname, [Validators.required, Validators.pattern(/^[^\s]+$/)]],
+      port: [1883, [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern(/^-?[0-9]+$/)]],
+      remoteShell: [false],
+      remoteConfiguration: [true],
+      checkConnectorsConfigurationInSeconds: [60, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      statistics: this.fb.group({
+        enable: [true],
+        statsSendPeriodInSeconds: [3600, [Validators.required, Validators.min(60), Validators.pattern(/^-?[0-9]+$/)]],
+        commands: this.fb.array([])
+      }),
+      maxPayloadSizeBytes: [8196, [Validators.required, Validators.min(100), Validators.pattern(/^-?[0-9]+$/)]],
+      minPackSendDelayMS: [50, [Validators.required, Validators.min(10), Validators.pattern(/^-?[0-9]+$/)]],
+      minPackSizeToSend: [500, [Validators.required, Validators.min(100), Validators.pattern(/^-?[0-9]+$/)]],
+      handleDeviceRenaming: [true],
+      checkingDeviceActivity: this.initCheckingDeviceActivityFormGroup(),
+      security: this.initSecurityFormGroup(),
+      qos: [1, [Validators.required, Validators.min(0), Validators.max(1), Validators.pattern(/^[^.\s]+$/)]]
+    });
+  }
+
+  private initStorageFormGroup(): FormGroup {
+    return this.fb.group({
+      type: [StorageTypes.MEMORY, [Validators.required]],
+      read_records_count: [100, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      max_records_count: [100000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      data_folder_path: ['./data/', [Validators.required]],
+      max_file_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      max_read_records_count: [10, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      max_records_per_file: [10000, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      data_file_path: ['./data/data.db', [Validators.required]],
+      messages_ttl_check_in_hours: [1, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      messages_ttl_in_days: [7, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]]
+    });
+  }
+
+  private initGrpcFormGroup(): FormGroup {
+    return this.fb.group({
+      enabled: [false],
+      serverPort: [9595, [Validators.required, Validators.min(1), Validators.max(65535), Validators.pattern(/^-?[0-9]+$/)]],
+      keepAliveTimeMs: [10000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      keepAliveTimeoutMs: [5000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      keepalivePermitWithoutCalls: [true],
+      maxPingsWithoutData: [0, [Validators.required, Validators.min(0), Validators.pattern(/^-?[0-9]+$/)]],
+      minTimeBetweenPingsMs: [10000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      minPingIntervalWithoutDataMs: [5000, [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]]
+    });
+  }
+
+  private initLogsFormGroup(): FormGroup {
+    return this.fb.group({
+      dateFormat: ['%Y-%m-%d %H:%M:%S', [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]],
+      logFormat: [
+        '%(asctime)s - |%(levelname)s| - [%(filename)s] - %(module)s - %(funcName)s - %(lineno)d - %(message)s',
+        [Validators.required, Validators.pattern(/^[^\s].*[^\s]$/)]
+      ],
+      type: ['remote', [Validators.required]],
+      remote: this.fb.group({
+        enabled: [false],
+        logLevel: [GatewayLogLevel.INFO, [Validators.required]]
+      }),
+      local: this.fb.group({})
+    });
+  }
+
+  private initCheckingDeviceActivityFormGroup(): FormGroup {
+    return this.fb.group({
+      checkDeviceInactivity: [false],
+      inactivityTimeoutSeconds: [200, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]],
+      inactivityCheckPeriodSeconds: [500, [Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]]
+    });
+  }
+
+  private initSecurityFormGroup(): FormGroup {
+    return this.fb.group({
+      type: [SecurityTypes.ACCESS_TOKEN, [Validators.required]],
+      accessToken: [null, [Validators.required, Validators.pattern(/^[^.\s]+$/)]],
+      clientId: [null, [Validators.pattern(/^[^.\s]+$/)]],
+      username: [null, [Validators.pattern(/^[^.\s]+$/)]],
+      password: [null, [Validators.pattern(/^[^.\s]+$/)]],
+      caCert: [null],
+      cert: [null],
+      privateKey: [null]
+    });
+  }
+
+  private observeFormChanges(): void {
+    this.observeSecurityPasswordChanges();
+    this.observeRemoteConfigurationChanges();
+    this.observeDeviceActivityChanges();
+    this.observeSecurityTypeChanges();
+    this.observeStorageTypeChanges();
+  }
+
+  private observeSecurityPasswordChanges(): void {
+    const securityUsername = this.basicFormGroup.get('thingsboard.security.username');
+    this.basicFormGroup.get('thingsboard.security.password').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(password => {
       if (password && password !== '') {
-        this.basicFormGroup.get('thingsboard.security.username').setValidators([Validators.required]);
+        securityUsername.setValidators([Validators.required]);
       } else {
-        this.basicFormGroup.get('thingsboard.security.username').clearValidators();
+        securityUsername.clearValidators();
       }
-      this.basicFormGroup.get('thingsboard.security.username').updateValueAndValidity({emitEvent: false});
+      securityUsername.updateValueAndValidity({ emitEvent: false });
     });
+  }
 
-    this.toggleRpcFields(false);
-
-    this.basicFormGroup.get('thingsboard.remoteConfiguration').valueChanges.subscribe(enabled => {
+  private observeRemoteConfigurationChanges(): void {
+    this.basicFormGroup.get('thingsboard.remoteConfiguration').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(enabled => {
       if (!enabled) {
         this.openConfigurationConfirmDialog();
       }
     });
 
     this.logSelector = this.fb.control(LocalLogsConfigs.service);
-
-    for (const localLogsConfigsKey of Object.keys(LocalLogsConfigs)) {
-      this.addLocalLogConfig(localLogsConfigsKey, {} as LogConfig);
+    for (const key of Object.keys(LocalLogsConfigs)) {
+      this.addLocalLogConfig(key, {} as LogConfig);
     }
+  }
 
+  private observeDeviceActivityChanges(): void {
     const checkingDeviceActivityGroup = this.basicFormGroup.get('thingsboard.checkingDeviceActivity') as FormGroup;
-    checkingDeviceActivityGroup.get('checkDeviceInactivity').valueChanges.subscribe(enabled => {
+    checkingDeviceActivityGroup.get('checkDeviceInactivity').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(enabled => {
       checkingDeviceActivityGroup.updateValueAndValidity();
+      const validators = [Validators.min(1), Validators.required, Validators.pattern(/^-?[0-9]+$/)];
+
       if (enabled) {
-        checkingDeviceActivityGroup.get('inactivityTimeoutSeconds')
-          .setValidators([Validators.min(1), Validators.required, Validators.pattern(/^-?[0-9]+$/)]);
-        checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds')
-          .setValidators([Validators.min(1), Validators.required, Validators.pattern(/^-?[0-9]+$/)]);
+        checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').setValidators(validators);
+        checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').setValidators(validators);
       } else {
         checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').clearValidators();
         checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').clearValidators();
       }
-      checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').updateValueAndValidity({emitEvent: false});
-      checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').updateValueAndValidity({emitEvent: false});
+      checkingDeviceActivityGroup.get('inactivityTimeoutSeconds').updateValueAndValidity({ emitEvent: false });
+      checkingDeviceActivityGroup.get('inactivityCheckPeriodSeconds').updateValueAndValidity({ emitEvent: false });
     });
 
-    this.basicFormGroup.get('grpc.enabled').valueChanges.subscribe(value => {
+    this.basicFormGroup.get('grpc.enabled').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       this.toggleRpcFields(value);
     });
+  }
 
+  private observeSecurityTypeChanges(): void {
     const securityGroup = this.basicFormGroup.get('thingsboard.security') as FormGroup;
-    securityGroup.get('type').valueChanges.subscribe(type => {
+
+    securityGroup.get('type').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(type => {
       this.removeAllSecurityValidators();
-      if (type === SecurityTypes.ACCESS_TOKEN) {
-        securityGroup.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
-        securityGroup.get('accessToken').updateValueAndValidity();
-      } else if (type === SecurityTypes.TLS_PRIVATE_KEY) {
-        securityGroup.get('caCert').addValidators([Validators.required]);
-        securityGroup.get('caCert').updateValueAndValidity();
-        securityGroup.get('privateKey').addValidators([Validators.required]);
-        securityGroup.get('privateKey').updateValueAndValidity();
-        securityGroup.get('cert').addValidators([Validators.required]);
-        securityGroup.get('cert').updateValueAndValidity();
-      } else if (type === SecurityTypes.TLS_ACCESS_TOKEN) {
-        securityGroup.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
-        securityGroup.get('accessToken').updateValueAndValidity();
-        securityGroup.get('caCert').addValidators([Validators.required]);
-        securityGroup.get('caCert').updateValueAndValidity();
-      } else if (type === SecurityTypes.USERNAME_PASSWORD) {
-        securityGroup.addValidators([this.atLeastOneRequired(Validators.required, ['clientId', 'username'])]);
+
+      switch (type) {
+        case SecurityTypes.ACCESS_TOKEN:
+          this.addAccessTokenValidators(securityGroup);
+          break;
+        case SecurityTypes.TLS_PRIVATE_KEY:
+          this.addTlsPrivateKeyValidators(securityGroup);
+          break;
+        case SecurityTypes.TLS_ACCESS_TOKEN:
+          this.addTlsAccessTokenValidators(securityGroup);
+          break;
+        case SecurityTypes.USERNAME_PASSWORD:
+          securityGroup.addValidators([this.atLeastOneRequired(Validators.required, ['clientId', 'username'])]);
+          break;
       }
+
       securityGroup.updateValueAndValidity();
     });
 
-    securityGroup.get('caCert').valueChanges.subscribe(() => this.cd.detectChanges());
-    securityGroup.get('privateKey').valueChanges.subscribe(() => this.cd.detectChanges());
-    securityGroup.get('cert').valueChanges.subscribe(() => this.cd.detectChanges());
+    ['caCert', 'privateKey', 'cert'].forEach(field => {
+      securityGroup.get(field).valueChanges.pipe(takeUntil(this.destroy$)).subscribe(() => this.cd.detectChanges());
+    });
+  }
 
+  private observeStorageTypeChanges(): void {
     const storageGroup = this.basicFormGroup.get('storage') as FormGroup;
-    storageGroup.get('type').valueChanges.subscribe(type => {
+
+    storageGroup.get('type').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(type => {
       this.removeAllStorageValidators();
-      if (type === StorageTypes.MEMORY) {
-        storageGroup.get('read_records_count').addValidators(
-          [Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
-        storageGroup.get('max_records_count').addValidators(
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
-        storageGroup.get('read_records_count').updateValueAndValidity({emitEvent: false});
-        storageGroup.get('max_records_count').updateValueAndValidity({emitEvent: false});
-      } else if (type === StorageTypes.FILE) {
-        storageGroup.get('data_folder_path').addValidators([Validators.required]);
-        storageGroup.get('max_file_count').addValidators(
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
-        storageGroup.get('max_read_records_count').addValidators(
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
-        storageGroup.get('max_records_per_file').addValidators(
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
-        storageGroup.get('data_folder_path').updateValueAndValidity({emitEvent: false});
-        storageGroup.get('max_file_count').updateValueAndValidity({emitEvent: false});
-        storageGroup.get('max_read_records_count').updateValueAndValidity({emitEvent: false});
-        storageGroup.get('max_records_per_file').updateValueAndValidity({emitEvent: false});
-      } else if (type === StorageTypes.SQLITE) {
-        storageGroup.get('data_file_path').addValidators([Validators.required]);
-        storageGroup.get('messages_ttl_check_in_hours').addValidators(
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
-        storageGroup.get('messages_ttl_in_days').addValidators(
-          [Validators.min(1), Validators.pattern(/^-?[0-9]+$/), Validators.required]);
-        storageGroup.get('data_file_path').updateValueAndValidity({emitEvent: false});
-        storageGroup.get('messages_ttl_check_in_hours').updateValueAndValidity({emitEvent: false});
-        storageGroup.get('messages_ttl_in_days').updateValueAndValidity({emitEvent: false});
+
+      switch (type) {
+        case StorageTypes.MEMORY:
+          this.addMemoryStorageValidators(storageGroup);
+          break;
+        case StorageTypes.FILE:
+          this.addFileStorageValidators(storageGroup);
+          break;
+        case StorageTypes.SQLITE:
+          this.addSqliteStorageValidators(storageGroup);
+          break;
       }
     });
   }
 
-  private checkAndFetchCredentials(security: any = {}): void {
-    if (security.type !== SecurityTypes.TLS_PRIVATE_KEY) {
-      this.deviceService.getDeviceCredentials(this.device.id).subscribe(credentials => {
-        this.initialCredentialsUpdated.emit(credentials);
-        if (credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN || security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
-          this.basicFormGroup.get('thingsboard.security.type')
-            .setValue(security.type === SecurityTypes.TLS_ACCESS_TOKEN
-              ? SecurityTypes.TLS_ACCESS_TOKEN
-              : SecurityTypes.ACCESS_TOKEN, {emitEvent: false});
-          this.basicFormGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId, {emitEvent: false});
-          if(security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
-            this.basicFormGroup.get('thingsboard.security.caCert').setValue(security.caCert, {emitEvent: false});
-          }
-        } else if (credentials.credentialsType === DeviceCredentialsType.MQTT_BASIC) {
-          const parsedValue = JSON.parse(credentials.credentialsValue);
-          this.basicFormGroup.get('thingsboard.security.type').setValue(SecurityTypes.USERNAME_PASSWORD, {emitEvent: false});
-          this.basicFormGroup.get('thingsboard.security.clientId').setValue(parsedValue.clientId, {emitEvent: false});
-          this.basicFormGroup.get('thingsboard.security.username').setValue(parsedValue.userName, {emitEvent: false});
-          this.basicFormGroup.get('thingsboard.security.password')
-            .setValue(parsedValue.password, {emitEvent: false});
-        } else if (credentials.credentialsType === DeviceCredentialsType.X509_CERTIFICATE) {
-          //if sertificate is present set sertificate as present
-        }
-      });
+  private addAccessTokenValidators(group: FormGroup): void {
+    group.get('accessToken').addValidators([Validators.required, Validators.pattern(/^[^.\s]+$/)]);
+    group.get('accessToken').updateValueAndValidity();
+  }
+
+  private addTlsPrivateKeyValidators(group: FormGroup): void {
+    ['caCert', 'privateKey', 'cert'].forEach(field => {
+      group.get(field).addValidators([Validators.required]);
+      group.get(field).updateValueAndValidity();
+    });
+  }
+
+  private addTlsAccessTokenValidators(group: FormGroup): void {
+    this.addAccessTokenValidators(group);
+    group.get('caCert').addValidators([Validators.required]);
+    group.get('caCert').updateValueAndValidity();
+  }
+
+  private addMemoryStorageValidators(group: FormGroup): void {
+    group.get('read_records_count').addValidators([Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
+    group.get('max_records_count').addValidators([Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
+    group.get('read_records_count').updateValueAndValidity({ emitEvent: false });
+    group.get('max_records_count').updateValueAndValidity({ emitEvent: false });
+  }
+
+  private addFileStorageValidators(group: FormGroup): void {
+    ['data_folder_path', 'max_file_count', 'max_read_records_count', 'max_records_per_file'].forEach(field => {
+      group.get(field).addValidators([Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
+      group.get(field).updateValueAndValidity({ emitEvent: false });
+    });
+  }
+
+  private addSqliteStorageValidators(group: FormGroup): void {
+    ['data_file_path', 'messages_ttl_check_in_hours', 'messages_ttl_in_days'].forEach(field => {
+      group.get(field).addValidators([Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
+      group.get(field).updateValueAndValidity({ emitEvent: false });
+    });
+  }
+
+  private checkAndFetchCredentials(security: GatewayConfigSecurity): void {
+    if (security.type === SecurityTypes.TLS_PRIVATE_KEY) {
+      return;
     }
+
+    this.deviceService.getDeviceCredentials(this.device.id).pipe(takeUntil(this.destroy$)).subscribe(credentials => {
+      this.initialCredentialsUpdated.emit(credentials);
+      this.updateSecurityType(security, credentials);
+      this.updateCredentials(credentials, security);
+    });
+  }
+
+  private updateSecurityType(security, credentials: DeviceCredentials): void {
+    const isAccessToken = credentials.credentialsType === DeviceCredentialsType.ACCESS_TOKEN
+      || security.type === SecurityTypes.TLS_ACCESS_TOKEN;
+    const securityType = isAccessToken
+      ? (security.type === SecurityTypes.TLS_ACCESS_TOKEN ? SecurityTypes.TLS_ACCESS_TOKEN : SecurityTypes.ACCESS_TOKEN)
+      : (credentials.credentialsType === DeviceCredentialsType.MQTT_BASIC ? SecurityTypes.USERNAME_PASSWORD : null);
+
+    if (securityType) {
+      this.basicFormGroup.get('thingsboard.security.type').setValue(securityType, { emitEvent: false });
+    }
+  }
+
+  private updateCredentials(credentials: DeviceCredentials, security: GatewayConfigSecurity): void {
+    switch (credentials.credentialsType) {
+      case DeviceCredentialsType.ACCESS_TOKEN:
+        this.updateAccessTokenCredentials(credentials, security);
+        break;
+      case DeviceCredentialsType.MQTT_BASIC:
+        this.updateMqttBasicCredentials(credentials);
+        break;
+      case DeviceCredentialsType.X509_CERTIFICATE:
+        break;
+    }
+  }
+
+  private updateAccessTokenCredentials(credentials: DeviceCredentials, security: GatewayConfigSecurity): void {
+    this.basicFormGroup.get('thingsboard.security.accessToken').setValue(credentials.credentialsId, { emitEvent: false });
+    if (security.type === SecurityTypes.TLS_ACCESS_TOKEN) {
+      this.basicFormGroup.get('thingsboard.security.caCert').setValue(security.caCert, { emitEvent: false });
+    }
+  }
+
+  private updateMqttBasicCredentials(credentials: DeviceCredentials): void {
+    const parsedValue = JSON.parse(credentials.credentialsValue);
+    this.basicFormGroup.get('thingsboard.security.clientId').setValue(parsedValue.clientId, { emitEvent: false });
+    this.basicFormGroup.get('thingsboard.security.username').setValue(parsedValue.userName, { emitEvent: false });
+    this.basicFormGroup.get('thingsboard.security.password').setValue(parsedValue.password, { emitEvent: false });
   }
 }

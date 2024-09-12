@@ -22,6 +22,11 @@
   overflow-x: auto;
   padding: 0;
 
+  .version-placeholder {
+    color: gray;
+    font-size: 12px
+  }
+
   .connector-container {
     height: 100%;
     width: 100%;

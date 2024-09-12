@@ -22,6 +22,7 @@
               panelClass="tb-widgets-bundle-select"
               placeholder="{{ 'widget.select-widgets-bundle' | translate }}"
               (blur)="onTouched()"
+              [compareWith]="compareById"
               (ngModelChange)="widgetsBundleChanged()">
     <mat-select-trigger>
       <div class="tb-bundle-item">
@@ -29,8 +30,12 @@
         <span translate class="tb-bundle-system" *ngIf="isSystem(widgetsBundle)">widgets-bundle.system</span>
       </div>
     </mat-select-trigger>
-    <mat-option [value]="null" *ngIf="!required">
+    <mat-option *ngIf="createNew; else empty" [value]="null" (click)="openWidgetsBundleDialog($event)">
+      <a translate>widgets-bundle.create-new</a>
     </mat-option>
+    <ng-template #empty>
+      <mat-option [value]="null" *ngIf="!required"></mat-option>
+    </ng-template>
     <mat-option *ngFor="let widgetsBundle of widgetsBundles$ | async" [value]="widgetsBundle">
       <div class="tb-bundle-item">
         <span>{{widgetsBundle.title}}</span>

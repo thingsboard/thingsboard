@@ -63,7 +63,9 @@ public class JpaUserCredentialsDaoTest extends AbstractJpaDaoTest {
         userCredentials.setUserId(new UserId(UUID.randomUUID()));
         userCredentials.setPassword("password");
         userCredentials.setActivateToken("ACTIVATE_TOKEN_" + number);
+        userCredentials.setActivateTokenExpTime(123L);
         userCredentials.setResetToken("RESET_TOKEN_" + number);
+        userCredentials.setResetTokenExpTime(321L);
         return userCredentialsDao.save(SYSTEM_TENANT_ID, userCredentials);
     }
 

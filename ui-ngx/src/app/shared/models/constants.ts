@@ -161,7 +161,7 @@ export const HelpLinks = {
     assetProfiles: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/asset-profiles`,
     edges: `${helpBaseUrl}/docs/edge/getting-started-guides/what-is-edge`,
     assets: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/assets`,
-    entityViews: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/entity-views`,
+    entityViews: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/entity-views`,
     entitiesImport: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/bulk-provisioning`,
     rulechains: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/ui/rule-chains`,
     lwm2mResourceLibrary: `${helpBaseUrl}/docs${docPlatformPrefix}/reference/lwm2m-api`,

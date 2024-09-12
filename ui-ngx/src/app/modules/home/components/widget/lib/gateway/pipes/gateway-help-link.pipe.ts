@@ -17,8 +17,8 @@
 import { Pipe, PipeTransform } from '@angular/core';
 import {
   MappingValueType,
-  OPCUaSourceTypes,
-  SourceTypes
+  OPCUaSourceType,
+  SourceType
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Pipe({
@@ -26,9 +26,9 @@ import {
   standalone: true,
 })
 export class GatewayHelpLinkPipe implements PipeTransform {
-  transform(field: string, sourceType: SourceTypes | OPCUaSourceTypes, sourceTypes?: Array<SourceTypes | OPCUaSourceTypes | MappingValueType> ): string {
-    if (!sourceTypes || sourceTypes?.includes(OPCUaSourceTypes.PATH)) {
-      if (sourceType !== OPCUaSourceTypes.CONST) {
+  transform(field: string, sourceType: SourceType | OPCUaSourceType, sourceTypes?: Array<SourceType | OPCUaSourceType | MappingValueType> ): string {
+    if (!sourceTypes || sourceTypes?.includes(OPCUaSourceType.PATH)) {
+      if (sourceType !== OPCUaSourceType.CONST) {
         return `widget/lib/gateway/${field}-${sourceType}_fn`;
       } else {
         return;
