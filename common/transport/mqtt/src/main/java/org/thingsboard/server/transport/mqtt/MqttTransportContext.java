@@ -27,7 +27,7 @@ import org.thingsboard.server.common.transport.TransportContext;
 import org.thingsboard.server.common.transport.TransportTenantProfileCache;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
-import org.thingsboard.server.transport.mqtt.gateway.GatewayLatencyService;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 
 import java.net.InetSocketAddress;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -58,7 +58,7 @@ public class MqttTransportContext extends TransportContext {
 
     @Getter
     @Autowired
-    private GatewayLatencyService gatewayLatencyService;
+    private GatewayMetricsService gatewayMetricsService;
 
     @Getter
     @Value("${transport.mqtt.netty.max_payload_size}")

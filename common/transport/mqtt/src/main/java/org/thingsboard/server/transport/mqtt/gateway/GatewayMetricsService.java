@@ -27,8 +27,8 @@ import org.thingsboard.server.common.transport.TransportServiceCallback;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.TbMqttTransportComponent;
-import org.thingsboard.server.transport.mqtt.gateway.latency.GatewayLatencyData;
-import org.thingsboard.server.transport.mqtt.gateway.latency.GatewayLatencyState;
+import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsData;
+import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsState;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
@@ -37,10 +37,12 @@ import java.util.concurrent.TimeUnit;
 @Slf4j
 @Service
 @TbMqttTransportComponent
-public class GatewayLatencyService {
+public class GatewayMetricsService {
 
-    @Value("${transport.mqtt.gateway_latency_report_interval_sec:3600}")
-    private int latencyReportIntervalSec;
+    public static final String METRICS_CHECK = "metricsCheck";
+
+    @Value("${transport.mqtt.gateway_metrics_report_interval_sec:3600}")
+    private int metricsReportIntervalSec;
 
     @Autowired
     private SchedulerComponent scheduler;
@@ -48,15 +50,15 @@ public class GatewayLatencyService {
     @Autowired
     private TransportService transportService;
 
-    private Map<DeviceId, GatewayLatencyState> states = new ConcurrentHashMap<>();
+    private Map<DeviceId, GatewayMetricsState> states = new ConcurrentHashMap<>();
 
     @PostConstruct
     private void init() {
-        scheduler.scheduleAtFixedRate(this::reportLatency, latencyReportIntervalSec, latencyReportIntervalSec, TimeUnit.SECONDS);
+        scheduler.scheduleAtFixedRate(this::reportMetrics, metricsReportIntervalSec, metricsReportIntervalSec, TimeUnit.SECONDS);
     }
 
-    public void process(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId, Map<String, GatewayLatencyData> data, long ts) {
-        states.computeIfAbsent(gatewayId, k -> new GatewayLatencyState(sessionInfo)).update(ts, data);
+    public void process(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId, Map<String, GatewayMetricsData> data, long ts) {
+        states.computeIfAbsent(gatewayId, k -> new GatewayMetricsState(sessionInfo)).update(ts, data);
     }
 
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId) {
@@ -71,34 +73,34 @@ public class GatewayLatencyService {
     }
 
     public void onDeviceDisconnect(DeviceId deviceId) {
-        GatewayLatencyState state = states.remove(deviceId);
+        GatewayMetricsState state = states.remove(deviceId);
         if (state != null) {
-            reportLatency(state, System.currentTimeMillis());
+            reportMetrics(state, System.currentTimeMillis());
         }
     }
 
-    public void reportLatency() {
+    public void reportMetrics() {
         if (states.isEmpty()) {
             return;
         }
-        Map<DeviceId, GatewayLatencyState> oldStates = states;
+        Map<DeviceId, GatewayMetricsState> oldStates = states;
         states = new ConcurrentHashMap<>();
 
         long ts = System.currentTimeMillis();
 
         oldStates.forEach((gatewayId, state) -> {
-            reportLatency(state, ts);
+            reportMetrics(state, ts);
         });
         oldStates.clear();
     }
 
-    private void reportLatency(GatewayLatencyState state, long ts) {
+    private void reportMetrics(GatewayMetricsState state, long ts) {
         if (state.isEmpty()) {
             return;
         }
-        var result = state.getLatencyStateResult();
+        var result = state.getStateResult();
         var kvProto = TransportProtos.KeyValueProto.newBuilder()
-                .setKey("latencyCheck")
+                .setKey(METRICS_CHECK)
                 .setType(TransportProtos.KeyValueType.JSON_V)
                 .setJsonV(JacksonUtil.toString(result))
                 .build();

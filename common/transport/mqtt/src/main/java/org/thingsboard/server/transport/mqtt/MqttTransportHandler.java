@@ -423,7 +423,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
-                case MqttTopics.GATEWAY_LATENCY_TOPIC:
+                case MqttTopics.GATEWAY_METRICS_TOPIC:
                     gatewaySessionHandler.onGatewayLatency(mqttMsg);
                     break;
                 default:

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.gateway.latency;
+package org.thingsboard.server.transport.mqtt.gateway.metrics;
 
 import lombok.Getter;
 import org.thingsboard.server.gen.transport.TransportProtos;
@@ -25,15 +25,15 @@ import java.util.concurrent.atomic.AtomicLong;
 import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantLock;
 
-public class GatewayLatencyState {
+public class GatewayMetricsState {
 
-    private final Map<String, ConnectorLatencyState> connectors;
+    private final Map<String, ConnectorMetricsState> connectors;
     private final Lock updateLock;
 
     @Getter
     private volatile TransportProtos.SessionInfoProto sessionInfo;
 
-    public GatewayLatencyState(TransportProtos.SessionInfoProto sessionInfo) {
+    public GatewayMetricsState(TransportProtos.SessionInfoProto sessionInfo) {
         this.connectors = new HashMap<>();
         this.updateLock = new ReentrantLock();
         this.sessionInfo = sessionInfo;
@@ -43,19 +43,19 @@ public class GatewayLatencyState {
         this.sessionInfo = sessionInfo;
     }
 
-    public void update(long ts, Map<String, GatewayLatencyData> latencyData) {
+    public void update(long ts, Map<String, GatewayMetricsData> metricsData) {
         updateLock.lock();
         try {
-            latencyData.forEach((connectorName, data) -> {
-                connectors.computeIfAbsent(connectorName, k -> new ConnectorLatencyState()).update(ts, data);
+            metricsData.forEach((connectorName, data) -> {
+                connectors.computeIfAbsent(connectorName, k -> new ConnectorMetricsState()).update(ts, data);
             });
         } finally {
             updateLock.unlock();
         }
     }
 
-    public Map<String, ConnectorLatencyResult> getLatencyStateResult() {
-        Map<String, ConnectorLatencyResult> result = new HashMap<>();
+    public Map<String, ConnectorMetricsResult> getStateResult() {
+        Map<String, ConnectorMetricsResult> result = new HashMap<>();
         updateLock.lock();
         try {
             connectors.forEach((name, state) -> result.put(name, state.getResult()));
@@ -71,7 +71,7 @@ public class GatewayLatencyState {
         return connectors.isEmpty();
     }
 
-    private static class ConnectorLatencyState {
+    private static class ConnectorMetricsState {
         private final AtomicInteger count;
         private final AtomicLong gwLatencySum;
         private final AtomicLong transportLatencySum;
@@ -80,15 +80,15 @@ public class GatewayLatencyState {
         private volatile long minTransportLatency;
         private volatile long maxTransportLatency;
 
-        private ConnectorLatencyState() {
+        private ConnectorMetricsState() {
             this.count = new AtomicInteger(0);
             this.gwLatencySum = new AtomicLong(0);
             this.transportLatencySum = new AtomicLong(0);
         }
 
-        private void update(long serverReceiveTs, GatewayLatencyData latencyData) {
-            long gwLatency = latencyData.publishedTs() - latencyData.receivedTs();
-            long transportLatency = serverReceiveTs - latencyData.publishedTs();
+        private void update(long serverReceiveTs, GatewayMetricsData metricsData) {
+            long gwLatency = metricsData.publishedTs() - metricsData.receivedTs();
+            long transportLatency = serverReceiveTs - metricsData.publishedTs();
             count.incrementAndGet();
             gwLatencySum.addAndGet(gwLatency);
             transportLatencySum.addAndGet(transportLatency);
@@ -106,16 +106,16 @@ public class GatewayLatencyState {
             }
         }
 
-        private ConnectorLatencyResult getResult() {
+        private ConnectorMetricsResult getResult() {
             long count = this.count.get();
             long avgGwLatency = gwLatencySum.get() / count;
-            long transportLatencyAvg = transportLatencySum.get() / count;
-            return new ConnectorLatencyResult(avgGwLatency, minGwLatency, maxGwLatency, transportLatencyAvg, minTransportLatency, maxTransportLatency);
+            long avgTransportLatency = transportLatencySum.get() / count;
+            return new ConnectorMetricsResult(avgGwLatency, minGwLatency, maxGwLatency, avgTransportLatency, minTransportLatency, maxTransportLatency);
         }
     }
 
-    public record ConnectorLatencyResult(long avgGwLatency, long minGwLatency, long maxGwLatency,
-                                         long transportLatencyAvg, long minTransportLatency, long maxTransportLatency) {
+    public record ConnectorMetricsResult(long avgGwLatency, long minGwLatency, long maxGwLatency,
+                                         long avgTransportLatency, long minTransportLatency, long maxTransportLatency) {
     }
 
 }

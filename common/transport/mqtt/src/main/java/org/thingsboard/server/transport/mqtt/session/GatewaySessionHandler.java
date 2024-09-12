@@ -27,7 +27,7 @@ import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.transport.auth.GetOrCreateDeviceFromGatewayResponse;
 import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.transport.mqtt.gateway.GatewayLatencyService;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
 
 import java.util.Optional;
 import java.util.UUID;
@@ -40,11 +40,11 @@ import static com.amazonaws.util.StringUtils.UTF8;
 @Slf4j
 public class GatewaySessionHandler extends AbstractGatewaySessionHandler<GatewayDeviceSessionContext> {
 
-    private final GatewayLatencyService latencyService;
+    private final GatewayMetricsService gatewayMetricsService;
 
     public GatewaySessionHandler(DeviceSessionCtx deviceSessionCtx, UUID sessionId, boolean overwriteDevicesActivity) {
         super(deviceSessionCtx, sessionId, overwriteDevicesActivity);
-        this.latencyService = deviceSessionCtx.getContext().getGatewayLatencyService();
+        this.gatewayMetricsService = deviceSessionCtx.getContext().getGatewayMetricsService();
     }
 
     public void onDeviceConnect(MqttPublishMessage mqttMsg) throws AdaptorException {
@@ -72,16 +72,16 @@ public class GatewaySessionHandler extends AbstractGatewaySessionHandler<Gateway
 
     public void onGatewayDisconnect() {
         this.onDevicesDisconnect();
-        latencyService.onDeviceDisconnect(gateway.getDeviceId());
+        gatewayMetricsService.onDeviceDisconnect(gateway.getDeviceId());
     }
 
     public void onGatewayUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         this.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
-        latencyService.onDeviceUpdate(sessionInfo, gateway.getDeviceId());
+        gatewayMetricsService.onDeviceUpdate(sessionInfo, gateway.getDeviceId());
     }
 
     public void onGatewayDelete(DeviceId deviceId) {
-        latencyService.onDeviceDelete(deviceId);
+        gatewayMetricsService.onDeviceDelete(deviceId);
     }
 
     public void onGatewayLatency(MqttPublishMessage mqttMsg) throws AdaptorException {
@@ -94,7 +94,7 @@ public class GatewaySessionHandler extends AbstractGatewaySessionHandler<Gateway
         }
         long ts = System.currentTimeMillis();
         try {
-            latencyService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), JacksonUtil.fromString(payload, new TypeReference<>() {}), ts);
+            gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), JacksonUtil.fromString(payload, new TypeReference<>() {}), ts);
             ack(msgId, MqttReasonCodes.PubAck.SUCCESS);
         } catch (Throwable t) {
             ackOrClose(msgId);
