@@ -18,6 +18,7 @@ import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
 import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
   ModbusBasicConfig_v3_5_2,
+  ModbusLegacyBasicConfig, ModbusLegacySlave,
   ModbusMasterConfig,
   ModbusSlave
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -26,23 +27,24 @@ import { SharedModule } from '@shared/shared.module';
 import { ModbusSlaveConfigComponent } from '../modbus-slave-config/modbus-slave-config.component';
 import { ModbusMasterTableComponent } from '../modbus-master-table/modbus-master-table.component';
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
+import { ModbusVersionMappingUtil } from '@home/components/widget/lib/gateway/utils/modbus-version-mapping.util';
 import {
   ModbusBasicConfigDirective
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.abstract';
 
 @Component({
-  selector: 'tb-modbus-basic-config',
+  selector: 'tb-modbus-legacy-basic-config',
   templateUrl: './modbus-basic-config.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
       provide: NG_VALUE_ACCESSOR,
-      useExisting: forwardRef(() => ModbusBasicConfigComponent),
+      useExisting: forwardRef(() => ModbusLegacyBasicConfigComponent),
       multi: true
     },
     {
       provide: NG_VALIDATORS,
-      useExisting: forwardRef(() => ModbusBasicConfigComponent),
+      useExisting: forwardRef(() => ModbusLegacyBasicConfigComponent),
       multi: true
     }
   ],
@@ -56,19 +58,19 @@ import {
   ],
   styleUrls: ['./modbus-basic-config.component.scss'],
 })
-export class ModbusBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig_v3_5_2> {
+export class ModbusLegacyBasicConfigComponent extends ModbusBasicConfigDirective<ModbusLegacyBasicConfig> {
 
-  protected override mapConfigToFormValue(config: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
+  protected override mapConfigToFormValue(config: ModbusLegacyBasicConfig): ModbusBasicConfig_v3_5_2 {
     return {
-      master: config.master ?? {} as ModbusMasterConfig,
-      slave: config.slave ?? {} as ModbusSlave,
+      master: config.master ? ModbusVersionMappingUtil.mapMasterToUpgradedVersion(config.master) : {} as ModbusMasterConfig,
+      slave: config.slave ? ModbusVersionMappingUtil.mapSlaveToUpgradedVersion(config.slave) : {} as ModbusSlave,
     };
   }
 
-  protected override getMappedValue(value: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
+  protected override getMappedValue(value: ModbusBasicConfig_v3_5_2): ModbusLegacyBasicConfig {
     return {
       master: value.master,
-      slave: value.slave,
+      slave: value.slave ? ModbusVersionMappingUtil.mapSlaveToDowngradedVersion(value.slave) : {} as ModbusLegacySlave,
     };
   }
 }
