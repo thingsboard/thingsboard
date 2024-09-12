@@ -16,7 +16,9 @@
 
 import {
   ConfigurationModes,
-  GatewayConnector, LocalLogsConfigs, LogSavingPeriod,
+  GatewayConnector,
+  LocalLogsConfigs,
+  LogSavingPeriod,
   SecurityTypes,
   StorageTypes
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
