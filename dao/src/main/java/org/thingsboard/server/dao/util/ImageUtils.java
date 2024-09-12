@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.StringUtils;
 import org.w3c.dom.Document;
 
 import javax.imageio.ImageIO;
-import java.awt.*;
+import java.awt.Color;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.ByteArrayOutputStream;
