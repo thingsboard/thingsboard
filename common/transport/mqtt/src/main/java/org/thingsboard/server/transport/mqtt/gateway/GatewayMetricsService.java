@@ -30,6 +30,7 @@ import org.thingsboard.server.transport.mqtt.TbMqttTransportComponent;
 import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsData;
 import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsState;
 
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.TimeUnit;
@@ -41,7 +42,7 @@ public class GatewayMetricsService {
 
     public static final String GATEWAY_METRICS = "gatewayMetrics";
 
-    @Value("${transport.mqtt.gateway_metrics_report_interval_sec:3600}")
+    @Value("${transport.mqtt.gateway_metrics_report_interval_sec:60}")
     private int metricsReportIntervalSec;
 
     @Autowired
@@ -57,8 +58,8 @@ public class GatewayMetricsService {
         scheduler.scheduleAtFixedRate(this::reportMetrics, metricsReportIntervalSec, metricsReportIntervalSec, TimeUnit.SECONDS);
     }
 
-    public void process(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId, Map<String, GatewayMetricsData> data, long ts) {
-        states.computeIfAbsent(gatewayId, k -> new GatewayMetricsState(sessionInfo)).update(ts, data);
+    public void process(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId, List<GatewayMetricsData> data, long serverReceiveTs) {
+        states.computeIfAbsent(gatewayId, k -> new GatewayMetricsState(sessionInfo)).update(data, serverReceiveTs);
     }
 
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, DeviceId gatewayId) {
@@ -72,26 +73,18 @@ public class GatewayMetricsService {
         states.remove(deviceId);
     }
 
-    public void onDeviceDisconnect(DeviceId deviceId) {
-        GatewayMetricsState state = states.remove(deviceId);
-        if (state != null) {
-            reportMetrics(state, System.currentTimeMillis());
-        }
-    }
-
     public void reportMetrics() {
         if (states.isEmpty()) {
             return;
         }
-        Map<DeviceId, GatewayMetricsState> oldStates = states;
+        Map<DeviceId, GatewayMetricsState> statesToReport = states;
         states = new ConcurrentHashMap<>();
 
         long ts = System.currentTimeMillis();
 
-        oldStates.forEach((gatewayId, state) -> {
+        statesToReport.forEach((gatewayId, state) -> {
             reportMetrics(state, ts);
         });
-        oldStates.clear();
     }
 
     private void reportMetrics(GatewayMetricsState state, long ts) {

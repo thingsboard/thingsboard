@@ -74,22 +74,34 @@ public class JsonConverter {
     private static int maxStringValueLength = 0;
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts) throws JsonSyntaxException {
+        return convertToTelemetryProto(jsonElement, ts, null);
+    }
+
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts, List<JsonElement> metadataResult) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        convertToTelemetry(jsonElement, ts, null, builder);
+        convertToTelemetry(jsonElement, ts, null, builder, metadataResult);
         return builder.build();
+    }
+
+    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, List<JsonElement> metadataResult) throws JsonSyntaxException {
+        return convertToTelemetryProto(jsonElement, System.currentTimeMillis(), metadataResult);
     }
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         return convertToTelemetryProto(jsonElement, System.currentTimeMillis());
     }
 
-    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
+    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, List<JsonElement> metadataResult) {
         if (jsonElement.isJsonObject()) {
             parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
         } else if (jsonElement.isJsonArray()) {
             jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    parseObject(systemTs, result, builder, je.getAsJsonObject());
+                    JsonObject jo = je.getAsJsonObject();
+                    if (metadataResult != null && jo.has("metadata")) {
+                        metadataResult.add(jo.get("metadata"));
+                    }
+                    parseObject(systemTs, result, builder, jo);
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
@@ -550,7 +562,7 @@ public class JsonConverter {
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws
             JsonSyntaxException {
         Map<Long, List<KvEntry>> result = sorted ? new TreeMap<>() : new HashMap<>();
-        convertToTelemetry(jsonElement, systemTs, result, null);
+        convertToTelemetry(jsonElement, systemTs, result, null, null);
         return result;
     }
 

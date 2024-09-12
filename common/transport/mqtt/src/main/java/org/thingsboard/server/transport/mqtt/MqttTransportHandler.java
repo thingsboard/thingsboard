@@ -423,9 +423,6 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 case MqttTopics.GATEWAY_DISCONNECT_TOPIC:
                     gatewaySessionHandler.onDeviceDisconnect(mqttMsg);
                     break;
-                case MqttTopics.GATEWAY_METRICS_TOPIC:
-                    gatewaySessionHandler.onGatewayMetrics(mqttMsg);
-                    break;
                 default:
                     ack(ctx, msgId, MqttReasonCodes.PubAck.TOPIC_NAME_INVALID);
             }
@@ -1199,7 +1196,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
             transportService.process(deviceSessionCtx.getSessionInfo(), SESSION_EVENT_MSG_CLOSED, null);
             transportService.deregisterSession(deviceSessionCtx.getSessionInfo());
             if (gatewaySessionHandler != null) {
-                gatewaySessionHandler.onGatewayDisconnect();
+                gatewaySessionHandler.onDevicesDisconnect();
             }
             if (sparkplugSessionHandler != null) {
                 // add Msg Telemetry node: key STATE type: String value: OFFLINE ts: sparkplugBProto.getTimestamp()

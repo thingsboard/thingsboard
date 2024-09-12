@@ -19,6 +19,7 @@ import lombok.Getter;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -43,11 +44,11 @@ public class GatewayMetricsState {
         this.sessionInfo = sessionInfo;
     }
 
-    public void update(long ts, Map<String, GatewayMetricsData> metricsData) {
+    public void update(List<GatewayMetricsData> metricsData, long serverReceiveTs) {
         updateLock.lock();
         try {
-            metricsData.forEach((connectorName, data) -> {
-                connectors.computeIfAbsent(connectorName, k -> new ConnectorMetricsState()).update(ts, data);
+            metricsData.forEach(data -> {
+                connectors.computeIfAbsent(data.connector(), k -> new ConnectorMetricsState()).update(data, serverReceiveTs);
             });
         } finally {
             updateLock.unlock();
@@ -86,7 +87,7 @@ public class GatewayMetricsState {
             this.transportLatencySum = new AtomicLong(0);
         }
 
-        private void update(long serverReceiveTs, GatewayMetricsData metricsData) {
+        private void update(GatewayMetricsData metricsData, long serverReceiveTs) {
             long gwLatency = metricsData.publishedTs() - metricsData.receivedTs();
             long transportLatency = serverReceiveTs - metricsData.publishedTs();
             count.incrementAndGet();

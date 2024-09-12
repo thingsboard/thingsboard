@@ -62,6 +62,8 @@ import org.thingsboard.server.transport.mqtt.MqttTransportHandler;
 import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
+import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsData;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import java.util.ArrayList;
@@ -114,6 +116,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
     protected final ConcurrentMap<MqttTopicMatcher, Integer> mqttQoSMap;
     protected final ChannelHandlerContext channel;
     protected final DeviceSessionCtx deviceSessionCtx;
+    protected final GatewayMetricsService gatewayMetricsService;
 
     @Getter
     @Setter
@@ -131,6 +134,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         this.mqttQoSMap = deviceSessionCtx.getMqttQoSMap();
         this.channel = deviceSessionCtx.getChannel();
         this.overwriteDevicesActivity = overwriteDevicesActivity;
+        this.gatewayMetricsService = deviceSessionCtx.getContext().getGatewayMetricsService();
     }
 
     ConcurrentReferenceHashMap<String, Lock> createWeakMap() {
@@ -380,12 +384,28 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private void processPostTelemetryMsg(T deviceCtx, JsonElement msg, String deviceName, int msgId) {
         try {
-            TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(msg.getAsJsonArray());
+            List<JsonElement> metadata = new ArrayList<>();
+            TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(msg.getAsJsonArray(), metadata);
+            processTelemetryMetadataMsg(metadata);
             transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
         } catch (Throwable e) {
             log.warn("[{}][{}][{}] Failed to convert telemetry: [{}]", gateway.getTenantId(), gateway.getDeviceId(), deviceName, msg, e);
             ackOrClose(msgId);
         }
+    }
+
+    private void processTelemetryMetadataMsg(List<JsonElement> metadata) {
+        var serverReceiveTs = System.currentTimeMillis();
+        var metricsData = metadata.stream()
+                .filter(JsonElement::isJsonObject)
+                .map(je -> {
+                    var jo = je.getAsJsonObject();
+                    var connector = jo.get("connector").getAsString();
+                    var receivedTs = jo.get("receivedTs").getAsLong();
+                    var publishedTs = jo.get("publishedTs").getAsLong();
+                    return new GatewayMetricsData(connector, receivedTs, publishedTs);
+                }).toList();
+       gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metricsData, serverReceiveTs);
     }
 
     protected void onDeviceTelemetryProto(int msgId, ByteBuf payload) throws AdaptorException {
