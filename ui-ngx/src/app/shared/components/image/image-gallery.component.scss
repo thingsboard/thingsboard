@@ -54,9 +54,8 @@ $tb-button-selected-color: rgb(255, 110, 64) !default;
 
     .tb-images-title {
       padding-right: 20px;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
+      display: flex;
+      align-items: center;
     }
 
     .tb-images-view-type-toolbar {

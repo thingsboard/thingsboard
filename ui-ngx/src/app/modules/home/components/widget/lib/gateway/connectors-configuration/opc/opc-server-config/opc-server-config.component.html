@@ -84,7 +84,7 @@
       </mat-form-field>
     </div>
   </div>
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+  <div *ngIf="!hideNewFields" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
     <div class="fixed-title-width" tb-hint-tooltip-icon="{{ 'gateway.hints.poll-period' | translate }}">
       <div tbTruncateWithTooltip>{{ 'gateway.poll-period' | translate }}</div>
     </div>

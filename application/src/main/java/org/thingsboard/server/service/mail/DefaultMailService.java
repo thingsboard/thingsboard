@@ -160,12 +160,12 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendActivationEmail(String activationLink, String email) throws ThingsboardException {
-
+    public void sendActivationEmail(String activationLink, long ttlMs, String email) throws ThingsboardException {
         String subject = messages.getMessage("activation.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
         model.put("activationLink", activationLink);
+        model.put("activationLinkTtlInHours", (int) Math.ceil(ttlMs / 3600000.0));
         model.put(TARGET_EMAIL, email);
 
         String message = mergeTemplateIntoString("activation.ftl", model);
@@ -188,12 +188,13 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendResetPasswordEmail(String passwordResetLink, String email) throws ThingsboardException {
+    public void sendResetPasswordEmail(String passwordResetLink, long ttlMs, String email) throws ThingsboardException {
 
         String subject = messages.getMessage("reset.password.subject", null, Locale.US);
 
         Map<String, Object> model = new HashMap<>();
         model.put("passwordResetLink", passwordResetLink);
+        model.put("passwordResetLinkTtlInHours", (int) Math.ceil(ttlMs / 3600000.0));
         model.put(TARGET_EMAIL, email);
 
         String message = mergeTemplateIntoString("reset.password.ftl", model);
@@ -202,10 +203,10 @@ public class DefaultMailService implements MailService {
     }
 
     @Override
-    public void sendResetPasswordEmailAsync(String passwordResetLink, String email) {
+    public void sendResetPasswordEmailAsync(String passwordResetLink, long ttlMs, String email) {
         passwordResetExecutorService.execute(() -> {
             try {
-                this.sendResetPasswordEmail(passwordResetLink, email);
+                this.sendResetPasswordEmail(passwordResetLink, ttlMs, email);
             } catch (Exception e) {
                 log.error("Error occurred: {} ", e.getMessage());
             }

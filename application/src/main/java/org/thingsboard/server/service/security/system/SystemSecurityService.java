@@ -22,17 +22,12 @@ import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.security.UserCredentials;
-import org.thingsboard.server.common.data.security.model.SecuritySettings;
 import org.thingsboard.server.common.data.security.model.UserPasswordPolicy;
 import org.thingsboard.server.common.data.security.model.mfa.PlatformTwoFaSettings;
 import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface SystemSecurityService {
-
-    SecuritySettings getSecuritySettings();
-
-    SecuritySettings saveSecuritySettings(SecuritySettings securitySettings);
 
     void validatePasswordByPolicy(String password, UserPasswordPolicy passwordPolicy);
 
@@ -47,4 +42,5 @@ public interface SystemSecurityService {
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, Exception e);
 
     void logLoginAction(User user, Object authenticationDetails, ActionType actionType, String provider, Exception e);
+
 }

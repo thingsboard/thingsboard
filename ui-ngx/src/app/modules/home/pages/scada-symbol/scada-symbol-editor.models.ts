@@ -491,17 +491,6 @@ export class ScadaSymbolElement {
       element.show();
     }
     this.box = element.rbox(this.editObject.svgShape);
-/*    if (element.visible()) {
-      this.box = element.rbox(this.editObject.svgShape);
-      if (parentGroup && parentGroup.invisible) {
-        this.invisible = true;
-      }
-    } else {
-      element.show();
-      this.box = element.rbox(this.editObject.svgShape);
-      element.hide();
-      this.invisible = true;
-    }*/
   }
 
   public init() {
@@ -1297,6 +1286,41 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               }
             ]
           },
+          icon: {
+            meta: 'function',
+            description: 'Draws icon inside element(s). Only applicable for elements of type ' +
+              '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-g">SVG.G</a>.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element or an array of SVG elements',
+                type: 'Element | Array&lt;Element&gt;'
+              },
+              {
+                name: 'icon',
+                description: 'Icon to draw',
+                type: 'string'
+              },
+              {
+                name: 'size',
+                description: 'Optional icon size in pixels. Default 12 pixels.',
+                type: 'number',
+                optional: true
+              },
+              {
+                name: 'color',
+                description: 'Optional icon color. Default #0000008A.',
+                type: 'string',
+                optional: true
+              },
+              {
+                name: 'center',
+                description: 'Whether to center icon inside group element. Default true.',
+                type: 'boolean',
+                optional: true
+              }
+            ]
+          },
           disable: {
             meta: 'function',
             description: 'Disables element(s). Disabled element doesn\'t accept any user interaction. ' +
@@ -1417,6 +1441,8 @@ const scadaSymbolPropertyCompletionType = (type: ScadaSymbolPropertyType): strin
       return 'Font';
     case ScadaSymbolPropertyType.units:
       return 'units string';
+    case ScadaSymbolPropertyType.icon:
+      return 'icon string';
   }
 };
 

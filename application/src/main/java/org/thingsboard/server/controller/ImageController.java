@@ -312,7 +312,7 @@ public class ImageController extends BaseController {
         if (StringUtils.isNotEmpty(etag)) {
             etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
             if (etag.equals(tbImageService.getETag(cacheKey))) {
-                return ResponseEntity.status(HttpStatus.NOT_MODIFIED).build();
+                return response(HttpStatus.NOT_MODIFIED);
             }
         }
 

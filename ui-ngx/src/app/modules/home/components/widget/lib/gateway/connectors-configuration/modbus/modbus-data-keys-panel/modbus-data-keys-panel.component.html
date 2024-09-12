@@ -31,9 +31,15 @@
                   </div>
                   <ng-template #tagName>
                     <div class="tb-flex">
-                      <div class="title-container" tbTruncateWithTooltip>{{ 'gateway.key' | translate }}: {{ keyControl.get('tag').value }}</div>
-                      <div class="title-container">{{ 'gateway.address' | translate }}: {{ keyControl.get('address').value }}</div>
-                      <div class="title-container">{{ 'gateway.type' | translate }}: {{ keyControl.get('type').value }}</div>
+                      <div class="title-container tb-flex">{{ 'gateway.key' | translate }}:
+                        <span class="key-label" tbTruncateWithTooltip>{{ keyControl.get('tag').value }}</span>
+                      </div>
+                      <div class="title-container">{{ 'gateway.address' | translate }}:
+                        <span class="key-label">{{ keyControl.get('address').value }}</span>
+                      </div>
+                      <div class="title-container">{{ 'gateway.type' | translate }}:
+                        <span class="key-label">{{ keyControl.get('type').value }}</span>
+                      </div>
                     </div>
                   </ng-template>
                 </mat-panel-title>
