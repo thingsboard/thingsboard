@@ -105,6 +105,7 @@ import { SmsProviderConfigurationComponent } from '@home/components/sms/sms-prov
 import { AwsSnsProviderConfigurationComponent } from '@home/components/sms/aws-sns-provider-configuration.component';
 import { SmppSmsProviderConfigurationComponent } from '@home/components/sms/smpp-sms-provider-configuration.component';
 import { TwilioSmsProviderConfigurationComponent } from '@home/components/sms/twilio-sms-provider-configuration.component';
+import { AliyunSmsProviderConfigurationComponent } from '@home/components/sms/aliyun-sms-provider-configuration.component';
 import { Lwm2mProfileComponentsModule } from '@home/components/profile/device/lwm2m/lwm2m-profile-components.module';
 import { DashboardPageComponent } from '@home/components/dashboard-page/dashboard-page.component';
 import { DashboardToolbarComponent } from '@home/components/dashboard-page/dashboard-toolbar.component';
@@ -286,6 +287,7 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
       EditAlarmDetailsDialogComponent,
       SmsProviderConfigurationComponent,
       AwsSnsProviderConfigurationComponent,
+      AliyunSmsProviderConfigurationComponent
       SmppSmsProviderConfigurationComponent,
       TwilioSmsProviderConfigurationComponent,
       DashboardToolbarComponent,
@@ -422,6 +424,7 @@ import { EntityChipsComponent } from '@home/components/entity/entity-chips.compo
     DeviceProfileProvisionConfigurationComponent,
     SmsProviderConfigurationComponent,
     AwsSnsProviderConfigurationComponent,
+    AliyunSmsProviderConfigurationComponent
     SmppSmsProviderConfigurationComponent,
     TwilioSmsProviderConfigurationComponent,
     DashboardToolbarComponent,
