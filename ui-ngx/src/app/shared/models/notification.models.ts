@@ -290,6 +290,7 @@ export interface SlackNotificationTargetConfig {
 export interface MicrosoftTeamsNotificationTargetConfig {
   webhookUrl: string;
   channelName: string;
+  useOldApi?: boolean;
 }
 export enum NotificationTargetType {
   PLATFORM_USERS = 'PLATFORM_USERS',
