@@ -408,7 +408,7 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
                     var publishedTs = jo.get("publishedTs").getAsLong();
                     return new GatewayMetricsData(connector, receivedTs, publishedTs);
                 }).toList();
-        if (!metadata.isEmpty()) {
+        if (!metricsData.isEmpty()) {
             gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metricsData, serverReceiveTs);
         }
     }
