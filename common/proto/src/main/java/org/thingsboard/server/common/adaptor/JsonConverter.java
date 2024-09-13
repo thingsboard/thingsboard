@@ -34,6 +34,8 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.gen.transport.TransportProtos.AttributeUpdateNotificationMsg;
 import org.thingsboard.server.gen.transport.TransportProtos.ClaimDeviceMsg;
@@ -74,33 +76,65 @@ public class JsonConverter {
     private static int maxStringValueLength = 0;
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts) throws JsonSyntaxException {
-        return convertToTelemetryProto(jsonElement, ts, null);
-    }
-
-    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, long ts, List<JsonElement> metadataResult) throws JsonSyntaxException {
         PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
-        convertToTelemetry(jsonElement, ts, null, builder, metadataResult);
+        convertToTelemetry(jsonElement, ts, null, builder);
         return builder.build();
-    }
-
-    public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement, List<JsonElement> metadataResult) throws JsonSyntaxException {
-        return convertToTelemetryProto(jsonElement, System.currentTimeMillis(), metadataResult);
     }
 
     public static PostTelemetryMsg convertToTelemetryProto(JsonElement jsonElement) throws JsonSyntaxException {
         return convertToTelemetryProto(jsonElement, System.currentTimeMillis());
     }
 
-    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder, List<JsonElement> metadataResult) {
+    public static TbPair<TransportProtos.PostTelemetryMsg, List<GatewayMetadata>> convertToGatewayTelemetry(JsonElement jsonElement, long systemTs) {
+        List<GatewayMetadata> metadataResult = null;
+        PostTelemetryMsg.Builder builder = PostTelemetryMsg.newBuilder();
+        if (jsonElement.isJsonArray()) {
+            var ja = jsonElement.getAsJsonArray();
+            for (int i = 0; i < ja.size(); i++) {
+                var je = ja.get(i);
+                if (je.isJsonObject()) {
+                    JsonObject jo = je.getAsJsonObject();
+                    JsonElement metadataElem = jo.remove("metadata");
+                    if (metadataElem != null) {
+                        if (metadataResult == null) {
+                            metadataResult = new ArrayList<>();
+                        }
+                        if (metadataElem.isJsonObject()) {
+                            JsonObject metadataObj = metadataElem.getAsJsonObject();
+                            var connector = getAndValidateMetadataElement(metadataObj, "connector").getAsString();
+                            var receivedTs = getAndValidateMetadataElement(metadataObj, "receivedTs").getAsLong();
+                            var publishedTs = getAndValidateMetadataElement(metadataObj, "publishedTs").getAsLong();
+                            metadataResult.add(new GatewayMetadata(connector, receivedTs, publishedTs));
+                        } else {
+                            throw new JsonSyntaxException("Can't parse gateway metadata: " + metadataElem);
+                        }
+                    }
+                    parseObject(systemTs, null, builder, jo);
+                } else {
+                    throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
+                }
+            }
+        } else {
+            throw new JsonSyntaxException(CAN_T_PARSE_VALUE + jsonElement);
+        }
+        return TbPair.of(builder.build(), metadataResult);
+    }
+
+    private static JsonElement getAndValidateMetadataElement(JsonObject metadata, String elementName) {
+        var element = metadata.get(elementName);
+        if (element == null || element.isJsonNull()) {
+            throw new JsonSyntaxException(String.format("Can't parse gateway element in metadata: [%s][%s]", metadata, elementName));
+        }
+        return element;
+    }
+
+    private static void convertToTelemetry(JsonElement jsonElement, long systemTs, Map<Long, List<KvEntry>> result, PostTelemetryMsg.Builder builder) {
         if (jsonElement.isJsonObject()) {
             parseObject(systemTs, result, builder, jsonElement.getAsJsonObject());
         } else if (jsonElement.isJsonArray()) {
             jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
                     JsonObject jo = je.getAsJsonObject();
-                    if (metadataResult != null && jo.has("metadata")) {
-                        metadataResult.add(jo.get("metadata"));
-                    }
                     parseObject(systemTs, result, builder, jo);
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
@@ -562,7 +596,7 @@ public class JsonConverter {
     public static Map<Long, List<KvEntry>> convertToTelemetry(JsonElement jsonElement, long systemTs, boolean sorted) throws
             JsonSyntaxException {
         Map<Long, List<KvEntry>> result = sorted ? new TreeMap<>() : new HashMap<>();
-        convertToTelemetry(jsonElement, systemTs, result, null, null);
+        convertToTelemetry(jsonElement, systemTs, result, null);
         return result;
     }
 

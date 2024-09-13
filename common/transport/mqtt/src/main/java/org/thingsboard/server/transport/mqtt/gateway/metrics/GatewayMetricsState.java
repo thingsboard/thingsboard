@@ -16,6 +16,7 @@
 package org.thingsboard.server.transport.mqtt.gateway.metrics;
 
 import lombok.Getter;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.gen.transport.TransportProtos;
 
 import java.util.HashMap;
@@ -44,7 +45,7 @@ public class GatewayMetricsState {
         this.sessionInfo = sessionInfo;
     }
 
-    public void update(List<GatewayMetricsData> metricsData, long serverReceiveTs) {
+    public void update(List<GatewayMetadata> metricsData, long serverReceiveTs) {
         updateLock.lock();
         try {
             metricsData.forEach(data -> {
@@ -87,7 +88,7 @@ public class GatewayMetricsState {
             this.transportLatencySum = new AtomicLong(0);
         }
 
-        private void update(GatewayMetricsData metricsData, long serverReceiveTs) {
+        private void update(GatewayMetadata metricsData, long serverReceiveTs) {
             long gwLatency = metricsData.publishedTs() - metricsData.receivedTs();
             long transportLatency = serverReceiveTs - metricsData.publishedTs();
             count.incrementAndGet();

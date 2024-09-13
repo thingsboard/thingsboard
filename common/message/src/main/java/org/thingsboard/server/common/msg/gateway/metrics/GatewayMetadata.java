@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.mqtt.gateway.metrics;
+package org.thingsboard.server.common.msg.gateway.metrics;
 
-public record GatewayMetricsData(String connector, long receivedTs, long publishedTs) {
+public record GatewayMetadata(String connector, long receivedTs, long publishedTs) {
 }

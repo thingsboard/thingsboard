@@ -28,7 +28,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
 import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
-import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsData;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsState;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
@@ -176,10 +176,10 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         for (int i = 0; i < n; i++) {
             long publishedTs = System.currentTimeMillis() - 10;
             long gatewayLatencyA = random.nextLong(100, 500);
-            var firstData = new GatewayMetricsData("connectorA", publishedTs - gatewayLatencyA, publishedTs);
+            var firstData = new GatewayMetadata("connectorA", publishedTs - gatewayLatencyA, publishedTs);
             gwLatencies.computeIfAbsent("connectorA", key -> new ArrayList<>()).add(gatewayLatencyA);
             long gatewayLatencyB = random.nextLong(120, 450);
-            var secondData = new GatewayMetricsData("connectorB", publishedTs - gatewayLatencyB, publishedTs);
+            var secondData = new GatewayMetadata("connectorB", publishedTs - gatewayLatencyB, publishedTs);
             gwLatencies.computeIfAbsent("connectorB", key -> new ArrayList<>()).add(gatewayLatencyB);
 
             List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");

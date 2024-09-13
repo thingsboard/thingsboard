@@ -48,6 +48,8 @@ import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.DeviceId;
+import org.thingsboard.server.common.data.util.TbPair;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.common.transport.TransportService;
 import org.thingsboard.server.common.transport.TransportServiceCallback;
@@ -63,7 +65,6 @@ import org.thingsboard.server.transport.mqtt.adaptors.JsonMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
 import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
-import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsData;
 import org.thingsboard.server.transport.mqtt.util.sparkplug.SparkplugConnectionState;
 
 import java.util.ArrayList;
@@ -384,32 +385,17 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
 
     private void processPostTelemetryMsg(T deviceCtx, JsonElement msg, String deviceName, int msgId) {
         try {
-            List<JsonElement> metadata = new ArrayList<>();
-            TransportProtos.PostTelemetryMsg postTelemetryMsg = JsonConverter.convertToTelemetryProto(msg.getAsJsonArray(), metadata);
-            processTelemetryMetadataMsg(metadata);
+            long systemTs = System.currentTimeMillis();
+            TbPair<TransportProtos.PostTelemetryMsg, List<GatewayMetadata>> gatewayPayloadPair = JsonConverter.convertToGatewayTelemetry(msg.getAsJsonArray(), systemTs);
+            TransportProtos.PostTelemetryMsg postTelemetryMsg = gatewayPayloadPair.getFirst();
+            List<GatewayMetadata> metadata = gatewayPayloadPair.getSecond();
+            if (!CollectionUtils.isEmpty(metadata)) {
+                gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metadata, systemTs);
+            }
             transportService.process(deviceCtx.getSessionInfo(), postTelemetryMsg, getPubAckCallback(channel, deviceName, msgId, postTelemetryMsg));
         } catch (Throwable e) {
             log.warn("[{}][{}][{}] Failed to convert telemetry: [{}]", gateway.getTenantId(), gateway.getDeviceId(), deviceName, msg, e);
             ackOrClose(msgId);
-        }
-    }
-
-    private void processTelemetryMetadataMsg(List<JsonElement> metadata) {
-        var serverReceiveTs = System.currentTimeMillis();
-        var metricsData = metadata.stream()
-                .filter(JsonElement::isJsonObject)
-                .map(JsonElement::getAsJsonObject)
-                .filter(jo -> jo.has("connector")
-                        && jo.has("receivedTs")
-                        && jo.has("publishedTs"))
-                .map(jo -> {
-                    var connector = jo.get("connector").getAsString();
-                    var receivedTs = jo.get("receivedTs").getAsLong();
-                    var publishedTs = jo.get("publishedTs").getAsLong();
-                    return new GatewayMetricsData(connector, receivedTs, publishedTs);
-                }).toList();
-        if (!metricsData.isEmpty()) {
-            gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metricsData, serverReceiveTs);
         }
     }
 
