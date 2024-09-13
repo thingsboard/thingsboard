@@ -301,6 +301,12 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
         try {
             lock.writeLock().lock();
             Observation observation = unsafeGetObservation(observationId);
+            if (observation instanceof SingleObservation){
+                log.trace("(SingleObservation) removeObservation: [{}]", ((SingleObservation)observation).getPath());
+            } else {
+                log.trace("(CompositeObservation) removeObservation: [{}]", ((CompositeObservation)observation).getPaths());
+            }
+
             if (observation != null && registrationId.equals(observation.getRegistrationId())) {
                 unsafeRemoveObservation(observationId);
                 return observation;

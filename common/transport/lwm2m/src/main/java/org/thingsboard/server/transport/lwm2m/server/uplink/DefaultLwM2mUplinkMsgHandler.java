@@ -630,17 +630,17 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      * @param registration - Registration LwM2M Client
      */
     public void updateAttrTelemetry(Registration registration, String path) {
+        log.trace("UpdateAttrTelemetry paths [{}]", path);
         try {
             ResultsAddKeyValueProto results = this.getParametersFromProfile(registration, path);
-            if (path.equals("/3_1.2/0/9")) {
-                log.info("UpdateTelemetry paths [{}] key: [{}] value [{}]", path, results.getResultTelemetries().get(0).getKey(), results.getResultTelemetries().get(0).getLongV());
-            }
             SessionInfoProto sessionInfo = this.getSessionInfoOrCloseSession(registration);
             if (results != null && sessionInfo != null) {
                 if (results.getResultAttributes().size() > 0) {
+                    log.trace("UpdateAttribute paths [{}] value [{}]", path, results.getResultAttributes().get(0).toString());
                     this.helper.sendParametersOnThingsboardAttribute(results.getResultAttributes(), sessionInfo);
                 }
                 if (results.getResultTelemetries().size() > 0) {
+                    log.trace("UpdateTelemetry paths [{}] value [{}]", path, results.getResultTelemetries().get(0).toString());
                     this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo);
                 }
             }

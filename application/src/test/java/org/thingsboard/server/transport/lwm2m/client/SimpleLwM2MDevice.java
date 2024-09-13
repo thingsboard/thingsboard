@@ -58,7 +58,7 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
             executorService.scheduleWithFixedDelay(() -> {
                         fireResourceChange(9);
                     }
-                    , 1, 1, TimeUnit.SECONDS); // 30 MIN
+                    , 1, 1, TimeUnit.SECONDS); // 2 sec
 //                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
@@ -169,8 +169,9 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private int getBatteryLevel() {
-        return randomIterator.nextInt();
-//        return 42;
+        int valBattery = randomIterator.nextInt();
+        log.trace("Send from client [3/0/9] val: [{}]", valBattery);
+        return valBattery;
     }
 
     private long getMemoryFree() {
