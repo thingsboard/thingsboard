@@ -144,7 +144,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 log.info("Skip schema re-update to version {}. Use env flag 'SKIP_SCHEMA_VERSION_CHECK' to force the re-update.", newVersionStr);
             }
         } catch (Exception e) {
-            log.error("Failed updating schema!!!", e);
+            throw new RuntimeException("Failed to update schema: " + e.getMessage(), e);
         }
     }
 
