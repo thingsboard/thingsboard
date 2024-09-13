@@ -134,8 +134,7 @@ public class JsonConverter {
         } else if (jsonElement.isJsonArray()) {
             jsonElement.getAsJsonArray().forEach(je -> {
                 if (je.isJsonObject()) {
-                    JsonObject jo = je.getAsJsonObject();
-                    parseObject(systemTs, result, builder, jo);
+                    parseObject(systemTs, result, builder, je.getAsJsonObject());
                 } else {
                     throw new JsonSyntaxException(CAN_T_PARSE_VALUE + je);
                 }
