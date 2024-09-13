@@ -20,22 +20,22 @@
     formControlName="country"
     (selectCountryCode)="changeCountry($event)">
   </tb-country-autocomplete>
-  <div fxLayout.gt-sm="row" fxLayoutGap.gt-sm="10px">
-    <mat-form-field class="mat-block">
+  <div class="tb-form-row column-xs tb-standard-fields no-border no-padding">
+    <mat-form-field class="flex">
       <mat-label translate>contact.city</mat-label>
       <input matInput formControlName="city">
       <mat-error *ngIf="parentForm.get('city').hasError('maxlength')">
         {{ 'contact.city-max-length' | translate }}
       </mat-error>
     </mat-form-field>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="flex">
       <mat-label translate>contact.state</mat-label>
       <input matInput formControlName="state">
       <mat-error *ngIf="parentForm.get('state').hasError('maxlength')">
         {{ 'contact.state-max-length' | translate }}
       </mat-error>
     </mat-form-field>
-    <mat-form-field class="mat-block">
+    <mat-form-field class="flex">
       <mat-label translate>contact.postal-code</mat-label>
       <input matInput formControlName="zip">
       <mat-error *ngIf="parentForm.get('zip').hasError('pattern')">
