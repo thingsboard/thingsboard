@@ -208,6 +208,7 @@ export interface ConnectorBaseInfo {
   id: string;
   enableRemoteLogging: boolean;
   logLevel: GatewayLogLevel;
+  configVersion: string | number;
 }
 
 export type MQTTBasicConfig = MQTTBasicConfig_v3_5_2 | MQTTLegacyBasicConfig;
