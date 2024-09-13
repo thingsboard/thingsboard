@@ -16,24 +16,21 @@
 package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Profile;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.StatementCallback;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.support.TransactionTemplate;
 import org.thingsboard.server.service.install.update.DefaultDataUpdateService;
 
-import java.nio.charset.Charset;
+import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.sql.Connection;
-import java.sql.DriverManager;
-import java.sql.ResultSet;
-import java.sql.SQLException;
 import java.sql.SQLWarning;
-import java.sql.Statement;
 import java.util.concurrent.TimeUnit;
-import java.util.function.Consumer;
 
 @Service
 @Profile("install")
@@ -42,123 +39,95 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
 
     private static final String SCHEMA_UPDATE_SQL = "schema_update.sql";
 
-    @Value("${spring.datasource.url}")
-    private String dbUrl;
+    private final InstallScripts installScripts;
+    private final JdbcTemplate jdbcTemplate;
+    private final TransactionTemplate transactionTemplate;
 
-    @Value("${spring.datasource.username}")
-    private String dbUserName;
-
-    @Value("${spring.datasource.password}")
-    private String dbPassword;
-
-    @Autowired
-    private InstallScripts installScripts;
+    public SqlDatabaseUpgradeService(InstallScripts installScripts, JdbcTemplate jdbcTemplate, PlatformTransactionManager transactionManager) {
+        this.installScripts = installScripts;
+        this.jdbcTemplate = jdbcTemplate;
+        this.transactionTemplate = new TransactionTemplate(transactionManager);
+        this.transactionTemplate.setTimeout((int) TimeUnit.MINUTES.toSeconds(120));
+    }
 
     @Override
-    public void upgradeDatabase(String fromVersion) throws Exception {
+    public void upgradeDatabase(String fromVersion) {
         switch (fromVersion) {
-            case "3.5.0":
-                updateSchema("3.5.0", 3005000, "3.5.1", 3005001, null);
-                break;
-            case "3.5.1":
-                updateSchema("3.5.1", 3005001, "3.6.0", 3006000, conn -> {
-                    String[] entityNames = new String[]{"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "ota_package",
-                            "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
-                    for (String entityName : entityNames) {
-                        try {
-                            conn.createStatement().execute("ALTER TABLE " + entityName + " DROP COLUMN search_text CASCADE");
-                        } catch (Exception e) {
-                        }
-                    }
-                    try {
-                        conn.createStatement().execute("ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
-                    } catch (Exception e) {
-                    }
-                    try {
-                        conn.createStatement().execute("ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0;");
-                    } catch (Exception e) {
-                    }
-                    try {
-                        conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_rule_node_type_configuration_version ON rule_node(type, configuration_version);");
-                    } catch (Exception e) {
-                    }
-                    try {
-                        conn.createStatement().execute("UPDATE rule_node SET " +
-                                "configuration = (configuration::jsonb || '{\"updateAttributesOnlyOnValueChange\": \"false\"}'::jsonb)::varchar, " +
-                                "configuration_version = 1 " +
-                                "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version < 1;");
-                    } catch (Exception e) {
-                    }
-                    try {
-                        conn.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ';");
-                    } catch (Exception e) {
-                    }
-                });
-                break;
-            case "3.6.0":
-                updateSchema("3.6.0", 3006000, "3.6.1", 3006001, null);
-                break;
-            case "3.6.1":
-                updateSchema("3.6.1", 3006001, "3.6.2", 3006002, connection -> {
-                    try {
-                        Path saveAttributesNodeUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.6.1", "save_attributes_node_update.sql");
-                        loadSql(saveAttributesNodeUpdateFile, connection);
-                    } catch (Exception e) {
-                        log.warn("Failed to execute update script for save attributes rule nodes due to: ", e);
-                    }
-                    try {
-                        connection.createStatement().execute("CREATE INDEX IF NOT EXISTS idx_asset_profile_id ON asset(tenant_id, asset_profile_id);");
-                    } catch (Exception e) {
-                    }
-                });
-                break;
-            case "3.6.2":
-                updateSchema("3.6.2", 3006002, "3.6.3", 3006003, null);
-                break;
-            case "3.6.3":
-                updateSchema("3.6.3", 3006003, "3.6.4", 3006004, null);
-                break;
-            case "3.6.4":
-                updateSchema("3.6.4", 3006004, "3.7.0", 3007000, null);
-                break;
-            case "3.7.0":
-                updateSchema("3.7.0", 3007000, "3.7.1", 3007001, null);
-                break;
-            default:
-                throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
-        }
-    }
+            case "3.5.0" -> updateSchema("3.5.0", 3005000, "3.5.1", 3005001);
+            case "3.5.1" -> {
+                updateSchema("3.5.1", 3005001, "3.6.0", 3006000);
 
-    private void updateSchema(String oldVersionStr, int oldVersion, String newVersionStr, int newVersion, Consumer<Connection> additionalAction) {
-        try (Connection conn = DriverManager.getConnection(dbUrl, dbUserName, dbPassword)) {
-            log.info("Updating schema ...");
-            if (isOldSchema(conn, oldVersion)) {
-                Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", oldVersionStr, SCHEMA_UPDATE_SQL);
-                loadSql(schemaUpdateFile, conn);
-                if (additionalAction != null) {
-                    additionalAction.accept(conn);
+                String[] tables = new String[]{"device", "component_descriptor", "customer", "dashboard", "rule_chain", "rule_node", "ota_package",
+                        "asset_profile", "asset", "device_profile", "tb_user", "tenant_profile", "tenant", "widgets_bundle", "entity_view", "edge"};
+                for (String tableName : tables) {
+                    try {
+                        jdbcTemplate.execute("ALTER TABLE " + tableName + " DROP COLUMN IF EXISTS search_text CASCADE");
+                    } catch (Exception ignored) {}
                 }
-                conn.createStatement().execute("UPDATE tb_schema_settings SET schema_version = " + newVersion + ";");
-                log.info("Schema updated to version {}", newVersionStr);
-            } else {
-                log.info("Skip schema re-update to version {}. Use env flag 'SKIP_SCHEMA_VERSION_CHECK' to force the re-update.", newVersionStr);
+                jdbcTemplate.execute("ALTER TABLE component_descriptor ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0");
+                jdbcTemplate.execute("ALTER TABLE rule_node ADD COLUMN IF NOT EXISTS configuration_version int DEFAULT 0");
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_rule_node_type_configuration_version ON rule_node(type, configuration_version)");
+                try {
+                    jdbcTemplate.execute("UPDATE rule_node SET " +
+                            "configuration = (configuration::jsonb || '{\"updateAttributesOnlyOnValueChange\": \"false\"}'::jsonb)::varchar, " +
+                            "configuration_version = 1 " +
+                            "WHERE type = 'org.thingsboard.rule.engine.telemetry.TbMsgAttributesNode' AND configuration_version < 1");
+                } catch (Exception ignored) {}
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_notification_recipient_id_unread ON notification(recipient_id) WHERE status <> 'READ'");
             }
-        } catch (Exception e) {
-            throw new RuntimeException("Failed to update schema: " + e.getMessage(), e);
+            case "3.6.0" -> updateSchema("3.6.0", 3006000, "3.6.1", 3006001);
+            case "3.6.1" -> {
+                updateSchema("3.6.1", 3006001, "3.6.2", 3006002);
+
+                try {
+                    Path saveAttributesNodeUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", "3.6.1", "save_attributes_node_update.sql");
+                    loadSql(saveAttributesNodeUpdateFile);
+                } catch (Exception e) {
+                    log.warn("Failed to execute update script for save attributes rule nodes due to: ", e);
+                }
+                jdbcTemplate.execute("CREATE INDEX IF NOT EXISTS idx_asset_profile_id ON asset(tenant_id, asset_profile_id)");
+            }
+            case "3.6.2" -> updateSchema("3.6.2", 3006002, "3.6.3", 3006003);
+            case "3.6.3" -> updateSchema("3.6.3", 3006003, "3.6.4", 3006004);
+            case "3.6.4" -> updateSchema("3.6.4", 3006004, "3.7.0", 3007000);
+            case "3.7.0" -> updateSchema("3.7.0", 3007000, "3.7.1", 3007001);
+            default -> throw new RuntimeException("Unsupported fromVersion '" + fromVersion + "'");
         }
     }
 
-    private void loadSql(Path sqlFile, Connection conn) throws Exception {
-        String sql = new String(Files.readAllBytes(sqlFile), Charset.forName("UTF-8"));
-        Statement st = conn.createStatement();
-        st.setQueryTimeout((int) TimeUnit.HOURS.toSeconds(3));
-        st.execute(sql);//NOSONAR, ignoring because method used to execute thingsboard database upgrade script
-        printWarnings(st);
-        Thread.sleep(5000);
+    private void updateSchema(String oldVersionStr, int oldVersion, String newVersionStr, int newVersion) {
+        try {
+            transactionTemplate.executeWithoutResult(ts -> {
+                log.info("Updating schema ...");
+                if (isOldSchema(oldVersion)) {
+                    Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", oldVersionStr, SCHEMA_UPDATE_SQL);
+                    loadSql(schemaUpdateFile);
+                    jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + newVersion);
+                    log.info("Schema updated to version {}", newVersionStr);
+                } else {
+                    log.info("Skip schema re-update to version {}. Use env flag 'SKIP_SCHEMA_VERSION_CHECK' to force the re-update.", newVersionStr);
+                }
+            });
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to update schema", e);
+        }
     }
 
-    protected void printWarnings(Statement statement) throws SQLException {
-        SQLWarning warnings = statement.getWarnings();
+    private void loadSql(Path sqlFile) {
+        String sql;
+        try {
+            sql = Files.readString(sqlFile);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+        jdbcTemplate.execute((StatementCallback<Object>) stmt -> {
+            stmt.execute(sql);
+            printWarnings(stmt.getWarnings());
+            return null;
+        });
+    }
+
+    private void printWarnings(SQLWarning warnings) {
         if (warnings != null) {
             log.info("{}", warnings.getMessage());
             SQLWarning nextWarning = warnings.getNextWarning();
@@ -169,26 +138,18 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         }
     }
 
-    protected boolean isOldSchema(Connection conn, long fromVersion) {
+    protected boolean isOldSchema(long fromVersion) {
         if (DefaultDataUpdateService.getEnv("SKIP_SCHEMA_VERSION_CHECK", false)) {
             log.info("Skipped DB schema version check due to SKIP_SCHEMA_VERSION_CHECK set to true!");
             return true;
         }
+        jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings (schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version))");
+        Long schemaVersion = jdbcTemplate.queryForObject("SELECT schema_version FROM tb_schema_settings LIMIT 1", Long.class);
         boolean isOldSchema = true;
-        try {
-            Statement statement = conn.createStatement();
-            statement.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings ( schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version));");
-            Thread.sleep(1000);
-            ResultSet resultSet = statement.executeQuery("SELECT schema_version FROM tb_schema_settings;");
-            if (resultSet.next()) {
-                isOldSchema = resultSet.getLong(1) <= fromVersion;
-            } else {
-                resultSet.close();
-                statement.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + fromVersion + ")");
-            }
-            statement.close();
-        } catch (InterruptedException | SQLException e) {
-            log.info("Failed to check current PostgreSQL schema due to: {}", e.getMessage());
+        if (schemaVersion != null) {
+            isOldSchema = schemaVersion <= fromVersion;
+        } else {
+            jdbcTemplate.execute("INSERT INTO tb_schema_settings (schema_version) VALUES (" + fromVersion + ")");
         }
         return isOldSchema;
     }
