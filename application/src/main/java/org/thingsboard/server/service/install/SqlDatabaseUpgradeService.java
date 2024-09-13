@@ -144,7 +144,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             return true;
         }
         jdbcTemplate.execute("CREATE TABLE IF NOT EXISTS tb_schema_settings (schema_version bigint NOT NULL, CONSTRAINT tb_schema_settings_pkey PRIMARY KEY (schema_version))");
-        Long schemaVersion = jdbcTemplate.queryForObject("SELECT schema_version FROM tb_schema_settings LIMIT 1", Long.class);
+        Long schemaVersion = jdbcTemplate.queryForList("SELECT schema_version FROM tb_schema_settings", Long.class).stream()
+                .findFirst().orElse(null);
         boolean isOldSchema = true;
         if (schemaVersion != null) {
             isOldSchema = schemaVersion <= fromVersion;
