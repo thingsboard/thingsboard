@@ -102,7 +102,6 @@ import { sortItems } from '@shared/models/page/page-link';
 import { entityFields } from '@shared/models/entity.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { AggregationType } from '@shared/models/time/time.models';
 import { FormBuilder } from '@angular/forms';

@@ -41,7 +41,6 @@ import { ColorProcessor, constantColor, Font } from '@shared/models/widget-setti
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { catchError, map, take, takeUntil } from 'rxjs/operators';
 import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
 import { MatIconRegistry } from '@angular/material/icon';

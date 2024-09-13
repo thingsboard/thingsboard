@@ -53,7 +53,6 @@ import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct, take } from 'rxjs/operators';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';

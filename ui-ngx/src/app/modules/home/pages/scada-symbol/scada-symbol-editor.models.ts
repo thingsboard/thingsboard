@@ -17,7 +17,6 @@
 import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ViewContainerRef } from '@angular/core';
 import { forkJoin, from } from 'rxjs';
 import {

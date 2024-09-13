@@ -42,7 +42,6 @@ import {
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { progressBarDefaultSettings, ProgressBarLayout, ProgressBarWidgetSettings } from './progress-bar-widget.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { Observable } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';

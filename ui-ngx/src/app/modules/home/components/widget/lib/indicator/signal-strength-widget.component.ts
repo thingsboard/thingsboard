@@ -57,7 +57,6 @@ import {
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
 import { formatValue, isDefinedAndNotNull, isNumeric, isUndefinedOrNull } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { Element, G, Svg, SVG } from '@svgdotjs/svg.js';
 import {
   signalBarActive,

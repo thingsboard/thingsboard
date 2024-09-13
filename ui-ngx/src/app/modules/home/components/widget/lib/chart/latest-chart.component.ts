@@ -37,7 +37,6 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Observable } from 'rxjs';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
 import { TbLatestChart } from '@home/components/widget/lib/chart/latest-chart';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
 import { WidgetComponent } from '@home/components/widget/widget.component';

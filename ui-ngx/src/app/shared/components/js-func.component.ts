@@ -36,7 +36,6 @@ import { UtilsService } from '@core/services/utils.service';
 import { guid, isUndefined } from '@app/core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { TbEditorCompleter } from '@shared/models/ace/completion.models';
 import { beautifyJs } from '@shared/models/beautify.models';
 import { ScriptLanguage } from '@shared/models/rule-node.models';
