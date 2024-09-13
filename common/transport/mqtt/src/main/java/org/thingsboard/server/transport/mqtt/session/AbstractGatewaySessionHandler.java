@@ -398,14 +398,19 @@ public abstract class AbstractGatewaySessionHandler<T extends AbstractGatewayDev
         var serverReceiveTs = System.currentTimeMillis();
         var metricsData = metadata.stream()
                 .filter(JsonElement::isJsonObject)
-                .map(je -> {
-                    var jo = je.getAsJsonObject();
+                .map(JsonElement::getAsJsonObject)
+                .filter(jo -> jo.has("connector")
+                        && jo.has("receivedTs")
+                        && jo.has("publishedTs"))
+                .map(jo -> {
                     var connector = jo.get("connector").getAsString();
                     var receivedTs = jo.get("receivedTs").getAsLong();
                     var publishedTs = jo.get("publishedTs").getAsLong();
                     return new GatewayMetricsData(connector, receivedTs, publishedTs);
                 }).toList();
-       gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metricsData, serverReceiveTs);
+        if (!metadata.isEmpty()) {
+            gatewayMetricsService.process(deviceSessionCtx.getSessionInfo(), gateway.getDeviceId(), metricsData, serverReceiveTs);
+        }
     }
 
     protected void onDeviceTelemetryProto(int msgId, ByteBuf payload) throws AdaptorException {
