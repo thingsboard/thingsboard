@@ -323,6 +323,7 @@
           "mobile-package-hint": "For Android: your own unique Application ID. For iOS: Product bundle identifier.",
           "mobile-package-unique": "Application package must be unique.",
           "mobile-package-max-length": "Application package should be less than 256",
+          "mobile-package-spaces": "Application package should not contain spaces",
           "mobile-app-secret": "Application secret",
           "mobile-app-secret-hint": "Base64 encoded string representing at least 512 bits of data.",
           "mobile-app-secret-required": "Application secret is required.",
