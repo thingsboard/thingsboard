@@ -265,7 +265,7 @@ public class DefaultSystemSecurityService implements SystemSecurityService {
             }
         }
         if (actionType == ActionType.LOGIN && e == null) {
-            userService.setLastLoginTs(user.getTenantId(), user.getId());
+            userService.updateLastLoginTs(user.getTenantId(), user.getId());
         }
         auditLogService.logEntityAction(
                 user.getTenantId(), user.getCustomerId(), user.getId(),

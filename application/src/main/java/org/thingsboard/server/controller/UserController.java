@@ -109,6 +109,8 @@ import static org.thingsboard.server.controller.ControllerConstants.USER_ID_PARA
 import static org.thingsboard.server.controller.ControllerConstants.USER_TEXT_SEARCH_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 import static org.thingsboard.server.dao.entity.BaseEntityService.NULL_CUSTOMER_ID;
+import static org.thingsboard.server.dao.user.UserServiceImpl.LAST_LOGIN_TS;
+import static org.thingsboard.server.dao.user.UserServiceImpl.USER_CREDENTIALS_ENABLED;
 
 @RequiredArgsConstructor
 @RestController
@@ -151,9 +153,10 @@ public class UserController extends BaseController {
             processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
             processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-            if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
-                additionalInfo.put("userCredentialsEnabled", true);
+            if (userCredentials.isEnabled() && !additionalInfo.has(USER_CREDENTIALS_ENABLED)) {
+                additionalInfo.put(USER_CREDENTIALS_ENABLED, true);
             }
+            additionalInfo.put(LAST_LOGIN_TS, userCredentials.getLastLoginTs());
         }
         return user;
     }
