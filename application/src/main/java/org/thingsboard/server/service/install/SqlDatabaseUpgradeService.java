@@ -126,7 +126,8 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     try {
                         connection.createStatement().execute("UPDATE rule_node SET " +
                                 "configuration = CASE " +
-                                "  WHEN (configuration::jsonb ->> 'persistAlarmRulesState')::boolean = false THEN jsonb_set(configuration::jsonb, '{fetchAlarmRulesStateOnStart}', 'false'::jsonb)::varchar " +
+                                "  WHEN (configuration::jsonb ->> 'persistAlarmRulesState') = 'false'" +
+                                "  THEN (configuration::jsonb || '{\"fetchAlarmRulesStateOnStart\": \"false\"}'::jsonb)::varchar " +
                                 "  ELSE configuration " +
                                 "END, " +
                                 "configuration_version = 1 " +
