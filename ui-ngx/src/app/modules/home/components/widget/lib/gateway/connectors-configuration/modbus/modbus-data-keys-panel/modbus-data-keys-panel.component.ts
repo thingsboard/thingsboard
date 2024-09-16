@@ -18,6 +18,7 @@ import { Component, EventEmitter, Input, OnDestroy, OnInit, Output } from '@angu
 import {
   AbstractControl,
   FormArray,
+  FormControl,
   FormGroup,
   UntypedFormArray,
   UntypedFormBuilder,
@@ -32,7 +33,10 @@ import {
   ModbusObjectCountByDataType,
   ModbusValue,
   ModbusValueKey,
+  ModifierType,
+  ModifierTypesMap,
   noLeadTrailSpacesRegex,
+  nonZeroFloat,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -69,12 +73,17 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   keysListFormArray: FormArray<UntypedFormGroup>;
   modbusDataTypes = Object.values(ModbusDataType);
+  modifierTypes: ModifierType[] = Object.values(ModifierType);
   withFunctionCode = true;
+
+  enableModifiersControlMap = new Map<string, FormControl<boolean>>();
+  showModifiersMap = new Map<string, boolean>();
   functionCodesMap = new Map();
   defaultFunctionCodes = [];
 
   readonly ModbusEditableDataTypes = ModbusEditableDataTypes;
   readonly ModbusFunctionCodeTranslationsMap = ModbusFunctionCodeTranslationsMap;
+  readonly ModifierTypesMap = ModifierTypesMap;
 
   private destroy$ = new Subject<void>();
 
@@ -101,6 +110,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   addKey(): void {
+    const id = generateSecret(5);
     const dataKeyFormGroup = this.fb.group({
       tag: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       value: [{value: '', disabled: !this.isMaster}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -108,9 +118,14 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       address: [null, [Validators.required]],
       objectsCount: [1, [Validators.required]],
       functionCode: [{ value: this.getDefaultFunctionCodes()[0], disabled: !this.withFunctionCode }, [Validators.required]],
-      id: [{value: generateSecret(5), disabled: true}],
+      modifierType: [{ value: ModifierType.MULTIPLIER, disabled: true }],
+      modifierValue: [{ value: 1, disabled: true }, [Validators.pattern(nonZeroFloat)]],
+      id: [{value: id, disabled: true}],
     });
+    this.showModifiersMap.set(id, false);
+    this.enableModifiersControlMap.set(id, this.fb.control(false));
     this.observeKeyDataType(dataKeyFormGroup);
+    this.observeEnableModifier(dataKeyFormGroup);
 
     this.keysListFormArray.push(dataKeyFormGroup);
   }
@@ -128,7 +143,17 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   applyKeysData(): void {
-    this.keysDataApplied.emit(this.keysListFormArray.value);
+    this.keysDataApplied.emit(this.mapKeysWithModifier());
+  }
+
+  private mapKeysWithModifier(): Array<ModbusValue> {
+    return this.keysListFormArray.value.map((keyData, i) => {
+      if (this.showModifiersMap.get(this.keysListFormArray.controls[i].get('id').value)) {
+        const { modifierType, modifierValue, ...value } = keyData;
+        return modifierType ? { ...value, [modifierType]: modifierValue } : value;
+      }
+      return keyData;
+    });
   }
 
   private prepareKeysFormArray(values: ModbusValue[]): UntypedFormArray {
@@ -138,6 +163,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       values.forEach(value => {
         const dataKeyFormGroup = this.createDataKeyFormGroup(value);
         this.observeKeyDataType(dataKeyFormGroup);
+        this.observeEnableModifier(dataKeyFormGroup);
         this.functionCodesMap.set(dataKeyFormGroup.get('id').value, this.getFunctionCodes(value.type));
 
         keysControlGroups.push(dataKeyFormGroup);
@@ -148,7 +174,12 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   private createDataKeyFormGroup(modbusValue: ModbusValue): FormGroup {
-    const { tag, value, type, address, objectsCount, functionCode } = modbusValue;
+    const { tag, value, type, address, objectsCount, functionCode, multiplier, divider } = modbusValue;
+    const id = generateSecret(5);
+
+    const showModifier = this.shouldShowModifier(type);
+    this.showModifiersMap.set(id, showModifier);
+    this.enableModifiersControlMap.set(id, this.fb.control((multiplier || divider) && showModifier));
 
     return this.fb.group({
       tag: [tag, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -157,8 +188,22 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       address: [address, [Validators.required]],
       objectsCount: [objectsCount, [Validators.required]],
       functionCode: [{ value: functionCode, disabled: !this.withFunctionCode }, [Validators.required]],
-      id: [{ value: generateSecret(5), disabled: true }],
+      modifierType: [{
+        value: divider ? ModifierType.DIVIDER : ModifierType.MULTIPLIER,
+        disabled: !this.enableModifiersControlMap.get(id).value
+      }],
+      modifierValue: [
+        { value: multiplier ?? divider ?? 1, disabled: !this.enableModifiersControlMap.get(id).value },
+        [Validators.pattern(nonZeroFloat)]
+      ],
+      id: [{ value: id, disabled: true }],
     });
+  }
+
+  private shouldShowModifier(type: ModbusDataType): boolean {
+    return !this.isMaster
+      && (this.keysType === ModbusValueKey.ATTRIBUTES || this.keysType === ModbusValueKey.TIMESERIES)
+      && (!this.ModbusEditableDataTypes.includes(type));
   }
 
   private observeKeyDataType(keyFormGroup: FormGroup): void {
@@ -166,8 +211,29 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       if (!this.ModbusEditableDataTypes.includes(dataType)) {
         keyFormGroup.get('objectsCount').patchValue(ModbusObjectCountByDataType[dataType], {emitEvent: false});
       }
+      const withModifier = this.shouldShowModifier(dataType);
+      this.showModifiersMap.set(keyFormGroup.get('id').value, withModifier);
       this.updateFunctionCodes(keyFormGroup, dataType);
     });
+  }
+
+  private observeEnableModifier(keyFormGroup: FormGroup): void {
+    this.enableModifiersControlMap.get(keyFormGroup.get('id').value).valueChanges
+      .pipe(takeUntil(this.destroy$))
+      .subscribe(showModifier => this.toggleModifierControls(keyFormGroup, showModifier));
+  }
+
+  private toggleModifierControls(keyFormGroup: FormGroup, enable: boolean): void {
+    const modifierTypeControl = keyFormGroup.get('modifierType');
+    const modifierValueControl = keyFormGroup.get('modifierValue');
+
+    if (enable) {
+      modifierTypeControl.enable();
+      modifierValueControl.enable();
+    } else {
+      modifierTypeControl.disable();
+      modifierValueControl.disable();
+    }
   }
 
   private updateFunctionCodes(keyFormGroup: FormGroup, dataType: ModbusDataType): void {

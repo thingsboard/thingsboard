@@ -19,6 +19,7 @@ import { AttributeData } from '@shared/models/telemetry/telemetry.models';
 
 export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
 export const integerRegex = /^[-+]?\d+$/;
+export const nonZeroFloat = /^-?(?!0(\.0+)?$)\d+(\.\d+)?$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -897,6 +898,30 @@ export enum MappingValueType {
   BOOLEAN = 'boolean'
 }
 
+export enum ModifierType {
+  DIVIDER = 'divider',
+  MULTIPLIER = 'multiplier',
+}
+
+export const ModifierTypesMap = new Map<ModifierType, ValueTypeData>(
+  [
+    [
+      ModifierType.DIVIDER,
+      {
+        name: 'gateway.divider',
+        icon: 'mdi:division'
+      }
+    ],
+    [
+      ModifierType.MULTIPLIER,
+      {
+        name: 'gateway.multiplier',
+        icon: 'mdi:multiplication'
+      }
+    ],
+  ]
+);
+
 export const mappingValueTypesMap = new Map<MappingValueType, ValueTypeData>(
   [
     [
@@ -1141,6 +1166,8 @@ export interface ModbusValue {
   objectsCount: number;
   address: number;
   value?: string;
+  multiplier?: number;
+  divider?: number;
 }
 
 export interface ModbusSecurity {
