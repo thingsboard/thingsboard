@@ -120,6 +120,7 @@ export class ScadaSymbolWidgetComponent implements OnInit, AfterViewInit, OnDest
 
   onScadaSymbolObjectLoadingState(loading: boolean) {
     this.loadingSubject.next(loading);
+    this.cd.detectChanges();
   }
 
   onScadaSymbolObjectError(error: string) {
