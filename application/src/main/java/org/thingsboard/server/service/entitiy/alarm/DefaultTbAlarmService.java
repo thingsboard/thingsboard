@@ -39,10 +39,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.ArrayList;
 import java.util.List;
 
 @Service
@@ -176,20 +174,20 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs) {
-        List<AlarmId> totalAlarmIds = new ArrayList<>();
-        PageLink pageLink = new PageLink(100, 0, null, new SortOrder("id", SortOrder.Direction.ASC));
+    public int unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs) {
+        int count = 0;
+        PageLink pageLink = new PageLink(100);
         while (true) {
             PageData<AlarmId> pageData = alarmService.findAlarmIdsByAssigneeId(tenantId, userId, pageLink);
-            List<AlarmId> alarmIds = pageData.getData();
-            if (alarmIds.isEmpty()) {
+            List<AlarmId> alarms = pageData.getData();
+            processAlarmsUnassignment(tenantId, userId, userTitle, alarms, unassignTs);
+
+            count += alarms.size();
+            if (!pageData.hasNext()) {
                 break;
             }
-            processAlarmsUnassignment(tenantId, userId, userTitle, alarmIds, unassignTs);
-            totalAlarmIds.addAll(alarmIds);
-            pageLink = pageLink.nextPageLink();
         }
-        return totalAlarmIds;
+        return count;
     }
 
     @Override
@@ -245,4 +243,5 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             log.error("Failed to save alarm comment", e);
         }
     }
+
 }
