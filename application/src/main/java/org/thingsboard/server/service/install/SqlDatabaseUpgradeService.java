@@ -134,6 +134,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                                 "WHERE type = 'org.thingsboard.rule.engine.profile.TbDeviceProfileNode' " +
                                 "AND configuration_version < 1;");
                     } catch (Exception e) {
+                        log.warn("Failed to execute update script for device profile rule nodes due to: ", e);
                     }
                 });
                 break;
