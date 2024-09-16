@@ -58,7 +58,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
         this.ruleChainName = ruleChainName;
         this.ruleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         this.defaultCtx = new DefaultTbContext(systemContext, ruleChainName, new RuleNodeCtx(tenantId, parent, self, ruleNode));
-        this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, ruleNode != null ? ruleNode.getName() : UNKNOWN_NAME);
+        this.info = new RuleNodeInfo(ruleNodeId, ruleChainName, getName(ruleNode));
     }
 
     @Override
@@ -76,7 +76,7 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
     public void onUpdate(TbActorCtx context) throws Exception {
         RuleNode newRuleNode = systemContext.getRuleChainService().findRuleNodeById(tenantId, entityId);
         if (isMyNodePartition(newRuleNode)) {
-            this.info = new RuleNodeInfo(entityId, ruleChainName, newRuleNode != null ? newRuleNode.getName() : UNKNOWN_NAME);
+            this.info = new RuleNodeInfo(entityId, ruleChainName, getName(newRuleNode));
             boolean restartRequired = state != ComponentLifecycleState.ACTIVE ||
                     !(ruleNode.getType().equals(newRuleNode.getType()) && ruleNode.getConfiguration().equals(newRuleNode.getConfiguration()));
             this.ruleNode = newRuleNode;
@@ -168,6 +168,10 @@ public class RuleNodeActorMessageProcessor extends ComponentMsgProcessor<RuleNod
 
     @Override
     public String getComponentName() {
+        return getName(ruleNode);
+    }
+
+    private String getName(RuleNode ruleNode) {
         return ruleNode != null ? ruleNode.getName() : UNKNOWN_NAME;
     }
 
