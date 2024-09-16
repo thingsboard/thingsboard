@@ -89,8 +89,7 @@ public class AuthController extends BaseController {
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         if (user.getAdditionalInfo().isObject()) {
             ObjectNode additionalInfo = (ObjectNode) user.getAdditionalInfo();
-            processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
-            processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
+            processDashboardIdFromAdditionalInfo(additionalInfo);
         }
         return user;
     }
