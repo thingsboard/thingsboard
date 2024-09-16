@@ -146,6 +146,8 @@ transport:
     # MQTT disconnect timeout in milliseconds. The time to wait for the client to disconnect after the server sends a disconnect message.
     disconnect_timeout: "${MQTT_DISCONNECT_TIMEOUT:1000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before device connected state. This limit works on low level before TenantProfileLimits mechanism
+    # Interval of periodic report of the gateway metrics
+    gateway_metrics_report_interval_sec: "${MQTT_GATEWAY_METRICS_REPORT_INTERVAL_SEC:60}"
     netty:
       # Netty leak detector level
       leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"

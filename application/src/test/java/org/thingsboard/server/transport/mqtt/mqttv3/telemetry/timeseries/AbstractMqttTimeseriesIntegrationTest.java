@@ -20,22 +20,34 @@ import io.netty.handler.codec.mqtt.MqttQoS;
 import lombok.extern.slf4j.Slf4j;
 import org.junit.Before;
 import org.junit.Test;
+import org.mockito.ArgumentCaptor;
+import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.transport.mqtt.AbstractMqttIntegrationTest;
 import org.thingsboard.server.transport.mqtt.MqttTestConfigProperties;
+import org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService;
+import org.thingsboard.server.common.msg.gateway.metrics.GatewayMetadata;
+import org.thingsboard.server.transport.mqtt.gateway.metrics.GatewayMetricsState;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestCallback;
 import org.thingsboard.server.transport.mqtt.mqttv3.MqttTestClient;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Set;
 import java.util.concurrent.TimeUnit;
 
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_ATTRIBUTES_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_SHORT_JSON_TOPIC;
@@ -43,6 +55,7 @@ import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVIC
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.DEVICE_TELEMETRY_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_CONNECT_TOPIC;
 import static org.thingsboard.server.common.data.device.profile.MqttTopics.GATEWAY_TELEMETRY_TOPIC;
+import static org.thingsboard.server.transport.mqtt.gateway.GatewayMetricsService.GATEWAY_METRICS;
 
 @Slf4j
 public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqttIntegrationTest {
@@ -52,6 +65,9 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
 
     protected static final String MALFORMED_JSON_PAYLOAD = "{\"key1\":, \"key2\":true, \"key3\": 3.0, \"key4\": 4," +
             " \"key5\": {\"someNumber\": 42, \"someArray\": [1,2,3], \"someNestedObject\": {\"key\": \"value\"}}}";
+
+    @SpyBean
+    GatewayMetricsService gatewayMetricsService;
 
     @Before
     public void beforeTest() throws Exception {
@@ -106,11 +122,96 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String deviceName = "Device A";
 
         Device device = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + deviceName, Device.class),
-            20,
-        100);
+                20,
+                100);
 
         assertNotNull(device);
         client.disconnect();
+    }
+
+    @Test
+    public void testPushMetricsGateway() throws Exception {
+        MqttTestConfigProperties configProperties = MqttTestConfigProperties.builder()
+                .gatewayName("Test metrics gateway")
+                .build();
+        processBeforeTest(configProperties);
+
+        Map<String, List<Long>> gwLatencies = new HashMap<>();
+        Map<String, List<Long>> transportLatencies = new HashMap<>();
+
+        publishLatency(gwLatencies, transportLatencies, 5);
+
+        gatewayMetricsService.reportMetrics();
+
+        List<String> actualKeys = getActualKeysList(savedGateway.getId(), List.of(GATEWAY_METRICS));
+        assertEquals(GATEWAY_METRICS, actualKeys.get(0));
+
+        String telemetryUrl = String.format("/api/plugins/telemetry/DEVICE/%s/values/timeseries?startTs=%d&endTs=%d&keys=%s", savedGateway.getId(), 0, System.currentTimeMillis(), GATEWAY_METRICS);
+
+        Map<String, List<Map<String, Object>>> gatewayTelemetry = doGetAsyncTyped(telemetryUrl, new TypeReference<>() {});
+        Map<String, Object> latencyCheckTelemetry = gatewayTelemetry.get(GATEWAY_METRICS).get(0);
+        Map<String, GatewayMetricsState.ConnectorMetricsResult> latencyCheckValue = JacksonUtil.fromString((String) latencyCheckTelemetry.get("value"), new TypeReference<>() {});
+        assertNotNull(latencyCheckValue);
+
+        gwLatencies.forEach((connectorName, gwLatencyList) -> {
+            long avgGwLatency = (long) gwLatencyList.stream().mapToLong(Long::longValue).average().getAsDouble();
+            long minGwLatency = gwLatencyList.stream().mapToLong(Long::longValue).min().getAsLong();
+            long maxGwLatency = gwLatencyList.stream().mapToLong(Long::longValue).max().getAsLong();
+
+            List<Long> transportLatencyList = transportLatencies.get(connectorName);
+            assertNotNull(transportLatencyList);
+
+            long avgTransportLatency = (long) transportLatencyList.stream().mapToLong(Long::longValue).average().getAsDouble();
+            long minTransportLatency = transportLatencyList.stream().mapToLong(Long::longValue).min().getAsLong();
+            long maxTransportLatency = transportLatencyList.stream().mapToLong(Long::longValue).max().getAsLong();
+
+            GatewayMetricsState.ConnectorMetricsResult connectorLatencyResult = latencyCheckValue.get(connectorName);
+            assertNotNull(connectorLatencyResult);
+            checkConnectorLatencyResult(connectorLatencyResult, avgGwLatency, minGwLatency, maxGwLatency, avgTransportLatency, minTransportLatency, maxTransportLatency);
+        });
+    }
+
+    private void publishLatency(Map<String, List<Long>> gwLatencies, Map<String, List<Long>> transportLatencies, int n) throws Exception {
+        Random random = new Random();
+        for (int i = 0; i < n; i++) {
+            long publishedTs = System.currentTimeMillis() - 10;
+            long gatewayLatencyA = random.nextLong(100, 500);
+            var firstData = new GatewayMetadata("connectorA", publishedTs - gatewayLatencyA, publishedTs);
+            gwLatencies.computeIfAbsent("connectorA", key -> new ArrayList<>()).add(gatewayLatencyA);
+            long gatewayLatencyB = random.nextLong(120, 450);
+            var secondData = new GatewayMetadata("connectorB", publishedTs - gatewayLatencyB, publishedTs);
+            gwLatencies.computeIfAbsent("connectorB", key -> new ArrayList<>()).add(gatewayLatencyB);
+
+            List<String> expectedKeys = Arrays.asList("key1", "key2", "key3", "key4", "key5");
+            String deviceName1 = "Device A";
+            String deviceName2 = "Device B";
+            String firstMetadata = JacksonUtil.writeValueAsString(firstData);
+            String secondMetadata = JacksonUtil.writeValueAsString(secondData);
+            String payload = getGatewayTelemetryJsonPayloadWithMetadata(deviceName1, deviceName2, "10000", "20000", firstMetadata, secondMetadata);
+            processGatewayTelemetryTest(GATEWAY_TELEMETRY_TOPIC, expectedKeys, payload.getBytes(), deviceName1, deviceName2);
+
+            ArgumentCaptor<Long> transportReceiveTsCaptorA = ArgumentCaptor.forClass(Long.class);
+            ArgumentCaptor<Long> transportReceiveTsCaptorB = ArgumentCaptor.forClass(Long.class);
+            verify(gatewayMetricsService).process(any(), eq(savedGateway.getId()), eq(List.of(firstData)), transportReceiveTsCaptorA.capture());
+            verify(gatewayMetricsService).process(any(), eq(savedGateway.getId()), eq(List.of(secondData)), transportReceiveTsCaptorB.capture());
+            Long transportReceiveTsA = transportReceiveTsCaptorA.getValue();
+            Long transportReceiveTsB = transportReceiveTsCaptorB.getValue();
+            Long transportLatencyA = transportReceiveTsA - publishedTs;
+            Long transportLatencyB = transportReceiveTsB - publishedTs;
+            transportLatencies.computeIfAbsent("connectorA", key -> new ArrayList<>()).add(transportLatencyA);
+            transportLatencies.computeIfAbsent("connectorB", key -> new ArrayList<>()).add(transportLatencyB);
+        }
+    }
+
+    private void checkConnectorLatencyResult(GatewayMetricsState.ConnectorMetricsResult result, long avgGwLatency, long minGwLatency, long maxGwLatency,
+                                             long avgTransportLatency, long minTransportLatency, long maxTransportLatency) {
+        assertNotNull(result);
+        assertEquals(avgGwLatency, result.avgGwLatency());
+        assertEquals(minGwLatency, result.minGwLatency());
+        assertEquals(maxGwLatency, result.maxGwLatency());
+        assertEquals(avgTransportLatency, result.avgTransportLatency());
+        assertEquals(minTransportLatency, result.minTransportLatency());
+        assertEquals(maxTransportLatency, result.maxTransportLatency());
     }
 
     protected void processJsonPayloadTelemetryTest(String topic, List<String> expectedKeys, byte[] payload, boolean withTs) throws Exception {
@@ -143,7 +244,8 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         long end = System.currentTimeMillis() + 5000;
         Map<String, List<Map<String, Object>>> values = null;
         while (start <= end) {
-            values = doGetAsyncTyped(getTelemetryValuesUrl, new TypeReference<>() {});
+            values = doGetAsyncTyped(getTelemetryValuesUrl, new TypeReference<>() {
+            });
             boolean valid = values.size() == expectedKeys.size();
             if (valid) {
                 for (String key : expectedKeys) {
@@ -182,7 +284,7 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         MqttTestClient client = new MqttTestClient();
         client.connectAndWait(gatewayAccessToken);
         client.publishAndWait(topic, payload);
-        client.disconnect();
+        client.disconnectAndWait();
 
         Device firstDevice = doExecuteWithRetriesAndInterval(() -> doGet("/api/tenant/devices?deviceName=" + firstDeviceName, Device.class),
                 20,
@@ -237,6 +339,16 @@ public abstract class AbstractMqttTimeseriesIntegrationTest extends AbstractMqtt
         String payload = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + "}, " +
                 "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + "}]";
         return "{\"" + deviceA + "\": " + payload + ",  \"" + deviceB + "\": " + payload + "}";
+    }
+
+    protected String getGatewayTelemetryJsonPayloadWithMetadata(String deviceA, String deviceB, String firstTsValue, String secondTsValue, String firstMetadata, String secondMetadata) {
+        String payloadA = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + ",  \"metadata\":" + firstMetadata + "}, " +
+                "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + "}]";
+
+        String payloadB = "[{\"ts\": " + firstTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + ",  \"metadata\":" + secondMetadata + "}, " +
+                "{\"ts\": " + secondTsValue + ", \"values\": " + PAYLOAD_VALUES_STR + "}]";
+
+        return "{\"" + deviceA + "\": " + payloadA + ",  \"" + deviceB + "\": " + payloadB + "}";
     }
 
     private String getTelemetryValuesUrl(DeviceId deviceId, Set<String> actualKeySet) {

@@ -122,7 +122,21 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 updateSchema("3.6.4", 3006004, "3.7.0", 3007000, null);
                 break;
             case "3.7.0":
-                updateSchema("3.7.0", 3007000, "3.7.1", 3007001, null);
+                updateSchema("3.7.0", 3007000, "3.7.1", 3007001, connection -> {
+                    try {
+                        connection.createStatement().execute("UPDATE rule_node SET " +
+                                "configuration = CASE " +
+                                "  WHEN (configuration::jsonb ->> 'persistAlarmRulesState') = 'false'" +
+                                "  THEN (configuration::jsonb || '{\"fetchAlarmRulesStateOnStart\": \"false\"}'::jsonb)::varchar " +
+                                "  ELSE configuration " +
+                                "END, " +
+                                "configuration_version = 1 " +
+                                "WHERE type = 'org.thingsboard.rule.engine.profile.TbDeviceProfileNode' " +
+                                "AND configuration_version < 1;");
+                    } catch (Exception e) {
+                        log.warn("Failed to execute update script for device profile rule nodes due to: ", e);
+                    }
+                });
                 break;
             default:
                 throw new RuntimeException("Unable to upgrade SQL database, unsupported fromVersion: " + fromVersion);
