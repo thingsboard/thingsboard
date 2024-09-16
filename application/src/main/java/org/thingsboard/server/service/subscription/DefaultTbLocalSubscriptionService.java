@@ -85,7 +85,7 @@ import java.util.stream.Collectors;
 @Service
 public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionService {
 
-    private final ConcurrentMap<String, Map<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, ConcurrentMap<Integer, TbSubscription<?>>> subscriptionsBySessionId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityLocalSubsInfo> subscriptionsByEntityId = new ConcurrentHashMap<>();
     private final ConcurrentMap<UUID, TbEntityUpdatesInfo> entityUpdates = new ConcurrentHashMap<>();
 
@@ -101,9 +101,9 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private ExecutorService tsCallBackExecutor;
     private ScheduledExecutorService staleSessionCleanupExecutor;
 
-    @Value("${server.ws.rate_limits.subscriptions_per_tenant:2000:60}")
+    @Value("${server.ws.rate_limits.subscriptions_per_tenant:}")
     private String subscriptionsPerTenantRateLimit;
-    @Value("${server.ws.rate_limits.subscriptions_per_user:500:60}")
+    @Value("${server.ws.rate_limits.subscriptions_per_user:}")
     private String subscriptionsPerUserRateLimit;
 
     public DefaultTbLocalSubscriptionService(AttributesService attrService, TimeseriesService tsService, TbServiceInfoProvider serviceInfoProvider,

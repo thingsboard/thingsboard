@@ -30,6 +30,7 @@
                             headerHeightPx="64"
                             headerTitle="{{symbolData?.imageResource?.title}}">
             <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+              <div tb-help="scadaSymbolDev"></div>
               <button mat-stroked-button
                       [disabled]="scadaSymbolFormGroup.invalid"
                       (click)="createWidget()">
@@ -85,7 +86,7 @@
                 formControlName="metadata">
                 <div class="tb-scada-symbol-metadata-header-prefix">
                   <button fxHide.gt-sm
-                          [disabled]="scadaSymbolFormGroup.invalid"
+                          [disabled]="scadaSymbolFormGroup.invalid || !symbolEditorValid"
                           mat-button color="primary"
                           (click)="enterPreviewMode()">
                     <mat-icon>visibility</mat-icon>
@@ -94,7 +95,7 @@
                 </div>
                 <div fxFlex.lt-md class="tb-scada-symbol-metadata-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
                   <button fxHide.lt-md
-                          [disabled]="scadaSymbolFormGroup.invalid"
+                          [disabled]="scadaSymbolFormGroup.invalid || !symbolEditorValid"
                           mat-button color="primary"
                           (click)="enterPreviewMode()">
                     <mat-icon>visibility</mat-icon>
@@ -107,7 +108,7 @@
                       <mat-icon>close</mat-icon>
                       {{ 'action.decline' | translate }}
                     </button>
-                    <button [disabled]="!scadaSymbolFormGroup.valid || !(scadaSymbolFormGroup.dirty || symbolEditorDirty)"
+                    <button [disabled]="!scadaSymbolFormGroup.valid || !symbolEditorValid || !(scadaSymbolFormGroup.dirty || symbolEditorDirty)"
                             mat-flat-button color="primary"
                             (click)="onApplyScadaSymbolConfig()">
                       <mat-icon>done</mat-icon>

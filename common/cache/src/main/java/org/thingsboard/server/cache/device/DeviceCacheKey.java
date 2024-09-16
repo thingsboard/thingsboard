@@ -19,17 +19,17 @@ import lombok.Builder;
 import lombok.EqualsAndHashCode;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.thingsboard.server.cache.VersionedCacheKey;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 import java.io.Serial;
-import java.io.Serializable;
 
 @Getter
 @EqualsAndHashCode
 @RequiredArgsConstructor
 @Builder
-public class DeviceCacheKey implements Serializable {
+public class DeviceCacheKey implements VersionedCacheKey {
 
     @Serial
     private static final long serialVersionUID = 6366389552842340207L;
@@ -59,6 +59,11 @@ public class DeviceCacheKey implements Serializable {
         } else {
             return tenantId + "_" + deviceId;
         }
+    }
+
+    @Override
+    public boolean isVersioned() {
+        return deviceId != null;
     }
 
 }

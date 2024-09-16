@@ -31,7 +31,7 @@ import {
   DashboardLayoutsInfo,
   DashboardState,
   DashboardStateLayouts,
-  GridSettings,
+  GridSettings, LayoutType,
   WidgetLayout
 } from '@shared/models/dashboard.models';
 import { deepClone, isDefined, isDefinedAndNotNull, isNotEmptyStr, isString, isUndefined } from '@core/utils';
@@ -349,7 +349,7 @@ export class DashboardUtilsService {
     const config = widget.config;
     config.showTitle = false;
     config.dropShadow = false;
-    config.resizable = !isScada;
+    config.resizable = true;
     config.preserveAspectRatio = isScada;
     config.padding = '0';
     config.margin = '0';
@@ -406,6 +406,7 @@ export class DashboardUtilsService {
 
   private createDefaultGridSettings(): GridSettings {
     return {
+      layoutType: LayoutType.default,
       backgroundColor: '#eeeeee',
       columns: 24,
       margin: 10,
@@ -491,12 +492,15 @@ export class DashboardUtilsService {
     if (!layout.gridSettings) {
       layout.gridSettings = this.createDefaultGridSettings();
     }
-    if (layout.gridSettings.margins && layout.gridSettings.margins.length === 2) {
-      layout.gridSettings.margin = layout.gridSettings.margins[0];
-      delete layout.gridSettings.margins;
+    if ((layout.gridSettings as any).margins && (layout.gridSettings as any).margins.length === 2) {
+      layout.gridSettings.margin = (layout.gridSettings as any).margins[0];
+      delete (layout.gridSettings as any).margins;
     }
     layout.gridSettings.outerMargin = isDefined(layout.gridSettings.outerMargin) ? layout.gridSettings.outerMargin : true;
     layout.gridSettings.margin = isDefined(layout.gridSettings.margin) ? layout.gridSettings.margin : 10;
+    if (!layout.gridSettings.layoutType) {
+      layout.gridSettings.layoutType = LayoutType.default;
+    }
   }
 
   public setLayouts(dashboard: Dashboard, targetState: string, newLayouts: DashboardStateLayouts) {

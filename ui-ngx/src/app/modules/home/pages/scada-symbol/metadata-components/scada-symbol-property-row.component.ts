@@ -81,6 +81,8 @@ export const defaultPropertyValue = (type: ScadaSymbolPropertyType): any => {
       } as Font;
     case ScadaSymbolPropertyType.units:
       return '';
+    case ScadaSymbolPropertyType.icon:
+      return 'star';
   }
 };
 

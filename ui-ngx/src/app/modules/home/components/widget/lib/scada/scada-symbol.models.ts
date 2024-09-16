@@ -15,7 +15,7 @@
 ///
 
 import { ValueType } from '@shared/models/constants';
-import { Box, Element, Runner, SVG, Svg, Text, Timeline } from '@svgdotjs/svg.js';
+import { Box, Element, Runner, Style, SVG, Svg, Text, Timeline } from '@svgdotjs/svg.js';
 import '@svgdotjs/svg.panzoom.js';
 import {
   DataToValueType,
@@ -34,21 +34,23 @@ import {
   mergeDeep,
   parseFunction
 } from '@core/utils';
-import { BehaviorSubject, forkJoin, Observable, Observer, Subject } from 'rxjs';
+import { BehaviorSubject, forkJoin, Observable, Observer, of, Subject } from 'rxjs';
 import { ValueAction, ValueGetter, ValueSetter } from '@home/components/widget/lib/action/action-widget.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { ColorProcessor, constantColor, Font } from '@shared/models/widget-settings.models';
 import { AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetAction, WidgetActionType, widgetActionTypeTranslationMap } from '@shared/models/widget.models';
-import { ResizeObserver } from '@juggle/resize-observer';
-import { takeUntil } from 'rxjs/operators';
+import { catchError, map, take, takeUntil } from 'rxjs/operators';
+import { isSvgIcon, splitIconName } from '@shared/models/icon.models';
+import { MatIconRegistry } from '@angular/material/icon';
 
 export interface ScadaSymbolApi {
   generateElementId: () => string;
   formatValue: (value: any, dec?: number, units?: string, showZeroDecimals?: boolean) => string | undefined;
   text: (element: Element | Element[], text: string) => void;
   font: (element: Element | Element[], font: Font, color: string) => void;
+  icon: (element: Element | Element[], icon: string, size?: number, color?: string, center?: boolean) => void;
   animate: (element: Element, duration: number) => Runner;
   resetAnimation: (element: Element) => void;
   finishAnimation: (element: Element) => void;
@@ -56,6 +58,7 @@ export interface ScadaSymbolApi {
   enable: (element: Element | Element[]) => void;
   callAction: (event: Event, behaviorId: string, value?: any, observer?: Partial<Observer<void>>) => void;
   setValue: (valueId: string, value: any) => void;
+  cssAnimate: CssScadaSymbolAnimations;
 }
 
 export interface ScadaSymbolContext {
@@ -133,7 +136,8 @@ export enum ScadaSymbolPropertyType {
   color = 'color',
   color_settings = 'color_settings',
   font = 'font',
-  units = 'units'
+  units = 'units',
+  icon = 'icon'
 }
 
 export const scadaSymbolPropertyTypes = Object.keys(ScadaSymbolPropertyType) as ScadaSymbolPropertyType[];
@@ -146,7 +150,8 @@ export const scadaSymbolPropertyTypeTranslations = new Map<ScadaSymbolPropertyTy
     [ScadaSymbolPropertyType.color, 'scada.property.type-color'],
     [ScadaSymbolPropertyType.color_settings, 'scada.property.type-color-settings'],
     [ScadaSymbolPropertyType.font, 'scada.property.type-font'],
-    [ScadaSymbolPropertyType.units, 'scada.property.type-units']
+    [ScadaSymbolPropertyType.units, 'scada.property.type-units'],
+    [ScadaSymbolPropertyType.icon, 'scada.property.type-icon']
   ]
 );
 
@@ -191,10 +196,10 @@ export interface ScadaSymbolMetadata {
   properties: ScadaSymbolProperty[];
 }
 
-export const emptyMetadata = (): ScadaSymbolMetadata => ({
+export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
   title: '',
-  widgetSizeX: 3,
-  widgetSizeY: 3,
+  widgetSizeX: width ? width/100 : 3,
+  widgetSizeY: height ? height/100 : 3,
   tags: [],
   behavior: [],
   properties: []
@@ -255,7 +260,17 @@ const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata 
     if (elements.length) {
       return JSON.parse(elements[0].textContent);
     } else {
-      return emptyMetadata();
+      const svg = svgDoc.getElementsByTagName('svg')[0];
+      let width = null;
+      let height = null;
+      if (svg.viewBox.baseVal.width && svg.viewBox.baseVal.height) {
+        width = svg.viewBox.baseVal.width;
+        height = svg.viewBox.baseVal.height;
+      } else if (svg.width.baseVal.value && svg.height.baseVal.value) {
+        width = svg.width.baseVal.value;
+        height = svg.height.baseVal.value;
+      }
+      return emptyMetadata(width, height);
     }
   } catch (_e) {
     console.error(_e);
@@ -289,12 +304,23 @@ const updateScadaSymbolMetadataInDom = (svgDoc: Document, metadata: ScadaSymbolM
   metadataElement.appendChild(cdata);
 };
 
-const tbMetadataRegex = /<tb:metadata>.*<\/tb:metadata>/gs;
+const tbMetadataRegex = /<tb:metadata[^>]*>.*<\/tb:metadata>/gs;
 
 export interface ScadaSymbolContentData {
   svgRootNode: string;
   innerSvg: string;
 }
+
+export const removeScadaSymbolMetadata = (svgContent: string): string => {
+  let result = svgContent;
+  tbMetadataRegex.lastIndex = 0;
+  const metadataMatch = tbMetadataRegex.exec(svgContent);
+  if (metadataMatch !== null && metadataMatch.length) {
+    const metadata = metadataMatch[0];
+    result = result.replace(metadata, '');
+  }
+  return result;
+};
 
 export const scadaSymbolContentData = (svgContent: string): ScadaSymbolContentData => {
   const result: ScadaSymbolContentData = {
@@ -485,6 +511,7 @@ export class ScadaSymbolObject {
 
   constructor(private rootElement: HTMLElement,
               private ctx: WidgetContext,
+              private iconRegistry: MatIconRegistry,
               private svgContent: string,
               private inputSettings: ScadaSymbolObjectSettings,
               private callbacks: ScadaSymbolObjectCallbacks,
@@ -517,10 +544,12 @@ export class ScadaSymbolObject {
     if (this.context) {
       for (const tag of this.metadata.tags) {
         const elements = this.context.tags[tag.tag];
-        elements.forEach(element => {
-          element.timeline().stop();
-          element.timeline(null);
-        });
+        if (elements) {
+          elements.forEach(element => {
+            element.timeline().stop();
+            element.timeline(null);
+          });
+        }
       }
     }
     if (this.svgShape) {
@@ -586,13 +615,15 @@ export class ScadaSymbolObject {
         formatValue,
         text: this.setElementText.bind(this),
         font: this.setElementFont.bind(this),
+        icon: this.setElementIcon.bind(this),
         animate: this.animate.bind(this),
         resetAnimation: this.resetAnimation.bind(this),
         finishAnimation: this.finishAnimation.bind(this),
         disable: this.disableElement.bind(this),
         enable: this.enableElement.bind(this),
         callAction: this.callAction.bind(this),
-        setValue: this.setValue.bind(this)
+        setValue: this.setValue.bind(this),
+        cssAnimate: new CssScadaSymbolAnimations(this.svgShape)
       },
       tags: {},
       properties: {},
@@ -846,6 +877,74 @@ export class ScadaSymbolObject {
     });
   }
 
+  private setElementIcon(e: Element | Element[],
+                         icon: string,
+                         size = 12,
+                         color = '#0000008A',
+                         center = true) {
+    this.elements(e).forEach(element => {
+      if (element.type === 'g') {
+        let skip = false;
+        const firstChild = element.first();
+        if (firstChild) {
+          const iconData: {icon: string; size: number; color: string} = firstChild.remember('iconData');
+          if (iconData && iconData.icon === icon && iconData.size === size && iconData.color === color) {
+            skip = true;
+          }
+        }
+        if (!skip) {
+          element.clear();
+          this.createIconElement(icon, size, color).subscribe((iconElement) => {
+            if (iconElement) {
+              iconElement.remember('iconData', {icon, size, color});
+              element.add(iconElement);
+              if (center) {
+                const box = iconElement.bbox();
+                iconElement.translate(-box.cx, -box.cy);
+              }
+            }
+          });
+        }
+      }
+    });
+  }
+
+  private createIconElement(icon: string, size: number, color: string): Observable<Element> {
+    const isSvg = isSvgIcon(icon);
+    if (isSvg) {
+      const [namespace, iconName] = splitIconName(icon);
+      return this.iconRegistry
+      .getNamedSvgIcon(iconName, namespace)
+      .pipe(
+        take(1),
+        map((svgElement) => {
+          const element = new Element(svgElement.firstChild);
+          const box = element.bbox();
+          const scale = size / box.height;
+          element.scale(scale);
+          element.fill(color);
+          return element;
+        }),
+        catchError(() => of(null)
+      ));
+    } else {
+      const iconName = splitIconName(icon)[1];
+      const textElement = this.svgShape.text(iconName);
+      const fontSetClasses = (
+        this.iconRegistry.getDefaultFontSetClass()
+      ).filter(className => className.length > 0);
+      fontSetClasses.forEach(className => textElement.addClass(className));
+      textElement.font({size: `${size}px`});
+      textElement.attr({
+        'text-anchor': 'start',
+        'dominant-baseline': 'hanging',
+        style: `font-size: ${size}px`
+      });
+      textElement.fill(color);
+      return of(textElement);
+    }
+  }
+
   private animate(element: Element, duration: number): Runner {
     this.finishAnimation(element);
     return element.animate(duration, 0, 'now');
@@ -910,4 +1009,302 @@ export class ScadaSymbolObject {
       return '';
     }
   }
+}
+
+const scadaSymbolAnimationId = 'scadaSymbolAnimation';
+
+class CssScadaSymbolAnimations {
+  constructor(private svgShape: Svg) {}
+
+  public rotate(element: Element, rotation: number, duration = 1000, loop = false): CssScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element,
+      new RotateCssScadaSymbolAnimation(this.svgShape, element, loop, rotation || 0)).duration(duration);
+  }
+
+  public move(element: Element, deltaX: number, deltaY: number, duration = 1000, loop = false): CssScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element,
+      new MoveCssScadaSymbolAnimation(this.svgShape, element, loop, deltaX, deltaY).duration(duration));
+  }
+
+  public attr(element: Element, attrName: string, value: any, duration = 1000, loop = false): CssScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element,
+      new AttrsCssScadaSymbolAnimation(this.svgShape, element, loop, {[attrName]: value}).duration(duration));
+  }
+
+  public attrs(element: Element, attr: any, duration = 1000, loop = false): CssScadaSymbolAnimation {
+    this.checkOldAnimation(element);
+    return this.setupAnimation(element,
+      new AttrsCssScadaSymbolAnimation(this.svgShape, element, loop, attr).duration(duration));
+  }
+
+  public animation(element: Element): CssScadaSymbolAnimation | undefined {
+    return element.remember(scadaSymbolAnimationId);
+  }
+
+  private checkOldAnimation(element: Element) {
+    const previousAnimation: CssScadaSymbolAnimation = element.remember(scadaSymbolAnimationId);
+    if (previousAnimation) {
+      previousAnimation.destroy();
+    }
+  }
+
+  private setupAnimation(element: Element, animation: CssScadaSymbolAnimation): CssScadaSymbolAnimation {
+    animation.init();
+    element.remember(scadaSymbolAnimationId, animation);
+    return animation;
+  }
+}
+
+interface ScadaSymbolAnimationKeyframe {
+  stop: string;
+  style: any;
+}
+
+abstract class CssScadaSymbolAnimation {
+
+  private _animationName: string;
+  private _animationStyle: Style;
+
+  private _running = true;
+  private _speed = 1;
+  private _duration = 1000;
+  private _easing = 'linear';
+
+  protected constructor(protected svgShape: Svg,
+                        protected element: Element,
+                        protected loop: boolean)  {
+  }
+
+  public init() {
+    this.prepareAnimation();
+  }
+
+  public start() {
+    if (!this._running) {
+      this.updateAnimationStyle('animation-play-state', 'running');
+      this._running = true;
+    }
+  }
+
+  public pause() {
+    if (this._running) {
+      this.updateAnimationStyle('animation-play-state', 'paused');
+      this._running = false;
+    }
+  }
+
+  public running(): boolean {
+    return this._running;
+  }
+
+  public destroy() {
+    if (this._animationStyle) {
+      this._animationStyle.remove();
+      this.element.removeClass(this._animationName);
+      this._animationStyle = null;
+      this._animationName = null;
+    }
+  }
+
+  public duration(duration: number): CssScadaSymbolAnimation {
+    this._duration = duration;
+    this.updateAnimationStyle(this.loop ? 'animation-duration' : 'transition-duration',
+      Math.round(this._duration / this._speed) + 'ms');
+    return this;
+  }
+
+  public speed(speed: number): CssScadaSymbolAnimation {
+    this._speed = speed;
+    this.updateAnimationStyle(this.loop ? 'animation-duration' : 'transition-duration',
+      Math.round(this._duration / this._speed) + 'ms');
+    return this;
+  }
+
+  public easing(easing: string): CssScadaSymbolAnimation {
+    this._easing = easing;
+    this.updateAnimationStyle(this.loop ? 'animation-timing-function' : 'transition-timing-function', this._easing);
+    return this;
+  }
+
+  private prepareAnimation() {
+    this._animationName = 'animation_' + generateElementId();
+    this._animationStyle = this.svgShape.style();
+    let styles: any;
+    if (this.loop) {
+      styles = {
+        'animation-name': this._animationName,
+        'animation-duration': this._duration + 'ms',
+        'animation-timing-function': this._easing,
+        'animation-iteration-count': 'infinite',
+        'animation-fill-mode': 'forwards',
+        'animation-play-state': 'running',
+        ...this.animationStyles()
+      };
+    } else {
+      styles = {
+        'transition-property': this.transitionProperties(),
+        'transition-duration': this._duration + 'ms',
+        'transition-timing-function': this._easing,
+        ...this.animationStyles()
+      };
+    }
+    this._animationStyle.rule('.' + this._animationName, styles);
+
+    if (this.loop) {
+      const keyframes = this.animationKeyframes();
+      let keyframesCss = `\n@keyframes ${this._animationName} {\n`;
+      for (const keyframe of keyframes) {
+        let keyframeCss = `  ${keyframe.stop} {\n`;
+        for (const i of Object.keys(keyframe.style)) {
+          keyframeCss += '    ' + i + ':' + keyframe.style[i] + ';\n';
+        }
+        keyframeCss += '  }\n';
+        keyframesCss += keyframeCss;
+      }
+      keyframesCss += '}';
+      this._animationStyle.addText(keyframesCss);
+    }
+    this.element.addClass(this._animationName);
+    if (!this.loop) {
+      this.doTransform();
+    }
+  }
+
+  private updateAnimationStyle(attrName: string, value: any) {
+    if (this._animationStyle) {
+      const styleText = this._animationStyle.node.innerHTML;
+      const attrValueRegex = new RegExp(`${attrName}:([^;]+);`);
+      this._animationStyle.node.innerHTML = styleText.replace(attrValueRegex, `${attrName}:${value};`);
+    }
+  }
+
+  protected animationStyles(): any {
+    return {};
+  }
+
+  protected abstract animationKeyframes(): ScadaSymbolAnimationKeyframe[];
+
+  protected abstract transitionProperties(): string;
+
+  protected doTransform() {
+  }
+
+}
+
+class RotateCssScadaSymbolAnimation extends CssScadaSymbolAnimation {
+
+  constructor(protected svgShape: Svg,
+              protected element: Element,
+              protected loop: boolean,
+              private rotation: number) {
+    super(svgShape, element, loop);
+  }
+
+  protected animationStyles(): any {
+    return {
+      'transform-origin': `${this.element.cx()}px ${this.element.cy()}px`
+    };
+  }
+
+  protected animationKeyframes(): ScadaSymbolAnimationKeyframe[] {
+    const transform = this.element.transform();
+    return [
+      {
+        stop: '0%',
+        style: {
+          transform: `translate(${transform.translateX}px, ${transform.translateY}px) rotate(${transform.rotate}deg)`
+        }
+      },
+      {
+        stop: '100%',
+        style: {
+          transform: `translate(${transform.translateX}px, ${transform.translateY}px) rotate(${this.rotation}deg)`
+        }
+      }
+    ];
+  }
+
+  protected transitionProperties(): string {
+    return 'transform';
+  }
+
+  protected doTransform() {
+    const transform = this.element.transform();
+    this.element.attr({transform: `translate(${transform.translateX} ${transform.translateY}) rotate(${this.rotation})`});
+  }
+
+}
+
+class MoveCssScadaSymbolAnimation extends CssScadaSymbolAnimation {
+
+  constructor(protected svgShape: Svg,
+              protected element: Element,
+              protected loop: boolean,
+              private deltaX: number,
+              private deltaY: number) {
+    super(svgShape, element, loop);
+  }
+
+  protected animationStyles(): any {
+    return {
+      'transform-origin': `${this.element.cx()}px ${this.element.cy()}px`
+    };
+  }
+
+  protected animationKeyframes(): ScadaSymbolAnimationKeyframe[] {
+    const transform = this.element.transform();
+    return [
+      {
+        stop: '0%',
+        style: {
+          transform: `translate(${transform.translateX}px, ${transform.translateY}px)`
+        }
+      },
+      {
+        stop: '100%',
+        style: {
+          transform: `translate(${transform.translateX+this.deltaX}px, ${transform.translateY+this.deltaY}px)`
+        }
+      }
+    ];
+  }
+
+  protected transitionProperties(): string {
+    return 'transform';
+  }
+
+  protected doTransform() {
+    this.element.relative(this.deltaX, this.deltaY);
+  }
+
+}
+
+class AttrsCssScadaSymbolAnimation extends CssScadaSymbolAnimation {
+
+  constructor(protected svgShape: Svg,
+              protected element: Element,
+              protected loop: boolean,
+              private attr: any) {
+    super(svgShape, element, loop);
+  }
+
+  protected animationStyles(): any {
+    return {};
+  }
+
+  protected animationKeyframes(): ScadaSymbolAnimationKeyframe[] {
+    return [];
+  }
+
+  protected transitionProperties(): string {
+    return Object.keys(this.attr).join(' ');
+  }
+
+  protected doTransform() {
+    this.element.attr(this.attr);
+  }
+
 }

@@ -47,7 +47,7 @@ import {
   WidgetActionsApi,
   WidgetSubscriptionApi
 } from '@core/api/widget-api.models';
-import { ChangeDetectorRef, Injector, NgModuleRef, NgZone, Type } from '@angular/core';
+import { ChangeDetectorRef, Injector, NgZone, Type } from '@angular/core';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { RafService } from '@core/services/raf.service';
 import { WidgetTypeId } from '@shared/models/id/widget-type-id';
@@ -101,7 +101,6 @@ import { AlarmQuery, AlarmSearchStatus, AlarmStatus } from '@app/shared/models/a
 import { ImagePipe, MillisecondsToTimeStringPipe, TelemetrySubscriber } from '@app/shared/public-api';
 import { UserId } from '@shared/models/id/user-id';
 import { UserSettingsService } from '@core/http/user-settings.service';
-import { DynamicComponentModule } from '@core/services/dynamic-component-factory.service';
 import { DataKeySettingsFunction } from '@home/components/widget/config/data-keys.component.models';
 import { UtilsService } from '@core/services/utils.service';
 
@@ -182,6 +181,10 @@ export class WidgetContext {
 
   get dashboardPageElement(): HTMLElement {
     return this.dashboard?.stateController?.dashboardCtrl?.elRef?.nativeElement;
+  }
+
+  get dashboardContentElement(): HTMLElement {
+    return this.dashboard?.stateController?.dashboardCtrl?.dashboardContent?.nativeElement;
   }
 
   authService: AuthService;
@@ -545,7 +548,6 @@ export interface WidgetInfo extends WidgetTypeDescriptor, WidgetControllerDescri
   description?: string;
   tags?: string[];
   componentType?: Type<IDynamicWidgetComponent>;
-  componentModuleRef?: NgModuleRef<DynamicComponentModule>;
 }
 
 export interface WidgetConfigComponentData {
