@@ -25,7 +25,6 @@ import { UtilsService } from '@core/services/utils.service';
 import { Observable, Subject } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';

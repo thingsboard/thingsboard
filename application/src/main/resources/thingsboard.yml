@@ -84,9 +84,9 @@ server:
     auth_timeout_ms: "${TB_SERVER_WS_AUTH_TIMEOUT_MS:10000}"
     rate_limits:
       # Per-tenant rate limit for WS subscriptions
-      subscriptions_per_tenant: "${TB_SERVER_WS_SUBSCRIPTIONS_PER_TENANT_RATE_LIMIT:2000:60}"
+      subscriptions_per_tenant: "${TB_SERVER_WS_SUBSCRIPTIONS_PER_TENANT_RATE_LIMIT:}"
       # Per-user rate limit for WS subscriptions
-      subscriptions_per_user: "${TB_SERVER_WS_SUBSCRIPTIONS_PER_USER_RATE_LIMIT:500:60}"
+      subscriptions_per_user: "${TB_SERVER_WS_SUBSCRIPTIONS_PER_USER_RATE_LIMIT:}"
   rest:
     server_side_rpc:
       # Minimum value of the server-side RPC timeout. May override value provided in the REST API call.
@@ -1020,6 +1020,8 @@ transport:
     # MQTT disconnect timeout in milliseconds. The time to wait for the client to disconnect after the server sends a disconnect message.
     disconnect_timeout: "${MQTT_DISCONNECT_TIMEOUT:1000}"
     msg_queue_size_per_device_limit: "${MQTT_MSG_QUEUE_SIZE_PER_DEVICE_LIMIT:100}" # messages await in the queue before the device connected state. This limit works on the low level before TenantProfileLimits mechanism
+    # Interval of periodic report of the gateway metrics
+    gateway_metrics_report_interval_sec: "${MQTT_GATEWAY_METRICS_REPORT_INTERVAL_SEC:60}"
     netty:
       # Netty leak detector level
       leak_detector_level: "${NETTY_LEAK_DETECTOR_LVL:DISABLED}"

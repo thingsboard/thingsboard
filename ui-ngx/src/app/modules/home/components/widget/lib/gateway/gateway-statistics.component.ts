@@ -20,7 +20,6 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DatasourceType, LegendConfig, LegendData, LegendPosition, widgetType } from '@shared/models/widget.models';

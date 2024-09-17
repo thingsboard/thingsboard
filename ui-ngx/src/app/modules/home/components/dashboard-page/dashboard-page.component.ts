@@ -150,7 +150,6 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { catchError, distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import {
   MoveWidgetsDialogComponent,

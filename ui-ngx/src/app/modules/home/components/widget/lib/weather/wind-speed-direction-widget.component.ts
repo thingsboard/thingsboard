@@ -43,7 +43,6 @@ import {
   overlayStyle
 } from '@shared/models/widget-settings.models';
 import { formatValue, isDefinedAndNotNull, isNumeric } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { Path, Svg, SVG, Text } from '@svgdotjs/svg.js';
 import { DataKey } from '@shared/models/widget.models';
 import { Observable } from 'rxjs';

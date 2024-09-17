@@ -1464,7 +1464,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
         if (gatewaySessionHandler != null) {
-            gatewaySessionHandler.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+            gatewaySessionHandler.onGatewayUpdate(sessionInfo, device, deviceProfileOpt);
         }
     }
 
@@ -1473,6 +1473,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         context.onAuthFailure(address);
         ChannelHandlerContext ctx = deviceSessionCtx.getChannel();
         closeCtx(ctx, MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION);
+        if (gatewaySessionHandler != null) {
+            gatewaySessionHandler.onGatewayDelete(deviceId);
+        }
     }
 
     public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {

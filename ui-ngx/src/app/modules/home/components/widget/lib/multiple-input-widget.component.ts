@@ -40,7 +40,6 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope, LatestTelemetry } from '@shared/models/telemetry/telemetry.models';
 import { forkJoin, Observable, Subject } from 'rxjs';
 import { EntityId } from '@shared/models/id/entity-id';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { takeUntil } from 'rxjs/operators';
 import {
   JsonObjectEditDialogComponent,

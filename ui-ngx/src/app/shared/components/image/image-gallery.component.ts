@@ -48,7 +48,6 @@ import { AppState } from '@core/core.state';
 import { DialogService } from '@core/services/dialog.service';
 import { FormBuilder } from '@angular/forms';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ActivatedRoute, QueryParamsHandling, Router } from '@angular/router';
