@@ -47,6 +47,6 @@ public class Lwm2mObserveTest extends AbstractLwm2mClientTest {
     @Test
     public void testObserveResource_Update_AfterUpdateRegistration() throws Exception {
         createLwm2mDevicesForConnectNoSec( name + "-" +  RandomStringUtils.randomAlphanumeric(7), this.lwm2mDevicesForTest );
-        observeResource_Update_AfterUpdateRegistration_test(this.lwm2mDevicesForTest.getLwM2MTestClient(), this.lwm2mDevicesForTest.getLwM2MDeviceTest().getId().toString());
+        observeResource_Update_AfterUpdateRegistration_test(this.lwm2mDevicesForTest.getLwM2MTestClient(), this.lwm2mDevicesForTest.getLwM2MDeviceTest().getId());
     }
 }

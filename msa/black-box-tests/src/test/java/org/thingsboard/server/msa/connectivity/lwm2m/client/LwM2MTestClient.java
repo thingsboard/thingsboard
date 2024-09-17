@@ -72,6 +72,7 @@ import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
 import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
@@ -107,6 +108,8 @@ public class LwM2MTestClient {
     private Set<LwM2MClientState> clientStates;
 
     private FwLwM2MDevice fwLwM2MDevice;
+
+    private LwM2mBinaryAppDataContainer lwM2MBinaryAppDataContainer;
     private Map<LwM2MClientState, Integer> clientDtlsCid;
 
     private int countUpdateRegistrationSuccess;
@@ -133,6 +136,8 @@ public class LwM2MTestClient {
         initializer.setInstancesForObject(DEVICE, lwM2MDevice = simpleLwM2MDevice);
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, 0),
+                new LwM2mBinaryAppDataContainer(executor, 1));
 
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
 
@@ -349,6 +354,9 @@ public class LwM2MTestClient {
         }
         if (fwLwM2MDevice != null) {
             fwLwM2MDevice.destroy();
+        }
+        if (lwM2MBinaryAppDataContainer != null) {
+            lwM2MBinaryAppDataContainer.destroy();
         }
     }
 }
