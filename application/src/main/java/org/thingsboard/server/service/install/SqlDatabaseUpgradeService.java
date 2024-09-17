@@ -17,6 +17,7 @@ package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
 import org.intellij.lang.annotations.Language;
+import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
@@ -116,8 +117,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             transactionTemplate.executeWithoutResult(ts -> {
                 log.info("Updating schema ...");
                 if (isOldSchema(oldVersion)) {
-                    Path schemaUpdateFile = Paths.get(installScripts.getDataDir(), "upgrade", oldVersionStr, SCHEMA_UPDATE_SQL);
-                    loadSql(schemaUpdateFile);
+                    loadSql(getSchemaUpdateFile(oldVersionStr));
                     jdbcTemplate.execute("UPDATE tb_schema_settings SET schema_version = " + newVersion);
                     log.info("Schema updated to version {}", newVersionStr);
                 } else {
@@ -127,6 +127,10 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
         } catch (Exception e) {
             throw new RuntimeException("Failed to update schema", e);
         }
+    }
+
+    private Path getSchemaUpdateFile(String version) {
+        return Paths.get(installScripts.getDataDir(), "upgrade", version, SCHEMA_UPDATE_SQL);
     }
 
     private void loadSql(Path sqlFile) {
