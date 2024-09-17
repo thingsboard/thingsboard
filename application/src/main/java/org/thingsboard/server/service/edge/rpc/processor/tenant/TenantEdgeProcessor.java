@@ -38,7 +38,7 @@ import org.thingsboard.server.service.edge.rpc.processor.BaseEdgeProcessor;
 public class TenantEdgeProcessor extends BaseEdgeProcessor {
 
     public DownlinkMsg convertTenantEventToDownlink(EdgeEvent edgeEvent, EdgeVersion edgeVersion) {
-        TenantId tenantId = new TenantId(edgeEvent.getEntityId());
+        TenantId tenantId = TenantId.fromUUID(edgeEvent.getEntityId());
         DownlinkMsg downlinkMsg = null;
         if (EdgeEventActionType.UPDATED.equals(edgeEvent.getAction())) {
             Tenant tenant = tenantService.findTenantById(tenantId);

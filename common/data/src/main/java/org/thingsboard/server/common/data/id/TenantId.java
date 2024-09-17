@@ -40,7 +40,9 @@ public final class TenantId extends UUIDBased implements EntityId {
         return tenants.computeIfAbsent(id, TenantId::new);
     }
 
-    //default constructor is still available due to possible usage in extensions
+    // Please, use TenantId.fromUUID instead
+    // Default constructor is still available due to possible usage in extensions
+    @Deprecated
     public TenantId(UUID id) {
         super(id);
     }
