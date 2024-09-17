@@ -55,8 +55,6 @@ import org.thingsboard.server.common.data.kv.BasicTsKvEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
 import org.thingsboard.server.common.data.msg.TbNodeConnectionType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
@@ -64,6 +62,7 @@ import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmDao;
 import org.thingsboard.server.dao.alarm.AlarmService;
@@ -201,15 +200,16 @@ public class HousekeeperServiceTest extends AbstractControllerTest {
             assertThat(alarm.getAssigneeId()).isEqualTo(userId);
             alarms.add(alarmId);
         }
-        PageData<AlarmId> assignedAlarms = alarmService.findAlarmIdsByAssigneeId(tenantId, userId, new PageLink(Integer.MAX_VALUE));
-        assertThat(assignedAlarms.getTotalElements()).isEqualTo(count);
-        assertThat(assignedAlarms.getData()).containsAll(alarms);
+        List<AlarmId> assignedAlarms = alarmService.findAlarmIdsByAssigneeId(tenantId, userId, 0, null, 5000).stream()
+                .map(TbPair::getFirst).map(AlarmId::new).toList();
+        assertThat(assignedAlarms).size().isEqualTo(count);
+        assertThat(assignedAlarms).containsAll(alarms);
 
         doDelete("/api/user/" + userId).andExpect(status().isOk());
 
         await().atMost(TIMEOUT, TimeUnit.SECONDS).untilAsserted(() -> {
             verifyNoRelatedData(userId);
-            assertThat(alarmService.findAlarmIdsByAssigneeId(tenantId, userId, new PageLink(1)).getTotalElements()).isZero();
+            assertThat(alarmService.findAlarmIdsByAssigneeId(tenantId, userId, 0, null, 5000)).size().isZero();
         });
     }
 

@@ -22,6 +22,9 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
 
+import java.util.List;
+import java.util.UUID;
+
 public interface TbAlarmService {
 
     Alarm save(Alarm entity, User user) throws ThingsboardException;
@@ -38,7 +41,7 @@ public interface TbAlarmService {
 
     AlarmInfo unassign(Alarm alarm, long unassignTs, User user) throws ThingsboardException;
 
-    int unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs);
+    void unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, List<UUID> alarms, long unassignTs);
 
     Boolean delete(Alarm alarm, User user);
 }
