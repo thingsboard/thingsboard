@@ -110,7 +110,7 @@ public final class EdgeGrpcSession implements Closeable {
     private static final ReentrantLock downlinkMsgLock = new ReentrantLock();
     private static final ConcurrentLinkedQueue<EdgeEvent> highPriorityQueue = new ConcurrentLinkedQueue<>();
 
-    private static final int MAX_DOWNLINK_ATTEMPTS = 10; // max number of attemps to send downlink message if edge connected
+    private static final int MAX_DOWNLINK_ATTEMPTS = 10; // max number of attempts to send downlink message if edge connected
 
     private static final String QUEUE_START_TS_ATTR_KEY = "queueStartTs";
     private static final String QUEUE_START_SEQ_ID_ATTR_KEY = "queueStartSeqId";
