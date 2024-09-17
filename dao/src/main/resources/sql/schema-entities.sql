@@ -497,7 +497,9 @@ CREATE TABLE IF NOT EXISTS user_credentials (
     reset_token varchar(255) UNIQUE,
     reset_token_exp_time BIGINT,
     user_id uuid UNIQUE,
-    additional_info varchar DEFAULT '{}'
+    additional_info varchar DEFAULT '{}',
+    last_login_ts BIGINT,
+    failed_login_attempts INT
 );
 
 CREATE TABLE IF NOT EXISTS widget_type (
