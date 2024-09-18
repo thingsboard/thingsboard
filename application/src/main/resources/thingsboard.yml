@@ -326,10 +326,8 @@ cassandra:
 
 # IoTDB driver configuration parameters
 iotdb:
-  # IoTDB server host
-  host: "${IoTDB_HOST:127.0.0.1}"
-  # IoTDB server port
-  port: "${IoTDB_PORT:6667}"
+  # IoTDB server nodeUrls, format: host1:port1,host2:port2,...
+  nodeUrls: "${IoTDB_NODE_URLS:127.0.0.1:6667}"
   # IoTDB server username
   user: "${IoTDB_USER:root}"
   # IoTDB server password
@@ -342,6 +340,10 @@ iotdb:
   max_size: "${IoTDB_MAX_SIZE:200}"
   # IoTDB database name
   database: "${IoTDB_DATABASE:root.thingsboard}"
+  # IoTDB result processing thread count
+  result_process_threads: "${IoTDB_PROCESS_THREADS:50}"
+  # IoTDB save process thread count
+  save_process_threads: "${IoTDB_SAVE_PROCESS_THREADS:50}"
 
 # SQL configuration parameters
 sql:

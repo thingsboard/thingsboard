@@ -53,63 +53,73 @@ public class IoTDBTimeseriesLatestDao implements TimeseriesLatestDao {
 
     @Autowired
     private IoTDBBaseTimeseriesDao ioTDBBaseTimeseriesDao;
+
     @Override
     public ListenableFuture<Optional<TsKvEntry>> findLatestOpt(TenantId tenantId, EntityId entityId, String key) {
         return Futures.submit(() -> {
-            String sql = "select last `" + key + "` from "+ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "` ";
-            SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
-            String value = "";
-            long time = System.currentTimeMillis();
-            BasicKvEntry entry = new StringDataEntry(key, value);
-            if (sessionDataSetWrapper.hasNext()) {
-                RowRecord record = sessionDataSetWrapper.next();
-                Field field = record.getFields().get(1);
-                Field fieldType = record.getFields().get(2);
-                time = record.getTimestamp();
-                entry = getLastEntry(key, field,fieldType);
+            String sql = "select last `" + key + "` from " + ioTDBBaseTimeseriesDao.getDbName() + ".`" + entityId.getId() + "` ";
+            try (SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)) {
+                if (sessionDataSetWrapper.hasNext()) {
+                    RowRecord record = sessionDataSetWrapper.next();
+                    Field field = record.getFields().get(1);
+                    Field fieldType = record.getFields().get(2);
+                    long time = record.getTimestamp();
+                    BasicKvEntry entry = getLastEntry(key, field, fieldType);
+                    return Optional.of(new BasicTsKvEntry(time, entry));
+                }
+                return Optional.empty();
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                log.error("iotdb findLatest error", e);
+                return Optional.empty();
             }
-
-            return Optional.of(new BasicTsKvEntry(time, entry));
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+        }, ioTDBBaseTimeseriesDao.readProcessingExecutor);
     }
 
     @Override
     public ListenableFuture<TsKvEntry> findLatest(TenantId tenantId, EntityId entityId, String key) {
         return Futures.submit(() -> {
-            String sql = "select last `" + key + "` from "+ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "` ";
-            SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
-            String value = "";
-            long time = System.currentTimeMillis();
-            BasicKvEntry entry = new StringDataEntry(key, value);
-            if (sessionDataSetWrapper.hasNext()) {
-                RowRecord record = sessionDataSetWrapper.next();
-                Field field = record.getFields().get(1);
-                Field fieldType = record.getFields().get(2);
-                time = record.getTimestamp();
-                entry = getLastEntry(key, field,fieldType);
+            String sql = "select last `" + key + "` from " + ioTDBBaseTimeseriesDao.getDbName() + ".`" + entityId.getId() + "` ";
+            try (SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)) {
+                String value = "";
+                long time = System.currentTimeMillis();
+                BasicKvEntry entry = new StringDataEntry(key, value);
+                if (sessionDataSetWrapper.hasNext()) {
+                    RowRecord record = sessionDataSetWrapper.next();
+                    Field field = record.getFields().get(1);
+                    Field fieldType = record.getFields().get(2);
+                    time = record.getTimestamp();
+                    entry = getLastEntry(key, field, fieldType);
+                }
+                return new BasicTsKvEntry(time, entry);
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                log.error("iotdb findLatest error", e);
+                return null;
             }
-            return new BasicTsKvEntry(time, entry);
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+        }, ioTDBBaseTimeseriesDao.readProcessingExecutor);
     }
 
     @Override
     public ListenableFuture<List<TsKvEntry>> findAllLatest(TenantId tenantId, EntityId entityId) {
         return Futures.submit(() -> {
-            String sql = "select last *  from "+ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "` ";
-            SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
-            List<TsKvEntry> list = Lists.newArrayList();
-            while (sessionDataSetWrapper.hasNext()) {
-                RowRecord record = sessionDataSetWrapper.next();
-                Field fieldName = record.getFields().get(0);
-                Field field = record.getFields().get(1);
-                Field fieldType = record.getFields().get(2);
-                String key = fieldName.getStringValue().substring(fieldName.getStringValue().lastIndexOf('.') + 1);
-                BasicKvEntry basicKvEntry = getLastEntry(key, field, fieldType);
-                BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(record.getTimestamp(), basicKvEntry);
-                list.add(tsKvEntry);
+            String sql = "select last *  from " + ioTDBBaseTimeseriesDao.getDbName() + ".`" + entityId.getId() + "` ";
+            try (SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)) {
+                List<TsKvEntry> list = Lists.newArrayList();
+                while (sessionDataSetWrapper.hasNext()) {
+                    RowRecord record = sessionDataSetWrapper.next();
+                    Field fieldName = record.getFields().get(0);
+                    Field field = record.getFields().get(1);
+                    Field fieldType = record.getFields().get(2);
+                    String key = fieldName.getStringValue().substring(fieldName.getStringValue().lastIndexOf('.') + 1);
+                    BasicKvEntry basicKvEntry = getLastEntry(key, field, fieldType);
+                    BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(record.getTimestamp(), basicKvEntry);
+                    list.add(tsKvEntry);
+                }
+                return list;
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                log.error("iotdb findAllLatest error", e);
+                return null;
             }
-            return list;
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+        }, ioTDBBaseTimeseriesDao.readProcessingExecutor);
     }
 
     @Override
@@ -118,7 +128,7 @@ public class IoTDBTimeseriesLatestDao implements TimeseriesLatestDao {
             return Futures.immediateFuture(null);
         }
         try {
-            ioTDBBaseTimeseriesDao.myIotdbSessionPool.insertRecord(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`", tsKvEntry.getTs(), Lists.newArrayList(tsKvEntry.getKey()), Lists.newArrayList(getType(tsKvEntry)), Lists.newArrayList(tsKvEntry.getValue()));
+            ioTDBBaseTimeseriesDao.iotdbSessionPool.insertRecord(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`", tsKvEntry.getTs(), Lists.newArrayList(tsKvEntry.getKey()), Lists.newArrayList(getType(tsKvEntry)), Lists.newArrayList(tsKvEntry.getValue()));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -126,20 +136,20 @@ public class IoTDBTimeseriesLatestDao implements TimeseriesLatestDao {
     }
 
 
-    public BasicKvEntry getLastEntry(String key , Field field, Field fieldType) {
-        if(TSDataType.BOOLEAN.name().equals(fieldType.getStringValue())){
-            return new BooleanDataEntry(key,Boolean.valueOf(field.getStringValue()));
+    public BasicKvEntry getLastEntry(String key, Field field, Field fieldType) {
+        if (TSDataType.BOOLEAN.name().equals(fieldType.getStringValue())) {
+            return new BooleanDataEntry(key, Boolean.valueOf(field.getStringValue()));
         }
-        if(TSDataType.INT64.name().equals(fieldType.getStringValue())){
-            return new LongDataEntry(key,Long.valueOf(field.getStringValue()));
+        if (TSDataType.INT64.name().equals(fieldType.getStringValue())) {
+            return new LongDataEntry(key, Long.valueOf(field.getStringValue()));
         }
-        if(TSDataType.DOUBLE.name().equals(fieldType.getStringValue())){
-            return new DoubleDataEntry(key,Double.valueOf(field.getStringValue()));
+        if (TSDataType.DOUBLE.name().equals(fieldType.getStringValue())) {
+            return new DoubleDataEntry(key, Double.valueOf(field.getStringValue()));
         }
-        if(TSDataType.TEXT.name().equals(fieldType.getStringValue())){
-            return new StringDataEntry(key,field.getStringValue());
+        if (TSDataType.TEXT.name().equals(fieldType.getStringValue())) {
+            return new StringDataEntry(key, field.getStringValue());
         }
-        return new StringDataEntry(key,field.getStringValue());
+        return new StringDataEntry(key, field.getStringValue());
     }
 
 
@@ -159,14 +169,20 @@ public class IoTDBTimeseriesLatestDao implements TimeseriesLatestDao {
     @Override
     public ListenableFuture<TsKvLatestRemovingResult> removeLatest(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         return Futures.submit(() -> {
-            String sql = "select last `" + query.getKey() + "`  from "+ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "` ";
-            SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
-            while (sessionDataSetWrapper.hasNext()) {
-                long time = sessionDataSetWrapper.next().getTimestamp();
-                ioTDBBaseTimeseriesDao.myIotdbSessionPool.deleteData(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "`.`" + query.getKey() + "`", time);
+            String sql = "select last `" + query.getKey() + "`  from " + ioTDBBaseTimeseriesDao.getDbName() + ".`" + entityId.getId() + "` ";
+            try (SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)) {
+                while (sessionDataSetWrapper.hasNext()) {
+                    long time = sessionDataSetWrapper.next().getTimestamp();
+                    if (time >= query.getStartTs() && time < query.getEndTs()) {
+                        ioTDBBaseTimeseriesDao.iotdbSessionPool.deleteData(ioTDBBaseTimeseriesDao.getDbName() + ".`" + entityId.getId() + "`.`" + query.getKey() + "`", time);
+                    }
+                }
+                return new TsKvLatestRemovingResult(query.getKey(), true);
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
+                log.error("iotdb removeLatest error", e);
+                return new TsKvLatestRemovingResult(query.getKey(), false);
             }
-            return new TsKvLatestRemovingResult(query.getKey(), true);
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+        }, ioTDBBaseTimeseriesDao.saveProcessingExecutor);
     }
 
     @Override
@@ -178,10 +194,8 @@ public class IoTDBTimeseriesLatestDao implements TimeseriesLatestDao {
     public List<String> findAllKeysByEntityIds(TenantId tenantId, List<EntityId> entityIds) {
         List<String> list = Lists.newArrayList();
         entityIds.forEach(entityId -> {
-            String sql = "select last *  from "+ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "` ";
-            SessionDataSetWrapper sessionDataSetWrapper = null;
-            try {
-                sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
+            String sql = "select last *  from " + ioTDBBaseTimeseriesDao.getDbName() + ".`" + entityId.getId() + "` ";
+            try (SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)) {
                 while (sessionDataSetWrapper.hasNext()) {
                     RowRecord record = sessionDataSetWrapper.next();
                     String timeseries = record.getFields().get(0).getStringValue();
@@ -189,7 +203,7 @@ public class IoTDBTimeseriesLatestDao implements TimeseriesLatestDao {
                     list.add(key);
                 }
             } catch (IoTDBConnectionException | StatementExecutionException e) {
-                e.printStackTrace();
+                log.error("iotdb findAllKeysByEntityIds error", e);
             }
         });
         return list;

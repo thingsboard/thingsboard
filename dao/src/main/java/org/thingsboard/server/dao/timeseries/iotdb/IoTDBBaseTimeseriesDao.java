@@ -25,6 +25,7 @@ import org.apache.iotdb.tsfile.read.common.Field;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.stereotype.Component;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.kv.BasicKvEntry;
 import org.thingsboard.server.common.data.kv.BooleanDataEntry;
 import org.thingsboard.server.common.data.kv.DoubleDataEntry;
@@ -32,23 +33,21 @@ import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
 import org.thingsboard.server.dao.util.IoTDBAnyDao;
 
+import java.util.List;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 
 @Component
 @Configuration
 @Data
 @IoTDBAnyDao
 public class IoTDBBaseTimeseriesDao {
-    public ExecutorService readResultsProcessingExecutor = Executors.newFixedThreadPool(20);
+    protected ExecutorService readProcessingExecutor;
+    protected ExecutorService saveProcessingExecutor;
 
-    public SessionPool myIotdbSessionPool;
+    protected SessionPool iotdbSessionPool;
 
-    @Value("${iotdb.host:localhost}")
-    private String host;
-
-    @Value("${iotdb.port:6667}")
-    private int port;
+    @Value("${iotdb.nodeUrls:127.0.0.1:6667}")
+    private List<String> nodeUrls;
 
     @Value("${iotdb.user:root}")
     private String user;
@@ -68,15 +67,35 @@ public class IoTDBBaseTimeseriesDao {
     @Value("${iotdb.database:root.thingsboard}")
     private String dbName;
 
+    @Value("${iotdb.result_process_threads:50}")
+    private int resultThreadPoolSize;
+
+    @Value("${iotdb.save_process_threads:50}")
+    private int saveThreadPoolSize;
+
+    @PostConstruct
+    public void startExecutor() {
+        readProcessingExecutor = ThingsBoardExecutors.newWorkStealingPool(resultThreadPoolSize, "iotdb-read-callback");
+        saveProcessingExecutor = ThingsBoardExecutors.newWorkStealingPool(saveThreadPoolSize, "iotdb-save-callback");
+    }
     @PostConstruct
     public void createPool() {
-        myIotdbSessionPool = createSessionPool();
+        iotdbSessionPool = createSessionPool();
     }
 
+    @PreDestroy
+    public void stopExecutor() {
+        if (readProcessingExecutor != null) {
+            readProcessingExecutor.shutdownNow();
+        }
+        if(saveProcessingExecutor != null) {
+            saveProcessingExecutor.shutdownNow();
+        }
+        iotdbSessionPool.close();
+    }
     private SessionPool createSessionPool() {
         return new SessionPool.Builder()
-                .host(host)
-                .port(port)
+                .nodeUrls(nodeUrls)
                 .user(user)
                 .password(password)
                 .connectionTimeoutInMs(timeout)
@@ -85,14 +104,6 @@ public class IoTDBBaseTimeseriesDao {
                 .build();
     }
 
-    @PreDestroy
-    public void stop() {
-        if (readResultsProcessingExecutor != null) {
-            readResultsProcessingExecutor.shutdownNow();
-        }
-
-        myIotdbSessionPool.close();
-    }
 
     public BasicKvEntry getEntry(String key , Field field) {
         if(TSDataType.BOOLEAN.equals(field.getDataType())){

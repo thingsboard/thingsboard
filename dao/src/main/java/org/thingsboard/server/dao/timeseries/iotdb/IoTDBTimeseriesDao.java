@@ -51,8 +51,6 @@ import java.util.stream.Collectors;
 public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDao{
 
 
-    protected static final int MIN_AGGREGATION_STEP_MS = 1000;
-
     protected static final int MAX_SIZE = 1000;
 
     @Autowired
@@ -68,17 +66,19 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
         }
 
         return Futures.submit(() -> {
-            SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
-            List<TsKvEntry> data = Lists.newArrayList();
-            while (sessionDataSetWrapper.hasNext()) {
-                RowRecord record = sessionDataSetWrapper.next();
-                Field field = record.getFields().get(0);
-                BasicKvEntry basicKvEntry = ioTDBBaseTimeseriesDao.getEntry(query.getKey(),field);
-                BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(record.getTimestamp(), basicKvEntry);
-                data.add(tsKvEntry);
+            List<TsKvEntry> data;
+            try (SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)) {
+                data = Lists.newArrayList();
+                while (sessionDataSetWrapper.hasNext()) {
+                    RowRecord record = sessionDataSetWrapper.next();
+                    Field field = record.getFields().get(0);
+                    BasicKvEntry basicKvEntry = ioTDBBaseTimeseriesDao.getEntry(query.getKey(), field);
+                    BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(record.getTimestamp(), basicKvEntry);
+                    data.add(tsKvEntry);
+                }
             }
             return new ReadTsKvQueryResult(query.getId(), data, System.currentTimeMillis());
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+        }, ioTDBBaseTimeseriesDao.readProcessingExecutor);
 
     }
 
@@ -86,19 +86,17 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
         String sql;
         long start = query.getStartTs();
         long end = Math.max(query.getStartTs() + 1, query.getEndTs());
-        if(query.getInterval() >0){
-            Long step = Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
-            start = System.currentTimeMillis();
-            end = start + step;
-        }
-
         sql = "select " + transferAgg(query) + " from "+ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "` ";
         if (start != 0 && end != 0) {
-            sql = sql + "where time > " + start + " and time < " + end;
+            sql = sql + "where time >= " + start + " and time < " + end;
         } else if (start != 0) {
-            sql = sql + "where time > " + start;
+            sql = sql + "where time >= " + start;
         } else if (end != 0) {
             sql = sql + "where time < " + end;
+        }
+
+        if(query.getInterval() >0){
+        sql=sql+" group by (["+start+","+end+"),"+query.getInterval()+"ms)";
         }
         return sql;
     }
@@ -128,16 +126,10 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
         long start = query.getStartTs();
         long end = Math.max(query.getStartTs() + 1, query.getEndTs());
 
-        if(query.getInterval() >0){
-            Long step = Math.max(query.getInterval(), MIN_AGGREGATION_STEP_MS);
-            start = System.currentTimeMillis();
-            end = start + step;
-        }
-
         if (start != 0 && end != 0) {
-            sql = sql + "where time > " + start + " and time < " + end;
+            sql = sql + "where time >= " + start + " and time < " + end;
         } else if (start != 0) {
-            sql = sql + "where time > " + start;
+            sql = sql + "where time >= " + start;
         } else if (end != 0) {
             sql = sql + "where time < " + end;
         }
@@ -158,34 +150,28 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
 
     @Override
     public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, EntityId entityId, List<ReadTsKvQuery> queries) {
-        return Futures.submit(() -> {
-            return queries.stream()
-                    .map(query -> {
-                        String sql;
-                        if (query.getAggregation().equals(Aggregation.NONE)) {
-                            sql = findAllAsyncWithLimit(tenantId, entityId, query);
-                        } else {
-                            sql = findAllAsyncWithAgg(tenantId, entityId, query);
+        return Futures.submit(() -> queries.stream()
+                .map(query -> {
+                    String sql;
+                    if (query.getAggregation().equals(Aggregation.NONE)) {
+                        sql = findAllAsyncWithLimit(tenantId, entityId, query);
+                    } else {
+                        sql = findAllAsyncWithAgg(tenantId, entityId, query);
+                    }
+                    List<TsKvEntry> data = Lists.newArrayList();
+                    try(SessionDataSetWrapper sessionDataSetWrapper = ioTDBBaseTimeseriesDao.iotdbSessionPool.executeQueryStatement(sql)){
+                        while (sessionDataSetWrapper.hasNext()) {
+                            RowRecord record = sessionDataSetWrapper.next();
+                            Field field = record.getFields().get(0);
+                            BasicKvEntry basicKvEntry = ioTDBBaseTimeseriesDao.getEntry(query.getKey(),field);
+                            BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(record.getTimestamp(), basicKvEntry);
+                            data.add(tsKvEntry);
                         }
-                        SessionDataSetWrapper sessionDataSetWrapper = null;
-                        List<TsKvEntry> data = Lists.newArrayList();
-                        try {
-                            sessionDataSetWrapper = ioTDBBaseTimeseriesDao.myIotdbSessionPool.executeQueryStatement(sql);
-                            while (sessionDataSetWrapper.hasNext()) {
-                                RowRecord record = sessionDataSetWrapper.next();
-                                Field field = record.getFields().get(0);
-                                BasicKvEntry basicKvEntry = ioTDBBaseTimeseriesDao.getEntry(query.getKey(),field);
-                                BasicTsKvEntry tsKvEntry = new BasicTsKvEntry(record.getTimestamp(), basicKvEntry);
-                                data.add(tsKvEntry);
-                            }
-                        } catch (IoTDBConnectionException e) {
-                            e.printStackTrace();
-                        } catch (StatementExecutionException e) {
-                            e.printStackTrace();
-                        }
-                        return new ReadTsKvQueryResult(query.getId(), data, System.currentTimeMillis());
-                    }).collect(Collectors.toList());
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+                    } catch (IoTDBConnectionException | StatementExecutionException e) {
+                        e.printStackTrace();
+                    }
+                    return new ReadTsKvQueryResult(query.getId(), data, System.currentTimeMillis());
+                }).collect(Collectors.toList()), ioTDBBaseTimeseriesDao.readProcessingExecutor);
     }
 
     @Override
@@ -194,7 +180,7 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
             return Futures.immediateFuture(0);
         }
         try {
-            ioTDBBaseTimeseriesDao.myIotdbSessionPool.insertRecord(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`", tsKvEntry.getTs(), Lists.newArrayList(tsKvEntry.getKey()), Lists.newArrayList(getType(tsKvEntry)), Lists.newArrayList(tsKvEntry.getValue()));
+            ioTDBBaseTimeseriesDao.iotdbSessionPool.insertRecord(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`", tsKvEntry.getTs(), Lists.newArrayList(tsKvEntry.getKey()), Lists.newArrayList(getType(tsKvEntry)), Lists.newArrayList(tsKvEntry.getValue()));
         } catch (Exception e) {
             e.printStackTrace();
         }
@@ -211,12 +197,6 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
         if (null != tsKvEntry.getDoubleValue().orElse(null)) {
             return TSDataType.DOUBLE;
         }
-//        if (null != tsKvEntry.getStrValue().orElse(null)) {
-//            return TSDataType.TEXT;
-//        }
-//        if (null != tsKvEntry.getJsonValue().orElse(null)) {
-//
-//        }
         return TSDataType.TEXT;
     }
 
@@ -230,22 +210,18 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
     public ListenableFuture<Void> remove(TenantId tenantId, EntityId entityId, DeleteTsKvQuery query) {
         return Futures.submit(() -> {
             try {
-                ioTDBBaseTimeseriesDao.myIotdbSessionPool.deleteData(Lists.newArrayList(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "`." + query.getKey()), query.getStartTs(), query.getEndTs());
-            } catch (IoTDBConnectionException e) {
-                e.printStackTrace();
-            } catch (StatementExecutionException e) {
+                ioTDBBaseTimeseriesDao.iotdbSessionPool.deleteData(Lists.newArrayList(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId() + "`." + query.getKey()), query.getStartTs(), query.getEndTs());
+            } catch (IoTDBConnectionException | StatementExecutionException e) {
                 e.printStackTrace();
             }
-        }, ioTDBBaseTimeseriesDao.readResultsProcessingExecutor);
+        }, ioTDBBaseTimeseriesDao.saveProcessingExecutor);
     }
 
     @Override
     public void cleanup(long systemTtl) {
         try {
-            ioTDBBaseTimeseriesDao.myIotdbSessionPool.deleteData(Lists.newArrayList(ioTDBBaseTimeseriesDao.getDbName()+".**"), systemTtl, System.currentTimeMillis());
-        } catch (IoTDBConnectionException e) {
-            e.printStackTrace();
-        } catch (StatementExecutionException e) {
+            ioTDBBaseTimeseriesDao.iotdbSessionPool.deleteData(Lists.newArrayList(ioTDBBaseTimeseriesDao.getDbName()+".**"), systemTtl, System.currentTimeMillis());
+        } catch (IoTDBConnectionException | StatementExecutionException e) {
             e.printStackTrace();
         }
     }
