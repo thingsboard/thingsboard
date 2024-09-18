@@ -1159,6 +1159,66 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
         type: 'ScadaSymbolApi',
         description: 'SCADA symbol API',
         children: {
+          cssAnimate: {
+            meta: 'function',
+            description: 'Finishes any previous CSS animation and starts new CSS animation for SVG element.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+              {
+                name: 'duration',
+                description: 'Animation duration in milliseconds',
+                type: 'number'
+              }
+            ],
+            return: {
+              description: 'Instance of ScadaSymbolAnimation which has generally similar methods as ' +
+                '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a> to control the animation.',
+              type: 'ScadaSymbolAnimation'
+            }
+          },
+          cssAnimation: {
+            meta: 'function',
+            description: 'Get the current CSS animation applied for the SVG element.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              }
+            ],
+            return: {
+              description: 'Instance of ScadaSymbolAnimation which has generally similar methods as ' +
+                '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a> to control the animation.',
+              type: 'ScadaSymbolAnimation'
+            }
+          },
+          resetCssAnimation: {
+            meta: 'function',
+            description: 'Stops CSS animation if any and restore SVG element initial state, removes CSS animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+            ]
+          },
+          finishCssAnimation: {
+            meta: 'function',
+            description: 'Finishes CSS animation if any, SVG element state updated according to the end animation values, ' +
+              'removes CSS animation instance.',
+            args: [
+              {
+                name: 'element',
+                description: 'SVG element',
+                type: 'Element'
+              },
+            ]
+          },
           animate: {
             meta: 'function',
             description: 'Finishes any previous animation and starts new animation for SVG element.',
