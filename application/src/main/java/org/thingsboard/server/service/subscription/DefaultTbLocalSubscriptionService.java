@@ -130,7 +130,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
         subscriptionUpdateExecutor = ThingsBoardExecutors.newWorkStealingPool(20, getClass());
         tsCallBackExecutor = Executors.newFixedThreadPool(8, ThingsBoardThreadFactory.forName("ts-sub-callback")); //since we are using locks by TenantId
         serviceId = serviceInfoProvider.getServiceId();
-        staleSessionCleanupExecutor = Executors.newSingleThreadScheduledExecutor(ThingsBoardThreadFactory.forName("stale-session-cleanup"));
+        staleSessionCleanupExecutor = ThingsBoardExecutors.newSingleThreadScheduledExecutor("stale-session-cleanup");
         staleSessionCleanupExecutor.scheduleWithFixedDelay(this::cleanupStaleSessions, 60, 60, TimeUnit.SECONDS);
     }
 

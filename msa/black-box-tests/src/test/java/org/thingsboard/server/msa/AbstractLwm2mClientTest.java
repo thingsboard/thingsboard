@@ -20,7 +20,7 @@ import org.apache.commons.io.IOUtils;
 import org.eclipse.leshan.client.object.Security;
 import org.eclipse.leshan.core.util.Hex;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.common.util.ThingsBoardThreadFactory;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -56,7 +56,6 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
@@ -186,7 +185,7 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest{
         if (executor != null) {
             executor.shutdown();
         }
-        executor = Executors.newScheduledThreadPool(10, ThingsBoardThreadFactory.forName("test-scheduled-" + deviceProfileName));
+        executor = ThingsBoardExecutors.newScheduledThreadPool(10, "test-scheduled-" + deviceProfileName);
 
         lwm2mDeviceProfile = getDeviceProfile(deviceProfileName);
         tenantId = lwm2mDeviceProfile.getTenantId();

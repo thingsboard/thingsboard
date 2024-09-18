@@ -34,7 +34,6 @@ import org.eclipse.leshan.core.observation.ObservationIdentifier;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.peer.LwM2mIdentity;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.core.util.Validate;
 import org.eclipse.leshan.server.redis.RedisRegistrationStore;
 import org.eclipse.leshan.server.redis.serialization.ObservationSerDes;
@@ -54,6 +53,7 @@ import org.springframework.data.redis.core.Cursor;
 import org.springframework.data.redis.core.ScanOptions;
 import org.springframework.integration.redis.util.RedisLockRegistry;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
@@ -67,7 +67,6 @@ import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -130,9 +129,7 @@ public class TbLwM2mRedisRegistrationStore implements RegistrationStore, Startab
     }
 
     public TbLwM2mRedisRegistrationStore(LwM2MTransportServerConfig config, RedisConnectionFactory connectionFactory, long cleanPeriodInSec, long lifetimeGracePeriodInSec, int cleanLimit, LwM2mVersionedModelProvider modelProvider) {
-        this(config, connectionFactory, Executors.newScheduledThreadPool(1,
-                new NamedThreadFactory(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
-                cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit, modelProvider);
+        this(config, connectionFactory, ThingsBoardExecutors.newSingleThreadScheduledExecutor(String.format("RedisRegistrationStore Cleaner (%ds)", cleanPeriodInSec)), cleanPeriodInSec, lifetimeGracePeriodInSec, cleanLimit, modelProvider);
     }
 
     public TbLwM2mRedisRegistrationStore(LwM2MTransportServerConfig config, RedisConnectionFactory connectionFactory, ScheduledExecutorService schedExecutor, long cleanPeriodInSec,

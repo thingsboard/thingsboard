@@ -1,3 +1,18 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package org.thingsboard.common.util;
 
 import lombok.extern.slf4j.Slf4j;
@@ -5,29 +20,16 @@ import lombok.extern.slf4j.Slf4j;
 import java.util.concurrent.CancellationException;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
-import java.util.concurrent.RejectedExecutionHandler;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.ScheduledThreadPoolExecutor;
 import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.TimeUnit;
 
 @Slf4j
-public final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
-
-    public ThingsBoardScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory, RejectedExecutionHandler handler) {
-        super(corePoolSize, threadFactory, handler);
-    }
-
-    public ThingsBoardScheduledThreadPoolExecutor(int corePoolSize, RejectedExecutionHandler handler) {
-        super(corePoolSize, handler);
-    }
+final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThreadPoolExecutor {
 
     public ThingsBoardScheduledThreadPoolExecutor(int corePoolSize, ThreadFactory threadFactory) {
         super(corePoolSize, threadFactory);
-    }
-
-    public ThingsBoardScheduledThreadPoolExecutor(int corePoolSize) {
-        super(corePoolSize);
     }
 
     @Override
@@ -42,21 +44,21 @@ public final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThrea
             if (wrappedThrowable instanceof CancellationException) {
                 log.debug("Task was cancelled.", wrappedThrowable);
             } else {
-                log.error("Unexpected exception occurred during task execution!", wrappedThrowable);
+                log.error("Uncaught error occurred during task execution!", wrappedThrowable);
             }
         }
 
         if (directThrowable != null) {
-            log.error("Unexpected exception occurred during task execution!", directThrowable);
+            log.error("Uncaught error occurred during task execution!", directThrowable);
         }
     }
 
     private static Throwable extractThrowableWrappedInFuture(Runnable runnable) {
-        if (runnable instanceof Future<?> && ((Future<?>) runnable).isDone()) {
+        if (runnable instanceof Future<?> future && future.isDone()) {
             try {
-                ((Future<?>) runnable).get();
+                future.get();
             } catch (InterruptedException e) { // should not happen due to isDone() check
-                throw new AssertionError(e);
+                throw new AssertionError("InterruptedException caught after isDone() check on a future", e);
             } catch (CancellationException e) {
                 return e;
             } catch (ExecutionException e) {
@@ -71,7 +73,7 @@ public final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThrea
         if (command == null) { // preserve the original NPE behavior of ScheduledThreadPoolExecutor with a more helpful message
             throw new NullPointerException("command is null");
         }
-        return super.scheduleAtFixedRate(new SafeRunnable(command), initialDelay, period, unit);
+        return super.scheduleAtFixedRate(new SafePeriodicRunnable(command), initialDelay, period, unit);
     }
 
     @Override
@@ -79,21 +81,16 @@ public final class ThingsBoardScheduledThreadPoolExecutor extends ScheduledThrea
         if (command == null) { // preserve the original NPE behavior of ScheduledThreadPoolExecutor with a more helpful message
             throw new NullPointerException("command is null");
         }
-        return super.scheduleWithFixedDelay(new SafeRunnable(command), initialDelay, delay, unit);
+        return super.scheduleWithFixedDelay(new SafePeriodicRunnable(command), initialDelay, delay, unit);
     }
 
-    private record SafeRunnable(Runnable runnable) implements Runnable {
+    private record SafePeriodicRunnable(Runnable runnable) implements Runnable {
 
         public void run() {
             try {
                 runnable.run();
             } catch (Exception ex) {
-                log.error("Unexpected exception occurred while periodically executing task!", ex);
-                // TODO: is calling uncaught execution handler here correct?
-                if (Thread.getDefaultUncaughtExceptionHandler() != null) {
-                    log.debug("Default exception handler is set, delegating exception handling to it");
-                    Thread.getDefaultUncaughtExceptionHandler().uncaughtException(Thread.currentThread(), ex);
-                }
+                log.error("Uncaught exception occurred during periodic task execution!", ex);
             }
             // Intentionally, no catch block for Throwable; uncaught Throwables will be handled in afterExecute()
         }

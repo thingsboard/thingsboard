@@ -34,7 +34,6 @@ import org.eclipse.leshan.core.observation.ObservationIdentifier;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.peer.LwM2mIdentity;
 import org.eclipse.leshan.core.request.ContentFormat;
-import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Deregistration;
 import org.eclipse.leshan.server.registration.ExpirationListener;
 import org.eclipse.leshan.server.registration.Registration;
@@ -42,6 +41,7 @@ import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.eclipse.leshan.server.registration.UpdatedRegistration;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ThingsBoardExecutors;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
@@ -56,7 +56,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Set;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
@@ -99,9 +98,7 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
     }
 
     public TbInMemoryRegistrationStore(LwM2MTransportServerConfig config, long cleanPeriodInSec, LwM2mVersionedModelProvider modelProvider) {
-        this(config, Executors.newScheduledThreadPool(1,
-                        new NamedThreadFactory(String.format("TbInMemoryRegistrationStore Cleaner (%ds)", cleanPeriodInSec))),
-                cleanPeriodInSec, modelProvider);
+        this(config, ThingsBoardExecutors.newSingleThreadScheduledExecutor(String.format("TbInMemoryRegistrationStore Cleaner (%ds)", cleanPeriodInSec)), cleanPeriodInSec, modelProvider);
     }
 
     public TbInMemoryRegistrationStore(LwM2MTransportServerConfig config, ScheduledExecutorService schedExecutor, long cleanPeriodInSec, LwM2mVersionedModelProvider modelProvider) {
