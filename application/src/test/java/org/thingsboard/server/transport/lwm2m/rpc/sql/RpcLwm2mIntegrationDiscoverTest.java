@@ -23,6 +23,8 @@ import org.eclipse.leshan.core.link.LinkParseException;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.transport.lwm2m.config.TbLwM2mVersion;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
 import java.util.Arrays;
@@ -33,9 +35,10 @@ import java.util.stream.Collectors;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_KEY;
+import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
-import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.convertObjectIdToVerId;
 
 
 public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
@@ -171,5 +174,20 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
     private String sendDiscover(String path) throws Exception {
         String setRpcRequest = "{\"method\": \"Discover\", \"params\": {\"id\": \"" + path + "\"}}";
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+    }
+
+    private  String convertObjectIdToVerId(String path, String ver) {
+        ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
+        try {
+            String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
+            if (keyArray.length > 1) {
+                keyArray[1] = keyArray[1] + LWM2M_SEPARATOR_KEY + ver;
+                return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
+            } else {
+                return path;
+            }
+        } catch (Exception e) {
+            return null;
+        }
     }
 }

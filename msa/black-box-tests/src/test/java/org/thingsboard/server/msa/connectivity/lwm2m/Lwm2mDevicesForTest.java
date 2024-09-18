@@ -13,22 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.rpc;
+package org.thingsboard.server.msa.connectivity.lwm2m;
 
-import org.junit.Before;
-import org.thingsboard.server.dao.service.DaoSqlTest;
 
-@DaoSqlTest
-public abstract class AbstractRpcLwM2MIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest{
-    private final String[] RESOURCES_RPC_MULTIPLE_19 = new String[]{"0.xml", "1.xml", "2.xml", "3.xml", "5.xml", "6.xml", "9.xml", "19.xml", "3303.xml"};
+import lombok.Data;
+import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.msa.connectivity.lwm2m.client.LwM2MTestClient;
 
-    public AbstractRpcLwM2MIntegrationObserveTest() {
-        setResources(this.RESOURCES_RPC_MULTIPLE_19);
+@Slf4j
+@Data
+public class Lwm2mDevicesForTest {
+
+    Device lwM2MDeviceTest;
+    LwM2MTestClient lwM2MTestClient;
+    DeviceProfile lwm2mDeviceProfile;
+    public Lwm2mDevicesForTest(DeviceProfile deviceProfile) {
+        this.lwm2mDeviceProfile = deviceProfile;
     }
-
-    @Before
-    public void initTest () throws Exception {
-        awaitObserveReadAll(4, deviceId);
-    }
-
 }

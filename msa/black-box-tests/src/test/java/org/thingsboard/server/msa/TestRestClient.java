@@ -16,6 +16,7 @@
 package org.thingsboard.server.msa;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.restassured.RestAssured;
 import io.restassured.common.mapper.TypeRef;
 import io.restassured.config.HeaderConfig;
@@ -115,6 +116,16 @@ public class TestRestClient {
                 .extract()
                 .as(Device.class);
     }
+
+    public ObjectNode postRpcLwm2mParams(String deviceIdStr, String body) {
+        return given().spec(requestSpec).body(body)
+                .post("/api/plugins/rpc/twoway/" + deviceIdStr)
+                .then()
+                .statusCode(HTTP_OK)
+                .extract()
+                .as(ObjectNode.class);
+    }
+
 
     public Device getDeviceByName(String deviceName) {
         return given().spec(requestSpec).pathParam("deviceName", deviceName)
