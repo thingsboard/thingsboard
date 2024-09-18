@@ -41,7 +41,7 @@ import {
 import {
   LegacySlaveConfig,
   ModbusMasterConfig,
-  ModbusProtocolLabelsMap, ModbusSlave,
+  ModbusProtocolLabelsMap,
   ModbusSlaveInfo,
   ModbusValues,
   SlaveConfig
