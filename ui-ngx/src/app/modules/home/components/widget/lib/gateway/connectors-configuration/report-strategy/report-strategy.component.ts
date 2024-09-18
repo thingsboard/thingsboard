@@ -89,8 +89,8 @@ export class ReportStrategyComponent implements ControlValueAccessor, OnDestroy 
     this.showStrategyControl = this.fb.control(false);
 
     this.reportStrategyFormGroup = this.fb.group({
-      type: [ReportStrategyType.OnReportPeriod, []],
-      reportPeriod: [5000, [Validators.required]],
+      type: [{ value: ReportStrategyType.OnReportPeriod, disabled: true }, []],
+      reportPeriod: [{ value: 5000, disabled: true }, [Validators.required]],
     });
 
     this.observeStrategyFormChange();
@@ -105,6 +105,9 @@ export class ReportStrategyComponent implements ControlValueAccessor, OnDestroy 
   writeValue(reportStrategyConfig: ReportStrategyConfig): void {
     if (this.isExpansionMode) {
       this.showStrategyControl.setValue(!!reportStrategyConfig, {emitEvent: false});
+    }
+    if (reportStrategyConfig) {
+      this.reportStrategyFormGroup.enable({emitEvent: false});
     }
     const { type = ReportStrategyType.OnReportPeriod, reportPeriod = 5000 } = reportStrategyConfig ?? {};
     this.reportStrategyFormGroup.setValue({ type, reportPeriod }, {emitEvent: false});
@@ -157,11 +160,10 @@ export class ReportStrategyComponent implements ControlValueAccessor, OnDestroy 
 
   private onTypeChange(type: ReportStrategyType): void {
     const reportPeriodControl = this.reportStrategyFormGroup.get('reportPeriod');
-    const isDisabled = reportPeriodControl.disabled;
 
-    if (type === ReportStrategyType.OnChange && !isDisabled) {
+    if (type === ReportStrategyType.OnChange) {
       reportPeriodControl.disable({emitEvent: false});
-    } else if (isDisabled) {
+    } else if (!this.isExpansionMode || this.showStrategyControl.value) {
       reportPeriodControl.enable({emitEvent: false});
     }
   }
