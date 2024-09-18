@@ -19,9 +19,9 @@ import {
   FormBuilder,
 } from '@angular/forms';
 import {
+  LegacySlaveConfig,
   ModbusProtocolType,
   ModbusSlaveInfo,
-  SlaveConfig,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
@@ -40,7 +40,7 @@ import {
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-slave-dialog/modbus-slave-dialog.abstract';
 
 @Component({
-  selector: 'tb-modbus-slave-dialog',
+  selector: 'tb-modbus-legacy-slave-dialog',
   templateUrl: './modbus-slave-dialog.component.html',
   changeDetection: ChangeDetectionStrategy.OnPush,
   standalone: true,
@@ -54,19 +54,19 @@ import {
   ],
   styleUrls: ['./modbus-slave-dialog.component.scss'],
 })
-export class ModbusSlaveDialogComponent extends ModbusSlaveDialogAbstract<ModbusSlaveDialogComponent, SlaveConfig> {
+export class ModbusLegacySlaveDialogComponent extends ModbusSlaveDialogAbstract<ModbusLegacySlaveDialogComponent, LegacySlaveConfig> {
 
   constructor(
     protected fb: FormBuilder,
     protected store: Store<AppState>,
     protected router: Router,
     @Inject(MAT_DIALOG_DATA) public data: ModbusSlaveInfo,
-    public dialogRef: MatDialogRef<ModbusSlaveDialogComponent, SlaveConfig>,
+    public dialogRef: MatDialogRef<ModbusLegacySlaveDialogComponent, LegacySlaveConfig>,
   ) {
     super(fb, store, router, data, dialogRef);
   }
 
-  protected override getSlaveResultData(): SlaveConfig {
+  protected override getSlaveResultData(): LegacySlaveConfig {
     const { values, type, serialPort, ...rest } = this.slaveConfigFormGroup.value;
     const slaveResult = { ...rest, type, ...values };
 
@@ -74,14 +74,11 @@ export class ModbusSlaveDialogComponent extends ModbusSlaveDialogAbstract<Modbus
       slaveResult.port = serialPort;
     }
 
-    if (!slaveResult.reportStrategy) {
-      delete slaveResult.reportStrategy;
-    }
-
     return slaveResult;
   }
 
+
   protected override addFieldsToFormGroup(): void {
-    this.slaveConfigFormGroup.addControl('reportStrategy', this.fb.control(null));
+    this.slaveConfigFormGroup.addControl('sendDataOnlyOnChange', this.fb.control(false));
   }
 }

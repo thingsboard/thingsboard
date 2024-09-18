@@ -41,6 +41,9 @@ import { generateSecret } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import {
+  ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -51,12 +54,15 @@ import { Subject } from 'rxjs';
     CommonModule,
     SharedModule,
     GatewayHelpLinkPipe,
+    ReportStrategyComponent,
   ]
 })
 export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   @coerceBoolean()
   @Input() isMaster = false;
+  @coerceBoolean()
+  @Input() hideNewFields = false;
   @Input() panelTitle: string;
   @Input() addKeyTitle: string;
   @Input() deleteKeyTitle: string;
@@ -70,6 +76,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   keysListFormArray: FormArray<UntypedFormGroup>;
   modbusDataTypes = Object.values(ModbusDataType);
   withFunctionCode = true;
+  withReportStrategy = true;
   functionCodesMap = new Map();
   defaultFunctionCodes = [];
 
@@ -87,6 +94,9 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.withFunctionCode = !this.isMaster || (this.keysType !== ModbusValueKey.ATTRIBUTES && this.keysType !== ModbusValueKey.TIMESERIES);
+    this.withReportStrategy = !this.isMaster
+      && (this.keysType === ModbusValueKey.ATTRIBUTES || this.keysType === ModbusValueKey.TIMESERIES)
+      && !this.hideNewFields;
     this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
   }
@@ -108,6 +118,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       address: [null, [Validators.required]],
       objectsCount: [1, [Validators.required]],
       functionCode: [{ value: this.getDefaultFunctionCodes()[0], disabled: !this.withFunctionCode }, [Validators.required]],
+      reportStrategy: [{ value: null, disabled: !this.withReportStrategy }],
       id: [{value: generateSecret(5), disabled: true}],
     });
     this.observeKeyDataType(dataKeyFormGroup);
@@ -128,7 +139,20 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   applyKeysData(): void {
-    this.keysDataApplied.emit(this.keysListFormArray.value);
+    this.keysDataApplied.emit(this.getFormValue());
+  }
+
+  private getFormValue(): ModbusValue[] {
+    return this.withReportStrategy
+      ? this.cleanUpEmptyStrategies(this.keysListFormArray.value)
+      : this.keysListFormArray.value;
+  }
+
+  private cleanUpEmptyStrategies(values: ModbusValue[]): ModbusValue[] {
+    return values.map((key) => {
+      const { reportStrategy, ...updatedKey } = key;
+      return !reportStrategy ? updatedKey : key;
+    });
   }
 
   private prepareKeysFormArray(values: ModbusValue[]): UntypedFormArray {
@@ -148,7 +172,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   private createDataKeyFormGroup(modbusValue: ModbusValue): FormGroup {
-    const { tag, value, type, address, objectsCount, functionCode } = modbusValue;
+    const { tag, value, type, address, objectsCount, functionCode, reportStrategy } = modbusValue;
 
     return this.fb.group({
       tag: [tag, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -158,6 +182,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       objectsCount: [objectsCount, [Validators.required]],
       functionCode: [{ value: functionCode, disabled: !this.withFunctionCode }, [Validators.required]],
       id: [{ value: generateSecret(5), disabled: true }],
+      reportStrategy: [{ value: reportStrategy, disabled: !this.withReportStrategy }],
     });
   }
 

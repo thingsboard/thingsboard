@@ -21,12 +21,13 @@ import {
   Component,
   ElementRef,
   forwardRef,
+  Input,
   OnDestroy,
   OnInit,
   ViewChild,
 } from '@angular/core';
 import { TranslateService } from '@ngx-translate/core';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
 import { Subject } from 'rxjs';
 import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
@@ -38,8 +39,9 @@ import {
   UntypedFormGroup,
 } from '@angular/forms';
 import {
+  LegacySlaveConfig,
   ModbusMasterConfig,
-  ModbusProtocolLabelsMap,
+  ModbusProtocolLabelsMap, ModbusSlave,
   ModbusSlaveInfo,
   ModbusValues,
   SlaveConfig
@@ -49,6 +51,10 @@ import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
 import { ModbusSlaveDialogComponent } from '../modbus-slave-dialog/modbus-slave-dialog.component';
 import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
+import { coerceBoolean } from '@shared/decorators/coercion';
+import {
+  ModbusLegacySlaveDialogComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-slave-dialog/modbus-legacy-slave-dialog.component';
 
 @Component({
   selector: 'tb-modbus-master-table',
@@ -68,6 +74,9 @@ import { TbTableDatasource } from '@shared/components/table/table-datasource.abs
 export class ModbusMasterTableComponent implements ControlValueAccessor, AfterViewInit, OnInit, OnDestroy {
 
   @ViewChild('searchInput') searchInputField: ElementRef;
+
+  @coerceBoolean()
+  @Input() isLegacy = false;
 
   textSearchMode = false;
   dataSource: SlavesDatasource;
@@ -152,14 +161,7 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
     }
     const withIndex = isDefinedAndNotNull(index);
     const value = withIndex ? this.slaves.at(index).value : {};
-    this.dialog.open<ModbusSlaveDialogComponent, ModbusSlaveInfo, ModbusValues>(ModbusSlaveDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        value,
-        buttonTitle: withIndex ? 'action.apply' : 'action.add'
-      }
-    }).afterClosed()
+    this.getSlaveDialog(value, withIndex ? 'action.apply' : 'action.add').afterClosed()
       .pipe(take(1), takeUntil(this.destroy$))
       .subscribe(res => {
         if (res) {
@@ -170,6 +172,33 @@ export class ModbusMasterTableComponent implements ControlValueAccessor, AfterVi
           }
           this.masterFormGroup.markAsDirty();
         }
+    });
+  }
+
+  private getSlaveDialog(
+    value: LegacySlaveConfig | SlaveConfig,
+    buttonTitle: string
+  ): MatDialogRef<ModbusLegacySlaveDialogComponent | ModbusSlaveDialogComponent> {
+    if (this.isLegacy) {
+      return this.dialog.open<ModbusLegacySlaveDialogComponent, ModbusSlaveInfo<LegacySlaveConfig>, ModbusValues>
+      (ModbusLegacySlaveDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          value: value as LegacySlaveConfig,
+          hideNewFields: true,
+          buttonTitle
+        }
+      });
+    }
+    return this.dialog.open<ModbusSlaveDialogComponent, ModbusSlaveInfo, ModbusValues>(ModbusSlaveDialogComponent, {
+      disableClose: true,
+      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+      data: {
+        value: value as SlaveConfig,
+        buttonTitle,
+        hideNewFields: false,
+      }
     });
   }
 

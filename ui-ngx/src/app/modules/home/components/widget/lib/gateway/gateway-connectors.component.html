@@ -299,5 +299,6 @@
         </mat-label>
       </mat-slide-toggle>
     </div>
+    <tb-report-strategy *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && connectorForm.get('configVersion').value === GatewayVersion.Current" formControlName="reportStrategy"/>
   </section>
 </ng-template>
