@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.transport.lwm2m.client;
+package org.thingsboard.server.msa.connectivity.lwm2m.client;
 
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
@@ -27,10 +27,8 @@ import org.eclipse.leshan.core.response.WriteResponse;
 
 import javax.security.auth.Destroyable;
 import java.sql.Time;
-import java.time.Instant;
-import java.time.LocalTime;
-import java.time.ZoneId;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -87,8 +85,7 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
                         fireResourceChange(0);
                         fireResourceChange(2);
                     }
-                    , 1, 1, TimeUnit.SECONDS); // 1 sec
-//                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
+                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
         } catch (Throwable e) {
             log.error("[{}]Throwable", e.toString());
             e.printStackTrace();
@@ -126,7 +123,6 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         switch (resourceId) {
             case 0:
                 if (setData(value, replace)) {
-                    fireResourceChange(resourceId);
                     return WriteResponse.success();
                 } else {
                     WriteResponse.badRequest("Invalidate value ...");
@@ -136,7 +132,7 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
                 fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 2:
-                setTimestamp();
+                setTimestamp(((Date) value.getValue()).getTime());
                 fireResourceChange(resourceId);
                 return WriteResponse.success();
             case 3:
@@ -181,15 +177,12 @@ public class LwM2mBinaryAppDataContainer extends BaseInstanceEnabler implements 
         return this.description;
     }
 
-    private void setTimestamp() {
-        long currentTimeMillis = System.currentTimeMillis();
-        this.timestamp = new Time(currentTimeMillis);
+    private void setTimestamp(long time) {
+        this.timestamp = new Time(time);
     }
 
     private Time getTimestamp() {
-        LocalTime localTime = LocalTime.ofInstant(Instant.now(), ZoneId.systemDefault());
-        this.timestamp = Time.valueOf(localTime);
-        return this.timestamp;
+        return this.timestamp != null ? this.timestamp : new Time(new Date().getTime());
     }
 
     private boolean setData(LwM2mResource value, boolean replace) {

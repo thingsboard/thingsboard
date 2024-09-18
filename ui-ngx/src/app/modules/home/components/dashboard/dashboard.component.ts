@@ -558,6 +558,10 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
+  public trackByWidgetId(_index: number, widget: DashboardWidget) {
+    return widget.widgetId;
+  }
+
   private scrollToWidget(widget: DashboardWidget, delay?: number) {
     const parentElement = this.gridster.el as HTMLElement;
     widget.gridsterItemComponent$().subscribe((gridsterItem) => {

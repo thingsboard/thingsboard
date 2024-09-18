@@ -308,10 +308,10 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
     }
 
     @Override
-    public PageData<AlarmId> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, PageLink pageLink) {
-        log.trace("[{}] Executing findAlarmIdsByAssigneeId [{}]", tenantId, userId);
+    public List<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(TenantId tenantId, UserId userId, long createdTimeOffset, AlarmId idOffset, int limit) {
+        log.trace("[{}] Executing findAlarmIdsByAssigneeId [{}][{}]", tenantId, userId, idOffset);
         validateId(userId, id -> "Incorrect userId " + id);
-        return alarmDao.findAlarmIdsByAssigneeId(tenantId, userId.getId(), pageLink);
+        return alarmDao.findAlarmIdsByAssigneeId(tenantId, userId, createdTimeOffset, idOffset, limit).getData();
     }
 
     @Override
@@ -476,4 +476,5 @@ public class BaseAlarmService extends AbstractCachedEntityService<TenantId, Page
             request.setEndTs(request.getStartTs());
         }
     }
+
 }
