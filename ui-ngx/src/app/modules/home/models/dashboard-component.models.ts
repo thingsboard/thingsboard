@@ -818,7 +818,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     return order;
   }
 
-  updatedXY(x: number, y: number) {
+  updatePosition(x: number, y: number) {
     if (this.widgetLayout) {
       this.widgetLayout.col = x;
       this.widgetLayout.row = y;
