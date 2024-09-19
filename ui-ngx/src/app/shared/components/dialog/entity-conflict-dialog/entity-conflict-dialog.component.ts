@@ -42,8 +42,10 @@ interface EntityConflictDialogData {
 export class EntityConflictDialogComponent {
 
   entityId: EntityId;
+  entityTypeLabel: string;
 
   readonly entityTypeTranslations = entityTypeTranslations;
+  private readonly defaultEntityLabel = 'entity.entity';
 
   constructor(
     @Inject(MAT_DIALOG_DATA) public data: EntityConflictDialogData,
@@ -51,6 +53,9 @@ export class EntityConflictDialogComponent {
     private importExportService: ImportExportService,
   ) {
     this.entityId = (data.entity as EntityInfoData).id ?? (data.entity as RuleChainMetaData).ruleChainId;
+    this.entityTypeLabel = entityTypeTranslations.has(this.entityId.entityType)
+      ? (entityTypeTranslations.get(this.entityId.entityType).type)
+      : this.defaultEntityLabel;
   }
 
   onCancel(): void {

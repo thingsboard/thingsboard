@@ -29,9 +29,7 @@
 <div mat-dialog-content>
   <div class="message-container">
     <span>
-      {{ 'entity.version-conflict.link' | translate:
-    { entityType: (entityTypeTranslations.get(entityId.entityType).type | translate) }
-      }}
+      {{ 'entity.version-conflict.link' | translate:{ entityType: entityTypeLabel | translate } }}
       <a class="cursor-pointer" (click)="onLinkClick($event)">{{ 'entity.link' | translate }}</a>.
     </span>
     <br/>
