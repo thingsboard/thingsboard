@@ -53,6 +53,7 @@ import static org.thingsboard.common.util.JacksonUtil.toJsonNode;
 
 public class LwM2MClientSerDes {
     public static final String VALUE = "value";
+    public static final String PROPERTY_KEY_TS_LATEST_MAP = "keyTsLatestMap";
     private static final RegistrationSerDes registrationSerDes = new RegistrationSerDes();
 
     @SneakyThrows
@@ -80,7 +81,7 @@ public class LwM2MClientSerDes {
         client.getKeyTsLatestMap().forEach((k, v) -> {
             keyTsLatestMap.addProperty(k, v.get());
         });
-        o.add("keyTsLatestMap", keyTsLatestMap);
+        o.add(PROPERTY_KEY_TS_LATEST_MAP, keyTsLatestMap);
 
         o.addProperty("state", client.getState().toString());
 
@@ -275,7 +276,7 @@ public class LwM2MClientSerDes {
             lwM2mClient.getSharedAttributes().put(entry.getKey(), builder.build());
         }
 
-        o.get("keyTsLatestMap").getAsJsonObject().entrySet().forEach(entry -> {
+        o.get(PROPERTY_KEY_TS_LATEST_MAP).getAsJsonObject().entrySet().forEach(entry -> {
             lwM2mClient.getKeyTsLatestMap().put(entry.getKey(), new AtomicLong(entry.getValue().getAsLong()));
         });
 

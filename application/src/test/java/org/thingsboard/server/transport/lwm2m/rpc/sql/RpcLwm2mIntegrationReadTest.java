@@ -60,6 +60,7 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_2;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
+import static org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MClientSerDes.PROPERTY_KEY_TS_LATEST_MAP;
 
 @Slf4j
 public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest {
@@ -254,7 +255,7 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         doAnswer(invocation -> {
             List<TransportProtos.KeyValueProto> kvList = invocation.getArgument(0);
             Map<String, AtomicLong> keyTsLatestMap = invocation.getArgument(2);
-            if (keyTsLatestMap != null && kvList.stream().anyMatch(kv -> "sensorValue".equals(kv.getKey()))) {
+            if (keyTsLatestMap != null && kvList.stream().anyMatch(kv -> RESOURCE_ID_NAME_3303_12_5700.equals(kv.getKey()))) {
                 kvLists.add(kvList);
                 keyTsLatestMaps.add(keyTsLatestMap);
                 latch.countDown();
@@ -284,15 +285,15 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         int ind = 0;
         for (List<KeyValueProto> tt : kvLists) {
             for (KeyValueProto t : tt) {
-                assertEquals("sensorValue", t.getKey());
+                assertEquals(RESOURCE_ID_NAME_3303_12_5700, t.getKey());
                 double expectedD = ind == 0 ? RESOURCE_ID_VALUE_3303_12_5700_1 : RESOURCE_ID_VALUE_3303_12_5700_2;
                 assertTrue(expectedD == t.getDoubleV());
                 ind++;
             }
         }
         // verify ts
-        long ts0 =  keyTsLatestMaps.get(0).get("keyTsLatestMap").longValue();
-        long ts1 =  keyTsLatestMaps.get(1).get("keyTsLatestMap").longValue();
+        long ts0 =  keyTsLatestMaps.get(0).get(PROPERTY_KEY_TS_LATEST_MAP).longValue();
+        long ts1 =  keyTsLatestMaps.get(1).get(PROPERTY_KEY_TS_LATEST_MAP).longValue();
         assertTrue(ts1 > ts0);
         assertTrue((ts1 - ts0) >= RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
     }
