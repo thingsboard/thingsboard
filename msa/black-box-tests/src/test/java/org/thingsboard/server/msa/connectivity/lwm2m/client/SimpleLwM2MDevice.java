@@ -13,8 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.connectivity.lwm2m;
+package org.thingsboard.server.msa.connectivity.lwm2m.client;
 
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.client.resource.BaseInstanceEnabler;
 import org.eclipse.leshan.client.servers.LwM2mServer;
@@ -36,8 +37,11 @@ import java.util.Map;
 import java.util.PrimitiveIterator;
 import java.util.Random;
 import java.util.TimeZone;
+import java.util.concurrent.ScheduledExecutorService;
+import java.util.concurrent.TimeUnit;
 
 @Slf4j
+@Data
 public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyable {
 
 
@@ -46,17 +50,30 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     private static final int max = 50;
     private static final  PrimitiveIterator.OfInt randomIterator = new Random().ints(min,max + 1).iterator();
     private static final List<Integer> supportedResources = Arrays.asList(0, 1, 2, 3, 6, 7, 8, 9, 10, 11, 13, 14, 15, 16, 17, 18, 19, 20, 21);
-
+    private int countReadObserveAfterUpdateRegistrationSuccess_3_0_9;
+    private int countUpdateRegistrationSuccessLast;
+    private LwM2MTestClient lwM2MTestClient;
 
     public SimpleLwM2MDevice() {
     }
 
-
+    public SimpleLwM2MDevice(ScheduledExecutorService executorService) {
+        try {
+            executorService.scheduleWithFixedDelay(() -> {
+                        fireResourceChange(9);
+                    }
+                    , 1, 1, TimeUnit.SECONDS); // 30 MIN
+//                    , 1800000, 1800000, TimeUnit.MILLISECONDS); // 30 MIN
+        } catch (Throwable e) {
+            log.error("[{}]Throwable", e.toString());
+            e.printStackTrace();
+        }
+    }
 
     @Override
     public ReadResponse read(LwM2mServer identity, int resourceId) {
         if (!identity.isSystem())
-            log.info("Read on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
+            log.trace("Read on Device resource /{}/{}/{}", getModel().id, getId(), resourceId);
         switch (resourceId) {
             case 0:
                 return ReadResponse.success(resourceId, getManufacturer());
@@ -155,8 +172,15 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     }
 
     private int getBatteryLevel() {
+        int batteryLevel = randomIterator.nextInt();
+        if (countUpdateRegistrationSuccessLast != this.lwM2MTestClient.getCountUpdateRegistrationSuccess()) {
+            countUpdateRegistrationSuccessLast = this.lwM2MTestClient.getCountUpdateRegistrationSuccess();
+            countReadObserveAfterUpdateRegistrationSuccess_3_0_9 = 0;
+        }
+        countReadObserveAfterUpdateRegistrationSuccess_3_0_9++;
+        this.lwM2MTestClient.setCountReadObserveAfterUpdateRegistrationSuccess(countReadObserveAfterUpdateRegistrationSuccess_3_0_9);
+        log.info("Read on Device resource /{}/{}/9 batteryLevel = {}, cntReadAfterUpdateReg [{}] ", getModel().id, getId(), batteryLevel, countReadObserveAfterUpdateRegistrationSuccess_3_0_9);
         return randomIterator.nextInt();
-//        return 42;
     }
 
     private long getMemoryFree() {
@@ -210,6 +234,10 @@ public class SimpleLwM2MDevice extends BaseInstanceEnabler implements Destroyabl
     @Override
     public List<Integer> getAvailableResourceIds(ObjectModel model) {
         return supportedResources;
+    }
+
+    protected void setLwM2MTestClient(LwM2MTestClient lwM2MTestClient){
+        this.lwM2MTestClient = lwM2MTestClient;
     }
 
     @Override

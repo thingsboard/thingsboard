@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.msa.connectivity.lwm2m;
+package org.thingsboard.server.msa.connectivity.lwm2m.client;
 
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -44,13 +44,14 @@ import org.eclipse.leshan.core.model.LwM2mModel;
 import org.eclipse.leshan.core.model.ObjectLoader;
 import org.eclipse.leshan.core.model.ObjectModel;
 import org.eclipse.leshan.core.model.StaticModel;
+import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mDecoder;
 import org.eclipse.leshan.core.node.codec.DefaultLwM2mEncoder;
 import org.eclipse.leshan.core.request.BootstrapRequest;
 import org.eclipse.leshan.core.request.DeregisterRequest;
 import org.eclipse.leshan.core.request.RegisterRequest;
 import org.eclipse.leshan.core.request.UpdateRequest;
-import org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState;
+import org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -60,6 +61,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -70,33 +72,35 @@ import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
 import static org.eclipse.leshan.core.LwM2mId.SECURITY;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_TIMEOUT;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_FAILURE;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_TIMEOUT;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_EXPECTED_ERROR;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_FAILURE;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_TIMEOUT;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_FAILURE;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_STARTED;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_TIMEOUT;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.resources;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.serverId;
-import static org.thingsboard.server.msa.connectivity.lwm2m.Lwm2mTestHelper.shortServerId;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_FAILURE;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_STARTED;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_SUCCESS;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_BOOTSTRAP_TIMEOUT;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_FAILURE;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_STARTED;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_SUCCESS;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_DEREGISTRATION_TIMEOUT;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_EXPECTED_ERROR;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_INIT;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_FAILURE;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_STARTED;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_SUCCESS;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_REGISTRATION_TIMEOUT;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_FAILURE;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_STARTED;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_SUCCESS;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.LwM2MClientState.ON_UPDATE_TIMEOUT;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.resources;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.serverId;
+import static org.thingsboard.server.msa.connectivity.lwm2m.client.Lwm2mTestHelper.shortServerId;
 
 
 @Slf4j
 @Data
 public class LwM2MTestClient {
 
+    private final ScheduledExecutorService executor;
     private final String endpoint;
     private LeshanClient leshanClient;
     private SimpleLwM2MDevice lwM2MDevice;
@@ -104,7 +108,12 @@ public class LwM2MTestClient {
     private Set<LwM2MClientState> clientStates;
 
     private FwLwM2MDevice fwLwM2MDevice;
+
+    private LwM2mBinaryAppDataContainer lwM2MBinaryAppDataContainer;
     private Map<LwM2MClientState, Integer> clientDtlsCid;
+
+    private int countUpdateRegistrationSuccess;
+    private int countReadObserveAfterUpdateRegistrationSuccess;
 
     public void init(Security security, int clientPort) throws InvalidDDFFileException, IOException {
         assertThat(leshanClient).as("client already initialized").isNull();
@@ -123,9 +132,12 @@ public class LwM2MTestClient {
         lwm2mServer.setId(serverId);
         initializer.setInstancesForObject(SERVER, lwm2mServer);
 
-        initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice());
+        SimpleLwM2MDevice simpleLwM2MDevice = new SimpleLwM2MDevice(executor);
+        initializer.setInstancesForObject(DEVICE, lwM2MDevice = simpleLwM2MDevice);
         initializer.setClassForObject(ACCESS_CONTROL, DummyInstanceEnabler.class);
         initializer.setInstancesForObject(FIRMWARE, fwLwM2MDevice = new FwLwM2MDevice());
+        initializer.setInstancesForObject(BINARY_APP_DATA_CONTAINER, lwM2MBinaryAppDataContainer = new LwM2mBinaryAppDataContainer(executor, 0),
+                new LwM2mBinaryAppDataContainer(executor, 1));
 
         List<LwM2mObjectEnabler> enablers = initializer.createAll();
 
@@ -218,6 +230,7 @@ public class LwM2MTestClient {
         clientDtlsCid = new HashMap<>();
         clientStates.add(ON_INIT);
         leshanClient = builder.build();
+        simpleLwM2MDevice.setLwM2MTestClient(this);
 
         LwM2mClientObserver observer = new LwM2mClientObserver() {
             @Override
@@ -248,7 +261,7 @@ public class LwM2MTestClient {
             @Override
             public void onRegistrationSuccess(LwM2mServer server, RegisterRequest request, String registrationID) {
                 clientStates.add(ON_REGISTRATION_SUCCESS);
-            }
+             }
 
             @Override
             public void onRegistrationFailure(LwM2mServer server, RegisterRequest request, ResponseCode responseCode, String errorMessage, Exception cause) {
@@ -268,6 +281,8 @@ public class LwM2MTestClient {
             @Override
             public void onUpdateSuccess(LwM2mServer server, UpdateRequest request) {
                 clientStates.add(ON_UPDATE_SUCCESS);
+                countUpdateRegistrationSuccess++;
+                countReadObserveAfterUpdateRegistrationSuccess = 0;
             }
 
             @Override
@@ -319,6 +334,12 @@ public class LwM2MTestClient {
             public void objectAdded(LwM2mObjectEnabler object) {
                 log.info("Object {} v{} enabled.", object.getId(), object.getObjectModel().version);
             }
+
+            @Override
+            public void resourceChanged(LwM2mPath... paths) {
+                countReadObserveAfterUpdateRegistrationSuccess++;
+                log.trace("resourceChanged paths {} cntReadObserve {}  cntUpdateSuccess {} .", paths, countReadObserveAfterUpdateRegistrationSuccess, countUpdateRegistrationSuccess);
+            }
         });
 
         leshanClient.start();
@@ -333,6 +354,9 @@ public class LwM2MTestClient {
         }
         if (fwLwM2MDevice != null) {
             fwLwM2MDevice.destroy();
+        }
+        if (lwM2MBinaryAppDataContainer != null) {
+            lwM2MBinaryAppDataContainer.destroy();
         }
     }
 }

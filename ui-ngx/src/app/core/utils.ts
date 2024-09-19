@@ -877,6 +877,15 @@ export const getOS = (): string => {
   return os;
 };
 
+export const isSafari = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!chrome|android).)*safari/i.test(userAgent);
+};
+
+export const isFirefox = (): boolean => {
+  const userAgent = window.navigator.userAgent.toLowerCase();
+  return /^((?!seamonkey).)*firefox/i.test(userAgent);
+};
 
 export const camelCase = (str: string): string => {
   return _.camelCase(str);
