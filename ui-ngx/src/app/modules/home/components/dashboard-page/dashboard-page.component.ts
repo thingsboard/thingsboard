@@ -169,6 +169,8 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   LayoutType = LayoutType;
 
+  private destroyed = false;
+
   private forcePristine = false;
 
   get isDirty(): boolean {
@@ -594,6 +596,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.cleanupDashboardCss();
     if (this.isMobileApp && this.syncStateWithQueryParam) {
       this.mobileService.unregisterToggleLayoutFunction();
@@ -1106,16 +1109,18 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public openDashboardState(state: string, openRightLayout?: boolean) {
-    const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
-    if (layoutsData) {
-      this.dashboardCtx.state = state;
-      this.dashboardCtx.aliasController.dashboardStateChanged();
-      this.isRightLayoutOpened = openRightLayout ? true : false;
-      this.updateLayouts(layoutsData);
+    if (!this.destroyed) {
+      const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
+      if (layoutsData) {
+        this.dashboardCtx.state = state;
+        this.dashboardCtx.aliasController.dashboardStateChanged();
+        this.isRightLayoutOpened = openRightLayout ? true : false;
+        this.updateLayouts(layoutsData);
+      }
+      setTimeout(() => {
+        this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
+      });
     }
-    setTimeout(() => {
-      this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
-    });
   }
 
   private updateLayouts(layoutsData?: DashboardLayoutsInfo) {
