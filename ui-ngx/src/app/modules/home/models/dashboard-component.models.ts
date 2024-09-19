@@ -706,15 +706,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     return Math.floor(res);
   }
 
-  set x(x: number) {
-    if (!this.dashboard.isMobileSize && this.dashboard.isEdit) {
-      if (this.widgetLayout) {
-        this.widgetLayout.col = x;
-      } else {
-        this.widget.col = x;
-      }
-    }
-  }
+  set x(_: number) {}
 
   @enumerable(true)
   get y(): number {
@@ -727,15 +719,7 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
     return Math.floor(res);
   }
 
-  set y(y: number) {
-    if (!this.dashboard.isMobileSize && this.dashboard.isEdit) {
-      if (this.widgetLayout) {
-        this.widgetLayout.row = y;
-      } else {
-        this.widget.row = y;
-      }
-    }
-  }
+  set y(_: number) {}
 
   get preserveAspectRatio(): boolean {
     if (!this.dashboard.isMobileSize && this.widgetLayout) {
@@ -832,5 +816,15 @@ export class DashboardWidget implements GridsterItem, IDashboardWidget {
       }
     }
     return order;
+  }
+
+  updatedXY(x: number, y: number) {
+    if (this.widgetLayout) {
+      this.widgetLayout.col = x;
+      this.widgetLayout.row = y;
+    } else {
+      this.widget.col = x;
+      this.widget.row = y;
+    }
   }
 }
