@@ -165,39 +165,8 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
     }, 0);
   }
 
-  getUserDisplayName(entity: UserEmailInfo) {
-    let displayName = '';
-    if ((entity.firstName && entity.firstName.length > 0) ||
-      (entity.lastName && entity.lastName.length > 0)) {
-      if (entity.firstName) {
-        displayName += entity.firstName;
-      }
-      if (entity.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.lastName;
-      }
-    } else {
-      displayName = entity.email;
-    }
-    return displayName;
-  }
-
   getUserInitials(entity: UserEmailInfo): string {
-    let initials = '';
-    if (entity.firstName && entity.firstName.length ||
-      entity.lastName && entity.lastName.length) {
-      if (entity.firstName) {
-        initials += entity.firstName.charAt(0);
-      }
-      if (entity.lastName) {
-        initials += entity.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.email.charAt(0);
-    }
-    return initials.toUpperCase();
+    return this.utilsService.getUserInitials(entity);
   }
 
   getFullName(entity: UserEmailInfo): string {
@@ -218,7 +187,7 @@ export class AlarmAssigneeSelectPanelComponent implements  OnInit, AfterViewInit
   }
 
   getAvatarBgColor(entity: UserEmailInfo) {
-    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+    return this.utilsService.stringToHslColor(this.utilsService.getUserDisplayName(entity), 40, 60);
   }
 
 }
