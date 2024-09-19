@@ -251,11 +251,11 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       resizable: {
         enabled: this.isEdit && !this.isEditingWidget,
         delayStart: 50,
-        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatedXY(itemComponent.$item.x, itemComponent.$item.y);}
+        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
       },
       draggable: {
         enabled: this.isEdit && !this.isEditingWidget,
-        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatedXY(itemComponent.$item.x, itemComponent.$item.y);}
+        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
       },
       itemChangeCallback: () => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (_, itemComponent) => {
