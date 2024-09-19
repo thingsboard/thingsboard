@@ -58,10 +58,6 @@ public class LwM2mTransportServerHelper {
         context.getTransportService().process(sessionInfo, postAttributeMsg, TransportServiceCallback.EMPTY);
     }
 
-    public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo) {
-        sendParametersOnThingsboardTelemetry(kvList, sessionInfo, null);
-    }
-
     public void sendParametersOnThingsboardTelemetry(List<TransportProtos.KeyValueProto> kvList, SessionInfoProto sessionInfo, @Nullable Map<String, AtomicLong> keyTsLatestMap) {
         TransportProtos.TsKvListProto tsKvList = toTsKvList(kvList, keyTsLatestMap);
 

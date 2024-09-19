@@ -137,7 +137,6 @@ public class LwM2MTestClient {
     private Map<LwM2MClientState, Integer> clientDtlsCid;
     private LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
-
     public void init(Security security, Security securityBs, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
                      LwM2mClientContext clientContext, boolean isWriteAttribute, Integer cIdLength, boolean queueMode,
@@ -159,11 +158,11 @@ public class LwM2MTestClient {
             initializer.setClassForObject(SECURITY, Security.class);
             initializer.setInstancesForObject(SECURITY, instances);
             // SERVER
-           Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
+            Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
             lwm2mServer.setId(serverId);
-            Server  serverBs = new Server(shortServerIdBs0, TimeUnit.MINUTES.toSeconds(60));
+            Server serverBs = new Server(shortServerIdBs0, TimeUnit.MINUTES.toSeconds(60));
             serverBs.setId(serverIdBs);
-             instances = new LwM2mInstanceEnabler[]{serverBs, lwm2mServer};
+            instances = new LwM2mInstanceEnabler[]{serverBs, lwm2mServer};
             initializer.setClassForObject(SERVER, Server.class);
             initializer.setInstancesForObject(SERVER, instances);
         } else if (securityBs != null) {
@@ -177,7 +176,7 @@ public class LwM2MTestClient {
             // SERVER
             Server lwm2mServer = new Server(shortServerId, TimeUnit.MINUTES.toSeconds(60));
             lwm2mServer.setId(serverId);
-            initializer.setInstancesForObject(SERVER, lwm2mServer );
+            initializer.setInstancesForObject(SERVER, lwm2mServer);
         }
 
         initializer.setInstancesForObject(DEVICE, lwM2MDevice = new SimpleLwM2MDevice(executor));
@@ -239,11 +238,11 @@ public class LwM2MTestClient {
         boolean supportDeprecatedCiphers = false;
         clientCoapConfig.set(DTLS_RECOMMENDED_CIPHER_SUITES_ONLY, !supportDeprecatedCiphers);
 
-        if (cIdLength!= null) {
+        if (cIdLength != null) {
             setDtlsConnectorConfigCidLength(clientCoapConfig, cIdLength);
         }
 
-        if (cIdLength!= null) {
+        if (cIdLength != null) {
             setDtlsConnectorConfigCidLength(clientCoapConfig, cIdLength);
         }
 
@@ -262,12 +261,12 @@ public class LwM2MTestClient {
 
         // Configure Registration Engine
         DefaultRegistrationEngineFactory engineFactory = new DefaultRegistrationEngineFactory();
-            // old
+        // old
         /**
          * Force reconnection/rehandshake on registration update.
          */
         int comPeriodInSec = 5;
-        if (comPeriodInSec > 0)   engineFactory.setCommunicationPeriod(comPeriodInSec * 1000);
+        if (comPeriodInSec > 0) engineFactory.setCommunicationPeriod(comPeriodInSec * 1000);
 //        engineFactory.setCommunicationPeriod(5000); // old
         /**
          * By default client will try to resume DTLS session by using abbreviated Handshake. This option force to always do a full handshake."
@@ -288,7 +287,7 @@ public class LwM2MTestClient {
         builder.setDataSenders(new ManualDataSender());
         builder.setRegistrationEngineFactory(engineFactory);
         Map<ContentFormat, NodeDecoder> decoders = new HashMap<>();
-        Map<ContentFormat, NodeEncoder> encoders =  new HashMap<>();
+        Map<ContentFormat, NodeEncoder> encoders = new HashMap<>();
         if (supportFormatOnly_SenMLJSON_SenMLCBOR) {
 //                decoders.put(ContentFormat.OPAQUE, new LwM2mNodeOpaqueDecoder());
             decoders.put(ContentFormat.CBOR, new LwM2mNodeCborDecoder());

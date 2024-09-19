@@ -117,6 +117,7 @@ import java.util.UUID;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
@@ -382,7 +383,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                         this.updateObjectInstanceResourceValue(lwM2MClient, lwM2mObjectInstance, path.toString(), 0);
                     } else if (node instanceof LwM2mResource) {
                         LwM2mResource lwM2mResource = (LwM2mResource) node;
-                        this.updateResourcesValue(lwM2MClient, lwM2mResource, path.toString(), Mode.UPDATE, 0);
+                        this.updateResourcesValueWithTs(lwM2MClient, lwM2mResource, path.toString(), Mode.UPDATE, ts);
                     }
                 }
                 tryAwake(lwM2MClient);
@@ -612,10 +613,19 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 otaService.onCurrentSoftwareResultUpdate(lwM2MClient, (Long) lwM2mResource.getValue());
             }
             if (ResponseCode.BAD_REQUEST.getCode() > code) {
-                this.updateAttrTelemetry(registration, path);
+                this.updateAttrTelemetry(registration, path, null);
             }
         } else {
             log.error("Fail update path [{}] Resource [{}]", path, lwM2mResource);
+        }
+    }
+    private void updateResourcesValueWithTs(LwM2mClient lwM2MClient, LwM2mResource lwM2mResource, String stringPath, Mode mode, Instant ts) {
+        Registration registration = lwM2MClient.getRegistration();
+        String path = convertObjectIdToVersionedId(stringPath, lwM2MClient);
+        if (lwM2MClient.saveResourceValue(path, lwM2mResource, modelProvider, mode)) {
+            this.updateAttrTelemetry(registration, path, ts);
+        } else {
+            log.error("Fail update path [{}] Resource [{}] with ts.", path, lwM2mResource);
         }
     }
 
@@ -629,7 +639,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
      *
      * @param registration - Registration LwM2M Client
      */
-    public void updateAttrTelemetry(Registration registration, String path) {
+    public void updateAttrTelemetry(Registration registration, String path, Instant ts) {
         log.trace("UpdateAttrTelemetry paths [{}]", path);
         try {
             ResultsAddKeyValueProto results = this.getParametersFromProfile(registration, path);
@@ -640,8 +650,9 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                     this.helper.sendParametersOnThingsboardAttribute(results.getResultAttributes(), sessionInfo);
                 }
                 if (results.getResultTelemetries().size() > 0) {
-                    log.trace("UpdateTelemetry paths [{}] value [{}]", path, results.getResultTelemetries().get(0).toString());
-                    this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo);
+                    log.trace("UpdateTelemetry paths [{}] value [{}] ts [{}]", path, results.getResultTelemetries().get(0).toString(), ts == null ? "null" : ts.toEpochMilli());
+                    Map keyTsLatestMap = ts == null ? null : new ConcurrentHashMap<>(Map.of("keyTsLatestMap", new AtomicLong(ts.toEpochMilli())));
+                    this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo, keyTsLatestMap);
                 }
             }
         } catch (Exception e) {
