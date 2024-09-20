@@ -26,7 +26,7 @@
     </strong>
     <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
          *ngFor="let argumentFormGroup of rpcParametersFormGroup.get('arguments')['controls']; let i = index" [formGroup]="argumentFormGroup">
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center type-container">
+      <div class="tb-form-row column-xs type-container" fxLayoutAlign="space-between center">
         <div class="tb-required" translate>gateway.type</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
@@ -47,7 +47,7 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row column-xs" fxLayoutAlign="space-between center value-container">
+      <div class="tb-form-row column-xs value-container" fxLayoutAlign="space-between center">
         <div class="tb-required" translate>gateway.value</div>
         <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
           <ng-container [ngSwitch]="argumentFormGroup.get('type').value">
