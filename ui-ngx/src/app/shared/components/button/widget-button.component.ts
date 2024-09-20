@@ -36,7 +36,6 @@ import {
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { ComponentStyle, iconStyle, validateCssSize } from '@shared/models/widget-settings.models';
 import { UtilsService } from '@core/services/utils.service';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { Observable, of } from 'rxjs';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull, isNotEmptyStr } from '@core/utils';

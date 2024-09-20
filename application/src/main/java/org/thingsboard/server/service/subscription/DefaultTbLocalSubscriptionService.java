@@ -101,9 +101,9 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     private ExecutorService tsCallBackExecutor;
     private ScheduledExecutorService staleSessionCleanupExecutor;
 
-    @Value("${server.ws.rate_limits.subscriptions_per_tenant:2000:60}")
+    @Value("${server.ws.rate_limits.subscriptions_per_tenant:}")
     private String subscriptionsPerTenantRateLimit;
-    @Value("${server.ws.rate_limits.subscriptions_per_user:500:60}")
+    @Value("${server.ws.rate_limits.subscriptions_per_user:}")
     private String subscriptionsPerUserRateLimit;
 
     public DefaultTbLocalSubscriptionService(AttributesService attrService, TimeseriesService tsService, TbServiceInfoProvider serviceInfoProvider,
@@ -334,7 +334,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void onTimeSeriesUpdate(UUID entityId, List<TsKvEntry> data, TbCallback callback) {
-        entityUpdates.get(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
+        getEntityUpdatesInfo(entityId).timeSeriesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.TIMESERIES.equals(sub.getType()),
                 s -> {
@@ -371,7 +371,7 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
     }
 
     private void onAttributesUpdate(UUID entityId, String scope, List<TsKvEntry> data, TbCallback callback) {
-        entityUpdates.get(entityId).attributesUpdateTs = System.currentTimeMillis();
+        getEntityUpdatesInfo(entityId).attributesUpdateTs = System.currentTimeMillis();
         processSubscriptionData(entityId,
                 sub -> TbSubscriptionType.ATTRIBUTES.equals(sub.getType()),
                 s -> {
@@ -637,6 +637,10 @@ public class DefaultTbLocalSubscriptionService implements TbLocalSubscriptionSer
             webSocketService.sendError(sessionRef, subscription.getSubscriptionId(), SubscriptionErrorCode.BAD_REQUEST, message);
         }
         throw new TbRateLimitsException(message);
+    }
+
+    private TbEntityUpdatesInfo getEntityUpdatesInfo(UUID entityId) {
+        return entityUpdates.computeIfAbsent(entityId, id -> new TbEntityUpdatesInfo(0));
     }
 
 }

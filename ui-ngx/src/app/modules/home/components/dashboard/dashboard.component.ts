@@ -53,7 +53,6 @@ import { Widget, WidgetPosition } from '@app/shared/models/widget.models';
 import { MatMenuTrigger } from '@angular/material/menu';
 import { SafeStyle } from '@angular/platform-browser';
 import { distinct, take } from 'rxjs/operators';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetComponentAction, WidgetComponentActionType } from '@home/components/widget/widget-container.component';
 import { TbPopoverComponent } from '@shared/components/popover.component';
@@ -249,8 +248,15 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemCols: 8,
       defaultItemRows: 6,
       displayGrid: this.displayGrid,
-      resizable: {enabled: this.isEdit && !this.isEditingWidget, delayStart: 50},
-      draggable: {enabled: this.isEdit && !this.isEditingWidget},
+      resizable: {
+        enabled: this.isEdit && !this.isEditingWidget,
+        delayStart: 50,
+        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
+      },
+      draggable: {
+        enabled: this.isEdit && !this.isEditingWidget,
+        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
+      },
       itemChangeCallback: () => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (_, itemComponent) => {
         (itemComponent.item as DashboardWidget).gridsterItemComponent = itemComponent;

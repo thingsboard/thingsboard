@@ -28,7 +28,7 @@ public abstract class AbstractRpcLwM2MIntegrationObserveTest extends AbstractRpc
 
     @Before
     public void initTest () throws Exception {
-        awaitObserveReadAll(2, deviceId);
+        awaitObserveReadAll(4, deviceId);
     }
 
 }

@@ -21,8 +21,8 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
 
-import java.util.HashMap;
-import java.util.Map;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.ConcurrentMap;
 
 @Service
 public class TopicService {
@@ -30,9 +30,9 @@ public class TopicService {
     @Value("${queue.prefix:}")
     private String prefix;
 
-    private final Map<String, TopicPartitionInfo> tbCoreNotificationTopics = new HashMap<>();
-    private final Map<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new HashMap<>();
-    private final Map<String, TopicPartitionInfo> tbEdgeNotificationTopics = new HashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
 
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.

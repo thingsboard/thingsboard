@@ -60,7 +60,6 @@ import {
   SaveWidgetTypeAsDialogResult
 } from '@home/pages/widget/save-widget-type-as-dialog.component';
 import { forkJoin, mergeMap, of, Subscription, throwError } from 'rxjs';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { widgetEditorCompleter } from '@home/pages/widget/widget-editor.models';
 import { Observable } from 'rxjs/internal/Observable';
 import { catchError, map, tap } from 'rxjs/operators';

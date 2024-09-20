@@ -37,13 +37,10 @@ import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.UserId;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.common.data.page.SortOrder;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 @Service
 @AllArgsConstructor
@@ -176,20 +173,20 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
     }
 
     @Override
-    public List<AlarmId> unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, long unassignTs) {
-        List<AlarmId> totalAlarmIds = new ArrayList<>();
-        PageLink pageLink = new PageLink(100, 0, null, new SortOrder("id", SortOrder.Direction.ASC));
-        while (true) {
-            PageData<AlarmId> pageData = alarmService.findAlarmIdsByAssigneeId(tenantId, userId, pageLink);
-            List<AlarmId> alarmIds = pageData.getData();
-            if (alarmIds.isEmpty()) {
-                break;
+    public void unassignDeletedUserAlarms(TenantId tenantId, UserId userId, String userTitle, List<UUID> alarms, long unassignTs) {
+        for (UUID alarmId : alarms) {
+            log.trace("[{}] Unassigning alarm {} from user {}", tenantId, alarmId, userId);
+            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, new AlarmId(alarmId), unassignTs);
+            if (!result.isSuccessful()) {
+                log.error("[{}] Cannot unassign alarm {} from user {}", tenantId, alarmId, userId);
+                continue;
             }
-            processAlarmsUnassignment(tenantId, userId, userTitle, alarmIds, unassignTs);
-            totalAlarmIds.addAll(alarmIds);
-            pageLink = pageLink.nextPageLink();
+            if (result.isModified()) {
+                String comment = String.format("Alarm was unassigned because user %s - was deleted", userTitle);
+                addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
+                logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
+            }
         }
-        return totalAlarmIds;
     }
 
     @Override
@@ -202,22 +199,6 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
 
     private static long getOrDefault(long ts) {
         return ts > 0 ? ts : System.currentTimeMillis();
-    }
-
-    private void processAlarmsUnassignment(TenantId tenantId, UserId userId, String userTitle, List<AlarmId> alarmIds, long unassignTs) {
-        for (AlarmId alarmId : alarmIds) {
-            log.trace("[{}] Unassigning alarm {} userId {}", tenantId, alarmId, userId);
-            AlarmApiCallResult result = alarmSubscriptionService.unassignAlarm(tenantId, alarmId, unassignTs);
-            if (!result.isSuccessful()) {
-                log.error("[{}] Cannot unassign alarm {} userId {}", tenantId, alarmId, userId);
-                continue;
-            }
-            if (result.isModified()) {
-                String comment = String.format("Alarm was unassigned because user %s - was deleted", userTitle);
-                addSystemAlarmComment(result.getAlarm(), null, "ASSIGN", comment);
-                logEntityActionService.logEntityAction(result.getAlarm().getTenantId(), result.getAlarm().getOriginator(), result.getAlarm(), result.getAlarm().getCustomerId(), ActionType.ALARM_UNASSIGNED, null);
-            }
-        }
     }
 
     private void addSystemAlarmComment(Alarm alarm, User user, String subType, String commentText) {
@@ -245,4 +226,5 @@ public class DefaultTbAlarmService extends AbstractTbEntityService implements Tb
             log.error("Failed to save alarm comment", e);
         }
     }
+
 }

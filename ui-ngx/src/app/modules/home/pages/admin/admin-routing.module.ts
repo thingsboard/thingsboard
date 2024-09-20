@@ -15,14 +15,22 @@
 ///
 
 import { inject, NgModule } from '@angular/core';
-import { ActivatedRouteSnapshot, Resolve, ResolveFn, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
+import {
+  ActivatedRouteSnapshot,
+  Resolve,
+  ResolveFn,
+  Router,
+  RouterModule,
+  RouterStateSnapshot,
+  Routes
+} from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { Authority } from '@shared/models/authority.enum';
 import { GeneralSettingsComponent } from '@modules/home/pages/admin/general-settings.component';
 import { SecuritySettingsComponent } from '@modules/home/pages/admin/security-settings.component';
-import { forkJoin } from 'rxjs';
+import { forkJoin, of } from 'rxjs';
 import { SmsProviderComponent } from '@home/pages/admin/sms-provider.component';
 import { HomeSettingsComponent } from '@home/pages/admin/home-settings.component';
 import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
@@ -45,17 +53,24 @@ import { ScadaSymbolComponent } from '@home/pages/scada-symbol/scada-symbol.comp
 import { ImageService } from '@core/http/image.service';
 import { ScadaSymbolData } from '@home/pages/scada-symbol/scada-symbol-editor.models';
 import { MenuId } from '@core/services/menu.models';
+import { catchError } from 'rxjs/operators';
 
 export const scadaSymbolResolver: ResolveFn<ScadaSymbolData> =
   (route: ActivatedRouteSnapshot,
    state: RouterStateSnapshot,
+   router = inject(Router),
    imageService = inject(ImageService)) => {
     const type: ImageResourceType = route.params.type;
     const key = decodeURIComponent(route.params.key);
     return forkJoin({
       imageResource: imageService.getImageInfo(type, key),
       scadaSymbolContent: imageService.getImageString(`${IMAGES_URL_PREFIX}/${type}/${encodeURIComponent(key)}`)
-    });
+    }).pipe(
+      catchError(() => {
+        router.navigate(['/resources/scada-symbols']);
+        return of(null);
+      })
+    );
 };
 
 export const scadaSymbolBreadcumbLabelFunction: BreadCrumbLabelFunction<ScadaSymbolComponent>

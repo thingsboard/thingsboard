@@ -18,11 +18,11 @@ import {
   AfterViewInit,
   ChangeDetectionStrategy,
   ChangeDetectorRef,
-  Component,
+  Component, ComponentRef,
   ElementRef,
   EventEmitter,
   HostBinding,
-  Input, OnChanges,
+  Input, NgZone, OnChanges,
   OnDestroy,
   OnInit,
   Output,
@@ -134,7 +134,8 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
               private renderer: Renderer2,
               private container: ViewContainerRef,
               private dashboardUtils: DashboardUtilsService,
-              private utils: UtilsService) {
+              private utils: UtilsService,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -173,7 +174,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     if (this.cssClass) {
       this.utils.clearCssElement(this.renderer, this.cssClass);
     }
-    if (this.editWidgetActionsTooltip) {
+    if (this.editWidgetActionsTooltip && !this.editWidgetActionsTooltip.status().destroyed) {
       this.editWidgetActionsTooltip.destroy();
     }
   }
@@ -255,6 +256,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   private initEditWidgetActionTooltip(parent: HTMLElement) {
+    let componentRef: ComponentRef<EditWidgetActionsTooltipComponent>;
     from(import('tooltipster')).subscribe(() => {
       $(this.gridsterItem.el).tooltipster({
         parent: $(parent),
@@ -305,24 +307,26 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         }
       });
       this.editWidgetActionsTooltip = $(this.gridsterItem.el).tooltipster('instance');
-      const componentRef = this.container.createComponent(EditWidgetActionsTooltipComponent);
-      componentRef.instance.container = this;
-      componentRef.instance.viewInited.subscribe(() => {
-        if (this.editWidgetActionsTooltip.status().open) {
-          this.editWidgetActionsTooltip.reposition();
-        }
+      this.zone.run(() => {
+        componentRef = this.container.createComponent(EditWidgetActionsTooltipComponent);
+        componentRef.instance.container = this;
+        componentRef.instance.viewInited.subscribe(() => {
+          if (this.editWidgetActionsTooltip.status().open) {
+            this.editWidgetActionsTooltip.reposition();
+          }
+        });
+        this.editWidgetActionsTooltip.on('destroyed', () => {
+          componentRef.destroy();
+        });
+        const parentElement = componentRef.instance.element.nativeElement;
+        const content = parentElement.firstChild;
+        parentElement.removeChild(content);
+        parentElement.style.display = 'none';
+        this.editWidgetActionsTooltip.content(content);
+        this.updateEditWidgetActionsTooltipState();
+        this.widget.onSelected((selected) =>
+          this.updateEditWidgetActionsTooltipSelectedState(selected));
       });
-      this.editWidgetActionsTooltip.on('destroyed', () => {
-        componentRef.destroy();
-      });
-      const parentElement = componentRef.instance.element.nativeElement;
-      const content = parentElement.firstChild;
-      parentElement.removeChild(content);
-      parentElement.style.display = 'none';
-      this.editWidgetActionsTooltip.content(content);
-      this.updateEditWidgetActionsTooltipState();
-      this.widget.onSelected((selected) =>
-        this.updateEditWidgetActionsTooltipSelectedState(selected));
     });
   }
 

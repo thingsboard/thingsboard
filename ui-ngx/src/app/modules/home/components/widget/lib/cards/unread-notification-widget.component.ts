@@ -30,7 +30,6 @@ import {
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
 import { isDefined } from '@core/utils';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { BehaviorSubject, fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';

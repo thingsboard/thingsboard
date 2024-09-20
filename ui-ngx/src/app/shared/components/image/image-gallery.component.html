@@ -22,7 +22,10 @@
                  [fxShow]="!textSearchMode && (mode === 'grid' || dataSource?.selection.isEmpty())" [ngClass.lt-lg]="{'multi-row': !isSysAdmin}">
       <div fxFlex fxLayout="row" fxLayoutAlign="start center">
         <div class="mat-toolbar-tools">
-          <span fxHide fxShow.gt-sm class="tb-images-title">{{ (isScada ? 'scada.symbols' : 'image.gallery') | translate }}</span>
+          <div fxHide fxShow.gt-sm class="tb-images-title">
+            <div tbTruncateWithTooltip>{{ (isScada ? 'scada.symbols' : 'image.gallery') | translate }}</div>
+            <div *ngIf="isScada" tb-help="scada"></div>
+          </div>
           <div class="tb-images-view-type-toolbar"
                fxLayout="row"
                fxLayoutAlign="start center">
@@ -72,7 +75,7 @@
                     matTooltipPosition="above">
               <tb-icon>mdi:file-import</tb-icon>
             </button>
-            <button fxHide fxShow.lt-lg
+            <button [fxHide]="!(dialogMode && isScada)" fxShow.lt-lg
                     [disabled]="isLoading$ | async"
                     mat-icon-button
                     color="primary"
@@ -82,7 +85,7 @@
               <mat-icon>add</mat-icon>
             </button>
           </section>
-          <button fxHide fxShow.gt-md
+          <button fxHide [fxShow.gt-md]="!(dialogMode && isScada)"
                   [disabled]="isLoading$ | async"
                   mat-flat-button
                   color="primary"

@@ -13,69 +13,26 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-@import "../../../../scss/constants";
 
 :host {
-  display: flex;
-  flex-direction: column;
-  max-height: 100%;
-  max-width: 100%;
-  background-color: #fff;
+  width: 450px;
 
-  .mat-content {
-    overflow: hidden;
-  }
+  .tb-timewindow-form {
+    display: flex;
+    flex-direction: column;
+    max-height: 100%;
 
-  .mat-padding {
-    padding: 0 16px;
-  }
-
-  .hide-label {
-    margin-bottom: 5px;
-    margin-right: 5px;
-  }
-
-  tb-timeinterval[ng-reflect-fx-show="true"] {
-    margin-bottom: -16px;
-  }
-
-  .limit-slider-container {
-    .limit-slider-value {
-      margin-left: 16px;
-      min-width: 25px;
-      max-width: 100px;
+    &-header {
+      flex-direction: row;
+      align-items: center;
     }
-    mat-form-field input[type=number] {
-      text-align: center;
-    }
-  }
 
-  @media #{$mat-gt-sm} {
-    .history-time-input {
-      min-width: 364px;
+    &-type-options {
+      flex: 1;
     }
-    .limit-slider-container {
-      > label {
-        margin-right: 16px;
-        width: min-content;
-        max-width: 40%;
-      }
-    }
-  }
 
-}
-
-:host ::ng-deep {
-  .mat-mdc-radio-button {
-    display: block;
-    .mdc-form-field {
-      align-items: start;
-      > label {
-        padding-top: 10px;
-      }
+    &-settings-btn {
+      color: rgba(0, 0, 0, 0.54);
     }
-  }
-  .mat-mdc-tab-group:not(.tb-headless) {
-    height: 100%;
   }
 }

@@ -113,22 +113,22 @@ import { GatewayHelpLinkPipe } from '@home/components/widget/lib/gateway/pipes/g
 import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import {
   BrokerConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/broker-config-control/broker-config-control.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/broker-config-control/broker-config-control.component';
 import {
   WorkersConfigControlComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/workers-config-control/workers-config-control.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/workers-config-control/workers-config-control.component';
 import {
   OpcServerConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/opc-server-config/opc-server-config.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-server-config/opc-server-config.component';
 import {
   MqttBasicConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt-basic-config/mqtt-basic-config.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-basic-config.component';
 import {
   MappingTableComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
 import {
   OpcUaBasicConfigComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/opc-ua-basic-config/opc-ua-basic-config.component';
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-ua-basic-config/opc-ua-basic-config.component';
 import {
   ModbusBasicConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.component';
@@ -146,11 +146,20 @@ import {
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-rpc-parameters/modbus-rpc-parameters.component';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 import {
+  MqttLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-legacy-basic-config.component';
+import {
   GatewayBasicConfigurationComponent
 } from '@home/components/widget/lib/gateway/configuration/basic/gateway-basic-configuration.component';
 import {
     GatewayAdvancedConfigurationComponent
 } from '@home/components/widget/lib/gateway/configuration/advanced/gateway-advanced-configuration.component';
+import {
+    OpcUaLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-ua-basic-config/opc-ua-legacy-basic-config.component';
+import {
+  ModbusLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-legacy-basic-config.component';
 
 @NgModule({
   declarations: [
@@ -239,8 +248,11 @@ import {
     ModbusBasicConfigComponent,
     EllipsisChipListDirective,
     ModbusRpcParametersComponent,
+    MqttLegacyBasicConfigComponent,
     GatewayBasicConfigurationComponent,
     GatewayAdvancedConfigurationComponent,
+    OpcUaLegacyBasicConfigComponent,
+    ModbusLegacyBasicConfigComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,

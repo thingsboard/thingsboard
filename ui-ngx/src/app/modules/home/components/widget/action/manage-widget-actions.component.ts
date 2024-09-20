@@ -52,7 +52,6 @@ import {
   WidgetActionDialogData
 } from '@home/components/widget/action/widget-action-dialog.component';
 import { deepClone } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { CdkDragDrop, moveItemInArray } from '@angular/cdk/drag-drop';
 

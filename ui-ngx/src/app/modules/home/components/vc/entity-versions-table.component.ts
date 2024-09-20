@@ -41,7 +41,6 @@ import { EntityVersion, VersionCreationResult, VersionLoadResult } from '@shared
 import { EntitiesVersionControlService } from '@core/http/entities-version-control.service';
 import { MatPaginator } from '@angular/material/paginator';
 import { MatSort } from '@angular/material/sort';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { BranchAutocompleteComponent } from '@shared/components/vc/branch-autocomplete.component';

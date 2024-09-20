@@ -45,7 +45,6 @@ import {
   updateDarkMode,
   updateXAxisTimeWindow
 } from '@home/components/widget/lib/chart/time-series-chart.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import {
   calculateAxisSize,
   ECharts,
