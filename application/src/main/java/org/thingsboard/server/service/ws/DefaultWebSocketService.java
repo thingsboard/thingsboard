@@ -28,7 +28,7 @@ import jakarta.annotation.PreDestroy;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.collections.CollectionUtils;
+import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
@@ -167,6 +167,14 @@ public class DefaultWebSocketService implements WebSocketService {
 
     private Map<WsCmdType, WsCmdHandler<? extends WsCmd>> cmdsHandlers;
 
+    private final TbCoreDeviceRpcService deviceRpcService;
+
+    @Value("${server.rest.server_side_rpc.min_timeout:5000}")
+    private final long rpcMinTimeout;
+
+    @Value("${server.rest.server_side_rpc.default_timeout:10000}")
+    private final long rpcDefaultTimeout;
+
     @PostConstruct
     public void init() {
         serviceId = serviceInfoProvider.getServiceId();
@@ -176,7 +184,6 @@ public class DefaultWebSocketService implements WebSocketService {
         pingExecutor.scheduleWithFixedDelay(this::sendPing, pingTimeout / NUMBER_OF_PING_ATTEMPTS, pingTimeout / NUMBER_OF_PING_ATTEMPTS, TimeUnit.MILLISECONDS);
 
         cmdsHandlers = new EnumMap<>(WsCmdType.class);
-        cmdsHandlers.put(WsCmdType.RPC, newCmdHandler(this::handleWsRpcCmd));
         cmdsHandlers.put(WsCmdType.ATTRIBUTES, newCmdHandler(this::handleWsAttributesSubscriptionCmd));
         cmdsHandlers.put(WsCmdType.TIMESERIES, newCmdHandler(this::handleWsTimeseriesSubscriptionCmd));
         cmdsHandlers.put(WsCmdType.TIMESERIES_HISTORY, newCmdHandler(this::handleWsHistoryCmd));
@@ -193,6 +200,7 @@ public class DefaultWebSocketService implements WebSocketService {
         cmdsHandlers.put(WsCmdType.MARK_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAsReadCmd));
         cmdsHandlers.put(WsCmdType.MARK_ALL_NOTIFICATIONS_AS_READ, newCmdHandler(notificationCmdsHandler::handleMarkAllAsReadCmd));
         cmdsHandlers.put(WsCmdType.NOTIFICATIONS_UNSUBSCRIBE, newCmdHandler(notificationCmdsHandler::handleUnsubCmd));
+        cmdsHandlers.put(WsCmdType.RPC, newCmdHandler(this::handleWsRpcCmd));
     }
 
     @PreDestroy
@@ -427,15 +435,6 @@ public class DefaultWebSocketService implements WebSocketService {
         return true;
     }
 
-    @Autowired
-    protected TbCoreDeviceRpcService deviceRpcService;
-
-    @Value("${server.rest.server_side_rpc.min_timeout:5000}")
-    protected long minTimeout;
-
-    @Value("${server.rest.server_side_rpc.default_timeout:10000}")
-    protected long defaultTimeout;
-
     private void handleWsRpcCmd(WebSocketSessionRef sessionRef, RpcCmd cmd) {
         if (!validateCmd(sessionRef, cmd, () -> {
             if (cmd.getEntityId() == null || cmd.getEntityId().isEmpty() || cmd.getEntityType() == null || cmd.getEntityType().isEmpty()) {
@@ -452,8 +451,8 @@ public class DefaultWebSocketService implements WebSocketService {
         TenantId tenantId = currentUser.getTenantId();
         DeviceId deviceId = DeviceId.fromString(cmd.getEntityId());
         boolean oneWay = cmd.isOneway();
-        long timeout = cmd.getTimeout() > 0 ? cmd.getTimeout() : defaultTimeout;
-        long expTime = cmd.getExpTime() > 0 ? cmd.getExpTime() : System.currentTimeMillis() + Math.max(minTimeout, timeout);
+        long timeout = cmd.getTimeout() > 0 ? cmd.getTimeout() : rpcDefaultTimeout;
+        long expTime = cmd.getExpTime() > 0 ? cmd.getExpTime() : System.currentTimeMillis() + Math.max(rpcMinTimeout, timeout);
         JsonNode rpcRequestBody = JacksonUtil.toJsonNode(cmd.getRpcjson());
         ToDeviceRpcRequestBody body = new ToDeviceRpcRequestBody(rpcRequestBody.get("method").asText(), JacksonUtil.toString(rpcRequestBody.get("params")));
         boolean persisted = cmd.isPersisted();

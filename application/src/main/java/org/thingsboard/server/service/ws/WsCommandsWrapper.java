@@ -50,7 +50,6 @@ public class WsCommandsWrapper {
 
     @JsonTypeInfo(use = JsonTypeInfo.Id.NAME, property = "type")
     @JsonSubTypes({
-            @Type(name = "RPC", value = RpcCmd.class),
             @Type(name = "ATTRIBUTES", value = AttributesSubscriptionCmd.class),
             @Type(name = "TIMESERIES", value = TimeseriesSubscriptionCmd.class),
             @Type(name = "TIMESERIES_HISTORY", value = GetHistoryCmd.class),
@@ -67,6 +66,7 @@ public class WsCommandsWrapper {
             @Type(name = "ENTITY_DATA_UNSUBSCRIBE", value = EntityDataUnsubscribeCmd.class),
             @Type(name = "ENTITY_COUNT_UNSUBSCRIBE", value = EntityCountUnsubscribeCmd.class),
             @Type(name = "NOTIFICATIONS_UNSUBSCRIBE", value = NotificationsUnsubCmd.class),
+            @Type(name = "RPC", value = RpcCmd.class),
     })
     private List<WsCmd> cmds;
 

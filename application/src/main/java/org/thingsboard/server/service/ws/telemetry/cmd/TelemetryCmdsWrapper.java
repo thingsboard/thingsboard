@@ -44,8 +44,6 @@ import java.util.stream.Stream;
 @Deprecated
 public class TelemetryCmdsWrapper {
 
-    private List<RpcCmd> rpcCmds;
-
     private List<AttributesSubscriptionCmd> attrSubCmds;
 
     private List<TimeseriesSubscriptionCmd> tsSubCmds;
@@ -67,6 +65,8 @@ public class TelemetryCmdsWrapper {
     private List<AlarmCountCmd> alarmCountCmds;
 
     private List<AlarmCountUnsubscribeCmd> alarmCountUnsubscribeCmds;
+
+    private List<RpcCmd> rpcCmds;
 
     @JsonIgnore
     public WsCommandsWrapper toCommonCmdsWrapper() {

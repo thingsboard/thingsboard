@@ -18,8 +18,6 @@ package org.thingsboard.server.service.ws;
 public enum WsCmdType {
     AUTH,
 
-    RPC,
-
     ATTRIBUTES,
     TIMESERIES,
     TIMESERIES_HISTORY,
@@ -37,5 +35,7 @@ public enum WsCmdType {
     ALARM_COUNT_UNSUBSCRIBE,
     ENTITY_DATA_UNSUBSCRIBE,
     ENTITY_COUNT_UNSUBSCRIBE,
-    NOTIFICATIONS_UNSUBSCRIBE
+    NOTIFICATIONS_UNSUBSCRIBE,
+
+    RPC,
 }
