@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+
 package org.thingsboard.server.dao.sqlts.insert.iotdb;
 
 import com.google.common.collect.Lists;
