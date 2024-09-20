@@ -471,7 +471,9 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
 
   ngAfterViewInit() {
     this.dashboardResize$ = new ResizeObserver(() => {
-      this.updateLayoutSizes();
+      this.ngZone.run(() => {
+        this.updateLayoutSizes();
+      });
     });
     this.dashboardResize$.observe(this.dashboardContainer.nativeElement);
     if (!this.widgetEditMode && !this.readonly && this.dashboardUtils.isEmptyDashboard(this.dashboard)) {
