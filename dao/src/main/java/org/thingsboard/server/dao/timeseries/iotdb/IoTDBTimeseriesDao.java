@@ -19,6 +19,9 @@ package org.thingsboard.server.dao.timeseries.iotdb;
 import com.google.common.collect.Lists;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
+import com.google.common.util.concurrent.MoreExecutors;
+import jakarta.annotation.PostConstruct;
+import jakarta.annotation.PreDestroy;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.iotdb.isession.pool.SessionDataSetWrapper;
 import org.apache.iotdb.rpc.IoTDBConnectionException;
@@ -38,23 +41,72 @@ import org.thingsboard.server.common.data.kv.DeleteTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQueryResult;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.stats.StatsFactory;
+import org.thingsboard.server.dao.model.sql.AbstractTsKvEntity;
+import org.thingsboard.server.dao.model.sqlts.iotdb.IoTDBTsKvEntity;
+import org.thingsboard.server.dao.sql.ScheduledLogExecutorComponent;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueParams;
+import org.thingsboard.server.dao.sql.TbSqlBlockingQueueWrapper;
+import org.thingsboard.server.dao.sqlts.AbstractSqlTimeseriesDao;
 import org.thingsboard.server.dao.sqlts.AggregationTimeseriesDao;
+import org.thingsboard.server.dao.sqlts.insert.InsertTsRepository;
 import org.thingsboard.server.dao.timeseries.TimeseriesDao;
 import org.thingsboard.server.dao.util.IoTDBTsDao;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.UUID;
+import java.util.function.Function;
 import java.util.stream.Collectors;
 
 @Component
 @Slf4j
 @IoTDBTsDao
-public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDao{
+public class IoTDBTimeseriesDao extends AbstractSqlTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDao{
 
 
     protected static final int MAX_SIZE = 1000;
 
     @Autowired
     private IoTDBBaseTimeseriesDao ioTDBBaseTimeseriesDao;
+
+    protected TbSqlBlockingQueueWrapper<IoTDBTsKvEntity, Void> tsQueue;
+
+    @Autowired
+    private StatsFactory statsFactory;
+
+    @Autowired
+    protected ScheduledLogExecutorComponent logExecutor;
+
+    @Autowired
+    protected InsertTsRepository<IoTDBTsKvEntity> insertRepository;
+    @PostConstruct
+    protected void init() {
+        if(ioTDBBaseTimeseriesDao.isEnableBatch()){
+            TbSqlBlockingQueueParams tsParams = TbSqlBlockingQueueParams.builder()
+                    .logName("ts IoTDB")
+                    .batchSize(ioTDBBaseTimeseriesDao.getBatchSize())
+                    .maxDelay(ioTDBBaseTimeseriesDao.getMaxDelay())
+                    .statsPrintIntervalMs(ioTDBBaseTimeseriesDao.getStatsPrintIntervalMs())
+                    .statsNamePrefix("ts.iotdb")
+                    .batchSortEnabled(false)
+                    .build();
+            Function<IoTDBTsKvEntity, Integer> hashcodeFunction = entity -> entity.getEntityId().hashCode();
+            tsQueue = new TbSqlBlockingQueueWrapper<>(tsParams, hashcodeFunction, ioTDBBaseTimeseriesDao.getSaveThreadPoolSize(), statsFactory);
+            tsQueue.init(logExecutor, v -> insertRepository.saveOrUpdate(v),
+                    Comparator.comparing((Function<IoTDBTsKvEntity, UUID>) AbstractTsKvEntity::getEntityId)
+                            .thenComparing(AbstractTsKvEntity::getKey)
+                            .thenComparing(AbstractTsKvEntity::getTs)
+            );
+        }
+    }
+
+    @PreDestroy
+    protected void destroy() {
+        if (tsQueue != null) {
+            tsQueue.destroy();
+        }
+    }
 
     @Override
     public ListenableFuture<ReadTsKvQueryResult> findAllAsync(TenantId tenantId, EntityId entityId, ReadTsKvQuery query) {
@@ -179,13 +231,33 @@ public class IoTDBTimeseriesDao implements TimeseriesDao,AggregationTimeseriesDa
         if (null != tsKvEntry.getJsonValue().orElse(null)) {
             return Futures.immediateFuture(0);
         }
-        try {
-            ioTDBBaseTimeseriesDao.iotdbSessionPool.insertRecord(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`", tsKvEntry.getTs(), Lists.newArrayList(tsKvEntry.getKey()), Lists.newArrayList(getType(tsKvEntry)), Lists.newArrayList(tsKvEntry.getValue()));
-        } catch (Exception e) {
-            e.printStackTrace();
+        if(ioTDBBaseTimeseriesDao.isEnableBatch()){
+            int dataPointDays = getDataPointDays(tsKvEntry, computeTtl(ttl));
+            IoTDBTsKvEntity entity = new IoTDBTsKvEntity();
+            entity.setEntityId(entityId.getId());
+            entity.setTs(tsKvEntry.getTs());
+            entity.setDevice(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`");
+            entity.setTimestamp(tsKvEntry.getTs());
+            entity.setMeasurement(tsKvEntry.getKey());
+            entity.setValue(tsKvEntry.getValue());
+            entity.setTsDataType(getType(tsKvEntry));
+            entity.setStrValue(tsKvEntry.getStrValue().orElse(null));
+            entity.setDoubleValue(tsKvEntry.getDoubleValue().orElse(null));
+            entity.setLongValue(tsKvEntry.getLongValue().orElse(null));
+            entity.setBooleanValue(tsKvEntry.getBooleanValue().orElse(null));
+            entity.setJsonValue(tsKvEntry.getJsonValue().orElse(null));
+            return Futures.transform(tsQueue.add(entity), v -> dataPointDays, MoreExecutors.directExecutor());
+        }else{
+            try {
+                ioTDBBaseTimeseriesDao.iotdbSessionPool.insertRecord(ioTDBBaseTimeseriesDao.getDbName()+".`" + entityId.getId()+"`", tsKvEntry.getTs(), Lists.newArrayList(tsKvEntry.getKey()), Lists.newArrayList(getType(tsKvEntry)), Lists.newArrayList(tsKvEntry.getValue()));
+            } catch (Exception e) {
+                log.error("save error",e);
+            }
+            return Futures.immediateFuture(1);
         }
-        return Futures.immediateFuture(1);
     }
+
+
 
     private TSDataType getType(TsKvEntry tsKvEntry) {
         if (null != tsKvEntry.getBooleanValue().orElse(null)) {

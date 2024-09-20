@@ -41,6 +41,7 @@ import java.util.concurrent.ExecutorService;
 @Data
 @IoTDBAnyDao
 public class IoTDBBaseTimeseriesDao {
+
     protected ExecutorService readProcessingExecutor;
     protected ExecutorService saveProcessingExecutor;
 
@@ -72,6 +73,31 @@ public class IoTDBBaseTimeseriesDao {
 
     @Value("${iotdb.save_process_threads:50}")
     private int saveThreadPoolSize;
+
+    @Value("${iotdb.enable_batch:true}")
+    private boolean enableBatch;
+
+    @Value("${iotdb.batch_size:1000}")
+    private int batchSize;
+
+    @Value("${iotdb.batch_max_delay:100}")
+    private int maxDelay;
+
+    @Value("${iotdb.stats_print_interval_ms:5000}")
+    private int statsPrintIntervalMs;
+
+    @Value("${iotdb.enable_latest_batch:true}")
+    private boolean enableLatestBatch;
+
+    @Value("${iotdb.latest_batch_size:1000}")
+    private int latestBatchSize;
+
+    @Value("${iotdb.latest_batch_max_delay:100}")
+    private int latestMaxDelay;
+
+    @Value("${iotdb.latest_stats_print_interval_ms:5000}")
+    private int latestStatsPrintIntervalMs;
+
 
     @PostConstruct
     public void startExecutor() {

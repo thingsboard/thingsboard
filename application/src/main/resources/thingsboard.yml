@@ -344,6 +344,23 @@ iotdb:
   result_process_threads: "${IoTDB_PROCESS_THREADS:50}"
   # IoTDB save process thread count
   save_process_threads: "${IoTDB_SAVE_PROCESS_THREADS:50}"
+  # Enable batch for persisting timeseries inserts. If set to false, the timeseries data will be inserted one by one
+  enable_batch: "${IOTDB_ENABLE_BATCH:true}"
+  # Batch size for persisting timeseries inserts
+  batch_size: "${IOTDB_TS_BATCH_SIZE:10000}"
+  # Max timeout for time-series entries queue polling. The value set in milliseconds
+  batch_max_delay: "${IOTDB_TS_BATCH_MAX_DELAY_MS:100}"
+  # Interval in milliseconds for printing timeseries insert statistic
+  stats_print_interval_ms: "${IOTDB_TS_BATCH_STATS_PRINT_MS:10000}"
+  # Enable batch for persisting timeseries inserts for latest batch. If set to false, the timeseries data will be inserted one by one
+  enable_latest_batch: "${IOTDB_ENABLE_LATEST_BATCH:true}"
+  # Batch size for persisting timeseries inserts for latest batch
+  latest_batch_size: "${IOTDB_TS_LATEST_BATCH_SIZE:10000}"
+  # Max timeout for time-series entries queue polling. The value set in milliseconds for latest batch
+  latest_batch_max_delay: "${IOTDB_TS_LATEST_BATCH_MAX_DELAY_MS:100}"
+  # Interval in milliseconds for printing timeseries insert statistic for latest batch
+  latest_stats_print_interval_ms: "${IOTDB_TS_LATEST_BATCH_STATS_PRINT_MS:10000}"
+
 
 # SQL configuration parameters
 sql:
