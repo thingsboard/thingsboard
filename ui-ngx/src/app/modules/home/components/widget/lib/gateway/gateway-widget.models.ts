@@ -296,7 +296,7 @@ export interface LegacyTimeseries {
 
 export interface RpcArgument {
   type: string;
-  value: number;
+  value: number | string | boolean;
 }
 
 export interface RpcMethod {
@@ -539,6 +539,37 @@ export interface RPCTemplate {
 
 export interface RPCTemplateConfig {
   [key: string]: any;
+}
+
+export interface RPCTemplateConfigMQTT {
+  methodFilter: string;
+  requestTopicExpression: string;
+  responseTopicExpression?: string;
+  responseTimeout?: number;
+  valueExpression: string;
+  withResponse: boolean;
+}
+
+export interface RPCTemplateConfigModbus {
+  tag: string;
+  type: ModbusDataType;
+  functionCode?: number;
+  objectsCount: number;
+  address: number;
+  value?: string;
+}
+
+export interface RPCTemplateConfigOPC {
+  method: string;
+  arguments: RpcArgument[];
+}
+
+export interface OPCTypeValue {
+  type: MappingValueType;
+  boolean?: boolean;
+  double?: number;
+  integer?: number;
+  string?: string;
 }
 
 export interface SaveRPCTemplateData {

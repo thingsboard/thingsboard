@@ -16,20 +16,9 @@
 
 -->
 <ng-container [formGroup]="rpcParametersFormGroup">
-  <div fxFlex fxLayout="row">
-    <mat-form-field fxFlex="100">
-      <mat-label>{{ 'gateway.key' | translate }}</mat-label>
-      <input matInput name="value" formControlName="tag" placeholder="{{ 'gateway.set' | translate }}"/>
-      <mat-icon matSuffix
-                matTooltipPosition="above"
-                matTooltipClass="tb-error-tooltip"
-                [matTooltip]="('gateway.key-required') | translate"
-                *ngIf="rpcParametersFormGroup.get('tag').hasError('required') &&
-                                           rpcParametersFormGroup.get('tag').touched"
-                class="tb-error">
-        warning
-      </mat-icon>
-    </mat-form-field>
+  <div class="tb-form-hint tb-primary-fill tb-flex no-padding-top hint-container">
+    RPC response will return all subtracted values from all connected devices when the reading functions are selected.<br>
+    RPC will write a filled value to all connected devices when the writing functions are selected.
   </div>
   <div fxFlex fxLayout="row" fxLayoutGap="10px">
     <mat-form-field fxFlex="50" class="mat-block">
@@ -43,21 +32,6 @@
       <mat-select formControlName="functionCode">
         <mat-option *ngFor="let code of functionCodes" [value]="code">{{ ModbusFunctionCodeTranslationsMap.get(code) | translate}}</mat-option>
       </mat-select>
-    </mat-form-field>
-  </div>
-  <div fxFlex fxLayout="row">
-    <mat-form-field fxFlex="100" *ngIf="writeFunctionCodes.includes(rpcParametersFormGroup.get('functionCode').value)">
-      <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
-      <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
-      <mat-icon matSuffix
-                matTooltipPosition="above"
-                matTooltipClass="tb-error-tooltip"
-                [matTooltip]="('gateway.value-required') | translate"
-                *ngIf="rpcParametersFormGroup.get('value').hasError('required') &&
-                                           rpcParametersFormGroup.get('value').touched"
-                class="tb-error">
-        warning
-      </mat-icon>
     </mat-form-field>
   </div>
   <div fxFlex fxLayout="row" fxLayoutGap="10px">
@@ -86,6 +60,21 @@
         placeholder="{{ 'gateway.set' | translate }}"
         [readonly]="!ModbusEditableDataTypes.includes(rpcParametersFormGroup.get('type').value)"
       />
+    </mat-form-field>
+  </div>
+  <div *ngIf="writeFunctionCodes.includes(rpcParametersFormGroup.get('functionCode').value)" fxFlex fxLayout="row">
+    <mat-form-field fxFlex="100">
+      <mat-label>{{ 'gateway.rpc.value' | translate }}</mat-label>
+      <input matInput name="value" formControlName="value" placeholder="{{ 'gateway.set' | translate }}"/>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="('gateway.value-required') | translate"
+                *ngIf="rpcParametersFormGroup.get('value').hasError('required') && rpcParametersFormGroup.get('value').touched"
+                class="tb-error"
+      >
+        warning
+      </mat-icon>
     </mat-form-field>
   </div>
 </ng-container>
