@@ -16,7 +16,7 @@
 
 import { Component, EventEmitter, Injector, Input, Output, StaticProvider, ViewContainerRef } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
-import { AlarmAssignee, AlarmInfo } from '@shared/models/alarm.models';
+import { AlarmAssignee, AlarmInfo, getUserDisplayName, getUserInitials } from '@shared/models/alarm.models';
 import {
   ALARM_ASSIGNEE_PANEL_DATA,
   AlarmAssigneePanelComponent,
@@ -55,7 +55,7 @@ export class AlarmAssigneeComponent {
       this.userAssigned = this.alarm.assigneeId && ((isNotEmptyStr(this.alarm.assignee?.firstName) ||
         isNotEmptyStr(this.alarm.assignee?.lastName)) || isNotEmptyStr(this.alarm.assignee?.email));
       if (this.userAssigned) {
-        return this.utilsService.getUserDisplayName(this.alarm.assignee);
+        return getUserDisplayName(this.alarm.assignee);
       } else {
         return this.translateService.instant(this.alarm.assigneeId ? 'alarm.user-deleted' : 'alarm.unassigned');
       }
@@ -63,11 +63,11 @@ export class AlarmAssigneeComponent {
   }
 
   getUserInitials(alarmAssignee: AlarmAssignee): string {
-    return this.utilsService.getUserInitials(alarmAssignee);
+    return getUserInitials(alarmAssignee);
   }
 
   getAvatarBgColor(entity: AlarmAssignee) {
-    return this.utilsService.stringToHslColor(this.utilsService.getUserDisplayName(entity), 40, 60);
+    return this.utilsService.stringToHslColor(getUserDisplayName(entity), 40, 60);
   }
 
   openAlarmAssigneePanel($event: Event, alarm: AlarmInfo) {

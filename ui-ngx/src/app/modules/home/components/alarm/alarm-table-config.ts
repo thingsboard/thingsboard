@@ -38,7 +38,9 @@ import {
   alarmSeverityColors,
   alarmSeverityTranslations,
   AlarmsMode,
-  alarmStatusTranslations
+  alarmStatusTranslations,
+  getUserDisplayName,
+  getUserInitials
 } from '@app/shared/models/alarm.models';
 import { AlarmService } from '@app/core/http/alarm.service';
 import { DialogService } from '@core/services/dialog.service';
@@ -217,9 +219,9 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
       templateContent = `
         <span class="assigned-container">
          <span class="user-avatar" style="background-color: ${this.getAvatarBgColor(entity.assignee)}">
-           ${this.utilsService.getUserInitials(entity.assignee)}
+           ${getUserInitials(entity.assignee)}
          </span>
-         <span class="user-display-name">${this.utilsService.getUserDisplayName(entity.assignee)}</span>
+         <span class="user-display-name">${getUserDisplayName(entity.assignee)}</span>
         </span>`;
     } else {
       templateContent = `
@@ -234,7 +236,7 @@ export class AlarmTableConfig extends EntityTableConfig<AlarmInfo, TimePageLink>
   }
 
   getAvatarBgColor(alarmAssignee: AlarmAssignee) {
-    return this.utilsService.stringToHslColor(this.utilsService.getUserDisplayName(alarmAssignee), 40, 60);
+    return this.utilsService.stringToHslColor(getUserDisplayName(alarmAssignee), 40, 60);
   }
 
   openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {

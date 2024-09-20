@@ -27,7 +27,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MAX_SAFE_PAGE_SIZE, PageLink } from '@shared/models/page/page-link';
 import { DateAgoPipe } from '@shared/pipe/date-ago.pipe';
 import { map } from 'rxjs/operators';
-import { AlarmComment, AlarmCommentType } from '@shared/models/alarm.models';
+import { AlarmComment, AlarmCommentType, getUserDisplayName } from '@shared/models/alarm.models';
 import { UtilsService } from '@core/services/utils.service';
 import { EntityType } from '@shared/models/entity-type.models';
 import { DatePipe } from '@angular/common';
@@ -79,7 +79,7 @@ export class AlarmCommentComponent implements OnInit {
 
   userDisplayName$ = this.store.pipe(
     select(selectUserDetails),
-    map((user) => this.utilsService.getUserDisplayName(user))
+    map((user) => getUserDisplayName(user))
   );
 
   currentUserDisplayName: string;
@@ -127,7 +127,7 @@ export class AlarmCommentComponent implements OnInit {
             displayDataElement.commentId = alarmComment.id.id;
             displayDataElement.userExists = isNotEmptyStr(alarmComment.firstName) || isNotEmptyStr(alarmComment.lastName) ||
               isNotEmptyStr(alarmComment.email);
-            displayDataElement.displayName = displayDataElement.userExists ? this.utilsService.getUserDisplayName(alarmComment) :
+            displayDataElement.displayName = displayDataElement.userExists ? getUserDisplayName(alarmComment) :
               this.translate.instant('alarm.user-deleted');
             displayDataElement.edit = false;
             displayDataElement.isEdited = alarmComment.comment.edited;

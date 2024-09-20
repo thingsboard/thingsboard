@@ -44,7 +44,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
-import { AlarmAssigneeOption } from '@shared/models/alarm.models';
+import { AlarmAssigneeOption, getUserDisplayName, getUserInitials } from '@shared/models/alarm.models';
 
 export const ALARM_ASSIGNEE_PANEL_DATA = new InjectionToken<any>('AlarmAssigneePanelData');
 
@@ -188,7 +188,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
   }
 
   getUserInitials(entity: UserEmailInfo): string {
-    return this.utilsService.getUserInitials(entity);
+    return getUserInitials(entity);
   }
 
   getFullName(entity: UserEmailInfo): string {
@@ -209,7 +209,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
   }
 
   getAvatarBgColor(entity: UserEmailInfo) {
-    return this.utilsService.stringToHslColor(this.utilsService.getUserDisplayName(entity), 40, 60);
+    return this.utilsService.stringToHslColor(getUserDisplayName(entity), 40, 60);
   }
 
 }

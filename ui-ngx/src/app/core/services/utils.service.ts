@@ -31,7 +31,6 @@ import {
   hashCode,
   isDefined,
   isDefinedAndNotNull,
-  isNotEmptyStr,
   isString,
   isUndefined,
   objToBase64,
@@ -43,8 +42,6 @@ import { customTranslationsPrefix, i18nPrefix } from '@app/shared/models/constan
 import { DataKey, Datasource, DatasourceType, KeyInfo } from '@shared/models/widget.models';
 import { DataKeyType } from '@app/shared/models/telemetry/telemetry.models';
 import {
-  AlarmAssignee,
-  AlarmCommentInfo,
   alarmFields,
   alarmSeverityTranslations,
   alarmStatusTranslations
@@ -379,39 +376,6 @@ export class UtilsService {
         index++;
       });
     });
-  }
-
-  public getUserDisplayName(alarmAssignee: AlarmAssignee |  AlarmCommentInfo) {
-    let displayName = '';
-    if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
-      if (alarmAssignee.firstName) {
-        displayName += alarmAssignee.firstName;
-      }
-      if (alarmAssignee.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += alarmAssignee.lastName;
-      }
-    } else {
-      displayName = alarmAssignee.email;
-    }
-    return displayName;
-  }
-
-  getUserInitials(alarmAssignee: AlarmAssignee): string {
-    let initials = '';
-    if (isNotEmptyStr(alarmAssignee.firstName) || isNotEmptyStr(alarmAssignee.lastName)) {
-      if (alarmAssignee.firstName) {
-        initials += alarmAssignee.firstName.charAt(0);
-      }
-      if (alarmAssignee.lastName) {
-        initials += alarmAssignee.lastName.charAt(0);
-      }
-    } else {
-      initials += alarmAssignee.email.charAt(0);
-    }
-    return initials.toUpperCase();
   }
 
   public stringToHslColor(str: string, saturationPercentage: number, lightnessPercentage: number): string {
