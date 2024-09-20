@@ -297,13 +297,14 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private hasSameConfig(sharedDataConfigJson: ConnectorBaseInfo, connectorDataConfigJson: ConnectorBaseInfo): boolean {
-    const { name, id, enableRemoteLogging, logLevel, reportStrategy, ...sharedDataConfig } = sharedDataConfigJson;
+    const { name, id, enableRemoteLogging, logLevel, reportStrategy, configVersion, ...sharedDataConfig } = sharedDataConfigJson;
     const {
       name: connectorName,
       id: connectorId,
       enableRemoteLogging: connectorEnableRemoteLogging,
       logLevel: connectorLogLevel,
       reportStrategy: connectorReportStrategy,
+      configVersion: connectorConfigVersion,
       ...connectorConfig
     } = connectorDataConfigJson;
 

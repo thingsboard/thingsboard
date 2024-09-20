@@ -640,10 +640,11 @@
                 </mat-form-field>
               </section>
               <button mat-icon-button (click)="removeCommandControl($index, $event)"
+                      class="tb-box-button"
                       [disabled]="!basicFormGroup.get('thingsboard.remoteConfiguration').value"
                       matTooltip="{{ 'gateway.statistics.remove' | translate }}"
                       matTooltipPosition="above">
-                <mat-icon>close</mat-icon>
+                <mat-icon>delete</mat-icon>
               </button>
             </div>
             <button mat-stroked-button color="primary"

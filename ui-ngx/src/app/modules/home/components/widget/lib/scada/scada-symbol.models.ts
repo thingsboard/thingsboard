@@ -45,8 +45,10 @@ import {
   deepClone,
   formatValue,
   guid,
-  isDefinedAndNotNull, isFirefox,
-  isNumeric, isSafari,
+  isDefinedAndNotNull,
+  isFirefox,
+  isNumeric,
+  isSafari,
   isUndefined,
   isUndefinedOrNull,
   mergeDeep,
@@ -1216,8 +1218,8 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
     return this;
   }
 
-  public ease(easing: string): this {
-    this._easing = easing;
+  public ease(easing: string | EasingLiteral): this {
+    this._easing = this.easingLiteralToCssEasing(easing);
     this.updateAnimationStyle('animation-timing-function', this._easing);
     return this;
   }
@@ -1551,10 +1553,10 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
       transform = deepClone(transform);
       Object.assign(transform, inputTransform);
     }
+
     return {
       'transform-origin': `${transform.originX}px ${transform.originY}px`,
       transform: `translate(${transform.translateX}px, ${transform.translateY}px) ` +
-                 `skewX(${transform.b}deg) skewY(${transform.c}deg) ` +
                  `scale(${transform.scaleX}, ${transform.scaleY}) ` +
                  `rotate(${transform.rotate}deg)`};
   }
@@ -1563,6 +1565,22 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
     const factor = Math.pow(10, digits);
     return Math.round((num + Number.EPSILON) * factor) / factor;
   }
+
+  private easingLiteralToCssEasing(easing: string | EasingLiteral): string {
+    switch (easing) {
+      case '<>':
+        return 'ease-in-out';
+      case '-':
+        return 'linear';
+      case '>':
+        return 'ease-out';
+      case '<':
+        return 'ease-in';
+      default:
+        return easing;
+    }
+  }
+
 }
 
 class JsScadaSymbolAnimation implements ScadaSymbolAnimation {

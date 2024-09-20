@@ -28,6 +28,7 @@ import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
+import { GatewayConfigValue } from '@home/components/widget/lib/gateway/configuration/models/gateway-configuration.models';
 
 @Component({
   selector: 'tb-gateway-advanced-configuration',
@@ -83,8 +84,8 @@ export class GatewayAdvancedConfigurationComponent implements OnDestroy, Control
     this.onTouched = fn;
   }
 
-  writeValue(basicConfig: unknown): void {
-    this.advancedFormControl.reset(basicConfig, {emitEvent: false});
+  writeValue(advancedConfig: GatewayConfigValue): void {
+    this.advancedFormControl.reset(advancedConfig, {emitEvent: false});
   }
 
   validate(): ValidationErrors | null {

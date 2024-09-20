@@ -35,9 +35,10 @@ import {
 export class OpcVersionMappingUtil {
 
   static mapServerToUpgradedVersion(server: LegacyServerConfig): ServerConfig {
-    const { mapping, disableSubscriptions, ...restServer } = server;
+    const { mapping, disableSubscriptions, pollPeriodInMillis, ...restServer } = server;
     return {
       ...restServer,
+      pollPeriodInMillis: pollPeriodInMillis ?? 5000,
       enableSubscriptions: !disableSubscriptions,
     };
   }
