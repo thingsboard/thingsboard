@@ -595,6 +595,7 @@
         "assignee-last-name": "Assignee last name",
         "assignee-email": "Assignee email",
         "unassigned": "Unassigned",
+        "user-deleted": "User deleted",
         "assignee-not-set": "All",
         "status": "Status",
         "alarm-details": "Alarm details",
