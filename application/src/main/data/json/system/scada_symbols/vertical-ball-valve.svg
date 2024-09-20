@@ -93,7 +93,7 @@
         },
         "valueToData": {
           "type": "CONSTANT",
-          "constantValue": false,
+          "constantValue": true,
           "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
         }
       },
@@ -127,7 +127,7 @@
         },
         "valueToData": {
           "type": "CONSTANT",
-          "constantValue": true,
+          "constantValue": false,
           "valueToDataFunction": "/* Convert input boolean value to RPC parameters or attribute/time-series value */\nreturn value;"
         }
       },

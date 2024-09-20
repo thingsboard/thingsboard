@@ -34,7 +34,6 @@ import {
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { isObject } from '@app/core/utils';
 import { CdkVirtualScrollViewport } from '@angular/cdk/scrolling';
-import { ResizeObserver } from '@juggle/resize-observer';
 
 export type ItemSizeFunction = (itemWidth: number) => number;
 

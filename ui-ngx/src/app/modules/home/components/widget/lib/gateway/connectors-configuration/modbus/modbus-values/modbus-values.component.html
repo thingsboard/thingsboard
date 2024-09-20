@@ -48,6 +48,8 @@
               mat-icon-button
               color="primary"
               [disabled]="disabled"
+              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltipPosition="above"
               #attributesButton
               (click)="manageKeys($event, attributesButton, ModbusValueKey.ATTRIBUTES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
@@ -69,6 +71,8 @@
               mat-icon-button
               color="primary"
               [disabled]="disabled"
+              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltipPosition="above"
               #telemetryButton
               (click)="manageKeys($event, telemetryButton, ModbusValueKey.TIMESERIES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
@@ -90,6 +94,8 @@
               mat-icon-button
               [disabled]="disabled"
               color="primary"
+              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltipPosition="above"
               #attributesUpdatesButton
               (click)="manageKeys($event, attributesUpdatesButton, ModbusValueKey.ATTRIBUTES_UPDATES, register)">
         <tb-icon matButtonIcon>edit</tb-icon>
@@ -111,6 +117,8 @@
               mat-icon-button
               color="primary"
               [disabled]="disabled"
+              matTooltip="{{ 'action.edit' | translate }}"
+              matTooltipPosition="above"
               #rpcRequestsButton
               (click)="manageKeys($event, rpcRequestsButton, ModbusValueKey.RPC_REQUESTS, register)">
         <tb-icon matButtonIcon>edit</tb-icon>

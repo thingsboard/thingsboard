@@ -150,7 +150,6 @@ import { TbPopoverService } from '@shared/components/popover.service';
 import { catchError, distinctUntilChanged, map, skip, tap } from 'rxjs/operators';
 import { LayoutFixedSize, LayoutWidthType } from '@home/components/dashboard-page/layout/layout.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { HasDirtyFlag } from '@core/guards/confirm-on-exit.guard';
 import {
   MoveWidgetsDialogComponent,
@@ -169,6 +168,8 @@ import { HttpStatusCode } from '@angular/common/http';
 export class DashboardPageComponent extends PageComponent implements IDashboardController, HasDirtyFlag, OnInit, AfterViewInit, OnDestroy {
 
   LayoutType = LayoutType;
+
+  private destroyed = false;
 
   private forcePristine = false;
 
@@ -437,15 +438,15 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
       ).pipe(
         map(value => this.parseBreakpointsResponse(value.breakpoints)),
         tap((value) => {
-          this.dashboardCtx.breakpoint = value.id;
-          this.changeMobileSize.next(this.isMobileSize(value));
+          this.dashboardCtx.breakpoint = value ? value.id : 'default';
+          this.changeMobileSize.next(value ? this.isMobileSize(value) : false);
         }),
         distinctUntilChanged((_, next) => {
           if (this.layouts.right.show || this.isEdit) {
             return true;
           }
           let nextBreakpointConfiguration: BreakpointId = 'default';
-          if (!!this.layouts.main.layoutCtx.layoutData?.[next.id]) {
+          if (next && !!this.layouts.main.layoutCtx.layoutData?.[next.id]) {
             nextBreakpointConfiguration = next.id;
           }
           return this.layouts.main.layoutCtx.breakpoint === nextBreakpointConfiguration;
@@ -595,6 +596,7 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   ngOnDestroy(): void {
+    this.destroyed = true;
     this.cleanupDashboardCss();
     if (this.isMobileApp && this.syncStateWithQueryParam) {
       this.mobileService.unregisterToggleLayoutFunction();
@@ -1107,16 +1109,18 @@ export class DashboardPageComponent extends PageComponent implements IDashboardC
   }
 
   public openDashboardState(state: string, openRightLayout?: boolean) {
-    const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
-    if (layoutsData) {
-      this.dashboardCtx.state = state;
-      this.dashboardCtx.aliasController.dashboardStateChanged();
-      this.isRightLayoutOpened = openRightLayout ? true : false;
-      this.updateLayouts(layoutsData);
+    if (!this.destroyed) {
+      const layoutsData = this.dashboardUtils.getStateLayoutsData(this.dashboard, state);
+      if (layoutsData) {
+        this.dashboardCtx.state = state;
+        this.dashboardCtx.aliasController.dashboardStateChanged();
+        this.isRightLayoutOpened = openRightLayout ? true : false;
+        this.updateLayouts(layoutsData);
+      }
+      setTimeout(() => {
+        this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
+      });
     }
-    setTimeout(() => {
-      this.mobileService.onDashboardLoaded(this.layouts.right.show, this.isRightLayoutOpened);
-    });
   }
 
   private updateLayouts(layoutsData?: DashboardLayoutsInfo) {

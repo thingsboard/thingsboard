@@ -34,7 +34,6 @@ import { AppState } from '@core/core.state';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { CancelAnimationFrame, RafService } from '@core/services/raf.service';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { beautifyCss } from '@shared/models/beautify.models';
 
 @Component({

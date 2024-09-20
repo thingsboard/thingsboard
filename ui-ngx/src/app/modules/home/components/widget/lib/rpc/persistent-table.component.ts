@@ -73,7 +73,6 @@ import {
   PersistentFilterPanelData
 } from '@home/components/widget/lib/rpc/persistent-filter-panel.component';
 import { PersistentAddDialogComponent } from '@home/components/widget/lib/rpc/persistent-add-dialog.component';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { HttpErrorResponse } from '@angular/common/http';
 

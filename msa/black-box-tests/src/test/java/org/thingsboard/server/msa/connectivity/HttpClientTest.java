@@ -21,6 +21,7 @@ import io.restassured.path.json.JsonPath;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
 import org.testng.annotations.Test;
+import org.thingsboard.server.common.data.DataConstants;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.DeviceProfileProvisionType;
@@ -146,6 +147,46 @@ public class HttpClientTest extends AbstractContainerTest {
 
         testRestClient.deleteDeviceIfExists(device.getId());
         device = testRestClient.getDeviceByName(testDeviceName);
+
+        DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
+
+        assertThat(credentialsType).isEqualTo(expectedDeviceCredentials.getCredentialsType().name());
+        assertThat(credentialsValue).isEqualTo(expectedDeviceCredentials.getCredentialsId());
+        assertThat(status).isEqualTo("SUCCESS");
+
+        updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.DISABLED);
+    }
+
+    @Test
+    public void provisionRequestForGatewayDeviceWithAllowToCreateNewDevicesStrategy() throws Exception {
+
+        String testDeviceName = "test_provision_device";
+
+        DeviceProfile deviceProfile = testRestClient.getDeviceProfileById(device.getDeviceProfileId());
+
+        deviceProfile = updateDeviceProfileWithProvisioningStrategy(deviceProfile, DeviceProfileProvisionType.ALLOW_CREATE_NEW_DEVICES);
+
+        JsonObject provisionRequest = new JsonObject();
+        provisionRequest.addProperty("provisionDeviceKey", TEST_PROVISION_DEVICE_KEY);
+        provisionRequest.addProperty("provisionDeviceSecret", TEST_PROVISION_DEVICE_SECRET);
+        provisionRequest.addProperty("deviceName", testDeviceName);
+        provisionRequest.addProperty("gateway", true);
+
+        JsonPath provisionResponse = testRestClient.postProvisionRequest(provisionRequest.toString());
+
+        String credentialsType = provisionResponse.get("credentialsType");
+        String credentialsValue = provisionResponse.get("credentialsValue");
+        String status = provisionResponse.get("status");
+
+        testRestClient.deleteDeviceIfExists(device.getId());
+        device = testRestClient.getDeviceByName(testDeviceName);
+
+        JsonNode additionalInfo = device.getAdditionalInfo();
+
+        assertThat(additionalInfo).isNotNull();
+        assertThat(additionalInfo.has(DataConstants.GATEWAY_PARAMETER)
+                && additionalInfo.get(DataConstants.GATEWAY_PARAMETER).isBoolean()).isTrue();
+        assertThat(additionalInfo.get(DataConstants.GATEWAY_PARAMETER).asBoolean()).isTrue();
 
         DeviceCredentials expectedDeviceCredentials = testRestClient.getDeviceCredentialsByDeviceId(device.getId());
 

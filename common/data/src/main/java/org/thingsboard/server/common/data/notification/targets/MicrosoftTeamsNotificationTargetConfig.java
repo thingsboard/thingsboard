@@ -28,6 +28,7 @@ public class MicrosoftTeamsNotificationTargetConfig extends NotificationTargetCo
     private String webhookUrl;
     @NotEmpty
     private String channelName;
+    private Boolean useOldApi = Boolean.TRUE;
 
     @Override
     public NotificationTargetType getType() {

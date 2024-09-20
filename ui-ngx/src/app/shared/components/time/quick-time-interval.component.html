@@ -16,8 +16,8 @@
 
 -->
 <section class="interval-section" fxLayout="row" fxFlex>
-  <mat-form-field fxFlex>
-    <mat-label translate>timewindow.interval</mat-label>
+  <mat-form-field fxFlex [subscriptSizing]="subscriptSizing" [appearance]="appearance">
+    <mat-label *ngIf="displayLabel" translate>timewindow.interval</mat-label>
     <mat-select [disabled]="disabled" [(ngModel)]="modelValue" (ngModelChange)="onIntervalChange()">
       <mat-option *ngFor="let interval of intervals" [value]="interval">
         {{ timeIntervalTranslationMap.get(interval) | translate}}

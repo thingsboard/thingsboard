@@ -30,6 +30,7 @@
                             headerHeightPx="64"
                             headerTitle="{{symbolData?.imageResource?.title}}">
             <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+              <div tb-help="scadaSymbolDev"></div>
               <button mat-stroked-button
                       [disabled]="scadaSymbolFormGroup.invalid"
                       (click)="createWidget()">
