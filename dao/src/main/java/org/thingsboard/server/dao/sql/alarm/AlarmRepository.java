@@ -331,8 +331,23 @@ public interface AlarmRepository extends JpaRepository<AlarmEntity, UUID> {
     @Query(value = "SELECT a FROM AlarmInfoEntity a WHERE a.tenantId = :tenantId AND a.id = :alarmId")
     AlarmInfoEntity findAlarmInfoById(@Param("tenantId") UUID tenantId, @Param("alarmId") UUID alarmId);
 
-    @Query("SELECT a.id FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
-    Page<UUID> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId, @Param("assigneeId") UUID assigneeId, Pageable pageable);
+    // using Slice so that count query is not executed
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
+            "FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId")
+    Slice<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId,
+                                                       @Param("assigneeId") UUID assigneeId,
+                                                       Pageable pageable);
+
+    // using Slice so that count query is not executed
+    @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
+            "FROM AlarmEntity a WHERE a.tenantId = :tenantId AND a.assigneeId = :assigneeId " +
+            "AND (a.createdTime > :createdTimeOffset OR " +
+            "(a.createdTime = :createdTimeOffset AND a.id > :idOffset))")
+    Slice<TbPair<UUID, Long>> findAlarmIdsByAssigneeId(@Param("tenantId") UUID tenantId,
+                                                       @Param("assigneeId") UUID assigneeId,
+                                                       @Param("createdTimeOffset") long createdTimeOffset,
+                                                       @Param("idOffset") UUID idOffset,
+                                                       Pageable pageable);
 
     // using Slice so that count query is not executed
     @Query("SELECT new org.thingsboard.server.common.data.util.TbPair(a.id, a.createdTime) " +
