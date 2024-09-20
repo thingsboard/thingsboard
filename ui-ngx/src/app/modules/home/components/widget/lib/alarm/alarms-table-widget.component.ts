@@ -273,11 +273,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         () => this.pageLink.page = 0
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.ngZone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }

@@ -1218,8 +1218,8 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
     return this;
   }
 
-  public ease(easing: string): this {
-    this._easing = easing;
+  public ease(easing: string | EasingLiteral): this {
+    this._easing = this.easingLiteralToCssEasing(easing);
     this.updateAnimationStyle('animation-timing-function', this._easing);
     return this;
   }
@@ -1564,6 +1564,21 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
   private normFloat(num: number, digits = 2): number {
     const factor = Math.pow(10, digits);
     return Math.round((num + Number.EPSILON) * factor) / factor;
+  }
+
+  private easingLiteralToCssEasing(easing: string | EasingLiteral): string {
+    switch (easing) {
+      case '<>':
+        return 'ease-in-out';
+      case '-':
+        return 'linear';
+      case '>':
+        return 'ease-out';
+      case '<':
+        return 'ease-in';
+      default:
+        return easing;
+    }
   }
 
 }
