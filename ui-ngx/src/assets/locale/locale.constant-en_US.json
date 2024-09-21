@@ -184,6 +184,7 @@
         "aliyun-signName": "Aliyun signName",
         "aliyun-signName-required": "Aliyun signName is required",
         "aliyun-templateCode": "Aliyun templateCode",
+        "aliyun-templateCode-hint": "In Aliyun's template, please use `code` to replace the content that is about to be sent",
         "aliyun-templateCode-required": "Aliyun templateCode is required",
         "send-test-sms": "Send test SMS",
         "test-sms-sent": "Test SMS was successfully sent!",
