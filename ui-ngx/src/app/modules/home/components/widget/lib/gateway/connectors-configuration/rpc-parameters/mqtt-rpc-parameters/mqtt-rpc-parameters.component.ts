@@ -106,6 +106,7 @@ export class MqttRpcParametersComponent implements ControlValueAccessor, Validat
 
   writeValue(value: RPCTemplateConfigMQTT): void {
     this.rpcParametersFormGroup.patchValue(value, {emitEvent: false});
+    this.toggleResponseFields(value.withResponse);
   }
 
   private observeValueChanges(): void {
@@ -119,18 +120,20 @@ export class MqttRpcParametersComponent implements ControlValueAccessor, Validat
 
   private observeWithResponse(): void {
     this.rpcParametersFormGroup.get('withResponse').valueChanges.pipe(
-      tap((isActive: boolean) => {
-        const responseTopicControl = this.rpcParametersFormGroup.get('responseTopicExpression');
-        const responseTimeoutControl = this.rpcParametersFormGroup.get('responseTimeout');
-        if (isActive) {
-          responseTopicControl.enable();
-          responseTimeoutControl.enable();
-        } else {
-          responseTopicControl.disable();
-          responseTimeoutControl.disable();
-        }
-      }),
+      tap((isActive: boolean) => this.toggleResponseFields(isActive)),
       takeUntil(this.destroy$),
     ).subscribe();
+  }
+
+  private toggleResponseFields(enabled: boolean): void {
+    const responseTopicControl = this.rpcParametersFormGroup.get('responseTopicExpression');
+    const responseTimeoutControl = this.rpcParametersFormGroup.get('responseTimeout');
+    if (enabled) {
+      responseTopicControl.enable();
+      responseTimeoutControl.enable();
+    } else {
+      responseTopicControl.disable();
+      responseTimeoutControl.disable();
+    }
   }
 }

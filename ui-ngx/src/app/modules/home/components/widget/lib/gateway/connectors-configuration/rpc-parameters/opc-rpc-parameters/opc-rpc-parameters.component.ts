@@ -44,7 +44,7 @@ import {
   OPCTypeValue,
   RPCTemplateConfigOPC
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isEqual } from '@core/utils';
+import { isDefinedAndNotNull, isEqual } from '@core/utils';
 
 @Component({
   selector: 'tb-opc-rpc-parameters',
@@ -77,8 +77,8 @@ export class OpcRpcParametersComponent implements ControlValueAccessor, Validato
   readonly MappingValueType = MappingValueType;
   readonly valueTypes = mappingValueTypesMap;
 
-  private onChange: (value: RPCTemplateConfigOPC) => void;
-  private onTouched: () => void;
+  private onChange: (value: RPCTemplateConfigOPC) => void = (_) => {} ;
+  private onTouched: () => void = () => {};
 
   private destroy$ = new Subject<void>();
 
@@ -111,11 +111,11 @@ export class OpcRpcParametersComponent implements ControlValueAccessor, Validato
   }
 
   writeValue(params: RPCTemplateConfigOPC): void {
-    this.clearFromArrayByName('arguments');
+    this.clearArguments();
     params.arguments?.map(({type, value}) => ({type, [type]: value }))
-      .forEach(argument => this.addOCPUAArguments(argument as OPCTypeValue));
+      .forEach(argument => this.addArgument(argument as OPCTypeValue));
     this.cdr.markForCheck();
-    this.rpcParametersFormGroup.get('method').patchValue(params.method, {emitEvent: false});
+    this.rpcParametersFormGroup.get('method').patchValue(params.method);
   }
 
   private observeValueChanges(): void {
@@ -128,27 +128,30 @@ export class OpcRpcParametersComponent implements ControlValueAccessor, Validato
     });
   }
 
-  removeOCPUAArguments(index: number): void {
+  removeArgument(index: number): void {
     (this.rpcParametersFormGroup.get('arguments') as FormArray).removeAt(index);
   }
 
-  addOCPUAArguments(value: OPCTypeValue = {} as OPCTypeValue): void {
+  addArgument(value: OPCTypeValue = {} as OPCTypeValue): void {
     const fromGroup = this.fb.group({
       type: [value.type ?? MappingValueType.STRING],
       string: [
         value.string ?? { value: '', disabled: !(isEqual(value, {}) || value.string)},
         [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]
       ],
-      integer: [{value: value.integer ?? 0, disabled: !value.integer}, [Validators.required, Validators.pattern(integerRegex)]],
-      double: [{value: value.double ?? 0, disabled: !value.double}, [Validators.required]],
-      boolean: [{value: value.boolean ?? false, disabled: !value.boolean}, [Validators.required]],
+      integer: [
+        {value: value.integer ?? 0, disabled: !isDefinedAndNotNull(value.integer)},
+        [Validators.required, Validators.pattern(integerRegex)]
+      ],
+      double: [{value: value.double ?? 0, disabled: !isDefinedAndNotNull(value.double)}, [Validators.required]],
+      boolean: [{value: value.boolean ?? false, disabled: !isDefinedAndNotNull(value.boolean)}, [Validators.required]],
     });
     this.observeTypeChange(fromGroup);
     (this.rpcParametersFormGroup.get('arguments') as FormArray).push(fromGroup, {emitEvent: false});
   }
 
-  clearFromArrayByName(name: string): void {
-    const formArray = this.rpcParametersFormGroup.get(name) as FormArray;
+  clearArguments(): void {
+    const formArray = this.rpcParametersFormGroup.get('arguments') as FormArray;
     while (formArray.length !== 0) {
       formArray.removeAt(0);
     }

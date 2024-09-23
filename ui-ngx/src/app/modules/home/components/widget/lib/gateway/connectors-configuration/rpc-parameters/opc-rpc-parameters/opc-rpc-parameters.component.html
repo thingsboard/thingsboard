@@ -73,7 +73,7 @@
           </mat-icon>
         </mat-form-field>
       </div>
-      <button mat-icon-button (click)="removeOCPUAArguments(i)"
+      <button mat-icon-button (click)="removeArgument(i)"
               class="tb-box-button"
               matTooltip="{{ 'gateway.rpc.remove' | translate }}"
               matTooltipPosition="above">
@@ -82,7 +82,7 @@
     </div>
     <button mat-raised-button
             fxFlexAlign="start"
-            (click)="addOCPUAArguments()">
+            (click)="addArgument()">
       {{ 'gateway.rpc.add-argument' | translate }}
     </button>
   </fieldset>
