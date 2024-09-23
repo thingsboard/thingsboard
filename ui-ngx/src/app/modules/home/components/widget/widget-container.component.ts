@@ -286,6 +286,14 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
           position.coord.left = clientRect.right - position.size.width - container.left;
           position.coord.top = position.coord.top - container.top;
           position.target = clientRect.right;
+          const rightOverflow = container.right - (position.coord.left + position.size.width);
+          if (rightOverflow < 0) {
+            position.coord.left += rightOverflow;
+          }
+          const leftOverflow = container.left - position.coord.left;
+          if (leftOverflow > 0) {
+            position.coord.left += leftOverflow;
+          }
           return position;
         },
         functionReady: (_instance, helper) => {
