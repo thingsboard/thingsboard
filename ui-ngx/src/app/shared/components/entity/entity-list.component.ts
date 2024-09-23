@@ -210,7 +210,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
   }
 
   validate(): ValidationErrors | null {
-    return isArray(this.modelValue) && this.modelValue.length ? null : {
+    return (isArray(this.modelValue) && this.modelValue.length) || !this.required ? null : {
       entities: {valid: false}
     };
   }
