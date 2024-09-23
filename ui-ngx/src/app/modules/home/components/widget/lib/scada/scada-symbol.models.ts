@@ -234,6 +234,8 @@ const svgPartsRegex = /(<svg.*?>)(.*)<\/svg>/gms;
 
 const tbNamespaceRegex = /<svg.*(xmlns:tb="https:\/\/thingsboard.io\/svg").*>/gms;
 
+const tbTagRegex = /tb:tag="([^"]*)"/gms;
+
 const generateElementId = () => {
   const id = guid();
   const firstChar = id.charAt(0);
@@ -277,6 +279,17 @@ export const parseScadaSymbolMetadataFromContent = (svgContent: string): ScadaSy
   } catch (_e) {
     return emptyMetadata();
   }
+};
+
+export const parseScadaSymbolsTagsFromContent = (svgContent: string): string[] => {
+  const tags: string[] = [];
+  tbTagRegex.lastIndex = 0;
+  let tagsMatch = tbTagRegex.exec(svgContent);
+  while (tagsMatch !== null) {
+    tags.push(tagsMatch[1]);
+    tagsMatch = tbTagRegex.exec(svgContent);
+  }
+  return tags.filter((v, i, arr) => arr.indexOf(v) === i);
 };
 
 const parseScadaSymbolMetadataFromDom = (svgDoc: Document): ScadaSymbolMetadata => {
