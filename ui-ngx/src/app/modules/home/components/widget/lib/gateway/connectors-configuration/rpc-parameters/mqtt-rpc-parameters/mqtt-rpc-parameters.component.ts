@@ -66,8 +66,8 @@ export class MqttRpcParametersComponent implements ControlValueAccessor, Validat
 
   rpcParametersFormGroup: UntypedFormGroup;
 
-  private onChange: (value: RPCTemplateConfigMQTT) => void;
-  private onTouched: () => void;
+  private onChange: (value: RPCTemplateConfigMQTT) => void = (_) => {};
+  private onTouched: () => void = () => {};
 
   private destroy$ = new Subject<void>();
 
