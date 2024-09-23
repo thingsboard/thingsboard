@@ -3187,7 +3187,8 @@
             "header-name": "Header name",
             "hint": {
                 "modbus-response-reading": "RPC response will return all subtracted values from all connected devices when the reading functions are selected.",
-                "modbus-writing-functions": "RPC will write a filled value to all connected devices when the writing functions are selected."
+                "modbus-writing-functions": "RPC will write a filled value to all connected devices when the writing functions are selected.",
+                "opc-method": "A filled method name is the OPC-UA method that will processed on the server side (make sure your node has the requested method)."
             },
             "security-name": "Security name",
             "value": "Value",

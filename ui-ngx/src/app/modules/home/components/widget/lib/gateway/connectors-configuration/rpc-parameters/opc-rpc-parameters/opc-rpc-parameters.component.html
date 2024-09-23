@@ -16,6 +16,9 @@
 
 -->
 <ng-container [formGroup]="rpcParametersFormGroup">
+  <div class="tb-form-hint tb-primary-fill tb-flex no-padding-top hint-container">
+    {{ 'gateway.rpc.hint.opc-method' | translate }}
+  </div>
   <mat-form-field class="tb-flex">
     <mat-label>{{ 'gateway.rpc.method' | translate }}</mat-label>
     <input matInput formControlName="method" placeholder="multiply"/>
