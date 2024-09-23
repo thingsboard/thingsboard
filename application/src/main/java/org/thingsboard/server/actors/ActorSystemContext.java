@@ -108,7 +108,6 @@ import org.thingsboard.server.service.executors.ExternalCallExecutorService;
 import org.thingsboard.server.service.executors.NotificationExecutorService;
 import org.thingsboard.server.service.executors.PubSubRuleNodeExecutorProvider;
 import org.thingsboard.server.service.executors.SharedEventLoopGroupService;
-import org.thingsboard.server.service.mail.MailExecutorService;
 import org.thingsboard.server.service.profile.TbAssetProfileCache;
 import org.thingsboard.server.service.profile.TbDeviceProfileCache;
 import org.thingsboard.server.service.rpc.TbCoreDeviceRpcService;
@@ -307,10 +306,6 @@ public class ActorSystemContext {
     @Autowired(required = false)
     @Getter
     private TbelInvokeService tbelInvokeService;
-
-    @Autowired
-    @Getter
-    private MailExecutorService mailExecutor;
 
     @Autowired
     @Getter

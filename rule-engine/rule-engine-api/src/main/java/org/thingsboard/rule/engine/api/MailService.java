@@ -16,6 +16,7 @@
 package org.thingsboard.rule.engine.api;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.google.common.util.concurrent.ListenableFuture;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.thingsboard.server.common.data.ApiFeature;
 import org.thingsboard.server.common.data.ApiUsageRecordState;
@@ -30,7 +31,7 @@ public interface MailService {
 
     void sendEmail(TenantId tenantId, String email, String subject, String message) throws ThingsboardException;
 
-    void sendTestMail(JsonNode config, String email) throws ThingsboardException;
+    ListenableFuture<Void> sendTestMail(JsonNode config, String email);
 
     void sendActivationEmail(String activationLink, long ttlMs, String email) throws ThingsboardException;
 
@@ -46,11 +47,11 @@ public interface MailService {
 
     void sendTwoFaVerificationEmail(String email, String verificationCode, int expirationTimeSeconds) throws ThingsboardException;
 
-    void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail) throws ThingsboardException;
+    ListenableFuture<Void> send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail);
 
-    void send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout) throws ThingsboardException;
+    ListenableFuture<Void> send(TenantId tenantId, CustomerId customerId, TbEmail tbEmail, JavaMailSender javaMailSender, long timeout);
 
-    void sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState) throws ThingsboardException;
+    ListenableFuture<Void> sendApiFeatureStateEmail(ApiFeature apiFeature, ApiUsageStateValue stateValue, String email, ApiUsageRecordState recordState);
 
     void testConnection(TenantId tenantId) throws Exception;
 
