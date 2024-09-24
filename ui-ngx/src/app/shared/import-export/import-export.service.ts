@@ -363,6 +363,7 @@ export class ImportExportService {
 
   public exportEntity(entityData: EntityInfoData | RuleChainMetaData): void {
     const id = (entityData as EntityInfoData).id ?? (entityData as RuleChainMetaData).ruleChainId;
+    let fileName = (entityData as EntityInfoData).name;
     let preparedData;
     switch (id.entityType) {
       case EntityType.DEVICE_PROFILE:
@@ -389,13 +390,13 @@ export class ImportExportService {
         preparedData = this.prepareDashboardExport(entityData as Dashboard);
         break;
       case EntityType.CUSTOMER:
-        preparedData = this.prepareExport({...entityData, name: (entityData as Customer).title});
-        (entityData as EntityInfoData).name = (entityData as Customer).title;
+        fileName = (entityData as Customer).title;
+        preparedData = this.prepareExport(entityData);
         break;
       default:
         preparedData = this.prepareExport(entityData);
     }
-    this.exportToPc(preparedData, (entityData as EntityInfoData).name);
+    this.exportToPc(preparedData, fileName);
   }
 
   private exportSelectedWidgetsBundle(widgetsBundle: WidgetsBundle): void {
