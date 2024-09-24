@@ -19,7 +19,7 @@
     },
     {
       "tag": "border",
-      "stateRenderFunction": "var value = ctx.values.value;\nvar colorProcessor = ctx.properties.defaultBorderColor;\nif (ctx.values.critical) {\n    colorProcessor = ctx.properties.criticalBorderColor;\n} else if (ctx.values.warning) {\n    colorProcessor = ctx.properties.warningBorderColor;\n} else if (value) {\n    colorProcessor = ctx.properties.activeBorderColor;\n}\ncolorProcessor.update(value);\nvar fill = colorProcessor.color;\nelement.attr({fill: fill});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.animate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetAnimation(element);\n    }\n}",
+      "stateRenderFunction": "var value = ctx.values.value;\nvar colorProcessor = ctx.properties.defaultBorderColor;\nif (ctx.values.critical) {\n    colorProcessor = ctx.properties.criticalBorderColor;\n} else if (ctx.values.warning) {\n    colorProcessor = ctx.properties.warningBorderColor;\n} else if (value) {\n    colorProcessor = ctx.properties.activeBorderColor;\n}\ncolorProcessor.update(value);\nvar fill = colorProcessor.color;\nelement.attr({fill: fill});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
@@ -47,7 +47,7 @@
     },
     {
       "tag": "pointer",
-      "stateRenderFunction": "var valueSet = element.remember('valueSet');\nif (!valueSet) {\n    element.remember('valueSet', true);\n    element.transform({\n        rotate: 0\n    });\n}\n\nvar value = ctx.values.value;\nvar fullValue = ctx.values.fullValue;\n\nvar degrees = Math.max(0, Math.min(1, value/fullValue))*179.99;\nvar rotate = element.remember('rotate');\nif (degrees !== rotate) {\n    element.remember('rotate', degrees);\n    ctx.api.animate(element, 1000).ease('-').transform({rotate: degrees});\n}",
+      "stateRenderFunction": "var valueSet = element.remember('valueSet');\nif (!valueSet) {\n    element.remember('valueSet', true);\n    element.transform({\n        rotate: 0\n    });\n}\n\nvar value = ctx.values.value;\nvar fullValue = ctx.values.fullValue;\n\nvar degrees = Math.max(0, Math.min(1, value/fullValue))*179.99;\nvar rotate = element.remember('rotate');\nif (degrees !== rotate) {\n    element.remember('rotate', degrees);\n    ctx.api.cssAnimate(element, 500).ease('ease-in').transform({rotate: degrees});\n}",
       "actions": {
         "click": {
           "actionFunction": "ctx.api.callAction(event, 'displayClick');"
