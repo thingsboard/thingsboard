@@ -980,11 +980,14 @@ export class ScadaSymbolObject {
       fontSetClasses.forEach(className => textElement.addClass(className));
       textElement.font({size: `${size}px`});
       textElement.attr({
-        'text-anchor': 'start',
-        'dominant-baseline': 'hanging',
         style: `font-size: ${size}px`
       });
       textElement.fill(color);
+      const tspan = textElement.first();
+      tspan.attr({
+        'text-anchor': 'start',
+        'dominant-baseline': 'hanging'
+      });
       return of(textElement);
     }
   }
