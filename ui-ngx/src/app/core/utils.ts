@@ -25,6 +25,7 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
+import Timeout = NodeJS.Timeout;
 
 const varsRegex = /\${([^}]*)}/g;
 
@@ -893,4 +894,31 @@ export const camelCase = (str: string): string => {
 
 export const convertKeysToCamelCase = (obj: Record<string, any>): Record<string, any> => {
   return _.mapKeys(obj, (value, key) => _.camelCase(key));
+};
+
+export const isIOSDevice = (): boolean =>
+  /iPhone|iPad|iPod/i.test(navigator.userAgent) || (navigator.userAgent.includes('Mac') && 'ontouchend' in document);
+
+export const onLongPress = (element: HTMLElement, callback: (event: TouchEvent) => void) => {
+  let timeoutId: Timeout;
+
+  $(element).on('touchstart', (e) => {
+    timeoutId = setTimeout(() => {
+      timeoutId = null;
+      e.stopPropagation();
+      callback(e.originalEvent);
+    }, 500);
+  });
+
+  $(element).on('contextmenu', (e) => e.preventDefault());
+  $(element).on('touchend', (e) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  });
+  $(element).on('touchmove', (e) => {
+    if (timeoutId) {
+      clearTimeout(timeoutId);
+    }
+  });
 };

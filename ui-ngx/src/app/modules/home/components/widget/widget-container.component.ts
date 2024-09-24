@@ -39,7 +39,7 @@ import { DashboardWidget, DashboardWidgets } from '@home/models/dashboard-compon
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { SafeStyle } from '@angular/platform-browser';
-import { isNotEmptyStr } from '@core/utils';
+import { isIOSDevice, isNotEmptyStr, onLongPress } from '@core/utils';
 import { GridsterItemComponent } from 'angular-gridster2';
 import { UtilsService } from '@core/services/utils.service';
 import { from } from 'rxjs';
@@ -57,7 +57,7 @@ export enum WidgetComponentActionType {
 }
 
 export class WidgetComponentAction {
-  event: MouseEvent;
+  event: MouseEvent | TouchEvent;
   actionType: WidgetComponentActionType;
 }
 
@@ -151,7 +151,11 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     }
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
-    $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
+    if (isIOSDevice()) {
+      onLongPress(this.gridsterItem.el, (event) => this.onContextMenu(event));
+    } else {
+      $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
+    }
     const dashboardContentElement = this.widget.widgetContext.dashboardContentElement;
     if (dashboardContentElement) {
       this.initEditWidgetActionTooltip(dashboardContentElement);
@@ -213,7 +217,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     });
   }
 
-  onContextMenu(event: MouseEvent) {
+  onContextMenu(event: MouseEvent | TouchEvent) {
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.CONTEXT_MENU
