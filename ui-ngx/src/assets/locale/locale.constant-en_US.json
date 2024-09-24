@@ -3355,6 +3355,13 @@
             "memory-storage": "Memory storage",
             "sqlite": "SQLITE"
         },
+        "report-strategy": {
+            "label": "Report strategy",
+            "on-change": "On value change",
+            "on-report-period": "On report period",
+            "on-change-or-report-period": "On value change or report period",
+            "report-period": "Report period"
+        },
         "source-type": {
             "msg": "Extract from message",
             "topic": "Extract from topic",
