@@ -1515,7 +1515,11 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
     const transform = this._initialTransform;
     for (const key of Object.keys(this._transform)) {
       if (this._relative) {
-        transformed[key] = this.normFloat(transform[key] + this._transform[key]);
+        if (['scaleX', 'scaleY'].includes(key)) {
+          transformed[key] = this.normFloat(transform[key] * this._transform[key]);
+        } else {
+          transformed[key] = this.normFloat(transform[key] + this._transform[key]);
+        }
       } else {
         transformed[key] = this.normFloat(this._transform[key]);
       }
