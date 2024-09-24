@@ -17,8 +17,10 @@
 import { ChangeDetectionStrategy, Component, forwardRef } from '@angular/core';
 import { NG_VALIDATORS, NG_VALUE_ACCESSOR } from '@angular/forms';
 import {
-  ModbusBasicConfig_v3_5_2,
-  ModbusLegacyBasicConfig, ModbusLegacySlave,
+  LegacySlaveConfig,
+  ModbusBasicConfig,
+  ModbusLegacyBasicConfig,
+  ModbusLegacySlave,
   ModbusMasterConfig,
   ModbusSlave
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
@@ -58,21 +60,21 @@ import {
   ],
   styleUrls: ['./modbus-basic-config.component.scss'],
 })
-export class ModbusLegacyBasicConfigComponent extends ModbusBasicConfigDirective<ModbusLegacyBasicConfig> {
+export class ModbusLegacyBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig, ModbusLegacyBasicConfig> {
 
-  protected override mapConfigToFormValue(config: ModbusLegacyBasicConfig): ModbusBasicConfig_v3_5_2 {
+  isLegacy = true;
+
+  protected override mapConfigToFormValue(config: ModbusLegacyBasicConfig): ModbusBasicConfig {
     return {
-      master: config.master?.slaves
-        ? ModbusVersionMappingUtil.mapMasterToUpgradedVersion(config.master)
-        : { slaves: [] } as ModbusMasterConfig,
-      slave: config.slave ? ModbusVersionMappingUtil.mapSlaveToUpgradedVersion(config.slave) : {} as ModbusSlave,
-    };
+      master: config.master?.slaves ? config.master : { slaves: [] } as ModbusMasterConfig<LegacySlaveConfig>,
+      slave: config.slave ? ModbusVersionMappingUtil.mapSlaveToUpgradedVersion(config.slave as ModbusLegacySlave) : {},
+    } as ModbusBasicConfig;
   }
 
-  protected override getMappedValue(value: ModbusBasicConfig_v3_5_2): ModbusLegacyBasicConfig {
+  protected override getMappedValue(value: ModbusBasicConfig): ModbusLegacyBasicConfig {
     return {
-      master: value.master,
-      slave: value.slave ? ModbusVersionMappingUtil.mapSlaveToDowngradedVersion(value.slave) : {} as ModbusLegacySlave,
+      master: value.master as ModbusMasterConfig<LegacySlaveConfig>,
+      slave: value.slave ? ModbusVersionMappingUtil.mapSlaveToDowngradedVersion(value.slave as ModbusSlave) : {} as ModbusLegacySlave,
     };
   }
 }

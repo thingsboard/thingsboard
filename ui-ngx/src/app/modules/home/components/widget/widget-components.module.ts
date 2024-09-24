@@ -167,6 +167,9 @@ import {
   ModbusRpcParametersComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/modbus-rpc-parameters/modbus-rpc-parameters.component';
 import { RpcTemplateArrayViewPipe } from '@home/components/widget/lib/gateway/pipes/rpc-template-array-view.pipe';
+import { 
+  ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
 
 @NgModule({
   declarations: [
@@ -264,6 +267,7 @@ import { RpcTemplateArrayViewPipe } from '@home/components/widget/lib/gateway/pi
     OpcRpcParametersComponent,
     ModbusRpcParametersComponent,
     RpcTemplateArrayViewPipe,
+    ReportStrategyComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,

@@ -227,13 +227,16 @@
             </mat-form-field>
           </div>
         </div>
-        <div class="tb-form-row" fxLayoutAlign="space-between center">
+        <div *ngIf="data.hideNewFields else reportStrategy" class="tb-form-row" fxLayoutAlign="space-between center">
           <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
             <mat-label>
               {{ 'gateway.send-data-on-change' | translate }}
             </mat-label>
           </mat-slide-toggle>
         </div>
+        <ng-template #reportStrategy>
+          <tb-report-strategy formControlName="reportStrategy" [isExpansionMode]="true"/>
+        </ng-template>
         <div class="tb-form-panel stroked">
           <mat-expansion-panel class="tb-settings">
             <mat-expansion-panel-header>
@@ -345,7 +348,7 @@
           </mat-expansion-panel>
         </div>
         <div class="tb-form-panel stroked">
-          <tb-modbus-values [singleMode]="true" formControlName="values"></tb-modbus-values>
+          <tb-modbus-values [singleMode]="true" [hideNewFields]="data.hideNewFields" formControlName="values"></tb-modbus-values>
         </div>
       </div>
     </div>

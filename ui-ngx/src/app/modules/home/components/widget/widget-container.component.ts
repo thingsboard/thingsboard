@@ -200,6 +200,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onMouseDown(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.MOUSE_DOWN
@@ -207,6 +210,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onClicked(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.CLICKED
@@ -214,6 +220,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onContextMenu(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.CONTEXT_MENU
@@ -221,6 +230,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onEdit(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.EDIT
@@ -228,6 +240,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onReplaceReferenceWithWidgetCopy(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.REPLACE_REFERENCE_WITH_WIDGET_COPY
@@ -235,6 +250,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onExport(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.EXPORT
@@ -242,6 +260,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
   }
 
   onRemove(event: MouseEvent) {
+    if (event) {
+      event.stopPropagation();
+    }
     this.widgetComponentAction.emit({
       event,
       actionType: WidgetComponentActionType.REMOVE
@@ -283,17 +304,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
         functionPosition: (instance, helper, position) => {
           const clientRect = helper.origin.getBoundingClientRect();
           const container = parent.getBoundingClientRect();
-          position.coord.left = clientRect.right - position.size.width - container.left;
+          position.coord.left = Math.max(0,clientRect.right - position.size.width - container.left);
           position.coord.top = position.coord.top - container.top;
           position.target = clientRect.right;
-          const rightOverflow = container.right - (position.coord.left + position.size.width);
-          if (rightOverflow < 0) {
-            position.coord.left += rightOverflow;
-          }
-          const leftOverflow = container.left - position.coord.left;
-          if (leftOverflow > 0) {
-            position.coord.left += leftOverflow;
-          }
           return position;
         },
         functionReady: (_instance, helper) => {
