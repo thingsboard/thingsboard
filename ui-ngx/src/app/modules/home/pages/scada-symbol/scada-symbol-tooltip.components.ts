@@ -258,7 +258,11 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         );
 
         const scadaSymbolTagSettingsTooltip = tagSettingsButton.tooltipster('instance');
-        setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, scadaSymbolTagSettingsTooltip);
+        const scadaSymbolTagSettingsComponentRef =
+          setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, scadaSymbolTagSettingsTooltip);
+        scadaSymbolTagSettingsTooltip.on('ready', () => {
+          scadaSymbolTagSettingsComponentRef.instance.updateFunctionsState();
+        });
       }
 
       if (!this.symbolElement.readonly) {
@@ -400,7 +404,7 @@ class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implemen
     this.updateFunctionsState();
   }
 
-  private updateFunctionsState() {
+  updateFunctionsState() {
     this.hasStateRenderFunction = this.symbolElement.hasStateRenderFunction();
     this.hasClickAction = this.symbolElement.hasClickAction();
   }
