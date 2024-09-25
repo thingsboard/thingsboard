@@ -680,7 +680,7 @@ export const HelpLinkByMappingTypeMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, helpBaseUrl + '/docs/iot-gateway/config/mqtt/#section-mapping'],
     [MappingType.OPCUA, helpBaseUrl + '/docs/iot-gateway/config/opc-ua/#section-mapping'],
-    [MappingType.REQUESTS, helpBaseUrl + '/docs/iot-gateway/config/mqtt/#section-mapping']
+    [MappingType.REQUESTS, helpBaseUrl + '/docs/iot-gateway/config/mqtt/#requests-mapping']
   ]
 );
 

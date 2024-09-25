@@ -26,10 +26,13 @@
             <mat-expansion-panel class="tb-settings" [expanded]="last">
               <mat-expansion-panel-header fxLayout="row wrap">
                 <mat-panel-title>
-                  <div class="title-container" *ngIf="keysType !== MappingKeysType.RPC_METHODS">
-                    {{ keyControl.get('key').value }}{{ '-' }}
-                  </div>
-                  <div class="title-container">{{ valueTitle(keyControl) }}</div>
+                  <ng-container *ngIf="keysType !== MappingKeysType.RPC_METHODS">
+                    <div tbTruncateWithTooltip class="title-container">
+                      {{ keyControl.get('key').value }}
+                    </div>
+                    {{ '-' }}
+                  </ng-container>
+                  <div tbTruncateWithTooltip class="title-container">{{ valueTitle(keyControl) }}</div>
                 </mat-panel-title>
               </mat-expansion-panel-header>
               <ng-template matExpansionPanelContent>
