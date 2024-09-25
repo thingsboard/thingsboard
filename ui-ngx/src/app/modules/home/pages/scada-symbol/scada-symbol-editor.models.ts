@@ -34,7 +34,7 @@ import {
 import { TbEditorCompletion, TbEditorCompletions } from '@shared/models/ace/completion.models';
 import { CustomTranslatePipe } from '@shared/pipe/custom-translate.pipe';
 import { AceHighlightRule, AceHighlightRules } from '@shared/models/ace/ace.models';
-import { ValueType } from '@shared/models/constants';
+import { HelpLinks, ValueType } from '@shared/models/constants';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
 import TooltipPositioningSide = JQueryTooltipster.TooltipPositioningSide;
 import ITooltipsterHelper = JQueryTooltipster.ITooltipsterHelper;
@@ -1131,6 +1131,10 @@ export const clickActionFunctionCompletions = (ctxCompletion: TbEditorCompletion
 
 export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags: string[],
                                              customTranslate: CustomTranslatePipe): TbEditorCompletion => {
+
+  const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
+  const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}">ScadaSymbolAnimation</a>`;
+
   const properties: TbEditorCompletion = {
     meta: 'object',
     type: 'object',
@@ -1191,9 +1195,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               }
             ],
             return: {
-              description: 'Instance of ScadaSymbolAnimation which has generally similar methods as ' +
-                '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a> to control the animation.',
-              type: 'ScadaSymbolAnimation'
+              description: `Instance of ${scadaSymbolAnimation} class with API to setup and control the animation.`,
+              type: scadaSymbolAnimation
             }
           },
           cssAnimation: {
@@ -1207,9 +1210,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               }
             ],
             return: {
-              description: 'Instance of ScadaSymbolAnimation which has generally similar methods as ' +
-                '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a> to control the animation.',
-              type: 'ScadaSymbolAnimation'
+              description: `Instance of ${scadaSymbolAnimation} class with API to setup and control the animation.`,
+              type: scadaSymbolAnimation
             }
           },
           resetCssAnimation: {
