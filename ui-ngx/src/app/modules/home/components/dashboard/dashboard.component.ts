@@ -19,7 +19,6 @@ import {
   ChangeDetectionStrategy,
   Component,
   DoCheck,
-  ElementRef,
   Input,
   IterableDiffers,
   KeyValueDiffers,
@@ -46,7 +45,7 @@ import {
 } from '../../models/dashboard-component.models';
 import { ReplaySubject, Subject, Subscription } from 'rxjs';
 import { WidgetLayout, WidgetLayouts } from '@shared/models/dashboard.models';
-import { animatedScroll, deepClone, isDefined, isIOSDevice, onLongPress } from '@app/core/utils';
+import { animatedScroll, deepClone, isDefined } from '@app/core/utils';
 import { BreakpointObserver } from '@angular/cdk/layout';
 import { MediaBreakpoints } from '@shared/models/constants';
 import { IAliasController, IStateController } from '@app/core/api/widget-api.models';
@@ -59,6 +58,7 @@ import { WidgetComponentAction, WidgetComponentActionType } from '@home/componen
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
   selector: 'tb-dashboard',
@@ -183,19 +183,18 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
   isMobileSize = false;
 
   @ViewChild('gridster', {static: true}) gridster: GridsterComponent;
-  @ViewChild('gridsterParent', {static: true, read: ElementRef}) gridsterParent: ElementRef<HTMLElement>;
 
   @ViewChild('dashboardMenuTrigger', {static: true}) dashboardMenuTrigger: MatMenuTrigger;
 
   dashboardMenuPosition = { x: '0px', y: '0px' };
 
-  dashboardContextMenuEvent: MouseEvent | TouchEvent;
+  dashboardContextMenuEvent: TbContextMenuEvent;
 
   @ViewChild('widgetMenuTrigger', {static: true}) widgetMenuTrigger: MatMenuTrigger;
 
   widgetMenuPosition = { x: '0px', y: '0px' };
 
-  widgetContextMenuEvent: MouseEvent | TouchEvent;
+  widgetContextMenuEvent: TbContextMenuEvent;
 
   dashboardWidgets = new DashboardWidgets(this,
     this.differs.find([]).create<Widget>((_, item) => item),
@@ -272,10 +271,6 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     );
 
     this.updateWidgets();
-
-    if (isIOSDevice()) {
-      onLongPress(this.gridsterParent.nativeElement, (event) => this.openDashboardContextMenu(event));
-    }
   }
 
   ngOnDestroy(): void {
@@ -401,30 +396,30 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  openDashboardContextMenu($event: MouseEvent | TouchEvent) {
+  openDashboardContextMenu($event: TbContextMenuEvent) {
     if (this.callbacks && this.callbacks.prepareDashboardContextMenu) {
       const items = this.callbacks.prepareDashboardContextMenu($event);
       if (items && items.length) {
         $event.preventDefault();
         $event.stopPropagation();
         this.dashboardContextMenuEvent = $event;
-        this.dashboardMenuPosition.x = ('touches' in $event ? $event.changedTouches[0].clientX : $event.clientX) + 'px';
-        this.dashboardMenuPosition.y = ('touches' in $event ? $event.changedTouches[0].clientY : $event.clientY) + 'px';
+        this.dashboardMenuPosition.x = $event.clientX + 'px';
+        this.dashboardMenuPosition.y = $event.clientY + 'px';
         this.dashboardMenuTrigger.menuData = { items };
         this.dashboardMenuTrigger.openMenu();
       }
     }
   }
 
-  private openWidgetContextMenu($event: MouseEvent | TouchEvent, widget: DashboardWidget) {
+  private openWidgetContextMenu($event: TbContextMenuEvent, widget: DashboardWidget) {
     if (this.callbacks && this.callbacks.prepareWidgetContextMenu) {
-      const items = this.callbacks.prepareWidgetContextMenu($event, widget.widget, widget.isReference);
+      const items = this.callbacks.prepareWidgetContextMenu($event as any, widget.widget, widget.isReference);
       if (items && items.length) {
         $event.preventDefault();
         $event.stopPropagation();
         this.widgetContextMenuEvent = $event;
-        this.widgetMenuPosition.x = ('touches' in $event ? $event.changedTouches[0].clientX : $event.clientX) + 'px';
-        this.widgetMenuPosition.y = ('touches' in $event ? $event.changedTouches[0].clientY : $event.clientY) + 'px';
+        this.widgetMenuPosition.x = $event.clientX + 'px';
+        this.widgetMenuPosition.y = $event.clientY + 'px';
         this.widgetMenuTrigger.menuData = { items, widget: widget.widget };
         this.widgetMenuTrigger.openMenu();
       }
