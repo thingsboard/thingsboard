@@ -606,7 +606,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       .subscribe((attributes: AttributeData[]) => {
 
         const active = attributes.find(data => data.key === 'active').value;
-        const lastDisconnectedTime = attributes.find(data => data.key === 'lastDisconnectTime').value;
+        const lastDisconnectedTime = attributes.find(data => data.key === 'lastDisconnectTime')?.value;
         const lastConnectedTime = attributes.find(data => data.key === 'lastConnectTime').value;
 
         this.isGatewayActive = this.getGatewayStatus(active, lastConnectedTime, lastDisconnectedTime);
@@ -714,7 +714,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     if (!active) {
       return false;
     }
-    return lastConnectedTime > lastDisconnectedTime;
+    return !lastDisconnectedTime || lastConnectedTime > lastDisconnectedTime;
   }
 
   private generateSubscription(): void {
@@ -821,7 +821,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private updateBasicConfigConnector(connector: GatewayConnector): void {
     this.connectorForm.get('mode').setValue(connector.mode || ConfigurationModes.BASIC, {emitEvent: false});
     this.connectorForm.get('configVersion').setValue(connector.configVersion, {emitEvent: false});
-    if (!connector.mode || connector.mode === ConfigurationModes.BASIC) {
+    if ((!connector.mode || connector.mode === ConfigurationModes.BASIC) && this.connectorForm.get('type').value !== connector.type) {
       this.basicConfigInitSubject.asObservable().pipe(take(1)).subscribe(() => {
         this.patchBasicConfigConnector(connector);
       });
