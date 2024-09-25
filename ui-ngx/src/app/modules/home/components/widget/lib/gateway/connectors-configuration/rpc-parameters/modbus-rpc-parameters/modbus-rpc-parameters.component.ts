@@ -39,13 +39,14 @@ import {
   ModbusEditableDataTypes,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
-  ModbusValue,
   noLeadTrailSpacesRegex,
+  RPCTemplateConfigModbus,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Component({
   selector: 'tb-modbus-rpc-parameters',
   templateUrl: './modbus-rpc-parameters.component.html',
+  styleUrls: ['./modbus-rpc-parameters.component.scss'],
   changeDetection: ChangeDetectionStrategy.OnPush,
   providers: [
     {
@@ -80,14 +81,13 @@ export class ModbusRpcParametersComponent implements ControlValueAccessor, Valid
   private readonly readFunctionCodes = [1, 2, 3, 4];
   private readonly bitsFunctionCodes = [...this.readFunctionCodes, ...this.writeFunctionCodes];
 
-  private onChange: (value: ModbusValue) => void;
+  private onChange: (value: RPCTemplateConfigModbus) => void;
   private onTouched: () => void;
 
   private destroy$ = new Subject<void>();
 
   constructor(private fb: FormBuilder) {
     this.rpcParametersFormGroup = this.fb.group({
-      tag: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       type: [ModbusDataType.BYTES, [Validators.required]],
       functionCode: [this.defaultFunctionCodes[0], [Validators.required]],
       value: [{value: '', disabled: true}, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -106,7 +106,7 @@ export class ModbusRpcParametersComponent implements ControlValueAccessor, Valid
     this.destroy$.complete();
   }
 
-  registerOnChange(fn: (value: ModbusValue) => void): void {
+  registerOnChange(fn: (value: RPCTemplateConfigModbus) => void): void {
     this.onChange = fn;
   }
 
@@ -120,7 +120,7 @@ export class ModbusRpcParametersComponent implements ControlValueAccessor, Valid
     };
   }
 
-  writeValue(value: ModbusValue): void {
+  writeValue(value: RPCTemplateConfigModbus): void {
     this.rpcParametersFormGroup.patchValue(value, {emitEvent: false});
   }
 

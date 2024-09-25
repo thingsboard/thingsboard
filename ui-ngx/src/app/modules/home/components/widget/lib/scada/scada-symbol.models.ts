@@ -972,12 +972,12 @@ export class ScadaSymbolObject {
       fontSetClasses.forEach(className => textElement.addClass(className));
       textElement.font({size: `${size}px`});
       textElement.attr({
-        style: `font-size: ${size}px`
+        style: `font-size: ${size}px`,
+        'text-anchor': 'start'
       });
       textElement.fill(color);
       const tspan = textElement.first();
       tspan.attr({
-        'text-anchor': 'start',
         'dominant-baseline': 'hanging'
       });
       return of(textElement);
