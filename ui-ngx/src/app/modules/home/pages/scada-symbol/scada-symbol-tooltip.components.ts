@@ -225,8 +225,6 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
 
   displayTagSettings = true;
 
-  private scadaSymbolTagSettingsTooltip: ITooltipsterInstance;
-
   constructor(public element: ElementRef<HTMLElement>,
               private container: ViewContainerRef) {
     super(element);
@@ -244,8 +242,26 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
 
       if (this.displayTagSettings) {
         const tagSettingsButton = $(this.tagSettingsButton.nativeElement);
-        tagSettingsButton.on('click', () => {
-          this.createTagSettingsTooltip();
+        tagSettingsButton.tooltipster(
+          {
+            parent: this.symbolElement.tooltipContainer,
+            zIndex: 200,
+            arrow: true,
+            theme: ['scada-symbol', 'tb-active'],
+            interactive: true,
+            trigger: 'click',
+            trackOrigin: true,
+            trackerInterval: 100,
+            side: 'top',
+            content: ''
+          }
+        );
+
+        const scadaSymbolTagSettingsTooltip = tagSettingsButton.tooltipster('instance');
+        const scadaSymbolTagSettingsComponentRef =
+          setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, scadaSymbolTagSettingsTooltip);
+        scadaSymbolTagSettingsTooltip.on('ready', () => {
+          scadaSymbolTagSettingsComponentRef.instance.updateFunctionsState();
         });
       }
 
@@ -281,33 +297,6 @@ class ScadaSymbolTagPanelComponent extends ScadaSymbolPanelComponent implements 
         });
       }
     });
-  }
-
-  private createTagSettingsTooltip() {
-    if (!this.scadaSymbolTagSettingsTooltip) {
-      const tagSettingsButton = $(this.tagSettingsButton.nativeElement);
-      tagSettingsButton.tooltipster(
-        {
-          parent: this.symbolElement.tooltipContainer,
-          zIndex: 200,
-          arrow: true,
-          theme: ['scada-symbol', 'tb-active'],
-          interactive: true,
-          trigger: 'click',
-          trackOrigin: true,
-          trackerInterval: 100,
-          side: 'top',
-          content: '',
-          functionAfter: () => {
-            this.scadaSymbolTagSettingsTooltip.destroy();
-            this.scadaSymbolTagSettingsTooltip = null;
-          }
-        }
-      );
-      this.scadaSymbolTagSettingsTooltip = tagSettingsButton.tooltipster('instance');
-      setTooltipComponent(this.symbolElement, this.container, ScadaSymbolTagSettingsComponent, this.scadaSymbolTagSettingsTooltip);
-      this.scadaSymbolTagSettingsTooltip.open();
-    }
   }
 
   public onUpdateTag() {
@@ -415,7 +404,7 @@ class ScadaSymbolTagSettingsComponent extends ScadaSymbolPanelComponent implemen
     this.updateFunctionsState();
   }
 
-  private updateFunctionsState() {
+  updateFunctionsState() {
     this.hasStateRenderFunction = this.symbolElement.hasStateRenderFunction();
     this.hasClickAction = this.symbolElement.hasClickAction();
   }

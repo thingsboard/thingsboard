@@ -28,7 +28,7 @@ import {
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
   ModbusDataType,
-  ModbusEditableDataTypes,
+  ModbusEditableDataTypes, ModbusFormValue,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
   ModbusValue,
@@ -45,6 +45,9 @@ import { generateSecret } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { takeUntil } from 'rxjs/operators';
 import { Subject } from 'rxjs';
+import {
+  ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
 
 @Component({
   selector: 'tb-modbus-data-keys-panel',
@@ -55,12 +58,15 @@ import { Subject } from 'rxjs';
     CommonModule,
     SharedModule,
     GatewayHelpLinkPipe,
+    ReportStrategyComponent,
   ]
 })
 export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   @coerceBoolean()
   @Input() isMaster = false;
+  @coerceBoolean()
+  @Input() hideNewFields = false;
   @Input() panelTitle: string;
   @Input() addKeyTitle: string;
   @Input() deleteKeyTitle: string;
@@ -75,6 +81,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   modbusDataTypes = Object.values(ModbusDataType);
   modifierTypes: ModifierType[] = Object.values(ModifierType);
   withFunctionCode = true;
+  withReportStrategy = true;
 
   enableModifiersControlMap = new Map<string, FormControl<boolean>>();
   showModifiersMap = new Map<string, boolean>();
@@ -96,6 +103,9 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
 
   ngOnInit(): void {
     this.withFunctionCode = !this.isMaster || (this.keysType !== ModbusValueKey.ATTRIBUTES && this.keysType !== ModbusValueKey.TIMESERIES);
+    this.withReportStrategy = !this.isMaster
+      && (this.keysType === ModbusValueKey.ATTRIBUTES || this.keysType === ModbusValueKey.TIMESERIES)
+      && !this.hideNewFields;
     this.keysListFormArray = this.prepareKeysFormArray(this.values);
     this.defaultFunctionCodes = this.getDefaultFunctionCodes();
   }
@@ -118,6 +128,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
       address: [null, [Validators.required]],
       objectsCount: [1, [Validators.required]],
       functionCode: [{ value: this.getDefaultFunctionCodes()[0], disabled: !this.withFunctionCode }, [Validators.required]],
+      reportStrategy: [{ value: null, disabled: !this.withReportStrategy }],
       modifierType: [{ value: ModifierType.MULTIPLIER, disabled: true }],
       modifierValue: [{ value: 1, disabled: true }, [Validators.pattern(nonZeroFloat)]],
       id: [{value: id, disabled: true}],
@@ -143,11 +154,26 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   applyKeysData(): void {
-    this.keysDataApplied.emit(this.mapKeysWithModifier());
+    this.keysDataApplied.emit(this.getFormValue());
   }
 
-  private mapKeysWithModifier(): Array<ModbusValue> {
-    return this.keysListFormArray.value.map((keyData, i) => {
+  private getFormValue(): ModbusValue[] {
+    return this.mapKeysWithModifier(
+      this.withReportStrategy
+      ? this.cleanUpEmptyStrategies(this.keysListFormArray.value)
+      : this.keysListFormArray.value
+    );
+  }
+
+  private cleanUpEmptyStrategies(values: ModbusValue[]): ModbusValue[] {
+    return values.map((key) => {
+      const { reportStrategy, ...updatedKey } = key;
+      return !reportStrategy ? updatedKey : key;
+    });
+  }
+
+  private mapKeysWithModifier(values: Array<ModbusFormValue>): Array<ModbusValue> {
+    return values.map((keyData, i) => {
       if (this.showModifiersMap.get(this.keysListFormArray.controls[i].get('id').value)) {
         const { modifierType, modifierValue, ...value } = keyData;
         return modifierType ? { ...value, [modifierType]: modifierValue } : value;
@@ -174,7 +200,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   }
 
   private createDataKeyFormGroup(modbusValue: ModbusValue): FormGroup {
-    const { tag, value, type, address, objectsCount, functionCode, multiplier, divider } = modbusValue;
+    const { tag, value, type, address, objectsCount, functionCode, multiplier, divider, reportStrategy } = modbusValue;
     const id = generateSecret(5);
 
     const showModifier = this.shouldShowModifier(type);
@@ -197,6 +223,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
         [Validators.pattern(nonZeroFloat)]
       ],
       id: [{ value: id, disabled: true }],
+      reportStrategy: [{ value: reportStrategy, disabled: !this.withReportStrategy }],
     });
   }
 

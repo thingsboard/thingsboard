@@ -1235,49 +1235,6 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
               },
             ]
           },
-          animate: {
-            meta: 'function',
-            description: 'Finishes any previous animation and starts new animation for SVG element.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-              {
-                name: 'duration',
-                description: 'Animation duration in milliseconds',
-                type: 'number'
-              }
-            ],
-            return: {
-              description: 'Instance of SVG.Runner which has the same methods as any element and additional methods to control the runner.',
-              type: '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a>'
-            }
-          },
-          resetAnimation: {
-            meta: 'function',
-            description: 'Stops animation if any and restore SVG element initial state, resets animation timeline.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-            ]
-          },
-          finishAnimation: {
-            meta: 'function',
-            description: 'Finishes animation if any, SVG element state updated according to the end animation values, ' +
-              'resets animation timeline.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-            ]
-          },
           generateElementId: {
             meta: 'function',
             description: 'Generates new unique element id.',
