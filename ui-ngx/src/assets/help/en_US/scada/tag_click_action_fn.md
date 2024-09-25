@@ -23,27 +23,28 @@ A JavaScript function invoked when user clicks on SVG element with specific tag.
 
 ##### Examples
 
-* Set new value action
+The example demonstrates how to dynamically call the 'turnOn' or 'turnOff' actions based on the 'active' status from the context. The actions are implemented using the following methods from the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolapi" target="_blank">Scada Symbol API</a>:
 
-*callAction: (event: Event, behaviorId: string, value?: any, observer?: Partial\<Observer\<void\>\>): void*
+- **callAction**: *(event: Event, behaviorId: string, value?: any, observer?: Partial\<Observer\<void\>\>): void* - Triggers a specific behavior action identified by its ID, allowing for the optional passing of values and observer callbacks.
 
-*setValue: (valueId: string, value: any): void*
+- **setValue**: *(valueId: string, value: any): void* - Updates a specific value within the `ctx.values` object and initiates all related rendering functions.
 
-Avoid manually setting behavior values, as shown in the example, see <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#best-practices" target="_blank">best practice</a> for Device Interaction
+For more detailed guidelines on device interaction, consider reviewing the <a href="${siteBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#best-practices" target="_blank">best practices</a>.
 
 ```javascript
-var active = ctx.values.active;
-var action = active ? 'turnOn' : 'turnOff';
+var active = ctx.values.active; // Current active status from context
+var action = active ? 'turnOn' : 'turnOff'; // Determine action based on active status
+var parameter = "any object or primitive"; // Parameter to pass with the action
 
-ctx.api.callAction(event, action, active, {
+// Call the action with observer callbacks for next and error handling
+ctx.api.callAction(event, action, parameter, {
   next: () => {
-    // To simplify debugging in preview mode
+    // Action succeeded; toggle the 'activate' status for debugging
     ctx.api.setValue('activate', !active);
   },
   error: () => {
-    // To simplify debugging in preview mode
+    // Action failed; reset the 'activate' status for debugging
     ctx.api.setValue('activate', active);
   }
 });
-{:copy-code}
 ```
