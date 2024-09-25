@@ -163,7 +163,7 @@
         <slack-api.version>1.39.0</slack-api.version>
         <oshi.version>6.6.0</oshi.version>
         <google-oauth-client.version>1.35.0</google-oauth-client.version>
-        <apache-xmlgraphics.version>1.17</apache-xmlgraphics.version>
+        <weisj-jsvg.version>1.6.1</weisj-jsvg.version>
         <drewnoakes-metadata-extractor.version>2.19.0</drewnoakes-metadata-extractor.version>
         <firebase-admin.version>9.2.0</firebase-admin.version>
     </properties>
@@ -2262,20 +2262,9 @@
                 <version>${google-oauth-client.version}</version>
             </dependency>
             <dependency>
-                <groupId>org.apache.xmlgraphics</groupId>
-                <artifactId>batik-transcoder</artifactId>
-                <version>${apache-xmlgraphics.version}</version>
-                <exclusions>
-                    <exclusion>
-                        <groupId>commons-logging</groupId>
-                        <artifactId>commons-logging</artifactId>
-                    </exclusion>
-                </exclusions>
-            </dependency>
-            <dependency>
-                <groupId>org.apache.xmlgraphics</groupId>
-                <artifactId>batik-codec</artifactId>
-                <version>${apache-xmlgraphics.version}</version>
+                <groupId>com.github.weisj</groupId>
+                <artifactId>jsvg</artifactId>
+                <version>${weisj-jsvg.version}</version>
             </dependency>
             <dependency>
                 <groupId>com.drewnoakes</groupId>
