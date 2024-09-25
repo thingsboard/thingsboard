@@ -8,7 +8,7 @@
   ],
   "widgetSizeX": 3,
   "widgetSizeY": 5,
-  "stateRenderFunction": "var running = ctx.values.running;\nif (running) {\n    ctx.api.enable(svg.children());\n} else {\n    ctx.api.disable(svg.children());\n}",
+  "stateRenderFunction": "var running = ctx.values.running;\nif (running) {\n    ctx.api.enable(ctx.tags.filterMode);\n} else {\n    ctx.api.disable(ctx.tags.filterMode);\n}",
   "tags": [
     {
       "tag": "background",
