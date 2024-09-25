@@ -45,6 +45,7 @@ import { UtilsService } from '@core/services/utils.service';
 import { from } from 'rxjs';
 import { DashboardUtilsService } from '@core/services/dashboard-utils.service';
 import ITooltipsterInstance = JQueryTooltipster.ITooltipsterInstance;
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 export enum WidgetComponentActionType {
   MOUSE_DOWN,
@@ -57,7 +58,7 @@ export enum WidgetComponentActionType {
 }
 
 export class WidgetComponentAction {
-  event: MouseEvent;
+  event: MouseEvent | TbContextMenuEvent;
   actionType: WidgetComponentActionType;
 }
 
@@ -151,7 +152,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     }
     $(this.gridsterItem.el).on('mousedown', (e) => this.onMouseDown(e.originalEvent));
     $(this.gridsterItem.el).on('click', (e) => this.onClicked(e.originalEvent));
-    $(this.gridsterItem.el).on('contextmenu', (e) => this.onContextMenu(e.originalEvent));
+    $(this.gridsterItem.el).on('tbcontextmenu', (e: TbContextMenuEvent) => this.onContextMenu(e));
     const dashboardContentElement = this.widget.widgetContext.dashboardContentElement;
     if (dashboardContentElement) {
       this.initEditWidgetActionTooltip(dashboardContentElement);
@@ -180,6 +181,9 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     if (this.editWidgetActionsTooltip && !this.editWidgetActionsTooltip.status().destroyed) {
       this.editWidgetActionsTooltip.destroy();
     }
+    $(this.gridsterItem.el).off('mousedown');
+    $(this.gridsterItem.el).off('click');
+    $(this.gridsterItem.el).off('tbcontextmenu');
   }
 
   isHighlighted(widget: DashboardWidget) {
@@ -219,7 +223,7 @@ export class WidgetContainerComponent extends PageComponent implements OnInit, O
     });
   }
 
-  onContextMenu(event: MouseEvent) {
+  onContextMenu(event: TbContextMenuEvent) {
     if (event) {
       event.stopPropagation();
     }

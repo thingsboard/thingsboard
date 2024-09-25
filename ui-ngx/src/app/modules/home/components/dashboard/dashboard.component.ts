@@ -58,6 +58,7 @@ import { WidgetComponentAction, WidgetComponentActionType } from '@home/componen
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { displayGrids } from 'angular-gridster2/lib/gridsterConfig.interface';
 import { coerceBoolean } from '@shared/decorators/coercion';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 
 @Component({
   selector: 'tb-dashboard',
@@ -187,13 +188,13 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   dashboardMenuPosition = { x: '0px', y: '0px' };
 
-  dashboardContextMenuEvent: MouseEvent;
+  dashboardContextMenuEvent: TbContextMenuEvent;
 
   @ViewChild('widgetMenuTrigger', {static: true}) widgetMenuTrigger: MatMenuTrigger;
 
   widgetMenuPosition = { x: '0px', y: '0px' };
 
-  widgetContextMenuEvent: MouseEvent;
+  widgetContextMenuEvent: TbContextMenuEvent;
 
   dashboardWidgets = new DashboardWidgets(this,
     this.differs.find([]).create<Widget>((_, item) => item),
@@ -395,7 +396,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  openDashboardContextMenu($event: MouseEvent) {
+  openDashboardContextMenu($event: TbContextMenuEvent) {
     if (this.callbacks && this.callbacks.prepareDashboardContextMenu) {
       const items = this.callbacks.prepareDashboardContextMenu($event);
       if (items && items.length) {
@@ -410,7 +411,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
     }
   }
 
-  private openWidgetContextMenu($event: MouseEvent, widget: DashboardWidget) {
+  private openWidgetContextMenu($event: TbContextMenuEvent, widget: DashboardWidget) {
     if (this.callbacks && this.callbacks.prepareWidgetContextMenu) {
       const items = this.callbacks.prepareWidgetContextMenu($event, widget.widget, widget.isReference);
       if (items && items.length) {

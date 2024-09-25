@@ -14,6 +14,22 @@
 /// limitations under the License.
 ///
 
-export * from './truncate-with-tooltip.directive';
-export * from './ellipsis-chip-list.directive';
-export * from './context-menu.directive';
+import { Directive, ElementRef, EventEmitter, OnDestroy, Output } from '@angular/core';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
+
+@Directive({
+  selector: '[tbcontextmenu]'
+})
+export class ContextMenuDirective implements OnDestroy {
+
+  @Output()
+  tbcontextmenu = new EventEmitter<TbContextMenuEvent>();
+
+  constructor(private el: ElementRef) {
+    $(this.el.nativeElement).on('tbcontextmenu', (e: TbContextMenuEvent) => this.tbcontextmenu.emit(e));
+  }
+
+  ngOnDestroy() {
+    $(this.el.nativeElement).off('tbcontextmenu');
+  }
+}
