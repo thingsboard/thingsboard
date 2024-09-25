@@ -70,8 +70,8 @@
                               matTooltipPosition="above"
                               matTooltipClass="tb-error-tooltip"
                               [matTooltip]="('gateway.value-required') | translate"
-                              *ngIf="keyControl.get(keyControl.get('value').value).hasError('required')
-                              && keyControl.get(keyControl.get('value').value).touched"
+                              *ngIf="keyControl.get(keyControl.get('type').value).hasError('required')
+                              && keyControl.get(keyControl.get('type').value).touched"
                               class="tb-error">
                       warning
                     </mat-icon>
