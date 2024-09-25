@@ -42,7 +42,6 @@ import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.request.CreateRequest;
 import org.eclipse.leshan.core.request.ObserveRequest;
 import org.eclipse.leshan.core.request.ReadRequest;
-import org.eclipse.leshan.core.request.SendRequest;
 import org.eclipse.leshan.core.request.WriteCompositeRequest;
 import org.eclipse.leshan.core.request.WriteRequest;
 import org.eclipse.leshan.core.request.WriteRequest.Mode;
@@ -133,7 +132,6 @@ import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaU
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_RESULT_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_STATE_ID;
 import static org.thingsboard.server.transport.lwm2m.server.ota.DefaultLwM2MOtaUpdateService.SW_VER_ID;
-import static org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MClientSerDes.PROPERTY_KEY_TS_LATEST_MAP;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_ERROR;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_INFO;
 import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.LOG_LWM2M_WARN;
@@ -652,8 +650,7 @@ public class DefaultLwM2mUplinkMsgHandler extends LwM2MExecutorAwareService impl
                 }
                 if (results.getResultTelemetries().size() > 0) {
                     log.trace("UpdateTelemetry paths [{}] value [{}] ts [{}]", path, results.getResultTelemetries().get(0).toString(), ts == null ? "null" : ts.toEpochMilli());
-                    Map keyTsLatestMap = ts == null ? null : new ConcurrentHashMap<>(Map.of(PROPERTY_KEY_TS_LATEST_MAP, new AtomicLong(ts.toEpochMilli())));
-                    this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo, keyTsLatestMap);
+                    this.helper.sendParametersOnThingsboardTelemetry(results.getResultTelemetries(), sessionInfo, null, ts);
                 }
             }
         } catch (Exception e) {

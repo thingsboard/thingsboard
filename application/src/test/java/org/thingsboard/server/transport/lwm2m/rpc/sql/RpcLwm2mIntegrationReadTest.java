@@ -15,31 +15,26 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc.sql;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.collections4.map.HashedMap;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
-import org.mockito.Mockito;
 import org.thingsboard.common.util.JacksonUtil;
-import org.thingsboard.server.gen.transport.TransportProtos;
-import org.thingsboard.server.gen.transport.TransportProtos.KeyValueProto;
-import org.thingsboard.server.gen.transport.TransportProtos.SessionInfoProto;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.time.Instant;
 import java.util.Map;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
 
+import static java.util.concurrent.TimeUnit.SECONDS;
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.core.LwM2mId.SERVER;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
-import static org.mockito.Mockito.doAnswer;
-import static org.mockito.Mockito.timeout;
-import static org.mockito.Mockito.verify;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.BINARY_APP_DATA_CONTAINER;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
@@ -60,7 +55,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_2;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
-import static org.thingsboard.server.transport.lwm2m.server.store.util.LwM2MClientSerDes.PROPERTY_KEY_TS_LATEST_MAP;
 
 @Slf4j
 public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest {
@@ -245,55 +239,38 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
     @Test
     public void testReadSingleResource_sendFromClient_CollectedValue() throws Exception {
         // init test
+        long startTs = Instant.now().toEpochMilli();
+        int cntValues = 4;
         int resourceId = 5700;
         String expectedIdVer = objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + resourceId;
-        long initSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3303_12_5700);
-        // send two Value in the Collected packet
-        CountDownLatch latch = new CountDownLatch(2);
-        List<List<TransportProtos.KeyValueProto>> kvLists = new ArrayList<>();
-        List<Map<String, AtomicLong>> keyTsLatestMaps = new ArrayList<>();
-        doAnswer(invocation -> {
-            List<TransportProtos.KeyValueProto> kvList = invocation.getArgument(0);
-            Map<String, AtomicLong> keyTsLatestMap = invocation.getArgument(2);
-            if (keyTsLatestMap != null && kvList.stream().anyMatch(kv -> RESOURCE_ID_NAME_3303_12_5700.equals(kv.getKey()))) {
-                kvLists.add(kvList);
-                keyTsLatestMaps.add(keyTsLatestMap);
-                latch.countDown();
-            }
-            return null;
-        }).when(lwM2mTransportServerHelperTest).sendParametersOnThingsboardTelemetry(
-                Mockito.any(List.class),
-                Mockito.any(SessionInfoProto.class),
-                Mockito.any(Map.class)
-        );
-        String actualResult = sendRPCById(expectedIdVer);
-        verify(lwM2mTransportServerHelperTest, timeout(10000).atLeast(2))
-                .sendParametersOnThingsboardTelemetry(Mockito.any(List.class), Mockito.any(SessionInfoProto.class), Mockito.any(Map.class));
-        if (!latch.await(15, TimeUnit.SECONDS)) {
-            throw new AssertionError("The test failed. The [send two Value in the Collected packet] condition failed within the timeout.");
-        }
-        // verify result read
-        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
-        assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        String expected = "LwM2mSingleResource [id=" + resourceId + ", value=";
-        String actual = rpcActualResult.get("value").asText();
-        assertTrue(actual.contains(expected));
-        // verify count value: 1-2: send CollectedValue; 3 - response for read;
-        long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3303_12_5700);
-        assertTrue((lastSendTelemetryAtCount - initSendTelemetryAtCount) >= 3);
-        // verify value
-        int ind = 0;
-        for (List<KeyValueProto> tt : kvLists) {
-            for (KeyValueProto t : tt) {
-                assertEquals(RESOURCE_ID_NAME_3303_12_5700, t.getKey());
-                double expectedD = ind == 0 ? RESOURCE_ID_VALUE_3303_12_5700_1 : RESOURCE_ID_VALUE_3303_12_5700_2;
-                assertTrue(expectedD == t.getDoubleV());
-                ind++;
-            }
-        }
+        sendRPCById(expectedIdVer);
+        // verify result read: verify count value: 1-2: send CollectedValue; 3 - response for read;
+        long endTs = Instant.now().toEpochMilli() + RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS * 4;
+        String expectedVal_1 = String.valueOf(RESOURCE_ID_VALUE_3303_12_5700_1);
+        String expectedVal_2 = String.valueOf(RESOURCE_ID_VALUE_3303_12_5700_2);
+        AtomicReference<ObjectNode> actualValues = new AtomicReference<>();
+        await().atMost(40, SECONDS).until(() -> {
+            actualValues.set(doGetAsync(
+                    "/api/plugins/telemetry/DEVICE/" + deviceId + "/values/timeseries?keys="
+                            + RESOURCE_ID_NAME_3303_12_5700
+                            + "&startTs=" + startTs
+                            + "&endTs=" + endTs
+                            + "&interval=0&limit=100&useStrictDataTypes=false",
+                    ObjectNode.class));
+            // verify cntValues
+            return actualValues.get() != null && actualValues.get().get(RESOURCE_ID_NAME_3303_12_5700).size() == cntValues;
+        });
         // verify ts
-        long ts0 =  keyTsLatestMaps.get(0).get(PROPERTY_KEY_TS_LATEST_MAP).longValue();
-        long ts1 =  keyTsLatestMaps.get(1).get(PROPERTY_KEY_TS_LATEST_MAP).longValue();
+        ArrayNode actual = (ArrayNode) actualValues.get().get(RESOURCE_ID_NAME_3303_12_5700);
+        Map<String, Long> keyTsMaps = new HashedMap();
+        for (JsonNode tsNode: actual) {
+            if (tsNode.get("value").asText().equals(expectedVal_1) || tsNode.get("value").asText().equals(expectedVal_2)) {
+                keyTsMaps.put(tsNode.get("value").asText(), tsNode.get("ts").asLong());
+            }
+        }
+        assertTrue(keyTsMaps.size() == 2);
+        long ts0 = keyTsMaps.get(expectedVal_1).longValue();
+        long ts1 = keyTsMaps.get(expectedVal_2).longValue();
         assertTrue(ts1 > ts0);
         assertTrue((ts1 - ts0) >= RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
     }
