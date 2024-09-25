@@ -102,23 +102,16 @@ export class MqttLegacyBasicConfigComponent extends MqttBasicConfigDirective<MQT
   }
 
   protected override getMappedValue(basicConfig: MQTTBasicConfig_v3_5_2): MQTTLegacyBasicConfig {
-    let { broker, workers, mapping, requestsMapping  } = basicConfig || {};
+    const { broker, workers, mapping, requestsMapping  } = basicConfig || {};
 
-    if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {
-      broker = {
-        ...broker,
-        ...workers,
-      };
-    }
-
-    if ((requestsMapping as RequestMappingData[])?.length) {
-      requestsMapping = this.getRequestDataObject(requestsMapping as RequestMappingValue[]);
-    }
+    const updatedRequestMapping = (requestsMapping as RequestMappingData[])?.length
+      ? this.getRequestDataObject(requestsMapping as RequestMappingValue[])
+      : {} as Record<RequestType, RequestMappingData[]>;
 
     return {
-      broker,
+      broker: this.getBrokerMappedValue(broker, workers),
       mapping: MqttVersionMappingUtil.mapMappingToDowngradedVersion(mapping),
-      ...(MqttVersionMappingUtil.mapRequestsToDowngradedVersion(requestsMapping as Record<RequestType, RequestMappingData[]>))
+      ...(MqttVersionMappingUtil.mapRequestsToDowngradedVersion(updatedRequestMapping as Record<RequestType, RequestMappingData[]>))
     };
   }
 }
