@@ -1103,8 +1103,9 @@ export const generalStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
     ctx: ctxCompletion,
     svg: {
       meta: 'argument',
-      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
-      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+      type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>',
+      description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" ' +
+        'target="_blank">SVG.Svg</a>.'
     }
   });
 
@@ -1114,8 +1115,9 @@ export const elementStateRenderFunctionCompletions = (ctxCompletion: TbEditorCom
       meta: 'argument',
       type: 'Element',
       description: 'SVG element.<br>' +
-        'See <a href="https://svgjs.dev/docs/3.2/manipulating/">Manipulating</a> section to manipulate the element.<br>' +
-        'See <a href="https://svgjs.dev/docs/3.2/animating/">Animating</a> section to animate the element.'
+        'See <a href="https://svgjs.dev/docs/3.2/manipulating/" ' +
+        'target="_blank">Manipulating</a> section to manipulate the element.<br>' +
+        'See <a href="https://svgjs.dev/docs/3.2/animating/" target="_blank">Animating</a> section to animate the element.'
     }
   });
 
@@ -1133,7 +1135,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
                                              customTranslate: CustomTranslatePipe): TbEditorCompletion => {
 
   const scadaSymbolAnimationLink = HelpLinks.linksMap.scadaSymbolDevAnimation;
-  const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}">ScadaSymbolAnimation</a>`;
+  const scadaSymbolAnimation = `<a href="${scadaSymbolAnimationLink}" target="_blank">ScadaSymbolAnimation</a>`;
 
   const properties: TbEditorCompletion = {
     meta: 'object',
@@ -1282,8 +1284,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           text: {
             meta: 'function',
             description: 'Set text to element(s). Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text" target="_blank">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan" target="_blank">SVG.Tspan</a>.',
             args: [
               {
                 name: 'element',
@@ -1300,8 +1302,8 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           font: {
             meta: 'function',
             description: 'Set element(s) text font and color. Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text">SVG.Text</a> or ' +
-              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan">SVG.Tspan</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-text" target="_blank">SVG.Text</a> or ' +
+              '<a href="https://svgjs.dev/docs/3.2/shape-elements/#svg-tspan" target="_blank">SVG.Tspan</a>.',
             args: [
               {
                 name: 'element',
@@ -1323,7 +1325,7 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
           icon: {
             meta: 'function',
             description: 'Draws icon inside element(s). Only applicable for elements of type ' +
-              '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-g">SVG.G</a>.',
+              '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-g" target="_blank">SVG.G</a>.',
             args: [
               {
                 name: 'element',
@@ -1431,8 +1433,9 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
       tags: tagsCompletions,
       svg: {
         meta: 'argument',
-        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>',
-        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg">SVG.Svg</a>.'
+        type: '<a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" target="_blank">SVG.Svg</a>',
+        description: 'A root svg node. Instance of <a href="https://svgjs.dev/docs/3.2/container-elements/#svg-svg" ' +
+          'target="_blank">SVG.Svg</a>.'
       }
     }
   };
