@@ -27,30 +27,34 @@ import { GatewayLogLevel } from '@home/components/widget/lib/gateway/gateway-for
 export interface GatewayConfigValue {
   mode: ConfigurationModes;
   thingsboard: GatewayGeneralConfig;
-  storage: {
-    type: StorageTypes;
-    read_records_count?: number;
-    max_records_count?: number;
-    data_folder_path?: string;
-    max_file_count?: number;
-    max_read_records_count?: number;
-    max_records_per_file?: number;
-    data_file_path?: string;
-    messages_ttl_check_in_hours?: number;
-    messages_ttl_in_days?: number;
-  };
-  grpc: {
-    enabled: boolean;
-    serverPort: number;
-    keepAliveTimeMs: number;
-    keepAliveTimeoutMs: number;
-    keepalivePermitWithoutCalls: boolean;
-    maxPingsWithoutData: number;
-    minTimeBetweenPingsMs: number;
-    minPingIntervalWithoutDataMs: number;
-  };
+  storage: GatewayStorageConfig;
+  grpc: GatewayGRPCConfig;
   connectors?: GatewayConnector[];
   logs: GatewayLogsConfig;
+}
+
+export interface GatewayGRPCConfig {
+  enabled: boolean;
+  serverPort: number;
+  keepAliveTimeMs: number;
+  keepAliveTimeoutMs: number;
+  keepalivePermitWithoutCalls: boolean;
+  maxPingsWithoutData: number;
+  minTimeBetweenPingsMs: number;
+  minPingIntervalWithoutDataMs: number;
+}
+
+export interface GatewayStorageConfig {
+  type: StorageTypes;
+  read_records_count?: number;
+  max_records_count?: number;
+  data_folder_path?: string;
+  max_file_count?: number;
+  max_read_records_count?: number;
+  max_records_per_file?: number;
+  data_file_path?: string;
+  messages_ttl_check_in_hours?: number;
+  messages_ttl_in_days?: number;
 }
 
 export interface GatewayGeneralConfig {

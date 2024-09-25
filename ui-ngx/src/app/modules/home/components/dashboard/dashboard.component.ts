@@ -89,10 +89,6 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   @Input()
   @coerceBoolean()
-  colWidthInteger = false;
-
-  @Input()
-  @coerceBoolean()
   setGridSize = false;
 
   @Input()
@@ -248,18 +244,18 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       defaultItemCols: 8,
       defaultItemRows: 6,
       displayGrid: this.displayGrid,
-      resizable: {enabled: this.isEdit && !this.isEditingWidget, delayStart: 50},
-      draggable: {enabled: this.isEdit && !this.isEditingWidget},
+      resizable: {
+        enabled: this.isEdit && !this.isEditingWidget,
+        delayStart: 50,
+        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
+      },
+      draggable: {
+        enabled: this.isEdit && !this.isEditingWidget,
+        stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
+      },
       itemChangeCallback: () => this.dashboardWidgets.sortWidgets(),
       itemInitCallback: (_, itemComponent) => {
         (itemComponent.item as DashboardWidget).gridsterItemComponent = itemComponent;
-      },
-      colWidthUpdateCallback: (colWidth) => {
-        if (this.colWidthInteger) {
-          return Math.floor(colWidth);
-        } else {
-          return colWidth;
-        }
       }
     };
 
@@ -354,7 +350,9 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
 
   ngAfterViewInit(): void {
     this.gridsterResize$ = new ResizeObserver(() => {
-      this.onGridsterParentResize();
+      this.ngZone.run(() => {
+        this.onGridsterParentResize();
+      });
     });
     this.gridsterResize$.observe(this.gridster.el.parentElement);
   }

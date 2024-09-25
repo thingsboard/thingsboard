@@ -1,5 +1,4 @@
-<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="400" fill="none" version="1.1" viewBox="0 0 400 400">
-<tb:metadata xmlns=""><![CDATA[{
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:tb="https://thingsboard.io/svg" width="400" height="400" fill="none" version="1.1" viewBox="0 0 400 400"><tb:metadata xmlns=""><![CDATA[{
   "title": "Centrifugal pump",
   "description": "Centrifugal pump with configurable connectors, running animation and various states.",
   "searchTags": [
@@ -11,12 +10,12 @@
   "tags": [
     {
       "tag": "background",
-      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.critical) {\n    color = ctx.properties.criticalColor;\n} else if (ctx.values.warning) {\n    color = ctx.properties.warningColor;\n} else if (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.animate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetAnimation(element);\n    }\n}",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.critical) {\n    color = ctx.properties.criticalColor;\n} else if (ctx.values.warning) {\n    color = ctx.properties.warningColor;\n} else if (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}",
       "actions": null
     },
     {
       "tag": "center",
-      "stateRenderFunction": "var running = ctx.values.running;\nvar t = element.timeline();\nif (running) {\n    if (!t.active()) {\n        if (t.time()) {\n            t.play();\n        } else {\n            ctx.api.animate(element, 2000).ease('-').rotate(360).loop();\n            t = element.timeline();\n        }\n    }\n    var speed = ctx.values.rotationAnimationSpeed;\n    t.speed(speed);\n} else {\n   t.pause();\n}\n",
+      "stateRenderFunction": "var running = ctx.values.running;\nvar speed = ctx.values.rotationAnimationSpeed;\nvar centerRotate = ctx.api.cssAnimation(element);\nif (running) {\n    if (!centerRotate) {\n        centerRotate = ctx.api.cssAnimate(element, 2000)\n                                      .rotate(360).loop().speed(speed);\n    } else {\n        centerRotate.speed(speed).play();\n    }\n} else {\n    if (centerRotate) {\n        centerRotate.pause();\n    }\n}\n",
       "actions": null
     },
     {
@@ -415,7 +414,8 @@
       "step": null
     }
   ]
-}]]></tb:metadata><rect x="50" y="371" width="300" height="29" rx="7" fill="#fff"/><rect x="50" y="371" width="300" height="29" rx="7" fill="url(#paint0_linear_1481_75415)"/><rect x="51.5" y="372.5" width="297" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m103 274h194l32 100h-258l32-100z" fill="#fff"/><path d="m103 274h194l32 100h-258l32-100z" fill="url(#paint1_linear_1481_75415)"/><path d="m73.055 372.5 31.04-97h191.81l31.04 97h-253.89z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g tb:tag="rightTopConnector">
+}]]></tb:metadata>
+<rect x="50" y="371" width="300" height="29" rx="7" fill="#fff"/><rect x="50" y="371" width="300" height="29" rx="7" fill="url(#paint0_linear_1481_75415)"/><rect x="51.5" y="372.5" width="297" height="26" rx="5.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><path d="m103 274h194l32 100h-258l32-100z" fill="#fff"/><path d="m103 274h194l32 100h-258l32-100z" fill="url(#paint1_linear_1481_75415)"/><path d="m73.055 372.5 31.04-97h191.81l31.04 97h-253.89z" stroke="#000" stroke-opacity=".12" stroke-width="3"/><g tb:tag="rightTopConnector">
   <rect x="200" y="64" width="186" height="72" fill="#fff"/>
   <rect x="200" y="64" width="186" height="72" fill="url(#paint2_linear_1481_75415)"/>
   <rect x="201.5" y="65.5" width="183" height="69" stroke="#000" stroke-opacity=".12" stroke-width="3"/>

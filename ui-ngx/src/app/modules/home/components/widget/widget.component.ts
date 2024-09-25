@@ -546,7 +546,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         });
       } else {
-        this.onInit(true);
+        this.ngZone.run(() => {
+          this.onInit(true);
+        });
       }
     }
   }

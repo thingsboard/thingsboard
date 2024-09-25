@@ -189,7 +189,9 @@ export class MultipleInputWidgetComponent extends PageComponent implements OnIni
     this.buildForm();
     this.ctx.updateWidgetParams();
     this.formResize$ = new ResizeObserver(() => {
-      this.resize();
+      this.ngZone.run(() => {
+        this.resize();
+      });
     });
     this.formResize$.observe(this.formContainerRef.nativeElement);
   }

@@ -297,12 +297,14 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private hasSameConfig(sharedDataConfigJson: ConnectorBaseInfo, connectorDataConfigJson: ConnectorBaseInfo): boolean {
-    const { name, id, enableRemoteLogging, logLevel, ...sharedDataConfig } = sharedDataConfigJson;
+    const { name, id, enableRemoteLogging, logLevel, reportStrategy, configVersion, ...sharedDataConfig } = sharedDataConfigJson;
     const {
       name: connectorName,
       id: connectorId,
       enableRemoteLogging: connectorEnableRemoteLogging,
       logLevel: connectorLogLevel,
+      reportStrategy: connectorReportStrategy,
+      configVersion: connectorConfigVersion,
       ...connectorConfig
     } = connectorDataConfigJson;
 
@@ -351,7 +353,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configuration: '',
       configurationJson: {},
       basicConfig: {},
-      configVersion: ''
+      configVersion: '',
+      reportStrategy: [{ value: {}, disabled: true }],
     }, {emitEvent: false});
     this.connectorForm.markAsPristine();
   }
@@ -542,6 +545,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       configurationJson: [{}, [Validators.required]],
       basicConfig: [{}],
       configVersion: [''],
+      reportStrategy: [{ value: {}, disabled: true }],
     });
     this.connectorForm.disable();
   }
@@ -751,6 +755,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   }
 
   private updateConnector(connector: GatewayConnector): void {
+    this.toggleReportStrategy(connector.type);
     switch (connector.type) {
       case ConnectorType.MQTT:
       case ConnectorType.OPCUA:
@@ -768,6 +773,15 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         this.connectorForm.markAsPristine();
     }
     this.createJsonConfigWatcher();
+  }
+
+  private toggleReportStrategy(type: ConnectorType): void {
+    const reportStrategyControl = this.connectorForm.get('reportStrategy');
+    if (type === ConnectorType.MODBUS) {
+      reportStrategyControl.enable({emitEvent: false});
+    } else {
+      reportStrategyControl.disable({emitEvent: false});
+    }
   }
 
   private setClientData(data: PageData<GatewayAttributeData>): void {

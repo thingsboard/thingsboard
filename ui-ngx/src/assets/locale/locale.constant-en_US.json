@@ -323,6 +323,7 @@
           "mobile-package-hint": "For Android: your own unique Application ID. For iOS: Product bundle identifier.",
           "mobile-package-unique": "Application package must be unique.",
           "mobile-package-max-length": "Application package should be less than 256",
+          "mobile-package-spaces": "Application package should not contain spaces",
           "mobile-app-secret": "Application secret",
           "mobile-app-secret-hint": "Base64 encoded string representing at least 512 bits of data.",
           "mobile-app-secret-required": "Application secret is required.",
@@ -594,6 +595,7 @@
         "assignee-last-name": "Assignee last name",
         "assignee-email": "Assignee email",
         "unassigned": "Unassigned",
+        "user-deleted": "User deleted",
         "assignee-not-set": "All",
         "status": "Status",
         "alarm-details": "Alarm details",
@@ -2934,6 +2936,7 @@
         "details": "Details",
         "delete-mapping-title": "Delete mapping?",
         "delete-slave-title": "Delete slave?",
+        "divider": "Divider",
         "download-configuration-file": "Download configuration file",
         "download-docker-compose": "Download docker-compose.yml for your gateway",
         "enable-remote-logging": "Enable remote logging",
@@ -3089,8 +3092,11 @@
         "min-pack-send-delay-required": "Min pack send delay is required",
         "min-pack-send-delay-min": "Min pack send delay can not be less then 10",
         "min-pack-send-delay-pattern": "Min pack send delay is not valid",
+        "multiplier": "Multiplier",
         "mode": "Mode",
         "model-name": "Model name",
+        "modifier": "Modifier",
+        "modifier-invalid": "Modifier is not valid",
         "mqtt-version": "MQTT version",
         "name": "Name",
         "name-required": "Name is required.",
@@ -3254,6 +3260,7 @@
         "sub-check-period": "Subscription check period (ms)",
         "sub-check-period-error": "Subscription check period should be at least {{min}} (ms).",
         "security": "Security",
+        "security-policy": "Security policy",
         "security-type": "Security type",
         "security-types": {
             "access-token": "Access Token",
@@ -3347,6 +3354,13 @@
             "file-storage": "File storage",
             "memory-storage": "Memory storage",
             "sqlite": "SQLITE"
+        },
+        "report-strategy": {
+            "label": "Report strategy",
+            "on-change": "On value change",
+            "on-report-period": "On report period",
+            "on-change-or-report-period": "On value change or report period",
+            "report-period": "Report period"
         },
         "source-type": {
             "msg": "Extract from message",
@@ -3460,6 +3474,7 @@
             "file": "Your data will be stored in separated files and will be saved even after the gateway restart.",
             "sqlite": "Your data will be stored in file based database. And will be saved even after the gateway restart.",
             "opc-timeout": "Timeout in milliseconds for connecting to OPC-UA server.",
+            "security-policy": "Security Policy defines the security mechanisms to be applied.",
             "scan-period": "Period in milliseconds to rescan the server.",
             "sub-check-period": "Period to check the subscriptions in the OPC-UA server.",
             "enable-subscription": "If true - the gateway will subscribe to interesting nodes and wait for data update and if false - the gateway will rescan OPC-UA server every scanPeriodInMillis.",
@@ -3493,7 +3508,8 @@
                 "objects-count": "Depends on the selected type.",
                 "address": "Register address to verify.",
                 "key": "Key to be used as the attribute key for the platform instance.",
-                "data-keys": "For more information about function codes and data types click on help icon"
+                "data-keys": "For more information about function codes and data types click on help icon",
+                "modifier": "The retrieved value will be adjusted (by multiplying or dividing it) based on the specified modifier value."
             }
         }
     },

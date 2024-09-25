@@ -69,8 +69,8 @@
         <apache-httpclient.version>4.5.14</apache-httpclient.version>
         <apache-httpcore.version>4.4.16</apache-httpcore.version>
         <joda-time.version>2.12.7</joda-time.version>
-        <jackson.version>2.17.0</jackson.version>
-        <jackson-databind.version>2.17.0</jackson-databind.version>
+        <jackson.version>2.17.2</jackson.version>
+        <jackson-databind.version>2.17.2</jackson-databind.version>
         <fasterxml-classmate.version>1.7.0</fasterxml-classmate.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>

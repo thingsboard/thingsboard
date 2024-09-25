@@ -17,7 +17,7 @@
 import { ImageResourceInfo } from '@shared/models/resource.models';
 import * as svgjs from '@svgdotjs/svg.js';
 import { Box, Element, Rect, Style, SVG, Svg, Timeline } from '@svgdotjs/svg.js';
-import { ViewContainerRef } from '@angular/core';
+import { NgZone, ViewContainerRef } from '@angular/core';
 import { forkJoin, from } from 'rxjs';
 import {
   setupAddTagPanelTooltip,
@@ -79,6 +79,7 @@ export class ScadaSymbolEditObject {
   constructor(private rootElement: HTMLElement,
               public tooltipsContainer: HTMLElement,
               public viewContainerRef: ViewContainerRef,
+              private zone: NgZone,
               private callbacks: ScadaSymbolEditObjectCallbacks,
               public readonly: boolean) {
     this.shapeResize$ = new ResizeObserver(() => {
@@ -193,7 +194,9 @@ export class ScadaSymbolEditObject {
       from(import('tooltipster')),
       from(import('tooltipster/dist/js/plugins/tooltipster/SVG/tooltipster-SVG.min.js'))
     ]).subscribe(() => {
-      this.setupElements();
+      this.zone.run(() => {
+        this.setupElements();
+      });
     });
   }
 
@@ -406,6 +409,10 @@ export class ScadaSymbolEditObject {
     .filter((v, i, a) => a.indexOf(v) === i)
     .sort();
     this.callbacks.tagsUpdated(this.tags);
+  }
+
+  public getTags(): string[] {
+    return this.tags;
   }
 
   public tagHasStateRenderFunction(tag: string): boolean {
@@ -826,6 +833,7 @@ export class ScadaSymbolElement {
   private innerAddTagTooltipPosition(_instance: ITooltipsterInstance,
                                      _helper: ITooltipsterHelper, position: ITooltipPosition): ITooltipPosition {
     const distance = 10;
+    const parentRect = this.tooltipContainer[0].getBoundingClientRect();
     switch (position.side) {
       case 'right':
         position.coord.top = this.tooltipMouseY - position.size.height / 2;
@@ -850,6 +858,14 @@ export class ScadaSymbolElement {
         position.coord.left = this.tooltipMouseX - position.size.width / 2;
         position.target = this.tooltipMouseX;
         break;
+    }
+    const rightOverflow = parentRect.right - (position.coord.left + position.size.width);
+    if (rightOverflow < 0) {
+      position.coord.left += rightOverflow;
+    }
+    const leftOverflow = parentRect.left - position.coord.left;
+    if (leftOverflow > 0) {
+      position.coord.left += leftOverflow;
     }
     return position;
   }
@@ -1211,49 +1227,6 @@ export const scadaSymbolContextCompletion = (metadata: ScadaSymbolMetadata, tags
             meta: 'function',
             description: 'Finishes CSS animation if any, SVG element state updated according to the end animation values, ' +
               'removes CSS animation instance.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-            ]
-          },
-          animate: {
-            meta: 'function',
-            description: 'Finishes any previous animation and starts new animation for SVG element.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-              {
-                name: 'duration',
-                description: 'Animation duration in milliseconds',
-                type: 'number'
-              }
-            ],
-            return: {
-              description: 'Instance of SVG.Runner which has the same methods as any element and additional methods to control the runner.',
-              type: '<a href="https://svgjs.dev/docs/3.2/animating/#svg-runner">SVG.Runner</a>'
-            }
-          },
-          resetAnimation: {
-            meta: 'function',
-            description: 'Stops animation if any and restore SVG element initial state, resets animation timeline.',
-            args: [
-              {
-                name: 'element',
-                description: 'SVG element',
-                type: 'Element'
-              },
-            ]
-          },
-          finishAnimation: {
-            meta: 'function',
-            description: 'Finishes animation if any, SVG element state updated according to the end animation values, ' +
-              'resets animation timeline.',
             args: [
               {
                 name: 'element',

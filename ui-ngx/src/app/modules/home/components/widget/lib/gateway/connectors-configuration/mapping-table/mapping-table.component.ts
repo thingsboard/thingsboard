@@ -256,10 +256,11 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   private getMappingValue(value: ConnectorMapping): MappingValue {
     switch (this.mappingType) {
       case MappingType.DATA:
+        const converterType = ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter?.type);
         return {
           topicFilter: (value as ConverterConnectorMapping).topicFilter,
           QoS: (value as ConverterConnectorMapping).subscriptionQos,
-          converter: this.translate.instant(ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter?.type) || '')
+          converter: converterType ? this.translate.instant(converterType) : ''
         };
       case MappingType.REQUESTS:
         let details: string;

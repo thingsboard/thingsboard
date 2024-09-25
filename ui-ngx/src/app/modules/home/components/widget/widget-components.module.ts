@@ -160,6 +160,9 @@ import {
 import {
   ModbusLegacyBasicConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-legacy-basic-config.component';
+import {
+    ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
 
 @NgModule({
   declarations: [
@@ -253,6 +256,7 @@ import {
     GatewayAdvancedConfigurationComponent,
     OpcUaLegacyBasicConfigComponent,
     ModbusLegacyBasicConfigComponent,
+    ReportStrategyComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,

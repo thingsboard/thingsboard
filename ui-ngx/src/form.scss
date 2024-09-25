@@ -205,6 +205,12 @@
     &.space-between {
       justify-content: space-between;
     }
+    &.flex-wrap {
+      flex-wrap: wrap;
+    }
+    &.overflow-auto {
+      overflow: auto;
+    }
     .mat-divider-vertical {
       height: 56px;
       margin-top: -7px;
