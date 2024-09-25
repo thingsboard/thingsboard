@@ -37,13 +37,13 @@ export const initCustomJQueryEvents = () => {
           e.stopPropagation();
           timeoutId = setTimeout(() => {
             timeoutId = null;
-            e.stopPropagation();
             const touch = e.originalEvent.changedTouches[0];
             const event = $.Event('tbcontextmenu', {
               clientX: touch.clientX,
               clientY: touch.clientY,
               ctrlKey: false,
-              metaKey: false
+              metaKey: false,
+              originalEvent: e
             });
             el.trigger(event, e);
           }, 500);
@@ -56,13 +56,12 @@ export const initCustomJQueryEvents = () => {
         });
       } else {
         el.on('contextmenu', (e) => {
-          e.preventDefault();
-          e.stopPropagation();
           const event = $.Event('tbcontextmenu', {
             clientX: e.originalEvent.clientX,
             clientY: e.originalEvent.clientY,
             ctrlKey: e.originalEvent.ctrlKey,
             metaKey: e.originalEvent.metaKey,
+            originalEvent: e
           });
           el.trigger(event, e);
         });
