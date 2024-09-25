@@ -25,7 +25,6 @@ import { HttpErrorResponse } from '@angular/common/http';
 import { TranslateService } from '@ngx-translate/core';
 import { serverErrorCodesTranslations } from '@shared/models/constants';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
-import Timeout = NodeJS.Timeout;
 
 const varsRegex = /\${([^}]*)}/g;
 

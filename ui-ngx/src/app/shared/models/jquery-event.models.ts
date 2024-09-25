@@ -19,6 +19,8 @@ import Timeout = NodeJS.Timeout;
 export interface TbContextMenuEvent extends Event {
   clientX: number;
   clientY: number;
+  ctrlKey: boolean;
+  metaKey: boolean;
 }
 
 const isIOSDevice = (): boolean =>
@@ -39,7 +41,9 @@ export const initCustomJQueryEvents = () => {
             const touch = e.originalEvent.changedTouches[0];
             const event = $.Event('tbcontextmenu', {
               clientX: touch.clientX,
-              clientY: touch.clientY
+              clientY: touch.clientY,
+              ctrlKey: false,
+              metaKey: false
             });
             el.trigger(event, e);
           }, 500);
@@ -56,7 +60,9 @@ export const initCustomJQueryEvents = () => {
           e.stopPropagation();
           const event = $.Event('tbcontextmenu', {
             clientX: e.originalEvent.clientX,
-            clientY: e.originalEvent.clientY
+            clientY: e.originalEvent.clientY,
+            ctrlKey: e.originalEvent.ctrlKey,
+            metaKey: e.originalEvent.metaKey,
           });
           el.trigger(event, e);
         });
