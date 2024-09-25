@@ -252,6 +252,7 @@ export class DashboardComponent extends PageComponent implements IDashboardCompo
       },
       draggable: {
         enabled: this.isEdit && !this.isEditingWidget,
+        delayStart: 100,
         stop: (_, itemComponent) => {(itemComponent.item as DashboardWidget).updatePosition(itemComponent.$item.x, itemComponent.$item.y);}
       },
       itemChangeCallback: () => this.dashboardWidgets.sortWidgets(),
