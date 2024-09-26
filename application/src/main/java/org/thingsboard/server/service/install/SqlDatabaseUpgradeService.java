@@ -122,7 +122,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                 updateSchema("3.6.4", 3006004, "3.7.0", 3007000, null);
                 break;
             case "3.7.0":
-                updateSchema("3.7.0", 3007000, "3.7.1", 3007001, connection -> {
+                updateSchema("3.7.0", 3007000, "3.8.0", 3008000, connection -> {
                     try {
                         connection.createStatement().execute("UPDATE rule_node SET " +
                                 "configuration = CASE " +
