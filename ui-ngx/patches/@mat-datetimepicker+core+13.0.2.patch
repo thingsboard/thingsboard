@@ -1,5 +1,5 @@
 diff --git a/node_modules/@mat-datetimepicker/core/esm2022/datetimepicker/clock.mjs b/node_modules/@mat-datetimepicker/core/esm2022/datetimepicker/clock.mjs
-index ac62cff..bf65507 100644
+index b3f4d2f..b3e7abb 100644
 --- a/node_modules/@mat-datetimepicker/core/esm2022/datetimepicker/clock.mjs
 +++ b/node_modules/@mat-datetimepicker/core/esm2022/datetimepicker/clock.mjs
 @@ -259,9 +259,9 @@ export class MatDatetimepickerClockComponent {
@@ -16,7 +16,7 @@ index ac62cff..bf65507 100644
          }
          this._timeChanged = true;
 diff --git a/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs b/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs
-index 5ba3776..95e868e 100644
+index 92a3fea..b630091 100644
 --- a/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs
 +++ b/node_modules/@mat-datetimepicker/core/fesm2022/mat-datetimepicker-core.mjs
 @@ -946,9 +946,9 @@ class MatDatetimepickerClockComponent {

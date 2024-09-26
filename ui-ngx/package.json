@@ -145,6 +145,7 @@
     "@types/tooltipster": "^0.0.31",
     "@typescript-eslint/eslint-plugin": "^7.2.0",
     "@typescript-eslint/parser": "^7.2.0",
+    "@typescript-eslint/utils": "^8.7.0",
     "compression-webpack-plugin": "^10.0.0",
     "directory-tree": "^3.5.1",
     "eslint": "^8.57.0",
