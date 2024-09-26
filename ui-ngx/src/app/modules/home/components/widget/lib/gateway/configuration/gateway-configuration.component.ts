@@ -242,7 +242,7 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
         consoleHandler: {
           class: 'logging.StreamHandler',
           formatter: 'LogFormatter',
-          level: 'DEBUG',
+          level: 0,
           stream: 'ext://sys.stdout'
         },
         databaseHandler: {
