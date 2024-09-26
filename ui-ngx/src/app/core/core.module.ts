@@ -88,7 +88,7 @@ import { EntityConflictInterceptor } from '@core/interceptors/entity-conflict.in
       ? []
       : StoreDevtoolsModule.instrument({
         name: env.appTitle
-      })
+      , connectInZone: true})
   ],
   providers: [
     {
