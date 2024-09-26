@@ -16,6 +16,7 @@
 
 import { Component, Input, OnInit } from '@angular/core';
 import { isLocalUrl } from '@core/utils';
+import { ShareButtonDirective } from 'ngx-sharebuttons';
 
 @Component({
   selector: 'tb-social-share-panel',

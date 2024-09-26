@@ -41,7 +41,7 @@ import {
   getFormattedDate
 } from '@home/components/widget/lib/date-range-navigator/date-range-navigator.models';
 import { KeyValue } from '@angular/common';
-import * as _moment from 'moment';
+import _moment from 'moment';
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { MatSelect } from '@angular/material/select';
