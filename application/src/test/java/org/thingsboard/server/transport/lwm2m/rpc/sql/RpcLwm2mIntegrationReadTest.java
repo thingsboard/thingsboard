@@ -273,10 +273,10 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         assertTrue(keyTsMaps.size() == 2);
         long actualTS0 = keyTsMaps.get(expectedVal_1).longValue();
         long actualTS1 = keyTsMaps.get(expectedVal_2).longValue();
+        assertTrue(actualTS0 > 0);
+        assertTrue(actualTS1 > 0);
         assertTrue(actualTS1 > actualTS0);
         assertTrue((actualTS1 - actualTS0) >= RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
-        assertTrue(RESOURCE_ID_3303_12_5700_TS_0 > 0);
-        assertTrue(RESOURCE_ID_3303_12_5700_TS_1 > 0);
         assertTrue(actualTS0 <= RESOURCE_ID_3303_12_5700_TS_0);
         assertTrue(actualTS1 <= RESOURCE_ID_3303_12_5700_TS_1);
     }
