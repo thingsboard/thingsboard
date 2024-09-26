@@ -360,6 +360,30 @@
                   "color": "#2196f3",
                   "settings": {},
                   "_hash": 0.7454705362378311
+                },
+                {
+                  "name": "lastConnectTime",
+                  "type": "attribute",
+                  "label": "lastConnectTime",
+                  "color": "#4caf50",
+                  "settings": {},
+                  "_hash": 0.7249585632235194
+                },
+                {
+                  "name": "lastDisconnectTime",
+                  "type": "attribute",
+                  "label": "lastDisconnectTime",
+                  "color": "#f44336",
+                  "settings": {},
+                  "_hash": 0.9812430092707332
+                },
+                {
+                  "name": "active",
+                  "type": "attribute",
+                  "label": "active",
+                  "color": "#ffc107",
+                  "settings": {},
+                  "_hash": 0.9216097189544408
                 }
               ]
             }

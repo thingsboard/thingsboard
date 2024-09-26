@@ -26,7 +26,6 @@ import {
 import {
   MqttBasicConfigDirective
 } from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-basic-config.abstract';
-import { isDefinedAndNotNull } from '@core/utils';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import {
@@ -85,19 +84,14 @@ export class MqttBasicConfigComponent extends MqttBasicConfigDirective<MQTTBasic
   }
 
   protected override getMappedValue(basicConfig: MQTTBasicConfig_v3_5_2): MQTTBasicConfig_v3_5_2 {
-    let { broker, workers, mapping, requestsMapping  } = basicConfig || {};
+    const { broker, workers, mapping, requestsMapping  } = basicConfig || {};
 
-    if (isDefinedAndNotNull(workers.maxNumberOfWorkers) || isDefinedAndNotNull(workers.maxMessageNumberPerWorker)) {
-      broker = {
-        ...broker,
-        ...workers,
-      };
-    }
-
-    if ((requestsMapping as RequestMappingData[])?.length) {
-      requestsMapping = this.getRequestDataObject(requestsMapping as RequestMappingValue[]);
-    }
-
-    return { broker, mapping, requestsMapping };
+    return {
+      broker: this.getBrokerMappedValue(broker, workers),
+      mapping,
+      requestsMapping: (requestsMapping as RequestMappingData[])?.length
+        ? this.getRequestDataObject(requestsMapping as RequestMappingValue[])
+        : {} as Record<RequestType, RequestMappingValue[]>
+    };
   }
 }

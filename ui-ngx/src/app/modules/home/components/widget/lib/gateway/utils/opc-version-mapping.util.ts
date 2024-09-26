@@ -45,7 +45,7 @@ export class OpcVersionMappingUtil {
 
   static mapServerToDowngradedVersion(config: OPCBasicConfig_v3_5_2): LegacyServerConfig {
     const { mapping, server } = config;
-    const { enableSubscriptions, ...restServer } = server;
+    const { enableSubscriptions, ...restServer } = server ?? {} as ServerConfig;
     return {
       ...restServer,
       mapping: mapping ? this.mapMappingToDowngradedVersion(mapping) : [],

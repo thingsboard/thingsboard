@@ -113,7 +113,6 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
 
   private initializeSlaveFormGroup(): void {
     this.slaveConfigFormGroup = this.fb.group({
-      name: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       type: [ModbusProtocolType.TCP],
       host: ['', [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
       port: [null, [Validators.required, Validators.min(PortLimits.MIN), Validators.max(PortLimits.MAX)]],
