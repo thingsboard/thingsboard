@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { Resolve, Router } from '@angular/router';
+import { Router } from '@angular/router';
 import { TenantProfile } from '@shared/models/tenant.model';
 import {
   checkBoxCell,
@@ -35,7 +35,7 @@ import { DialogService } from '@core/services/dialog.service';
 import { ImportExportService } from '@shared/import-export/import-export.service';
 
 @Injectable()
-export class TenantProfilesTableConfigResolver implements Resolve<EntityTableConfig<TenantProfile>> {
+export class TenantProfilesTableConfigResolver  {
 
   private readonly config: EntityTableConfig<TenantProfile> = new EntityTableConfig<TenantProfile>();
 

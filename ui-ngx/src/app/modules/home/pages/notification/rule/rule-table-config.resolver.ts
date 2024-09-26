@@ -32,12 +32,12 @@ import {
   RuleNotificationDialogComponent,
   RuleNotificationDialogData
 } from '@home/pages/notification/rule/rule-notification-dialog.component';
-import { ActivatedRouteSnapshot, Resolve } from '@angular/router';
+import { ActivatedRouteSnapshot } from '@angular/router';
 import { Injectable } from '@angular/core';
 import { DatePipe } from '@angular/common';
 
 @Injectable()
-export class RuleTableConfigResolver implements Resolve<EntityTableConfig<NotificationRule>> {
+export class RuleTableConfigResolver  {
 
   private readonly config: EntityTableConfig<NotificationRule> = new EntityTableConfig<NotificationRule>();
 
