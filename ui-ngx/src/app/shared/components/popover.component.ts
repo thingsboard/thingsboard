@@ -20,7 +20,6 @@ import {
   ChangeDetectorRef,
   Component,
   ComponentFactory,
-  ComponentFactoryResolver,
   ComponentRef,
   Directive,
   ElementRef,
@@ -94,7 +93,6 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   // eslint-disable-next-line @angular-eslint/no-output-rename
   @Output('tbPopoverVisibleChange') readonly visibleChange = new EventEmitter<boolean>();
 
-  componentFactory: ComponentFactory<TbPopoverComponent> = this.resolver.resolveComponentFactory(TbPopoverComponent);
   component?: TbPopoverComponent;
 
   private readonly destroy$ = new Subject<void>();
@@ -105,7 +103,6 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   constructor(
     private elementRef: ElementRef,
     private hostView: ViewContainerRef,
-    private resolver: ComponentFactoryResolver,
     private renderer: Renderer2
   ) {}
 
@@ -150,7 +147,7 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
   }
 
   private createComponent(): void {
-    const componentRef = this.hostView.createComponent(this.componentFactory);
+    const componentRef = this.hostView.createComponent(TbPopoverComponent);
 
     this.component = componentRef.instance;
 
