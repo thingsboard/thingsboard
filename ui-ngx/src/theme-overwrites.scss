@@ -31,7 +31,7 @@
         position: absolute;
         left: 0;
         top: 0;
-        background-color: mat.get-color-from-palette($primary);
+        background-color: mat.m2-get-color-from-palette($primary);
       }
       background-color: transparent;
     }
