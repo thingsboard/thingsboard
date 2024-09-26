@@ -26,17 +26,19 @@ import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.request.argument.Arguments;
 import org.eclipse.leshan.core.response.ExecuteResponse;
 import org.eclipse.leshan.core.response.ReadResponse;
+import org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper;
 
 import javax.security.auth.Destroyable;
 import java.math.BigDecimal;
 import java.math.RoundingMode;
+import java.time.Instant;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
 
 @Slf4j
@@ -80,7 +82,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
                 if (identity == LwM2mServer.SYSTEM) { // return value for ForCollectedValue
                     cntIdentitySystem++;
                     return ReadResponse.success(resourceId, cntIdentitySystem == 1 ?
-                            RESOURCE_ID_VALUE_3303_12_5700_1 : RESOURCE_ID_VALUE_3303_12_5700_2);
+                            RESOURCE_ID_3303_12_5700_VALUE_0 : RESOURCE_ID_3303_12_5700_VALUE_1);
                 }
                 cntRead_5700++;
                 if (cntRead_5700 == 1) {            // read value after start
@@ -166,8 +168,10 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
             ManualDataSender sender = this.leshanClient.getSendService().getDataSender(ManualDataSender.DEFAULT_NAME,
                     ManualDataSender.class);
             sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = Instant.now().toEpochMilli();
             Thread.sleep(RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
             sender.collectData(Arrays.asList(getPathForCollectedValue(resourceId)));
+            Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_1 = Instant.now().toEpochMilli();
             sender.sendCollectedData(registeredServer, ContentFormat.SENML_JSON, 1000, false);
         } catch (InterruptedException e) {
             throw new RuntimeException(e);

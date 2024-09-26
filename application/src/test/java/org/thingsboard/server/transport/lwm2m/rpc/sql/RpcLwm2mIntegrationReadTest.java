@@ -45,6 +45,8 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_11;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_3;
@@ -52,8 +54,8 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3303_12_5700;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_1;
-import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
 
 @Slf4j
@@ -246,8 +248,8 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
         sendRPCById(expectedIdVer);
         // verify result read: verify count value: 1-2: send CollectedValue; 3 - response for read;
         long endTs = Instant.now().toEpochMilli() + RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS * 4;
-        String expectedVal_1 = String.valueOf(RESOURCE_ID_VALUE_3303_12_5700_1);
-        String expectedVal_2 = String.valueOf(RESOURCE_ID_VALUE_3303_12_5700_2);
+        String expectedVal_1 = String.valueOf(RESOURCE_ID_3303_12_5700_VALUE_0);
+        String expectedVal_2 = String.valueOf(RESOURCE_ID_3303_12_5700_VALUE_1);
         AtomicReference<ObjectNode> actualValues = new AtomicReference<>();
         await().atMost(40, SECONDS).until(() -> {
             actualValues.set(doGetAsync(
@@ -269,10 +271,14 @@ public class RpcLwm2mIntegrationReadTest extends AbstractRpcLwM2MIntegrationTest
             }
         }
         assertTrue(keyTsMaps.size() == 2);
-        long ts0 = keyTsMaps.get(expectedVal_1).longValue();
-        long ts1 = keyTsMaps.get(expectedVal_2).longValue();
-        assertTrue(ts1 > ts0);
-        assertTrue((ts1 - ts0) >= RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
+        long actualTS0 = keyTsMaps.get(expectedVal_1).longValue();
+        long actualTS1 = keyTsMaps.get(expectedVal_2).longValue();
+        assertTrue(actualTS1 > actualTS0);
+        assertTrue((actualTS1 - actualTS0) >= RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS);
+        assertTrue(RESOURCE_ID_3303_12_5700_TS_0 > 0);
+        assertTrue(RESOURCE_ID_3303_12_5700_TS_1 > 0);
+        assertTrue(actualTS0 <= RESOURCE_ID_3303_12_5700_TS_0);
+        assertTrue(actualTS1 <= RESOURCE_ID_3303_12_5700_TS_1);
     }
 
     /**
