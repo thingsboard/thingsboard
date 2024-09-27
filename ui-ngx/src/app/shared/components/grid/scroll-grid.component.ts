@@ -17,7 +17,7 @@
 import {
   AfterViewInit, ChangeDetectorRef,
   Component,
-  Input,
+  Input, NgZone,
   OnChanges, OnDestroy,
   OnInit,
   Renderer2,
@@ -90,7 +90,8 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
 
   constructor(private breakpointObserver: BreakpointObserver,
               private cd: ChangeDetectorRef,
-              private renderer: Renderer2) {
+              private renderer: Renderer2,
+              private zone: NgZone) {
   }
 
   ngOnInit(): void {
@@ -109,7 +110,9 @@ export class ScrollGridComponent<T, F> implements OnInit, AfterViewInit, OnChang
     this.renderer.setStyle(this.viewport._contentWrapper.nativeElement, 'padding', this.gap + 'px');
     if (!(typeof this.itemSize === 'number')) {
       this.contentResize$ = new ResizeObserver(() => {
-        this.onContentResize();
+        this.zone.run(() => {
+          this.onContentResize();
+        });
       });
       this.contentResize$.observe(this.viewport._contentWrapper.nativeElement);
     }

@@ -187,6 +187,7 @@ export const HelpLinks = {
     gatewayInstall: `${helpBaseUrl}/docs/iot-gateway/install/docker-installation`,
     scada: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada`,
     scadaSymbolDev: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/symbols-dev-guide`,
+    scadaSymbolDevAnimation: `${helpBaseUrl}/docs${docPlatformPrefix}/user-guide/scada/scada-symbols-dev-guide/#scadasymbolanimation`
   }
 };
 /* eslint-enable max-len */

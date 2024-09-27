@@ -74,6 +74,11 @@ export class GatewayServiceRPCComponent implements OnInit {
 
   readonly ConnectorType = ConnectorType;
   readonly gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslatesMap;
+  readonly typesWithUpdatedParams = new Set<ConnectorType>([
+    ConnectorType.MQTT,
+    ConnectorType.OPCUA,
+    ConnectorType.MODBUS,
+  ]);
 
   private subscription: IWidgetSubscription;
   private subscriptionOptions: WidgetSubscriptionOptions = {

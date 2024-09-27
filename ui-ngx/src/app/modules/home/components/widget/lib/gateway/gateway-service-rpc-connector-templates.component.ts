@@ -49,7 +49,8 @@ export class GatewayServiceRPCConnectorTemplatesComponent implements OnInit {
   rpcTemplates: Array<RPCTemplate>;
 
   public readonly originalOrder = (): number => 0;
-  public readonly isObject = (value: any) => isLiteralObject(value);
+  public readonly isObject = (value: unknown) => isLiteralObject(value);
+  public readonly isArray = (value: unknown) => Array.isArray(value);
   public readonly SNMPMethodsTranslations = SNMPMethodsTranslations;
 
   constructor(private attributeService: AttributeService) {

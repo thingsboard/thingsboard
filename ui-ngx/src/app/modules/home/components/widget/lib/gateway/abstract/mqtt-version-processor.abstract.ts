@@ -74,8 +74,8 @@ export class MqttVersionProcessor extends GatewayConnectorVersionProcessor<MQTTB
   getDowngradedVersion(): GatewayConnector<MQTTLegacyBasicConfig> {
     const { requestsMapping, mapping, ...restConfig } = this.connector.configurationJson as MQTTBasicConfig_v3_5_2;
 
-    const updatedRequestsMapping =
-      MqttVersionMappingUtil.mapRequestsToDowngradedVersion(requestsMapping as Record<RequestType, RequestMappingData[]>);
+    const updatedRequestsMapping = requestsMapping
+      ? MqttVersionMappingUtil.mapRequestsToDowngradedVersion(requestsMapping as Record<RequestType, RequestMappingData[]>) : {};
     const updatedMapping = MqttVersionMappingUtil.mapMappingToDowngradedVersion(mapping);
 
     return {

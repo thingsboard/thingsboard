@@ -185,7 +185,7 @@
                   matTooltipPosition="above">
             <mat-icon>{{ isFullscreen ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
           </button>
-          <div class="tb-absolute-fill tb-rulechain-graph" (contextmenu)="openRuleChainContextMenu($event)">
+          <div class="tb-absolute-fill tb-rulechain-graph" (tbcontextmenu)="openRuleChainContextMenu($event)">
             <div #ruleChainMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
                  [style.left]="ruleChainMenuPosition.x"
                  [style.top]="ruleChainMenuPosition.y"

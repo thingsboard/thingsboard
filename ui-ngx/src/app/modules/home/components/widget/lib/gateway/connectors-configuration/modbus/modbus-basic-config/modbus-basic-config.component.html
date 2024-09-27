@@ -20,7 +20,7 @@
     <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
   </mat-tab>
   <mat-tab label="{{ 'gateway.master-connections' | translate }}">
-    <tb-modbus-master-table formControlName="master"></tb-modbus-master-table>
+    <tb-modbus-master-table [isLegacy]="isLegacy" formControlName="master"></tb-modbus-master-table>
   </mat-tab>
   <mat-tab label="{{ 'gateway.server-config' | translate }}">
     <div class="tb-form-panel no-border no-padding padding-top">

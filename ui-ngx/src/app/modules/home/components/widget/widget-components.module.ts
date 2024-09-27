@@ -141,9 +141,6 @@ import {
 import {
   TypeValuePanelComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
-import {
-  ModbusRpcParametersComponent
-} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-rpc-parameters/modbus-rpc-parameters.component';
 import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
 import {
   MqttLegacyBasicConfigComponent
@@ -160,6 +157,19 @@ import {
 import {
   ModbusLegacyBasicConfigComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-legacy-basic-config.component';
+import {
+  MqttRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/mqtt-rpc-parameters/mqtt-rpc-parameters.component';
+import {
+  OpcRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/opc-rpc-parameters/opc-rpc-parameters.component';
+import {
+  ModbusRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/modbus-rpc-parameters/modbus-rpc-parameters.component';
+import { RpcTemplateArrayViewPipe } from '@home/components/widget/lib/gateway/pipes/rpc-template-array-view.pipe';
+import { 
+  ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
 
 @NgModule({
   declarations: [
@@ -253,6 +263,11 @@ import {
     GatewayAdvancedConfigurationComponent,
     OpcUaLegacyBasicConfigComponent,
     ModbusLegacyBasicConfigComponent,
+    MqttRpcParametersComponent,
+    OpcRpcParametersComponent,
+    ModbusRpcParametersComponent,
+    RpcTemplateArrayViewPipe,
+    ReportStrategyComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,

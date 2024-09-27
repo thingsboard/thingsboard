@@ -44,7 +44,7 @@ import { AlarmService } from '@core/http/alarm.service';
 import { OverlayRef } from '@angular/cdk/overlay';
 import { MatAutocompleteSelectedEvent } from '@angular/material/autocomplete';
 import { UtilsService } from '@core/services/utils.service';
-import { AlarmAssigneeOption } from '@shared/models/alarm.models';
+import { AlarmAssigneeOption, getUserDisplayName, getUserInitials } from '@shared/models/alarm.models';
 
 export const ALARM_ASSIGNEE_PANEL_DATA = new InjectionToken<any>('AlarmAssigneePanelData');
 
@@ -110,9 +110,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     this.filteredUsers = this.selectUserFormGroup.get('user').valueChanges
       .pipe(
         debounceTime(150),
-        map(value => {
-          return value ? (typeof value === 'string' ? value : '') : ''
-        }),
+        map(value => value ? (typeof value === 'string' ? value : '') : ''),
         distinctUntilChanged(),
         switchMap(name => this.fetchUsers(name)),
         share(),
@@ -123,7 +121,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
   ngAfterViewInit() {
     setTimeout(() => {
       this.userInput.nativeElement.focus();
-    }, 0)
+    }, 0);
   }
 
   ngOnDestroy() {
@@ -149,7 +147,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     this.alarmService.assignAlarm(this.alarmId, user.id.id, {ignoreLoading: true}).subscribe(
       () => {
         this.reassigned = true;
-        this.overlayRef.dispose()
+        this.overlayRef.dispose();
       });
   }
 
@@ -157,7 +155,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     this.alarmService.unassignAlarm(this.alarmId, {ignoreLoading: true}).subscribe(
       () => {
         this.reassigned = true;
-        this.overlayRef.dispose()
+        this.overlayRef.dispose();
       });
   }
 
@@ -170,9 +168,7 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     return this.userService.getUsersForAssign(this.alarmId, pageLink, {ignoreLoading: true})
       .pipe(
       catchError(() => of(emptyPageData<UserEmailInfo>())),
-      map(pageData => {
-        return pageData.data;
-      })
+      map(pageData => pageData.data)
     );
   }
 
@@ -191,42 +187,11 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     }, 0);
   }
 
-  getUserDisplayName(entity: User) {
-    let displayName = '';
-    if ((entity.firstName && entity.firstName.length > 0) ||
-      (entity.lastName && entity.lastName.length > 0)) {
-      if (entity.firstName) {
-        displayName += entity.firstName;
-      }
-      if (entity.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.lastName;
-      }
-    } else {
-      displayName = entity.email;
-    }
-    return displayName;
+  getUserInitials(entity: UserEmailInfo): string {
+    return getUserInitials(entity);
   }
 
-  getUserInitials(entity: User): string {
-    let initials = '';
-    if (entity.firstName && entity.firstName.length ||
-      entity.lastName && entity.lastName.length) {
-      if (entity.firstName) {
-        initials += entity.firstName.charAt(0);
-      }
-      if (entity.lastName) {
-        initials += entity.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.email.charAt(0);
-    }
-    return initials.toUpperCase();
-  }
-
-  getFullName(entity: User): string {
+  getFullName(entity: UserEmailInfo): string {
     let fullName = '';
     if ((entity.firstName && entity.firstName.length > 0) ||
       (entity.lastName && entity.lastName.length > 0)) {
@@ -243,8 +208,8 @@ export class AlarmAssigneePanelComponent implements  OnInit, AfterViewInit, OnDe
     return fullName;
   }
 
-  getAvatarBgColor(entity: User) {
-    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  getAvatarBgColor(entity: UserEmailInfo) {
+    return this.utilsService.stringToHslColor(getUserDisplayName(entity), 40, 60);
   }
 
 }

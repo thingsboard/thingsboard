@@ -530,8 +530,10 @@ export class Lwm2mDeviceProfileTransportConfigurationComponent implements Contro
     this.removeObserveAttrTelemetryFromJson(ATTRIBUTE, value.keyId);
     this.removeKeyNameFromJson(value.keyId);
     this.removeAttributesFromJson(value.keyId);
-    this.updateObserveAttrTelemetryObjectFormGroup(objectsOld);
-  }
+    this.lwm2mDeviceProfileFormGroup.patchValue({
+      observeAttrTelemetry: deepClone(objectsOld)
+    }, {emitEvent: false});
+  };
 
   private removeObserveAttrTelemetryFromJson = (observeAttrTel: string, keyId: string): void => {
     const isIdIndex = (element) => element.startsWith(`/${keyId}`);

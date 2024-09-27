@@ -55,11 +55,7 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { UtilsService } from '@core/services/utils.service';
 import { WidgetService } from '@core/http/widget.service';
 import { WidgetsBundle } from '@shared/models/widgets-bundle.model';
-import {
-  EntityInfoData,
-  ImportEntitiesResultInfo,
-  ImportEntityData
-} from '@shared/models/entity.models';
+import { EntityInfoData, ImportEntitiesResultInfo, ImportEntityData } from '@shared/models/entity.models';
 import { RequestConfig } from '@core/http/http-utils';
 import { RuleChain, RuleChainImport, RuleChainMetaData, RuleChainType } from '@shared/models/rule-chain.models';
 import { RuleChainService } from '@core/http/rule-chain.service';
@@ -85,6 +81,7 @@ import { selectUserSettingsProperty } from '@core/auth/auth.selectors';
 import { ActionPreferencesPutUserSettings } from '@core/auth/auth.actions';
 import { ExportableEntity } from '@shared/models/base-data';
 import { EntityId } from '@shared/models/id/entity-id';
+import { Customer } from '@shared/models/customer.model';
 
 export type editMissingAliasesFunction = (widgets: Array<Widget>, isSingleWidget: boolean,
                                           customTitle: string, missingEntityAliases: EntityAliases) => Observable<EntityAliases>;
@@ -366,6 +363,7 @@ export class ImportExportService {
 
   public exportEntity(entityData: EntityInfoData | RuleChainMetaData): void {
     const id = (entityData as EntityInfoData).id ?? (entityData as RuleChainMetaData).ruleChainId;
+    let fileName = (entityData as EntityInfoData).name;
     let preparedData;
     switch (id.entityType) {
       case EntityType.DEVICE_PROFILE:
@@ -391,10 +389,14 @@ export class ImportExportService {
       case EntityType.DASHBOARD:
         preparedData = this.prepareDashboardExport(entityData as Dashboard);
         break;
+      case EntityType.CUSTOMER:
+        fileName = (entityData as Customer).title;
+        preparedData = this.prepareExport(entityData);
+        break;
       default:
         preparedData = this.prepareExport(entityData);
     }
-    this.exportToPc(preparedData, (entityData as EntityInfoData).name);
+    this.exportToPc(preparedData, fileName);
   }
 
   private exportSelectedWidgetsBundle(widgetsBundle: WidgetsBundle): void {

@@ -20,7 +20,7 @@ import {
   FormGroup,
 } from '@angular/forms';
 import { EntityId } from '@shared/models/id/entity-id';
-import { MatDialog, MatDialogRef } from '@angular/material/dialog';
+import { MatDialogRef } from '@angular/material/dialog';
 import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { DeviceService } from '@core/http/device.service';
@@ -40,7 +40,9 @@ import {
   GatewayConfigSecurity,
   GatewayConfigValue,
   GatewayGeneralConfig,
+  GatewayGRPCConfig,
   GatewayLogsConfig,
+  GatewayStorageConfig,
   LocalLogs,
   LogAttribute,
   LogConfig,
@@ -113,7 +115,7 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
     this.gatewayConfigGroup.get('basicConfig').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       const advancedControl = this.gatewayConfigGroup.get('advancedConfig');
 
-      if (!isEqual(advancedControl.value, value)) {
+      if (!isEqual(advancedControl.value, value) && this.gatewayConfigGroup.get('mode').value === ConfigurationModes.BASIC) {
         advancedControl.patchValue(value, {emitEvent: false});
       }
     });
@@ -121,7 +123,7 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
     this.gatewayConfigGroup.get('advancedConfig').valueChanges.pipe(takeUntil(this.destroy$)).subscribe(value => {
       const basicControl = this.gatewayConfigGroup.get('basicConfig');
 
-      if (!isEqual(basicControl.value, value)) {
+      if (!isEqual(basicControl.value, value) && this.gatewayConfigGroup.get('mode').value === ConfigurationModes.ADVANCED) {
         basicControl.patchValue(value, {emitEvent: false});
       }
     });
@@ -240,7 +242,7 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
         consoleHandler: {
           class: 'logging.StreamHandler',
           formatter: 'LogFormatter',
-          level: 'DEBUG',
+          level: 0,
           stream: 'ext://sys.stdout'
         },
         databaseHandler: {
@@ -320,10 +322,10 @@ export class GatewayConfigurationComponent implements AfterViewInit, OnDestroy {
 
   private updateConfigs(attributes: AttributeData[]): void {
     const formValue: GatewayConfigValue = {
-      thingsboard: null,
-      grpc: null,
-      logs: null,
-      storage: null,
+      thingsboard: {} as GatewayGeneralConfig,
+      grpc: {} as GatewayGRPCConfig,
+      logs: {} as GatewayLogsConfig,
+      storage: {} as GatewayStorageConfig,
       mode: ConfigurationModes.BASIC
     };
 

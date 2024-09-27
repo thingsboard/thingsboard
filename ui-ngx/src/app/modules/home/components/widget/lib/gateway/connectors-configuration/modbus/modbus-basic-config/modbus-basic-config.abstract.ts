@@ -25,8 +25,8 @@ import {
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 @Directive()
-export abstract class ModbusBasicConfigDirective<BasicConfig>
-  extends GatewayConnectorBasicConfigDirective<ModbusBasicConfig_v3_5_2, BasicConfig> {
+export abstract class ModbusBasicConfigDirective<InputBasicConfig, OutputBasicConfig>
+  extends GatewayConnectorBasicConfigDirective<InputBasicConfig, OutputBasicConfig> {
 
   enableSlaveControl: FormControl<boolean> = new FormControl(false);
 
@@ -41,7 +41,7 @@ export abstract class ModbusBasicConfigDirective<BasicConfig>
       });
   }
 
-  override writeValue(basicConfig: BasicConfig & ModbusBasicConfig): void {
+  override writeValue(basicConfig: OutputBasicConfig & ModbusBasicConfig): void {
     super.writeValue(basicConfig);
     this.onEnableSlaveControl(basicConfig);
   }

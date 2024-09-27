@@ -638,7 +638,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             ImageCacheKey key = getKeyFromUrl(tenantId, url);
             if (key != null) {
                 var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getResourceKey());
-                if (imageInfo != null) {
+                if (imageInfo != null && !(TenantId.SYS_TENANT_ID.equals(imageInfo.getTenantId()) && ResourceSubType.SCADA_SYMBOL.equals(imageInfo.getResourceSubType()))) {
                     byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
                     ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
                     String tbImagePrefix = "";

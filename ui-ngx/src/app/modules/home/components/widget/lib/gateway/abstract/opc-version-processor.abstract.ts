@@ -38,7 +38,7 @@ export class OpcVersionProcessor extends GatewayConnectorVersionProcessor<OPCBas
       ...this.connector,
       configurationJson: {
         server: server ? OpcVersionMappingUtil.mapServerToUpgradedVersion(server) : {},
-        mapping: server.mapping ? OpcVersionMappingUtil.mapMappingToUpgradedVersion(server.mapping) : [],
+        mapping: server?.mapping ? OpcVersionMappingUtil.mapMappingToUpgradedVersion(server.mapping) : [],
       },
       configVersion: this.gatewayVersionIn
     } as GatewayConnector<OPCBasicConfig_v3_5_2>;
