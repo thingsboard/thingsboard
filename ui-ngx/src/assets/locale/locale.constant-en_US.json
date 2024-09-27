@@ -4739,10 +4739,10 @@
         "queue-singleton-hint": "Select a queue for message forwarding in multi-instance environments. 'Main' queue is used by default."
     },
     "timezone": {
-      "timezone": "Timezone",
-      "select-timezone": "Select timezone",
-      "no-timezones-matching": "No timezones matching '{{timezone}}' were found.",
-      "timezone-required": "Timezone is required.",
+      "timezone": "Time zone",
+      "select-timezone": "Select time zone",
+      "no-timezones-matching": "No time zones matching '{{timezone}}' were found.",
+      "timezone-required": "Time zone is required.",
       "browser-time": "Browser Time"
     },
     "queue": {
