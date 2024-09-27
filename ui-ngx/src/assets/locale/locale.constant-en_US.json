@@ -5208,6 +5208,13 @@
         "relative": "Relative",
         "range": "Range",
         "hide-timewindow-section": "Hide time window section from end-users",
+        "hide-last-interval": "Hide last interval from end-users",
+        "hide-relative-interval": "Hide relative interval from end-users",
+        "hide-fixed-interval": "Hide fixed interval from end-users",
+        "hide-aggregation": "Hide aggregation from end-users",
+        "hide-group-interval": "Hide grouping interval from end-users",
+        "hide-max-values": "Hide max values from end-users",
+        "hide-timezone": "Hide time zone from end-users",
         "disable-custom-interval": "Disable custom interval selection"
     },
     "tooltip": {
