@@ -693,7 +693,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="flex">
               <mat-label translate>gateway.inactivity-check-period-seconds</mat-label>
-              <input matInput formControlName="inactivityCheckPeriodSeconds"/>
+              <input matInput type="number" min="0" formControlName="inactivityCheckPeriodSeconds"/>
               <mat-error
                 *ngIf="basicFormGroup.get('thingsboard.checkingDeviceActivity.inactivityCheckPeriodSeconds').hasError('required')">
                 {{ 'gateway.inactivity-check-period-seconds-required' | translate }}
