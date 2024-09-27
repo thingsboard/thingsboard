@@ -28,7 +28,8 @@ import {
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import {
   ModbusDataType,
-  ModbusEditableDataTypes, ModbusFormValue,
+  ModbusEditableDataTypes,
+  ModbusFormValue,
   ModbusFunctionCodeTranslationsMap,
   ModbusObjectCountByDataType,
   ModbusValue,
@@ -37,6 +38,7 @@ import {
   ModifierTypesMap,
   noLeadTrailSpacesRegex,
   nonZeroFloat,
+  ReportStrategyDefaultValue,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
@@ -91,6 +93,7 @@ export class ModbusDataKeysPanelComponent implements OnInit, OnDestroy {
   readonly ModbusEditableDataTypes = ModbusEditableDataTypes;
   readonly ModbusFunctionCodeTranslationsMap = ModbusFunctionCodeTranslationsMap;
   readonly ModifierTypesMap = ModifierTypesMap;
+  readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
 
   private destroy$ = new Subject<void>();
 

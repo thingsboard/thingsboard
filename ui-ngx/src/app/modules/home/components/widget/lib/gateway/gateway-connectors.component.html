@@ -23,7 +23,7 @@
       <button *ngIf="dataSource?.data?.length"
               mat-icon-button
               [disabled]="isLoading$ | async"
-              (click)="addConnector($event)"
+              (click)="onAddConnector($event)"
               matTooltip="{{ 'action.add' | translate }}"
               matTooltipPosition="above">
         <mat-icon>add</mat-icon>
@@ -33,7 +33,7 @@
       <section *ngIf="!dataSource?.data?.length" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">
         <button mat-button class="connector"
-        (click)="addConnector($event)">
+        (click)="onAddConnector($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
           <span>{{ 'gateway.add-connector' | translate }}</span>
         </button>
@@ -244,7 +244,7 @@
         <button mat-raised-button color="primary"
                 type="button"
                 [disabled]="!connectorForm.dirty || connectorForm.invalid"
-                (click)="saveConnector(false)">
+                (click)="onSaveConnector()">
           {{ 'action.save' | translate }}
         </button>
       </div>
@@ -315,6 +315,7 @@
       </mat-slide-toggle>
     </div>
     <tb-report-strategy
+      [defaultValue]="ReportStrategyDefaultValue.Connector"
       *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && connectorForm.get('configVersion').value === GatewayVersion.Current"
       formControlName="reportStrategy"
     />
