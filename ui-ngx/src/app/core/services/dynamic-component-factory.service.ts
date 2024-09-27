@@ -18,6 +18,7 @@ import { Component, Injectable, Type, ɵComponentDef, ɵNG_COMP_DEF } from '@ang
 import { from, Observable, of } from 'rxjs';
 import { CommonModule } from '@angular/common';
 import { mergeMap } from 'rxjs/operators';
+import { guid } from '@core/utils';
 
 @Injectable({
     providedIn: 'root'
@@ -60,7 +61,8 @@ export class DynamicComponentFactoryService {
       imports,
       preserveWhitespaces,
       styles,
-      standalone: true
+      standalone: true,
+      selector: 'tb-dynamic-component#' + guid()
     })(componentType);
     // Trigger component compilation
     return comp[ɵNG_COMP_DEF];

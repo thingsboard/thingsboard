@@ -63,6 +63,9 @@
       font-size: 14px;
       font-weight: 500;
       letter-spacing: .25px;
+      .mat-pseudo-checkbox {
+        display: none;
+      }
     }
 
     .mat-button-toggle-checked.mat-button-toggle-appearance-standard:not(.mat-button-toggle-disabled):hover .mat-button-toggle-focus-overlay {
