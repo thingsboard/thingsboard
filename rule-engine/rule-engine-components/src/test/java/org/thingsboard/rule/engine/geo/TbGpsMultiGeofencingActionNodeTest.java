@@ -73,7 +73,6 @@ public class TbGpsMultiGeofencingActionNodeTest {
         configuration.setPerimeterAttributeKey("perimeter");
         configuration.setLatitudeKeyName("latitude");
         configuration.setLongitudeKeyName("longitude");
-        configuration.setRelationField(EntitySearchDirection.TO);
         configuration.setInsideDurationMs(10L);
         configuration.setOutsideDurationMs(10L);
         EntityRelationsQuery entityRelationsQuery = new EntityRelationsQuery();

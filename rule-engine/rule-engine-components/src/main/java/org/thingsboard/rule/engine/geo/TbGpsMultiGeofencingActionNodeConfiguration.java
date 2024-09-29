@@ -32,7 +32,6 @@ import java.util.UUID;
 public class TbGpsMultiGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
 
     private EntityRelationsQuery entityRelationsQuery;
-    private EntitySearchDirection relationField;
     private String perimeterAttributeKey;
     private Long insideDurationMs;
     private Long outsideDurationMs;
@@ -47,7 +46,6 @@ public class TbGpsMultiGeofencingActionNodeConfiguration extends TbGpsGeofencing
         RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
         entityRelationsQuery.setFilters(List.of(filter));
         configuration.setEntityRelationsQuery(entityRelationsQuery);
-        configuration.setRelationField(EntitySearchDirection.TO);
         configuration.setInsideDurationMs(1000L);
         configuration.setOutsideDurationMs(1000L);
         return configuration;

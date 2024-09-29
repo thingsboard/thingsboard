@@ -19,7 +19,6 @@ package org.thingsboard.rule.engine.geo;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.data.AttributeScope;
@@ -50,9 +49,9 @@ public class GeofencingProcessor {
     }
 
     public GeofenceResponse process(Long ts, RuleNodeId ruleNodeId, EntityId entityId, List<EntityId> matchedGeofences) throws ExecutionException, InterruptedException {
-        List<EntityId> enteredGeofences = emptyList();
-        List<EntityId> leftGeofences = emptyList();
-        List<EntityId> insideGeofences = emptyList();
+        List<EntityId> enteredGeofences = null;
+        List<EntityId> leftGeofences = null;
+        List<EntityId> insideGeofences = null;
 
         Set<GeofenceState> geofenceStates = fetchGeofenceStatesForEntity(entityId, ruleNodeId);
 
@@ -75,8 +74,8 @@ public class GeofencingProcessor {
     }
 
     public List<EntityId> getEnteredGeofences(Long currentTs, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
-        if (CollectionUtils.isEmpty(matchedGeofences)) {
-            return Collections.emptyList();
+        if (isEmpty(matchedGeofences)) {
+            return emptyList();
         }
 
         Optional<GeofenceState> enteredGeofenceState = geofenceStates.stream().filter(GeofenceState::isEntered).findFirst();
@@ -125,13 +124,13 @@ public class GeofencingProcessor {
             return List.of(geofenceState.getGeofenceId());
         }
 
-        return Collections.emptyList();
+        return emptyList();
     }
 
     public List<EntityId> getOutsideGeofences(Long currentTs, Long durationMs, List<EntityId> matchedGeofences, Set<GeofenceState> geofenceStates) {
         Set<GeofenceState> candidatesForOutside = geofenceStates.stream().filter(state -> state.isLeft() && !matchedGeofences.contains(state.getGeofenceId())).collect(Collectors.toSet());
 
-        if (CollectionUtils.isEmpty(candidatesForOutside)) {
+        if (isEmpty(candidatesForOutside)) {
             return emptyList();
         }
 
@@ -184,7 +183,7 @@ public class GeofencingProcessor {
             JsonNode jsonNode = JacksonUtil.toJsonNode(attributeKvEntry.get().getJsonValue().get());
             Set<GeofenceState> geofenceStates = JacksonUtil.convertValue(jsonNode.get(GEOFENCE_STATES_KEY), new TypeReference<>() {
             });
-            if (CollectionUtils.isEmpty(geofenceStates)) {
+            if (isEmpty(geofenceStates)) {
                 geofenceStates = new HashSet<>();
             }
             return geofenceStates;

@@ -23,7 +23,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 
 @Data
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@NoArgsConstructor
 public class GeofenceState {
 
     @EqualsAndHashCode.Include
@@ -49,7 +48,7 @@ public class GeofenceState {
 
     @JsonIgnore
     public boolean isLeft() {
-        return  leftTs != null;
+        return leftTs != null;
     }
 
 }

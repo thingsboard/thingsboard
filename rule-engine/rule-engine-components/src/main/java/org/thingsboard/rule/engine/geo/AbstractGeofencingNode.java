@@ -63,12 +63,11 @@ public abstract class AbstractGeofencingNode<T extends TbGpsGeofencingFilterNode
     }
 
     protected JsonObject getJsonObject(TbMsg msg) throws TbNodeException {
-        JsonElement msgDataElement = new JsonParser().parse(msg.getData());
+        JsonElement msgDataElement = JsonParser.parseString(msg.getData());
         if (!msgDataElement.isJsonObject()) {
             throw new TbNodeException("Incoming Message is not a valid JSON object!");
         }
-        JsonObject msgDataObj = msgDataElement.getAsJsonObject();
-        return msgDataObj;
+        return msgDataElement.getAsJsonObject();
     }
 
     protected boolean checkMatches(Perimeter perimeter, double latitude, double longitude) throws TbNodeException {
