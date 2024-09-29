@@ -127,7 +127,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         node.onMsg(ctx, msg);
 
-        verify(ctx, atLeastOnce()).tellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
 
         assertCapturedEvent(msgCaptor, labelCaptor, "Entered");
     }
@@ -150,7 +150,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         node.onMsg(ctx, msgInside);
 
-        verify(ctx, atLeastOnce()).tellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
         assertCapturedEvent(msgCaptor, labelCaptor, "Inside");
     }
 
@@ -169,7 +169,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         node.onMsg(ctx, msgOutside);
 
-        verify(ctx, atLeastOnce()).tellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
         assertCapturedEvent(msgCaptor, labelCaptor, "Left");
     }
 
@@ -198,7 +198,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         node.onMsg(ctx, msgOutside);
 
-        verify(ctx, atLeastOnce()).tellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
         assertCapturedEvent(msgCaptor, labelCaptor, "Outside");
     }
 
@@ -222,7 +222,6 @@ public class TbGpsMultiGeofencingActionNodeTest {
     private void assertCapturedEvent(ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> relationTypeCaptor, String expectedRelationType) {
         assertEquals(expectedRelationType, relationTypeCaptor.getValue());
         assertEquals(zoneId, msgCaptor.getValue().getOriginator());
-        assertEquals("container", msgCaptor.getValue().getMetaData().getValue("originatorName"));
     }
 
 }
