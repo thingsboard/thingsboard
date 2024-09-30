@@ -68,9 +68,8 @@ import org.eclipse.leshan.core.util.Hex;
 import org.eclipse.leshan.server.model.LwM2mModelProvider;
 import org.eclipse.leshan.server.registration.Registration;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.device.profile.lwm2m.ObjectAttributes;
-import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
-import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.queue.util.TbLwM2mTransportComponent;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportContext;
@@ -88,14 +87,11 @@ import org.thingsboard.server.transport.lwm2m.utils.LwM2mValueConverterImpl;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Date;
-import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.Set;
-import java.util.TreeSet;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.RejectedExecutionException;
 import java.util.function.Function;
@@ -177,24 +173,32 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
+    /**
+     * if resource in CompositeObservation is already registered - return BAD REQUEST
+     */
     @Override
     public void sendObserveRequest(LwM2mClient client, TbLwM2MObserveRequest request, DownlinkRequestCallback<ObserveRequest, ObserveResponse> callback) {
         try {
             validateVersionedId(client, request);
             LwM2mPath resultIds = new LwM2mPath(request.getObjectId());
-            ObserveRequest downlink;
-            ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
-            if (resultIds.isResourceInstance()) {
-                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), resultIds.getResourceInstanceId());
-            } else if (resultIds.isResource()) {
-                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
-            } else if (resultIds.isObjectInstance()) {
-                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+            String resourceExisting = checkResourceSingleObservationForExisting(client, resultIds.toString());
+            if (StringUtils.isNotBlank(resourceExisting)) {
+                callback.onValidationError(request.toString(), resourceExisting);
             } else {
-                downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                ObserveRequest downlink;
+                ContentFormat contentFormat = getReadRequestContentFormat(client, request, modelProvider);
+                if (resultIds.isResourceInstance()) {
+                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(), resultIds.getResourceInstanceId());
+                } else if (resultIds.isResource()) {
+                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId());
+                } else if (resultIds.isObjectInstance()) {
+                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId());
+                } else {
+                    downlink = new ObserveRequest(contentFormat, resultIds.getObjectId());
+                }
+                log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
+                sendSimpleRequest(client, downlink, request.getTimeout(), callback);
             }
-            log.info("[{}] Send observation: {}.", client.getEndpoint(), request.getVersionedId());
-            sendSimpleRequest(client, downlink, request.getTimeout(), callback);
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
@@ -208,19 +212,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (observation instanceof SingleObservation) {
                 paths.add("SingleObservation:" + ((SingleObservation) observation).getPath().toString());
             } else {
-                List<LwM2mPath> listPath = ((CompositeObservation) observation).getPaths();
-                List<String> pathsComposite =  listPath.stream().map(lwM2mPath -> (lwM2mPath.toString())).collect(Collectors.toList());
-                Set <String> pathsCompositeSort = new TreeSet<>();
-                if (pathsComposite.size() == 1) {
-                    pathsCompositeSort.add("CompositeObservation: [" + pathsComposite.get(0) + "]");
-                } else if (pathsComposite.size() > 1) {
-                    List <String> sort = new LinkedList<>();
-                    sort.addAll(pathsComposite);
-                    sort.set(0, "CompositeObservation: [" + sort.get(0));
-                    sort.set(pathsComposite.size()-1, sort.get(pathsComposite.size()-1) + "]");
-                    pathsCompositeSort = new LinkedHashSet<>(sort);
-                }
-                paths.addAll(pathsCompositeSort);
+                paths.add("CompositeObservation: " + ((CompositeObservation) observation).getPaths().toString());
             }
 
         });
@@ -234,10 +226,15 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     public void sendObserveCompositeRequest(LwM2mClient client, TbLwM2MObserveCompositeRequest request, DownlinkRequestCallback<ObserveCompositeRequest,
             ObserveCompositeResponse> callback) {
         try {
-            log.trace("[{}] Send Composite observation: [{}].", client.getEndpoint(), request.getObjectIds());
             ContentFormat compositeContentFormat = this.findFirstContentFormatForComposite(client.getClientSupportContentFormats());
-            ObserveCompositeRequest downlink = new ObserveCompositeRequest(compositeContentFormat, compositeContentFormat, request.getObjectIds());
-            sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+            String resourceExisting = checkResourceForExistingComposite(client, request.getObjectIds());
+            if (StringUtils.isNotBlank(resourceExisting)) {
+                callback.onValidationError(request.toString(), resourceExisting);
+            } else {
+                ObserveCompositeRequest downlink = new ObserveCompositeRequest(compositeContentFormat, compositeContentFormat, request.getObjectIds());
+                log.trace("[{}] Send ObserveComposite: {}.", client.getEndpoint(), request.getVersionedIds());
+                sendCompositeRequest(client, downlink, this.config.getTimeout(), callback);
+            }
         } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
@@ -246,42 +243,16 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
     @Override
     public void sendCancelObserveCompositeRequest(LwM2mClient client, TbLwM2MCancelObserveCompositeRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveCompositeRequest, Integer> callback) {
         try {
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-            List<LwM2mPath> listPath = LwM2mPath.getLwM2mPathList(Arrays.asList(request.getObjectIds()));
-            Optional<Observation> observationOpt = Optional.ofNullable(observations.stream().filter(observation -> observation instanceof CompositeObservation && ((CompositeObservation) observation).getPaths().equals(listPath)).findFirst().orElse(null));
-            int cnt = 0;
-            if (observationOpt.isPresent()) {
-                cnt = context.getServer().getObservationService().cancelCompositeObservations(client.getRegistration(), request.getObjectIds());
+            log.trace("[{}] Send CancelObserveComposite: {}.", client.getEndpoint(), request.getVersionedIds());
+            int cnt = context.getServer().getObservationService().cancelCompositeObservations(client.getRegistration(), request.getObjectIds());
+            if (cnt != 0) {
                 callback.onSuccess(request, cnt);
             } else {
-                Set<String> lwPaths = new HashSet<>();
-                for (Observation obs : observations) {
-                    LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
-                    for (LwM2mPath nodePath : listPath) {
-                        String validNodePath = validatePathObserveCancelAny(nodePath, lwPathObs, client);
-                        if (validNodePath != null) lwPaths.add(validNodePath);
-                    }
-                };
-                for (String nodePath : lwPaths) {
-                    cnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
-                }
+                callback.onValidationError(request.toString(), "Could not find active Observe Composite component with paths: " + Arrays.toString(request.getVersionedIds()));
             }
-            callback.onSuccess(request, cnt);
-        } catch (ThingsboardException e){
+        } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
-    }
-
-    private String validatePathObserveCancelAny(LwM2mPath nodePath, LwM2mPath lwPathObs, LwM2mClient client) throws ThingsboardException {
-        if (nodePath.equals(lwPathObs) || lwPathObs.startWith(nodePath)) {    // nodePath = "3",     lwPathObs = "3/0/9": cancel for tne all lwPathObs
-            return lwPathObs.toString();
-        } else if (!nodePath.equals(lwPathObs) && nodePath.startWith(lwPathObs)) {
-            String errorMsg = String.format(
-                    "Unexpected error: There is registration with Endpoint %s for observation path [%s], that includes this observation path [%s]",
-                    client.getRegistration().getEndpoint(), lwPathObs, nodePath);
-            throw new ThingsboardException(errorMsg, ThingsboardErrorCode.BAD_REQUEST_PARAMS);
-        }
-        return null;
     }
 
     @Override
@@ -334,22 +305,15 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
 
     @Override
     public void sendCancelObserveRequest(LwM2mClient client, TbLwM2MCancelObserveRequest request, DownlinkRequestCallback<TbLwM2MCancelObserveRequest, Integer> callback) {
-        try{
-            validateVersionedId(client, request);
-            Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
-            int observeCancelCnt = 0;
-            Set<String> lwPaths = new HashSet<>();
-            for (Observation obs : observations) {
-                LwM2mPath lwPathObs = ((SingleObservation) obs).getPath();
-                LwM2mPath nodePath = new LwM2mPath(request.getObjectId());
-                String validNodePath = validatePathObserveCancelAny(nodePath, lwPathObs, client);
-                if (validNodePath != null) lwPaths.add(validNodePath);
-            };
-            for (String nodePath : lwPaths) {
-                observeCancelCnt += context.getServer().getObservationService().cancelObservations(client.getRegistration(), nodePath);
+        try {
+            log.trace("[{}] Send CancelObserve {}.", client.getEndpoint(), request.getVersionedId());
+            int cnt = context.getServer().getObservationService().cancelObservations(client.getRegistration(), request.getObjectId());
+            if (cnt != 0) {
+                callback.onSuccess(request, cnt);
+            } else {
+                callback.onValidationError(request.toString(), "Could not find active Observe component with path: " + request.getVersionedId());
             }
-            callback.onSuccess(request, observeCancelCnt);
-        } catch (ThingsboardException e){
+        } catch (InvalidRequestException e) {
             callback.onValidationError(request.toString(), e.getMessage());
         }
     }
@@ -416,7 +380,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             addAttribute(attributes, OBJECT_VERSION, params.getVer());          // Attachment.OBJECT
         }
 
-       return  new LwM2mAttributeSet(attributes);
+        return new LwM2mAttributeSet(attributes);
     }
 
     @Override
@@ -702,13 +666,13 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         addAttribute(attributes, attribute, value, null, null);
     }
 
-    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes,  LwM2mAttributeModel<T> attribute, T value, Function<T, ?> converter) {
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes, LwM2mAttributeModel<T> attribute, T value, Function<T, ?> converter) {
         addAttribute(attributes, attribute, value, null, converter);
     }
 
-    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes,  LwM2mAttributeModel<T> attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
+    private static <T> void addAttribute(List<LwM2mAttribute<?>> attributes, LwM2mAttributeModel<T> attributeName, T value, Predicate<T> filter, Function<T, ?> converter) {
         if (value != null && ((filter == null) || filter.test(value))) {
-            T valueConvert = (T)  converter != null ?  (T) converter.apply(value) : value;
+            T valueConvert = (T) converter != null ? (T) converter.apply(value) : value;
             attributes.add(new LwM2mAttribute<>(attributeName, valueConvert));
         }
     }
@@ -746,12 +710,12 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             if (resourceModel != null && (pathIds.isResourceInstance() || (pathIds.isResource() && !resourceModel.multiple))) {
                 ContentFormat[] desiredFormats;
                 if (OBJLNK.equals(resourceModel.type)) {
-                    desiredFormats =  new ContentFormat[]{ContentFormat.LINK, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
+                    desiredFormats = new ContentFormat[]{ContentFormat.LINK, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
                 } else if (OPAQUE.equals(resourceModel.type)) {
-                    desiredFormats =  new ContentFormat[]{ContentFormat.OPAQUE, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
-                 } else {
-                    desiredFormats =  new ContentFormat[]{ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
-               }
+                    desiredFormats = new ContentFormat[]{ContentFormat.OPAQUE, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
+                } else {
+                    desiredFormats = new ContentFormat[]{ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};
+                }
                 return findFirstContentFormatForComp(client.getClientSupportContentFormats(), client.getDefaultContentFormat(), desiredFormats);
             } else {
                 return getContentFormatForComplex(client);
@@ -775,6 +739,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             throw new RuntimeException("The version " + client.getRegistration().getLwM2mVersion() + " is not supported!");
         }
     }
+
     private <R> String toString(R request) {
         try {
             return request != null ? request.toString() : "";
@@ -784,7 +749,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         }
     }
 
-    private ContentFormat findFirstContentFormatForComposite (Set<ContentFormat> clientSupportContentFormats) {
+    private ContentFormat findFirstContentFormatForComposite(Set<ContentFormat> clientSupportContentFormats) {
         ContentFormat contentFormat = findFirstContentFormatForComp(clientSupportContentFormats, null, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON);
         if (contentFormat != null) {
             return contentFormat;
@@ -792,13 +757,71 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
             throw new RuntimeException("This device does not support Composite Operation");
         }
     }
+
     private static ContentFormat findFirstContentFormatForComp(Set<ContentFormat> clientSupportContentFormats, ContentFormat defaultValue, ContentFormat... desiredFormats) {
-        List desiredFormatsList =  Arrays.asList(desiredFormats);
+        List desiredFormatsList = Arrays.asList(desiredFormats);
         for (ContentFormat c : clientSupportContentFormats) {
             if (desiredFormatsList.contains(c)) {
                 return c;
             }
         }
         return defaultValue;
+    }
+
+    /**
+     * Check if at least one of the resource objectIds (Composite) in SingleObservation or CompositeObservation is already registered
+     * @param objectIds
+     * @return
+     */
+    private String checkResourceForExistingComposite(LwM2mClient client, String[] objectIds) {
+        List<String> objectIdsList = Arrays.asList(objectIds);
+        Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+        for (Observation observation : observations) {
+            if (observation instanceof SingleObservation singleObs) {
+                String idSingleOb = singleObs.getPath().toString();
+                if (objectIdsList.contains(idSingleOb)) {
+                    return "Resource [" + idSingleOb + "] is already registered as SingleObservation.";
+                }
+            } else if (observation instanceof CompositeObservation compObs) {
+                String paths = compObs.getPaths().toString();
+                for (String idCompOb : objectIds) {
+                    if (paths.contains(idCompOb)) {
+                        return "Resource [" + idCompOb + "] is already registered in CompositeObservation.";
+                    }
+                }
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Check if the resource SingleObservation is already registered in CompositeObservation
+     * Check if the resource SingleObservation is already registered in SingleObservation and (not equals path
+     * @param objectId
+     * @return
+     */
+    private String checkResourceSingleObservationForExisting(LwM2mClient client, String objectId) {
+        Set<Observation> observations = context.getServer().getObservationService().getObservations(client.getRegistration());
+        for (Observation observation : observations) {
+            if (observation instanceof SingleObservation singleObs) {
+                LwM2mPath pathSingleOb = singleObs.getPath();
+                LwM2mPath pathObjectId = new LwM2mPath(objectId);
+                if (!pathSingleOb.toString().equals(objectId)) {
+                    List paths = Arrays.asList(pathSingleOb, pathObjectId);
+                    try {
+                        LwM2mPath.validateNotOverlapping(paths);
+                    } catch (IllegalArgumentException e){
+                        return "Resource [" + objectId + "] conflict with is already registered as SingleObservation [" + pathSingleOb + "].";
+                    }
+                }
+            }
+            else if (observation instanceof CompositeObservation compObs) {
+                String paths = compObs.getPaths().toString();
+                if (paths.contains(objectId)) {
+                    return "Resource [" + objectId + "] is already registered in CompositeObservation.";
+                }
+            }
+        }
+        return null;
     }
 }

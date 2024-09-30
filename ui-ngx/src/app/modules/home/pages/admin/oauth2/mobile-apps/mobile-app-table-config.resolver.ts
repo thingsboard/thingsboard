@@ -25,7 +25,6 @@ import {
   EntityTableConfig
 } from '@home/models/entity/entities-table-config.models';
 import { MobileApp, MobileAppInfo } from '@shared/models/oauth2.models';
-import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
 import { DatePipe } from '@angular/common';
 import { EntityType, entityTypeResources, entityTypeTranslations } from '@shared/models/entity-type.models';
@@ -34,7 +33,7 @@ import { Direction } from '@app/shared/models/page/sort-order';
 import { MobileAppService } from '@core/http/mobile-app.service';
 import { MobileAppComponent } from '@home/pages/admin/oauth2/mobile-apps/mobile-app.component';
 import { MobileAppTableHeaderComponent } from '@home/pages/admin/oauth2/mobile-apps/mobile-app-table-header.component';
-import { map } from 'rxjs';
+import { map, Observable, of, mergeMap } from 'rxjs';
 
 @Injectable()
 export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<MobileAppInfo>> {
@@ -43,7 +42,6 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
 
   constructor(private translate: TranslateService,
               private datePipe: DatePipe,
-              private utilsService: UtilsService,
               private mobileAppService: MobileAppService) {
     this.config.tableTitle = this.translate.instant('admin.oauth2.mobile-apps');
     this.config.selectionEnabled = false;
@@ -66,7 +64,7 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
           name: this.translate.instant('admin.oauth2.copy-mobile-app-secret'),
           icon: 'content_copy',
           style: {
-            'padding-top': '1px',
+            padding: '4px',
             'font-size': '16px',
             color: 'rgba(0,0,0,.87)'
           },
@@ -93,18 +91,22 @@ export class MobileAppTableConfigResolver implements Resolve<EntityTableConfig<M
     this.config.loadEntity = id => this.mobileAppService.getMobileAppInfoById(id.id);
     this.config.saveEntity = (mobileApp, originalMobileApp) => {
       const clientsIds = mobileApp.oauth2ClientInfos as Array<string> || [];
+      let clientsTask: Observable<void>;
       if (mobileApp.id && !isEqual(mobileApp.oauth2ClientInfos?.sort(),
         originalMobileApp.oauth2ClientInfos?.map(info => info.id ? info.id.id : info).sort())) {
-        this.mobileAppService.updateOauth2Clients(mobileApp.id.id, clientsIds).subscribe();
+        clientsTask = this.mobileAppService.updateOauth2Clients(mobileApp.id.id, clientsIds);
+      } else {
+        clientsTask = of(null);
       }
       delete mobileApp.oauth2ClientInfos;
-      return this.mobileAppService.saveMobileApp(mobileApp as MobileApp, mobileApp.id ? [] : clientsIds).pipe(
-        map(mobileApp => {
-          (mobileApp as MobileAppInfo).oauth2ClientInfos = clientsIds;
-          return mobileApp;
+      return clientsTask.pipe(
+        mergeMap(() => this.mobileAppService.saveMobileApp(mobileApp as MobileApp, mobileApp.id ? [] : clientsIds)),
+        map(savedMobileApp => {
+          (savedMobileApp as MobileAppInfo).oauth2ClientInfos = clientsIds;
+          return savedMobileApp;
         })
       );
-    }
+    };
     this.config.deleteEntity = id => this.mobileAppService.deleteMobileApp(id.id);
   }
 

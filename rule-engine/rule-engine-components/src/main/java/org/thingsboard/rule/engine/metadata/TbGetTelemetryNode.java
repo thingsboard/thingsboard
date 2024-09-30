@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.metadata;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
@@ -30,17 +31,17 @@ import org.thingsboard.rule.engine.api.TbNode;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.api.util.TbNodeUtils;
-import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.kv.Aggregation;
 import org.thingsboard.server.common.data.kv.BaseReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.ReadTsKvQuery;
 import org.thingsboard.server.common.data.kv.TsKvEntry;
+import org.thingsboard.server.common.data.page.SortOrder.Direction;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
 import java.util.List;
-import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
@@ -51,6 +52,7 @@ import java.util.stream.Collectors;
 @RuleNode(type = ComponentType.ENRICHMENT,
         name = "originator telemetry",
         configClazz = TbGetTelemetryNodeConfiguration.class,
+        version = 1,
         nodeDescription = "Adds message originator telemetry for selected time range into message metadata",
         nodeDetails = "Useful when you need to get telemetry data set from the message originator for a specific time range " +
                 "instead of fetching just the latest telemetry or if you need to get the closest telemetry to the fetch interval start or end. " +
@@ -60,53 +62,61 @@ import java.util.stream.Collectors;
         configDirective = "tbEnrichmentNodeGetTelemetryFromDatabase")
 public class TbGetTelemetryNode implements TbNode {
 
-    private static final String DESC_ORDER = "DESC";
-    private static final String ASC_ORDER = "ASC";
-
     private TbGetTelemetryNodeConfiguration config;
     private List<String> tsKeyNames;
     private int limit;
-    private String fetchMode;
-    private String orderByFetchAll;
+    private FetchMode fetchMode;
+    private Direction orderBy;
     private Aggregation aggregation;
 
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         this.config = TbNodeUtils.convert(configuration, TbGetTelemetryNodeConfiguration.class);
         tsKeyNames = config.getLatestTsKeyNames();
-        limit = config.getFetchMode().equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL) ? validateLimit(config.getLimit()) : 1;
+        if (tsKeyNames.isEmpty()) {
+            throw new TbNodeException("Telemetry should be specified!", true);
+        }
         fetchMode = config.getFetchMode();
-        orderByFetchAll = config.getOrderBy();
-        if (StringUtils.isEmpty(orderByFetchAll)) {
-            orderByFetchAll = ASC_ORDER;
+        if (fetchMode == null) {
+            throw new TbNodeException("FetchMode should be specified!", true);
         }
-        aggregation = parseAggregationConfig(config.getAggregation());
-    }
-
-    Aggregation parseAggregationConfig(String aggName) {
-        if (StringUtils.isEmpty(aggName) || !fetchMode.equals(TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL)) {
-            return Aggregation.NONE;
+        switch (fetchMode) {
+            case ALL:
+                limit = validateLimit(config.getLimit());
+                if (config.getOrderBy() == null) {
+                    throw new TbNodeException("OrderBy should be specified!", true);
+                }
+                orderBy = config.getOrderBy();
+                if (config.getAggregation() == null) {
+                    throw new TbNodeException("Aggregation should be specified!", true);
+                }
+                aggregation = config.getAggregation();
+                break;
+            case FIRST:
+                limit = 1;
+                orderBy = Direction.ASC;
+                aggregation = Aggregation.NONE;
+                break;
+            case LAST:
+                limit = 1;
+                orderBy = Direction.DESC;
+                aggregation = Aggregation.NONE;
+                break;
         }
-        return Aggregation.valueOf(aggName);
     }
 
     @Override
-    public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        if (tsKeyNames.isEmpty()) {
-            ctx.tellFailure(msg, new IllegalStateException("Telemetry is not selected!"));
-        } else {
-            try {
-                Interval interval = getInterval(msg);
-                List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
-                ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
-                DonAsynchron.withCallback(list, data -> {
-                    var metaData = updateMetadata(data, msg, keys);
-                    ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
-                }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
-            } catch (Exception e) {
-                ctx.tellFailure(msg, e);
-            }
+    public void onMsg(TbContext ctx, TbMsg msg) {
+        Interval interval = getInterval(msg);
+        if (interval.getStartTs() > interval.getEndTs()) {
+            throw new RuntimeException("Interval start should be less than Interval end");
         }
+        List<String> keys = TbNodeUtils.processPatterns(tsKeyNames, msg);
+        ListenableFuture<List<TsKvEntry>> list = ctx.getTimeseriesService().findAll(ctx.getTenantId(), msg.getOriginator(), buildQueries(interval, keys));
+        DonAsynchron.withCallback(list, data -> {
+            var metaData = updateMetadata(data, msg, keys);
+            ctx.tellSuccess(TbMsg.transformMsgMetadata(msg, metaData));
+        }, error -> ctx.tellFailure(msg, error), ctx.getDbCallbackExecutor());
     }
 
     private List<ReadTsKvQuery> buildQueries(Interval interval, List<String> keys) {
@@ -116,24 +126,13 @@ public class TbGetTelemetryNode implements TbNode {
                 interval.getEndTs() - interval.getStartTs();
 
         return keys.stream()
-                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, getOrderBy()))
+                .map(key -> new BaseReadTsKvQuery(key, interval.getStartTs(), interval.getEndTs(), aggIntervalStep, limit, aggregation, orderBy.name()))
                 .collect(Collectors.toList());
-    }
-
-    private String getOrderBy() {
-        switch (fetchMode) {
-            case TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL:
-                return orderByFetchAll;
-            case TbGetTelemetryNodeConfiguration.FETCH_MODE_FIRST:
-                return ASC_ORDER;
-            default:
-                return DESC_ORDER;
-        }
     }
 
     private TbMsgMetaData updateMetadata(List<TsKvEntry> entries, TbMsg msg, List<String> keys) {
         ObjectNode resultNode = JacksonUtil.newObjectNode(JacksonUtil.ALLOW_UNQUOTED_FIELD_NAMES_MAPPER);
-        if (TbGetTelemetryNodeConfiguration.FETCH_MODE_ALL.equals(fetchMode)) {
+        if (FetchMode.ALL.equals(fetchMode)) {
             entries.forEach(entry -> processArray(resultNode, entry));
         } else {
             entries.forEach(entry -> processSingle(resultNode, entry));
@@ -174,7 +173,7 @@ public class TbGetTelemetryNode implements TbNode {
             return getIntervalFromPatterns(msg);
         } else {
             Interval interval = new Interval();
-            long ts = System.currentTimeMillis();
+            long ts = getCurrentTimeMillis();
             interval.setStartTs(ts - TimeUnit.valueOf(config.getStartIntervalTimeUnit()).toMillis(config.getStartInterval()));
             interval.setEndTs(ts - TimeUnit.valueOf(config.getEndIntervalTimeUnit()).toMillis(config.getEndInterval()));
             return interval;
@@ -211,12 +210,15 @@ public class TbGetTelemetryNode implements TbNode {
         return pattern.replaceAll("[$\\[{}\\]]", "");
     }
 
-    private int validateLimit(int limit) {
-        if (limit != 0) {
-            return limit;
-        } else {
-            return TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE;
+    private int validateLimit(int limit) throws TbNodeException {
+        if (limit < 2 || limit > TbGetTelemetryNodeConfiguration.MAX_FETCH_SIZE) {
+            throw new TbNodeException("Limit should be in a range from 2 to 1000.", true);
         }
+        return limit;
+    }
+
+    long getCurrentTimeMillis() {
+        return System.currentTimeMillis();
     }
 
     @Data
@@ -224,6 +226,49 @@ public class TbGetTelemetryNode implements TbNode {
     private static class Interval {
         private Long startTs;
         private Long endTs;
+    }
+
+    @Override
+    public TbPair<Boolean, JsonNode> upgrade(int fromVersion, JsonNode oldConfiguration) throws TbNodeException {
+        boolean hasChanges = false;
+        switch (fromVersion) {
+            case 0 -> {
+                if (oldConfiguration.hasNonNull("fetchMode")) {
+                    String fetchMode = oldConfiguration.get("fetchMode").asText();
+                    switch (fetchMode) {
+                        case "FIRST":
+                            ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
+                            ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                            hasChanges = true;
+                            break;
+                        case "LAST":
+                            ((ObjectNode) oldConfiguration).put("orderBy", Direction.DESC.name());
+                            ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                            hasChanges = true;
+                            break;
+                        case "ALL":
+                            if (oldConfiguration.has("orderBy") &&
+                                    (oldConfiguration.get("orderBy").isNull() || oldConfiguration.get("orderBy").asText().isEmpty())) {
+                                ((ObjectNode) oldConfiguration).put("orderBy", Direction.ASC.name());
+                                hasChanges = true;
+                            }
+                            if (oldConfiguration.has("aggregation") &&
+                                    (oldConfiguration.get("aggregation").isNull() || oldConfiguration.get("aggregation").asText().isEmpty())) {
+                                ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                                hasChanges = true;
+                            }
+                            break;
+                        default:
+                            ((ObjectNode) oldConfiguration).put("fetchMode", FetchMode.LAST.name());
+                            ((ObjectNode) oldConfiguration).put("orderBy", Direction.DESC.name());
+                            ((ObjectNode) oldConfiguration).put("aggregation", Aggregation.NONE.name());
+                            hasChanges = true;
+                            break;
+                    }
+                }
+            }
+        }
+        return new TbPair<>(hasChanges, oldConfiguration);
     }
 
 }

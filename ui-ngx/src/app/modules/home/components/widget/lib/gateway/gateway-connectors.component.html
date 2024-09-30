@@ -181,9 +181,14 @@
               *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
-              <tb-mqtt-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
+              <tb-mqtt-legacy-basic-config
+                (initialized)="basicConfigInitSubject.next()"
+                formControlName="basicConfig"
+                [generalTabContent]="generalTabContent"
+              />
             </ng-template>
           </ng-container>
           <ng-container *ngSwitchCase="ConnectorType.OPCUA">
@@ -191,9 +196,14 @@
               *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
-              <tb-opc-ua-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
+              <tb-opc-ua-legacy-basic-config
+                (initialized)="basicConfigInitSubject.next()"
+                formControlName="basicConfig"
+                [generalTabContent]="generalTabContent"
+              />
             </ng-template>
           </ng-container>
           <ng-container *ngSwitchCase="ConnectorType.MODBUS">
@@ -201,9 +211,14 @@
               *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
             />
             <ng-template #legacy>
-              <tb-modbus-legacy-basic-config formControlName="basicConfig" [generalTabContent]="generalTabContent"/>
+              <tb-modbus-legacy-basic-config
+                formControlName="basicConfig"
+                (initialized)="basicConfigInitSubject.next()"
+                [generalTabContent]="generalTabContent"
+              />
             </ng-template>
           </ng-container>
         </ng-container>
@@ -229,7 +244,7 @@
         <button mat-raised-button color="primary"
                 type="button"
                 [disabled]="!connectorForm.dirty || connectorForm.invalid"
-                (click)="saveConnector()">
+                (click)="saveConnector(false)">
           {{ 'action.save' | translate }}
         </button>
       </div>
@@ -299,5 +314,9 @@
         </mat-label>
       </mat-slide-toggle>
     </div>
+    <tb-report-strategy
+      *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && connectorForm.get('configVersion').value === GatewayVersion.Current"
+      formControlName="reportStrategy"
+    />
   </section>
 </ng-template>

@@ -94,6 +94,7 @@ import { VersionControlComponent } from '@home/components/vc/version-control.com
 import { ComponentClusteringMode } from '@shared/models/component-descriptor.models';
 import { MatDrawer } from '@angular/material/sidenav';
 import { HttpStatusCode } from '@angular/common/http';
+import { TbContextMenuEvent } from '@shared/models/jquery-event.models';
 import Timeout = NodeJS.Timeout;
 
 @Component({
@@ -131,7 +132,7 @@ export class RuleChainPageComponent extends PageComponent
 
   ruleChainMenuPosition = { x: '0px', y: '0px' };
 
-  contextMenuEvent: MouseEvent;
+  contextMenuEvent: TbContextMenuEvent;
 
   ruleNodeTypeDescriptorsMap = ruleNodeTypeDescriptors;
   ruleNodeTypesLibraryArray = ruleNodeTypesLibrary;
@@ -657,7 +658,7 @@ export class RuleChainPageComponent extends PageComponent
     this.validate();
   }
 
-  openRuleChainContextMenu($event: MouseEvent) {
+  openRuleChainContextMenu($event: TbContextMenuEvent) {
     if (this.ruleChainCanvas.modelService && !$event.ctrlKey && !$event.metaKey) {
       const x = $event.clientX;
       const y = $event.clientY;

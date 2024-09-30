@@ -23,14 +23,22 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
 
   protected constructor(protected gatewayVersionIn: string | number, protected connector: GatewayConnector<BasicConfig>) {
     this.gatewayVersion = this.parseVersion(this.gatewayVersionIn);
-    this.configVersion = this.parseVersion(connector.configVersion);
+    this.configVersion = this.parseVersion(this.connector.configVersion);
   }
 
   getProcessedByVersion(): GatewayConnector<BasicConfig> {
-    if (this.isVersionUpdateNeeded()) {
-      return this.isVersionUpgradeNeeded()
-        ? this.getUpgradedVersion()
-        : this.getDowngradedVersion();
+    if (!this.isVersionUpdateNeeded()) {
+      return this.connector;
+    }
+
+    return this.processVersionUpdate();
+  }
+
+  private processVersionUpdate(): GatewayConnector<BasicConfig> {
+    if (this.isVersionUpgradeNeeded()) {
+      return this.getUpgradedVersion();
+    } else if (this.isVersionDowngradeNeeded()) {
+      return this.getDowngradedVersion();
     }
 
     return this.connector;
@@ -46,6 +54,10 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
 
   private isVersionUpgradeNeeded(): boolean {
     return this.gatewayVersionIn === GatewayVersion.Current && (!this.configVersion || this.configVersion < this.gatewayVersion);
+  }
+
+  private isVersionDowngradeNeeded(): boolean {
+    return this.configVersion && this.connector.configVersion === GatewayVersion.Current && (this.configVersion > this.gatewayVersion);
   }
 
   private parseVersion(version: string | number): number {

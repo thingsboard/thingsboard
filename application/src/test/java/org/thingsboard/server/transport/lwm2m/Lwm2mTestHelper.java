@@ -48,6 +48,7 @@ public class Lwm2mTestHelper {
     public static final String RESOURCE_ID_NAME_3_9 = "batteryLevel";
     public static final String RESOURCE_ID_NAME_3_14 = "UtfOffset";
     public static final String RESOURCE_ID_NAME_19_0_0 = "dataRead";
+    public static final String RESOURCE_ID_NAME_19_0_2 = "dataCreationTime";
     public static final String RESOURCE_ID_NAME_19_1_0 = "dataWrite";
     public static final String RESOURCE_ID_NAME_19_0_3 = "dataDescription";
 

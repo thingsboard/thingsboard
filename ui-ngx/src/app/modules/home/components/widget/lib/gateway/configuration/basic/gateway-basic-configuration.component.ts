@@ -502,14 +502,14 @@ export class GatewayBasicConfigurationComponent implements OnDestroy, ControlVal
   }
 
   private addFileStorageValidators(group: FormGroup): void {
-    ['data_folder_path', 'max_file_count', 'max_read_records_count', 'max_records_per_file'].forEach(field => {
+    ['max_file_count', 'max_read_records_count', 'max_records_per_file'].forEach(field => {
       group.get(field).addValidators([Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
       group.get(field).updateValueAndValidity({ emitEvent: false });
     });
   }
 
   private addSqliteStorageValidators(group: FormGroup): void {
-    ['data_file_path', 'messages_ttl_check_in_hours', 'messages_ttl_in_days'].forEach(field => {
+    ['messages_ttl_check_in_hours', 'messages_ttl_in_days'].forEach(field => {
       group.get(field).addValidators([Validators.required, Validators.min(1), Validators.pattern(/^-?[0-9]+$/)]);
       group.get(field).updateValueAndValidity({ emitEvent: false });
     });

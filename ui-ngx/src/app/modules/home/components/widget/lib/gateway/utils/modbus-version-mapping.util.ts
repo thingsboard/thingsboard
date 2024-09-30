@@ -15,6 +15,7 @@
 ///
 
 import {
+  LegacySlaveConfig,
   ModbusDataType,
   ModbusLegacyRegisterValues,
   ModbusLegacySlave,
@@ -23,17 +24,36 @@ import {
   ModbusSlave,
   ModbusValue,
   ModbusValues,
+  ReportStrategyType,
   SlaveConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 
 export class ModbusVersionMappingUtil {
 
-  static mapMasterToUpgradedVersion(master: ModbusMasterConfig): ModbusMasterConfig {
+  static mapMasterToUpgradedVersion(master: ModbusMasterConfig<LegacySlaveConfig>): ModbusMasterConfig {
     return {
-      slaves: master.slaves.map((slave: SlaveConfig) => ({
-        ...slave,
-        deviceType: slave.deviceType ?? 'default',
-      }))
+      slaves: master.slaves.map((slave: LegacySlaveConfig) => {
+        const { sendDataOnlyOnChange, ...restSlave } = slave;
+        return {
+          ...restSlave,
+          deviceType: slave.deviceType ?? 'default',
+          reportStrategy: sendDataOnlyOnChange
+            ? { type: ReportStrategyType.OnChange }
+            : { type: ReportStrategyType.OnReportPeriod, reportPeriod: slave.pollPeriod }
+        };
+      })
+    };
+  }
+
+  static mapMasterToDowngradedVersion(master: ModbusMasterConfig): ModbusMasterConfig<LegacySlaveConfig> {
+    return {
+      slaves: master.slaves.map((slave: SlaveConfig) => {
+        const { reportStrategy, ...restSlave } = slave;
+        return {
+          ...restSlave,
+          sendDataOnlyOnChange: reportStrategy?.type !== ReportStrategyType.OnReportPeriod
+        };
+      })
     };
   }
 

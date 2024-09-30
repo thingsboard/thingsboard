@@ -19,6 +19,7 @@ import { AttributeData } from '@shared/models/telemetry/telemetry.models';
 
 export const noLeadTrailSpacesRegex = /^\S+(?: \S+)*$/;
 export const integerRegex = /^[-+]?\d+$/;
+export const nonZeroFloat = /^-?(?!0(\.0+)?$)\d+(\.\d+)?$/;
 
 export enum StorageTypes {
   MEMORY = 'memory',
@@ -208,6 +209,8 @@ export interface ConnectorBaseInfo {
   id: string;
   enableRemoteLogging: boolean;
   logLevel: GatewayLogLevel;
+  configVersion: string | number;
+  reportStrategy?: ReportStrategyConfig;
 }
 
 export type MQTTBasicConfig = MQTTBasicConfig_v3_5_2 | MQTTLegacyBasicConfig;
@@ -254,7 +257,7 @@ export interface ModbusBasicConfig_v3_5_2 {
 }
 
 export interface ModbusLegacyBasicConfig {
-  master: ModbusMasterConfig;
+  master: ModbusMasterConfig<LegacySlaveConfig>;
   slave: ModbusLegacySlave;
 }
 
@@ -294,7 +297,7 @@ export interface LegacyTimeseries {
 
 export interface RpcArgument {
   type: string;
-  value: number;
+  value: number | string | boolean;
 }
 
 export interface RpcMethod {
@@ -539,6 +542,37 @@ export interface RPCTemplateConfig {
   [key: string]: any;
 }
 
+export interface RPCTemplateConfigMQTT {
+  methodFilter: string;
+  requestTopicExpression: string;
+  responseTopicExpression?: string;
+  responseTimeout?: number;
+  valueExpression: string;
+  withResponse: boolean;
+}
+
+export interface RPCTemplateConfigModbus {
+  tag: string;
+  type: ModbusDataType;
+  functionCode?: number;
+  objectsCount: number;
+  address: number;
+  value?: string;
+}
+
+export interface RPCTemplateConfigOPC {
+  method: string;
+  arguments: RpcArgument[];
+}
+
+export interface OPCTypeValue {
+  type: MappingValueType;
+  boolean?: boolean;
+  double?: number;
+  integer?: number;
+  string?: string;
+}
+
 export interface SaveRPCTemplateData {
   config: RPCTemplateConfig;
   templates: Array<RPCTemplate>;
@@ -588,9 +622,10 @@ export interface MappingInfo {
   buttonTitle: string;
 }
 
-export interface ModbusSlaveInfo {
-  value: SlaveConfig;
+export interface ModbusSlaveInfo<Slave = SlaveConfig> {
+  value: Slave;
   buttonTitle: string;
+  hideNewFields: boolean;
 }
 
 export enum ConfigurationModes {
@@ -603,6 +638,20 @@ export enum SecurityType {
   BASIC = 'basic',
   CERTIFICATES = 'certificates'
 }
+
+export enum ReportStrategyType {
+  OnChange = 'ON_CHANGE',
+  OnReportPeriod = 'ON_REPORT_PERIOD',
+  OnChangeOrReportPeriod = 'ON_CHANGE_OR_REPORT_PERIOD'
+}
+
+export const ReportStrategyTypeTranslationsMap = new Map<ReportStrategyType, string>(
+  [
+    [ReportStrategyType.OnChange, 'gateway.report-strategy.on-change'],
+    [ReportStrategyType.OnReportPeriod, 'gateway.report-strategy.on-report-period'],
+    [ReportStrategyType.OnChangeOrReportPeriod, 'gateway.report-strategy.on-change-or-report-period']
+  ]
+);
 
 export enum ModeType {
   NONE = 'None',
@@ -662,7 +711,7 @@ export const HelpLinkByMappingTypeMap = new Map<MappingType, string>(
   [
     [MappingType.DATA, helpBaseUrl + '/docs/iot-gateway/config/mqtt/#section-mapping'],
     [MappingType.OPCUA, helpBaseUrl + '/docs/iot-gateway/config/opc-ua/#section-mapping'],
-    [MappingType.REQUESTS, helpBaseUrl + '/docs/iot-gateway/config/mqtt/#section-mapping']
+    [MappingType.REQUESTS, helpBaseUrl + '/docs/iot-gateway/config/mqtt/#requests-mapping']
   ]
 );
 
@@ -897,6 +946,30 @@ export enum MappingValueType {
   BOOLEAN = 'boolean'
 }
 
+export enum ModifierType {
+  DIVIDER = 'divider',
+  MULTIPLIER = 'multiplier',
+}
+
+export const ModifierTypesMap = new Map<ModifierType, ValueTypeData>(
+  [
+    [
+      ModifierType.DIVIDER,
+      {
+        name: 'gateway.divider',
+        icon: 'mdi:division'
+      }
+    ],
+    [
+      ModifierType.MULTIPLIER,
+      {
+        name: 'gateway.multiplier',
+        icon: 'mdi:multiplication'
+      }
+    ],
+  ]
+);
+
 export const mappingValueTypesMap = new Map<MappingValueType, ValueTypeData>(
   [
     [
@@ -1097,8 +1170,12 @@ export const ModbusKeysNoKeysTextTranslationsMap = new Map<ModbusValueKey, strin
   ]
 );
 
-export interface ModbusMasterConfig {
-  slaves: SlaveConfig[];
+export interface ModbusMasterConfig<Slave = SlaveConfig> {
+  slaves: Slave[];
+}
+
+export interface LegacySlaveConfig extends Omit<SlaveConfig, 'reportStrategy'> {
+  sendDataOnlyOnChange: boolean;
 }
 
 export interface SlaveConfig {
@@ -1118,7 +1195,7 @@ export interface SlaveConfig {
   unitId: number;
   deviceName: string;
   deviceType?: string;
-  sendDataOnlyOnChange: boolean;
+  reportStrategy: ReportStrategyConfig;
   connectAttemptTimeMs: number;
   connectAttemptCount: number;
   waitAfterFailedAttemptsMs: number;
@@ -1141,6 +1218,14 @@ export interface ModbusValue {
   objectsCount: number;
   address: number;
   value?: string;
+  reportStrategy?: ReportStrategyConfig;
+  multiplier?: number;
+  divider?: number;
+}
+
+export interface ModbusFormValue extends ModbusValue {
+  modifierType?: ModifierType;
+  modifierValue?: string;
 }
 
 export interface ModbusSecurity {
@@ -1203,6 +1288,11 @@ export interface ModbusIdentity {
   vendorUrl?: string;
   productName?: string;
   modelName?: string;
+}
+
+export interface ReportStrategyConfig {
+  type: ReportStrategyType;
+  reportPeriod?: number;
 }
 
 export const ModbusBaudrates = [4800, 9600, 19200, 38400, 57600, 115200, 230400, 460800, 921600];

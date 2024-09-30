@@ -10,7 +10,7 @@
   "tags": [
     {
       "tag": "background",
-      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.critical) {\n    color = ctx.properties.criticalColor;\n} else if (ctx.values.warning) {\n    color = ctx.properties.warningColor;\n} else if (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.animate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetAnimation(element);\n    }\n}",
+      "stateRenderFunction": "var color = ctx.properties.stoppedColor;\nif (ctx.values.critical) {\n    color = ctx.properties.criticalColor;\n} else if (ctx.values.warning) {\n    color = ctx.properties.warningColor;\n} else if (ctx.values.running) {\n    color = ctx.properties.runningColor;\n}\nelement.attr({fill: color});\n\nvar elementCriticalAnimation = element.remember('criticalAnimation');\nvar criticalAnimation = ctx.values.critical && ctx.values.criticalAnimation;\n\nif (elementCriticalAnimation !== criticalAnimation) {\n    element.remember('criticalAnimation', criticalAnimation);\n    if (criticalAnimation) {\n        ctx.api.cssAnimate(element, 500).attr({opacity: 0.15}).loop(0, true);\n    } else {\n        ctx.api.resetCssAnimation(element);\n    }\n}",
       "actions": null
     },
     {
