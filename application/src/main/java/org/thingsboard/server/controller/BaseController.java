@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.mail.MessagingException;
@@ -875,10 +876,10 @@ public abstract class BaseController {
         }
     }
 
-    protected void processUserAdditionalInfo(User user) throws ThingsboardException {
-        if (user.getAdditionalInfo().isObject()) {
-            ObjectNode additionalInfo = (ObjectNode) user.getAdditionalInfo();
-            processDashboardIdFromAdditionalInfo(additionalInfo);
+    protected void checkUserInfo(User user) throws ThingsboardException {
+        if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
+            checkDashboardInfo(additionalInfo);
+
             UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
             if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
                 additionalInfo.put("userCredentialsEnabled", true);
@@ -886,16 +887,25 @@ public abstract class BaseController {
         }
     }
 
-    protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo) throws ThingsboardException {
-        processDashboardIdFromAdditionalInfo(additionalInfo, DEFAULT_DASHBOARD);
-        processDashboardIdFromAdditionalInfo(additionalInfo, HOME_DASHBOARD);
+    protected void checkDashboardInfo(JsonNode additionalInfo) throws ThingsboardException {
+        checkDashboardInfo(additionalInfo, DEFAULT_DASHBOARD);
+        checkDashboardInfo(additionalInfo, HOME_DASHBOARD);
     }
 
-    protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
-        String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
-        if (dashboardId != null && !dashboardId.equals("null")) {
-            if (dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
-                additionalInfo.remove(requiredFields);
+    protected void checkDashboardInfo(JsonNode node, String dashboardField) throws ThingsboardException {
+        if (node instanceof ObjectNode additionalInfo) {
+            DashboardId dashboardId = Optional.ofNullable(additionalInfo.get(dashboardField))
+                    .filter(JsonNode::isTextual).map(JsonNode::asText)
+                    .map(id -> {
+                        try {
+                            return new DashboardId(UUID.fromString(id));
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }).orElse(null);
+
+            if (dashboardId != null && !dashboardService.existsById(getTenantId(), dashboardId)) {
+                additionalInfo.remove(dashboardField);
             }
         }
     }
