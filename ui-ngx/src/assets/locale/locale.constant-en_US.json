@@ -4327,6 +4327,8 @@
         "warning": "Warning",
         "webhook-url": "Webhook URL",
         "webhook-url-required": "Webhook URL is required",
+        "workflow-url": "Workflow URL",
+        "workflow-url-required": "Workflow URL is required",
         "channel-name": "Channel name",
         "channel-name-required": "Channel name is required",
         "settings": {
