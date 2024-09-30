@@ -334,8 +334,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 values.addProperty("pulse_cnt_" + channelNumber, (double) (startPoint + sampleOffset));
                 break;
             case MEASUREMENT_TYPE_IAQ:
-                values.addProperty("iaq_" + channelNumber, (startPoint + sampleOffset) / IAQ_METADATA_FACTOR);
-                values.addProperty("iaq_metadata_" + channelNumber, (startPoint + sampleOffset) % IAQ_METADATA_FACTOR);
+                addPulseCounterProperties(values, "iaq_", channelNumber, startPoint + sampleOffset, IAQ_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_ELECTRICITY_METER:
                 values.addProperty("watt_hour_" + channelNumber, (double) (startPoint + sampleOffset));
@@ -353,31 +352,25 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 values.addProperty("distance_mm_" + channelNumber, (double) (startPoint + sampleOffset));
                 break;
             case MEASUREMENT_TYPE_WATER_METER_ACC_MINOR:
-                values.addProperty("water_cnt_acc_minor_" + channelNumber, (startPoint + sampleOffset) / WATER_METER_ACC_MINOR_METADATA_FACTOR);
-                values.addProperty("water_cnt_acc_minor_metadata_" + channelNumber, (startPoint + sampleOffset) % WATER_METER_ACC_MINOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "water_cnt_acc_minor_", channelNumber, startPoint + sampleOffset, WATER_METER_ACC_MINOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR:
-                values.addProperty("water_cnt_acc_major_" + channelNumber, (startPoint + sampleOffset) / WATER_METER_ACC_MAJOR_METADATA_FACTOR);
-                values.addProperty("water_cnt_acc_major_metadata_" + channelNumber, (startPoint + sampleOffset) % WATER_METER_ACC_MAJOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "water_cnt_acc_major_", channelNumber, startPoint + sampleOffset, WATER_METER_ACC_MAJOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_HUMIDITY_ACCURATE:
                 values.addProperty("humidity_relative_" + channelNumber, (double) (startPoint + sampleOffset) / 10f);
                 break;
             case MEASUREMENT_TYPE_STATIC_IAQ:
-                values.addProperty("static_iaq_" + channelNumber, (startPoint + sampleOffset) / STATIC_IAQ_METADATA_FACTOR);
-                values.addProperty("static_iaq_metadata_" + channelNumber, (startPoint + sampleOffset) % STATIC_IAQ_METADATA_FACTOR);
+                addPulseCounterProperties(values, "static_iaq_", channelNumber, startPoint + sampleOffset, STATIC_IAQ_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_CO2_GAS:
-                values.addProperty("co2_gas_" + channelNumber, (startPoint + sampleOffset) / CO2_GAS_METADATA_FACTOR);
-                values.addProperty("co2_gas_metadata_" + channelNumber, (startPoint + sampleOffset) % CO2_GAS_METADATA_FACTOR);
+                addPulseCounterProperties(values, "co2_gas_", channelNumber, startPoint + sampleOffset, CO2_GAS_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_CO2_EQUIVALENT:
-                values.addProperty("co2_ppm_" + channelNumber, (startPoint + sampleOffset) / CO2_EQUIVALENT_METADATA_FACTOR);
-                values.addProperty("co2_ppm_metadata_" + channelNumber, (startPoint + sampleOffset) % CO2_EQUIVALENT_METADATA_FACTOR);
+                addPulseCounterProperties(values, "co2_ppm_", channelNumber, startPoint + sampleOffset, CO2_EQUIVALENT_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_BREATH_VOC:
-                values.addProperty("breath_voc_ppm_" + channelNumber, (startPoint + sampleOffset) / BREATH_VOC_METADATA_FACTOR);
-                values.addProperty("breath_voc_ppm_metadata_" + channelNumber, (startPoint + sampleOffset) % BREATH_VOC_METADATA_FACTOR);
+                addPulseCounterProperties(values, "breath_voc_", channelNumber, startPoint + sampleOffset, BREATH_VOC_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_PERCENTAGE:
                 values.addProperty("percentage_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
@@ -389,28 +382,22 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 values.addProperty("current_" + channelNumber, (double) (startPoint + sampleOffset));
                 break;
             case MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR:
-                values.addProperty("pulse_cnt_acc_minor_" + channelNumber, (startPoint + sampleOffset) / PULSE_CNT_ACC_MINOR_METADATA_FACTOR);
-                values.addProperty("pulse_cnt_acc_minor_metadata_" + channelNumber, (startPoint + sampleOffset) % PULSE_CNT_ACC_MINOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "pulse_cnt_acc_minor_", channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_MINOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR:
-                values.addProperty("pulse_cnt_acc_major_" + channelNumber, (startPoint + sampleOffset) / PULSE_CNT_ACC_MAJOR_METADATA_FACTOR);
-                values.addProperty("pulse_cnt_acc_major_metadata_" + channelNumber, (startPoint + sampleOffset) % PULSE_CNT_ACC_MAJOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "pulse_cnt_acc_major_", channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_MAJOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR:
-                values.addProperty("elec_meter_acc_minor_" + channelNumber, (startPoint + sampleOffset) / ELEC_METER_ACC_MINOR_METADATA_FACTOR);
-                values.addProperty("elec_meter_acc_minor_metadata_" + channelNumber, (startPoint + sampleOffset) % ELEC_METER_ACC_MINOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "elec_meter_acc_minor_", channelNumber, startPoint + sampleOffset, ELEC_METER_ACC_MINOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR:
-                values.addProperty("elec_meter_acc_major_" + channelNumber, (startPoint + sampleOffset) / ELEC_METER_ACC_MAJOR_METADATA_FACTOR);
-                values.addProperty("elec_meter_acc_major_metadata_" + channelNumber, (startPoint + sampleOffset) % ELEC_METER_ACC_MAJOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "elec_meter_acc_major_", channelNumber, startPoint + sampleOffset, ELEC_METER_ACC_MAJOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR:
-                values.addProperty("pulse_cnt_acc_wide_minor_" + channelNumber, (startPoint + sampleOffset) / PULSE_CNT_ACC_WIDE_MINOR_METADATA_FACTOR);
-                values.addProperty("pulse_cnt_acc_wide_minor_metadata_" + channelNumber, (startPoint + sampleOffset) % PULSE_CNT_ACC_WIDE_MINOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "pulse_cnt_acc_wide_minor_", channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_WIDE_MINOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR:
-                values.addProperty("pulse_cnt_acc_wide_major_" + channelNumber, (startPoint + sampleOffset) / PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR);
-                values.addProperty("pulse_cnt_acc_wide_major_metadata_" + channelNumber, (startPoint + sampleOffset) % PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR);
+                addPulseCounterProperties(values, "pulse_cnt_acc_wide_major_", channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_CURRENT_PRECISE:
                 values.addProperty("current_precise_" + channelNumber, (double) (startPoint + sampleOffset));
@@ -423,6 +410,11 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 log.trace("[{}],[{}] Unsupported measurementType! Ignoring.", sessionId, protoChannel.getType().name());
                 break;
         }
+    }
+
+    private void addPulseCounterProperties(JsonObject values, String prefix, int channelNumber, int value, int metadataFactor) {
+        values.addProperty(prefix + "_" + channelNumber, value / metadataFactor);
+        values.addProperty(prefix + "_metadata_" + channelNumber, value % metadataFactor);
     }
 
     private void calculatePulseCounterTotalValue(JsonObject value, PulseCounterType pulseCounterType) {
