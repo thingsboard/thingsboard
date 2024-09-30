@@ -2955,7 +2955,6 @@
         "configuration-delete-dialog-confirm": "Turn Off",
         "connector-duplicate-name": "Connector with such name already exists.",
         "connector-side": "Connector side",
-        "client-communication-type": "Client communication type",
         "payload-type": "Payload type",
         "platform-side": "Platform side",
         "JSON": "JSON",
