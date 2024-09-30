@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import jakarta.mail.MessagingException;
@@ -113,6 +114,7 @@ import org.thingsboard.server.common.data.rpc.Rpc;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainType;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.common.data.security.UserCredentials;
 import org.thingsboard.server.common.data.util.ThrowingBiFunction;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
@@ -187,8 +189,11 @@ import java.util.stream.Collectors;
 
 import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 import static org.thingsboard.server.common.data.query.EntityKeyType.ENTITY_FIELD;
+import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASHBOARD;
+import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
+import static org.thingsboard.server.dao.user.UserServiceImpl.LAST_LOGIN_TS;
 
 @TbCoreComponent
 public abstract class BaseController {
@@ -872,11 +877,37 @@ public abstract class BaseController {
         }
     }
 
-    protected void processDashboardIdFromAdditionalInfo(ObjectNode additionalInfo, String requiredFields) throws ThingsboardException {
-        String dashboardId = additionalInfo.has(requiredFields) ? additionalInfo.get(requiredFields).asText() : null;
-        if (dashboardId != null && !dashboardId.equals("null")) {
-            if (dashboardService.findDashboardById(getTenantId(), new DashboardId(UUID.fromString(dashboardId))) == null) {
-                additionalInfo.remove(requiredFields);
+    protected void checkUserInfo(User user) throws ThingsboardException {
+        if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
+            checkDashboardInfo(additionalInfo);
+
+            UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+            if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
+                additionalInfo.put("userCredentialsEnabled", true);
+            }
+            additionalInfo.put(LAST_LOGIN_TS, userCredentials.getLastLoginTs());
+        }
+    }
+
+    protected void checkDashboardInfo(JsonNode additionalInfo) throws ThingsboardException {
+        checkDashboardInfo(additionalInfo, DEFAULT_DASHBOARD);
+        checkDashboardInfo(additionalInfo, HOME_DASHBOARD);
+    }
+
+    protected void checkDashboardInfo(JsonNode node, String dashboardField) throws ThingsboardException {
+        if (node instanceof ObjectNode additionalInfo) {
+            DashboardId dashboardId = Optional.ofNullable(additionalInfo.get(dashboardField))
+                    .filter(JsonNode::isTextual).map(JsonNode::asText)
+                    .map(id -> {
+                        try {
+                            return new DashboardId(UUID.fromString(id));
+                        } catch (IllegalArgumentException e) {
+                            return null;
+                        }
+                    }).orElse(null);
+
+            if (dashboardId != null && !dashboardService.existsById(getTenantId(), dashboardId)) {
+                additionalInfo.remove(dashboardField);
             }
         }
     }
