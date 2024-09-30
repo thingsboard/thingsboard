@@ -139,7 +139,7 @@ public class TbEntityLocalSubsInfo {
         return updateState(Set.of(type), newState);
     }
 
-    public TbEntitySubEvent removeAll(List<TbSubscription<?>> subsToRemove) {
+    public TbEntitySubEvent removeAll(List<? extends TbSubscription<?>> subsToRemove) {
         Set<TbSubscriptionType> changedTypes = new HashSet<>();
         TbSubscriptionsInfo newState = state.copy();
         for (TbSubscription<?> sub : subsToRemove) {
