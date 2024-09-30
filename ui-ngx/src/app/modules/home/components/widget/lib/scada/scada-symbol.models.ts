@@ -628,20 +628,6 @@ export class ScadaSymbolObject {
     }
 
     this.svgShape = SVG().svg(svgContent);
-
-    try {
-      const userAgent = window.navigator.userAgent;
-      if (+(/Chrome\/(\d+)/i.exec(userAgent)[1]) <= 127) {
-        if (this.svgShape.defs().findOne('pattern')) {
-          this.svgShape.defs().add(SVG('<pattern class="empty-animation"></pattern>>'));
-          this.svgShape.style()
-            .rule('.' + 'empty-animation',
-              {'animation-name': 'empty-animation', 'animation-duration': '1000ms', 'animation-iteration-count': 'infinite'})
-            .addText('@keyframes empty-animation {0% {<!--opacity:1;-->}100% {<!--opacity:1;-->}}');
-        }
-      }
-    } catch (e) {}
-
     this.svgShape.node.style.overflow = 'hidden';
     this.svgShape.node.style.position = 'absolute';
     this.svgShape.node.style['user-select'] = 'none';
@@ -1182,6 +1168,22 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
               private element: Element,
               duration = 1000)  {
     this._duration = duration;
+    this.fixPatternAnimationForChromeBelow128();
+  }
+
+  private fixPatternAnimationForChromeBelow128(): void {
+    try {
+      const userAgent = window.navigator.userAgent;
+      if (+(/Chrome\/(\d+)/i.exec(userAgent)[1]) <= 127) {
+        if (this.svgShape.defs().findOne('pattern')  && !this.svgShape.defs().findOne('pattern.empty-animation')) {
+          this.svgShape.defs().add(SVG('<pattern class="empty-animation"></pattern>'));
+          this.svgShape.style()
+            .rule('.' + 'empty-animation',
+              {'animation-name': 'empty-animation', 'animation-duration': '1000ms', 'animation-iteration-count': 'infinite'})
+            .addText('@keyframes empty-animation {0% {<!--opacity:1;-->}100% {<!--opacity:1;-->}}');
+        }
+      }
+    } catch (e) {}
   }
 
   public running(): boolean {
