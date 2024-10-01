@@ -367,13 +367,13 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 addPulseCounterProperties(values, "co2_gas_", channelNumber, startPoint + sampleOffset, CO2_GAS_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_CO2_EQUIVALENT:
-                addPulseCounterProperties(values, "co2_ppm_", channelNumber, startPoint + sampleOffset, CO2_EQUIVALENT_METADATA_FACTOR);
+                addPulseCounterProperties(values, "co2_", channelNumber, startPoint + sampleOffset, CO2_EQUIVALENT_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_BREATH_VOC:
                 addPulseCounterProperties(values, "breath_voc_", channelNumber, startPoint + sampleOffset, BREATH_VOC_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_PERCENTAGE:
-                values.addProperty("percentage_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
+                values.addProperty("percentage_" + channelNumber, startPoint + sampleOffset);
                 break;
             case MEASUREMENT_TYPE_VOLTAGE:
                 values.addProperty("voltage_" + channelNumber, (double) (startPoint + sampleOffset));
@@ -413,8 +413,8 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     }
 
     private void addPulseCounterProperties(JsonObject values, String prefix, int channelNumber, int value, int metadataFactor) {
-        values.addProperty(prefix + "_" + channelNumber, value / metadataFactor);
-        values.addProperty(prefix + "_metadata_" + channelNumber, value % metadataFactor);
+        values.addProperty(prefix + channelNumber, value / metadataFactor);
+        values.addProperty(prefix + "metadata_" + channelNumber, value % metadataFactor);
     }
 
     private void calculatePulseCounterTotalValue(JsonObject value, PulseCounterType pulseCounterType) {
