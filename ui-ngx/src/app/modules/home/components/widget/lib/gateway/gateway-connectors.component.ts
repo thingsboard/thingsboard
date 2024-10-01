@@ -59,7 +59,6 @@ import {
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
   noLeadTrailSpacesRegex,
-  GatewayVersion,
   ReportStrategyDefaultValue,
   ReportStrategyType,
 } from './gateway-widget.models';
@@ -71,6 +70,7 @@ import { PageData } from '@shared/models/page/page-data';
 import {
   GatewayConnectorVersionMappingUtil
 } from '@home/components/widget/lib/gateway/utils/gateway-connector-version-mapping.util';
+import { LatestVersionConfigPipe } from '@home/components/widget/lib/gateway/pipes/latest-version-config.pipe';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null): boolean {
@@ -104,7 +104,6 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
   readonly GatewayConnectorTypesTranslatesMap = GatewayConnectorDefaultTypesTranslatesMap;
   readonly ConnectorConfigurationModes = ConfigurationModes;
-  readonly GatewayVersion = GatewayVersion;
   readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
 
   pageLink: PageLink;
@@ -149,6 +148,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
               private telemetryWsService: TelemetryWebsocketService,
               private zone: NgZone,
               private utils: UtilsService,
+              private isLatestVersionConfig: LatestVersionConfigPipe,
               private cd: ChangeDetectorRef) {
     super(store);
 
@@ -255,7 +255,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       delete value.class;
     }
 
-    if (value.type === ConnectorType.MODBUS && value.configVersion === GatewayVersion.Current) {
+    if (value.type === ConnectorType.MODBUS && this.isLatestVersionConfig.transform(value.configVersion)) {
       if (!value.reportStrategy) {
         value.reportStrategy = {
           type: ReportStrategyType.OnReportPeriod,

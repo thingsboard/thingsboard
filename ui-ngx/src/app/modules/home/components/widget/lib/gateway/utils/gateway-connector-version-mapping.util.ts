@@ -24,6 +24,7 @@ import {
 import { MqttVersionProcessor } from '@home/components/widget/lib/gateway/abstract/mqtt-version-processor.abstract';
 import { OpcVersionProcessor } from '@home/components/widget/lib/gateway/abstract/opc-version-processor.abstract';
 import { ModbusVersionProcessor } from '@home/components/widget/lib/gateway/abstract/modbus-version-processor.abstract';
+import { isNumber, isString } from '@core/utils';
 
 export abstract class GatewayConnectorVersionMappingUtil {
 
@@ -38,5 +39,13 @@ export abstract class GatewayConnectorVersionMappingUtil {
       default:
         return connector;
     }
+  }
+
+  static parseVersion(version: string | number): number {
+    if (isNumber(version)) {
+      return version as number;
+    }
+
+    return isString(version) ? parseFloat((version as string).replace(/\./g, '').slice(0, 3)) / 100 : 0;
   }
 }
