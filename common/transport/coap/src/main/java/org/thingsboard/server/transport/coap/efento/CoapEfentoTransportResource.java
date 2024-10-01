@@ -373,7 +373,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 addPulseCounterProperties(values, "breath_voc_", channelNumber, startPoint + sampleOffset, BREATH_VOC_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_PERCENTAGE:
-                values.addProperty("percentage_" + channelNumber, startPoint + sampleOffset);
+                values.addProperty("percentage_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
                 break;
             case MEASUREMENT_TYPE_VOLTAGE:
                 values.addProperty("voltage_" + channelNumber, (double) (startPoint + sampleOffset));
