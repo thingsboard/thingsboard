@@ -158,8 +158,6 @@ class CoapEfentoTransportResourceTest {
                 Arguments.of(MEASUREMENT_TYPE_AMBIENT_LIGHT, List.of(500), "ambient_light_1", 50),
                 Arguments.of(MEASUREMENT_TYPE_HIGH_PRESSURE, List.of(200000), "high_pressure_1", 200000),
                 Arguments.of(MEASUREMENT_TYPE_DISTANCE_MM, List.of(1500), "distance_mm_1", 1500),
-                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(125), "water_cnt_acc_minor_1", 20),
-                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR, List.of(2500), "water_cnt_acc_major_1", 625),
                 Arguments.of(MEASUREMENT_TYPE_HUMIDITY_ACCURATE, List.of(525), "humidity_relative_1", 52.5),
                 Arguments.of(MEASUREMENT_TYPE_STATIC_IAQ, List.of(110), "static_iaq_1", 36),
                 Arguments.of(MEASUREMENT_TYPE_CO2_EQUIVALENT, List.of(450), "co2_1", 150),
@@ -167,15 +165,55 @@ class CoapEfentoTransportResourceTest {
                 Arguments.of(MEASUREMENT_TYPE_PERCENTAGE, List.of(80), "percentage_1", 80),
                 Arguments.of(MEASUREMENT_TYPE_VOLTAGE, List.of(2400), "voltage_1", 2400.0),
                 Arguments.of(MEASUREMENT_TYPE_CURRENT, List.of(550), "current_1", 550.0),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(180), "pulse_cnt_acc_minor_1", 30),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR, List.of(1200), "pulse_cnt_acc_major_1", 300),
-                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(550), "elec_meter_acc_minor_1", 91),
-                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR, List.of(5500), "elec_meter_acc_major_1", 1375),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(230), "pulse_cnt_acc_wide_minor_1", 38),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR, List.of(1700), "pulse_cnt_acc_wide_major_1", 425),
                 Arguments.of(MEASUREMENT_TYPE_CURRENT_PRECISE, List.of(275), "current_precise_1", 275.0)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource
+    void checkPulseCounterSensors(MeasurementType minorType, List<Integer> minorSampleOffsets, MeasurementType majorType, List<Integer> majorSampleOffsets,
+                                  String propertyPrefix, double expectedValue) {
+        long tsInSec = Instant.now().getEpochSecond();
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
+                .setSerialNum(integerToByteString(1234))
+                .setCloudToken("test_token")
+                .setMeasurementPeriodBase(180)
+                .setMeasurementPeriodFactor(0)
+                .setBatteryStatus(true)
+                .setSignal(0)
+                .setNextTransmissionAt(1000)
+                .setTransferReason(0)
+                .setHash(0)
+                .addAllChannels(List.of(MeasurementsProtos.ProtoChannel.newBuilder()
+                        .setType(minorType)
+                        .setTimestamp(Math.toIntExact(tsInSec))
+                        .addAllSampleOffsets(minorSampleOffsets)
+                        .build(),
+                        MeasurementsProtos.ProtoChannel.newBuilder()
+                                .setType(majorType)
+                                .setTimestamp(Math.toIntExact(tsInSec))
+                                .addAllSampleOffsets(majorSampleOffsets)
+                                .build()))
+                .build();
+        List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
+        assertThat(efentoMeasurements).hasSize(1);
+        assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(propertyPrefix + "_total_value").getAsDouble()).isEqualTo(expectedValue);
+        checkDefaultMeasurements(measurements, efentoMeasurements, 180, false);
+    }
+
+    private static Stream<Arguments> checkPulseCounterSensors() {
+        return Stream.of(
+                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(125), MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR,
+                        List.of(2500), "water_cnt_acc", 62520.0),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(180), MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR,
+                        List.of(1200), "pulse_cnt_acc", 300030.0),
+                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(550), MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR,
+                        List.of(5500), "elec_meter_acc", 1375091.0),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(230), MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR,
+                        List.of(1700), "pulse_cnt_acc_wide", 425000038.0));
+    }
+
 
     @Test
     void checkBinarySensor() {
