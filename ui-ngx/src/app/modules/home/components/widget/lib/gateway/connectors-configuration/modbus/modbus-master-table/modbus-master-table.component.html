@@ -62,6 +62,14 @@
     </mat-toolbar>
     <div class="table-container">
       <table mat-table [dataSource]="dataSource">
+        <ng-container [matColumnDef]="'deviceName'">
+          <mat-header-cell *matHeaderCellDef class="table-value-column">
+            <div tbTruncateWithTooltip>{{ 'gateway.device-name' | translate }}</div>
+          </mat-header-cell>
+          <mat-cell *matCellDef="let slave" class="table-value-column">
+            <div tbTruncateWithTooltip>{{ slave['deviceName'] }}</div>
+          </mat-cell>
+        </ng-container>
         <ng-container [matColumnDef]="'info'">
           <mat-header-cell *matHeaderCellDef class="table-value-column">
             {{ 'gateway.info' | translate }}
@@ -80,7 +88,7 @@
         </ng-container>
         <ng-container [matColumnDef]="'type'">
           <mat-header-cell *matHeaderCellDef class="table-value-column">
-            <div tbTruncateWithTooltip>{{ 'gateway.client-communication-type' | translate }}</div>
+            <div>{{ 'gateway.type' | translate }}</div>
           </mat-header-cell>
           <mat-cell *matCellDef="let slave" class="table-value-column">
             {{ ModbusProtocolLabelsMap.get(slave['type']) }}
@@ -121,8 +129,8 @@
             </div>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="['info', 'unitId', 'type', 'actions']; sticky: true"></mat-header-row>
-        <mat-row *matRowDef="let slave; columns: ['info', 'unitId', 'type', 'actions']"></mat-row>
+        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="['deviceName', 'info', 'unitId', 'type', 'actions']; sticky: true"></mat-header-row>
+        <mat-row *matRowDef="let slave; columns: ['deviceName', 'info', 'unitId', 'type', 'actions']"></mat-row>
       </table>
       <section [fxShow]="!textSearchMode && (dataSource.isEmpty() | async)" fxLayoutAlign="center center"
                class="mat-headline-5 tb-absolute-fill tb-add-new">
