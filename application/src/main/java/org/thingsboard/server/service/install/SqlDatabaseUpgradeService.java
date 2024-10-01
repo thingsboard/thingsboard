@@ -17,7 +17,6 @@ package org.thingsboard.server.service.install;
 
 import lombok.extern.slf4j.Slf4j;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
 import org.springframework.context.annotation.Profile;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.StatementCallback;
@@ -107,7 +106,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
                     log.warn("Failed to execute update script for device profile rule nodes due to: ", e);
                 }
             }
-            case "3.7.1" -> updateSchema("3.7.1", 3007001, "3.7.2", 3007002);
+            case "3.8.0" -> updateSchema("3.8.0", 3008000, "3.9.0", 3009000);
             default -> throw new RuntimeException("Unsupported fromVersion '" + fromVersion + "'");
         }
     }

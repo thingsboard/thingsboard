@@ -38,6 +38,12 @@
     padding: 0;
   }
 
+  &.no-pointer-events {
+    button {
+      pointer-events: none;
+    }
+  }
+
   .tb-toggle-button-container {
     flex: 1;
     min-width: 0;

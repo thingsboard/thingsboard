@@ -135,10 +135,11 @@
           </a>
         </section>
         <mat-form-field class="mat-block">
-          <mat-label translate>notification.webhook-url</mat-label>
+          <mat-label>{{ (targetNotificationForm.get('configuration.useOldApi').value ?
+            'notification.webhook-url' : 'notification.workflow-url') | translate }}</mat-label>
           <input matInput formControlName="webhookUrl">
           <mat-error *ngIf="targetNotificationForm.get('configuration.webhookUrl').hasError('required')">
-            {{ 'notification.webhook-url-required' | translate }}
+            {{ (targetNotificationForm.get('configuration.useOldApi').value ? 'notification.webhook-url-required' : 'notification.workflow-url-required') | translate }}
           </mat-error>
         </mat-form-field>
         <mat-form-field class="mat-block">

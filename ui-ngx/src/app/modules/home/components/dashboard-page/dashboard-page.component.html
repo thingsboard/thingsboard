@@ -116,17 +116,18 @@
               <mat-icon>edit</mat-icon>{{'dashboard.edit-mode' | translate}}</button>
           </ng-container>
           <ng-container *ngIf="isEdit">
-            <button fxHide.gt-md mat-icon-button (click)="saveDashboard()"
+            <button fxHide.gt-md mat-icon-button (click)="saveDashboard()" [disabled]="isLoading$ | async"
                     matTooltip="{{'action.save' | translate}}"
                     matTooltipPosition="below">
               <mat-icon>done</mat-icon></button>
-            <button fxHide.lt-lg mat-stroked-button (click)="saveDashboard()">
+            <button fxHide.lt-lg mat-stroked-button [disabled]="isLoading$ | async" (click)="saveDashboard()">
               <mat-icon>done</mat-icon>{{ 'action.save' | translate }}</button>
             <button fxHide.gt-md mat-icon-button (click)="toggleDashboardEditMode()"
                     matTooltip="{{'action.cancel' | translate}}"
+                    [disabled]="isLoading$ | async"
                     matTooltipPosition="below">
               <mat-icon>close</mat-icon></button>
-            <button fxHide.lt-lg mat-button (click)="toggleDashboardEditMode()">
+            <button fxHide.lt-lg mat-button (click)="toggleDashboardEditMode()" [disabled]="isLoading$ | async">
               <mat-icon>close</mat-icon>{{ 'action.cancel' | translate }}</button>
             <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
           </ng-container>
@@ -352,6 +353,7 @@
                   mat-mini-fab
                   class="tb-btn-header tb-btn-edit"
                   (click)="saveDashboard()"
+                  [disabled]="isLoading$ | async"
                   matTooltip="{{'action.save' | translate}}"
                   matTooltipPosition="below">
             <mat-icon>done</mat-icon></button>
@@ -360,6 +362,7 @@
                   mat-mini-fab
                   class="tb-btn-header tb-btn-edit"
                   (click)="toggleDashboardEditMode()"
+                  [disabled]="isLoading$ | async"
                   matTooltip="{{'action.cancel' | translate}}"
                   matTooltipPosition="below">
             <mat-icon>close</mat-icon></button>

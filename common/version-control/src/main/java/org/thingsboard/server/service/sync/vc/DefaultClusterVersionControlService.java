@@ -223,7 +223,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
                     var currentSettings = vcService.getRepositorySettings(ctx.getTenantId());
                     var newSettings = ctx.getSettings();
                     if (!newSettings.equals(currentSettings)) {
-                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+                        vcService.initRepository(ctx.getTenantId(), ctx.getSettings(), false);
                     }
                     if (msg.hasCommitRequest()) {
                         handleCommitRequest(ctx, msg.getCommitRequest());
@@ -464,7 +464,7 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
 
     private void handleInitRepositoryCommand(VersionControlRequestCtx ctx) {
         try {
-            vcService.initRepository(ctx.getTenantId(), ctx.getSettings());
+            vcService.initRepository(ctx.getTenantId(), ctx.getSettings(), false);
             reply(ctx, Optional.empty());
         } catch (Exception e) {
             log.debug("[{}] Failed to connect to the repository: ", ctx, e);
@@ -564,4 +564,5 @@ public class DefaultClusterVersionControlService extends TbApplicationEventListe
             }, MoreExecutors.directExecutor());
         }
     }
+
 }

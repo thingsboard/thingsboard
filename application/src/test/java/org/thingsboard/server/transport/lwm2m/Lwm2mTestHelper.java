@@ -42,14 +42,22 @@ public class Lwm2mTestHelper {
     public static final int RESOURCE_ID_11 = 11;
     public static final int RESOURCE_ID_14 = 14;
     public static final int RESOURCE_ID_15 = 15;
+    public static final int RESOURCE_ID_5700 = 5700;
     public static final int RESOURCE_INSTANCE_ID_0 = 0;
     public static final int RESOURCE_INSTANCE_ID_2 = 2;
 
     public static final String RESOURCE_ID_NAME_3_9 = "batteryLevel";
     public static final String RESOURCE_ID_NAME_3_14 = "UtfOffset";
     public static final String RESOURCE_ID_NAME_19_0_0 = "dataRead";
+    public static final String RESOURCE_ID_NAME_19_0_2 = "dataCreationTime";
     public static final String RESOURCE_ID_NAME_19_1_0 = "dataWrite";
     public static final String RESOURCE_ID_NAME_19_0_3 = "dataDescription";
+    public static final String RESOURCE_ID_NAME_3303_12_5700 = "sensorValue";
+    public static final double RESOURCE_ID_3303_12_5700_VALUE_0 = 25.05d;
+    public static final double RESOURCE_ID_3303_12_5700_VALUE_1 = 35.12d;
+    public static long RESOURCE_ID_3303_12_5700_TS_0 = 0;
+    public static long RESOURCE_ID_3303_12_5700_TS_1 = 0;
+    public static final int RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS = 3000;
 
     public enum LwM2MClientState {
 
@@ -71,8 +79,8 @@ public class Lwm2mTestHelper {
         ON_DEREGISTRATION_FAILURE(14, "onDeregistrationFailure"),
         ON_DEREGISTRATION_TIMEOUT(15, "onDeregistrationTimeout"),
         ON_EXPECTED_ERROR(16, "onUnexpectedError"),
-        ON_READ_CONNECTION_ID (17, "onReadConnection"),
-        ON_WRITE_CONNECTION_ID (18, "onWriteConnection");
+        ON_READ_CONNECTION_ID(17, "onReadConnection"),
+        ON_WRITE_CONNECTION_ID(18, "onWriteConnection");
 
         public int code;
         public String type;

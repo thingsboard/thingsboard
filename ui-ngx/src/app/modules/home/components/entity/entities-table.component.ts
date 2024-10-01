@@ -22,7 +22,7 @@ import {
   ComponentFactoryResolver,
   ElementRef,
   EventEmitter,
-  Input,
+  Input, NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -142,7 +142,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private router: Router,
               private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -157,11 +158,13 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       });
     }
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
   }
@@ -432,8 +435,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     }
   }
 
-  private getTimePageLinkInterval(): {startTime?: number, endTime?: number} {
-    const interval: {startTime?: number, endTime?: number} = {};
+  private getTimePageLinkInterval(): {startTime?: number; endTime?: number} {
+    const interval: {startTime?: number; endTime?: number} = {};
     switch (this.timewindow.history.historyType) {
       case HistoryWindowType.LAST_INTERVAL:
         const currentTime = Date.now();

@@ -18,6 +18,7 @@ package org.thingsboard.rule.engine.metadata;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 import org.thingsboard.server.common.data.kv.Aggregation;
+import org.thingsboard.server.common.data.page.SortOrder.Direction;
 
 import java.util.Collections;
 import java.util.List;
@@ -28,10 +29,6 @@ import java.util.concurrent.TimeUnit;
  */
 @Data
 public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetTelemetryNodeConfiguration> {
-
-    public static final String FETCH_MODE_FIRST = "FIRST";
-    public static final String FETCH_MODE_LAST = "LAST";
-    public static final String FETCH_MODE_ALL = "ALL";
 
     public static final int MAX_FETCH_SIZE = 1000;
 
@@ -45,9 +42,9 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
 
     private String startIntervalTimeUnit;
     private String endIntervalTimeUnit;
-    private String fetchMode; //FIRST, LAST, ALL
-    private String orderBy; //ASC, DESC
-    private String aggregation; //MIN, MAX, AVG, SUM, COUNT, NONE;
+    private FetchMode fetchMode; //FIRST, LAST, ALL
+    private Direction orderBy; //ASC, DESC
+    private Aggregation aggregation; //MIN, MAX, AVG, SUM, COUNT, NONE;
     private int limit;
 
     private List<String> latestTsKeyNames;
@@ -56,7 +53,7 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
     public TbGetTelemetryNodeConfiguration defaultConfiguration() {
         TbGetTelemetryNodeConfiguration configuration = new TbGetTelemetryNodeConfiguration();
         configuration.setLatestTsKeyNames(Collections.emptyList());
-        configuration.setFetchMode("FIRST");
+        configuration.setFetchMode(FetchMode.FIRST);
         configuration.setStartIntervalTimeUnit(TimeUnit.MINUTES.name());
         configuration.setStartInterval(2);
         configuration.setEndIntervalTimeUnit(TimeUnit.MINUTES.name());
@@ -64,8 +61,8 @@ public class TbGetTelemetryNodeConfiguration implements NodeConfiguration<TbGetT
         configuration.setUseMetadataIntervalPatterns(false);
         configuration.setStartIntervalPattern("");
         configuration.setEndIntervalPattern("");
-        configuration.setOrderBy("ASC");
-        configuration.setAggregation(Aggregation.NONE.name());
+        configuration.setOrderBy(Direction.ASC);
+        configuration.setAggregation(Aggregation.NONE);
         configuration.setLimit(MAX_FETCH_SIZE);
         return configuration;
     }

@@ -86,7 +86,7 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
         background-color: $primary-color;
         border: $border;
         border-bottom: none;
-        border-radius: 8px 8px 0px 0px;
+        border-radius: 8px 8px 0 0;
 
         &.activity-only {
           border: none;
@@ -94,7 +94,7 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
 
         &.asc {
           border-bottom: $border;
-          box-shadow: 0px 4px 10px rgba(23, 33, 90, 0.08);
+          box-shadow: 0 4px 10px rgba(23, 33, 90, 0.08);
 
           &.activity-only {
             border: none;
@@ -116,7 +116,7 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
     .comments-container {
       border: $border;
       border-top: none;
-      border-radius: 0px 0px 8px 8px;
+      border-radius: 0 0 8px 8px;
 
       &.activity-only {
         border: none;
@@ -133,6 +133,11 @@ $border: 1px solid mat.get-color-from-palette($tb-primary);
       border-radius: 8px;
       &:hover {
         background-color: $primary-color;
+      }
+
+      .mat-icon {
+        align-self: start;
+        color: rgba(0, 0, 0, 0.38);
       }
     }
 

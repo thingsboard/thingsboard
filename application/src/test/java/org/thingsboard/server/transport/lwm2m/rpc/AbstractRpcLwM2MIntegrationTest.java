@@ -15,20 +15,30 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
+import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.link.LinkParser;
 import org.eclipse.leshan.core.link.lwm2m.DefaultLwM2mLinkParser;
 import org.junit.Before;
+import org.mockito.Mockito;
+import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
+import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
+import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
+import java.util.List;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Predicate;
 
+import static org.awaitility.Awaitility.await;
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.eclipse.leshan.core.LwM2mId.DEVICE;
 import static org.eclipse.leshan.core.LwM2mId.FIRMWARE;
@@ -40,16 +50,23 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_0
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_ID_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_1;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_12;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_14;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_5700;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_0_2;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_19_1_0;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3303_12_5700;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_14;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_NAME_3_9;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.TEMPERATURE_SENSOR;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.resources;
+import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fromVersionedIdToObjectId;
 
+@Slf4j
 @DaoSqlTest
 public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
@@ -74,8 +91,18 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String objectIdVer_3303;
     protected static AtomicInteger endpointSequence = new AtomicInteger();
     protected static String DEVICE_ENDPOINT_RPC_PREF = "deviceEndpointRpc";
+
+    protected String idVer_3_0_0;
     protected String idVer_3_0_9;
+    protected String id_3_0_9;
+
     protected String idVer_19_0_0;
+
+    @SpyBean
+    protected DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
+
+    @SpyBean
+    protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
     public AbstractRpcLwM2MIntegrationTest() {
         setResources(resources);
@@ -125,7 +152,9 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         objectInstanceIdVer_5 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).startsWith("/" + FIRMWARE)).findFirst().get();
         objectInstanceIdVer_9 = (String) expectedObjectIdVerInstances.stream().filter(path -> ((String) path).startsWith("/" + SOFTWARE_MANAGEMENT)).findFirst().get();
 
+        idVer_3_0_0 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
         idVer_3_0_9 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9;
+        id_3_0_9 =  fromVersionedIdToObjectId(idVer_3_0_9);
         idVer_19_0_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
 
         OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC =
@@ -134,19 +163,25 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                         "      \"" + idVer_3_0_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
                         "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\": \"" + RESOURCE_ID_NAME_3_14 + "\",\n" +
                         "      \"" + idVer_19_0_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\"\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\": \"" + RESOURCE_ID_NAME_19_0_2 + "\",\n" +
+                        "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\": \"" + RESOURCE_ID_NAME_3303_12_5700 + "\"\n" +
                         "    },\n" +
                         "    \"observe\": [\n" +
                         "      \"" + idVer_3_0_9 + "\",\n" +
-                        "      \"" + idVer_19_0_0 + "\"\n" +
+                        "      \"" + idVer_19_0_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\"\n" +
                         "    ],\n" +
                         "    \"attribute\": [\n" +
-                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\"\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\"\n" +
                         "    ],\n" +
                         "    \"telemetry\": [\n" +
                         "      \"" + idVer_3_0_9 + "\",\n" +
                         "      \"" + idVer_19_0_0 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\"\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\",\n" +
+                        "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\"\n" +
                         "    ],\n" +
                         "    \"attributeLwm2m\": {}\n" +
                         "  }";
@@ -168,6 +203,58 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
             return String.join("/", objVer);
         }
         return pathIdVer;
+    }
+
+    protected long countUpdateAttrTelemetryAll() {
+        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
+                .getInvocations().stream()
+                .filter(invocation -> invocation.getMethod().getName().equals("updateAttrTelemetry"))
+                .count();
+    }
+
+    protected long countUpdateAttrTelemetryResource(String idVerRez) {
+        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
+                .getInvocations().stream()
+                .filter(invocation ->
+                        invocation.getMethod().getName().equals("updateAttrTelemetry") &&
+                                invocation.getArguments().length > 1 &&
+                                idVerRez.equals(invocation.getArguments()[1])
+                )
+                .count();
+    }
+
+    protected void updateRegAtLeastOnceAfterAction() {
+        long initialInvocationCount = countUpdateReg();
+        AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
+        log.trace("updateRegAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
+        await("Update Registration at-least-once after action")
+                .atMost(50, TimeUnit.SECONDS)
+                .until(() -> {
+                    newInvocationCount.set(countUpdateReg());
+                    return newInvocationCount.get() > initialInvocationCount;
+                });
+        log.trace("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
+    }
+
+    protected long countUpdateReg() {
+        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
+                .getInvocations().stream()
+                .filter(invocation -> invocation.getMethod().getName().equals("updatedReg"))
+                .count();
+    }
+
+   protected long countSendParametersOnThingsboardTelemetryResource(String rezName) {
+        return Mockito.mockingDetails(lwM2mTransportServerHelperTest)
+                .getInvocations().stream()
+                .filter(invocation ->
+                        invocation.getMethod().getName().equals("sendParametersOnThingsboardTelemetry") &&
+                                invocation.getArguments().length > 0 &&
+                                invocation.getArguments()[0] instanceof List &&
+                                ((List<?>) invocation.getArguments()[0]).stream()
+                                        .filter(arg -> arg instanceof TransportProtos.KeyValueProto)
+                                        .anyMatch(arg -> rezName.equals(((TransportProtos.KeyValueProto) arg).getKey()))
+                )
+                .count();
     }
 
 }

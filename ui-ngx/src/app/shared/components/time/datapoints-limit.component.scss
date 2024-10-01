@@ -25,6 +25,27 @@
   mat-form-field input[type=number] {
     text-align: center;
   }
+
+  .mdc-slider {
+    height: 40px;
+
+    ::ng-deep {
+      .mdc-slider__thumb {
+        left: -20px;
+        height: 40px;
+        width: 40px;
+
+        .mat-ripple-element.mat-mdc-slider-focus-ripple,
+        .mat-ripple-element.mat-mdc-slider-active-ripple,
+        .mat-ripple-element.mat-mdc-slider-hover-ripple {
+          left: 0 !important;
+          top: 0 !important;
+          height: 40px !important;
+          width: 40px !important;
+        }
+      }
+    }
+  }
 }
 
 @media #{$mat-gt-sm} {

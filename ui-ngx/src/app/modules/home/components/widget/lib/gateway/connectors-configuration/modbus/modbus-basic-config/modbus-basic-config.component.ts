@@ -56,7 +56,9 @@ import {
   ],
   styleUrls: ['./modbus-basic-config.component.scss'],
 })
-export class ModbusBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig_v3_5_2> {
+export class ModbusBasicConfigComponent extends ModbusBasicConfigDirective<ModbusBasicConfig_v3_5_2, ModbusBasicConfig_v3_5_2> {
+
+  isLegacy = false;
 
   protected override mapConfigToFormValue({ master, slave }: ModbusBasicConfig_v3_5_2): ModbusBasicConfig_v3_5_2 {
     return {

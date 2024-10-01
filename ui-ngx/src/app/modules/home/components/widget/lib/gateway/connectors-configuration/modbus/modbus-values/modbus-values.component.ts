@@ -87,6 +87,9 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
   @coerceBoolean()
   @Input() singleMode = false;
 
+  @coerceBoolean()
+  @Input() hideNewFields = false;
+
   disabled = false;
   modbusRegisterTypes: ModbusRegisterType[] = Object.values(ModbusRegisterType);
   modbusValueKeys = Object.values(ModbusValueKey);
@@ -172,7 +175,8 @@ export class ModbusValuesComponent implements ControlValueAccessor, Validator, O
       panelTitle: ModbusKeysPanelTitleTranslationsMap.get(keysType),
       addKeyTitle: ModbusKeysAddKeyTranslationsMap.get(keysType),
       deleteKeyTitle: ModbusKeysDeleteKeyTranslationsMap.get(keysType),
-      noKeysText: ModbusKeysNoKeysTextTranslationsMap.get(keysType)
+      noKeysText: ModbusKeysNoKeysTextTranslationsMap.get(keysType),
+      hideNewFields: this.hideNewFields,
     };
     const dataKeysPanelPopover = this.popoverService.displayPopover(
       trigger,

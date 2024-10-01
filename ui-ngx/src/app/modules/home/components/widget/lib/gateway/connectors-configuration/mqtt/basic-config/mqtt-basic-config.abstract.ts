@@ -17,11 +17,14 @@
 import { Directive } from '@angular/core';
 import { FormGroup } from '@angular/forms';
 import {
+  BrokerConfig,
   MappingType,
-  MQTTBasicConfig, MQTTBasicConfig_v3_5_2,
+  MQTTBasicConfig,
+  MQTTBasicConfig_v3_5_2,
   RequestMappingData,
   RequestMappingValue,
-  RequestType
+  RequestType,
+  WorkersConfig
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { isObject } from '@core/utils';
 import {
@@ -71,6 +74,14 @@ export abstract class MqttBasicConfigDirective<BasicConfig>
       attributeUpdates: [],
       serverSideRpc: [],
     });
+  }
+
+  protected getBrokerMappedValue(broker: BrokerConfig, workers: WorkersConfig): BrokerConfig {
+    return {
+      ...broker,
+      maxNumberOfWorkers: workers.maxNumberOfWorkers ?? 100,
+      maxMessageNumberPerWorker: workers.maxMessageNumberPerWorker ?? 10,
+    };
   }
 
   writeValue(basicConfig: BasicConfig): void {

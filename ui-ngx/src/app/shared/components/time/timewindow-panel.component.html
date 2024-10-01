@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="timewindowForm" class="tb-timewindow-form">
-  <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom no-gap" *ngIf="!historyOnly">
+  <div class="tb-timewindow-form-header tb-form-panel no-border no-padding-bottom" *ngIf="!historyOnly">
     <tb-toggle-select class="tb-timewindow-form-type-options" appearance="fill"
                       [options]="timewindowTypeOptions" formControlName="selectedTab">
     </tb-toggle-select>

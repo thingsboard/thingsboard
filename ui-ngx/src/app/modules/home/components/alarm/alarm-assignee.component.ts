@@ -16,7 +16,7 @@
 
 import { Component, EventEmitter, Injector, Input, Output, StaticProvider, ViewContainerRef } from '@angular/core';
 import { UtilsService } from '@core/services/utils.service';
-import { AlarmAssignee, AlarmInfo } from '@shared/models/alarm.models';
+import { AlarmAssignee, AlarmInfo, getUserDisplayName, getUserInitials } from '@shared/models/alarm.models';
 import {
   ALARM_ASSIGNEE_PANEL_DATA,
   AlarmAssigneePanelComponent,
@@ -25,6 +25,7 @@ import {
 import { ConnectedPosition, Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { ComponentPortal } from '@angular/cdk/portal';
 import { TranslateService } from '@ngx-translate/core';
+import { isNotEmptyStr } from '@core/utils';
 
 @Component({
   selector: 'tb-alarm-assignee',
@@ -41,6 +42,8 @@ export class AlarmAssigneeComponent {
   @Output()
   alarmReassigned = new EventEmitter<boolean>();
 
+  userAssigned: boolean;
+
   constructor(private utilsService: UtilsService,
               private overlay: Overlay,
               private viewContainerRef: ViewContainerRef,
@@ -49,68 +52,22 @@ export class AlarmAssigneeComponent {
 
   getAssignee() {
     if (this.alarm) {
-      if (this.alarm.assignee) {
-        return this.getUserDisplayName(this.alarm.assignee);
+      this.userAssigned = this.alarm.assigneeId && ((isNotEmptyStr(this.alarm.assignee?.firstName) ||
+        isNotEmptyStr(this.alarm.assignee?.lastName)) || isNotEmptyStr(this.alarm.assignee?.email));
+      if (this.userAssigned) {
+        return getUserDisplayName(this.alarm.assignee);
       } else {
-        return this.translateService.instant('alarm.unassigned');
+        return this.translateService.instant(this.alarm.assigneeId ? 'alarm.user-deleted' : 'alarm.unassigned');
       }
     }
   }
 
-  getUserDisplayName(entity: AlarmAssignee) {
-    let displayName = '';
-    if ((entity.firstName && entity.firstName.length > 0) ||
-      (entity.lastName && entity.lastName.length > 0)) {
-      if (entity.firstName) {
-        displayName += entity.firstName;
-      }
-      if (entity.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.lastName;
-      }
-    } else {
-      displayName = entity.email;
-    }
-    return displayName;
-  }
-
-  getUserInitials(entity: AlarmAssignee): string {
-    let initials = '';
-    if (entity.firstName && entity.firstName.length ||
-      entity.lastName && entity.lastName.length) {
-      if (entity.firstName) {
-        initials += entity.firstName.charAt(0);
-      }
-      if (entity.lastName) {
-        initials += entity.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.email.charAt(0);
-    }
-    return initials.toUpperCase();
-  }
-
-  getFullName(entity: AlarmAssignee): string {
-    let fullName = '';
-    if ((entity.firstName && entity.firstName.length > 0) ||
-      (entity.lastName && entity.lastName.length > 0)) {
-      if (entity.firstName) {
-        fullName += entity.firstName;
-      }
-      if (entity.lastName) {
-        if (fullName.length > 0) {
-          fullName += ' ';
-        }
-        fullName += entity.lastName;
-      }
-    }
-    return fullName;
+  getUserInitials(alarmAssignee: AlarmAssignee): string {
+    return getUserInitials(alarmAssignee);
   }
 
   getAvatarBgColor(entity: AlarmAssignee) {
-    return this.utilsService.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+    return this.utilsService.stringToHslColor(getUserDisplayName(entity), 40, 60);
   }
 
   openAlarmAssigneePanel($event: Event, alarm: AlarmInfo) {

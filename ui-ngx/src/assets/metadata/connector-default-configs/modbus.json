@@ -3,7 +3,6 @@
         "master": {
             "slaves": [
                 {
-                    "name": "Slave 1",
                     "host": "127.0.0.1",
                     "port": 5021,
                     "type": "tcp",
@@ -18,7 +17,6 @@
                     "unitId": 1,
                     "deviceName": "Temp Sensor",
                     "deviceType": "default",
-                    "sendDataOnlyOnChange": true,
                     "connectAttemptTimeMs": 5000,
                     "connectAttemptCount": 5,
                     "waitAfterFailedAttemptsMs": 300000,
@@ -232,10 +230,10 @@
                     "attributes": [
                         {
                             "address": 5,
-                            "type": "string",
-                            "tag": "sm",
+                            "type": "8int",
+                            "tag": "coil",
                             "objectsCount": 1,
-                            "value": "12"
+                            "value": 0
                         }
                     ],
                     "timeseries": [],

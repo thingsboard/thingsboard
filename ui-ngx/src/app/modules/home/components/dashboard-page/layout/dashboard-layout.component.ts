@@ -109,10 +109,6 @@ export class DashboardLayoutComponent extends PageComponent implements ILayoutCo
     return this.layoutCtx.gridSettings.mobileRowHeight;
   }
 
-  get colWidthInteger(): boolean {
-    return this.isScada;
-  }
-
   get columns(): number {
     return this.layoutCtx.gridSettings.minColumns || this.layoutCtx.gridSettings.columns || 24;
   }

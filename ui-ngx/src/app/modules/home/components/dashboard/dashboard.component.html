@@ -27,7 +27,7 @@
                 [class.center-vertical]="centerVertical"
                 [class.center-horizontal]="centerHorizontal"
                 (mousedown)="onDashboardMouseDown($event)"
-                (contextmenu)="openDashboardContextMenu($event)">
+                (tbcontextmenu)="openDashboardContextMenu($event)">
   <div #dashboardMenuTrigger="matMenuTrigger" style="visibility: hidden; position: fixed"
        [style.left]="dashboardMenuPosition.x"
        [style.top]="dashboardMenuPosition.y"
