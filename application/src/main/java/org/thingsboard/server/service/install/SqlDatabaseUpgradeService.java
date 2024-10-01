@@ -90,7 +90,7 @@ public class SqlDatabaseUpgradeService implements DatabaseEntitiesUpgradeService
             case "3.6.3" -> updateSchema("3.6.3", 3006003, "3.6.4", 3006004);
             case "3.6.4" -> updateSchema("3.6.4", 3006004, "3.7.0", 3007000);
             case "3.7.0" -> {
-                updateSchema("3.7.0", 3007000, "3.7.1", 3007001);
+                updateSchema("3.7.0", 3007000, "3.8.0", 3008000);
 
                 try {
                     execute("UPDATE rule_node SET " +
