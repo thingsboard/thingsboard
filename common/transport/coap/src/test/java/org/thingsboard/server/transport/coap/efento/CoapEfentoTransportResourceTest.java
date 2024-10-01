@@ -163,9 +163,9 @@ class CoapEfentoTransportResourceTest {
                 Arguments.of(MEASUREMENT_TYPE_CO2_EQUIVALENT, List.of(450), "co2_1", 150),
                 Arguments.of(MEASUREMENT_TYPE_BREATH_VOC, List.of(220), "breath_voc_1", 73),
                 Arguments.of(MEASUREMENT_TYPE_PERCENTAGE, List.of(80), "percentage_1", 0.8),
-                Arguments.of(MEASUREMENT_TYPE_VOLTAGE, List.of(2400), "voltage_1", 2400.0),
-                Arguments.of(MEASUREMENT_TYPE_CURRENT, List.of(550), "current_1", 550.0),
-                Arguments.of(MEASUREMENT_TYPE_CURRENT_PRECISE, List.of(275), "current_precise_1", 275.0)
+                Arguments.of(MEASUREMENT_TYPE_VOLTAGE, List.of(2400), "voltage_1", 240.0),
+                Arguments.of(MEASUREMENT_TYPE_CURRENT, List.of(550), "current_1", 5.5),
+                Arguments.of(MEASUREMENT_TYPE_CURRENT_PRECISE, List.of(275), "current_precise_1", 0.275)
         );
     }
 

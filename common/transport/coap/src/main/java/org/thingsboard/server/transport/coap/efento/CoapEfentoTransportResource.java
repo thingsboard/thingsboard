@@ -376,10 +376,10 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 values.addProperty("percentage_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
                 break;
             case MEASUREMENT_TYPE_VOLTAGE:
-                values.addProperty("voltage_" + channelNumber, (double) (startPoint + sampleOffset));
+                values.addProperty("voltage_" + channelNumber, (double) (startPoint + sampleOffset) / 10f);
                 break;
             case MEASUREMENT_TYPE_CURRENT:
-                values.addProperty("current_" + channelNumber, (double) (startPoint + sampleOffset));
+                values.addProperty("current_" + channelNumber, (double) (startPoint + sampleOffset) / 100f);
                 break;
             case MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR:
                 addPulseCounterProperties(values, "pulse_cnt_acc_minor_", channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_MINOR_METADATA_FACTOR);
@@ -400,7 +400,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 addPulseCounterProperties(values, "pulse_cnt_acc_wide_major_", channelNumber, startPoint + sampleOffset, PULSE_CNT_ACC_WIDE_MAJOR_METADATA_FACTOR);
                 break;
             case MEASUREMENT_TYPE_CURRENT_PRECISE:
-                values.addProperty("current_precise_" + channelNumber, (double) (startPoint + sampleOffset));
+                values.addProperty("current_precise_" + channelNumber, (double) (startPoint + sampleOffset) / 1000f);
                 break;
             case MEASUREMENT_TYPE_NO_SENSOR:
             case UNRECOGNIZED:
