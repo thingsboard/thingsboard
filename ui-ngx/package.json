@@ -7,6 +7,7 @@
     "build": "ng build",
     "build:prod": "node --max_old_space_size=4096 ./node_modules/@angular/cli/bin/ng build --configuration production --vendor-chunk",
     "build:types": "node generate-types.js",
+    "build:icon-metadata": "node generate-icon-metadata.js",
     "test": "ng test",
     "lint": "ng lint",
     "e2e": "ng e2e",
