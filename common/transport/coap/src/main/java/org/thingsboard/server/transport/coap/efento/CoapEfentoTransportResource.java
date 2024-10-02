@@ -191,7 +191,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
     private void validateAndProcessEffentoMessage(String token, CoapExchange exchange, TriConsumer<DeviceProfile, TransportProtos.SessionInfoProto, UUID> requestProcessor) {
         transportService.process(DeviceTransportType.COAP, TransportProtos.ValidateDeviceTokenRequestMsg.newBuilder().setToken(token).build(),
                 new CoapDeviceAuthCallback(exchange, (msg, deviceProfile) -> {
-                    TransportProtos.SessionInfoProto sessionInfo = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
+                    TransportProtos.SessionInfoProto sessionInfref o = SessionInfoCreator.create(msg, transportContext, UUID.randomUUID());
                     UUID sessionId = new UUID(sessionInfo.getSessionIdMSB(), sessionInfo.getSessionIdLSB());
                     try {
                         validateEfentoTransportConfiguration(deviceProfile);
