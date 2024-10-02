@@ -3277,7 +3277,7 @@
         },
         "select-connector": "Select connector to display config",
         "send-change-data": "Send data only on change",
-        "send-data-TB": "Send data to ThingsBoard",
+        "send-data-to-platform": "Send data to platform",
         "send-data-on-change": "Send data only on change",
         "send-change-data-hint": "The values will be saved to the database only if they are different from the corresponding values in the previous converted message. This functionality applies to both attributes and time series in the converter output.",
         "server": "Server",
