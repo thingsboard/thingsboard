@@ -100,6 +100,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         List<String> uriPath = request.getOptions().getUriPath();
         boolean validPath = uriPath.size() == CHILD_RESOURCE_POSITION && uriPath.get(1).equals(CURRENT_TIMESTAMP);
         if (!validPath) {
+            log.trace("Invalid path: [{}]", uriPath);
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
         } else {
             int dateInSec = (int) (System.currentTimeMillis() / 1000);
@@ -114,6 +115,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
         Request request = advanced.getRequest();
         List<String> uriPath = request.getOptions().getUriPath();
         if (uriPath.size() != CHILD_RESOURCE_POSITION) {
+            log.trace("Unexpected uri path size, uri path: [{}]", uriPath);
             exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
             return;
         }
@@ -129,6 +131,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                 processConfigurationRequest(exchange);
                 break;
             default:
+                log.trace("Unexpected request type: [{}]", requestType);
                 exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 break;
         }
@@ -195,6 +198,7 @@ public class CoapEfentoTransportResource extends AbstractCoapTransportResource {
                     log.error("[{}] Failed to decode Efento ProtoConfig: ", sessionId, e);
                     exchange.respond(CoAP.ResponseCode.BAD_REQUEST);
                 } catch (InvalidProtocolBufferException e) {
+                    log.error("[{}] Error while processing efento message: ", sessionId, e);
                     throw new RuntimeException(e);
                 }
             });
