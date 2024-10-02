@@ -422,7 +422,7 @@ message UserCredentialsUpdateMsg {
   bool enabled = 3 [deprecated = true];rf
   string password = 4 [deprecated = true];
   string entity = 5;
-}
+}wef
 
 message TenantUpdateMsg {
   UpdateMsgType msgType = 1;
