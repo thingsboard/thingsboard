@@ -84,15 +84,16 @@ export class NotificationTemplateConfigurationComponent implements OnDestroy, Co
   tinyMceOptions: Record<string, any> = {
     base_url: '/assets/tinymce',
     suffix: '.min',
-    plugins: ['link table image imagetools code fullscreen'],
+    plugins: ['link', 'table', 'image', 'lists', 'code', 'fullscreen'],
     menubar: 'edit insert tools view format table',
-    toolbar: 'fontselect fontsizeselect | formatselect | bold italic  strikethrough  forecolor backcolor ' +
-      '| link | table | image | alignleft aligncenter alignright alignjustify  ' +
-      '| numlist bullist outdent indent  | removeformat | code | fullscreen',
+    toolbar: 'undo redo | fontfamily fontsize blocks | bold italic  strikethrough | forecolor backcolor ' +
+      '| link table image | alignleft aligncenter alignright alignjustify  ' +
+      '| numlist bullist | outdent indent  | removeformat | code | fullscreen',
     toolbar_mode: 'sliding',
     height: 400,
     autofocus: false,
-    branding: false
+    branding: false,
+    promotion: false
   };
 
   private propagateChange = null;
