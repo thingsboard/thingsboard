@@ -17,12 +17,12 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import ThingsboardBaseComponent from './json-form-base-component';
 import reactCSS from 'reactcss';
-import TextField from '@material-ui/core/TextField';
-import IconButton from '@material-ui/core/IconButton';
+import TextField from '@mui/material/TextField';
+import IconButton from '@mui/material/IconButton';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import Clear from '@material-ui/icons/Clear';
-import Icon from '@material-ui/core/Icon';
-import Tooltip from '@material-ui/core/Tooltip';
+import Clear from '@mui/icons-material/Clear';
+import Icon from '@mui/material/Icon';
+import Tooltip from '@mui/material/Tooltip';
 
 interface ThingsboardIconState extends JsonFormFieldState {
   icon: string | null;

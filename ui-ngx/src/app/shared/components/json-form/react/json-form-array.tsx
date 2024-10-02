@@ -16,12 +16,12 @@
 import * as React from 'react';
 import JsonFormUtils from './json-form-utils';
 import ThingsboardBaseComponent from './json-form-base-component';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import _ from 'lodash';
-import IconButton from '@material-ui/core/IconButton';
-import Clear from '@material-ui/icons/Clear';
-import Add from '@material-ui/icons/Add';
-import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import Clear from '@mui/icons-material/Clear';
+import Add from '@mui/icons-material/Add';
+import Tooltip from '@mui/material/Tooltip';
 import {
   JsonFormData,
   JsonFormFieldProps,

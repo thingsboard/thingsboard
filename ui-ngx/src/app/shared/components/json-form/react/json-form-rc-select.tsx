@@ -134,10 +134,10 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
 
     render() {
 
-        let options: JSX.Element[] = [];
+        let options: React.JSX.Element[] = [];
         if (this.state.items && this.state.items.length > 0) {
-            options = this.state.items.map((item, idx) => (
-              <Option key={idx} value={item.value}>{item.label}</Option>
+            options = this.state.items.map((item) => (
+              <Option key={item.value} value={item.value}>{item.label}</Option>
             ));
         }
 

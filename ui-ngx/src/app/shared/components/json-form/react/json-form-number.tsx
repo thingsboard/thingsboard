@@ -16,7 +16,7 @@
 import * as React from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import { TextField } from '@material-ui/core';
+import { TextField } from '@mui/material';
 
 interface ThingsboardNumberState extends JsonFormFieldState {
   focused: boolean;
@@ -78,6 +78,7 @@ class ThingsboardNumber extends React.Component<JsonFormFieldProps, ThingsboardN
     return (
       <div>
         <TextField
+          variant={'standard'}
           className={fieldClass}
           label={this.props.form.title}
           type='number'

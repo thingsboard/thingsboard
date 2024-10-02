@@ -17,9 +17,9 @@ import React from 'react';
 import Dropzone from 'react-dropzone';
 import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
-import IconButton from '@material-ui/core/IconButton';
-import Clear from '@material-ui/icons/Clear';
-import Tooltip from '@material-ui/core/Tooltip';
+import IconButton from '@mui/material/IconButton';
+import Clear from '@mui/icons-material/Clear';
+import Tooltip from '@mui/material/Tooltip';
 
 interface ThingsboardImageState extends JsonFormFieldState {
   imageUrl: string;
@@ -91,7 +91,7 @@ class ThingsboardImage extends React.Component<JsonFormFieldProps, ThingsboardIm
                         </Tooltip>
                     </div>
                     <Dropzone onDrop={this.onDrop}
-                              accept='image/*' multiple={false}>
+                              accept={ {'image/*': []} }  multiple={false}>
                       {({getRootProps, getInputProps}) => (
                           <div className='tb-dropzone' {...getRootProps()}>
                             <div>Drop an image or click to select a file to upload.</div>

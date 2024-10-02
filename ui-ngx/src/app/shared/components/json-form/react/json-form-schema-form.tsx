@@ -46,7 +46,7 @@ import _ from 'lodash';
 import tinycolor from 'tinycolor2';
 import { GroupInfo } from '@shared/models/widget.models';
 import ThingsboardMarkdown from '@shared/components/json-form/react/json-form-markdown';
-import { MouseEvent } from 'react';
+import { MouseEvent, ReactNode } from 'react';
 
 class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
 
@@ -149,7 +149,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
     if (this.props.mapper) {
       mapper = _.merge(this.mapper, this.props.mapper);
     }
-    const forms = merged.map(function(form, index) {
+    const forms: ReactNode[] = merged.map(function(form, index) {
       return this.builder(form, this.props.model, index, this.onChange, this.onColorClick,
         this.onIconClick, this.onToggleFullscreen, this.onHelpClick, mapper);
     }.bind(this));

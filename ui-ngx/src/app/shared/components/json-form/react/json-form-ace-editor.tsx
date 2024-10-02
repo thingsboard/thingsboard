@@ -17,16 +17,16 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import ThingsboardBaseComponent from './json-form-base-component';
 import reactCSS from 'reactcss';
-import Button from '@material-ui/core/Button';
+import Button from '@mui/material/Button';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
 import { IEditorProps } from 'react-ace/src/types';
 import { mergeMap } from 'rxjs/operators';
 import { getAce } from '@shared/models/ace/ace.models';
 import { from } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
-import { CircularProgress, IconButton } from '@material-ui/core';
+import { CircularProgress, IconButton } from '@mui/material';
 import { MouseEvent } from 'react';
-import { Help, HelpOutline } from '@material-ui/icons';
+import { Help, HelpOutline } from '@mui/icons-material';
 
 const ReactAce = React.lazy(() => {
   return getAce().pipe(
