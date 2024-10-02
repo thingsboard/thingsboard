@@ -69,7 +69,6 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.HashMap;
@@ -88,6 +87,7 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
 
     private LinkFormatHelper tbLinkFormatHelper;
     protected Map<LwM2mPath, LwM2mAttributeSet> lwM2mAttributes;
+
     public TbLwm2mObjectEnabler(int id, ObjectModel objectModel, Map<Integer, LwM2mInstanceEnabler> instances,
                                 LwM2mInstanceEnablerFactory instanceFactory, ContentFormat defaultContentFormat) {
         super(id, objectModel);
@@ -586,10 +586,10 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
      * - Less Than     lt (def = -- )    Float   Resource                        Numerical&Readable Resource
      * - Step          st (def = -- )    Float   Resource                        Numerical&Readable Resource
      */
-    public  WriteAttributesResponse doWriteAttributes(LwM2mServer server, WriteAttributesRequest request) {
+    public WriteAttributesResponse doWriteAttributes(LwM2mServer server, WriteAttributesRequest request) {
         LwM2mPath lwM2mPath = request.getPath();
         LwM2mAttributeSet attributeSet = lwM2mAttributes.get(lwM2mPath);
-        Map <String, LwM2mAttribute<?>> attributes = new HashMap<>();
+        Map<String, LwM2mAttribute<?>> attributes = new HashMap<>();
 
         for (LwM2mAttribute attr : request.getAttributes().getLwM2mAttributes()) {
             if (attr.getName().equals("pmax") || attr.getName().equals("pmin")) {
@@ -606,12 +606,12 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
                 }
             }
         }
-        if (attributes.size()>0){
+        if (attributes.size() > 0) {
             if (attributeSet == null) {
                 attributeSet = new LwM2mAttributeSet(attributes.values());
             } else {
                 Iterable<LwM2mAttribute<?>> lwM2mAttributeIterable = attributeSet.getLwM2mAttributes();
-              Map <String, LwM2mAttribute<?>> attributesOld = new HashMap<>();
+                Map<String, LwM2mAttribute<?>> attributesOld = new HashMap<>();
                 for (LwM2mAttribute<?> attr : lwM2mAttributeIterable) {
                     attributesOld.put(attr.getName(), attr);
                 }
@@ -643,7 +643,7 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
 
         LwM2mPath path = request.getPath();
         if (path.isObject()) {
-            LwM2mLink[] ObjectLinks = linkUpdateAttributes(this.tbLinkFormatHelper.getObjectDescription(this, null), server);
+            LwM2mLink[] ObjectLinks = linkAddUpdateAttributes(this.tbLinkFormatHelper.getObjectDescription(server, this, null), server);
             return DiscoverResponse.success(ObjectLinks);
 
         } else if (path.isObjectInstance()) {
@@ -651,7 +651,7 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
             if (!getAvailableInstanceIds().contains(path.getObjectInstanceId()))
                 return DiscoverResponse.notFound();
 
-            LwM2mLink[] instanceLink =  linkUpdateAttributes(this.tbLinkFormatHelper.getInstanceDescription(this, path.getObjectInstanceId(), null), server);
+            LwM2mLink[] instanceLink = linkAddUpdateAttributes(this.tbLinkFormatHelper.getInstanceDescription(server, this, path.getObjectInstanceId(), null), server);
             return DiscoverResponse.success(instanceLink);
 
         } else if (path.isResource()) {
@@ -666,46 +666,43 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
             if (!getAvailableResourceIds(path.getObjectInstanceId()).contains(path.getResourceId()))
                 return DiscoverResponse.notFound();
 
-            LwM2mLink resourceLink  = linkAddAttribute(
-                    this.tbLinkFormatHelper.getResourceDescription(this, path.getObjectInstanceId(), path.getResourceId(), null),
-                    server);
-            return DiscoverResponse.success(new LwM2mLink[] { resourceLink });
+            LwM2mLink[] resourceLink = linkAddUpdateAttributes(this.tbLinkFormatHelper.getResourceDescription(server,
+                    this, path.getObjectInstanceId(), path.getResourceId(), null), server);
+            return DiscoverResponse.success(resourceLink);
         }
         return DiscoverResponse.badRequest(null);
     }
 
-    private LwM2mLink[] linkUpdateAttributes(LwM2mLink[] links, LwM2mServer server) {
-        return  Arrays.stream(links)
-                .map(link -> linkAddAttribute(link, server))
-                .toArray(LwM2mLink[]::new);
+    private LwM2mLink[] linkAddUpdateAttributes(LwM2mLink[] links, LwM2mServer server) {
+        ArrayList<LwM2mLink> resourceLinkList = new ArrayList<>();
+        for (LwM2mLink link : links) {
+
+            LwM2mAttributeSet lwM2mAttributeSetDop = null;
+            if (this.lwM2mAttributes.get(link.getPath()) != null) {
+                lwM2mAttributeSetDop = this.lwM2mAttributes.get(link.getPath());
+            }
+            LwM2mAttribute resourceAttributeDim = getResourceAttributes(server, link.getPath());
+
+            Map<String, LwM2mAttribute<?>> attributes = new HashMap<>();
+            if (link.getAttributes() != null) {
+                for (LwM2mAttribute attr : link.getAttributes().getLwM2mAttributes()) {
+                    attributes.put(attr.getName(), attr);
+                }
+            }
+            if (lwM2mAttributeSetDop != null) {
+                for (LwM2mAttribute attr : lwM2mAttributeSetDop.getLwM2mAttributes()) {
+                    attributes.put(attr.getName(), attr);
+                }
+            }
+            if (resourceAttributeDim != null) {
+                attributes.put(resourceAttributeDim.getName(), resourceAttributeDim);
+            }
+            resourceLinkList.add(new LwM2mLink(link.getRootPath(), link.getPath(), attributes.values()));
+        }
+        return resourceLinkList.toArray(LwM2mLink[]::new);
     }
 
-    private LwM2mLink linkAddAttribute(LwM2mLink link, LwM2mServer server) {
-
-        LwM2mAttributeSet lwM2mAttributeSetDop = null;
-        if (this.lwM2mAttributes.get(link.getPath())!= null){
-            lwM2mAttributeSetDop = this.lwM2mAttributes.get(link.getPath());
-        }
-        LwM2mAttribute resourceAttributeDim = getResourceAttributes (server, link.getPath());
-
-        Map <String, LwM2mAttribute<?>> attributes = new HashMap<>();
-        if (link.getAttributes() != null) {
-            for (LwM2mAttribute attr : link.getAttributes().getLwM2mAttributes()) {
-                attributes.put(attr.getName(), attr);
-            }
-        }
-        if (lwM2mAttributeSetDop != null) {
-            for (LwM2mAttribute attr : lwM2mAttributeSetDop.getLwM2mAttributes()) {
-                attributes.put(attr.getName(), attr);
-            }
-        }
-        if (resourceAttributeDim != null) {
-            attributes.put(resourceAttributeDim.getName(), resourceAttributeDim);
-        }
-        return new LwM2mLink(link.getRootPath(), link.getPath(), attributes.values());
-    }
-
-    protected LwM2mAttribute getResourceAttributes (LwM2mServer server, LwM2mPath path)    {
+    protected LwM2mAttribute getResourceAttributes(LwM2mServer server, LwM2mPath path) {
         ResourceModel resourceModel = getObjectModel().resources.get(path.getResourceId());
         if (path.isResource() && resourceModel.multiple) {
             return getResourceAttributeDim(path, server);
@@ -717,13 +714,13 @@ public class TbLwm2mObjectEnabler extends BaseObjectEnabler implements Destroyab
         LwM2mInstanceEnabler instance = instances.get(path.getObjectInstanceId());
         try {
             ReadResponse readResponse = instance.read(server, path.getResourceId());
-            if (readResponse.getCode().getCode()==205 && readResponse.getContent() instanceof LwM2mMultipleResource) {
-                long valueDim = ((LwM2mMultipleResource)readResponse.getContent()).getInstances().size();
+            if (readResponse.getCode().getCode() == 205 && readResponse.getContent() instanceof LwM2mMultipleResource) {
+                long valueDim = ((LwM2mMultipleResource) readResponse.getContent()).getInstances().size();
                 return LwM2mAttributes.create(LwM2mAttributes.DIMENSION, valueDim);
             } else {
                 return null;
             }
-        } catch (Exception e ){
+        } catch (Exception e) {
             return null;
         }
     }

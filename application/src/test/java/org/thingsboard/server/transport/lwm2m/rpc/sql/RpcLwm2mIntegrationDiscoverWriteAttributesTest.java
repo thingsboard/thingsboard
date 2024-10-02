@@ -49,6 +49,7 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
         String actual = rpcActualResult.get("error").asText();
         assertTrue(actual.equals(expected));
     }
+
     /**
      * WriteAttributes {"id":"/3_1.2/0/6","attributes":{"pmax":100, "pmin":10}}
      * if not implemented:
@@ -82,7 +83,7 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
 
     @Test
     public void testWriteAttributesResourceServerUriWithParametersById_Result_BAD_REQUEST() throws Exception {
-        String expectedPath =  objectInstanceIdVer_1;
+        String expectedPath = objectInstanceIdVer_1;
         String actualResult = sendRPCReadById(expectedPath);
         String expectedValue = "{\"uri\":\"coaps://localhost:5690\"}";
         actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
@@ -108,13 +109,13 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
      * "ver" only for objectId
      */
     @Test
-    public void testReadDIM_3_0_6_Only_R () throws Exception {
+    public void testReadDIM_3_0_6_Only_R() throws Exception {
         String path = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6;
         String actualResult = sendDiscover(path);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         String expected = "</3/0/6>;dim=3";
-        assertTrue(rpcActualResult.get("value").asText().equals(expected));
+        assertTrue(rpcActualResult.get("value").asText().contains(expected));
 
     }
 
@@ -126,7 +127,7 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
      * "ver" only for objectId
      */
     @Test
-    public void testReadVer () throws Exception {
+    public void testReadVer() throws Exception {
         String path = objectIdVer_3;
         String actualResult = sendDiscover(path);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -149,7 +150,7 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
         String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
-            // result changed
+        // result changed
         actualResult = sendDiscover(expectedPath);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
@@ -175,7 +176,7 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
      * <3/0/6>;dim=8,<3/0/7>;gt=50;lt=42.2;st=0.5,<3/0/8>;...
      */
     @Test
-    public void testWriteAttributesPeriodLtGt () throws Exception {
+    public void testWriteAttributesPeriodLtGt() throws Exception {
         String expectedPath = objectInstanceIdVer_3;
         String expectedValue = "{\"pmax\":60}";
         String actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
@@ -187,30 +188,33 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_7;
-        expectedValue ="{\"gt\":50, \"lt\":42.2, \"st\":0.5}";
+        expectedValue = "{\"gt\":50.0, \"lt\":42.2, \"st\":0.5}";
         actualResult = sendRPCExecuteWithValueById(expectedPath, expectedValue);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
-            // ObjectId
+        // ObjectId
         expectedPath = objectIdVer_3;
         actualResult = sendDiscover(expectedPath);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-            // String expected = "</3>;ver=1.2,</3/0>;pmax=60,</3/0/0>,</3/0/1>,</3/0/2>,</3/0/3>,</3/0/6>;dim=3,</3/0/7>;st=0.5;lt=42.2;gt=50.0,</3/0/8>,</3/0/9>,</3/0/10>,</3/0/11>;dim=1,</3/0/13>,</3/0/14>,</3/0/15>,</3/0/16>,</3/0/17>,</3/0/18>,</3/0/19>,</3/0/20>,</3/0/21>";
+        String actualValue = rpcActualResult.get("value").asText();
         String expected = "</3>;ver=1.2,</3/0>;pmax=65";
-        assertTrue(rpcActualResult.get("value").asText().contains(expected));
-        expected = "</3/0/6>;dim=3,</3/0/7>;st=0.5;lt=42.2;gt=50.0";
-        assertTrue(rpcActualResult.get("value").asText().contains(expected));
-            // ObjectInstanceId
+        assertTrue(actualValue.contains(expected));
+        expected = "</3/0/6>;dim=3";
+        assertTrue(actualValue.contains(expected));
+        expected = "</3/0/7>;st=0.5;lt=42.2;gt=50";
+        assertTrue(actualValue.contains(expected));
+        // ObjectInstanceId
         expectedPath = objectInstanceIdVer_3;
         actualResult = sendDiscover(expectedPath);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
+        actualValue = rpcActualResult.get("value").asText();
         expected = "</3/0>;pmax=65";
-        assertTrue(rpcActualResult.get("value").asText().contains(expected));
-        expected = "</3/0/6>;dim=3,</3/0/7>;st=0.5;lt=42.2;gt=50.0";
-        assertTrue(rpcActualResult.get("value").asText().contains(expected));
-            // ResourceId
+        assertTrue(actualValue.contains(expected));
+        expected = "</3/0/6>;dim=3,</3/0/7>;st=0.5;lt=42.2;gt=50";
+        assertTrue(actualValue.contains(expected));
+        // ResourceId
         expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6;
         actualResult = sendDiscover(expectedPath);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -221,10 +225,10 @@ public class RpcLwm2mIntegrationDiscoverWriteAttributesTest extends AbstractRpcL
         actualResult = sendDiscover(expectedPath);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        expected = "</3/0/7>;st=0.5;lt=42.2;gt=50.0";
+        expected = "</3/0/7>;st=0.5;lt=42.2;gt=50";
         assertTrue(rpcActualResult.get("value").asText().contains(expected));
-            // ResourceInstanceId
-        expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6+ "/1";
+        // ResourceInstanceId
+        expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6 + "/1";
         actualResult = sendDiscover(expectedPath);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.INTERNAL_SERVER_ERROR.getName(), rpcActualResult.get("result").asText());
