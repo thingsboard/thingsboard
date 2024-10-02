@@ -20,7 +20,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.DataConstants;
-import org.thingsboard.server.common.data.EdgeUpgradeInfo;
+import org.thingsboard.server.common.data.edge.EdgeUpgradeInfo;
 import org.thingsboard.server.common.data.edge.EdgeInstructions;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
