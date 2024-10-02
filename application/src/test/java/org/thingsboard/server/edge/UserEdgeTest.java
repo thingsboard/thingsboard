@@ -60,7 +60,7 @@ public class UserEdgeTest extends AbstractEdgeTest {
         Assert.assertEquals(4, edgeImitator.findAllMessagesByType(UserCredentialsUpdateMsg.class).size());
         Optional<UserUpdateMsg> userUpdateMsgOpt = edgeImitator.findMessageByType(UserUpdateMsg.class);
         Assert.assertTrue(userUpdateMsgOpt.isPresent());
-        UserUpdateMsg userUpdateMsg = userUpdateMsgOpt.get();
+        UserUpdateMsg userUprefdateMsg = userUpdateMsgOpt.get();
         User userMsg = JacksonUtil.fromString(userUpdateMsg.getEntity(), User.class, true);
         Assert.assertNotNull(userMsg);
         Assert.assertEquals(UpdateMsgType.ENTITY_CREATED_RPC_MESSAGE, userUpdateMsg.getMsgType());
