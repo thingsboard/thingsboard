@@ -21,7 +21,6 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
@@ -36,10 +35,10 @@ import static org.junit.jupiter.api.Assertions.assertNotNull;
 import static org.junit.jupiter.api.Assertions.assertNull;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-class TbEntityLocalSubsInfoTest {
+public class TbEntityLocalSubsInfoTest {
 
     @Test
-    void addTest() {
+    public void addTest() {
         Set<TbAttributeSubscription> expectedSubs = new HashSet<>();
         TbEntityLocalSubsInfo subsInfo = createSubsInfo();
         TenantId tenantId = subsInfo.getTenantId();
@@ -74,7 +73,7 @@ class TbEntityLocalSubsInfoTest {
     }
 
     @Test
-    void removeTest() {
+    public void removeTest() {
         Set<TbAttributeSubscription> expectedSubs = new HashSet<>();
         TbEntityLocalSubsInfo subsInfo = createSubsInfo();
         TenantId tenantId = subsInfo.getTenantId();
@@ -117,8 +116,7 @@ class TbEntityLocalSubsInfoTest {
     }
 
     @Test
-    void removeAllTest() {
-        List<TbAttributeSubscription> subs = new ArrayList<>();
+    public void removeAllTest() {
         TbEntityLocalSubsInfo subsInfo = createSubsInfo();
         TenantId tenantId = subsInfo.getTenantId();
         EntityId entityId = subsInfo.getEntityId();
@@ -136,17 +134,28 @@ class TbEntityLocalSubsInfoTest {
                 .keyStates(Map.of("key3", 3L, "key4", 4L))
                 .build();
 
-        subs.add(attrSubscription1);
-        subs.add(attrSubscription2);
+        TbAttributeSubscription attrSubscription3 = TbAttributeSubscription.builder()
+                .sessionId("session3")
+                .tenantId(tenantId)
+                .entityId(entityId)
+                .keyStates(Map.of("key5", 5L, "key6", 6L))
+                .build();
 
         subsInfo.add(attrSubscription1);
         subsInfo.add(attrSubscription2);
+        subsInfo.add(attrSubscription3);
 
         assertFalse(subsInfo.isEmpty());
 
-        TbEntitySubEvent deletedEvent = subsInfo.removeAll(subs);
+        TbEntitySubEvent updatedEvent = subsInfo.removeAll(List.of(attrSubscription1, attrSubscription2));
+        assertNotNull(updatedEvent);
+        checkEvent(updatedEvent, Set.of(attrSubscription3), ComponentLifecycleEvent.UPDATED);
+
+        assertFalse(subsInfo.isEmpty());
+
+        TbEntitySubEvent deletedEvent = subsInfo.removeAll(List.of(attrSubscription3));
         assertNotNull(deletedEvent);
-        checkEvent(deletedEvent, subs, ComponentLifecycleEvent.DELETED);
+        checkEvent(deletedEvent, null, ComponentLifecycleEvent.DELETED);
 
         assertTrue(subsInfo.isEmpty());
     }
@@ -155,7 +164,7 @@ class TbEntityLocalSubsInfoTest {
         return new TbEntityLocalSubsInfo(new TenantId(UUID.randomUUID()), new DeviceId(UUID.randomUUID()));
     }
 
-    private void checkEvent(TbEntitySubEvent event, Collection<TbAttributeSubscription> expectedSubs, ComponentLifecycleEvent expectedType) {
+    private void checkEvent(TbEntitySubEvent event, Set<TbAttributeSubscription> expectedSubs, ComponentLifecycleEvent expectedType) {
         assertEquals(expectedType, event.getType());
         TbSubscriptionsInfo info = event.getInfo();
         if (event.getType() == ComponentLifecycleEvent.DELETED) {
@@ -171,7 +180,7 @@ class TbEntityLocalSubsInfoTest {
         assertEquals(getAttrKeys(expectedSubs), info.attrKeys);
     }
 
-    private Set<String> getAttrKeys(Collection<TbAttributeSubscription> attributeSubscriptions) {
+    private Set<String> getAttrKeys(Set<TbAttributeSubscription> attributeSubscriptions) {
         return attributeSubscriptions.stream().map(s -> s.getKeyStates().keySet()).flatMap(Collection::stream).collect(Collectors.toSet());
     }
 }

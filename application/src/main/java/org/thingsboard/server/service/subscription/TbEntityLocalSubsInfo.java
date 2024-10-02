@@ -135,7 +135,7 @@ public class TbEntityLocalSubsInfo {
         }
         TbSubscriptionType type = sub.getType();
         TbSubscriptionsInfo newState = state.copy();
-        updateNewState(newState, type);
+        clearState(newState, type);
         return updateState(Set.of(type), newState);
     }
 
@@ -155,14 +155,14 @@ public class TbEntityLocalSubsInfo {
                 continue;
             }
 
-            updateNewState(newState, type);
+            clearState(newState, type);
             changedTypes.add(type);
         }
 
         return updateState(changedTypes, newState);
     }
 
-    private void updateNewState(TbSubscriptionsInfo state, TbSubscriptionType type) {
+    private void clearState(TbSubscriptionsInfo state, TbSubscriptionType type) {
         switch (type) {
             case NOTIFICATIONS:
             case NOTIFICATIONS_COUNT:
