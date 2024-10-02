@@ -31,6 +31,8 @@ interface ThingsboardIconState extends JsonFormFieldState {
 
 class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIconState> {
 
+    containerRef = React.createRef<HTMLDivElement>();
+
     constructor(props) {
         super(props);
         this.onBlur = this.onBlur.bind(this);
@@ -54,7 +56,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
     }
 
     componentDidMount() {
-        const node = ReactDOM.findDOMNode(this);
+        const node = this.containerRef.current;
         const iconContainer = $(node).children('#icon-container');
         iconContainer.click((event) => {
           if (!this.props.form.readonly) {
@@ -64,7 +66,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
     }
 
     componentWillUnmount() {
-        const node = ReactDOM.findDOMNode(this);
+        const node = this.containerRef.current;
         const iconContainer = $(node).children('#icon-container');
         iconContainer.off( 'click' );
     }
@@ -102,6 +104,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
                     alignItems: 'center'
                 },
                 icon: {
+                    padding: '12px',
                     marginRight: '10px',
                     marginBottom: 'auto',
                     cursor: 'pointer',
@@ -134,12 +137,13 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
         }
 
         return (
-            <div style={ styles.container }>
+            <div ref={this.containerRef} style={ styles.container }>
                  <div id='icon-container' style={ styles.iconContainer }>
                     <IconButton style={ styles.icon }>
                       <Icon>{pickedIcon}</Icon>
                     </IconButton>
                     <TextField
+                        variant={'standard'}
                         className={fieldClass}
                         label={this.props.form.title}
                         error={!this.props.valid}

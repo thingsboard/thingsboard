@@ -60,6 +60,11 @@ class ThingsboardDate extends React.Component<JsonFormFieldProps, ThingsboardDat
           <LocalizationProvider dateAdapter={AdapterMoment}>
             <div style={{width: '100%', display: 'block'}}>
                 <DatePicker
+                    slotProps={{
+                      textField: {
+                        variant: 'standard'
+                      }
+                    }}
                     format='MM/DD/YYYY'
                     className={fieldClass}
                     label={this.props.form.title}

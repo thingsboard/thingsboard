@@ -24,7 +24,7 @@ class ThingsboardRadios extends React.Component<JsonFormFieldProps, JsonFormFiel
   render() {
     const items = this.props.form.titleMap.map((item, index) => {
       return (
-          <FormControlLabel value={item.value} control={<Radio />} label={item.name} key={index} />
+          <FormControlLabel value={item.value} control={<Radio color={'secondary'} />} label={item.name} key={index} />
       );
     });
 
