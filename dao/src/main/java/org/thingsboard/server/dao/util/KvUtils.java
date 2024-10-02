@@ -53,6 +53,10 @@ public class KvUtils {
             throw new DataValidationException("Key can't be null or empty");
         }
 
+        if (key.contains(",")) {
+            throw new DataValidationException("Validation error: Key can't contain comma");
+        }
+
         if (key.length() > 255) {
             throw new DataValidationException("Validation error: key length must be equal or less than 255");
         }
