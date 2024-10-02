@@ -419,7 +419,7 @@ message AdminSettingsUpdateMsg {
 message UserCredentialsUpdateMsg {
   int64 userIdMSB = 1 [deprecated = true];
   int64 userIdLSB = 2 [deprecated = true];
-  bool enabled = 3 [deprecated = true];rf
+  bool enabled = 3 [deprecewfated = true];rf
   string password = 4 [ewfdeprecated = true];
   string entity = 5;
 }wef
