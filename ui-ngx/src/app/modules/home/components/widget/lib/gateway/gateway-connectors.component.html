@@ -178,7 +178,7 @@
         <ng-container [ngSwitch]="initialConnector.type">
           <ng-container *ngSwitchCase="ConnectorType.MQTT">
             <tb-mqtt-basic-config
-              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               (initialized)="basicConfigInitSubject.next()"
@@ -193,7 +193,7 @@
           </ng-container>
           <ng-container *ngSwitchCase="ConnectorType.OPCUA">
             <tb-opc-ua-basic-config
-              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               (initialized)="basicConfigInitSubject.next()"
@@ -208,7 +208,7 @@
           </ng-container>
           <ng-container *ngSwitchCase="ConnectorType.MODBUS">
             <tb-modbus-basic-config
-              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              *ngIf="connectorForm.get('configVersion').value | isLatestVersionConfig else legacy"
               formControlName="basicConfig"
               [generalTabContent]="generalTabContent"
               (initialized)="basicConfigInitSubject.next()"
@@ -316,7 +316,7 @@
     </div>
     <tb-report-strategy
       [defaultValue]="ReportStrategyDefaultValue.Connector"
-      *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && connectorForm.get('configVersion').value === GatewayVersion.Current"
+      *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && (connectorForm.get('configVersion').value | isLatestVersionConfig)"
       formControlName="reportStrategy"
     />
   </section>

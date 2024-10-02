@@ -167,9 +167,10 @@ import {
   ModbusRpcParametersComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/modbus-rpc-parameters/modbus-rpc-parameters.component';
 import { RpcTemplateArrayViewPipe } from '@home/components/widget/lib/gateway/pipes/rpc-template-array-view.pipe';
-import { 
+import {
   ReportStrategyComponent
 } from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
+import { LatestVersionConfigPipe } from '@home/components/widget/lib/gateway/pipes/latest-version-config.pipe';
 
 @NgModule({
   declarations: [
@@ -268,6 +269,7 @@ import {
     ModbusRpcParametersComponent,
     RpcTemplateArrayViewPipe,
     ReportStrategyComponent,
+    LatestVersionConfigPipe,
   ],
   exports: [
     EntitiesTableWidgetComponent,
@@ -337,7 +339,8 @@ import {
     ScadaSymbolWidgetComponent
   ],
   providers: [
-    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}
+    {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule},
+    {provide: LatestVersionConfigPipe}
   ]
 })
 export class WidgetComponentsModule {

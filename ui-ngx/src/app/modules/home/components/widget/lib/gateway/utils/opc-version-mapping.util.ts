@@ -56,7 +56,7 @@ export class OpcVersionMappingUtil {
   static mapMappingToUpgradedVersion(mapping: LegacyDeviceConnectorMapping[]): DeviceConnectorMapping[] {
     return mapping.map((legacyMapping: LegacyDeviceConnectorMapping) => ({
       ...legacyMapping,
-      deviceNodeSource: this.getTypeSourceByValue(legacyMapping.deviceNodePattern),
+      deviceNodeSource: this.getDeviceNodeSourceByValue(legacyMapping.deviceNodePattern),
       deviceInfo: {
         deviceNameExpression: legacyMapping.deviceNamePattern,
         deviceNameExpressionSource: this.getTypeSourceByValue(legacyMapping.deviceNamePattern),
@@ -120,6 +120,14 @@ export class OpcVersionMappingUtil {
       return OPCUaSourceType.PATH;
     }
     return OPCUaSourceType.CONST;
+  }
+
+  private static getDeviceNodeSourceByValue(value: string): OPCUaSourceType {
+    if (value.includes('${')) {
+      return OPCUaSourceType.IDENTIFIER;
+    } else {
+      return OPCUaSourceType.PATH;
+    }
   }
 
   private static getArgumentType(arg: unknown): string {

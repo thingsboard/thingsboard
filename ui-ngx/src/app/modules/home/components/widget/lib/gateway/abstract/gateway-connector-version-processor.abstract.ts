@@ -15,15 +15,17 @@
 ///
 
 import { GatewayConnector, GatewayVersion } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { isNumber, isString } from '@core/utils';
+import {
+  GatewayConnectorVersionMappingUtil
+} from '@home/components/widget/lib/gateway/utils/gateway-connector-version-mapping.util';
 
 export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   gatewayVersion: number;
   configVersion: number;
 
   protected constructor(protected gatewayVersionIn: string | number, protected connector: GatewayConnector<BasicConfig>) {
-    this.gatewayVersion = this.parseVersion(this.gatewayVersionIn);
-    this.configVersion = this.parseVersion(this.connector.configVersion);
+    this.gatewayVersion = GatewayConnectorVersionMappingUtil.parseVersion(this.gatewayVersionIn);
+    this.configVersion = GatewayConnectorVersionMappingUtil.parseVersion(this.connector.configVersion);
   }
 
   getProcessedByVersion(): GatewayConnector<BasicConfig> {
@@ -53,19 +55,13 @@ export abstract class GatewayConnectorVersionProcessor<BasicConfig> {
   }
 
   private isVersionUpgradeNeeded(): boolean {
-    return this.gatewayVersionIn === GatewayVersion.Current && (!this.configVersion || this.configVersion < this.gatewayVersion);
+    return this.gatewayVersion >= GatewayConnectorVersionMappingUtil.parseVersion(GatewayVersion.Current)
+      && (!this.configVersion || this.configVersion < this.gatewayVersion);
   }
 
   private isVersionDowngradeNeeded(): boolean {
-    return this.configVersion && this.connector.configVersion === GatewayVersion.Current && (this.configVersion > this.gatewayVersion);
-  }
-
-  private parseVersion(version: string | number): number {
-    if (isNumber(version)) {
-      return version as number;
-    }
-
-    return isString(version) ? parseFloat((version as string).replace(/\./g, '').slice(0, 3)) / 100 : 0;
+    return this.configVersion && this.configVersion >= GatewayConnectorVersionMappingUtil.parseVersion(GatewayVersion.Current)
+      && (this.configVersion > this.gatewayVersion);
   }
 
   protected abstract getDowngradedVersion(): GatewayConnector<BasicConfig>;
