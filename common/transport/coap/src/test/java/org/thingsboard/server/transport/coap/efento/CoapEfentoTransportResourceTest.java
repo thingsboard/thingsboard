@@ -70,7 +70,7 @@ import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.Me
 import static org.thingsboard.server.gen.transport.coap.MeasurementTypeProtos.MeasurementType.MEASUREMENT_TYPE_WATER_METER_ACC_MINOR;
 import static org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils.convertTimestampToUtcString;
 
-class CoapEfentTransportResourceTest {
+class CoapEfentoTransportResourceTest {
 
     private static CoapEfentoTransportResource coapEfentoTransportResource;
 
@@ -152,30 +152,68 @@ class CoapEfentTransportResourceTest {
                 Arguments.of(MEASUREMENT_TYPE_ATMOSPHERIC_PRESSURE, List.of(1013), "pressure_1", 101.3),
                 Arguments.of(MEASUREMENT_TYPE_DIFFERENTIAL_PRESSURE, List.of(500), "pressure_diff_1", 500),
                 Arguments.of(MEASUREMENT_TYPE_PULSE_CNT, List.of(300), "pulse_cnt_1", 300),
-                Arguments.of(MEASUREMENT_TYPE_IAQ, List.of(150), "iaq_1", 150),
+                Arguments.of(MEASUREMENT_TYPE_IAQ, List.of(150), "iaq_1", 50.0),
                 Arguments.of(MEASUREMENT_TYPE_ELECTRICITY_METER, List.of(1200), "watt_hour_1", 1200),
                 Arguments.of(MEASUREMENT_TYPE_SOIL_MOISTURE, List.of(35), "soil_moisture_1", 35),
                 Arguments.of(MEASUREMENT_TYPE_AMBIENT_LIGHT, List.of(500), "ambient_light_1", 50),
                 Arguments.of(MEASUREMENT_TYPE_HIGH_PRESSURE, List.of(200000), "high_pressure_1", 200000),
                 Arguments.of(MEASUREMENT_TYPE_DISTANCE_MM, List.of(1500), "distance_mm_1", 1500),
-                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(125), "acc_counter_water_minor_1", 125),
-                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR, List.of(2500), "acc_counter_water_major_1", 2500),
                 Arguments.of(MEASUREMENT_TYPE_HUMIDITY_ACCURATE, List.of(525), "humidity_relative_1", 52.5),
-                Arguments.of(MEASUREMENT_TYPE_STATIC_IAQ, List.of(110), "static_iaq_1", 110),
-                Arguments.of(MEASUREMENT_TYPE_CO2_EQUIVALENT, List.of(450), "co2_ppm_1", 450),
-                Arguments.of(MEASUREMENT_TYPE_BREATH_VOC, List.of(220), "breath_voc_ppm_1", 220),
-                Arguments.of(MEASUREMENT_TYPE_PERCENTAGE, List.of(80), "percentage_1", 0.80),
-                Arguments.of(MEASUREMENT_TYPE_VOLTAGE, List.of(2400), "voltage_1", 240),
+                Arguments.of(MEASUREMENT_TYPE_STATIC_IAQ, List.of(110), "static_iaq_1", 36),
+                Arguments.of(MEASUREMENT_TYPE_CO2_EQUIVALENT, List.of(450), "co2_1", 150),
+                Arguments.of(MEASUREMENT_TYPE_BREATH_VOC, List.of(220), "breath_voc_1", 73),
+                Arguments.of(MEASUREMENT_TYPE_PERCENTAGE, List.of(80), "percentage_1", 0.8),
+                Arguments.of(MEASUREMENT_TYPE_VOLTAGE, List.of(2400), "voltage_1", 240.0),
                 Arguments.of(MEASUREMENT_TYPE_CURRENT, List.of(550), "current_1", 5.5),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(180), "pulse_cnt_minor_1", 180),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR, List.of(1200), "pulse_cnt_major_1", 1200),
-                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(550), "elec_meter_minor_1", 550),
-                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR, List.of(5500), "elec_meter_major_1", 5500),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(230), "pulse_cnt_wide_minor_1", 230),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR, List.of(1700), "pulse_cnt_wide_major_1", 1700),
                 Arguments.of(MEASUREMENT_TYPE_CURRENT_PRECISE, List.of(275), "current_precise_1", 0.275)
         );
     }
+
+    @ParameterizedTest
+    @MethodSource
+    void checkPulseCounterSensors(MeasurementType minorType, List<Integer> minorSampleOffsets, MeasurementType majorType, List<Integer> majorSampleOffsets,
+                                  String propertyPrefix, double expectedValue) {
+        long tsInSec = Instant.now().getEpochSecond();
+        ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
+                .setSerialNum(integerToByteString(1234))
+                .setCloudToken("test_token")
+                .setMeasurementPeriodBase(180)
+                .setMeasurementPeriodFactor(0)
+                .setBatteryStatus(true)
+                .setSignal(0)
+                .setNextTransmissionAt(1000)
+                .setTransferReason(0)
+                .setHash(0)
+                .addAllChannels(List.of(MeasurementsProtos.ProtoChannel.newBuilder()
+                        .setType(minorType)
+                        .setTimestamp(Math.toIntExact(tsInSec))
+                        .addAllSampleOffsets(minorSampleOffsets)
+                        .build(),
+                        MeasurementsProtos.ProtoChannel.newBuilder()
+                                .setType(majorType)
+                                .setTimestamp(Math.toIntExact(tsInSec))
+                                .addAllSampleOffsets(majorSampleOffsets)
+                                .build()))
+                .build();
+        List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
+        assertThat(efentoMeasurements).hasSize(1);
+        assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(propertyPrefix + "_total_value").getAsDouble()).isEqualTo(expectedValue);
+        checkDefaultMeasurements(measurements, efentoMeasurements, 180, false);
+    }
+
+    private static Stream<Arguments> checkPulseCounterSensors() {
+        return Stream.of(
+                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(125), MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR,
+                        List.of(2500), "water_cnt_acc", 62520.0),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(180), MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR,
+                        List.of(1200), "pulse_cnt_acc", 300030.0),
+                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(550), MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR,
+                        List.of(5500), "elec_meter_acc", 1375091.0),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(230), MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR,
+                        List.of(1700), "pulse_cnt_acc_wide", 425000038.0));
+    }
+
 
     @Test
     void checkBinarySensor() {
