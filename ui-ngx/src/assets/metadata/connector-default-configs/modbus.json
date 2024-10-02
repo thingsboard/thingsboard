@@ -20,13 +20,21 @@
                     "connectAttemptTimeMs": 5000,
                     "connectAttemptCount": 5,
                     "waitAfterFailedAttemptsMs": 300000,
+                    "reportStrategy": {
+                        "type": "ON_REPORT_PERIOD",
+                        "reportPeriod": 30000
+                    },
                     "attributes": [
                         {
                             "tag": "string_read",
                             "type": "string",
                             "functionCode": 4,
                             "objectsCount": 4,
-                            "address": 1
+                            "address": 1,
+                            "reportStrategy": {
+                                "type": "ON_REPORT_PERIOD",
+                                "reportPeriod": 15000
+                            }
                         },
                         {
                             "tag": "bits_read",
@@ -86,7 +94,11 @@
                             "type": "8uint",
                             "functionCode": 4,
                             "objectsCount": 1,
-                            "address": 17
+                            "address": 17,
+                            "reportStrategy": {
+                                "type": "ON_REPORT_PERIOD",
+                                "reportPeriod": 15000
+                            }
                         },
                         {
                             "tag": "16uint_read",

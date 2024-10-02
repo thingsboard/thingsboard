@@ -126,6 +126,7 @@ export class SecurityConfigComponent implements ControlValueAccessor, OnInit, On
       if (!securityInfo.type) {
         securityInfo.type = SecurityType.ANONYMOUS;
       }
+      this.updateValidators(securityInfo.type);
       this.securityFormGroup.reset(securityInfo, {emitEvent: false});
     }
     this.cdr.markForCheck();
