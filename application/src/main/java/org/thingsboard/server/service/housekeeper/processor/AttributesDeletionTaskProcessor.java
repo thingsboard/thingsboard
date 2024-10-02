@@ -18,9 +18,9 @@ package org.thingsboard.server.service.housekeeper.processor;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTask;
 import org.thingsboard.server.common.data.housekeeper.HousekeeperTaskType;
+import org.thingsboard.server.dao.attributes.AttributesService;
 
 @Component
 @RequiredArgsConstructor

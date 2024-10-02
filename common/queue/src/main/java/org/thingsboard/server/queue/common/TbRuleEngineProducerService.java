@@ -53,22 +53,23 @@ public class TbRuleEngineProducerService {
                         .correlationId(correlationId)
                         .partition(partition)
                         .build();
-                sendToRuleEngine(producer, tpi, tenantId, tbMsg, i == tpis.size() - 1 ? callback : null);
+                sendToRuleEngine(producer, tpi, tenantId, tbMsg, relations,  i == tpis.size() - 1 ? callback : null);
             }
         } else {
-            sendToRuleEngine(producer, tpis.get(0), tenantId, tbMsg, callback);
+            sendToRuleEngine(producer, tpis.get(0), tenantId, tbMsg, relations, callback);
         }
     }
 
     private void sendToRuleEngine(TbQueueProducer<TbProtoQueueMsg<ToRuleEngineMsg>> producer, TopicPartitionInfo tpi,
-                                  TenantId tenantId, TbMsg tbMsg, TbQueueCallback callback) {
+                                  TenantId tenantId, TbMsg tbMsg, Set<String> relations, TbQueueCallback callback) {
         if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, tbMsg.getOriginator(), tpi.getFullTopicName(), tbMsg);
         }
         ToRuleEngineMsg msg = ToRuleEngineMsg.newBuilder()
                 .setTbMsg(TbMsg.toByteString(tbMsg))
                 .setTenantIdMSB(tenantId.getId().getMostSignificantBits())
-                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits()).build();
+                .setTenantIdLSB(tenantId.getId().getLeastSignificantBits())
+                .addAllRelationTypes(relations).build();
         producer.send(tpi, new TbProtoQueueMsg<>(tbMsg.getId(), msg), callback);
     }
 

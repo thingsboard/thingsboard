@@ -33,7 +33,6 @@ import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
 import java.util.Collection;
-import java.util.Objects;
 import java.util.Optional;
 import java.util.UUID;
 

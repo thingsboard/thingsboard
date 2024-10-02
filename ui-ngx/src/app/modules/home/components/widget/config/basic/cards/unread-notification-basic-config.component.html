@@ -77,7 +77,7 @@
       <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <tb-font-settings formControlName="counterValueFont"
                           clearButton
-                          [previewText]="unreadNotificationWidgetConfigForm.get('maxNotificationDisplay').value.toString()"
+                          [previewText]="countPreviewFn"
                           [initialPreviewStyle]="widgetConfig.config.titleStyle">
         </tb-font-settings>
         <tb-color-input asBoxInput
@@ -94,7 +94,7 @@
   </div>
 
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div class="tb-form-panel-title" translate>widget-config.card-appearance</div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.background.background' | translate }}</div>
       <tb-background-settings formControlName="background">

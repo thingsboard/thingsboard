@@ -15,25 +15,16 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.store;
 
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
-import org.eclipse.californium.core.coap.Token;
-import org.eclipse.californium.core.network.RandomTokenGenerator;
 import org.eclipse.californium.core.network.TokenGenerator;
-import org.eclipse.californium.core.network.TokenGenerator.Scope;
 import org.eclipse.leshan.core.Destroyable;
 import org.eclipse.leshan.core.Startable;
 import org.eclipse.leshan.core.Stoppable;
-import org.eclipse.leshan.core.model.ObjectModel;
-import org.eclipse.leshan.core.model.ResourceModel;
-import org.eclipse.leshan.core.node.LwM2mPath;
 import org.eclipse.leshan.core.observation.CompositeObservation;
 import org.eclipse.leshan.core.observation.Observation;
 import org.eclipse.leshan.core.observation.ObservationIdentifier;
 import org.eclipse.leshan.core.observation.SingleObservation;
 import org.eclipse.leshan.core.peer.LwM2mIdentity;
-import org.eclipse.leshan.core.request.ContentFormat;
 import org.eclipse.leshan.core.util.NamedThreadFactory;
 import org.eclipse.leshan.server.registration.Deregistration;
 import org.eclipse.leshan.server.registration.ExpirationListener;
@@ -41,14 +32,12 @@ import org.eclipse.leshan.server.registration.Registration;
 import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.eclipse.leshan.server.registration.UpdatedRegistration;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.config.LwM2MTransportServerConfig;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mVersionedModelProvider;
 
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Iterator;
@@ -60,12 +49,8 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReadWriteLock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-
-import static org.eclipse.leshan.core.californium.ObserveUtil.CTX_CF_OBERSATION;
-import static org.eclipse.leshan.core.californium.ObserveUtil.extractSerializedObservation;
 
 @Slf4j
 public class TbInMemoryRegistrationStore implements RegistrationStore, Startable, Stoppable, Destroyable {
@@ -108,7 +93,7 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
         this.schedExecutor = schedExecutor;
         this.cleanPeriod = cleanPeriodInSec;
         this.modelProvider = modelProvider;
-        this.config =  config;
+        this.config = config;
     }
 
     /* *************** Leshan Registration API **************** */
@@ -255,138 +240,60 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
         List<Observation> removed = new ArrayList<>();
         try {
             lock.writeLock().lock();
-
             if (!regsByRegId.containsKey(registrationId)) {
                 throw new IllegalStateException(String.format(
                         "can not add observation %s there is no registration with id %s", observation, registrationId));
             }
-
-            if (observation instanceof SingleObservation) {
-                if (validateObserveResource(((SingleObservation)observation).getPath(), registrationId)) {
-                    updateSingleObservation(registrationId, (SingleObservation) observation, addIfAbsent, removed);
-                        // cancel existing observations for the same path and registration id.
-                    cancelObservation (observation, registrationId, removed);
-                }
-            } else {
-                ContentFormat ct = ((CompositeObservation) observation).getResponseContentFormat();
-                Map<String, String> ctx = observation.getContext();
-                String serializedObservation = extractSerializedObservation(observation);
-                JsonNode nodeSerObs = JacksonUtil.toJsonNode(serializedObservation);
-                ((CompositeObservation)observation).getPaths().forEach(path -> {
-                    if (validateObserveResource(path, registrationId)) {
-                        String serializedObs = createSerializedSingleObservation(nodeSerObs, path.toString());
-                        Observation singleObservation = createSingleObservation(registrationId, path, ct, ctx, serializedObs, getTokenGenerator());
-                        updateSingleObservation(registrationId, (SingleObservation) singleObservation, addIfAbsent, removed);
-                        // cancel existing observations for the same path and registration id.
-                        cancelObservation (singleObservation, registrationId, removed);
-                    }
-                });
-            }
-
+            updateObservation(registrationId, observation, addIfAbsent, removed);
         } finally {
             lock.writeLock().unlock();
         }
-
         return removed;
     }
 
-    private boolean validateObserveResource(LwM2mPath path, String registrationId){
-        // check if the resource is readable.
-        if (path.isResource() || path.isResourceInstance()) {
-            ObjectModel objectModel = modelProvider.getObjectModel(getRegistration(registrationId)).getObjectModel(path.getObjectId());
-            ResourceModel resourceModel = objectModel == null ? null : objectModel.resources.get(path.getResourceId());
-            if (resourceModel == null) {
-                return false;
-            } else if (!resourceModel.operations.isReadable()) {
-                return false;
-            } else if (path.isResourceInstance() && !resourceModel.multiple) {
-                return false;
-            }
-        }
-        return true;
-    }
+    private void updateObservation(String registrationId, Observation observation, boolean addIfAbsent, List<Observation> removed) {
 
-    private void updateSingleObservation (String registrationId, SingleObservation observation, boolean addIfAbsent, List<Observation> removed) {
-            // Absorption by existing Observations
-
-
+        // Absorption by existing Observations
         Observation previousObservation = null;
-        SingleObservation existingObservation = null;
-
         ObservationIdentifier id = observation.getId();
         if (addIfAbsent) {
             if (!obsByToken.containsKey(id)) {
-                existingObservation = validateByAbsorptionExistingObservations(observation);
-                if (existingObservation == null) {
-                    obsByToken.put(id, observation);
-                } else if (!existingObservation.getPath().equals(observation.getPath())){
-                    obsByToken.put(id, observation);
-                    previousObservation = obsByToken.get(existingObservation.getId());
-                }
+                previousObservation = obsByToken.put(id, observation);
+            } else {
+                obsByToken.put(id, observation);
             }
         } else {
             previousObservation = obsByToken.put(id, observation);
         }
+
         if (!tokensByRegId.containsKey(registrationId)) {
             tokensByRegId.put(registrationId, new HashSet<ObservationIdentifier>());
         }
-
-        if (existingObservation == null || !existingObservation.getPath().equals(observation.getPath())) {
-            tokensByRegId.get(registrationId).add(id);
-        }
+        tokensByRegId.get(registrationId).add(id);
 
         // log any collisions
-        if (addIfAbsent && previousObservation != null) {
-            if (!existingObservation.getPath().equals(observation.getPath())) {
-                removed.add(previousObservation);
-                log.warn("Token collision ? observation [{}] will be replaced by observation [{}], that this observation  includes input observation [{}]!",
-                        previousObservation, observation, observation);
-            } else {
-                log.warn("Token collision ? existing observation [{}] includes input observation [{}]",
-                        existingObservation, observation);
+        if (previousObservation != null) {
+            removed.add(previousObservation);
+            log.warn("Token collision ? observation [{}] will be replaced by observation [{}] ",
+                    previousObservation, observation);
+        }
+        // cancel existing observations for the same path and registration id.
+        for (Observation obs : unsafeGetObservations(registrationId)) {
+            if (areTheSamePaths(observation, obs) && !observation.getId().equals(obs.getId())) {
+                unsafeRemoveObservation(obs.getId());
+                removed.add(obs);
             }
         }
     }
 
-    private SingleObservation validateByAbsorptionExistingObservations (SingleObservation observation) {
-        LwM2mPath pathObservation = observation.getPath();
-        AtomicReference<SingleObservation> result = new AtomicReference<>();
-        obsByToken.values().stream().forEach(obs -> {
-            LwM2mPath pathObs = ((SingleObservation)obs).getPath();
-            if ((!pathObservation.equals(pathObs) && pathObs.startWith(pathObservation)) ||        // pathObs = "3/0/9"-> pathObservation = "3"
-                    (pathObservation.equals(pathObs) && !observation.getId().equals(obs.getId()))) {
-               result.set((SingleObservation)obs);
-            } else if (!pathObservation.equals(pathObs) && pathObservation.startWith(pathObs)) {    // pathObs = "3" -> pathObservation = "3/0/9"
-                result.set(observation);
-            }
-        });
-        return result.get();
-    }
-
-    private TokenGenerator getTokenGenerator(){
-        if (this.tokenGenerator == null) {
-            this.tokenGenerator = new RandomTokenGenerator(config.getCoapConfig());
+    private boolean areTheSamePaths(Observation observation, Observation obs) {
+        if (observation instanceof SingleObservation && obs instanceof SingleObservation) {
+            return ((SingleObservation) observation).getPath().equals(((SingleObservation) obs).getPath());
         }
-        return this.tokenGenerator;
-    }
-
-    public static SingleObservation createSingleObservation(String registrationId, LwM2mPath target, ContentFormat ct,
-                                                Map<String, String> ctx, String serializedObservation, TokenGenerator tokenGenerator) {
-        Token token = tokenGenerator.createToken(Scope.SHORT_TERM);
-        Map<String, String>  protocolData = Collections.emptyMap();
-        if (serializedObservation != null) {
-            protocolData = new HashMap<>();
-            protocolData.put(CTX_CF_OBERSATION, serializedObservation);
+        if (observation instanceof CompositeObservation && obs instanceof CompositeObservation) {
+            return ((CompositeObservation) observation).getPaths().equals(((CompositeObservation) obs).getPaths());
         }
-        return new SingleObservation(new ObservationIdentifier(token.getBytes()), registrationId, target, ct, ctx, protocolData);
-    }
-
-    public static String createSerializedSingleObservation(JsonNode nodeSerObs, String path){
-        if (nodeSerObs.has("context")){
-            ((ObjectNode) nodeSerObs.get("context")).put("leshan-path", path + "\n");
-            return JacksonUtil.toString(nodeSerObs);
-        }
-        return null;
+        return false;
     }
 
     @Override
@@ -394,6 +301,12 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
         try {
             lock.writeLock().lock();
             Observation observation = unsafeGetObservation(observationId);
+            if (observation instanceof SingleObservation){
+                log.trace("(SingleObservation) removeObservation: [{}]", ((SingleObservation)observation).getPath());
+            } else {
+                log.trace("(CompositeObservation) removeObservation: [{}]", ((CompositeObservation)observation).getPaths());
+            }
+
             if (observation != null && registrationId.equals(observation.getRegistrationId())) {
                 unsafeRemoveObservation(observationId);
                 return observation;
@@ -470,24 +383,6 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
         return obs;
     }
 
-    private void cancelObservation (Observation observation, String registrationId, List<Observation> removed) {
-        for (Observation obs : unsafeGetObservations(registrationId)) {
-            cancelExistingObservation(observation, obs, removed);
-        }
-    }
-
-    private void cancelExistingObservation(Observation observation, Observation obs, List<Observation> removed) {
-        LwM2mPath pathObservation = ((SingleObservation)observation).getPath();
-        LwM2mPath pathObs = ((SingleObservation)obs).getPath();
-        if ((!pathObservation.equals(pathObs) && pathObs.startWith(pathObservation)) ||        // pathObservation = "3", pathObs = "3/0/9"
-             (pathObservation.equals(pathObs) && !observation.getId().equals(obs.getId()))) {
-            unsafeRemoveObservation(obs.getId());
-            removed.add(obs);
-        } else if (!pathObservation.equals(pathObs) && pathObservation.startWith(pathObs)) {    // pathObservation = "3/0/9", pathObs = "3"
-            unsafeRemoveObservation(observation.getId());
-        }
-    }
-
     private void unsafeRemoveObservation(ObservationIdentifier observationId) {
         Observation removed = obsByToken.remove(observationId);
         if (removed != null) {
@@ -499,7 +394,6 @@ public class TbInMemoryRegistrationStore implements RegistrationStore, Startable
             }
         }
     }
-
 
     /**
      * CancelAllObservation

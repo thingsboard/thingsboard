@@ -1,0 +1,133 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<ng-container [formGroup]="scadaSymbolObjectSettingsFormGroup">
+  <div *ngIf="behaviorGroups?.length" class="tb-form-panel" formGroupName="behavior">
+    <div class="tb-form-panel-title" translate>scada.behavior.behavior</div>
+    <ng-container *ngFor="let behaviorGroup of behaviorGroups">
+      <div *ngIf="behaviorGroup.title" class="tb-form-panel stroked">
+        <mat-expansion-panel class="tb-settings" expanded>
+          <mat-expansion-panel-header fxLayout="row wrap">
+            <mat-panel-title>
+              <div class="tb-form-panel-title">{{ behaviorGroup.title | customTranslate }}</div>
+            </mat-panel-title>
+          </mat-expansion-panel-header>
+          <ng-template matExpansionPanelContent>
+            <ng-container *ngTemplateOutlet="behaviorsTpl; context:{behaviors: behaviorGroup.behaviors}"></ng-container>
+          </ng-template>
+        </mat-expansion-panel>
+      </div>
+      <ng-container *ngIf="!behaviorGroup.title">
+        <ng-container *ngTemplateOutlet="behaviorsTpl; context:{behaviors: behaviorGroup.behaviors}"></ng-container>
+      </ng-container>
+    </ng-container>
+  </div>
+  <div [fxShow]="propertyRows?.length || appearanceProperties.children.length" class="tb-form-panel" formGroupName="properties">
+    <div class="tb-form-panel-title" translate>widget-config.appearance</div>
+    <div #appearanceProperties><ng-content select=".tb-scada-symbol-appearance-properties"></ng-content></div>
+    <div *ngFor="let propertyRow of propertyRows" class="tb-form-row space-between flex-wrap overflow-auto" [class]="propertyRow.rowClass">
+      <mat-slide-toggle *ngIf="propertyRow.switch" class="mat-slide fixed-title-width margin" formControlName="{{ propertyRow.switch.id }}">
+        {{ propertyRow.label | customTranslate }}
+      </mat-slide-toggle>
+      <div *ngIf="!propertyRow.switch" class="fixed-title-width fixed-title-height">{{ propertyRow.label | customTranslate }}</div>
+      <div *ngIf="propertyRow.properties.length" class="tb-flex row flex-end align-center">
+        <ng-container *ngFor="let property of propertyRow.properties">
+          <div *ngIf="property.subLabel" class="tb-small-label">{{ property.subLabel | customTranslate }}</div>
+          <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.text" [class]="property.fieldClass" appearance="outline" subscriptSizing="dynamic">
+            <input matInput formControlName="{{ property.id }}" [required]="property.required" placeholder="{{ 'widget-config.set' | translate }}">
+            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+          </mat-form-field>
+          <tb-color-input *ngIf="property.type === ScadaSymbolPropertyType.color"
+                          [required]="property.required"
+                          [class]="property.fieldClass"
+                          asBoxInput
+                          colorClearButton
+                          formControlName="{{ property.id }}">
+          </tb-color-input>
+          <tb-color-settings *ngIf="property.type === ScadaSymbolPropertyType.color_settings"
+                             [class]="property.fieldClass"
+                             formControlName="{{ property.id }}"
+                             settingsKey="{{ property.name | customTranslate }}">
+          </tb-color-settings>
+          <mat-form-field  *ngIf="property.type === ScadaSymbolPropertyType.number" [class]="property.fieldClass" appearance="outline" class="number" subscriptSizing="dynamic">
+            <input matInput formControlName="{{ property.id }}" [required]="property.required"
+                   [min]="property.min" [max]="property.max" [step]="property.step"
+                   type="number" placeholder="{{ 'widget-config.set' | translate }}">
+            <div fxHide.lt-md matSuffix *ngIf="property.fieldSuffix">{{ property.fieldSuffix | customTranslate }}</div>
+          </mat-form-field>
+          <tb-font-settings *ngIf="property.type === ScadaSymbolPropertyType.font"
+                            [class]="property.fieldClass"
+                            formControlName="{{ property.id }}"
+                            clearButton
+                            disabledLineHeight>
+          </tb-font-settings>
+          <tb-unit-input *ngIf="property.type === ScadaSymbolPropertyType.units"
+                         [class]="property.fieldClass"
+                         [required]="property.required"
+                         formControlName="{{ property.id }}"></tb-unit-input>
+          <tb-material-icon-select *ngIf="property.type === ScadaSymbolPropertyType.icon"
+                                   asBoxInput
+                                   formControlName="{{ property.id }}">
+          </tb-material-icon-select>
+          <mat-divider *ngIf="property.divider" vertical></mat-divider>
+        </ng-container>
+      </div>
+    </div>
+  </div>
+</ng-container>
+
+<ng-template #behaviorsTpl let-behaviors="behaviors">
+  <ng-container *ngFor="let behavior of behaviors">
+    <ng-container *ngTemplateOutlet="behaviorTpl; context:{behavior: behavior}"></ng-container>
+  </ng-container>
+</ng-template>
+
+<ng-template #behaviorTpl let-behavior="behavior">
+  <ng-container [formGroup]="scadaSymbolObjectSettingsFormGroup">
+    <div class="tb-form-row flex-wrap overflow-auto" formGroupName="behavior">
+      <div class="fixed-title-width fixed-title-height" tb-hint-tooltip-icon="{{ behavior.hint | customTranslate }}">{{ behavior.name | customTranslate }}</div>
+      <tb-get-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.value"
+                                    class="tb-flex"
+                                    panelTitle="{{ behavior.name | customTranslate }}"
+                                    [valueType]="behavior.valueType"
+                                    [trueLabel]="behavior.trueLabel | customTranslate"
+                                    [falseLabel]="behavior.falseLabel | customTranslate"
+                                    [stateLabel]="behavior.stateLabel | customTranslate"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="{{ behavior.id }}">
+      </tb-get-value-action-settings>
+      <tb-set-value-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.action"
+                                    class="tb-flex"
+                                    panelTitle="{{ behavior.name | customTranslate }}"
+                                    [valueType]="behavior.valueType"
+                                    [aliasController]="aliasController"
+                                    [targetDevice]="targetDevice"
+                                    [widgetType]="widgetType"
+                                    formControlName="{{ behavior.id }}">
+      </tb-set-value-action-settings>
+      <tb-widget-action-settings *ngIf="behavior.type === ScadaSymbolBehaviorType.widgetAction"
+                                 class="tb-flex"
+                                 panelTitle="{{ behavior.name | customTranslate }}"
+                                 [callbacks]="callbacks"
+                                 [widgetType]="widgetType"
+                                 formControlName="{{ behavior.id }}">
+      </tb-widget-action-settings>
+    </div>
+  </ng-container>
+</ng-template>

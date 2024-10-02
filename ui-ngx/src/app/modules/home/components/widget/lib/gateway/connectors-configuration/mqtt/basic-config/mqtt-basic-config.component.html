@@ -1,0 +1,41 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<mat-tab-group [formGroup]="basicFormGroup">
+  <mat-tab label="{{ 'gateway.general' | translate }}">
+    <ng-container [ngTemplateOutlet]="generalTabContent"></ng-container>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.broker.connection' | translate }}*">
+    <tb-broker-config-control formControlName="broker"></tb-broker-config-control>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.data-mapping' | translate }}*">
+    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
+      <tb-mapping-table formControlName="mapping" [required]="true" [mappingType]="MappingType.DATA"></tb-mapping-table>
+    </div>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.requests-mapping' | translate }}">
+    <div class="tb-form-panel no-border no-padding padding-top tb-flex fill-height">
+      <tb-mapping-table formControlName="requestsMapping" [mappingType]="MappingType.REQUESTS"></tb-mapping-table>
+    </div>
+  </mat-tab>
+  <mat-tab label="{{ 'gateway.workers-settings' | translate }}">
+    <div class="tb-form-panel no-border no-padding">
+      <tb-workers-config-control formControlName="workers"></tb-workers-config-control>
+    </div>
+  </mat-tab>
+</mat-tab-group>
+

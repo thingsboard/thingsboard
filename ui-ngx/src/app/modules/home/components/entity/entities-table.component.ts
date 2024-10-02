@@ -22,7 +22,7 @@ import {
   ComponentFactoryResolver,
   ElementRef,
   EventEmitter,
-  Input,
+  Input, NgZone,
   OnChanges,
   OnDestroy,
   OnInit,
@@ -47,6 +47,7 @@ import {
   CellActionDescriptor,
   CellActionDescriptorType,
   EntityActionTableColumn,
+  EntityChipsEntityTableColumn,
   EntityColumn,
   EntityLinkTableColumn,
   EntityTableColumn,
@@ -63,7 +64,6 @@ import { DomSanitizer, SafeHtml } from '@angular/platform-browser';
 import { TbAnchorComponent } from '@shared/components/tb-anchor.component';
 import { isDefined, isEqual, isNotEmptyStr, isUndefined } from '@core/utils';
 import { HasUUID } from '@shared/models/id/has-uuid';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import { EntitiesTableAction, IEntitiesTableComponent } from '@home/models/entity/entity-table-component.models';
 import { EntityDetailsPanelComponent } from '@home/components/entity/entity-details-panel.component';
@@ -142,7 +142,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
               private router: Router,
               private componentFactoryResolver: ComponentFactoryResolver,
               private elementRef: ElementRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -157,11 +158,13 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       });
     }
     this.widgetResize$ = new ResizeObserver(() => {
-      const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-      if (showHidePageSize !== this.hidePageSize) {
-        this.hidePageSize = showHidePageSize;
-        this.cd.markForCheck();
-      }
+      this.zone.run(() => {
+        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+        if (showHidePageSize !== this.hidePageSize) {
+          this.hidePageSize = showHidePageSize;
+          this.cd.markForCheck();
+        }
+      });
     });
     this.widgetResize$.observe(this.elementRef.nativeElement);
   }
@@ -402,7 +405,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
     this.cd.detectChanges();
   }
 
-  updateData(closeDetails: boolean = true) {
+  updateData(closeDetails: boolean = true, reloadEntity: boolean = true) {
     if (closeDetails) {
       this.isDetailsOpen = false;
     }
@@ -427,13 +430,13 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
       timePageLink.endTime = interval.endTime;
     }
     this.dataSource.loadEntities(this.pageLink);
-    if (this.isDetailsOpen && this.entityDetailsPanel) {
+    if (reloadEntity && this.isDetailsOpen && this.entityDetailsPanel) {
       this.entityDetailsPanel.reloadEntity();
     }
   }
 
-  private getTimePageLinkInterval(): {startTime?: number, endTime?: number} {
-    const interval: {startTime?: number, endTime?: number} = {};
+  private getTimePageLinkInterval(): {startTime?: number; endTime?: number} {
+    const interval: {startTime?: number; endTime?: number} = {};
     switch (this.timewindow.history.historyType) {
       case HistoryWindowType.LAST_INTERVAL:
         const currentTime = Date.now();
@@ -511,7 +514,7 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
   }
 
   onEntityUpdated(entity: BaseData<HasId>) {
-    this.updateData(false);
+    this.updateData(false, false);
     this.entitiesTableConfig.entityUpdated(entity);
   }
 
@@ -614,7 +617,8 @@ export class EntitiesTableComponent extends PageComponent implements IEntitiesTa
 
   columnsUpdated(resetData: boolean = false) {
     this.entityColumns = this.entitiesTableConfig.columns.filter(
-      (column) => column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn)
+      (column) => column instanceof EntityTableColumn || column instanceof EntityLinkTableColumn ||
+        column instanceof EntityChipsEntityTableColumn)
       .map(column => column as EntityTableColumn<BaseData<HasId>>);
     this.actionColumns = this.entitiesTableConfig.columns.filter(
       (column) => column instanceof EntityActionTableColumn)

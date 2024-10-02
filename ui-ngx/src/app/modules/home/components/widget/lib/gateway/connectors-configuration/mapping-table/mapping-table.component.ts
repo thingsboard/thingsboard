@@ -28,8 +28,8 @@ import {
 import { TranslateService } from '@ngx-translate/core';
 import { MatDialog } from '@angular/material/dialog';
 import { DialogService } from '@core/services/dialog.service';
-import { BehaviorSubject, Observable, Subject } from 'rxjs';
-import { debounceTime, distinctUntilChanged, map, take, takeUntil } from 'rxjs/operators';
+import { Subject } from 'rxjs';
+import { debounceTime, distinctUntilChanged, take, takeUntil } from 'rxjs/operators';
 import {
   ControlValueAccessor,
   FormBuilder,
@@ -40,24 +40,28 @@ import {
   Validator,
 } from '@angular/forms';
 import {
+  AttributeUpdate,
   ConnectorMapping,
+  ConnectRequest,
   ConverterConnectorMapping,
   ConvertorTypeTranslationsMap,
   DeviceConnectorMapping,
+  DisconnectRequest,
   MappingInfo,
   MappingType,
   MappingTypeTranslationsMap,
   MappingValue,
-  RequestMappingData,
+  RequestMappingValue,
   RequestType,
-  RequestTypesTranslationsMap
+  RequestTypesTranslationsMap,
+  ServerSideRpc
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
-import { DataSource } from '@angular/cdk/collections';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
 import { isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { coerceBoolean } from '@shared/decorators/coercion';
 import { SharedModule } from '@shared/shared.module';
 import { CommonModule } from '@angular/common';
+import { TbTableDatasource } from '@shared/components/table/table-datasource.abstract';
 
 @Component({
   selector: 'tb-mapping-table',
@@ -191,7 +195,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
       $event.stopPropagation();
     }
     const value = isDefinedAndNotNull(index) ? this.mappingFormGroup.at(index).value : {};
-    this.dialog.open<MappingDialogComponent, MappingInfo, MappingValue>(MappingDialogComponent, {
+    this.dialog.open<MappingDialogComponent, MappingInfo, ConnectorMapping>(MappingDialogComponent, {
       disableClose: true,
       panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
       data: {
@@ -206,7 +210,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
           if (isDefinedAndNotNull(index)) {
             this.mappingFormGroup.at(index).patchValue(res);
           } else {
-            this.mappingFormGroup.push(this.fb.group(res));
+            this.pushDataAsFormArrays([res]);
           }
           this.mappingFormGroup.markAsDirty();
         }
@@ -222,7 +226,7 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
         )
       );
     }
-    this.dataSource.loadMappings(tableValue);
+    this.dataSource.loadData(tableValue);
   }
 
   deleteMapping($event: Event, index: number): void {
@@ -252,23 +256,25 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   private getMappingValue(value: ConnectorMapping): MappingValue {
     switch (this.mappingType) {
       case MappingType.DATA:
+        const converterType = ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter?.type);
         return {
           topicFilter: (value as ConverterConnectorMapping).topicFilter,
           QoS: (value as ConverterConnectorMapping).subscriptionQos,
-          converter: this.translate.instant(ConvertorTypeTranslationsMap.get((value as ConverterConnectorMapping).converter?.type) || '')
+          converter: converterType ? this.translate.instant(converterType) : ''
         };
       case MappingType.REQUESTS:
         let details: string;
-        if ((value as RequestMappingData).requestType === RequestType.ATTRIBUTE_UPDATE) {
-          details = (value as RequestMappingData).requestValue.attributeFilter;
-        } else if ((value as RequestMappingData).requestType === RequestType.SERVER_SIDE_RPC) {
-          details = (value as RequestMappingData).requestValue.methodFilter;
+        const requestValue = value as RequestMappingValue;
+        if (requestValue.requestType === RequestType.ATTRIBUTE_UPDATE) {
+          details = (requestValue.requestValue as AttributeUpdate).attributeFilter;
+        } else if (requestValue.requestType === RequestType.SERVER_SIDE_RPC) {
+          details = (requestValue.requestValue as ServerSideRpc).methodFilter;
         } else {
-          details = (value as RequestMappingData).requestValue.topicFilter;
+          details = (requestValue.requestValue as ConnectRequest | DisconnectRequest).topicFilter;
         }
         return {
-          requestType: (value as RequestMappingData).requestType,
-          type: this.translate.instant(RequestTypesTranslationsMap.get((value as RequestMappingData).requestType)),
+          requestType: (value as RequestMappingValue).requestType,
+          type: this.translate.instant(RequestTypesTranslationsMap.get((value as RequestMappingValue).requestType)),
           details
         };
       case MappingType.OPCUA:
@@ -310,33 +316,8 @@ export class MappingTableComponent implements ControlValueAccessor, Validator, A
   }
 }
 
-export class MappingDatasource implements DataSource<{[key: string]: any}> {
-
-  private mappingSubject = new BehaviorSubject<Array<{[key: string]: any}>>([]);
-
-  constructor() {}
-
-  connect(): Observable<Array<{[key: string]: any}>> {
-    return this.mappingSubject.asObservable();
-  }
-
-  disconnect(): void {
-    this.mappingSubject.complete();
-  }
-
-  loadMappings(mappings: Array<{[key: string]: any}>): void {
-    this.mappingSubject.next(mappings);
-  }
-
-  isEmpty(): Observable<boolean> {
-    return this.mappingSubject.pipe(
-      map((mappings) => !mappings.length)
-    );
-  }
-
-  total(): Observable<number> {
-    return this.mappingSubject.pipe(
-      map((mappings) => mappings.length)
-    );
+export class MappingDatasource extends TbTableDatasource<MappingValue> {
+  constructor() {
+    super();
   }
 }

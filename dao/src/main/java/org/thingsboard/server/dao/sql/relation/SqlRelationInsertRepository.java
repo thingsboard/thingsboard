@@ -15,33 +15,39 @@
  */
 package org.thingsboard.server.dao.sql.relation;
 
+import jakarta.persistence.EntityManager;
+import jakarta.persistence.PersistenceContext;
+import jakarta.persistence.Query;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.PreparedStatementCreator;
+import org.springframework.jdbc.core.SqlProvider;
+import org.springframework.jdbc.support.GeneratedKeyHolder;
+import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.dao.model.sql.RelationEntity;
 
-import jakarta.persistence.EntityManager;
-import jakarta.persistence.PersistenceContext;
-import jakarta.persistence.Query;
+import java.sql.Connection;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 import java.util.List;
+
+import static org.thingsboard.server.dao.model.ModelConstants.VERSION_COLUMN;
 
 @Repository
 @Transactional
 public class SqlRelationInsertRepository implements RelationInsertRepository {
 
-    private static final String INSERT_ON_CONFLICT_DO_UPDATE_JPA = "INSERT INTO relation (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info)" +
-            " VALUES (:fromId, :fromType, :toId, :toType, :relationTypeGroup, :relationType, :additionalInfo) " +
-            "ON CONFLICT (from_id, from_type, relation_type_group, relation_type, to_id, to_type) DO UPDATE SET additional_info = :additionalInfo returning *";
+    private static final String INSERT_ON_CONFLICT_DO_UPDATE_JPA = "INSERT INTO relation (from_id, from_type, to_id, to_type, relation_type_group, relation_type, version, additional_info)" +
+            " VALUES (:fromId, :fromType, :toId, :toType, :relationTypeGroup, :relationType, nextval('relation_version_seq'), :additionalInfo) " +
+            "ON CONFLICT (from_id, from_type, relation_type_group, relation_type, to_id, to_type) DO UPDATE SET additional_info = :additionalInfo, version = nextval('relation_version_seq') returning *";
 
-    private static final String INSERT_ON_CONFLICT_DO_UPDATE_JDBC = "INSERT INTO relation (from_id, from_type, to_id, to_type, relation_type_group, relation_type, additional_info)" +
-            " VALUES (?, ?, ?, ?, ?, ?, ?) " +
-            "ON CONFLICT (from_id, from_type, relation_type_group, relation_type, to_id, to_type) DO UPDATE SET additional_info = ?";
-
+    private static final String INSERT_ON_CONFLICT_DO_UPDATE_JDBC = "INSERT INTO relation (from_id, from_type, to_id, to_type, relation_type_group, relation_type, version, additional_info)" +
+            " VALUES (?, ?, ?, ?, ?, ?, nextval('relation_version_seq'), ?) " +
+            "ON CONFLICT (from_id, from_type, relation_type_group, relation_type, to_id, to_type) DO UPDATE SET additional_info = ?, version = nextval('relation_version_seq')";
 
     @PersistenceContext
     protected EntityManager entityManager;
@@ -71,8 +77,9 @@ public class SqlRelationInsertRepository implements RelationInsertRepository {
     }
 
     @Override
-    public void saveOrUpdate(List<RelationEntity> entities) {
-        jdbcTemplate.batchUpdate(INSERT_ON_CONFLICT_DO_UPDATE_JDBC, new BatchPreparedStatementSetter() {
+    public List<RelationEntity> saveOrUpdate(List<RelationEntity> entities) {
+        KeyHolder keyHolder = new GeneratedKeyHolder();
+        jdbcTemplate.batchUpdate(new SequencePreparedStatementCreator(INSERT_ON_CONFLICT_DO_UPDATE_JDBC), new BatchPreparedStatementSetter() {
             @Override
             public void setValues(PreparedStatement ps, int i) throws SQLException {
                 RelationEntity relation = entities.get(i);
@@ -98,7 +105,30 @@ public class SqlRelationInsertRepository implements RelationInsertRepository {
             public int getBatchSize() {
                 return entities.size();
             }
-        });
+        }, keyHolder);
+
+        var seqNumbers = keyHolder.getKeyList();
+
+        for (int i = 0; i < entities.size(); i++) {
+            entities.get(i).setVersion((Long) seqNumbers.get(i).get(VERSION_COLUMN));
+        }
+
+        return entities;
+    }
+
+    private record SequencePreparedStatementCreator(String sql) implements PreparedStatementCreator, SqlProvider {
+
+        private static final String[] COLUMNS = {VERSION_COLUMN};
+
+        @Override
+        public PreparedStatement createPreparedStatement(Connection con) throws SQLException {
+            return con.prepareStatement(sql, COLUMNS);
+        }
+
+        @Override
+        public String getSql() {
+            return this.sql;
+        }
     }
 
 }

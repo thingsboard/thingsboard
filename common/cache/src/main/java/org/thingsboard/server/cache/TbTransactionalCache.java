@@ -73,7 +73,7 @@ public interface TbTransactionalCache<K extends Serializable, V extends Serializ
         try {
             R dbValue = dbCall.get();
             if (dbValue != null || cacheNullValue) {
-                cacheTransaction.putIfAbsent(key, dbValueToCacheValue.apply(dbValue));
+                cacheTransaction.put(key, dbValueToCacheValue.apply(dbValue));
                 cacheTransaction.commit();
                 return dbValue;
             } else {

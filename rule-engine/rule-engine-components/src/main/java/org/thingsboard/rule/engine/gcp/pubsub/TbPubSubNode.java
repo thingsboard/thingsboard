@@ -129,7 +129,7 @@ public class TbPubSubNode extends TbAbstractExternalNode {
         return TbMsg.transformMsgMetadata(origMsg, metaData);
     }
 
-    private Publisher initPubSubClient(TbContext ctx) throws IOException {
+    Publisher initPubSubClient(TbContext ctx) throws IOException {
         ProjectTopicName topicName = ProjectTopicName.of(config.getProjectId(), config.getTopicName());
         ServiceAccountCredentials credentials =
                 ServiceAccountCredentials.fromStream(

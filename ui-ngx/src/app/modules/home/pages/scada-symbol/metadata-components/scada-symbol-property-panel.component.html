@@ -1,0 +1,190 @@
+<!--
+
+    Copyright © 2016-2024 The Thingsboard Authors
+
+    Licensed under the Apache License, Version 2.0 (the "License");
+    you may not use this file except in compliance with the License.
+    You may obtain a copy of the License at
+
+        http://www.apache.org/licenses/LICENSE-2.0
+
+    Unless required by applicable law or agreed to in writing, software
+    distributed under the License is distributed on an "AS IS" BASIS,
+    WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+    See the License for the specific language governing permissions and
+    limitations under the License.
+
+-->
+<div class="tb-scada-symbol-property-settings-panel" [formGroup]="propertyFormGroup">
+  <div class="tb-scada-symbol-property-settings-title">{{ panelTitle | translate }}</div>
+  <div class="tb-scada-symbol-property-settings-panel-content">
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.property.id</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="id" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.property.name</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <input required matInput formControlName="name" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row">
+      <div class="fixed-title-width" translate>scada.property.type</div>
+      <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+        <mat-select formControlName="type">
+          <mat-option *ngFor="let type of scadaSymbolPropertyTypes" [value]="type">
+            {{ scadaSymbolPropertyTypeTranslations.get(type) | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+    </div>
+    <div class="tb-form-row space-between">
+      <div class="fixed-title-width" translate>scada.property.default-value</div>
+      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.text"
+                       class="flex"
+                       appearance="outline" subscriptSizing="dynamic">
+        <input matInput formControlName="default" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+      <tb-color-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.color"
+                      asBoxInput
+                      colorClearButton
+                      formControlName="default">
+      </tb-color-input>
+      <tb-color-settings *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.color_settings"
+                         formControlName="default"
+                         settingsKey="{{ propertyFormGroup.get('id').value }}">
+      </tb-color-settings>
+      <mat-form-field  *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number"
+                       appearance="outline"
+                       class="number"
+                       subscriptSizing="dynamic">
+        <input matInput formControlName="default"
+               [min]="propertyFormGroup.get('min').value"
+               [max]="propertyFormGroup.get('max').value"
+               [step]="propertyFormGroup.get('step').value"
+               type="number" placeholder="{{ 'widget-config.set' | translate }}">
+      </mat-form-field>
+      <tb-font-settings *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.font"
+                        formControlName="default"
+                        clearButton
+                        disabledLineHeight>
+      </tb-font-settings>
+      <tb-unit-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.units"
+                     formControlName="default"></tb-unit-input>
+      <tb-value-input *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.switch"
+                      [valueType]="ValueType.BOOLEAN"
+                      formControlName="default"></tb-value-input>
+      <tb-material-icon-select *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.icon"
+                               asBoxInput
+                               formControlName="default">
+      </tb-material-icon-select>
+    </div>
+    <div *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number" class="tb-form-row space-between">
+      <div translate>scada.property.number-settings</div>
+      <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
+        <div class="tb-small-label" translate>scada.property.min</div>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="min"
+                 type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>scada.property.max</div>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="max"
+                 type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+        <mat-divider vertical></mat-divider>
+        <div class="tb-small-label" translate>scada.property.step</div>
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
+          <input matInput formControlName="step" min="0"
+                 type="number" placeholder="{{ 'widget-config.set' | translate }}">
+        </mat-form-field>
+      </div>
+    </div>
+    <div class="tb-form-row space-between">
+      <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="required">
+        {{ 'scada.property.value-required' | translate }}
+      </mat-slide-toggle>
+    </div>
+    <div class="tb-form-panel stroked">
+      <mat-expansion-panel class="tb-settings">
+        <mat-expansion-panel-header fxLayout="row wrap">
+          <mat-panel-title>
+            {{ 'scada.property.advanced-ui-settings' | translate }}
+          </mat-panel-title>
+        </mat-expansion-panel-header>
+        <ng-template matExpansionPanelContent>
+          <div class="tb-form-row space-between">
+            <div class="fixed-title-width" translate>scada.property.sub-label</div>
+            <mat-form-field  class="flex"
+                             appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="subLabel" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
+            <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="divider">
+              {{ 'scada.property.vertical-divider-after' | translate }}
+            </mat-slide-toggle>
+          </div>
+          <div *ngIf="[ScadaSymbolPropertyType.number, ScadaSymbolPropertyType.text].includes(propertyFormGroup.get('type').value)"
+               class="tb-form-row space-between">
+            <div class="fixed-title-width" translate>scada.property.input-field-suffix</div>
+            <mat-form-field  class="flex"
+                             appearance="outline" subscriptSizing="dynamic">
+              <input matInput formControlName="fieldSuffix" placeholder="{{ 'widget-config.set' | translate }}">
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row space-between">
+            <div class="fixed-title-width" translate>scada.property.disable-on-property</div>
+            <mat-form-field  class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="disableOnProperty" placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option [value]="null"></mat-option>
+                <mat-option *ngFor="let prop of booleanPropertyIds" [value]="prop">
+                  {{ prop }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div class="tb-form-row">
+            <div class="fixed-title-width" translate>scada.property.property-row-classes</div>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="rowClass" multiple placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option *ngFor="let clazz of scadaSymbolPropertyRowClasses" [value]="clazz">
+                  {{ clazz }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+          <div *ngIf="propertyFormGroup.get('type').value !== ScadaSymbolPropertyType.switch" class="tb-form-row">
+            <div class="fixed-title-width" translate>scada.property.property-field-classes</div>
+            <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
+              <mat-select formControlName="fieldClass" multiple placeholder="{{ 'widget-config.set' | translate }}">
+                <mat-option *ngFor="let clazz of scadaSymbolPropertyFieldClasses" [value]="clazz">
+                  {{ clazz }}
+                </mat-option>
+              </mat-select>
+            </mat-form-field>
+          </div>
+        </ng-template>
+      </mat-expansion-panel>
+    </div>
+  </div>
+  <div class="tb-scada-symbol-property-settings-panel-buttons">
+    <button mat-button
+            color="primary"
+            type="button"
+            (click)="cancel()">
+      {{ (disabled ? 'action.close' : 'action.cancel') | translate }}
+    </button>
+    <button *ngIf="!disabled"
+            mat-raised-button
+            color="primary"
+            type="button"
+            (click)="applyPropertySettings()"
+            [disabled]="propertyFormGroup.invalid || !propertyFormGroup.dirty">
+      {{ (isAdd ? 'action.add' : 'action.apply') | translate }}
+    </button>
+  </div>
+</div>

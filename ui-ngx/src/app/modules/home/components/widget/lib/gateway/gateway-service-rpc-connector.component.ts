@@ -35,8 +35,6 @@ import {
   ConnectorType,
   GatewayConnectorDefaultTypesTranslatesMap,
   HTTPMethods,
-  ModbusCodesTranslate,
-  ModbusCommandTypes,
   noLeadTrailSpacesRegex,
   RPCCommand,
   RPCTemplateConfig,
@@ -53,7 +51,6 @@ import {
 } from '@shared/components/dialog/json-object-edit-dialog.component';
 import { jsonRequired } from '@shared/components/json-object-edit.component';
 import { deepClone } from '@core/utils';
-import { takeUntil, tap } from "rxjs/operators";
 import { Subject } from "rxjs";
 
 @Component({
@@ -80,10 +77,7 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   saveTemplate: EventEmitter<RPCTemplateConfig> = new EventEmitter();
 
   commandForm: FormGroup;
-  isMQTTWithResponse: FormControl;
-  codesArray: Array<number> = [1, 2, 3, 4, 5, 6, 15, 16];
   ConnectorType = ConnectorType;
-  modbusCommandTypes = Object.values(ModbusCommandTypes) as ModbusCommandTypes[];
   bACnetRequestTypes = Object.values(BACnetRequestTypes) as BACnetRequestTypes[];
   bACnetObjectTypes = Object.values(BACnetObjectTypes) as BACnetObjectTypes[];
   bLEMethods = Object.values(BLEMethods) as BLEMethods[];
@@ -99,7 +93,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
   SocketMethodProcessingsTranslates = SocketMethodProcessingsTranslates;
   SNMPMethodsTranslations = SNMPMethodsTranslations;
   gatewayConnectorDefaultTypesTranslates = GatewayConnectorDefaultTypesTranslatesMap;
-  modbusCodesTranslate = ModbusCodesTranslate;
 
   urlPattern = /^[-a-zA-Zd_$:{}?~+=\/.0-9-]*$/;
   numbersOnlyPattern = /^[0-9]*$/;
@@ -135,8 +128,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
         this.propagateChange({...this.commandForm.value, ...value});
       }
     });
-    this.isMQTTWithResponse = this.fb.control(false);
-    this.observeMQTTWithResponse();
   }
 
   ngOnDestroy(): void {
@@ -148,35 +139,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
     let formGroup: FormGroup;
 
     switch (type) {
-      case ConnectorType.MQTT:
-        formGroup = this.fb.group({
-          methodFilter: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          requestTopicExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTopicExpression: [{ value: null, disabled: true }, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          responseTimeout: [null, [Validators.min(10), Validators.pattern(this.numbersOnlyPattern)]],
-          valueExpression: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-        })
-        break;
-      case ConnectorType.MODBUS:
-        formGroup = this.fb.group({
-          tag: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          type: [null, [Validators.required]],
-          functionCode: [null, [Validators.required]],
-          value: [null, []],
-          address: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]],
-          objectsCount: [null, [Validators.required, Validators.min(0), Validators.pattern(this.numbersOnlyPattern)]]
-        })
-        const valueForm = formGroup.get('value');
-        formGroup.get('functionCode').valueChanges.subscribe(value => {
-          if (value > 4) {
-            valueForm.addValidators([Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]);
-          } else {
-            valueForm.clearValidators();
-            valueForm.setValue(null);
-          }
-          valueForm.updateValueAndValidity();
-        })
-        break;
       case ConnectorType.BACNET:
         formGroup = this.fb.group({
           method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -272,12 +234,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           httpHeaders: this.fb.array([]),
         })
         break;
-      case ConnectorType.OPCUA:
-        formGroup = this.fb.group({
-          method: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
-          arguments: this.fb.array([]),
-        })
-        break;
       default:
         formGroup = this.fb.group({
           command: [null, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]],
@@ -317,18 +273,6 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
 
   getFormArrayControls(path: string) {
     return (this.commandForm.get(path) as FormArray).controls as FormControl[];
-  }
-
-  addOCPUAArguments(value: string = null) {
-    const oidsFA = this.commandForm.get('arguments') as FormArray;
-    if (oidsFA) {
-      oidsFA.push(this.fb.control(value, [Validators.required, Validators.pattern(noLeadTrailSpacesRegex)]), {emitEvent: false});
-    }
-  }
-
-  removeOCPUAArguments(index: number) {
-    const oidsFA = this.commandForm.get('arguments') as FormArray;
-    oidsFA.removeAt(index);
   }
 
   openEditJSONDialog($event: Event) {
@@ -394,25 +338,8 @@ export class GatewayServiceRPCConnectorComponent implements OnInit, OnDestroy, C
           })
           delete value.httpHeaders;
           break;
-        case ConnectorType.OPCUA:
-          this.clearFromArrayByName("arguments");
-          value.arguments.forEach(value => {
-            this.addOCPUAArguments(value)
-          })
-          delete value.arguments;
-          break;
       }
       this.commandForm.patchValue(value, {onlySelf: false});
     }
-  }
-
-  private observeMQTTWithResponse(): void {
-    this.isMQTTWithResponse.valueChanges.pipe(
-      tap((isActive: boolean) => {
-        const responseControl = this.commandForm.get('responseTopicExpression');
-        isActive ? responseControl.enable() : responseControl.disable();
-      }),
-      takeUntil(this.destroy$),
-    ).subscribe();
   }
 }

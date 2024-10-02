@@ -16,11 +16,10 @@
 package org.thingsboard.rule.engine.telemetry;
 
 import com.google.common.util.concurrent.FutureCallback;
+import jakarta.annotation.Nullable;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.server.common.msg.TbMsg;
-
-import jakarta.annotation.Nullable;
 
 /**
  * Created by ashvayka on 02.04.18.

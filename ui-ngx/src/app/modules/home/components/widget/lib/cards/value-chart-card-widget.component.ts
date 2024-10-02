@@ -41,7 +41,6 @@ import {
   textStyle
 } from '@shared/models/widget-settings.models';
 import { WidgetComponent } from '@home/components/widget/widget.component';
-import { ResizeObserver } from '@juggle/resize-observer';
 import {
   valueChartCardDefaultSettings,
   ValueChartCardLayout,

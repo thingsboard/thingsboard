@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { ResizeObserver } from '@juggle/resize-observer';
 import { ECharts, echartsModule, EChartsOption } from '@home/components/widget/lib/chart/echarts-widget.models';
 import {
   LatestChartDataItem,

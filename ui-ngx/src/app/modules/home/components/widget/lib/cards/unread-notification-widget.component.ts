@@ -30,7 +30,6 @@ import {
 import { WidgetAction, WidgetContext } from '@home/models/widget-component.models';
 import { isDefined } from '@core/utils';
 import { backgroundStyle, ComponentStyle, overlayStyle, textStyle } from '@shared/models/widget-settings.models';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { BehaviorSubject, fromEvent, Observable, ReplaySubject, Subscription } from 'rxjs';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -153,9 +152,11 @@ export class UnreadNotificationWidgetComponent implements OnInit, OnDestroy {
     this.ctx.widgetActions = [this.viewAllAction, this.filterAction, this.markAsReadAction];
 
     this.viewAllAction.show = isDefined(this.settings.enableViewAll) ? this.settings.enableViewAll : true;
-    this.store.pipe(select(selectUserDetails), take(1)).subscribe(
-      user => this.viewAllAction.show = !user.additionalInfo?.defaultDashboardFullscreen
-    );
+    if (this.viewAllAction.show) {
+      this.store.pipe(select(selectUserDetails), take(1)).subscribe(
+        user => this.viewAllAction.show = !user.additionalInfo?.defaultDashboardFullscreen
+      );
+    }
     this.filterAction.show = isDefined(this.settings.enableFilter) ? this.settings.enableFilter : true;
     this.markAsReadAction.show = isDefined(this.settings.enableMarkAsRead) ? this.settings.enableMarkAsRead : true;
 

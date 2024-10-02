@@ -20,7 +20,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { MenuService } from '@core/services/menu.service';
-import { HomeSection, HomeSectionPlace } from '@core/services/menu.models';
+import { HomeSection, MenuSection } from '@core/services/menu.models';
 import { Router } from '@angular/router';
 import { map } from 'rxjs/operators';
 
@@ -38,9 +38,7 @@ export class NavigationCardsWidgetComponent extends PageComponent implements OnI
 
   homeSections$ = this.menuService.homeSections();
   showHomeSections$ = this.homeSections$.pipe(
-    map((sections) => {
-      return sections.filter((section) => this.sectionPlaces(section).length > 0);
-    })
+    map((sections) => sections.filter((section) => this.sectionPlaces(section).length > 0))
   );
 
   cols = null;
@@ -85,11 +83,11 @@ export class NavigationCardsWidgetComponent extends PageComponent implements OnI
     });
   }
 
-  sectionPlaces(section: HomeSection): HomeSectionPlace[] {
+  sectionPlaces(section: HomeSection): MenuSection[] {
     return section && section.places ? section.places.filter((place) => this.filterPlace(place)) : [];
   }
 
-  private filterPlace(place: HomeSectionPlace): boolean {
+  private filterPlace(place: MenuSection): boolean {
     if (this.settings.filterType === 'include') {
       return this.settings.filter.includes(place.path);
     } else if (this.settings.filterType === 'exclude') {

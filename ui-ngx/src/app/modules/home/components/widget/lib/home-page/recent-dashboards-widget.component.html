@@ -48,7 +48,7 @@
                 {{ 'widgets.recent-dashboards.name' | translate }}
               </mat-header-cell>
               <mat-cell class="title" *matCellDef="let lastVisitedDashboard">
-                <a routerLink="/dashboards/{{lastVisitedDashboard.id}}">{{ lastVisitedDashboard.title }}</a>
+                <a [routerLink]="createDashboardUrl(lastVisitedDashboard.id)">{{ lastVisitedDashboard.title | customTranslate }}</a>
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="lastVisited">
@@ -78,7 +78,7 @@
                         class="star" [ngClass]="{'starred': dashboard.starred}">{{ dashboard.starred ? 'star' : 'star_border' }}</mat-icon>
             </div>
             <div class="tb-cell title">
-              <a routerLink="/dashboards/{{dashboard.id}}">{{ dashboard.title }}</a>
+              <a [routerLink]="createDashboardUrl(dashboard.id)">{{ dashboard.title | customTranslate }}</a>
             </div>
           </div>
         </div>
@@ -87,6 +87,7 @@
                                    subscriptSizing="dynamic"
                                    appearance="outline"
                                    [useIdValue]="false"
+                                   [customerId]="customerId"
                                    label=""
                                    placeholder="{{ 'dashboard.select-dashboard' | translate }}"
                                    [(ngModel)]="starredDashboardValue" (ngModelChange)="onStarDashboard($event)"></tb-dashboard-autocomplete>

@@ -44,6 +44,7 @@
          [class]="{'no-padding': noPadding}"
          matTooltip="{{ 'timewindow.edit' | translate }}"
          [matTooltipPosition]="tooltipPosition"
+         [matTooltipDisabled]="timewindowDisabled"
          [style]="timewindowComponentStyle"
          (click)="toggleTimewindow($event)">
   <tb-icon *ngIf="computedTimewindowStyle.showIcon && computedTimewindowStyle.iconPosition === 'left'"

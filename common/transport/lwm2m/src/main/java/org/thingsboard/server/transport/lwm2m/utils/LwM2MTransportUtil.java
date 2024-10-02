@@ -156,21 +156,19 @@ public class LwM2MTransportUtil {
     }
 
     public static String convertObjectIdToVersionedId(String path, LwM2mClient lwM2MClient) {
-        String ver = String.valueOf(lwM2MClient.getSupportedObjectVersion(new LwM2mPath(path).getObjectId()));
-        return convertObjectIdToVerId(path, ver);
-    }
-    public static String convertObjectIdToVerId(String path, String ver) {
-        ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
-        try {
-            String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
-            if (keyArray.length > 1) {
-                keyArray[1] = keyArray[1] + LWM2M_SEPARATOR_KEY + ver;
+        String[] keyArray = path.split(LWM2M_SEPARATOR_PATH);
+        if (keyArray.length > 1) {
+            try {
+                Integer objectId = Integer.valueOf((keyArray[1].split(LWM2M_SEPARATOR_KEY))[0]);
+                String ver = String.valueOf(lwM2MClient.getSupportedObjectVersion(objectId));
+                ver = ver != null ? ver : TbLwM2mVersion.VERSION_1_0.getVersion().toString();
+                keyArray[1] = String.valueOf(keyArray[1]).contains(LWM2M_SEPARATOR_KEY) ? keyArray[1] : keyArray[1] + LWM2M_SEPARATOR_KEY + ver;
                 return StringUtils.join(keyArray, LWM2M_SEPARATOR_PATH);
-            } else {
-                return path;
+            } catch (Exception e) {
+                return null;
             }
-        } catch (Exception e) {
-            return null;
+        } else {
+            return path;
         }
     }
 
@@ -214,20 +212,20 @@ public class LwM2MTransportUtil {
     }
 
     public static Map<Integer, Object> convertMultiResourceValuesFromRpcBody(Object value, ResourceModel.Type type, String versionedId) throws Exception {
-            String valueJsonStr = JacksonUtil.toString(value);
-            JsonElement element = JsonUtils.parse(valueJsonStr);
-            return convertMultiResourceValuesFromJson(element, type, versionedId);
+        String valueJsonStr = JacksonUtil.toString(value);
+        JsonElement element = JsonUtils.parse(valueJsonStr);
+        return convertMultiResourceValuesFromJson(element, type, versionedId);
     }
 
     public static Map<Integer, Object> convertMultiResourceValuesFromJson(JsonElement newValProto, ResourceModel.Type type, String versionedId) {
         Map<Integer, Object> newValues = new HashMap<>();
         newValProto.getAsJsonObject().entrySet().forEach((obj) -> {
-            newValues.put(Integer.valueOf(obj.getKey()), convertValueByTypeResource (obj.getValue().getAsString(), type,  versionedId));
+            newValues.put(Integer.valueOf(obj.getKey()), convertValueByTypeResource(obj.getValue().getAsString(), type, versionedId));
         });
         return newValues;
     }
 
-    public static Object convertValueByTypeResource (String value, ResourceModel.Type type,  String versionedId) {
+    public static Object convertValueByTypeResource(String value, ResourceModel.Type type, String versionedId) {
         return LwM2mValueConverterImpl.getInstance().convertValue(value,
                 STRING, type, new LwM2mPath(fromVersionedIdToObjectId(versionedId)));
     }
@@ -356,7 +354,7 @@ public class LwM2MTransportUtil {
         serverCoapConfig.setTransient(DTLS_CONNECTION_ID_LENGTH);
         serverCoapConfig.setTransient(DTLS_CONNECTION_ID_NODE_ID);
         serverCoapConfig.set(DTLS_CONNECTION_ID_LENGTH, cIdLength);
-        if ( cIdLength > 4) {
+        if (cIdLength > 4) {
             serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, 0);
         } else {
             serverCoapConfig.set(DTLS_CONNECTION_ID_NODE_ID, null);

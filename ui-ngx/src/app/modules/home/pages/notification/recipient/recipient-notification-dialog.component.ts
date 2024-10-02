@@ -32,7 +32,7 @@ import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { NotificationService } from '@core/http/notification.service';
 import { EntityType } from '@shared/models/entity-type.models';
-import { deepTrim, isDefinedAndNotNull } from '@core/utils';
+import { deepTrim, isDefinedAndNotNull, isUndefinedOrNull } from '@core/utils';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
 import { Authority } from '@shared/models/authority.enum';
@@ -100,6 +100,7 @@ export class RecipientNotificationDialogComponent extends
         conversation: [{value: '', disabled: true}, Validators.required],
         webhookUrl: [{value: '', disabled: true}, Validators.required],
         channelName: [{value: '', disabled: true}, Validators.required],
+        useOldApi: [{value: !this.isAdd, disabled: true}],
         description: [null]
       })
     });
@@ -120,6 +121,7 @@ export class RecipientNotificationDialogComponent extends
         case NotificationTargetType.MICROSOFT_TEAMS:
           this.targetNotificationForm.get('configuration.webhookUrl').enable({emitEvent: false});
           this.targetNotificationForm.get('configuration.channelName').enable({emitEvent: false});
+          this.targetNotificationForm.get('configuration.useOldApi').enable({emitEvent: false});
           break;
       }
       this.targetNotificationForm.get('configuration.type').enable({emitEvent: false});
@@ -168,6 +170,10 @@ export class RecipientNotificationDialogComponent extends
       if (this.isSysAdmin() && data.target.configuration.usersFilter?.type === NotificationTargetConfigType.TENANT_ADMINISTRATORS) {
         this.targetNotificationForm.get('configuration.usersFilter.filterByTenants')
           .patchValue(!Array.isArray(this.data.target.configuration.usersFilter.tenantProfilesIds), {onlySelf: true});
+      }
+      if (data.target.configuration.type === NotificationTargetType.MICROSOFT_TEAMS
+        && isUndefinedOrNull(this.data.target.configuration.useOldApi)) {
+        this.targetNotificationForm.get('configuration.useOldApi').patchValue(true, {emitEvent: false});
       }
     }
   }

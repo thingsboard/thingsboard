@@ -28,7 +28,7 @@
             <mat-grid-tile *ngFor="let place of section.places">
               <a mat-raised-button color="primary" class="tb-card-button" routerLink="{{place.path}}">
                 <tb-icon matButtonIcon class="tb-mat-96">{{place.icon}}</tb-icon>
-                <span translate>{{place.name}}</span>
+                <span>{{place.customTranslate ? (place.name | customTranslate) : (place.name | translate)}}</span>
               </a>
             </mat-grid-tile>
           </mat-grid-list>

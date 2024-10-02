@@ -37,7 +37,16 @@ import { DataKey, WidgetActionDescriptor, WidgetConfig } from '@shared/models/wi
 import { IWidgetSubscription } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { TranslateService } from '@ngx-translate/core';
-import { deepClone, hashCode, isDefined, isDefinedAndNotNull, isNumber, isObject, isUndefined } from '@core/utils';
+import {
+  deepClone,
+  hashCode,
+  isDefined,
+  isDefinedAndNotNull,
+  isNotEmptyStr,
+  isNumber,
+  isObject,
+  isUndefined
+} from '@core/utils';
 import cssjs from '@core/css/css';
 import { sortItems } from '@shared/models/page/page-link';
 import { Direction } from '@shared/models/page/sort-order';
@@ -83,7 +92,16 @@ import {
   DisplayColumnsPanelComponent,
   DisplayColumnsPanelData
 } from '@home/components/widget/lib/display-columns-panel.component';
-import { AlarmDataInfo, alarmFields, AlarmInfo, alarmSeverityColors, AlarmStatus } from '@shared/models/alarm.models';
+import {
+  AlarmAssignee,
+  AlarmDataInfo,
+  alarmFields,
+  AlarmInfo,
+  alarmSeverityColors,
+  AlarmStatus,
+  getUserDisplayName,
+  getUserInitials
+} from '@shared/models/alarm.models';
 import { DatePipe } from '@angular/common';
 import {
   AlarmDetailsDialogComponent,
@@ -104,7 +122,6 @@ import {
 import { DataKeyType } from '@shared/models/telemetry/telemetry.models';
 import { entityFields } from '@shared/models/entity.models';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import {
   ALARM_ASSIGNEE_PANEL_DATA,
@@ -274,11 +291,13 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
         () => this.pageLink.page = 0
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.ngZone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }
@@ -415,7 +434,7 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
           if (alarmField && alarmField.time) {
             keySettings.columnWidth = '120px';
           }
-          if (alarmField && alarmField.keyName  === alarmFields.assignee.keyName) {
+          if (alarmField && alarmField.keyName === alarmFields.assignee.keyName) {
             keySettings.columnWidth = '120px';
           }
         }
@@ -1098,43 +1117,21 @@ export class AlarmsTableWidgetComponent extends PageComponent implements OnInit,
     this.rowStyleCache.length = 0;
   }
 
-  getUserDisplayName(entity: AlarmInfo) {
-    let displayName = '';
-    if ((entity.assignee.firstName && entity.assignee.firstName.length > 0) ||
-      (entity.assignee.lastName && entity.assignee.lastName.length > 0)) {
-      if (entity.assignee.firstName) {
-        displayName += entity.assignee.firstName;
-      }
-      if (entity.assignee.lastName) {
-        if (displayName.length > 0) {
-          displayName += ' ';
-        }
-        displayName += entity.assignee.lastName;
-      }
-    } else {
-      displayName = entity.assignee.email;
-    }
-    return displayName;
+  checkAssigneeHasName(alarmAssignee: AlarmAssignee): boolean {
+    return (isNotEmptyStr(alarmAssignee?.firstName) || isNotEmptyStr(alarmAssignee?.lastName)) ||
+      isNotEmptyStr(alarmAssignee?.email);
   }
 
-  getUserInitials(entity: AlarmInfo): string {
-    let initials = '';
-    if (entity.assignee.firstName && entity.assignee.firstName.length ||
-      entity.assignee.lastName && entity.assignee.lastName.length) {
-      if (entity.assignee.firstName) {
-        initials += entity.assignee.firstName.charAt(0);
-      }
-      if (entity.assignee.lastName) {
-        initials += entity.assignee.lastName.charAt(0);
-      }
-    } else {
-      initials += entity.assignee.email.charAt(0);
-    }
-    return initials.toUpperCase();
+  getUserDisplayName(alarmAssignee: AlarmAssignee) {
+    return getUserDisplayName(alarmAssignee);
   }
 
-  getAvatarBgColor(entity: AlarmInfo) {
-    return this.utils.stringToHslColor(this.getUserDisplayName(entity), 40, 60);
+  getUserInitials(alarmAssignee: AlarmAssignee): string {
+    return getUserInitials(alarmAssignee);
+  }
+
+  getAvatarBgColor(alarmAssignee: AlarmAssignee) {
+    return this.utils.stringToHslColor(this.getUserDisplayName(alarmAssignee), 40, 60);
   }
 
   openAlarmAssigneePanel($event: Event, entity: AlarmInfo) {

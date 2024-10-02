@@ -62,6 +62,6 @@ export class KeyValueIsNotEmptyPipe implements PipeTransform {
   }
 
   private makeKeyValuePair(key: string, value: unknown): KeyValue<string, unknown> {
-    return {key: key, value: value};
+    return {key, value};
   }
 }

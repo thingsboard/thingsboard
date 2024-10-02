@@ -15,31 +15,48 @@
  */
 package org.thingsboard.server.common.data.oauth2;
 
+import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.BaseData;
+import org.thingsboard.server.common.data.HasName;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
-@EqualsAndHashCode
+import java.util.List;
+
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
 @Schema
-public class OAuth2ClientInfo {
+@EqualsAndHashCode(callSuper = true)
+public class OAuth2ClientInfo extends BaseData<OAuth2ClientId> implements HasName {
 
-    @Schema(description = "OAuth2 client name", example = "GitHub")
-    private String name;
-    @Schema(description = "Name of the icon, displayed on OAuth2 log in button", example = "github-logo")
-    private String icon;
-    @Schema(description = "URI for OAuth2 log in. On HTTP GET request to this URI, it redirects to the OAuth2 provider page",
-            example = "/oauth2/authorization/8352f191-2b4d-11ec-9ed1-cbf57c026ecc")
-    private String url;
+    @Schema(description = "Oauth2 client registration title (e.g. My google)")
+    private String title;
 
-    public OAuth2ClientInfo(OAuth2ClientInfo oauth2ClientInfo) {
-        this.name = oauth2ClientInfo.getName();
-        this.icon = oauth2ClientInfo.getIcon();
-        this.url = oauth2ClientInfo.getUrl();
+    @Schema(description = "Oauth2 client provider name (e.g. Google)")
+    private String providerName;
+    @Schema(description = "List of platforms for which usage of the OAuth2 client is allowed (empty for all allowed)")
+    private List<PlatformType> platforms;
+
+    public OAuth2ClientInfo() {
+        super();
     }
 
+    public OAuth2ClientInfo(OAuth2ClientId id) {
+        super(id);
+    }
+
+    public OAuth2ClientInfo(OAuth2Client oAuth2Client) {
+        super(oAuth2Client);
+        this.title = oAuth2Client.getTitle();
+        this.providerName =  oAuth2Client.getAdditionalInfoField("providerName", JsonNode::asText,"");
+        this.platforms = oAuth2Client.getPlatforms();
+    }
+
+    @Override
+    @JsonProperty(access = JsonProperty.Access.READ_ONLY)
+    public String getName() {
+        return title;
+    }
 }

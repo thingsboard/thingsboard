@@ -15,139 +15,319 @@
  */
 package org.thingsboard.rule.engine.transform;
 
-import com.datastax.oss.driver.api.core.uuid.Uuids;
 import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import org.junit.jupiter.params.ParameterizedTest;
+import org.junit.jupiter.params.provider.Arguments;
+import org.junit.jupiter.params.provider.MethodSource;
+import org.junit.jupiter.params.provider.NullAndEmptySource;
 import org.mockito.ArgumentCaptor;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
+import org.thingsboard.rule.engine.api.RuleEngineAlarmService;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.api.util.TbNodeUtils;
+import org.thingsboard.rule.engine.data.RelationsQuery;
+import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.alarm.Alarm;
 import org.thingsboard.server.common.data.asset.Asset;
+import org.thingsboard.server.common.data.id.AlarmId;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.CustomerId;
+import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.EntityId;
-import org.thingsboard.server.common.data.id.RuleChainId;
-import org.thingsboard.server.common.data.id.RuleNodeId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 import org.thingsboard.server.common.msg.TbMsg;
-import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.asset.AssetService;
+import org.thingsboard.server.dao.device.DeviceService;
+import org.thingsboard.server.dao.relation.RelationService;
 
+import java.util.Collections;
+import java.util.Map;
 import java.util.NoSuchElementException;
+import java.util.UUID;
+import java.util.stream.Stream;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.ArgumentMatchers.same;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.then;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.ALARM_ORIGINATOR;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.CUSTOMER;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.ENTITY;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.RELATED;
+import static org.thingsboard.rule.engine.transform.OriginatorSource.TENANT;
 
 @ExtendWith(MockitoExtension.class)
 public class TbChangeOriginatorNodeTest {
 
-    private static final String CUSTOMER_SOURCE = "CUSTOMER";
+    private final TenantId TENANT_ID = TenantId.fromUUID(UUID.fromString("79830b6d-4f93-49bd-9b5b-d31ce51da77b"));
+    private final CustomerId CUSTOMER_ID = new CustomerId(UUID.fromString("c6b2c94b-5517-4f20-bf8e-ae9407eb8a7a"));
+    private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("990605a4-db46-4ed4-942f-e18200453571"));
+    private final AssetId ASSET_ID = new AssetId(UUID.fromString("55de3f10-1b55-4950-b711-ed132896b260"));
+
+    private final ListeningExecutor dbExecutor = new TestDbCallbackExecutor();
 
     private TbChangeOriginatorNode node;
+    private TbChangeOriginatorNodeConfiguration config;
 
     @Mock
-    private TbContext ctx;
+    private TbContext ctxMock;
     @Mock
-    private AssetService assetService;
-
-    private ListeningExecutor dbExecutor;
+    private AssetService assetServiceMock;
+    @Mock
+    private DeviceService deviceServiceMock;
+    @Mock
+    private RelationService relationServiceMock;
+    @Mock
+    private RuleEngineAlarmService alarmServiceMock;
 
     @BeforeEach
     public void before() throws TbNodeException {
-        dbExecutor = new TestDbCallbackExecutor();
-        init();
-    }
-
-    @Test
-    public void originatorCanBeChangedToCustomerId() {
-        AssetId assetId = new AssetId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
-        Asset asset = new Asset();
-        asset.setCustomerId(customerId);
-
-        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, assetId, TbMsgMetaData.EMPTY, TbMsgDataType.JSON, TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
-
-        when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(any(),eq( assetId))).thenReturn(Futures.immediateFuture(asset));
-
-        node.onMsg(ctx, msg);
-
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
-        verify(ctx).transformMsgOriginator(msgCaptor.capture(), originatorCaptor.capture());
-
-        assertEquals(customerId, originatorCaptor.getValue());
-    }
-
-    @Test
-    public void newChainCanBeStarted() {
-        AssetId assetId = new AssetId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
-        Asset asset = new Asset();
-        asset.setCustomerId(customerId);
-
-        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, assetId, TbMsgMetaData.EMPTY, TbMsgDataType.JSON,TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
-
-        when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(asset));
-
-        node.onMsg(ctx, msg);
-        ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
-        ArgumentCaptor<EntityId> originatorCaptor = ArgumentCaptor.forClass(EntityId.class);
-        verify(ctx).transformMsgOriginator(msgCaptor.capture(), originatorCaptor.capture());
-
-        assertEquals(customerId, originatorCaptor.getValue());
-    }
-
-    @Test
-    public void exceptionThrownIfCannotFindNewOriginator() {
-        AssetId assetId = new AssetId(Uuids.timeBased());
-        CustomerId customerId = new CustomerId(Uuids.timeBased());
-        Asset asset = new Asset();
-        asset.setCustomerId(customerId);
-
-        RuleChainId ruleChainId = new RuleChainId(Uuids.timeBased());
-        RuleNodeId ruleNodeId = new RuleNodeId(Uuids.timeBased());
-
-        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, assetId, TbMsgMetaData.EMPTY, TbMsgDataType.JSON,TbMsg.EMPTY_JSON_OBJECT, ruleChainId, ruleNodeId);
-
-        when(ctx.getAssetService()).thenReturn(assetService);
-        when(assetService.findAssetByIdAsync(any(), eq(assetId))).thenReturn(Futures.immediateFuture(null));
-
-        ArgumentCaptor<NoSuchElementException> exceptionCaptor = ArgumentCaptor.forClass(NoSuchElementException.class);
-
-        node.onMsg(ctx, msg);
-        verify(ctx).tellFailure(same(msg), exceptionCaptor.capture());
-
-        assertEquals("Failed to find new originator!", exceptionCaptor.getValue().getMessage());
-    }
-
-    public void init() throws TbNodeException {
-        TbChangeOriginatorNodeConfiguration config = new TbChangeOriginatorNodeConfiguration();
-        config.setOriginatorSource(CUSTOMER_SOURCE);
-        TbNodeConfiguration nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
-
-        when(ctx.getDbCallbackExecutor()).thenReturn(dbExecutor);
-
         node = new TbChangeOriginatorNode();
-        node.init(null, nodeConfiguration);
+        config = new TbChangeOriginatorNodeConfiguration().defaultConfiguration();
     }
+
+    @Test
+    public void verifyDefaultConfig() {
+        var config = new TbChangeOriginatorNodeConfiguration().defaultConfiguration();
+        assertThat(config.getOriginatorSource()).isEqualTo(CUSTOMER);
+        RelationsQuery relationsQuery = new RelationsQuery();
+        relationsQuery.setDirection(EntitySearchDirection.FROM);
+        relationsQuery.setMaxLevel(1);
+        RelationEntityTypeFilter relationEntityTypeFilter = new RelationEntityTypeFilter(EntityRelation.CONTAINS_TYPE, Collections.emptyList());
+        relationsQuery.setFilters(Collections.singletonList(relationEntityTypeFilter));
+        assertThat(config.getRelationsQuery()).isEqualTo(relationsQuery);
+        assertThat(config.getEntityType()).isNull();
+        assertThat(config.getEntityNamePattern()).isNull();
+    }
+
+    @Test
+    public void givenRelatedSourceIsNull_whenInit_thenThrowsException() {
+        config.setOriginatorSource(null);
+
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Originator source should be specified.");
+    }
+
+    @Test
+    public void givenRelatedSourceAndRelatedQueryIsNull_whenInit_thenThrowsException() {
+        config.setOriginatorSource(RELATED);
+        config.setRelationsQuery(null);
+
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Relations query should be specified if 'Related entity' source is selected.");
+    }
+
+    @Test
+    public void givenEntitySourceAndEntityTypeIsNull_whenInit_thenThrowsException() {
+        config.setOriginatorSource(ENTITY);
+        config.setEntityType(null);
+
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Entity type should be specified if 'Entity by name pattern' source is selected.");
+    }
+
+    @ParameterizedTest
+    @NullAndEmptySource
+    public void givenEntitySourceAndEntityNamePatternIsEmpty_whenInit_thenThrowsException(String entityName) {
+        config.setOriginatorSource(ENTITY);
+        config.setEntityType(EntityType.DEVICE.name());
+        config.setEntityNamePattern(entityName);
+
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(IllegalArgumentException.class)
+                .hasMessage("Name pattern should be specified if 'Entity by name pattern' source is selected.");
+    }
+
+    @Test
+    public void givenEntitySourceAndUnexpectedEntityType_whenInit_thenThrowsException() {
+        config.setOriginatorSource(ENTITY);
+        config.setEntityType(EntityType.TENANT.name());
+        config.setEntityNamePattern("tenant-A");
+
+        assertThatThrownBy(() -> node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config))))
+                .isInstanceOf(IllegalStateException.class)
+                .hasMessage("Unexpected entity type TENANT");
+    }
+
+    @Test
+    public void givenOriginatorSourceIsCustomer_whenOnMsg_thenTellSuccess() throws TbNodeException {
+        Device device = new Device(DEVICE_ID);
+        device.setCustomerId(CUSTOMER_ID);
+
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, CUSTOMER_ID);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getDeviceService()).willReturn(deviceServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(deviceServiceMock.findDeviceById(any(TenantId.class), any(DeviceId.class))).willReturn(device);
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        then(deviceServiceMock).should().findDeviceById(TENANT_ID, DEVICE_ID);
+        then(ctxMock).should().transformMsgOriginator(msg, CUSTOMER_ID);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    @Test
+    public void givenOriginatorSourceIsTenant_whenOnMsg_thenTellSuccess() throws TbNodeException {
+        config.setOriginatorSource(TENANT);
+
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, TENANT_ID);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        then(ctxMock).should().transformMsgOriginator(msg, TENANT_ID);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    @Test
+    public void givenOriginatorSourceIsRelatedAndNewOriginatorIsNull_whenOnMsg_thenTellFailure() throws TbNodeException {
+        config.setOriginatorSource(RELATED);
+
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, ASSET_ID, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getRelationService()).willReturn(relationServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(relationServiceMock.findByQuery(any(TenantId.class), any(EntityRelationsQuery.class))).willReturn(Futures.immediateFuture(Collections.emptyList()));
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        var query = new EntityRelationsQuery();
+        var relationsQuery = config.getRelationsQuery();
+        var parameters = new RelationsSearchParameters(
+                ASSET_ID,
+                relationsQuery.getDirection(),
+                relationsQuery.getMaxLevel(),
+                relationsQuery.isFetchLastLevelOnly()
+        );
+        query.setParameters(parameters);
+        query.setFilters(relationsQuery.getFilters());
+        then(relationServiceMock).should().findByQuery(TENANT_ID, query);
+        ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
+        assertThat(throwable.getValue()).isInstanceOf(NoSuchElementException.class).hasMessage("Failed to find new originator!");
+    }
+
+    @Test
+    public void givenOriginatorSourceIsAlarmOriginator_whenOnMsg_thenTellSuccess() throws TbNodeException {
+        config.setOriginatorSource(ALARM_ORIGINATOR);
+
+        AlarmId alarmId = new AlarmId(UUID.fromString("6b43f694-cb5f-4199-9023-e9e40eeb82dd"));
+        Alarm alarm = new Alarm(alarmId);
+        alarm.setOriginator(DEVICE_ID);
+
+        TbMsg msg = TbMsg.newMsg(TbMsgType.ALARM, alarmId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT);
+        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, DEVICE_ID);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getAlarmService()).willReturn(alarmServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(alarmServiceMock.findAlarmByIdAsync(any(TenantId.class), any(AlarmId.class))).willReturn(Futures.immediateFuture(alarm));
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        then(alarmServiceMock).should().findAlarmByIdAsync(TENANT_ID, alarmId);
+        then(ctxMock).should().transformMsgOriginator(msg, DEVICE_ID);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    @ParameterizedTest
+    @MethodSource
+    public void givenOriginatorSourceIsEntity_whenOnMsg_thenTellSuccess(String entityNamePattern, TbMsgMetaData metaData, String data) throws TbNodeException {
+        config.setOriginatorSource(ENTITY);
+        config.setEntityType(EntityType.ASSET.name());
+        config.setEntityNamePattern(entityNamePattern);
+
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, data);
+        TbMsg expectedMsg = TbMsg.transformMsgOriginator(msg, ASSET_ID);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(assetServiceMock.findAssetByTenantIdAndName(any(TenantId.class), any(String.class))).willReturn(new Asset(ASSET_ID));
+        given(ctxMock.transformMsgOriginator(any(TbMsg.class), any(EntityId.class))).willReturn(expectedMsg);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        String expectedEntityName = TbNodeUtils.processPattern(entityNamePattern, msg);
+        then(assetServiceMock).should().findAssetByTenantIdAndName(TENANT_ID, expectedEntityName);
+        then(ctxMock).should().transformMsgOriginator(msg, ASSET_ID);
+        ArgumentCaptor<TbMsg> actualMsg = ArgumentCaptor.forClass(TbMsg.class);
+        then(ctxMock).should().tellSuccess(actualMsg.capture());
+        assertThat(actualMsg.getValue()).usingRecursiveComparison().ignoringFields("ctx").isEqualTo(expectedMsg);
+    }
+
+    private static Stream<Arguments> givenOriginatorSourceIsEntity_whenOnMsg_thenTellSuccess() {
+        return Stream.of(
+                Arguments.of("test-asset", TbMsgMetaData.EMPTY, TbMsg.EMPTY_JSON_OBJECT),
+                Arguments.of("${md-name-pattern}", new TbMsgMetaData(Map.of("md-name-pattern", "md-test-asset")), TbMsg.EMPTY_JSON_OBJECT),
+                Arguments.of("${msg-name-pattern}", TbMsgMetaData.EMPTY, "{\"msg-name-pattern\":\"msg-test-asset\"}")
+        );
+    }
+
+    @Test
+    public void givenOriginatorSourceIsEntityAndEntityCouldNotFound_whenOnMsg_thenTellFailure() throws TbNodeException {
+        config.setOriginatorSource(ENTITY);
+        config.setEntityType(EntityType.ASSET.name());
+        config.setEntityNamePattern("${md-name-pattern}");
+
+        TbMsgMetaData metaData = new TbMsgMetaData();
+        metaData.putValue("md-name-pattern", "test-asset");
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, DEVICE_ID, metaData, TbMsg.EMPTY_JSON_OBJECT);
+
+        given(ctxMock.getDbCallbackExecutor()).willReturn(dbExecutor);
+        given(ctxMock.getAssetService()).willReturn(assetServiceMock);
+        given(ctxMock.getTenantId()).willReturn(TENANT_ID);
+        given(assetServiceMock.findAssetByTenantIdAndName(any(TenantId.class), any(String.class))).willReturn(null);
+
+        node.init(ctxMock, new TbNodeConfiguration(JacksonUtil.valueToTree(config)));
+        node.onMsg(ctxMock, msg);
+
+        ArgumentCaptor<Throwable> throwable = ArgumentCaptor.forClass(Throwable.class);
+        then(ctxMock).should().tellFailure(eq(msg), throwable.capture());
+        assertThat(throwable.getValue()).isInstanceOf(IllegalStateException.class).hasMessage("Failed to find asset with name 'test-asset'!");
+    }
+
 }

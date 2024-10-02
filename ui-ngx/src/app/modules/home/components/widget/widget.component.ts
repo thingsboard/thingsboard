@@ -39,7 +39,7 @@ import {
 } from '@angular/core';
 import { DashboardWidget } from '@home/models/dashboard-component.models';
 import {
-  Widget,
+  Widget, WidgetAction,
   WidgetActionDescriptor,
   widgetActionSources,
   WidgetActionType,
@@ -57,7 +57,7 @@ import { WidgetService } from '@core/http/widget.service';
 import { UtilsService } from '@core/services/utils.service';
 import { forkJoin, Observable, of, ReplaySubject, Subscription, throwError } from 'rxjs';
 import {
-  deepClone,
+  deepClone, guid,
   insertVariable,
   isDefined,
   isNotEmptyStr,
@@ -100,12 +100,11 @@ import { DashboardService } from '@core/http/dashboard.service';
 import { WidgetSubscription } from '@core/api/widget-subscription';
 import { EntityService } from '@core/http/entity.service';
 import { ServicesMap } from '@home/models/services.map';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { EntityDataService } from '@core/api/entity-data.service';
 import { TranslateService } from '@ngx-translate/core';
 import { NotificationType } from '@core/notification/notification.models';
 import { AlarmDataService } from '@core/api/alarm-data.service';
-import { MatDialog } from '@angular/material/dialog';
+import { MatDialog, MatDialogRef } from '@angular/material/dialog';
 import { ComponentType } from '@angular/cdk/portal';
 import { EMBED_DASHBOARD_DIALOG_TOKEN } from '@home/components/widget/dialog/embed-dashboard-dialog-token';
 import { MobileService } from '@core/services/mobile.service';
@@ -254,6 +253,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       actionDescriptorsBySourceId,
       getActionDescriptors: this.getActionDescriptors.bind(this),
       handleWidgetAction: this.handleWidgetAction.bind(this),
+      onWidgetAction: this.onWidgetAction.bind(this),
       elementClick: this.elementClick.bind(this),
       cardClick: this.cardClick.bind(this),
       click: this.click.bind(this),
@@ -546,7 +546,9 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
           }
         });
       } else {
-        this.onInit(true);
+        this.ngZone.run(() => {
+          this.onInit(true);
+        });
       }
     }
   }
@@ -759,7 +761,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
 
       try {
         this.dynamicWidgetComponentRef = this.widgetContentContainer.createComponent(this.widgetInfo.componentType,
-          {index: 0, injector, ngModuleRef: this.widgetInfo.componentModuleRef});
+          {index: 0, injector});
         this.cd.detectChanges();
       } catch (e) {
         if (this.dynamicWidgetComponentRef) {
@@ -1040,7 +1042,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
     return result;
   }
 
-  private handleWidgetAction($event: Event, descriptor: WidgetActionDescriptor,
+  private handleWidgetAction($event: Event, descriptor: WidgetAction,
                              entityId?: EntityId, entityName?: string, additionalParams?: any, entityLabel?: string): void {
     const type = descriptor.type;
     const targetEntityParamName = descriptor.stateEntityParamName;
@@ -1113,7 +1115,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
         const customHtml = descriptor.customHtml;
         const customCss = descriptor.customCss;
         const customResources = descriptor.customResources;
-        const actionNamespace = `custom-action-pretty-${descriptor.name.toLowerCase()}`;
+        const actionNamespace = `custom-action-pretty-${guid()}`;
         let htmlTemplate = '';
         if (isDefined(customHtml) && customHtml.length > 0) {
           htmlTemplate = customHtml;
@@ -1364,7 +1366,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   }
 
   private openDashboardStateInSeparateDialog(targetDashboardStateId: string, params?: StateParams, dialogTitle?: string,
-                                             hideDashboardToolbar = true, dialogWidth?: number, dialogHeight?: number) {
+                                             hideDashboardToolbar = true, dialogWidth?: number, dialogHeight?: number): MatDialogRef<any> {
     const dashboard = deepClone(this.widgetContext.stateController.dashboardCtrl.dashboardCtx.getDashboard());
     const stateObject: StateObject = {};
     stateObject.params = params;
@@ -1412,6 +1414,7 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       }
     });
     this.cd.markForCheck();
+    return dashboard.dialogRef;
   }
 
   private elementClick($event: Event) {
@@ -1421,13 +1424,8 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
       const idsList = descriptors.map(descriptor => `#${descriptor.name}`).join(',');
       const targetElement = $(elementClicked).closest(idsList, this.widgetContext.$container[0]);
       if (targetElement.length && targetElement[0].id) {
-        $event.stopPropagation();
         const descriptor = descriptors.find(descriptorInfo => descriptorInfo.name === targetElement[0].id);
-        const entityInfo = this.getActiveEntityInfo();
-        const entityId = entityInfo ? entityInfo.entityId : null;
-        const entityName = entityInfo ? entityInfo.entityName : null;
-        const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-        this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
+        this.onWidgetAction($event, descriptor);
       }
     }
   }
@@ -1443,18 +1441,23 @@ export class WidgetComponent extends PageComponent implements OnInit, AfterViewI
   private onClick($event: Event, sourceId: string) {
     const descriptors = this.getActionDescriptors(sourceId);
     if (descriptors.length) {
-      $event.stopPropagation();
-      const descriptor = descriptors[0];
-      const entityInfo = this.getActiveEntityInfo();
-      const entityId = entityInfo ? entityInfo.entityId : null;
-      const entityName = entityInfo ? entityInfo.entityName : null;
-      const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
-      this.handleWidgetAction($event, descriptor, entityId, entityName, null, entityLabel);
+      this.onWidgetAction($event, descriptors[0]);
     }
   }
 
+  private onWidgetAction($event: Event, action: WidgetAction) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const entityInfo = this.getActiveEntityInfo();
+    const entityId = entityInfo ? entityInfo.entityId : null;
+    const entityName = entityInfo ? entityInfo.entityName : null;
+    const entityLabel = entityInfo && entityInfo.entityLabel ? entityInfo.entityLabel : null;
+    this.handleWidgetAction($event, action, entityId, entityName, null, entityLabel);
+  }
+
   private loadCustomActionResources(actionNamespace: string, customCss: string, customResources: Array<WidgetResource>,
-                                    actionDescriptor: WidgetActionDescriptor): Observable<any> {
+                                    actionDescriptor: WidgetAction): Observable<any> {
     const resourceTasks: Observable<string>[] = [];
     const modulesTasks: Observable<ModulesWithFactories | string>[] = [];
 

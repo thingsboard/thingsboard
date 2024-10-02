@@ -14,18 +14,17 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, ElementRef, Input, OnDestroy, OnInit, TemplateRef } from '@angular/core';
+import { ChangeDetectorRef, Component, ElementRef, Input, NgZone, OnDestroy, OnInit, TemplateRef } from '@angular/core';
 import { PageComponent } from '@shared/components/page.component';
 import { AppState } from '@core/core.state';
 import { Store } from '@ngrx/store';
 import { BadgePosition, MobileAppSettings } from '@shared/models/mobile-app.models';
-import { MobileAppService } from '@core/http/mobile-app.service';
+import { MobileApplicationService } from '@core/http/mobile-application.service';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { UtilsService } from '@core/services/utils.service';
 import { Observable, Subject } from 'rxjs';
 import { MINUTE } from '@shared/models/time/time.models';
 import { isDefinedAndNotNull, mergeDeep } from '@core/utils';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { backgroundStyle, ComponentStyle, overlayStyle } from '@shared/models/widget-settings.models';
 import { ImagePipe } from '@shared/pipe/image.pipe';
 import { DomSanitizer } from '@angular/platform-browser';
@@ -78,11 +77,12 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
 
   constructor(protected store: Store<AppState>,
               protected cd: ChangeDetectorRef,
-              private mobileAppService: MobileAppService,
+              private mobileAppService: MobileApplicationService,
               private utilsService: UtilsService,
               private elementRef: ElementRef,
               private imagePipe: ImagePipe,
-              private sanitizer: DomSanitizer,) {
+              private sanitizer: DomSanitizer,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -102,11 +102,13 @@ export class MobileAppQrcodeWidgetComponent extends PageComponent implements OnI
         }
 
         this.widgetResize$ = new ResizeObserver(() => {
-          const showHideBadgeContainer = this.elementRef.nativeElement.offsetWidth > 250;
-          if (showHideBadgeContainer !== this.showBadgeContainer) {
-            this.showBadgeContainer = showHideBadgeContainer;
-            this.cd.markForCheck();
-          }
+          this.zone.run(() => {
+            const showHideBadgeContainer = this.elementRef.nativeElement.offsetWidth > 250;
+            if (showHideBadgeContainer !== this.showBadgeContainer) {
+              this.showBadgeContainer = showHideBadgeContainer;
+              this.cd.markForCheck();
+            }
+          });
         });
 
         this.widgetResize$.observe(this.elementRef.nativeElement);

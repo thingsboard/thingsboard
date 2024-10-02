@@ -59,7 +59,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         createDeviceProfile(transportConfiguration);
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(this.CLIENT_ENDPOINT_WITHOUT_FW_INFO));
         final Device device = createDevice(deviceCredentials, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
-        createNewClient(SECURITY_NO_SEC,  null, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
+        createNewClient(SECURITY_NO_SEC, null, false, this.CLIENT_ENDPOINT_WITHOUT_FW_INFO);
         awaitObserveReadAll(0, device.getId().getId().toString());
 
         device.setFirmwareId(createFirmware().getId());
@@ -95,7 +95,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
 
         expectedStatuses = Arrays.asList(QUEUED, INITIATED, DOWNLOADING, DOWNLOADED, UPDATING, UPDATED);
         List<TsKvEntry> ts = await("await on timeseries")
-                .atMost(30, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> toTimeseries(doGetAsyncTyped("/api/plugins/telemetry/DEVICE/" +
                         savedDevice.getId().getId() + "/values/timeseries?orderBy=ASC&keys=fw_state&startTs=0&endTs=" +
                         System.currentTimeMillis(), new TypeReference<>() {
@@ -127,7 +127,7 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
                 QUEUED, INITIATED, DOWNLOADING, DOWNLOADING, DOWNLOADING, DOWNLOADED, VERIFIED, UPDATED);
 
         List<TsKvEntry> ts = await("await on timeseries")
-                .atMost(30, TimeUnit.SECONDS)
+                .atMost(TIMEOUT, TimeUnit.SECONDS)
                 .until(() -> getSwStateTelemetryFromAPI(device.getId().getId()), this::predicateForStatuses);
         log.warn("Object9: Got the ts: {}", ts);
     }
@@ -145,12 +145,14 @@ public class OtaLwM2MIntegrationTest extends AbstractOtaLwM2MIntegrationTest {
         return tsKvEntries;
     }
 
-    private boolean predicateForStatuses (List<TsKvEntry> ts) {
-        List<OtaPackageUpdateStatus> statuses = ts.stream().sorted(Comparator
-                .comparingLong(TsKvEntry::getTs)).map(KvEntry::getValueAsString)
+    private boolean predicateForStatuses(List<TsKvEntry> ts) {
+        List<OtaPackageUpdateStatus> statuses = ts.stream()
+                .sorted(Comparator.comparingLong(TsKvEntry::getTs))
+                .map(KvEntry::getValueAsString)
                 .map(OtaPackageUpdateStatus::valueOf)
                 .collect(Collectors.toList());
         log.warn("{}", statuses);
         return statuses.containsAll(expectedStatuses);
     }
+
 }

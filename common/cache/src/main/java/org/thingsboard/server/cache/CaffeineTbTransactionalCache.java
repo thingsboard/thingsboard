@@ -17,6 +17,7 @@ package org.thingsboard.server.cache;
 
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import org.springframework.cache.Cache;
 import org.springframework.cache.CacheManager;
 
 import java.io.Serializable;
@@ -26,6 +27,7 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.Set;
 import java.util.UUID;
 import java.util.concurrent.locks.Lock;
@@ -34,17 +36,22 @@ import java.util.concurrent.locks.ReentrantLock;
 @RequiredArgsConstructor
 public abstract class CaffeineTbTransactionalCache<K extends Serializable, V extends Serializable> implements TbTransactionalCache<K, V> {
 
-    private final CacheManager cacheManager;
     @Getter
-    private final String cacheName;
-
-    private final Lock lock = new ReentrantLock();
+    protected final String cacheName;
+    protected final Cache cache;
+    protected final Lock lock = new ReentrantLock();
     private final Map<K, Set<UUID>> objectTransactions = new HashMap<>();
     private final Map<UUID, CaffeineTbCacheTransaction<K, V>> transactions = new HashMap<>();
 
+    public CaffeineTbTransactionalCache(CacheManager cacheManager, String cacheName) {
+        this.cacheName = cacheName;
+        this.cache = Optional.ofNullable(cacheManager.getCache(cacheName))
+                .orElseThrow(() -> new IllegalArgumentException("Cache '" + cacheName + "' is not configured"));
+    }
+
     @Override
     public TbCacheValueWrapper<V> get(K key) {
-        return SimpleTbCacheValueWrapper.wrap(cacheManager.getCache(cacheName).get(key));
+        return SimpleTbCacheValueWrapper.wrap(cache.get(key));
     }
 
     @Override
@@ -52,7 +59,7 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
         lock.lock();
         try {
             failAllTransactionsByKey(key);
-            cacheManager.getCache(cacheName).put(key, value);
+            cache.put(key, value);
         } finally {
             lock.unlock();
         }
@@ -109,12 +116,12 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
         return newTransaction(keys);
     }
 
-    void doPutIfAbsent(Object key, Object value) {
-        cacheManager.getCache(cacheName).putIfAbsent(key, value);
+    void doPutIfAbsent(K key, V value) {
+        cache.putIfAbsent(key, value);
     }
 
     void doEvict(K key) {
-        cacheManager.getCache(cacheName).evict(key);
+        cache.evict(key);
     }
 
     TbCacheTransaction<K, V> newTransaction(List<K> keys) {
@@ -132,7 +139,7 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
         }
     }
 
-    public boolean commit(UUID trId, Map<Object, Object> pendingPuts) {
+    public boolean commit(UUID trId, Map<K, V> pendingPuts) {
         lock.lock();
         try {
             var tr = transactions.get(trId);
@@ -181,7 +188,7 @@ public abstract class CaffeineTbTransactionalCache<K extends Serializable, V ext
         }
     }
 
-    private void failAllTransactionsByKey(K key) {
+    protected void failAllTransactionsByKey(K key) {
         Set<UUID> transactionsIds = objectTransactions.get(key);
         if (transactionsIds != null) {
             for (UUID otherTrId : transactionsIds) {

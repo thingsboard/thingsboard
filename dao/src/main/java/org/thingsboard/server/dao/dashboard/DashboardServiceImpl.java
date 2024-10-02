@@ -304,7 +304,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         if (customer == null) {
             throw new DataValidationException("Can't unassign dashboards from non-existent customer!");
         }
-        new CustomerDashboardsUnassigner(customer).removeEntities(tenantId, customer);
+        new CustomerDashboardsRemover(customer).removeEntities(tenantId, customer);
     }
 
     @Override
@@ -385,6 +385,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return dashboardDao.findByTenantIdAndTitle(tenantId.getId(), title);
     }
 
+    @Override
+    public boolean existsById(TenantId tenantId, DashboardId dashboardId) {
+        return dashboardDao.existsById(tenantId, dashboardId.getId());
+    }
+
     private final PaginatedRemover<TenantId, DashboardId> tenantDashboardsRemover = new PaginatedRemover<>() {
 
         @Override
@@ -413,11 +418,11 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
         return EntityType.DASHBOARD;
     }
 
-    private class CustomerDashboardsUnassigner extends PaginatedRemover<Customer, DashboardInfo> {
+    private class CustomerDashboardsRemover extends PaginatedRemover<Customer, DashboardInfo> {
 
-        private Customer customer;
+        private final Customer customer;
 
-        CustomerDashboardsUnassigner(Customer customer) {
+        CustomerDashboardsRemover(Customer customer) {
             this.customer = customer;
         }
 
@@ -435,7 +440,7 @@ public class DashboardServiceImpl extends AbstractEntityService implements Dashb
 
     private class CustomerDashboardsUpdater extends PaginatedRemover<Customer, DashboardInfo> {
 
-        private Customer customer;
+        private final Customer customer;
 
         CustomerDashboardsUpdater(Customer customer) {
             this.customer = customer;

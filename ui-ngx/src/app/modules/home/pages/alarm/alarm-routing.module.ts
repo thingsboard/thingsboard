@@ -14,99 +14,45 @@
 /// limitations under the License.
 ///
 
-import { NgModule } from '@angular/core';
-import { RouterModule, Routes } from '@angular/router';
+import { Injectable, NgModule } from '@angular/core';
+import { Resolve, RouterModule, Routes } from '@angular/router';
 import { Authority } from '@shared/models/authority.enum';
+import { Observable } from 'rxjs';
+import { OAuth2Service } from '@core/http/oauth2.service';
 import { AlarmTableComponent } from '@home/components/alarm/alarm-table.component';
 import { AlarmsMode } from '@shared/models/alarm.models';
-import { RouterTabsComponent } from '@home/components/router-tabs.component';
-import { EntitiesTableComponent } from '@home/components/entity/entities-table.component';
-import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
-import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
-import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
-import { BreadCrumbConfig } from '@shared/components/breadcrumb';
-import { AlarmRulesTableConfigResolver } from '@home/pages/alarm/alarm-rules-table-config.resolver';
+import { MenuId } from '@core/services/menu.models';
+
+@Injectable()
+export class OAuth2LoginProcessingUrlResolver implements Resolve<string> {
+
+  constructor(private oauth2Service: OAuth2Service) {
+  }
+
+  resolve(): Observable<string> {
+    return this.oauth2Service.getLoginProcessingUrl();
+  }
+}
 
 const routes: Routes = [
   {
     path: 'alarms',
-    component: RouterTabsComponent,
+    component: AlarmTableComponent,
     data: {
       auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
+      title: 'alarm.alarms',
       breadcrumb: {
-        label: 'alarm.alarms',
-        icon: 'mdi:alert-outline'
-      }
-    },
-    children: [
-      {
-        path: '',
-        children: [],
-        data: {
-          auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
-          redirectTo: '/alarms/alarms'
-        }
+        menuId: MenuId.alarms
       },
-      {
-        path: 'alarms',
-        component: AlarmTableComponent,
-        data: {
-          auth: [Authority.TENANT_ADMIN, Authority.CUSTOMER_USER],
-          title: 'alarm.alarms',
-          breadcrumb: {
-            label: 'alarm.alarms',
-            icon: 'mdi:alert-outline'
-          },
-          isPage: true,
-          alarmsMode: AlarmsMode.ALL
-        }
-      },
-      {
-        path: 'alarm-rules',
-        data: {
-          breadcrumb: {
-            label: 'alarm-rule.alarm-rules',
-            icon: 'mdi:list-status'
-          }
-        },
-        children: [
-          {
-            path: '',
-            component: EntitiesTableComponent,
-            data: {
-              auth: [Authority.TENANT_ADMIN],
-              title: 'alarm-rules.alarm-rules'
-            },
-            resolve: {
-              entitiesTableConfig: AlarmRulesTableConfigResolver
-            }
-          },
-          {
-            path: ':entityId',
-            component: EntityDetailsPageComponent,
-            canDeactivate: [ConfirmOnExitGuard],
-            data: {
-              breadcrumb: {
-                labelFunction: entityDetailsPageBreadcrumbLabelFunction,
-                icon: 'mdi:list-status'
-              } as BreadCrumbConfig<EntityDetailsPageComponent>,
-              auth: [Authority.TENANT_ADMIN]
-            },
-            resolve: {
-              entitiesTableConfig: null
-            }
-          }
-        ]
-      }
-    ]
+      isPage: true,
+      alarmsMode: AlarmsMode.ALL
+    }
   }
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule],
-  providers: [
-    AlarmRulesTableConfigResolver
-  ]
+  providers: []
 })
 export class AlarmRoutingModule { }

@@ -33,6 +33,7 @@ import { WidgetTypesTableConfigResolver } from '@home/pages/widget/widget-types-
 import { WidgetsBundleWidgetsComponent } from '@home/pages/widget/widgets-bundle-widgets.component';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
+import { MenuId } from '@core/services/menu.models';
 
 export interface WidgetEditorData {
   widgetTypeDetails: WidgetTypeDetails;
@@ -108,8 +109,7 @@ const widgetTypesRoutes: Routes = [
     path: 'widget-types',
     data: {
       breadcrumb: {
-        label: 'widget.widgets',
-        icon: 'now_widgets'
+        menuId: MenuId.widget_types
       }
     },
     children: [
@@ -157,8 +157,7 @@ const widgetsBundlesRoutes: Routes = [
     path: 'widgets-bundles',
     data: {
       breadcrumb: {
-        label: 'widgets-bundle.widgets-bundles',
-        icon: 'now_widgets'
+        menuId: MenuId.widgets_bundles
       }
     },
     children: [
@@ -235,8 +234,7 @@ export const widgetsLibraryRoutes: Routes = [
     data: {
       auth: [Authority.SYS_ADMIN, Authority.TENANT_ADMIN],
       breadcrumb: {
-        label: 'widget.widget-library',
-        icon: 'now_widgets'
+        menuId: MenuId.widget_library
       }
     },
     children: [

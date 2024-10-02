@@ -20,7 +20,8 @@
     <mat-toolbar class="mat-mdc-table-toolbar">
       <h2>{{ 'gateway.connectors' | translate }}</h2>
       <span fxFlex></span>
-      <button mat-icon-button
+      <button *ngIf="dataSource?.data?.length"
+              mat-icon-button
               [disabled]="isLoading$ | async"
               (click)="addConnector($event)"
               matTooltip="{{ 'action.add' | translate }}"
@@ -153,15 +154,16 @@
   <section [formGroup]="connectorForm" class="tb-form-panel section-container flex">
     <div class="tb-form-panel-title tb-flex no-flex space-between align-center">
       <div class="tb-form-panel-title">
-        {{ initialConnector?.type ? gatewayConnectorDefaultTypes.get(initialConnector.type) : '' }}
+        {{ initialConnector?.type ? GatewayConnectorTypesTranslatesMap.get(initialConnector.type) : '' }}
         {{ 'gateway.configuration' | translate }}
+        <span class="version-placeholder" *ngIf="connectorForm.get('configVersion').value">v{{connectorForm.get('configVersion').value}}</span>
       </div>
       <tb-toggle-select *ngIf="initialConnector && allowBasicConfig.has(initialConnector.type)"
                         formControlName="mode" appearance="fill">
-        <tb-toggle-option [value]="connectorConfigurationModes.BASIC">
+        <tb-toggle-option [value]="ConnectorConfigurationModes.BASIC">
           {{ 'gateway.basic' | translate }}
         </tb-toggle-option>
-        <tb-toggle-option [value]="connectorConfigurationModes.ADVANCED">
+        <tb-toggle-option [value]="ConnectorConfigurationModes.ADVANCED">
           {{ 'gateway.advanced' | translate }}
         </tb-toggle-option>
       </tb-toggle-select>
@@ -172,16 +174,53 @@
       gateway.select-connector
     </span>
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">
-      <ng-container *ngIf="connectorForm.get('mode')?.value === connectorConfigurationModes.BASIC else defaultConfig">
+      <ng-container *ngIf="connectorForm.get('mode')?.value === ConnectorConfigurationModes.BASIC else defaultConfig">
         <ng-container [ngSwitch]="initialConnector.type">
-          <tb-mqtt-basic-config *ngSwitchCase="connectorType.MQTT"
-                                formControlName="basicConfig"
-                                [generalTabContent]="generalTabContent">
-          </tb-mqtt-basic-config>
-          <tb-opc-ua-basic-config *ngSwitchCase="connectorType.OPCUA"
-                                  formControlName="basicConfig"
-                                  [generalTabContent]="generalTabContent">
-          </tb-opc-ua-basic-config>
+          <ng-container *ngSwitchCase="ConnectorType.MQTT">
+            <tb-mqtt-basic-config
+              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-mqtt-legacy-basic-config
+                (initialized)="basicConfigInitSubject.next()"
+                formControlName="basicConfig"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.OPCUA">
+            <tb-opc-ua-basic-config
+              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-opc-ua-legacy-basic-config
+                (initialized)="basicConfigInitSubject.next()"
+                formControlName="basicConfig"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
+          <ng-container *ngSwitchCase="ConnectorType.MODBUS">
+            <tb-modbus-basic-config
+              *ngIf="connectorForm.get('configVersion').value === GatewayVersion.Current else legacy"
+              formControlName="basicConfig"
+              [generalTabContent]="generalTabContent"
+              (initialized)="basicConfigInitSubject.next()"
+            />
+            <ng-template #legacy>
+              <tb-modbus-legacy-basic-config
+                formControlName="basicConfig"
+                (initialized)="basicConfigInitSubject.next()"
+                [generalTabContent]="generalTabContent"
+              />
+            </ng-template>
+          </ng-container>
         </ng-container>
       </ng-container>
       <ng-template #defaultConfig>
@@ -205,7 +244,7 @@
         <button mat-raised-button color="primary"
                 type="button"
                 [disabled]="!connectorForm.dirty || connectorForm.invalid"
-                (click)="saveConnector()">
+                (click)="saveConnector(false)">
           {{ 'action.save' | translate }}
         </button>
       </div>
@@ -232,7 +271,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === connectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.CUSTOM" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <div class="fixed-title-width" translate>gateway.connectors-table-class</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -240,7 +279,7 @@
         </mat-form-field>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === connectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.GRPC" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <div class="fixed-title-width" translate>gateway.connectors-table-key</div>
       <div class="tb-flex no-gap">
         <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
@@ -268,12 +307,16 @@
         </div>
       </div>
     </div>
-    <div *ngIf="connectorForm.get('type').value === connectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="connectorForm.get('type').value === ConnectorType.MQTT" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
       <mat-slide-toggle class="mat-slide" formControlName="sendDataOnlyOnChange">
         <mat-label tb-hint-tooltip-icon="{{ 'gateway.send-change-data-hint' | translate }}">
           {{ 'gateway.send-change-data' | translate }}
         </mat-label>
       </mat-slide-toggle>
     </div>
+    <tb-report-strategy
+      *ngIf="connectorForm.get('type').value === ConnectorType.MODBUS && connectorForm.get('configVersion').value === GatewayVersion.Current"
+      formControlName="reportStrategy"
+    />
   </section>
 </ng-template>

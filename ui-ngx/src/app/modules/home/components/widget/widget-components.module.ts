@@ -56,7 +56,7 @@ import {
   GatewayServiceRPCConnectorTemplatesComponent
 } from '@home/components/widget/lib/gateway/gateway-service-rpc-connector-templates.component';
 import { DeviceGatewayCommandComponent } from '@home/components/widget/lib/gateway/device-gateway-command.component';
-import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/gateway-configuration.component';
+import { GatewayConfigurationComponent } from '@home/components/widget/lib/gateway/configuration/gateway-configuration.component';
 import {
   GatewayRemoteConfigurationDialogComponent
 } from '@home/components/widget/lib/gateway/gateway-remote-configuration-dialog';
@@ -90,9 +90,6 @@ import { ToggleButtonWidgetComponent } from '@home/components/widget/lib/button/
 import { TimeSeriesChartWidgetComponent } from '@home/components/widget/lib/chart/time-series-chart-widget.component';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
 import { MappingDialogComponent } from '@home/components/widget/lib/gateway/dialog/mapping-dialog.component';
-import {
-  EllipsisChipListDirective
-} from '@home/components/widget/lib/gateway/connectors-configuration/ellipsis-chip-list.directive';
 import { StatusWidgetComponent } from '@home/components/widget/lib/indicator/status-widget.component';
 import { LatestChartComponent } from '@home/components/widget/lib/chart/latest-chart.component';
 import { PieChartWidgetComponent } from '@home/components/widget/lib/chart/pie-chart-widget.component';
@@ -112,18 +109,67 @@ import {
 import {
   NotificationTypeFilterPanelComponent
 } from '@home/components/widget/lib/cards/notification-type-filter-panel.component';
-import { GatewayHelpLinkPipe } from '@home/pipes/public-api';
+import { GatewayHelpLinkPipe } from '@home/components/widget/lib/gateway/pipes/gateway-help-link.pipe';
+import { EllipsisChipListDirective } from '@shared/directives/ellipsis-chip-list.directive';
 import {
-  BrokerConfigControlComponent,
-  DeviceInfoTableComponent,
-  MappingDataKeysPanelComponent,
-  MappingTableComponent,
-  MqttBasicConfigComponent,
-  OpcUaBasicConfigComponent,
-  ServerConfigComponent,
-  TypeValuePanelComponent,
-  WorkersConfigControlComponent,
-} from '@home/components/widget/lib/gateway/connectors-configuration/public-api';
+  BrokerConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/broker-config-control/broker-config-control.component';
+import {
+  WorkersConfigControlComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/workers-config-control/workers-config-control.component';
+import {
+  OpcServerConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-server-config/opc-server-config.component';
+import {
+  MqttBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-basic-config.component';
+import {
+  MappingTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-table/mapping-table.component';
+import {
+  OpcUaBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-ua-basic-config/opc-ua-basic-config.component';
+import {
+  ModbusBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-basic-config.component';
+import {
+  DeviceInfoTableComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/device-info-table/device-info-table.component';
+import {
+  MappingDataKeysPanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mapping-data-keys-panel/mapping-data-keys-panel.component';
+import {
+  TypeValuePanelComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/type-value-panel/type-value-panel.component';
+import { ScadaSymbolWidgetComponent } from '@home/components/widget/lib/scada/scada-symbol-widget.component';
+import {
+  MqttLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/mqtt/basic-config/mqtt-legacy-basic-config.component';
+import {
+  GatewayBasicConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/basic/gateway-basic-configuration.component';
+import {
+    GatewayAdvancedConfigurationComponent
+} from '@home/components/widget/lib/gateway/configuration/advanced/gateway-advanced-configuration.component';
+import {
+    OpcUaLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/opc/opc-ua-basic-config/opc-ua-legacy-basic-config.component';
+import {
+  ModbusLegacyBasicConfigComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/modbus/modbus-basic-config/modbus-legacy-basic-config.component';
+import {
+  MqttRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/mqtt-rpc-parameters/mqtt-rpc-parameters.component';
+import {
+  OpcRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/opc-rpc-parameters/opc-rpc-parameters.component';
+import {
+  ModbusRpcParametersComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/rpc-parameters/modbus-rpc-parameters/modbus-rpc-parameters.component';
+import { RpcTemplateArrayViewPipe } from '@home/components/widget/lib/gateway/pipes/rpc-template-array-view.pipe';
+import { 
+  ReportStrategyComponent
+} from '@home/components/widget/lib/gateway/connectors-configuration/report-strategy/report-strategy.component';
 
 @NgModule({
   declarations: [
@@ -163,7 +209,6 @@ import {
     GatewayConfigurationComponent,
     GatewayRemoteConfigurationDialogComponent,
     GatewayServiceRPCConnectorTemplateDialogComponent,
-    EllipsisChipListDirective,
     ValueCardWidgetComponent,
     AggregatedValueCardWidgetComponent,
     CountWidgetComponent,
@@ -192,7 +237,9 @@ import {
     LabelCardWidgetComponent,
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
-    NotificationTypeFilterPanelComponent],
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
+  ],
   imports: [
     CommonModule,
     SharedModule,
@@ -203,11 +250,24 @@ import {
     GatewayHelpLinkPipe,
     BrokerConfigControlComponent,
     WorkersConfigControlComponent,
-    ServerConfigComponent,
+    OpcServerConfigComponent,
     MqttBasicConfigComponent,
     MappingTableComponent,
     OpcUaBasicConfigComponent,
-    KeyValueIsNotEmptyPipe
+    KeyValueIsNotEmptyPipe,
+    ModbusBasicConfigComponent,
+    EllipsisChipListDirective,
+    ModbusRpcParametersComponent,
+    MqttLegacyBasicConfigComponent,
+    GatewayBasicConfigurationComponent,
+    GatewayAdvancedConfigurationComponent,
+    OpcUaLegacyBasicConfigComponent,
+    ModbusLegacyBasicConfigComponent,
+    MqttRpcParametersComponent,
+    OpcRpcParametersComponent,
+    ModbusRpcParametersComponent,
+    RpcTemplateArrayViewPipe,
+    ReportStrategyComponent,
   ],
   exports: [
     EntitiesTableWidgetComponent,
@@ -273,7 +333,8 @@ import {
     LabelCardWidgetComponent,
     LabelValueCardWidgetComponent,
     UnreadNotificationWidgetComponent,
-    NotificationTypeFilterPanelComponent
+    NotificationTypeFilterPanelComponent,
+    ScadaSymbolWidgetComponent
   ],
   providers: [
     {provide: WIDGET_COMPONENTS_MODULE_TOKEN, useValue: WidgetComponentsModule}

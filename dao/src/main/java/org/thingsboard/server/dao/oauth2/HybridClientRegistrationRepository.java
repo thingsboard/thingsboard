@@ -21,7 +21,9 @@ import org.springframework.security.oauth2.client.registration.ClientRegistratio
 import org.springframework.security.oauth2.core.AuthorizationGrantType;
 import org.springframework.security.oauth2.core.ClientAuthenticationMethod;
 import org.springframework.stereotype.Component;
-import org.thingsboard.server.common.data.oauth2.OAuth2Registration;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2Client;
 
 import java.util.UUID;
 
@@ -30,29 +32,29 @@ public class HybridClientRegistrationRepository implements ClientRegistrationRep
     private static final String defaultRedirectUriTemplate = "{baseUrl}/login/oauth2/code/{registrationId}";
 
     @Autowired
-    private OAuth2Service oAuth2Service;
+    private OAuth2ClientService oAuth2ClientService;
 
     @Override
     public ClientRegistration findByRegistrationId(String registrationId) {
-        OAuth2Registration registration = oAuth2Service.findRegistration(UUID.fromString(registrationId));
-        return registration == null ?
-                null : toSpringClientRegistration(registration);
+        OAuth2Client oAuth2Client = oAuth2ClientService.findOAuth2ClientById(TenantId.SYS_TENANT_ID, new OAuth2ClientId(UUID.fromString(registrationId)));
+        return oAuth2Client == null ?
+                null : toSpringClientRegistration(oAuth2Client);
     }
 
-    private ClientRegistration toSpringClientRegistration(OAuth2Registration registration){
-        String registrationId = registration.getUuidId().toString();
+    private ClientRegistration toSpringClientRegistration(OAuth2Client oAuth2Client){
+        String registrationId = oAuth2Client.getUuidId().toString();
         return ClientRegistration.withRegistrationId(registrationId)
-                .clientName(registration.getName())
-                .clientId(registration.getClientId())
-                .authorizationUri(registration.getAuthorizationUri())
-                .clientSecret(registration.getClientSecret())
-                .tokenUri(registration.getAccessTokenUri())
-                .scope(registration.getScope())
+                .clientName(oAuth2Client.getName())
+                .clientId(oAuth2Client.getClientId())
+                .authorizationUri(oAuth2Client.getAuthorizationUri())
+                .clientSecret(oAuth2Client.getClientSecret())
+                .tokenUri(oAuth2Client.getAccessTokenUri())
+                .scope(oAuth2Client.getScope())
                 .authorizationGrantType(AuthorizationGrantType.AUTHORIZATION_CODE)
-                .userInfoUri(registration.getUserInfoUri())
-                .userNameAttributeName(registration.getUserNameAttributeName())
-                .jwkSetUri(registration.getJwkSetUri())
-                .clientAuthenticationMethod(registration.getClientAuthenticationMethod().equals("POST") ?
+                .userInfoUri(oAuth2Client.getUserInfoUri())
+                .userNameAttributeName(oAuth2Client.getUserNameAttributeName())
+                .jwkSetUri(oAuth2Client.getJwkSetUri())
+                .clientAuthenticationMethod(oAuth2Client.getClientAuthenticationMethod().equals("POST") ?
                         ClientAuthenticationMethod.CLIENT_SECRET_POST : ClientAuthenticationMethod.CLIENT_SECRET_BASIC)
                 .redirectUri(defaultRedirectUriTemplate)
                 .build();

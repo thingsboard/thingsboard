@@ -60,6 +60,7 @@ import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.OtaPackageId;
 import org.thingsboard.server.common.data.ota.OtaPackageType;
 import org.thingsboard.server.common.data.rpc.RpcStatus;
+import org.thingsboard.server.common.data.tenant.profile.DefaultTenantProfileConfiguration;
 import org.thingsboard.server.common.msg.EncryptionUtil;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
@@ -78,6 +79,8 @@ import org.thingsboard.server.gen.transport.mqtt.SparkplugBProto;
 import org.thingsboard.server.queue.scheduler.SchedulerComponent;
 import org.thingsboard.server.transport.mqtt.adaptors.MqttTransportAdaptor;
 import org.thingsboard.server.transport.mqtt.adaptors.ProtoMqttAdaptor;
+import org.thingsboard.server.transport.mqtt.limits.GatewaySessionLimits;
+import org.thingsboard.server.transport.mqtt.limits.SessionLimits;
 import org.thingsboard.server.transport.mqtt.session.DeviceSessionCtx;
 import org.thingsboard.server.transport.mqtt.session.GatewaySessionHandler;
 import org.thingsboard.server.transport.mqtt.session.MqttTopicMatcher;
@@ -130,6 +133,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     private static final Pattern FW_REQUEST_PATTERN = Pattern.compile(MqttTopics.DEVICE_FIRMWARE_REQUEST_TOPIC_PATTERN);
     private static final Pattern SW_REQUEST_PATTERN = Pattern.compile(MqttTopics.DEVICE_SOFTWARE_REQUEST_TOPIC_PATTERN);
 
+    private static final String SESSION_LIMITS = "getSessionLimits";
 
     private static final String PAYLOAD_TOO_LARGE = "PAYLOAD_TOO_LARGE";
 
@@ -493,8 +497,12 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 transportService.process(deviceSessionCtx.getSessionInfo(), rpcResponseMsg, getPubAckCallback(ctx, msgId, rpcResponseMsg));
             } else if (topicName.startsWith(MqttTopics.DEVICE_RPC_REQUESTS_TOPIC)) {
                 TransportProtos.ToServerRpcRequestMsg rpcRequestMsg = payloadAdaptor.convertToServerRpcRequest(deviceSessionCtx, mqttMsg, MqttTopics.DEVICE_RPC_REQUESTS_TOPIC);
-                transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
                 toServerRpcSubTopicType = TopicType.V1;
+                if (SESSION_LIMITS.equals(rpcRequestMsg.getMethodName())) {
+                    onGetSessionLimitsRpc(deviceSessionCtx.getSessionInfo(), ctx, msgId, rpcRequestMsg);
+                } else {
+                    transportService.process(deviceSessionCtx.getSessionInfo(), rpcRequestMsg, getPubAckCallback(ctx, msgId, rpcRequestMsg));
+                }
             } else if (topicName.equals(MqttTopics.DEVICE_CLAIM_TOPIC)) {
                 TransportProtos.ClaimDeviceMsg claimDeviceMsg = payloadAdaptor.convertToClaimDevice(deviceSessionCtx, mqttMsg);
                 transportService.process(deviceSessionCtx.getSessionInfo(), claimDeviceMsg, getPubAckCallback(ctx, msgId, claimDeviceMsg));
@@ -928,7 +936,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 }
             } else {
                 log.debug("[{}] Failed to process unsubscription [{}] to [{}] - Subscription not found", sessionId, mqttMsg.variableHeader().messageId(), topicName);
-                unSubResults.add((short)MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
+                unSubResults.add((short) MqttReasonCodes.UnsubAck.NO_SUBSCRIPTION_EXISTED.byteValue());
             }
         }
         if (!activityReported) {
@@ -1055,6 +1063,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
                 log.debug("[{}][{}][{}] IOException: {}", sessionId,
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceId).orElse(null),
                         Optional.ofNullable(this.deviceSessionCtx.getDeviceInfo()).map(TransportDeviceInfo::getDeviceName).orElse(""),
+                        cause.getMessage(),
                         cause);
             } else if (log.isInfoEnabled()) {
                 log.info("[{}][{}][{}] IOException: {}", sessionId,
@@ -1330,6 +1339,43 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         }
     }
 
+    private void onGetSessionLimitsRpc(TransportProtos.SessionInfoProto sessionInfo, ChannelHandlerContext ctx, int msgId, TransportProtos.ToServerRpcRequestMsg rpcRequestMsg) {
+        var tenantProfile = context.getTenantProfileCache().get(deviceSessionCtx.getTenantId());
+        DefaultTenantProfileConfiguration profile = tenantProfile.getDefaultProfileConfiguration();
+
+        SessionLimits sessionLimits;
+
+        if (sessionInfo.getIsGateway()) {
+            var gatewaySessionLimits = new GatewaySessionLimits();
+            var gatewayLimits = new SessionLimits.SessionRateLimits(profile.getTransportGatewayMsgRateLimit(),
+                    profile.getTransportGatewayTelemetryMsgRateLimit(),
+                    profile.getTransportGatewayTelemetryDataPointsRateLimit());
+            var gatewayDeviceLimits = new SessionLimits.SessionRateLimits(profile.getTransportGatewayDeviceMsgRateLimit(),
+                    profile.getTransportGatewayDeviceTelemetryMsgRateLimit(),
+                    profile.getTransportGatewayDeviceTelemetryDataPointsRateLimit());
+            gatewaySessionLimits.setGatewayRateLimits(gatewayLimits);
+            gatewaySessionLimits.setRateLimits(gatewayDeviceLimits);
+            sessionLimits = gatewaySessionLimits;
+        } else {
+            var rateLimits = new SessionLimits.SessionRateLimits(profile.getTransportDeviceMsgRateLimit(),
+                    profile.getTransportDeviceTelemetryMsgRateLimit(),
+                    profile.getTransportDeviceTelemetryDataPointsRateLimit());
+            sessionLimits = new SessionLimits();
+            sessionLimits.setRateLimits(rateLimits);
+        }
+        sessionLimits.setMaxPayloadSize(context.getMaxPayloadSize());
+        sessionLimits.setMaxInflightMessages(context.getMessageQueueSizePerDeviceLimit());
+
+        ack(ctx, msgId, MqttReasonCodes.PubAck.SUCCESS);
+
+        TransportProtos.ToServerRpcResponseMsg responseMsg = TransportProtos.ToServerRpcResponseMsg.newBuilder()
+                .setRequestId(rpcRequestMsg.getRequestId())
+                .setPayload(JacksonUtil.toString(sessionLimits))
+                .build();
+
+        onToServerRpcResponse(responseMsg);
+    }
+
     private void handleToSparkplugDeviceRpcRequest(TransportProtos.ToDeviceRpcRequestMsg rpcRequest) throws ThingsboardException {
         SparkplugMessageType messageType = SparkplugMessageType.parseMessageType(rpcRequest.getMethodName());
         SparkplugRpcRequestHeader header;
@@ -1418,7 +1464,7 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
     public void onDeviceUpdate(TransportProtos.SessionInfoProto sessionInfo, Device device, Optional<DeviceProfile> deviceProfileOpt) {
         deviceSessionCtx.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
         if (gatewaySessionHandler != null) {
-            gatewaySessionHandler.onDeviceUpdate(sessionInfo, device, deviceProfileOpt);
+            gatewaySessionHandler.onGatewayUpdate(sessionInfo, device, deviceProfileOpt);
         }
     }
 
@@ -1427,6 +1473,9 @@ public class MqttTransportHandler extends ChannelInboundHandlerAdapter implement
         context.onAuthFailure(address);
         ChannelHandlerContext ctx = deviceSessionCtx.getChannel();
         closeCtx(ctx, MqttReasonCodes.Disconnect.ADMINISTRATIVE_ACTION);
+        if (gatewaySessionHandler != null) {
+            gatewaySessionHandler.onGatewayDelete(deviceId);
+        }
     }
 
     public void sendErrorRpcResponse(TransportProtos.SessionInfoProto sessionInfo, int requestId, ThingsboardErrorCode result, String errorMsg) {

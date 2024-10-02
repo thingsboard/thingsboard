@@ -72,6 +72,7 @@ import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.kv.KvEntry;
 import org.thingsboard.server.common.data.kv.LongDataEntry;
 import org.thingsboard.server.common.data.kv.StringDataEntry;
+import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.TimePageLink;
 import org.thingsboard.server.common.data.rule.RuleNode;
@@ -79,7 +80,6 @@ import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgDataType;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.common.msg.plugin.ComponentLifecycleMsg;
-import org.thingsboard.server.common.msg.session.SessionMsgType;
 import org.thingsboard.server.controller.AbstractControllerTest;
 import org.thingsboard.server.dao.alarm.AlarmService;
 import org.thingsboard.server.dao.alarm.rule.AlarmRuleService;
@@ -206,14 +206,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -231,7 +231,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Assert.equals(AlarmStatus.ACTIVE_UNACK, alarm.getStatus());
 
         data.put("temperature", 5);
-        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg3 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg3);
@@ -305,7 +305,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -313,7 +313,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
         data.put("temperature", 52);
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -381,7 +381,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 21);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -460,7 +460,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 21);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -542,14 +542,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msgFromDifferentDevice = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msgFromDifferentDevice = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromDifferentDevice);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msgFromSourceEntity = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
+        TbMsg msgFromSourceEntity = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromSourceEntity);
@@ -635,14 +635,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msgFromDifferentDevice = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msgFromDifferentDevice = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromDifferentDevice);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msgFromSourceEntity = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
+        TbMsg msgFromSourceEntity = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromSourceEntity);
@@ -728,14 +728,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msgFromDifferentDevice = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msgFromDifferentDevice = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromDifferentDevice);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msgFromSourceEntity = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
+        TbMsg msgFromSourceEntity = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), sourceEntity.getId(), new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromSourceEntity);
@@ -824,14 +824,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
 
-        TbMsg msgFromAsset = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
+        TbMsg msgFromAsset = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromAsset);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(assetId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, tbMsg);
@@ -920,14 +920,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
 
-        TbMsg msgFromDevice = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msgFromDevice = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msgFromDevice);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg tbMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, tbMsg);
@@ -1011,7 +1011,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg deviceMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), device1Id, new TbMsgMetaData(),
+        TbMsg deviceMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), device1Id, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, deviceMsg);
@@ -1028,7 +1028,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Assert.equals("highTemperatureAlarm", deviceAlarm.getName());
         Assert.equals(AlarmStatus.ACTIVE_UNACK, deviceAlarm.getStatus());
 
-        TbMsg assetMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), device2Id, new TbMsgMetaData(),
+        TbMsg assetMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), device2Id, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, assetMsg);
@@ -1117,7 +1117,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg deviceMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg deviceMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, deviceMsg);
@@ -1134,7 +1134,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         Assert.equals("highTemperatureAlarm", deviceAlarm.getName());
         Assert.equals(AlarmStatus.ACTIVE_UNACK, deviceAlarm.getStatus());
 
-        TbMsg assetMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
+        TbMsg assetMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), assetId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, assetMsg);
@@ -1200,7 +1200,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -1278,7 +1278,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -1294,7 +1294,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -1372,7 +1372,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -1388,7 +1388,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -1461,14 +1461,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -1541,14 +1541,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -1627,7 +1627,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -1643,7 +1643,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(halfOfAlarmDelay);
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -1717,14 +1717,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -1794,7 +1794,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -1803,14 +1803,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode differentData = JacksonUtil.newObjectNode();
         data.put("humidity", 85);
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(differentData), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg3 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg3);
@@ -1884,7 +1884,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -1970,7 +1970,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2032,7 +2032,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 25);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2098,7 +2098,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 40);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2168,7 +2168,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150L);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2234,7 +2234,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 150L);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2309,7 +2309,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2323,7 +2323,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Mockito.verify(clusterService, never()).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -2332,7 +2332,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds) + 1);
 
-        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg3 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg3); //no update temperature
@@ -2411,7 +2411,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode temperatureData = JacksonUtil.newObjectNode();
         temperatureData.put("temperature", 35);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(temperatureData), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2428,7 +2428,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         ObjectNode temperatureThresholdData = JacksonUtil.newObjectNode();
         temperatureData.put("temperatureThreshold", 100);
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(temperatureThresholdData), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -2437,7 +2437,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         Thread.sleep(TimeUnit.SECONDS.toMillis(alarmDelayInSeconds) + 1);
 
-        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg3 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(temperatureData), null, null);
 
         alarmRuleStateService.process(ctx, msg3); //no update temperature
@@ -2512,14 +2512,14 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperatureLeft", 42);
         data.put("temperatureRight", 39);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
 
         Mockito.verify(clusterService).pushMsgToRuleEngine(eq(tenantId), eq(deviceId), any(), eq(Collections.singleton("Alarm Created")), any());
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -2538,7 +2538,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
 
         data.put("temperatureLeft", 5);
-        TbMsg msg3 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg3 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg3);
@@ -2600,7 +2600,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2635,7 +2635,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                     return true;
                 });
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -2645,7 +2645,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
         ObjectNode updateData = JacksonUtil.newObjectNode();
         updateData.put("temperature", 42);
         updateData.put("humidity", 54);
-        TbMsg updateMsg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg updateMsg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(updateData), null, null);
 
         alarmRuleStateService.process(ctx, updateMsg);
@@ -2710,7 +2710,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2734,7 +2734,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                     return true;
                 });
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);
@@ -2786,7 +2786,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
 
         ObjectNode data = JacksonUtil.newObjectNode();
         data.put("temperature", 42);
-        TbMsg msg = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg);
@@ -2806,7 +2806,7 @@ public class DefaultTbAlarmRuleStateServiceTest extends AbstractControllerTest {
                     return true;
                 });
 
-        TbMsg msg2 = TbMsg.newMsg(SessionMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
+        TbMsg msg2 = TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST.name(), deviceId, new TbMsgMetaData(),
                 TbMsgDataType.JSON, JacksonUtil.toString(data), null, null);
 
         alarmRuleStateService.process(ctx, msg2);

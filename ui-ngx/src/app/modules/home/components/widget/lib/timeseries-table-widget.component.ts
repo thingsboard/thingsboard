@@ -20,7 +20,7 @@ import {
   Component,
   ElementRef,
   Injector,
-  Input,
+  Input, NgZone,
   OnDestroy,
   OnInit,
   QueryList,
@@ -85,7 +85,6 @@ import { Overlay, OverlayConfig, OverlayRef } from '@angular/cdk/overlay';
 import { SubscriptionEntityInfo } from '@core/api/widget-api.models';
 import { DatePipe } from '@angular/common';
 import { coerceBooleanProperty } from '@angular/cdk/coercion';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { hidePageSizePixelValue } from '@shared/models/constants';
 import {
   DISPLAY_COLUMNS_PANEL_DATA,
@@ -225,7 +224,8 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
               private domSanitizer: DomSanitizer,
               private datePipe: DatePipe,
               private cd: ChangeDetectorRef,
-              private fb: FormBuilder) {
+              private fb: FormBuilder,
+              private zone: NgZone) {
     super(store);
   }
 
@@ -250,11 +250,13 @@ export class TimeseriesTableWidgetComponent extends PageComponent implements OnI
         }
       );
       this.widgetResize$ = new ResizeObserver(() => {
-        const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
-        if (showHidePageSize !== this.hidePageSize) {
-          this.hidePageSize = showHidePageSize;
-          this.cd.markForCheck();
-        }
+        this.zone.run(() => {
+          const showHidePageSize = this.elementRef.nativeElement.offsetWidth < hidePageSizePixelValue;
+          if (showHidePageSize !== this.hidePageSize) {
+            this.hidePageSize = showHidePageSize;
+            this.cd.markForCheck();
+          }
+        });
       });
       this.widgetResize$.observe(this.elementRef.nativeElement);
     }

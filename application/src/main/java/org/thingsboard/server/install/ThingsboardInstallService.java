@@ -138,12 +138,11 @@ public class ThingsboardInstallService {
                             systemDataLoaderService.updateDefaultNotificationConfigs(false);
                             systemDataLoaderService.updateSecuritySettings();
                         case "3.7.0":
-                            log.info("Upgrading ThingsBoard from version 3.7.0 to 3.7.1 ...");
+                            log.info("Upgrading ThingsBoard from version 3.7.0 to 3.8.0 ...");
                             databaseEntitiesUpgradeService.upgradeDatabase("3.7.0");
-                            break;
-                        case "3.7.1":
-                            log.info("Upgrading ThingsBoard from version 3.7.1 to 3.8.0 ...");
-                            databaseEntitiesUpgradeService.upgradeDatabase("3.7.1");
+                        case "3.8.0":
+                            log.info("Upgrading ThingsBoard from version 3.8.0 to 3.9.0 ...");
+                            databaseEntitiesUpgradeService.upgradeDatabase("3.8.0");
                             //TODO DON'T FORGET to update switch statement in the CacheCleanupService if you need to clear the cache
                             break;
                         default:

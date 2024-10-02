@@ -15,13 +15,16 @@
  */
 package org.thingsboard.server.service.entitiy.user;
 
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.thingsboard.rule.engine.api.MailService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.UserActivationLink;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -32,9 +35,7 @@ import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 import org.thingsboard.server.service.security.system.SystemSecurityService;
 
-import jakarta.servlet.http.HttpServletRequest;
-
-import static org.thingsboard.server.controller.UserController.ACTIVATE_URL_PATTERN;
+import java.util.concurrent.TimeUnit;
 
 @Service
 @TbCoreComponent
@@ -54,13 +55,9 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
             boolean sendEmail = tbUser.getId() == null && sendActivationMail;
             User savedUser = checkNotNull(userService.saveUser(tenantId, tbUser));
             if (sendEmail) {
-                UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, savedUser.getId());
-                String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
-                String activateUrl = String.format(ACTIVATE_URL_PATTERN, baseUrl,
-                        userCredentials.getActivateToken());
-                String email = savedUser.getEmail();
+                UserActivationLink activationLink = getActivationLink(tenantId, customerId, savedUser.getId(), request);
                 try {
-                    mailService.sendActivationEmail(activateUrl, email);
+                    mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), savedUser.getEmail());
                 } catch (ThingsboardException e) {
                     userService.deleteUser(tenantId, savedUser);
                     throw e;
@@ -88,4 +85,24 @@ public class DefaultUserService extends AbstractTbEntityService implements TbUse
             throw e;
         }
     }
+
+    @Override
+    public UserActivationLink getActivationLink(TenantId tenantId, CustomerId customerId, UserId userId, HttpServletRequest request) throws ThingsboardException {
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(tenantId, userId);
+        if (!userCredentials.isEnabled() && userCredentials.getActivateToken() != null) {
+            long ttl = userCredentials.getActivationTokenTtl();
+            if (ttl < TimeUnit.MINUTES.toMillis(15)) { // renew link if less than 15 minutes before expiration
+                userCredentials = userService.generateUserActivationToken(userCredentials);
+                userCredentials = userService.saveUserCredentials(tenantId, userCredentials);
+                ttl = userCredentials.getActivationTokenTtl();
+                log.debug("[{}][{}] Regenerated expired user activation token", tenantId, userId);
+            }
+            String baseUrl = systemSecurityService.getBaseUrl(tenantId, customerId, request);
+            String link = baseUrl + "/api/noauth/activate?activateToken=" + userCredentials.getActivateToken();
+            return new UserActivationLink(link, ttl);
+        } else {
+            throw new ThingsboardException("User is already activated!", ThingsboardErrorCode.BAD_REQUEST_PARAMS);
+        }
+    }
+
 }

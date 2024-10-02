@@ -46,6 +46,7 @@ import org.springframework.web.util.WebUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardErrorCode;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.msg.tools.MaxPayloadSizeExceededException;
 import org.thingsboard.server.common.msg.tools.TbRateLimitsException;
 import org.thingsboard.server.service.security.exception.AuthMethodNotSupportedException;
 import org.thingsboard.server.service.security.exception.JwtExpiredTokenException;
@@ -91,6 +92,7 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.TOO_MANY_UPDATES, HttpStatus.TOO_MANY_REQUESTS);
         errorCodeToStatusMap.put(ThingsboardErrorCode.SUBSCRIPTION_VIOLATION, HttpStatus.FORBIDDEN);
+        errorCodeToStatusMap.put(ThingsboardErrorCode.VERSION_CONFLICT, HttpStatus.CONFLICT);
     }
 
     private static ThingsboardErrorCode statusToErrorCode(HttpStatus status) {
@@ -146,6 +148,8 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
                     handleAccessDeniedException(response);
                 } else if (exception instanceof AuthenticationException) {
                     handleAuthenticationException((AuthenticationException) exception, response);
+                }  else if (exception instanceof MaxPayloadSizeExceededException) {
+                    handleMaxPayloadSizeExceededException(response, (MaxPayloadSizeExceededException) exception);
                 } else {
                     response.setStatus(HttpStatus.INTERNAL_SERVER_ERROR.value());
                     JacksonUtil.writeValue(response.getWriter(), ThingsboardErrorResponse.of(exception.getMessage(),
@@ -182,6 +186,13 @@ public class ThingsboardErrorResponseHandler extends ResponseEntityExceptionHand
         JacksonUtil.writeValue(response.getWriter(),
                 ThingsboardErrorResponse.of(message,
                         ThingsboardErrorCode.TOO_MANY_REQUESTS, HttpStatus.TOO_MANY_REQUESTS));
+    }
+
+    private void handleMaxPayloadSizeExceededException(HttpServletResponse response, MaxPayloadSizeExceededException exception) throws IOException {
+        response.setStatus(HttpStatus.PAYLOAD_TOO_LARGE.value());
+        JacksonUtil.writeValue(response.getWriter(),
+                ThingsboardErrorResponse.of(exception.getMessage(),
+                        ThingsboardErrorCode.BAD_REQUEST_PARAMS, HttpStatus.PAYLOAD_TOO_LARGE));
     }
 
     private void handleSubscriptionException(ThingsboardException subscriptionException, HttpServletResponse response) throws IOException {

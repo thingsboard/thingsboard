@@ -55,7 +55,7 @@ public class DataConstants {
     public static final String TB_IMAGE_PREFIX = "tb-image;";
 
 
-    public static final String[] allScopes() {
+    public static String[] allScopes() {
         return new String[]{CLIENT_SCOPE, SHARED_SCOPE, SERVER_SCOPE};
     }
 
@@ -141,6 +141,8 @@ public class DataConstants {
     public static final String INTERNAL_QUEUE_NAME = "Internal";
     public static final String INTERNAL_QUEUE_TOPIC = "tb_rule_engine.internal";
     public static final String QUEUE_NAME = "queueName";
+
+    public static final String EDGE_QUEUE_NAME = "Edge";
 
     public static final String DEVICE_PROFILE_NODE_TYPE = "org.thingsboard.rule.engine.profile.TbDeviceProfileNode";
     public static final String ALARM_RULES_NODE_TYPE = "org.thingsboard.rule.engine.action.TbAlarmRulesNode";

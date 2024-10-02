@@ -73,6 +73,7 @@ import org.thingsboard.server.common.data.sync.vc.VcUtils;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.audit.AuditLogService;
 import org.thingsboard.server.dao.settings.AdminSettingsService;
+import org.thingsboard.server.dao.settings.SecuritySettingsService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.auth.jwt.settings.JwtSettingsService;
 import org.thingsboard.server.service.security.auth.oauth2.CookieUtils;
@@ -109,6 +110,7 @@ public class AdminController extends BaseController {
     private final SmsService smsService;
     private final AdminSettingsService adminSettingsService;
     private final SystemSecurityService systemSecurityService;
+    private final SecuritySettingsService securitySettingsService;
     private final JwtSettingsService jwtSettingsService;
     private final JwtTokenFactory tokenFactory;
     private final EntitiesVersionControlService versionControlService;
@@ -137,7 +139,7 @@ public class AdminController extends BaseController {
         return adminSettings;
     }
 
-    @ApiOperation(value = "Get the Administration Settings object using key (getAdminSettings)",
+    @ApiOperation(value = "Creates or Updates the Administration Settings (saveAdminSettings)",
             notes = "Creates or Updates the Administration Settings. Platform generates random Administration Settings Id during settings creation. " +
                     "The Administration Settings Id will be present in the response. Specify the Administration Settings Id when you would like to update the Administration Settings. " +
                     "Referencing non-existing Administration Settings Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
@@ -160,14 +162,14 @@ public class AdminController extends BaseController {
         return adminSettings;
     }
 
-    @ApiOperation(value = "Get the Security Settings object",
+    @ApiOperation(value = "Get the Security Settings object (getSecuritySettings)",
             notes = "Get the Security Settings object that contains password policy, etc." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")
     @RequestMapping(value = "/securitySettings", method = RequestMethod.GET)
     @ResponseBody
     public SecuritySettings getSecuritySettings() throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.READ);
-        return checkNotNull(systemSecurityService.getSecuritySettings());
+        return checkNotNull(securitySettingsService.getSecuritySettings());
     }
 
     @ApiOperation(value = "Update Security Settings (saveSecuritySettings)",
@@ -179,7 +181,7 @@ public class AdminController extends BaseController {
             @Parameter(description = "A JSON value representing the Security Settings.")
             @RequestBody SecuritySettings securitySettings) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.ADMIN_SETTINGS, Operation.WRITE);
-        securitySettings = checkNotNull(systemSecurityService.saveSecuritySettings(securitySettings));
+        securitySettings = checkNotNull(securitySettingsService.saveSecuritySettings(securitySettings));
         return securitySettings;
     }
 
@@ -237,7 +239,7 @@ public class AdminController extends BaseController {
         }
     }
 
-    @ApiOperation(value = "Send test sms (sendTestMail)",
+    @ApiOperation(value = "Send test sms (sendTestSms)",
             notes = "Attempts to send test sms to the System Administrator User using SMS Settings and phone number provided as a parameters of the request. "
                     + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('SYS_ADMIN')")

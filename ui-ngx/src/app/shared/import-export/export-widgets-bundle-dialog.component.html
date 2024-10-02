@@ -24,23 +24,23 @@
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
+<mat-progress-bar color="warn" mode="indeterminate" *ngIf="(isLoading$ | async) && !ignoreLoading">
 </mat-progress-bar>
 <div mat-dialog-content>
-  <fieldset [disabled]="isLoading$ | async">
+  <fieldset [disabled]="(isLoading$ | async) && !ignoreLoading">
     <mat-checkbox [formControl]="exportWidgetsFormControl">{{ 'widgets-bundle.export-widgets-bundle-widgets-prompt' | translate }}</mat-checkbox>
   </fieldset>
 </div>
 <div mat-dialog-actions fxLayoutAlign="end center">
   <button mat-button color="primary"
           type="button"
-          [disabled]="(isLoading$ | async)"
+          [disabled]="(isLoading$ | async) && !ignoreLoading"
           (click)="cancel()">
     {{ 'action.cancel' | translate }}
   </button>
   <button mat-raised-button color="primary"
           (click)="export()"
-          [disabled]="(isLoading$ | async)">
+          [disabled]="(isLoading$ | async) && !ignoreLoading">
     {{ 'action.export' | translate }}
   </button>
 </div>

@@ -41,14 +41,14 @@ import {
 } from '@home/pages/rulechain/rulechain-routing.module';
 import { EntityDetailsPageComponent } from '@home/components/entity/entity-details-page.component';
 import { entityDetailsPageBreadcrumbLabelFunction } from '@home/pages/home-pages.models';
+import { MenuId } from '@core/services/menu.models';
 
 const routes: Routes = [
   {
     path: 'edgeManagement',
     data: {
       breadcrumb: {
-        label: 'edge.management',
-        icon: 'settings_input_antenna'
+        menuId: MenuId.edge_management
       }
     },
     children: [
@@ -64,8 +64,7 @@ const routes: Routes = [
         path: 'instances',
         data: {
           breadcrumb: {
-            label: 'edge.instances',
-            icon: 'router'
+            menuId: MenuId.edges
           }
         },
         children: [
@@ -307,8 +306,7 @@ const routes: Routes = [
         path: 'ruleChains',
         data: {
           breadcrumb: {
-            label: 'edge.rulechain-templates',
-            icon: 'settings_ethernet'
+            menuId: MenuId.rulechain_templates
           }
         },
         children: [

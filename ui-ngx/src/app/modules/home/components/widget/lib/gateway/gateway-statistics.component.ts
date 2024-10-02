@@ -20,7 +20,6 @@ import { AttributeService } from '@core/http/attribute.service';
 import { AttributeData, AttributeScope } from '@shared/models/telemetry/telemetry.models';
 import { WidgetContext } from '@home/models/widget-component.models';
 import { TbFlot } from '@home/components/widget/lib/flot-widget';
-import { ResizeObserver } from '@juggle/resize-observer';
 import { IWidgetSubscription, SubscriptionInfo, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { UtilsService } from '@core/services/utils.service';
 import { DatasourceType, LegendConfig, LegendData, LegendPosition, widgetType } from '@shared/models/widget.models';
@@ -32,6 +31,7 @@ import { Direction, SortOrder } from '@shared/models/page/sort-order';
 import { MatTableDataSource } from '@angular/material/table';
 import { MatSort } from '@angular/material/sort';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
+import { deepClone } from '@core/utils';
 
 @Component({
   selector: 'tb-gateway-statistics',
@@ -133,6 +133,11 @@ export class GatewayStatisticsComponent implements AfterViewInit {
           });
       }
     }
+  }
+
+  public navigateToStatistics() {
+    const params = deepClone(this.ctx.stateController.getStateParams());
+    this.ctx.stateController.openState('configuration', params);
   }
 
   public sortData() {

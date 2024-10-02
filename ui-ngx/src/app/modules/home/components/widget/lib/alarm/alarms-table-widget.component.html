@@ -88,24 +88,24 @@
             <span [innerHTML]="cellContent(alarm, column, row)"></span>
             <ng-container *ngIf="column.entityKey.key === 'assignee'">
               <span class="assignee-cell" fxLayout="row" fxLayoutAlign="start center">
-                <span *ngIf="alarm.assigneeId" class="assigned-container">
-                  <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm)">
-                    {{ getUserInitials(alarm) }}
+                <span *ngIf="alarm.assigneeId && checkAssigneeHasName(alarm.assignee); else unassigned"
+                      class="assigned-container">
+                  <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
+                    {{ getUserInitials(alarm.assignee) }}
                   </span>
-                  <span [matTooltip]="getUserDisplayName(alarm)"
-                        matTooltipPosition="above">
-                    {{ getUserDisplayName(alarm) }}
-                  </span>
-                </span>
-                <span *ngIf="!alarm.assigneeId" class="unassigned-container">
-                  <mat-icon class="material-icons unassigned-icon">account_circle</mat-icon>
-                  <span matTooltip="{{ 'alarm.unassigned' | translate }}"
-                        matTooltipPosition="above"
-                        style="vertical-align: middle"
-                        translate>
-                    alarm.unassigned
+                  <span [matTooltip]="getUserDisplayName(alarm.assignee)" matTooltipPosition="above">
+                    {{ getUserDisplayName(alarm.assignee) }}
                   </span>
                 </span>
+                <ng-template #unassigned>
+                  <span class="unassigned-container">
+                    <mat-icon class="material-icons unassigned-icon">{{ alarm.assigneeId ? 'no_accounts' : 'account_circle' }}</mat-icon>
+                    <span matTooltip="{{ (alarm.assigneeId ? 'alarm.user-deleted' : 'alarm.unassigned') | translate }}"
+                          matTooltipPosition="above" style="vertical-align: middle">
+                      {{ (alarm.assigneeId ? 'alarm.user-deleted' : 'alarm.unassigned') | translate }}
+                    </span>
+                  </span>
+                </ng-template>
                 <button *ngIf="allowAssign"
                         mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ 'alarm.assign' | translate }}"
