@@ -71,7 +71,7 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fr
 public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MIntegrationTest {
 
     protected final LinkParser linkParser = new DefaultLwM2mLinkParser();
-    protected String OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC;
+    protected String CONFIG_PROFILE_WITH_PARAMS_RPC;
     public Set expectedObjects;
     public Set expectedObjectIdVers;
     public Set expectedInstances;
@@ -116,10 +116,10 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")){
             supportFormatOnly_SenMLJSON_SenMLCBOR = true;
         }
-        initRpc();
+        initRpc(false);
     }
 
-    private void initRpc () throws Exception {
+    protected void initRpc(boolean isCollected) throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
         createNewClient(SECURITY_NO_SEC, null, true, endpoint);
         expectedObjects = ConcurrentHashMap.newKeySet();
@@ -157,15 +157,14 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         id_3_0_9 =  fromVersionedIdToObjectId(idVer_3_0_9);
         idVer_19_0_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
 
-        OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC =
+        String ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE =
                 "    {\n" +
                         "    \"keyName\": {\n" +
                         "      \"" + idVer_3_0_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
                         "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\": \"" + RESOURCE_ID_NAME_3_14 + "\",\n" +
                         "      \"" + idVer_19_0_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
                         "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\": \"" + RESOURCE_ID_NAME_19_0_2 + "\",\n" +
-                        "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\": \"" + RESOURCE_ID_NAME_3303_12_5700 + "\"\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\": \"" + RESOURCE_ID_NAME_19_0_2 + "\"\n" +
                         "    },\n" +
                         "    \"observe\": [\n" +
                         "      \"" + idVer_3_0_9 + "\",\n" +
@@ -180,13 +179,29 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                         "    \"telemetry\": [\n" +
                         "      \"" + idVer_3_0_9 + "\",\n" +
                         "      \"" + idVer_19_0_0 + "\",\n" +
-                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\",\n" +
-                        "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\"\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\"\n" +
                         "    ],\n" +
                         "    \"attributeLwm2m\": {}\n" +
                         "  }";
 
-        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(OBSERVE_ATTRIBUTES_WITH_PARAMS_RPC, getBootstrapServerCredentialsNoSec(NONE));
+        String TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE =
+                "    {\n" +
+                        "    \"keyName\": {\n" +
+                        "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\": \"" + RESOURCE_ID_NAME_3303_12_5700 + "\"\n" +
+                        "    },\n" +
+                        "    \"observe\": [\n" +
+                        "    ],\n" +
+                        "    \"attribute\": [\n" +
+                        "    ],\n" +
+                        "    \"telemetry\": [\n" +
+                        "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\"\n" +
+                        "    ],\n" +
+                        "    \"attributeLwm2m\": {}\n" +
+                        "  }" ;
+
+        CONFIG_PROFILE_WITH_PARAMS_RPC = isCollected ? TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE : ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE;
+
+        Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(CONFIG_PROFILE_WITH_PARAMS_RPC, getBootstrapServerCredentialsNoSec(NONE));
         createDeviceProfile(transportConfiguration);
 
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(endpoint));
