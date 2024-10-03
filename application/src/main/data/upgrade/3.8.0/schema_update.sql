@@ -22,4 +22,5 @@ ALTER TABLE user_credentials ADD COLUMN IF NOT EXISTS failed_login_attempts INT;
 UPDATE user_credentials c SET failed_login_attempts = (SELECT (additional_info::json ->> 'failedLoginAttempts')::int FROM tb_user u WHERE u.id = c.user_id)
   WHERE failed_login_attempts IS NULL;
 
-UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - 'failedLoginAttempts')::text WHERE additional_info IS NOT NULL AND additional_info != 'null';
+UPDATE tb_user SET additional_info = (additional_info::jsonb - 'lastLoginTs' - 'failedLoginAttempts' - 'userCredentialsEnabled')::text
+  WHERE additional_info IS NOT NULL AND additional_info != 'null';

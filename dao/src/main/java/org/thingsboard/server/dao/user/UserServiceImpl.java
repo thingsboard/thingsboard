@@ -17,7 +17,6 @@ package org.thingsboard.server.dao.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -84,8 +83,6 @@ import static org.thingsboard.server.dao.service.Validator.validateString;
 public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, User, UserCacheEvictEvent> implements UserService {
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
-    public static final String USER_CREDENTIALS_ENABLED = "userCredentialsEnabled";
-    public static final String LAST_LOGIN_TS = "lastLoginTs";
 
     private static final int DEFAULT_TOKEN_LENGTH = 30;
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
@@ -430,16 +427,11 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         validateId(userId, id -> INCORRECT_USER_ID + id);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentials.setEnabled(enabled);
-        saveUserCredentials(tenantId, userCredentials);
-
-        User user = findUserById(tenantId, userId);
-        user.setAdditionalInfoField(USER_CREDENTIALS_ENABLED, BooleanNode.valueOf(enabled));
-        saveUser(tenantId, user);
         if (enabled) {
-            resetFailedLoginAttempts(tenantId, userId);
+            userCredentials.setFailedLoginAttempts(0);
         }
+        saveUserCredentials(tenantId, userCredentials);
     }
-
 
     @Override
     public void resetFailedLoginAttempts(TenantId tenantId, UserId userId) {

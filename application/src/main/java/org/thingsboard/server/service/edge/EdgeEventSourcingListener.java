@@ -225,7 +225,6 @@ public class EdgeEventSourcingListener {
     }
 
     private void cleanUpUserAdditionalInfo(User user) {
-        // reset FAILED_LOGIN_ATTEMPTS and LAST_LOGIN_TS - edge is not interested in this information
         if (user.getAdditionalInfo() instanceof NullNode) {
             user.setAdditionalInfo(null);
         }

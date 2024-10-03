@@ -38,6 +38,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.context.request.async.AsyncRequestTimeoutException;
 import org.springframework.web.context.request.async.DeferredResult;
 import org.thingsboard.common.util.DonAsynchron;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
@@ -193,7 +194,6 @@ import static org.thingsboard.server.controller.ControllerConstants.DEFAULT_DASH
 import static org.thingsboard.server.controller.ControllerConstants.HOME_DASHBOARD;
 import static org.thingsboard.server.controller.UserController.YOU_DON_T_HAVE_PERMISSION_TO_PERFORM_THIS_OPERATION;
 import static org.thingsboard.server.dao.service.Validator.validateId;
-import static org.thingsboard.server.dao.user.UserServiceImpl.LAST_LOGIN_TS;
 
 @TbCoreComponent
 public abstract class BaseController {
@@ -878,15 +878,18 @@ public abstract class BaseController {
     }
 
     protected void checkUserInfo(User user) throws ThingsboardException {
+        ObjectNode info;
         if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
-            checkDashboardInfo(additionalInfo);
-
-            UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
-            if (userCredentials.isEnabled() && !additionalInfo.has("userCredentialsEnabled")) {
-                additionalInfo.put("userCredentialsEnabled", true);
-            }
-            additionalInfo.put(LAST_LOGIN_TS, userCredentials.getLastLoginTs());
+            info = additionalInfo;
+            checkDashboardInfo(info);
+        } else {
+            info = JacksonUtil.newObjectNode();
+            user.setAdditionalInfo(info);
         }
+
+        UserCredentials userCredentials = userService.findUserCredentialsByUserId(user.getTenantId(), user.getId());
+        info.put("userCredentialsEnabled", userCredentials.isEnabled());
+        info.put("lastLoginTs", userCredentials.getLastLoginTs());
     }
 
     protected void checkDashboardInfo(JsonNode additionalInfo) throws ThingsboardException {
