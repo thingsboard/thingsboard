@@ -92,7 +92,7 @@ export class ResourcesLibraryComponent extends EntityComponent<Resource> impleme
 
   override updateFormState(): void {
     super.updateFormState();
-    if (this.isEdit && this.entityForm) {
+    if (this.isEdit && this.entityForm && !this.isAdd) {
       this.entityForm.get('resourceType').disable({ emitEvent: false });
       if (this.entityForm.get('resourceType').value !== ResourceType.JS_MODULE) {
         this.entityForm.get('fileName').disable({ emitEvent: false });
