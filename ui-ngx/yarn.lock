@@ -5434,7 +5434,7 @@ ecc-jsbn@~0.1.1:
 
 "echarts@https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz":
   version "5.5.0-TB"
-  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#d1017728576b3fd65532eb17e503d1349f7feaed"
+  resolved "https://github.com/thingsboard/echarts/archive/5.5.0-TB.tar.gz#0b707b5cd2ae4699e9ced8b07ca49cb70189ae2a"
   dependencies:
     tslib "2.3.0"
     zrender "5.5.0"
