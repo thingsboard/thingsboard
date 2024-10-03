@@ -217,15 +217,15 @@
         "serve": {
           "builder": "@angular-builders/custom-webpack:dev-server",
           "options": {
-            "browserTarget": "thingsboard:build",
+            "buildTarget": "thingsboard:build",
             "proxyConfig": "proxy.conf.js"
           },
           "configurations": {
             "production": {
-              "browserTarget": "thingsboard:build:production"
+              "buildTarget": "thingsboard:build:production"
             },
             "development": {
-              "browserTarget": "thingsboard:build:development"
+              "buildTarget": "thingsboard:build:development"
             }
           },
           "defaultConfiguration": "development"
@@ -233,7 +233,7 @@
         "extract-i18n": {
           "builder": "@angular-devkit/build-angular:extract-i18n",
           "options": {
-            "browserTarget": "thingsboard:build"
+            "buildTarget": "thingsboard:build"
           }
         },
         "lint": {
