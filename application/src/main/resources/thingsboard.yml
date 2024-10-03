@@ -802,7 +802,7 @@ spring:
         # This property controls the amount of time that a connection can be out of the pool before a message is logged indicating a possible connection leak for events datasource. A value of 0 means leak detection is disabled
         leakDetectionThreshold: "${SPRING_EVENTS_DATASOURCE_HIKARI_LEAK_DETECTION_THRESHOLD:0}"
         # This property increases the number of connections in the pool as demand increases for events datasource. At the same time, the property ensures that the pool doesn't grow to the point of exhausting a system's resources, which ultimately affects an application's performance and availability
-        maximumPoolSize: "${SPRING_EVENTS_DATASOURCE_MAXIMUM_POOL_SIZE:16}"
+        maximumPoolSize: "${SPRING_EVENTS_DATASOURCE_MAXIMUM_POOL_SIZE:4}"
         # Enable MBean to diagnose pools state via JMX for events datasource
         registerMbeans: "${SPRING_EVENTS_DATASOURCE_HIKARI_REGISTER_MBEANS:false}"
 
