@@ -162,28 +162,12 @@
               </mat-slide-toggle>
             </div>
           </section>
-          <div class="tb-form-row tb-standard-fields no-border no-padding column-xs">
-            <mat-form-field class="flex">
-              <mat-label translate>admin.oauth2.scope</mat-label>
-              <mat-chip-grid #scopeList required [disabled]="!this.createNewDialog && !(this.isEdit || this.isAdd)">
-                <mat-chip-row *ngFor="let scope of entityForm.get('scope').value; let k = index; trackBy: trackByParams"
-                              removable (removed)="removeScope(k, entityForm)">
-                  {{scope}}
-                  <mat-icon matChipRemove>cancel</mat-icon>
-                </mat-chip-row>
-                <input [matChipInputFor]="scopeList"
-                       [matChipInputSeparatorKeyCodes]="separatorKeysCodes"
-                       matChipInputAddOnBlur
-                       (matChipInputTokenEnd)="addScope($event, entityForm)">
-              </mat-chip-grid>
-              <mat-error *ngIf="entityForm.get('scope').hasError('required')">
-                {{ 'admin.oauth2.scope-required' | translate }}
-              </mat-error>
-            </mat-form-field>
-          </div>
-          <tb-error style="display: block; margin-top: -24px;"
-                    [error]="entityForm.get('scope').hasError('required') ? ('admin.oauth2.scope-required' | translate) : ''">
-          </tb-error>
+          <tb-string-items-list
+            formControlName="scope"
+            label="{{ 'admin.oauth2.scope' | translate }}"
+            requiredText="{{ 'admin.oauth2.scope-required' | translate }}"
+            required>
+          </tb-string-items-list>
         </section>
         <section class="tb-form-panel no-border no-padding no-gap" *ngIf="!generalSettingsMode">
           <div class="tb-form-row tb-standard-fields no-border no-padding">

@@ -329,11 +329,9 @@ export const resolveCssSize = (strSize?: string): [number, cssUnit] => {
   }
   let resolvedUnit: cssUnit;
   let resolvedSize = strSize;
-  for (const unit of cssUnits) {
-    if (strSize.endsWith(unit)) {
-      resolvedUnit = unit;
-      break;
-    }
+  const unitMatch = strSize.match(new RegExp(`(${cssUnits.join('|')})$`));
+  if (unitMatch) {
+    resolvedUnit = unitMatch[0] as cssUnit;
   }
   if (resolvedUnit) {
     resolvedSize = strSize.substring(0, strSize.length - resolvedUnit.length);

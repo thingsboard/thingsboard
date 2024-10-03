@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.controller;
 
-import com.fasterxml.jackson.databind.node.ObjectNode;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
@@ -79,9 +78,7 @@ public class TenantController extends BaseController {
         checkParameter(TENANT_ID, strTenantId);
         TenantId tenantId = TenantId.fromUUID(toUUID(strTenantId));
         Tenant tenant = checkTenantId(tenantId, Operation.READ);
-        if (!tenant.getAdditionalInfo().isNull()) {
-            processDashboardIdFromAdditionalInfo((ObjectNode) tenant.getAdditionalInfo(), HOME_DASHBOARD);
-        }
+        checkDashboardInfo(tenant.getAdditionalInfo(), HOME_DASHBOARD);
         return tenant;
     }
 

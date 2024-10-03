@@ -33,6 +33,8 @@ export class GatewayHelpLinkPipe implements PipeTransform {
       } else {
         return;
       }
+    } else if (field === 'attributes' || field === 'timeseries') {
+      return 'widget/lib/gateway/attributes_timeseries_expressions_fn';
     }
     return 'widget/lib/gateway/expressions_fn';
   }
