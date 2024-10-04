@@ -31,14 +31,14 @@ export class DynamicComponentFactoryService {
   public createDynamicComponent<T>(
                      componentType: Type<T>,
                      template: string,
-                     modules?: Type<any>[],
+                     imports?: Type<any>[],
                      preserveWhitespaces?: boolean,
                      styles?: string[]): Observable<Type<T>> {
     return from(import('@angular/compiler')).pipe(
       mergeMap(() => {
         let componentImports: Type<any>[] = [CommonModule];
-        if (modules) {
-          componentImports = [...componentImports, ...modules];
+        if (imports) {
+          componentImports = [...componentImports, ...imports];
         }
         const comp = this.createAndCompileDynamicComponent(componentType, template, componentImports, preserveWhitespaces, styles);
         return of(comp.type);

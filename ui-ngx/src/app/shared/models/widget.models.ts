@@ -659,7 +659,7 @@ export interface CustomActionDescriptor {
   customResources?: Array<WidgetResource>;
   customHtml?: string;
   customCss?: string;
-  customModules?: Type<any>[];
+  customImports?: Type<any>[];
 }
 
 export interface WidgetAction extends CustomActionDescriptor {

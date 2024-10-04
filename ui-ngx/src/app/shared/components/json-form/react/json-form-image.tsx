@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-import React from 'react';
+import React, { MouseEvent } from 'react';
 import Dropzone from 'react-dropzone';
 import ThingsboardBaseComponent from './json-form-base-component';
 import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-form/react/json-form.models';
@@ -27,7 +27,7 @@ interface ThingsboardImageState extends JsonFormFieldState {
 
 class ThingsboardImage extends React.Component<JsonFormFieldProps, ThingsboardImageState> {
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onDrop = this.onDrop.bind(this);
         this.onClear = this.onClear.bind(this);
@@ -40,12 +40,12 @@ class ThingsboardImage extends React.Component<JsonFormFieldProps, ThingsboardIm
     onDrop(acceptedFiles: File[]) {
       const reader = new FileReader();
       reader.onload = () => {
-        this.onValueChanged(reader.result);
+        this.onValueChanged(reader.result as string);
       };
       reader.readAsDataURL(acceptedFiles[0]);
     }
 
-    onValueChanged(value) {
+    onValueChanged(value: string) {
         this.setState({
             imageUrl: value
         });
@@ -56,7 +56,7 @@ class ThingsboardImage extends React.Component<JsonFormFieldProps, ThingsboardIm
         });
     }
 
-    onClear(event) {
+    onClear(event: MouseEvent) {
         if (event) {
             event.stopPropagation();
         }
@@ -73,7 +73,7 @@ class ThingsboardImage extends React.Component<JsonFormFieldProps, ThingsboardIm
             labelClass += ' tb-readonly';
         }
 
-        let previewComponent;
+        let previewComponent: React.JSX.Element;
         if (this.state.imageUrl) {
             previewComponent = <img className='tb-image-preview' src={this.state.imageUrl} />;
         } else {

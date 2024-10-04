@@ -32,7 +32,7 @@ class ThingsboardColor extends React.Component<JsonFormFieldProps, ThingsboardCo
 
     containerRef = React.createRef<HTMLDivElement>();
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onBlur = this.onBlur.bind(this);
         this.onFocus = this.onFocus.bind(this);

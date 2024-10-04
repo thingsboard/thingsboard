@@ -21,7 +21,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
   extends React.Component<P, JsonFormFieldState> {
 
-    constructor(props) {
+    constructor(props: P) {
         super(props);
         this.onChangeValidate = this.onChangeValidate.bind(this);
         const value = this.defaultValue();

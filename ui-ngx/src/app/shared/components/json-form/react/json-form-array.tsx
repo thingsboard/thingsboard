@@ -35,7 +35,7 @@ interface ThingsboardArrayState extends JsonFormFieldState {
 
 class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardArrayState> {
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onAppend = this.onAppend.bind(this);
         this.onDelete = this.onDelete.bind(this);
@@ -130,12 +130,10 @@ class ThingsboardArray extends React.Component<JsonFormFieldProps, ThingsboardAr
 
     render() {
         const arrays = [];
-        const fields = [];
         const model = this.state.model;
         const keys = this.state.keys;
-        const items = this.props.form.items;
         for (let i = 0; i < model.length; i++ ) {
-            let removeButton: JSX.Element = null;
+            let removeButton: React.JSX.Element = null;
             if (!this.props.form.readonly) {
                 const boundOnDelete = this.onDelete.bind(this, i);
                 removeButton = <Tooltip title='Remove'><IconButton onClick={boundOnDelete}><Clear/></IconButton></Tooltip>;

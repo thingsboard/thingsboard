@@ -339,8 +339,6 @@ import { TimezoneComponent } from '@shared/components/time/timezone.component';
 import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 
-declare const System;
-
 class ModulesMap implements IModulesMap {
 
   private initialized = false;
@@ -673,7 +671,7 @@ class ModulesMap implements IModulesMap {
 
   init() {
     if (!this.initialized) {
-      System.constructor.prototype.resolve = (id) => {
+      System.constructor.prototype.resolve = (id: string) => {
         try {
           if (this.modulesMap[id]) {
             return 'app:' + id;
@@ -688,7 +686,7 @@ class ModulesMap implements IModulesMap {
         System.set('app:' + moduleId, this.modulesMap[moduleId]);
       }
       System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
-      System.constructor.prototype.fetch = (url, options: RequestInit & {meta?: any}) => {
+      System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
         if (options?.meta?.additionalHeaders) {
           options.headers = { ...options.headers, ...options.meta.additionalHeaders };
         }

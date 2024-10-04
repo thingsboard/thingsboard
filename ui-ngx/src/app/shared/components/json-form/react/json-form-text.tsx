@@ -24,7 +24,7 @@ interface ThingsboardTextState extends JsonFormFieldState {
 
 class ThingsboardText extends React.Component<JsonFormFieldProps, ThingsboardTextState> {
 
-  constructor(props) {
+  constructor(props: JsonFormFieldProps) {
     super(props);
     this.onBlur = this.onBlur.bind(this);
     this.onFocus = this.onFocus.bind(this);

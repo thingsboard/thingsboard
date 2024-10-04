@@ -53,7 +53,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
   private hasConditions: boolean;
   private readonly mapper: {[type: string]: any};
 
-  constructor(props) {
+  constructor(props: JsonFormProps) {
     super(props);
 
     this.mapper = {
@@ -121,7 +121,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
           onIconClick: OnIconClickFn,
           onToggleFullscreen: onToggleFullscreenFn,
           onHelpClick: onHelpClickFn,
-          mapper: {[type: string]: any}): JSX.Element {
+          mapper: {[type: string]: any}): React.JSX.Element {
     const type = form.type;
     const Field = this.mapper[type];
     if (!Field) {
@@ -143,13 +143,13 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
                   mapper={mapper} builder={this.builder}/>;
   }
 
-  createSchema(theForm: any[]): JSX.Element {
+  createSchema(theForm: any[]): React.JSX.Element {
     const merged = JsonFormUtils.merge(this.props.schema, theForm, this.props.ignore, this.props.option);
     let mapper = this.mapper;
     if (this.props.mapper) {
       mapper = _.merge(this.mapper, this.props.mapper);
     }
-    const forms: ReactNode[] = merged.map(function(form, index) {
+    const forms: ReactNode[] = merged.map(function(form: JsonFormData, index: number) {
       return this.builder(form, this.props.model, index, this.onChange, this.onColorClick,
         this.onIconClick, this.onToggleFullscreen, this.onHelpClick, mapper);
     }.bind(this));
@@ -166,7 +166,7 @@ class ThingsboardSchemaForm extends React.Component<JsonFormProps, any> {
 
   render() {
     if (this.props.groupInfoes && this.props.groupInfoes.length > 0) {
-      const content: JSX.Element[] = [];
+      const content: React.JSX.Element[] = [];
       for (const info of this.props.groupInfoes) {
         const forms = this.createSchema(this.props.form[info.formIndex]);
         const item = <ThingsboardSchemaGroup key={content.length} forms={forms} info={info}></ThingsboardSchemaGroup>;
@@ -182,7 +182,7 @@ export default ThingsboardSchemaForm;
 
 interface ThingsboardSchemaGroupProps {
   info: GroupInfo;
-  forms: JSX.Element;
+  forms: React.JSX.Element;
 }
 
 interface ThingsboardSchemaGroupState {
@@ -190,14 +190,14 @@ interface ThingsboardSchemaGroupState {
 }
 
 class ThingsboardSchemaGroup extends React.Component<ThingsboardSchemaGroupProps, ThingsboardSchemaGroupState> {
-  constructor(props) {
+  constructor(props: ThingsboardSchemaGroupProps) {
     super(props);
     this.state = {
       showGroup: true
     };
   }
 
-  toogleGroup(index) {
+  toogleGroup() {
     this.setState({
       showGroup: !this.state.showGroup
     });

@@ -22,18 +22,18 @@ import { JsonFormFieldProps, JsonFormFieldState } from '@shared/components/json-
 import { IEditorProps } from 'react-ace/src/types';
 import { mergeMap } from 'rxjs/operators';
 import { getAce } from '@shared/models/ace/ace.models';
-import { from } from 'rxjs';
+import { from, lastValueFrom } from 'rxjs';
 import { Observable } from 'rxjs/internal/Observable';
 import { CircularProgress, IconButton } from '@mui/material';
 import { MouseEvent } from 'react';
 import { Help, HelpOutline } from '@mui/icons-material';
 
 const ReactAce = React.lazy(() => {
-  return getAce().pipe(
+  return lastValueFrom(getAce().pipe(
     mergeMap(() => {
       return from(import('react-ace'));
     })
-  ).toPromise();
+  ));
 });
 
 interface ThingsboardAceEditorProps extends JsonFormFieldProps {
@@ -53,7 +53,7 @@ class ThingsboardAceEditor extends React.Component<ThingsboardAceEditorProps, Th
 
     private aceEditor: IEditorProps;
 
-    constructor(props) {
+    constructor(props: ThingsboardAceEditorProps) {
         super(props);
         this.onValueChanged = this.onValueChanged.bind(this);
         this.onBlur = this.onBlur.bind(this);

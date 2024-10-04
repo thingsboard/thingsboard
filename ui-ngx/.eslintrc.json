@@ -6,7 +6,8 @@
   "overrides": [
     {
       "files": [
-        "*.ts"
+        "*.ts",
+        "*.tsx"
       ],
       "parserOptions": {
         "project": [

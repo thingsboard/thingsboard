@@ -32,7 +32,7 @@ interface ThingsboardRcSelectState extends JsonFormFieldState {
 
 class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, ThingsboardRcSelectState> {
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onSelect = this.onSelect.bind(this);
         this.onDeselect = this.onDeselect.bind(this);
@@ -96,7 +96,7 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
         return index;
     }
 
-    onSelect(value: KeyLabelItem, option) {
+    onSelect(value: KeyLabelItem) {
         if (this.props.form.schema.type === 'array') {
             const v = this.state.currentValue as KeyLabelItem[];
             v.push(this.keyToCurrentValue(value.key, false) as KeyLabelItem);
@@ -110,7 +110,7 @@ class ThingsboardRcSelect extends React.Component<JsonFormFieldProps, Thingsboar
         }
     }
 
-    onDeselect(value: KeyLabelItem, option) {
+    onDeselect(value: KeyLabelItem) {
         if (this.props.form.schema.type === 'array') {
             const v = this.state.currentValue as KeyLabelItem[];
             const index = this.keyIndex(v, value.key);

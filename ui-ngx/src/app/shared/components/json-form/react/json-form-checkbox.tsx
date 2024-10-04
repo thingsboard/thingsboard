@@ -31,7 +31,7 @@ class ThingsboardCheckbox extends React.Component<JsonFormFieldProps, JsonFormFi
                 value={this.props.form.key.slice(-1)[0]}
                 checked={this.props.value || false}
                 disabled={this.props.form.readonly}
-                onChange={(e, checked) => {
+                onChange={(e) => {
                   this.props.onChangeValidate(e);
                 }}
               />

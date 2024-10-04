@@ -26,7 +26,7 @@ interface ThingsboardDateState extends JsonFormFieldState {
 
 class ThingsboardDate extends React.Component<JsonFormFieldProps, ThingsboardDateState> {
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onDatePicked = this.onDatePicked.bind(this);
         let value: Date | null = null;

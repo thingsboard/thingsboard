@@ -28,7 +28,7 @@ interface ThingsboardSelectState extends JsonFormFieldState {
 
 class ThingsboardSelect extends React.Component<JsonFormFieldProps, ThingsboardSelectState> {
 
-  static getDerivedStateFromProps(props) {
+  static getDerivedStateFromProps(props: JsonFormFieldProps) {
     if (props.model && props.form.key) {
       return {
         currentValue: ThingsboardSelect.getModelKey(props.model, props.form.key)
@@ -37,7 +37,7 @@ class ThingsboardSelect extends React.Component<JsonFormFieldProps, ThingsboardS
     }
   }
 
-  static getModelKey(model, key) {
+  static getModelKey(model: any, key: (string | number)[]) {
     if (Array.isArray(key)) {
       const res = key.reduce((cur, nxt) => (cur[nxt] || {}), model);
       if (res && isObject(res)) {
@@ -50,7 +50,7 @@ class ThingsboardSelect extends React.Component<JsonFormFieldProps, ThingsboardS
     }
   }
 
-  constructor(props) {
+  constructor(props: JsonFormFieldProps) {
     super(props);
     this.onSelected = this.onSelected.bind(this);
     const possibleValue = ThingsboardSelect.getModelKey(this.props.model, this.props.form.key);

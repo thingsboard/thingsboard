@@ -19,7 +19,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactory,
   ComponentRef,
   Directive,
   ElementRef,
@@ -34,6 +33,7 @@ import {
   Renderer2,
   SimpleChanges,
   TemplateRef,
+  Type,
   ViewChild,
   ViewContainerRef,
   ViewEncapsulation
@@ -43,7 +43,8 @@ import {
   CdkConnectedOverlay,
   CdkOverlayOrigin,
   ConnectedOverlayPositionChange,
-  ConnectionPositionPair, NoopScrollStrategy
+  ConnectionPositionPair,
+  NoopScrollStrategy
 } from '@angular/cdk/overlay';
 import { Subject, Subscription } from 'rxjs';
 import {
@@ -344,8 +345,8 @@ export class TbPopoverDirective implements OnChanges, OnDestroy, AfterViewInit {
                       {{ tbContent }}
                     </ng-container>
                   </ng-container>
-                  <ng-container *ngIf="tbComponentFactory"
-                                [tbComponentOutlet]="tbComponentFactory"
+                  <ng-container *ngIf="tbComponent"
+                                [tbComponentOutlet]="tbComponent"
                                 [tbComponentInjector]="tbComponentInjector"
                                 [tbComponentOutletContext]="tbComponentContext"
                                 (componentChange)="onComponentChange($event)"
@@ -367,7 +368,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   @ViewChild('popover', { static: false }) popover!: ElementRef<HTMLElement>;
 
   tbContent: string | TemplateRef<void> | null = null;
-  tbComponentFactory: ComponentFactory<T> | null = null;
+  tbComponent: Type<T> | null = null;
   tbComponentRef: ComponentRef<T> | null = null;
   tbComponentContext: any;
   tbComponentInjector: Injector | null = null;
@@ -675,7 +676,7 @@ export class TbPopoverComponent<T = any> implements OnDestroy, OnInit {
   }
 
   private isEmpty(): boolean {
-    return (this.tbComponentFactory instanceof ComponentFactory || this.tbContent instanceof TemplateRef)
+    return (this.tbComponent instanceof Type || this.tbContent instanceof TemplateRef)
       ? false : !isNotEmptyStr(this.tbContent);
   }
 }

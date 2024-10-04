@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 import * as React from 'react';
-import * as ReactDOM from 'react-dom';
+import { MouseEvent } from 'react';
 import ThingsboardBaseComponent from './json-form-base-component';
 import reactCSS from 'reactcss';
 import TextField from '@mui/material/TextField';
@@ -33,7 +33,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
 
     containerRef = React.createRef<HTMLDivElement>();
 
-    constructor(props) {
+    constructor(props: JsonFormFieldProps) {
         super(props);
         this.onBlur = this.onBlur.bind(this);
         this.onFocus = this.onFocus.bind(this);
@@ -58,7 +58,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
     componentDidMount() {
         const node = this.containerRef.current;
         const iconContainer = $(node).children('#icon-container');
-        iconContainer.click((event) => {
+        iconContainer.on('click', (event) => {
           if (!this.props.form.readonly) {
             this.onIconClick(event);
           }
@@ -72,14 +72,13 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
     }
 
     onValueChanged(value: string | null) {
-        const icon = value;
         this.setState({
             icon: value
         });
         this.props.onChange(this.props.form.key, value);
     }
 
-    onIconClick(event) {
+    onIconClick(_event) {
       this.props.onIconClick(this.props.form.key, this.state.icon,
         (color) => {
           this.onValueChanged(color);
@@ -87,7 +86,7 @@ class ThingsboardIcon extends React.Component<JsonFormFieldProps, ThingsboardIco
       );
     }
 
-    onClear(event) {
+    onClear(event: MouseEvent) {
         if (event) {
             event.stopPropagation();
         }
