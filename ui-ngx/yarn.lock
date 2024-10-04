@@ -1863,17 +1863,17 @@
   dependencies:
     "@fortawesome/fontawesome-common-types" "6.6.0"
 
-"@geoman-io/leaflet-geoman-free@2.14.2":
-  version "2.14.2"
-  resolved "https://registry.yarnpkg.com/@geoman-io/leaflet-geoman-free/-/leaflet-geoman-free-2.14.2.tgz#c84c2115c263f34d11dc0b43859551639fe3d56b"
-  integrity sha512-6lIyG8RvSVdFjVjiQgBPyNASjymSyqzsiUeBW0pA+q41lB5fAg4SDC6SfJvWdEyDHa81Jb5FWjUkCc9O+u0gbg==
+"@geoman-io/leaflet-geoman-free@2.17.0":
+  version "2.17.0"
+  resolved "https://registry.yarnpkg.com/@geoman-io/leaflet-geoman-free/-/leaflet-geoman-free-2.17.0.tgz#9c8fce5c7a85e5d7ece3a7e5d0b82dbf2329bd81"
+  integrity sha512-vAY9tKB2I/Ui8d3QUBuebWnunI2sGjsfAUTXMMcf5UpISvPz67io4hpbKXid9GNsW6P4LGv1+ZzrmkpM78GzHA==
   dependencies:
     "@turf/boolean-contains" "^6.5.0"
     "@turf/kinks" "^6.5.0"
     "@turf/line-intersect" "^6.5.0"
     "@turf/line-split" "^6.5.0"
     lodash "4.17.21"
-    polygon-clipping "0.15.3"
+    polyclip-ts "^0.16.5"
 
 "@humanwhocodes/config-array@^0.13.0":
   version "0.13.0"
@@ -3295,17 +3295,10 @@
   dependencies:
     "@types/leaflet" "*"
 
-"@types/leaflet@*":
+"@types/leaflet@*", "@types/leaflet@1.9.12":
   version "1.9.12"
   resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.9.12.tgz#a6626a0b3fba36fd34723d6e95b22e8024781ad6"
   integrity sha512-BK7XS+NyRI291HIo0HCfE18Lp8oA30H1gpi1tf0mF3TgiCEzanQjOqNZ4x126SXzzi2oNSZhZ5axJp1k0iM6jg==
-  dependencies:
-    "@types/geojson" "*"
-
-"@types/leaflet@1.8.0":
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/@types/leaflet/-/leaflet-1.8.0.tgz#dc92d3e868fb6d5067b4b59fa08cd4441f84fabe"
-  integrity sha512-+sXFmiJTFdhaXXIGFlV5re9AdqtAODoXbGAvxx02e5SHXL3ir7ClP5J7pahO8VmzKY3dth4RUS1nf2BTT+DW1A==
   dependencies:
     "@types/geojson" "*"
 
@@ -4113,6 +4106,11 @@ big.js@^5.2.2:
   version "5.2.2"
   resolved "https://registry.yarnpkg.com/big.js/-/big.js-5.2.2.tgz#65f0af382f578bcdc742bd9c281e9cb2d7768328"
   integrity sha512-vyL2OymJxmarO8gxMr0mhChsO9QGwhynfuu4+MHTAW6czfq9humCB7rKpUjDd9YUiDPU4mzpyupFSvOClAwbmQ==
+
+bignumber.js@^9.1.0:
+  version "9.1.2"
+  resolved "https://registry.yarnpkg.com/bignumber.js/-/bignumber.js-9.1.2.tgz#b7c4242259c008903b13707983b5f4bbd31eda0c"
+  integrity sha512-2/mKyZH9K85bzOEfhXDBFZTGd1CTs+5IHpeFQo9luiBG7hghdC851Pj2WAhb6E3R6b9tZj/XKhbg4fum+Kepug==
 
 binary-extensions@^2.0.0:
   version "2.3.0"
@@ -7296,10 +7294,10 @@ leaflet-polylinedecorator@1.6.0:
   dependencies:
     leaflet-rotatedmarker "^0.2.0"
 
-leaflet-providers@1.13.0:
-  version "1.13.0"
-  resolved "https://registry.yarnpkg.com/leaflet-providers/-/leaflet-providers-1.13.0.tgz#10c843a23d5823a65096d40ad53f27029e13434b"
-  integrity sha512-f/sN5wdgBbVA2jcCYzScIfYNxKdn2wBJP9bu+5cRX9Xj6g8Bt1G9Sr8WgJAt/ckIFIc3LVVxCBNFpSCfTuUElg==
+leaflet-providers@2.0.0:
+  version "2.0.0"
+  resolved "https://registry.yarnpkg.com/leaflet-providers/-/leaflet-providers-2.0.0.tgz#dfdab9ca2dccc57c79e1462bc3dd20f78910afcb"
+  integrity sha512-CWwKEnHd66Qsx0m4o5q5ZOa60s00B91pMxnlr4Y22msubfs7dhbZhdMIz8bvZQkrZqi67ppI1fsZRS6vtrLcOA==
 
 leaflet-rotatedmarker@^0.2.0:
   version "0.2.0"
@@ -7316,10 +7314,10 @@ leaflet.markercluster@1.5.3:
   resolved "https://registry.yarnpkg.com/leaflet.markercluster/-/leaflet.markercluster-1.5.3.tgz#9cdb52a4eab92671832e1ef9899669e80efc4056"
   integrity sha512-vPTw/Bndq7eQHjLBVlWpnGeLa3t+3zGiuM7fJwCkiMFq+nmRuG3RI3f7f4N4TDX7T4NpbAXpR2+NTRSEGfCSeA==
 
-leaflet@1.8.0:
-  version "1.8.0"
-  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.8.0.tgz#4615db4a22a304e8e692cae9270b983b38a2055e"
-  integrity sha512-gwhMjFCQiYs3x/Sf+d49f10ERXaEFCPr+nVTryhAW8DWbMGqJqt9G4XuIaHmFW08zYvhgdzqXGr8AlW8v8dQkA==
+leaflet@1.9.4:
+  version "1.9.4"
+  resolved "https://registry.yarnpkg.com/leaflet/-/leaflet-1.9.4.tgz#23fae724e282fa25745aff82ca4d394748db7d8d"
+  integrity sha512-nxS1ynzJOmOlHp+iL3FyWqK89GtNL8U8rvlMOsQdTTssxZwCXh8N2NB3GDQOL+YR3XnWyZAxwQixURb+FA74PA==
 
 less-loader@12.2.0:
   version "12.2.0"
@@ -8601,12 +8599,13 @@ points-on-path@^0.2.1:
     path-data-parser "0.1.0"
     points-on-curve "0.2.0"
 
-polygon-clipping@0.15.3:
-  version "0.15.3"
-  resolved "https://registry.yarnpkg.com/polygon-clipping/-/polygon-clipping-0.15.3.tgz#0215840438470ba2e9e6593625e4ea5c1087b4b7"
-  integrity sha512-ho0Xx5DLkgxRx/+n4O74XyJ67DcyN3Tu9bGYKsnTukGAW6ssnuak6Mwcyb1wHy9MZc9xsUWqIoiazkZB5weECg==
+polyclip-ts@^0.16.5:
+  version "0.16.5"
+  resolved "https://registry.yarnpkg.com/polyclip-ts/-/polyclip-ts-0.16.5.tgz#053e073e640449f1b1a1d88471f8758779d0b030"
+  integrity sha512-ZchnG0zGZReHgEo3EYzEUi6UmfQFFzNnj6AFU+gBm+IJJ4qG9gL4CwjtCV6oi/PittUPpJLiLJxcn/AgrCBO+g==
   dependencies:
-    splaytree "^3.1.0"
+    bignumber.js "^9.1.0"
+    splaytree-ts "^1.0.1"
 
 possible-typed-array-names@^1.0.0:
   version "1.0.0"
@@ -9689,10 +9688,10 @@ spdy@^4.0.2:
     select-hose "^2.0.0"
     spdy-transport "^3.0.0"
 
-splaytree@^3.1.0:
-  version "3.1.2"
-  resolved "https://registry.yarnpkg.com/splaytree/-/splaytree-3.1.2.tgz#d1db2691665a3c69d630de98d55145a6546dc166"
-  integrity sha512-4OM2BJgC5UzrhVnnJA4BkHKGtjXNzzUfpQjCO8I05xYPsfS/VuQDwjCGGMi8rYQilHEV4j8NBqTFbls/PZEE7A==
+splaytree-ts@^1.0.1:
+  version "1.0.1"
+  resolved "https://registry.yarnpkg.com/splaytree-ts/-/splaytree-ts-1.0.1.tgz#4ddcfe2684da017d02b599d53d67f6d07a90745b"
+  integrity sha512-B+VzCm33/KEchi/fzT6/3NRHm8k5+Kf37SBQO3meHHS/tK2xBnIm4ZvusQ1wUpHgKMCCqEWgXnwFXAa1nD289g==
 
 split.js@^1.6.5:
   version "1.6.5"
