@@ -21,7 +21,7 @@ import { WidgetContext } from '@home/models/widget-component.models';
 import { isDefinedAndNotNull } from '@core/utils';
 
 export class HEREMap extends LeafletMap {
-    constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
+    constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
         super(ctx, $container, options);
         const map = L.map($container, {
           doubleClickZoom: !this.options.disableDoubleClickZooming,
