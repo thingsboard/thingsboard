@@ -31,7 +31,7 @@ interface GmGlobal {
 export class GoogleMap extends LeafletMap {
   private resource: ResourcesService;
 
-  constructor(ctx: WidgetContext, $container, options: WidgetUnitedMapSettings) {
+  constructor(ctx: WidgetContext, $container: HTMLElement, options: WidgetUnitedMapSettings) {
     super(ctx, $container, options);
     this.resource = ctx.$injector.get(ResourcesService);
     this.loadGoogle(() => {
@@ -47,20 +47,20 @@ export class GoogleMap extends LeafletMap {
     }, options.gmApiKey);
   }
 
-  private loadGoogle(callback, apiKey = 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q') {
+  private loadGoogle(callback: () => void, apiKey = 'AIzaSyDoEx2kaGz3PxwbI9T7ccTSg5xjdw8Nw8Q') {
     if (gmGlobals[apiKey]) {
       callback();
     } else {
-      this.resource.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).subscribe(
-        () => {
+      this.resource.loadResource(`https://maps.googleapis.com/maps/api/js?key=${apiKey}`).subscribe({
+        next: () => {
           gmGlobals[apiKey] = true;
           callback();
         },
-        (error) => {
+        error: (error) => {
           gmGlobals[apiKey] = false;
           console.error(`Google map api load failed!`, error);
         }
-      );
+      });
     }
   }
 }
