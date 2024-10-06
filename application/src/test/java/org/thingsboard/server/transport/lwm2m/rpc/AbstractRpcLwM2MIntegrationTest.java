@@ -110,9 +110,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @Before
     public void startInitRPC() throws Exception {
-        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationDiscoverWriteAttributesTest")){
-            isWriteAttribute = true;
-        }
         if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")){
             supportFormatOnly_SenMLJSON_SenMLCBOR = true;
         }

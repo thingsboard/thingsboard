@@ -39,6 +39,7 @@ import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPA
 import static org.thingsboard.server.common.data.lwm2m.LwM2mConstants.LWM2M_SEPARATOR_PATH;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.OBJECT_INSTANCE_ID_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_2;
+import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_6;
 
 
 public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegrationTest {
@@ -169,6 +170,17 @@ public class RpcLwm2mIntegrationDiscoverTest extends AbstractRpcLwM2MIntegration
         String actualResult = sendDiscover(expected);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.NOT_FOUND.getName(), rpcActualResult.get("result").asText());
+    }
+
+    @Test
+    public void testDiscoverRequestCannotTargetResourceInstance_Return_INTERNAL_SERVER_ERROR() throws Exception {
+        // ResourceInstanceId
+        String expectedPath = objectInstanceIdVer_3 + "/" + RESOURCE_ID_6 + "/1";
+        String actualResult = sendDiscover(expectedPath);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.INTERNAL_SERVER_ERROR.getName(), rpcActualResult.get("result").asText());
+        String expected = "InvalidRequestException: Discover request cannot target resource instance path: /3/0/6/1";
+        assertTrue(rpcActualResult.get("error").asText().contains(expected));
     }
 
     private String sendDiscover(String path) throws Exception {
