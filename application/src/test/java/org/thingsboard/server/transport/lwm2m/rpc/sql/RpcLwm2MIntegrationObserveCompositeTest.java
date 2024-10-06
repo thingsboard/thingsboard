@@ -20,11 +20,8 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.ResponseCode;
 import org.junit.Test;
-import org.mockito.Mockito;
-import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserveTest;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
 import java.util.Objects;
 import java.util.concurrent.TimeUnit;
@@ -54,10 +51,6 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fr
 
 @Slf4j
 public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MIntegrationObserveTest {
-
-    @SpyBean
-    DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
-
 
     /**
      *  ObserveComposite {"ids":["5/0/7", "5/0/5", "5/0/3", "3/0/9", "19/1/0/0"]} - Ok
@@ -517,13 +510,6 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, sendRpcRequest, String.class, status().isOk());
     }
 
-    private long countUpdateAttrTelemetryAll() {
-        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
-                .getInvocations().stream()
-                .filter(invocation -> invocation.getMethod().getName().equals("updateAttrTelemetry"))
-                .count();
-    }
-
     private void updateAttrTelemetryAllAtLeastOnceAfterAction(long initialInvocationCount) {
         AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
         log.warn("countUpdateAttrTelemetryAllAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
@@ -536,19 +522,6 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         log.warn("countUpdateAttrTelemetryAllAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
     }
 
-
-    private long countUpdateAttrTelemetryResource(String idVerRez) {
-        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
-                .getInvocations().stream()
-                .filter(invocation ->
-                        invocation.getMethod().getName().equals("updateAttrTelemetry") &&
-                                invocation.getArguments().length > 1 &&
-                                idVerRez.equals(invocation.getArguments()[1])
-                )
-                .count();
-    }
-
-
     private void updateAttrTelemetryResourceAtLeastOnceAfterAction(long initialInvocationCount, String idVerRez) {
         AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
         log.warn("countUpdateAttrTelemetryResourceAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
@@ -559,25 +532,5 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
                     return newInvocationCount.get() > initialInvocationCount;
                 });
         log.warn("countUpdateAttrTelemetryResourceAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
-    }
-
-    private long countUpdateReg() {
-        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
-                .getInvocations().stream()
-                .filter(invocation -> invocation.getMethod().getName().equals("updatedReg"))
-                .count();
-    }
-
-    private void updateRegAtLeastOnceAfterAction() {
-        long initialInvocationCount = countUpdateReg();
-        AtomicLong newInvocationCount = new AtomicLong(initialInvocationCount);
-        log.warn("updateRegAtLeastOnceAfterAction: initialInvocationCount [{}]", initialInvocationCount);
-        await("Update Registration at-least-once after action")
-                .atMost(50, TimeUnit.SECONDS)
-                .until(() -> {
-                    newInvocationCount.set(countUpdateReg());
-                    return newInvocationCount.get() > initialInvocationCount;
-                });
-        log.warn("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
     }
 }

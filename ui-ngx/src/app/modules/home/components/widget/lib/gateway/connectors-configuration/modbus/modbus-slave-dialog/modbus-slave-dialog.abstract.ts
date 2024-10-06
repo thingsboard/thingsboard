@@ -35,6 +35,7 @@ import {
   ModbusSlaveInfo,
   noLeadTrailSpacesRegex,
   PortLimits,
+  ReportStrategyDefaultValue,
 } from '@home/components/widget/lib/gateway/gateway-widget.models';
 import { Subject } from 'rxjs';
 import { DialogComponent } from '@shared/components/dialog.component';
@@ -64,6 +65,7 @@ export abstract class ModbusSlaveDialogAbstract<Component, Config> extends Dialo
   readonly ModbusParityLabelsMap = ModbusParityLabelsMap;
   readonly ModbusProtocolLabelsMap = ModbusProtocolLabelsMap;
   readonly ModbusMethodLabelsMap = ModbusMethodLabelsMap;
+  readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
   readonly modbusHelpLink =
     helpBaseUrl + '/docs/iot-gateway/config/modbus/#section-master-description-and-configuration-parameters';
 

@@ -205,7 +205,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
 
         if (!Files.exists(Path.of(gitRepository.getDirectory()))) {
             try {
-                return cloneRepository(tenantId, gitRepository.getSettings());
+                return openOrCloneRepository(tenantId, gitRepository.getSettings(), false);
             } catch (Exception e) {
                 throw new IllegalStateException("Could not initialize the repository: " + e.getMessage(), e);
             }
@@ -239,11 +239,11 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
     }
 
     @Override
-    public void initRepository(TenantId tenantId, RepositorySettings settings) throws Exception {
+    public void initRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception {
         if (!settings.isLocalOnly()) {
             clearRepository(tenantId);
         }
-        cloneRepository(tenantId, settings);
+        openOrCloneRepository(tenantId, settings, fetch);
     }
 
     @Override
@@ -280,13 +280,16 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         return EntityIdFactory.getByTypeAndUuid(entityType, entityId);
     }
 
-    private GitRepository cloneRepository(TenantId tenantId, RepositorySettings settings) throws Exception {
+    private GitRepository openOrCloneRepository(TenantId tenantId, RepositorySettings settings, boolean fetch) throws Exception {
         log.debug("[{}] Init tenant repository started.", tenantId);
         Path repositoryDirectory = Path.of(repositoriesFolder, settings.isLocalOnly() ? "local_" + settings.getRepositoryUri() : tenantId.getId().toString());
 
         GitRepository repository;
         if (Files.exists(repositoryDirectory)) {
             repository = GitRepository.open(repositoryDirectory.toFile(), settings);
+            if (fetch) {
+                repository.fetch();
+            }
         } else {
             Files.createDirectories(repositoryDirectory);
             if (settings.isLocalOnly()) {

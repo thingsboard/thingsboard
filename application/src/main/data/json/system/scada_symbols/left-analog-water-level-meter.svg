@@ -37,7 +37,7 @@
     },
     {
       "tag": "icon",
-      "stateRenderFunction": "var showIcon = ctx.properties.showIcon;\nif (showIcon) {\n    element.show();\n    var icon = ctx.properties.icon;\n    var iconSize = ctx.properties.iconSize;\n    var iconColor = ctx.properties.iconColor;\n    ctx.api.icon(element, icon, iconSize, iconColor, true);\n} else {\n    element.hide()\n}",
+      "stateRenderFunction": "var showIcon = ctx.properties.showIcon;\nvar showLabel = ctx.properties.label;\nif (showIcon) {\n    element.show();\n    var icon = ctx.properties.icon;\n    var iconSize = ctx.properties.iconSize;\n    var iconColor = ctx.properties.iconColor;\n    ctx.api.icon(element, icon, iconSize, iconColor, true);\n    if (!showLabel) {\n        element.transform({translateX: 83,translateY: 137});\n    }\n} else {\n    element.hide()\n}\n",
       "actions": null
     },
     {
