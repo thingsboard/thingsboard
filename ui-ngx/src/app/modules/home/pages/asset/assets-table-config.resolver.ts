@@ -16,7 +16,7 @@
 
 import { Injectable } from '@angular/core';
 
-import { ActivatedRouteSnapshot, Resolve, Router } from '@angular/router';
+import { ActivatedRouteSnapshot, Router } from '@angular/router';
 import {
   CellActionDescriptor,
   checkBoxCell,
@@ -65,7 +65,7 @@ import {
 } from '@home/dialogs/add-entities-to-edge-dialog.component';
 
 @Injectable()
-export class AssetsTableConfigResolver implements Resolve<EntityTableConfig<AssetInfo>> {
+export class AssetsTableConfigResolver  {
 
   private readonly config: EntityTableConfig<AssetInfo> = new EntityTableConfig<AssetInfo>();
 

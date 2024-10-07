@@ -158,7 +158,7 @@ export class EntityListComponent implements ControlValueAccessor, OnInit, AfterV
         }
       }),
       filter((value) => typeof value === 'string'),
-      map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
+      map((value) => value ? value : ''),
       mergeMap(name => this.fetchEntities(name) ),
       share()
     );
