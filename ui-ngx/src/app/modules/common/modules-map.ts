@@ -259,7 +259,6 @@ import * as EventContentDialogComponent from '@home/components/event/event-conte
 import * as SharedHomeComponentsModule from '@home/components/shared-home-components.module';
 import * as WidgetConfigComponentsModule from '@home/components/widget/config/widget-config-components.module';
 import * as BasicWidgetConfigModule from '@home/components/widget/config/basic/basic-widget-config.module';
-import * as TbFlot from '@home/components/widget/lib/flot-widget';
 import * as WidgetSettingsCommonModule from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 import * as WidgetComponentsModule from '@home/components/widget/widget-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
@@ -585,7 +584,6 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/config/data-keys.component': DataKeysComponent,
     '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
     '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
-    '@home/components/widget/lib/flot-widget': TbFlot,
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
