@@ -198,7 +198,6 @@ import * as GalleryImageInputComponent from '@shared/components/image/gallery-im
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
 import * as TbPopoverService from '@shared/components/popover.service';
 
-import * as AttributeDatasource from '@home/models/datasource/attribute-datasource';
 
 import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
 import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
@@ -538,7 +537,6 @@ class ModulesMap implements IModulesMap {
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
     '@shared/components/popover.service': TbPopoverService,
 
-    '@home/models/datasource/attribute-datasource': AttributeDatasource,
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
     '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
