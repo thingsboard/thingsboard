@@ -196,6 +196,9 @@ import * as HintTooltipIconComponent from '@shared/components/hint-tooltip-icon.
 import * as ScrollGridComponent from '@shared/components/grid/scroll-grid.component';
 import * as GalleryImageInputComponent from '@shared/components/image/gallery-image-input.component';
 import * as MultipleGalleryImageInputComponent from '@shared/components/image/multiple-gallery-image-input.component';
+import * as TbPopoverService from '@shared/components/popover.service';
+
+import * as AttributeDatasource from '@home/models/datasource/attribute-datasource';
 
 import * as CssUnitSelectComponent from '@home/components/widget/lib/settings/common/css-unit-select.component';
 import * as WidgetActionsPanelComponent from '@home/components/widget/config/basic/common/widget-actions-panel.component';
@@ -247,6 +250,7 @@ import * as CustomActionPrettyEditorComponent from '@home/components/widget/lib/
 import * as MobileActionEditorComponent from '@home/components/widget/lib/settings/common/action/mobile-action-editor.component';
 import * as CustomDialogService from '@home/components/widget/dialog/custom-dialog.service';
 import * as CustomDialogContainerComponent from '@home/components/widget/dialog/custom-dialog-container.component';
+import * as ImportExportService from '@shared/import-export/import-export.service';
 import * as ImportDialogComponent from '@shared/import-export/import-dialog.component';
 import * as AddWidgetToDashboardDialogComponent from '@home/components/attribute/add-widget-to-dashboard-dialog.component';
 import * as ImportDialogCsvComponent from '@shared/import-export/import-dialog-csv.component';
@@ -255,6 +259,7 @@ import * as EventContentDialogComponent from '@home/components/event/event-conte
 import * as SharedHomeComponentsModule from '@home/components/shared-home-components.module';
 import * as WidgetConfigComponentsModule from '@home/components/widget/config/widget-config-components.module';
 import * as BasicWidgetConfigModule from '@home/components/widget/config/basic/basic-widget-config.module';
+import * as TbFlot from '@home/components/widget/lib/flot-widget';
 import * as WidgetSettingsCommonModule from '@home/components/widget/lib/settings/common/widget-settings-common.module';
 import * as WidgetComponentsModule from '@home/components/widget/widget-components.module';
 import * as SelectTargetLayoutDialogComponent from '@home/components/dashboard/select-target-layout-dialog.component';
@@ -435,6 +440,7 @@ class ModulesMap implements IModulesMap {
     '@shared/decorators/enumerable': enumerable,
     '@shared/decorators/tb-inject': TbInject,
 
+    '@shared/import-export/import-export.service': ImportExportService,
     '@shared/import-export/import-dialog.component': ImportDialogComponent,
     '@shared/import-export/import-dialog-csv.component': ImportDialogCsvComponent,
     '@shared/import-export/table-columns-assignment.component': TableColumnsAssignmentComponent,
@@ -533,6 +539,9 @@ class ModulesMap implements IModulesMap {
     '@shared/components/grid/scroll-grid.component': ScrollGridComponent,
     '@shared/components/image/gallery-image-input.component': GalleryImageInputComponent,
     '@shared/components/image/multiple-gallery-image-input.component': MultipleGalleryImageInputComponent,
+    '@shared/components/popover.service': TbPopoverService,
+
+    '@home/models/datasource/attribute-datasource': AttributeDatasource,
 
     '@home/components/alarm/alarm-filter-config.component': AlarmFilterConfigComponent,
     '@home/components/alarm/alarm-comment-dialog.component': AlarmCommentDialogComponent,
@@ -576,6 +585,7 @@ class ModulesMap implements IModulesMap {
     '@home/components/widget/config/data-keys.component': DataKeysComponent,
     '@home/components/widget/config/data-key-config-dialog.component': DataKeyConfigDialogComponent,
     '@home/components/widget/config/data-key-config.component': DataKeyConfigComponent,
+    '@home/components/widget/lib/flot-widget': TbFlot,
     '@home/components/widget/lib/settings/common/legend-config.component': LegendConfigComponent,
     '@home/components/widget/action/manage-widget-actions.component': ManageWidgetActionsComponent,
     '@home/components/widget/action/widget-action-dialog.component': WidgetActionDialogComponent,
