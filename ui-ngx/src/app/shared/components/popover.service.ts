@@ -15,8 +15,6 @@
 ///
 
 import {
-  ComponentFactory,
-  ComponentFactoryResolver,
   ComponentRef,
   ElementRef,
   Inject,
@@ -26,12 +24,7 @@ import {
   Type,
   ViewContainerRef
 } from '@angular/core';
-import {
-  PopoverPlacement,
-  PopoverPreferredPlacement,
-  PopoverWithTrigger,
-  StrictPopoverPlacement
-} from '@shared/components/popover.models';
+import { PopoverPreferredPlacement, PopoverWithTrigger } from '@shared/components/popover.models';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 import { ComponentType } from '@angular/cdk/portal';
 import { HELP_MARKDOWN_COMPONENT_TOKEN } from '@shared/components/tokens';
@@ -42,10 +35,7 @@ export class TbPopoverService {
 
   private popoverWithTriggers: PopoverWithTrigger[] = [];
 
-  componentFactory: ComponentFactory<TbPopoverComponent> = this.resolver.resolveComponentFactory(TbPopoverComponent);
-
-  constructor(private resolver: ComponentFactoryResolver,
-              @Inject(HELP_MARKDOWN_COMPONENT_TOKEN) private helpMarkdownComponent: ComponentType<any>) {
+  constructor(@Inject(HELP_MARKDOWN_COMPONENT_TOKEN) private helpMarkdownComponent: ComponentType<any>) {
   }
 
   hasPopover(trigger: Element): boolean {
@@ -64,7 +54,7 @@ export class TbPopoverService {
   }
 
   createPopoverRef(hostView: ViewContainerRef): ComponentRef<TbPopoverComponent> {
-    return hostView.createComponent(this.componentFactory);
+    return hostView.createComponent(TbPopoverComponent);
   }
 
   displayPopover<T>(trigger: Element, renderer: Renderer2, hostView: ViewContainerRef,
@@ -96,7 +86,7 @@ export class TbPopoverService {
     const originElementRef = new ElementRef(trigger);
     component.setOverlayOrigin(new CdkOverlayOrigin(originElementRef));
     component.tbPlacement = preferredPlacement;
-    component.tbComponentFactory = this.resolver.resolveComponentFactory(componentType);
+    component.tbComponent = componentType;
     component.tbComponentInjector = injector;
     component.tbComponentContext = context;
     component.tbOverlayStyle = overlayStyle;
@@ -134,7 +124,7 @@ export class TbPopoverService {
       const injector = Injector.create({
         parent: hostView.injector, providers: []
       });
-      const componentRef = hostView.createComponent(this.componentFactory);
+      const componentRef = hostView.createComponent(TbPopoverComponent);
       const component = componentRef.instance;
       this.popoverWithTriggers.push({
         trigger,
@@ -149,7 +139,7 @@ export class TbPopoverService {
       component.tbOverlayStyle = {...overlayStyle, opacity: '0' };
       component.setOverlayOrigin(new CdkOverlayOrigin(originElementRef));
       component.tbPlacement = preferredPlacement;
-      component.tbComponentFactory = this.resolver.resolveComponentFactory(this.helpMarkdownComponent);
+      component.tbComponent = this.helpMarkdownComponent;
       component.tbComponentInjector = injector;
       component.tbComponentContext = {
         helpId,

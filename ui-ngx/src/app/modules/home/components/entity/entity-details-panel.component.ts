@@ -19,7 +19,6 @@ import {
   ChangeDetectionStrategy,
   ChangeDetectorRef,
   Component,
-  ComponentFactoryResolver,
   ComponentRef,
   EventEmitter,
   Injector,
@@ -97,8 +96,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
 
   constructor(protected store: Store<AppState>,
               protected injector: Injector,
-              protected cd: ChangeDetectorRef,
-              protected componentFactoryResolver: ComponentFactoryResolver) {
+              protected cd: ChangeDetectorRef) {
     super(store);
   }
 
@@ -167,7 +165,6 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
       this.entityComponentRef.destroy();
       this.entityComponentRef = null;
     }
-    const componentFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityComponent);
     const viewContainerRef = this.entityDetailsFormAnchor.viewContainerRef;
     viewContainerRef.clear();
     const injector: Injector = Injector.create(
@@ -185,7 +182,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
         parent: this.injector
       }
     );
-    this.entityComponentRef = viewContainerRef.createComponent(componentFactory, 0, injector);
+    this.entityComponentRef = viewContainerRef.createComponent(this.entitiesTableConfig.entityComponent, {index: 0, injector});
     this.entityComponent = this.entityComponentRef.instance;
     this.entityComponent.isEdit = this.isEdit;
     this.detailsForm = this.entityComponent.entityForm;
@@ -207,8 +204,7 @@ export class EntityDetailsPanelComponent extends PageComponent implements AfterV
     viewContainerRef.clear();
     this.entityTabsComponent = null;
     if (this.entitiesTableConfig.entityTabsComponent) {
-      const componentTabsFactory = this.componentFactoryResolver.resolveComponentFactory(this.entitiesTableConfig.entityTabsComponent);
-      this.entityTabsComponentRef = viewContainerRef.createComponent(componentTabsFactory);
+      this.entityTabsComponentRef = viewContainerRef.createComponent(this.entitiesTableConfig.entityTabsComponent);
       this.entityTabsComponent = this.entityTabsComponentRef.instance;
       this.entityTabsComponent.isEdit = this.isEdit;
       this.entityTabsComponent.entitiesTableConfig = this.entitiesTableConfig;

@@ -78,7 +78,7 @@ import * as RxJs from 'rxjs';
 import * as RxJsOperators from 'rxjs/operators';
 import * as TranslateCore from '@ngx-translate/core';
 import * as MatDateTimePicker from '@mat-datetimepicker/core';
-import * as _moment from 'moment';
+import _moment from 'moment';
 import * as tslib from 'tslib';
 
 import * as TbCore from '@core/public-api';
@@ -342,8 +342,6 @@ import { IModulesMap } from '@modules/common/modules-map.models';
 import { TimezoneComponent } from '@shared/components/time/timezone.component';
 import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
 import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
-
-declare const System;
 
 class ModulesMap implements IModulesMap {
 
@@ -681,7 +679,7 @@ class ModulesMap implements IModulesMap {
 
   init() {
     if (!this.initialized) {
-      System.constructor.prototype.resolve = (id) => {
+      System.constructor.prototype.resolve = (id: string) => {
         try {
           if (this.modulesMap[id]) {
             return 'app:' + id;
@@ -696,7 +694,7 @@ class ModulesMap implements IModulesMap {
         System.set('app:' + moduleId, this.modulesMap[moduleId]);
       }
       System.constructor.prototype.shouldFetch = (url: string) => url.endsWith('/download');
-      System.constructor.prototype.fetch = (url, options: RequestInit & {meta?: any}) => {
+      System.constructor.prototype.fetch = (url: string, options: RequestInit & {meta?: any}) => {
         if (options?.meta?.additionalHeaders) {
           options.headers = { ...options.headers, ...options.meta.additionalHeaders };
         }
