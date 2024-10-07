@@ -14,7 +14,6 @@
 /// limitations under the License.
 ///
 
-import { MapProviders } from '@home/components/widget/lib/maps/map-models';
 import {
   createLabelFromDatasource,
   hashCode,
@@ -58,7 +57,7 @@ export function findAngle(startPoint: FormattedData, endPoint: FormattedData, la
 }
 
 
-export function getDefCenterPosition(position): [number, number] {
+export function getDefCenterPosition(position: string | [number, number]): [number, number] {
   if (typeof (position) === 'string') {
     const parts = position.split(',');
     if (parts.length === 2) {
@@ -258,8 +257,8 @@ export const parseWithTranslation = {
   }
 };
 
-export function functionValueCalculator(useFunction: boolean, func: (...args: any[]) => any, params = [], defaultValue: any) {
-  let res;
+export function functionValueCalculator<T>(useFunction: boolean, func: (...args: any[]) => any, params = [], defaultValue: T): T {
+  let res: T;
   if (useFunction && isDefined(func) && isFunction(func)) {
     try {
       res = func(...params);
