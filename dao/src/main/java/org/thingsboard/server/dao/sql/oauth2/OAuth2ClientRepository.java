@@ -46,9 +46,10 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
-            "LEFT JOIN MobileAppOauth2ClientEntity mc on c.id = mc.oauth2ClientId " +
-            "LEFT JOIN MobileAppEntity app on mc.mobileAppId = app.id " +
-            "WHERE app.pkgName = :pkgName AND app.oauth2Enabled = true " +
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity ac on c.id = ac.oauth2ClientId " +
+            "LEFT JOIN MobileAppBundleEntity b on ac.mobileAppBundleId = b.id " +
+            "LEFT JOIN MobileAppEntity a on (b.androidAppId = a.id or b.iosAppID = a.id) " +
+            "WHERE a.pkgName = :pkgName AND b.oauth2Enabled = true " +
             "AND (:platformFilter IS NULL OR c.platforms IS NULL OR c.platforms = '' OR ilike(c.platforms, CONCAT('%', :platformFilter, '%')) = true)")
     List<OAuth2ClientEntity> findEnabledByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
                                                                  @Param("platformFilter") String platformFilter);
@@ -61,16 +62,17 @@ public interface OAuth2ClientRepository extends JpaRepository<OAuth2ClientEntity
 
     @Query("SELECT c " +
             "FROM OAuth2ClientEntity c " +
-            "LEFT JOIN MobileAppOauth2ClientEntity mc on mc.oauth2ClientId = c.id " +
-            "WHERE mc.mobileAppId = :mobileAppId ")
-    List<OAuth2ClientEntity> findByMobileAppId(@Param("mobileAppId") UUID mobileAppId);
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity bc on bc.oauth2ClientId = c.id " +
+            "WHERE bc.mobileAppBundleId = :mobileAppBundleId ")
+    List<OAuth2ClientEntity> findByMobileAppBundleId(@Param("mobileAppBundleId") UUID mobileAppBundleId);
 
-    @Query("SELECT m.appSecret " +
-            "FROM MobileAppEntity m " +
-            "LEFT JOIN MobileAppOauth2ClientEntity mp on m.id = mp.mobileAppId " +
-            "LEFT JOIN OAuth2ClientEntity p on mp.oauth2ClientId = p.id " +
-            "WHERE p.id = :clientId " +
-            "AND m.pkgName = :pkgName")
+    @Query("SELECT a.appSecret " +
+            "FROM MobileAppEntity a " +
+            "LEFT JOIN MobileAppBundleEntity b on (b.androidAppId = a.id or b.iosAppID = a.id) " +
+            "LEFT JOIN MobileAppBundleOauth2ClientEntity bc on bc.mobileAppBundleId = b.id " +
+            "LEFT JOIN OAuth2ClientEntity c on bc.oauth2ClientId = c.id " +
+            "WHERE c.id = :clientId " +
+            "AND a.pkgName = :pkgName")
     String findAppSecret(@Param("clientId") UUID id,
                          @Param("pkgName") String pkgName);
 

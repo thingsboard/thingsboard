@@ -634,7 +634,22 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     tenant_id uuid,
     pkg_name varchar(255) UNIQUE,
     app_secret varchar(2048),
-    oauth2_enabled boolean
+    platform_type varchar(32),
+    status varchar(32),
+    version_info varchar(16384),
+    qr_code_config varchar(16384)
+);
+
+CREATE TABLE IF NOT EXISTS mobile_app_bundle (
+     id uuid NOT NULL CONSTRAINT mobile_app_bundle_pkey PRIMARY KEY,
+     created_time bigint NOT NULL,
+     tenant_id uuid,
+     title varchar(255),
+     android_app_id uuid,
+     ios_app_id uuid,
+     description varchar(1024),
+     layout_config varchar(16384),
+     oauth2_enabled boolean
 );
 
 CREATE TABLE IF NOT EXISTS domain_oauth2_client (
@@ -644,10 +659,10 @@ CREATE TABLE IF NOT EXISTS domain_oauth2_client (
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_oauth2_client (
-    mobile_app_id uuid NOT NULL,
+CREATE TABLE IF NOT EXISTS mobile_app_bundle_oauth2_client (
+    mobile_app_bundle_id uuid NOT NULL,
     oauth2_client_id uuid NOT NULL,
-    CONSTRAINT fk_domain FOREIGN KEY (mobile_app_id) REFERENCES mobile_app(id) ON DELETE CASCADE,
+    CONSTRAINT fk_domain FOREIGN KEY (mobile_app_bundle_id) REFERENCES mobile_app_bundle(id) ON DELETE CASCADE,
     CONSTRAINT fk_oauth2_client FOREIGN KEY (oauth2_client_id) REFERENCES oauth2_client(id) ON DELETE CASCADE
 );
 
@@ -886,13 +901,12 @@ CREATE TABLE IF NOT EXISTS queue_stats (
     CONSTRAINT queue_stats_name_unq_key UNIQUE (tenant_id, queue_name, service_id)
 );
 
-CREATE TABLE IF NOT EXISTS mobile_app_settings (
+CREATE TABLE IF NOT EXISTS qr_code_settings (
     id uuid NOT NULL CONSTRAINT mobile_app_settings_pkey PRIMARY KEY,
     created_time bigint NOT NULL,
     tenant_id uuid NOT NULL,
     use_default_app boolean,
-    android_config VARCHAR(1000),
-    ios_config VARCHAR(1000),
+    mobile_app_bundle_id uuid,
     qr_code_config VARCHAR(100000),
     CONSTRAINT mobile_app_settings_tenant_id_unq_key UNIQUE (tenant_id)
 );

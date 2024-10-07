@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.mobile;
+package org.thingsboard.server.common.data.mobile;
 
+import lombok.AllArgsConstructor;
 import lombok.Data;
-import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+
+import java.util.List;
 
 @Data
-public class MobileAppSettingsEvictEvent {
-    private final TenantId tenantId;
+@AllArgsConstructor
+public class MobileLoginInfo {
+    List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos;
 }

@@ -13,25 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data.id;
 
-import jakarta.persistence.Transient;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import org.thingsboard.server.common.data.EntityType;
 
-import java.io.Serializable;
 import java.util.UUID;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class MobileAppOauth2ClientCompositeKey implements Serializable {
+public class MobileAppBundleId extends UUIDBased implements EntityId{
 
-    @Transient
-    private static final long serialVersionUID = -245388185894468455L;
+    @JsonCreator
+    public MobileAppBundleId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
 
-    private UUID mobileAppBundleId;
-    private UUID oauth2ClientId;
+    public static MobileAppBundleId fromString(String mobileAppId) {
+        return new MobileAppBundleId(UUID.fromString(mobileAppId));
+    }
 
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP_BUNDLE;
+    }
 }

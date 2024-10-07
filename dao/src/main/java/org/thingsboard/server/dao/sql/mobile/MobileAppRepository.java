@@ -39,4 +39,10 @@ public interface MobileAppRepository extends JpaRepository<MobileAppEntity, UUID
     @Query("DELETE FROM MobileAppEntity r WHERE r.tenantId = :tenantId")
     void deleteByTenantId(@Param("tenantId") UUID tenantId);
 
+    @Query("SELECT a FROM MobileAppEntity a LEFT JOIN MobileAppBundleEntity b on b.androidAppId = a.id WHERE b.id = :bundleId")
+    MobileAppEntity findAndroidAppByBundleId(@Param("bundleId") UUID bundleId);
+
+    @Query("SELECT a FROM MobileAppEntity a LEFT JOIN MobileAppBundleEntity b on b.iosAppID = a.id WHERE b.id = :bundleId")
+    MobileAppEntity findIOSAppByBundleId(@Param("bundleId") UUID bundleId);
+
 }

@@ -13,25 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.id;
+package org.thingsboard.server.dao.mobile;
 
-import com.fasterxml.jackson.annotation.JsonCreator;
-import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.dao.Dao;
 
-import java.util.UUID;
 
-@Schema
-public class MobileAppSettingsId extends UUIDBased {
+public interface QrCodeSettingsDao extends Dao<QrCodeSettings> {
 
-    private static final long serialVersionUID = 1L;
+    QrCodeSettings findByTenantId(TenantId tenantId);
 
-    @JsonCreator
-    public MobileAppSettingsId(@JsonProperty("id") UUID id) {
-        super(id);
-    }
-
-    public static MobileAppSettingsId fromString(String mobileAppSettingsId) {
-        return new MobileAppSettingsId(UUID.fromString(mobileAppSettingsId));
-    }
+    void removeByTenantId(TenantId tenantId);
 }

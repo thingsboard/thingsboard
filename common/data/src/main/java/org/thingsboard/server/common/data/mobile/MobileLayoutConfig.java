@@ -13,17 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.mobile;
+package org.thingsboard.server.common.data.mobile;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-public interface MobileAppSettingsService {
+import java.util.ArrayList;
+import java.util.List;
 
-    MobileAppSettings saveMobileAppSettings(TenantId tenantId, MobileAppSettings settings);
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class MobileLayoutConfig {
 
-    MobileAppSettings getMobileAppSettings(TenantId tenantId);
-
-    void deleteByTenantId(TenantId tenantId);
+    @Schema(description = "List of custom menu items", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Valid
+    private List<MobileMenuItem> items = new ArrayList<>();
 
 }

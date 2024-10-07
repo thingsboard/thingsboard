@@ -20,69 +20,65 @@ import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
-import jakarta.validation.constraints.NotEmpty;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.validation.Length;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
 @ToString
-public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, HasName {
+public class MobileAppBundle extends BaseData<MobileAppBundleId> implements HasTenantId, HasName {
 
     @Schema(description = "JSON object with Tenant Id")
     private TenantId tenantId;
-    @Schema(description = "Application package name. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Application bundle title. Cannot be empty", requiredMode = Schema.RequiredMode.REQUIRED)
     @NotBlank
-    @Length(fieldName = "pkgName")
-    private String pkgName;
-    @Schema(description = "Application secret. The length must be at least 16 characters", requiredMode = Schema.RequiredMode.REQUIRED)
-    @NotEmpty
-    @Length(fieldName = "appSecret", min = 16, max = 2048, message = "must be at least 16 and max 2048 characters")
-    private String appSecret;
-    @Schema(description = "Application platform type: ANDROID or IOS", requiredMode = Schema.RequiredMode.REQUIRED)
-    private PlatformType platformType;
-    @Schema(description = "Application status: PUBLISHED, DEPRECATED, SUSPENDED", requiredMode = Schema.RequiredMode.REQUIRED)
-    private MobileAppStatus status;
-    @Schema(description = "Application version info")
-    @NoXss
-    @Length(fieldName = "versionInfo", max = 16384)
-    private JsonNode versionInfo;
-    @Schema(description = "Application qr code configuration")
+    @Length(fieldName = "title")
+    private String title;
+    @Schema(description = "Application bundle description.")
+    @Length(fieldName = "description")
+    private String description;
+    @Schema(description = "Android application id")
+    private MobileAppId androidAppId;
+    @Schema(description = "IOS application id")
+    private MobileAppId iosAppId;
+    @Schema(description = "Application layout configuration")
     @Valid
-    private QrCodeConfig qrCodeConfig;
+    private MobileLayoutConfig layoutConfig;
+    @Schema(description = "Whether OAuth2 settings are enabled or not")
+    private Boolean oauth2Enabled;
 
-    public MobileApp() {
+    public MobileAppBundle() {
         super();
     }
 
-    public MobileApp(MobileAppId id) {
+    public MobileAppBundle(MobileAppBundleId id) {
         super(id);
     }
 
-    public MobileApp(MobileApp mobile) {
+    public MobileAppBundle(MobileAppBundle mobile) {
         super(mobile);
         this.tenantId = mobile.tenantId;
-        this.pkgName = mobile.pkgName;
-        this.appSecret = mobile.appSecret;
-        this.platformType = mobile.platformType;
-        this.status = mobile.status;
-        this.versionInfo = mobile.versionInfo;
-        this.qrCodeConfig = mobile.qrCodeConfig;
+        this.title = mobile.title;
+        this.description = mobile.description;
+        this.androidAppId = mobile.androidAppId;
+        this.iosAppId = mobile.iosAppId;
+        this.layoutConfig = mobile.layoutConfig;
+        this.oauth2Enabled = mobile.oauth2Enabled;
     }
 
     @Override
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    @Schema(description = "Mobile app package name", example = "my.mobile.app", accessMode = Schema.AccessMode.READ_ONLY)
+    @Schema(description = "Mobile app bundle title", example = "My main application", accessMode = Schema.AccessMode.READ_ONLY)
     public String getName() {
-        return pkgName;
+        return title;
     }
 }

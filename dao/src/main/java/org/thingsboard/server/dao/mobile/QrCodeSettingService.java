@@ -15,19 +15,21 @@
  */
 package org.thingsboard.server.dao.mobile;
 
-import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
+import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 
-public interface MobileAppDao extends Dao<MobileApp> {
+public interface QrCodeSettingService {
 
-    MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
+    QrCodeSettings saveQrCodeSettings(TenantId tenantId, QrCodeSettings settings);
 
-    PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink);
+    QrCodeSettings getQrCodeSettings(TenantId tenantId);
+
+    AndroidQrCodeConfig getAndroidQrCodeConfig(TenantId sysTenantId);
+
+    IosQrCodeConfig getIosQrCodeConfig(TenantId sysTenantId);
 
     void deleteByTenantId(TenantId tenantId);
+
 }

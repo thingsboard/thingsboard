@@ -15,18 +15,35 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-public class MobileAppOauth2Client {
+@EqualsAndHashCode
+public class AndroidQrCodeConfig implements QrCodeConfig {
 
-    private MobileAppId mobileAppId;
-    private OAuth2ClientId oAuth2ClientId;
+    private boolean enabled;
+    @NoXss
+    @NotBlank
+    private String appPackage;
+    @NoXss
+    @NotBlank
+    private String sha256CertFingerprints;
+    @NoXss
+    @NotBlank
+    private String storeLink;
 
+    @Override
+    public PlatformType getType() {
+        return PlatformType.ANDROID;
+    }
 }

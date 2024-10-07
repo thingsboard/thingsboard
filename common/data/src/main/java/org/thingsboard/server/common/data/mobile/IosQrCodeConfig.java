@@ -15,11 +15,13 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
+import jakarta.validation.constraints.NotBlank;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
@@ -27,14 +29,18 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class AndroidConfig {
+public class IosQrCodeConfig implements QrCodeConfig {
 
     private boolean enabled;
     @NoXss
-    private String appPackage;
+    @NotBlank
+    private String appId;
     @NoXss
-    private String sha256CertFingerprints;
-    @NoXss
+    @NotBlank
     private String storeLink;
 
+    @Override
+    public PlatformType getType() {
+        return PlatformType.IOS;
+    }
 }
