@@ -22,9 +22,9 @@ import org.thingsboard.server.common.data.oauth2.PlatformType;
 
 public interface QrCodeSettingService {
 
-    QrCodeSettings saveQrCodeSettings(TenantId tenantId, QrCodeSettings settings);
+    QrCodeSettings saveQrCodeSettings(TenantId tenantId, QrCodeSettings qrCodeSettings);
 
-    QrCodeSettings getQrCodeSettings(TenantId tenantId);
+    QrCodeSettings findQrCodeSettings(TenantId tenantId);
 
     QrCodeConfig findAppQrCodeConfig(TenantId sysTenantId, PlatformType platformType);
 

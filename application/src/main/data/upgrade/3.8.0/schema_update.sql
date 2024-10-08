@@ -21,13 +21,11 @@ CREATE TABLE IF NOT EXISTS mobile_app_bundle (
     created_time bigint NOT NULL,
     tenant_id uuid,
     title varchar(255),
-    android_app_id uuid,
-    ios_app_id uuid,
     description varchar(1024),
+    android_app_id uuid UNIQUE,
+    ios_app_id uuid UNIQUE,
     layout_config varchar(16384),
     oauth2_enabled boolean,
-    CONSTRAINT android_app_id_unq_key UNIQUE (android_app_id),
-    CONSTRAINT ios_app_id_unq_key UNIQUE (ios_app_id),
     CONSTRAINT fk_android_app_id FOREIGN KEY (android_app_id) REFERENCES mobile_app(id),
     CONSTRAINT fk_ios_app_id FOREIGN KEY (ios_app_id) REFERENCES mobile_app(id)
 );
@@ -43,7 +41,7 @@ DO
 $$
     BEGIN
         -- in case of running the upgrade script a second time
-        IF EXISTS(SELECT * FROM information_schema.tables WHERE table_name='mobile_app_oauth2_client') THEN
+        IF EXISTS(SELECT * FROM information_schema.tables WHERE table_name = 'mobile_app_oauth2_client') THEN
             ALTER TABLE mobile_app_oauth2_client RENAME TO mobile_app_bundle_oauth2_client;
             ALTER TABLE mobile_app_bundle_oauth2_client DROP CONSTRAINT IF EXISTS fk_domain;
             ALTER TABLE mobile_app_bundle_oauth2_client RENAME COLUMN mobile_app_id TO mobile_app_bundle_id;
@@ -63,7 +61,7 @@ $$
         mobileAppRecord RECORD;
     BEGIN
         -- in case of running the upgrade script a second time
-        IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name='mobile_app' and column_name='oauth2_enabled') THEN
+        IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'mobile_app' and column_name = 'oauth2_enabled') THEN
             UPDATE mobile_app SET platform_type = 'ANDROID' WHERE platform_type IS NULL;
             UPDATE mobile_app SET status = 'PUBLISHED' WHERE mobile_app.status IS NULL;
             FOR mobileAppRecord IN SELECT * FROM mobile_app
@@ -104,6 +102,7 @@ $$
         IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'qr_code_settings' and column_name = 'android_config') THEN
             FOR qrCodeRecord IN SELECT * FROM qr_code_settings
             LOOP
+                generatedBundleId := NULL;
                 -- migrate android config
                 SELECT id into androidAppId FROM mobile_app WHERE pkg_name = qrCodeRecord.android_config::jsonb ->> 'appPackage' AND platform_type = 'ANDROID';
                 IF androidAppId IS NULL THEN
@@ -117,6 +116,7 @@ $$
                     UPDATE qr_code_settings SET mobile_app_bundle_id = generatedBundleId WHERE id = qrCodeRecord.id;
                 ELSE
                     UPDATE mobile_app SET qr_code_config = qrCodeRecord.android_config::jsonb || '{"type": "ANDROID"}'::jsonb WHERE id = androidAppId;
+                    UPDATE qr_code_settings SET mobile_app_bundle_id = (SELECT id FROM mobile_app_bundle WHERE mobile_app_bundle.android_app_id = androidAppId) WHERE id = qrCodeRecord.id;
                 END IF;
 
                 -- migrate ios config
@@ -137,6 +137,7 @@ $$
                     END IF;
                 ELSE
                     UPDATE mobile_app SET qr_code_config = qrCodeRecord.ios_config::jsonb || '{"type": "IOS"}'::jsonb WHERE id = iosAppId;
+                    UPDATE qr_code_settings SET mobile_app_bundle_id = (SELECT id FROM mobile_app_bundle WHERE mobile_app_bundle.ios_app_id = iosAppId) WHERE id = qrCodeRecord.id;
                 END IF;
             END LOOP;
         END IF;

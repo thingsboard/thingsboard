@@ -67,7 +67,7 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
     }
 
     @Override
-    public QrCodeSettings getQrCodeSettings(TenantId tenantId) {
+    public QrCodeSettings findQrCodeSettings(TenantId tenantId) {
         log.trace("Executing getMobileAppSettings for tenant [{}] ", tenantId);
         QrCodeSettings qrCodeSettings = cache.getAndPutInTransaction(tenantId,
                 () -> qrCodeSettingsDao.findByTenantId(tenantId), true);
@@ -77,7 +77,7 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
     @Override
     public QrCodeConfig findAppQrCodeConfig(TenantId tenantId, PlatformType platformType) {
         log.trace("Executing findAppQrCodeConfig for tenant [{}] ", tenantId);
-        QrCodeSettings qrCodeSettings = getQrCodeSettings(tenantId);
+        QrCodeSettings qrCodeSettings = findQrCodeSettings(tenantId);
         return qrCodeSettings.getMobileAppBundleId() != null ? mobileAppService.findByBundleIdAndPlatformType(tenantId, qrCodeSettings.getMobileAppBundleId(), platformType).getQrCodeConfig() : null;
     }
 

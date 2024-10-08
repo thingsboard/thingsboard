@@ -58,10 +58,10 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
     public void setUp() throws Exception {
         loginSysAdmin();
 
-        androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID, true);
+        androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID);
         androidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
 
-        iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS, true);
+        iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS);
         iosApp = doPost("/api/mobile/app", iosApp, MobileApp.class);
     }
 
@@ -143,13 +143,13 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
         assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppBundleInfo(savedMobileAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), List.of(new OAuth2ClientInfo(savedOAuth2Client))));
     }
 
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType, boolean oauth2Enabled) {
-        MobileApp MobileApp = new MobileApp();
-        MobileApp.setTenantId(tenantId);
-        MobileApp.setPkgName(mobileAppName);
-        MobileApp.setPlatformType(platformType);
-        MobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
-        return MobileApp;
+    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType) {
+        MobileApp mobileApp = new MobileApp();
+        mobileApp.setTenantId(tenantId);
+        mobileApp.setPkgName(mobileAppName);
+        mobileApp.setPlatformType(platformType);
+        mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        return mobileApp;
     }
 
 }

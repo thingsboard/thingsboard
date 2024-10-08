@@ -54,10 +54,10 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     private MobileAppBundleDao mobileAppBundleDao;
 
     @Override
-    public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileApp) {
-        log.trace("Executing saveMobileApp [{}]", mobileApp);
+    public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileAppBundle) {
+        log.trace("Executing saveMobileAppBundle [{}]", mobileAppBundle);
         try {
-            MobileAppBundle savedMobileApp = mobileAppBundleDao.save(tenantId, mobileApp);
+            MobileAppBundle savedMobileApp = mobileAppBundleDao.save(tenantId, mobileAppBundle);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedMobileApp).build());
             return savedMobileApp;
         } catch (Exception e) {
@@ -100,7 +100,7 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
 
     @Override
     public MobileAppBundleInfo findMobileAppBundleInfoById(TenantId tenantId, MobileAppBundleId mobileAppIdBundle) {
-        log.trace("Executing findMobileAppInfoById [{}] [{}]", tenantId, mobileAppIdBundle);
+        log.trace("Executing findMobileAppBundleInfoById [{}] [{}]", tenantId, mobileAppIdBundle);
         MobileAppBundleInfo mobileAppBundleInfo = mobileAppBundleDao.findInfoById(tenantId, mobileAppIdBundle);
         if (mobileAppBundleInfo != null) {
             fetchOauth2Clients(mobileAppBundleInfo);
@@ -133,7 +133,7 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
 
     @Override
     public MobileAppBundle findMobileAppBundleByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
-        log.trace("Executing findMobileAppBundle, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
+        log.trace("Executing findMobileAppBundleByPkgNameAndPlatform, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
         return mobileAppBundleDao.findByPkgNameAndPlatform(tenantId, pkgName, platform);
     }
 

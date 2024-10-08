@@ -40,21 +40,19 @@ import java.util.List;
 public class MobileV2Controller extends BaseController {
 
     @GetMapping(value = "/api/noauth/mobile")
-    public LoginMobileInfo getMobileUserLoginSettings(@Parameter(description = "Mobile application package name")
-                                                      @RequestParam String pkgName,
-                                                      @Parameter(description = "Platform type",
-                                                              schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
-                                                      @RequestParam PlatformType platform) {
+    public LoginMobileInfo getLoginMobileInfo(@Parameter(description = "Mobile application package name")
+                                              @RequestParam String pkgName,
+                                              @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
+                                              @RequestParam PlatformType platform) {
         List<OAuth2ClientLoginInfo> oauth2Clients = oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(pkgName, platform);
         return new LoginMobileInfo(oauth2Clients);
     }
 
     @GetMapping(value = "/api/auth/mobile")
-    public UserMobileInfo getMobileUserSettings(@Parameter(description = "Mobile application package name")
-                                                @RequestParam String pkgName,
-                                                @Parameter(description = "Platform type",
-                                                        schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
-                                                @RequestParam PlatformType platform) throws ThingsboardException {
+    public UserMobileInfo getUserMobileInfo(@Parameter(description = "Mobile application package name")
+                                            @RequestParam String pkgName,
+                                            @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
+                                            @RequestParam PlatformType platform) throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         HomeDashboardInfo homeDashboardInfo = getHomeDashboardInfo(securityUser, user.getAdditionalInfo());

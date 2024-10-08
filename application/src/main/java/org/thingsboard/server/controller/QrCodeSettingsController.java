@@ -113,7 +113,7 @@ public class QrCodeSettingsController extends BaseController {
     @GetMapping(value = "/.well-known/apple-app-site-association")
     public ResponseEntity<JsonNode> getAppleAppSiteAssociation() {
         IosQrCodeConfig iosQrCodeConfig = (IosQrCodeConfig) qrCodeSettingService.findAppQrCodeConfig(TenantId.SYS_TENANT_ID, IOS);
-        if (iosQrCodeConfig != null && iosQrCodeConfig.isEnabled() && iosQrCodeConfig.getAppId() != null) {
+        if (iosQrCodeConfig != null && iosQrCodeConfig.isEnabled()) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, iosQrCodeConfig.getAppId())));
         } else {
             return ResponseEntity.notFound().build();
@@ -139,7 +139,7 @@ public class QrCodeSettingsController extends BaseController {
     public QrCodeSettings getMobileAppSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
-        return qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID);
+        return qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
     }
 
     @ApiOperation(value = "Get the deep link to the associated mobile application (getMobileAppDeepLink)",
@@ -150,7 +150,7 @@ public class QrCodeSettingsController extends BaseController {
         String secret = mobileAppSecretService.generateMobileAppSecret(getCurrentUser());
         String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, null, request);
         String platformDomain = new URI(baseUrl).getHost();
-        QrCodeSettings qrCodeSettings = qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID);
+        QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
         String appDomain;
         if (!qrCodeSettings.isUseDefaultApp()) {
             appDomain = platformDomain;
@@ -175,7 +175,7 @@ public class QrCodeSettingsController extends BaseController {
 
     @GetMapping(value = "/api/noauth/qr")
     public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
-        QrCodeSettings qrCodeSettings = qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID);
+        QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
         boolean useDefaultApp = qrCodeSettings.isUseDefaultApp();
         if (userAgent.contains("Android")) {
             String googlePlayLink = useDefaultApp ? qrCodeSettings.getDefaultGooglePlayLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), ANDROID);

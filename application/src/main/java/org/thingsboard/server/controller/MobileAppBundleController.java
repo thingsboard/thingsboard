@@ -64,10 +64,10 @@ public class MobileAppBundleController extends BaseController {
     private final TbMobileAppBundleService tbMobileAppBundleService;
 
     @ApiOperation(value = "Save Or update Mobile app bundle (saveMobileAppBundle)",
-            notes = "Create or update the Mobile app bundle that represents tha pair of apps for ANDROID and IOS platforms." +
+            notes = "Create or update the Mobile app bundle that represents tha pair of ANDROID and IOS app and " +
+                    "mobile settings like oauth2 clients, self-registration and layout configuration." +
                     "When creating mobile app bundle, platform generates Mobile App Bundle Id as " + UUID_WIKI_LINK +
                     "The newly created Mobile App Bundle Id will be present in the response. " +
-                    "Specify existing Mobile App Bundle Id to configure application settings like oauth2 settings, self-registration or layout settings. " +
                     "Referencing non-existing Mobile App Bundle Id will cause 'Not Found' error."  + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @PostMapping(value = "/mobile/bundle")
