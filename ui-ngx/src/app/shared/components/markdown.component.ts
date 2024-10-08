@@ -127,7 +127,7 @@ export class TbMarkdownComponent implements OnChanges {
       const preHtml = preElements.item(i).outerHTML.replace('ngnonbindable=""', 'ngNonBindable');
       template = template.replace(matches[i][0], preHtml);
     }
-    template = this.sanitizeCurlyBraces(template);
+    template = this.sanitize(template);
     this.markdownContainer.clear();
     let styles: string[] = [];
     let readyObservable: Observable<void>;
@@ -259,8 +259,8 @@ export class TbMarkdownComponent implements OnChanges {
     }
   }
 
-  private sanitizeCurlyBraces(template: string): string {
-    return template.replace(/{/g, '&#123;').replace(/}/g, '&#125;');
+  private sanitize(template: string): string {
+    return template.replace(/{/g, '&#123;').replace(/}/g, '&#125;').replace(/@/g, '&#64;');
   }
 
   private destroyMarkdownInstanceResources() {
