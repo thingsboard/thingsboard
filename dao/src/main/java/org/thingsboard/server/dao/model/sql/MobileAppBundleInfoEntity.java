@@ -15,30 +15,29 @@
  */
 package org.thingsboard.server.dao.model.sql;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.mobile.MobileAppBundle;
-
-import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_BUNDLE_TABLE_NAME;
+import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-@Entity
-@Table(name = MOBILE_APP_BUNDLE_TABLE_NAME)
-public final class MobileAppBundleEntity extends AbstractMobileAppBundleEntity<MobileAppBundle> {
+public class MobileAppBundleInfoEntity extends AbstractMobileAppBundleEntity<MobileAppBundleInfo> {
 
-    public MobileAppBundleEntity() {
+    private String androidPkgName;
+    private String iosPkgName;
+
+    public MobileAppBundleInfoEntity() {
         super();
     }
 
-    public MobileAppBundleEntity(MobileAppBundle mobileAppBundle) {
-        super(mobileAppBundle);
+    public MobileAppBundleInfoEntity(MobileAppBundleEntity mobileAppBundleEntity, String androidPkgName, String iosPkgName) {
+        super(mobileAppBundleEntity);
+        this.androidPkgName = androidPkgName;
+        this.iosPkgName = iosPkgName;
     }
 
     @Override
-    public MobileAppBundle toData() {
-        return super.toMobileAppBundle();
+    public MobileAppBundleInfo toData() {
+        return new MobileAppBundleInfo(super.toMobileAppBundle(), androidPkgName, iosPkgName);
     }
 }

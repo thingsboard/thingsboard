@@ -25,8 +25,8 @@ import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.mobile.MobileAppBundle;
-import org.thingsboard.server.common.data.mobile.MobileLoginInfo;
-import org.thingsboard.server.common.data.mobile.MobileUserInfo;
+import org.thingsboard.server.common.data.mobile.LoginMobileInfo;
+import org.thingsboard.server.common.data.mobile.UserMobileInfo;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.queue.util.TbCoreComponent;
@@ -40,17 +40,17 @@ import java.util.List;
 public class MobileV2Controller extends BaseController {
 
     @GetMapping(value = "/api/noauth/mobile")
-    public MobileLoginInfo getMobileUserLoginSettings(@Parameter(description = "Mobile application package name")
+    public LoginMobileInfo getMobileUserLoginSettings(@Parameter(description = "Mobile application package name")
                                                       @RequestParam String pkgName,
                                                       @Parameter(description = "Platform type",
                                                               schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
                                                       @RequestParam PlatformType platform) {
         List<OAuth2ClientLoginInfo> oauth2Clients = oAuth2ClientService.findOAuth2ClientLoginInfosByMobilePkgNameAndPlatformType(pkgName, platform);
-        return new MobileLoginInfo(oauth2Clients);
+        return new LoginMobileInfo(oauth2Clients);
     }
 
     @GetMapping(value = "/api/auth/mobile")
-    public MobileUserInfo getMobileUserSettings(@Parameter(description = "Mobile application package name")
+    public UserMobileInfo getMobileUserSettings(@Parameter(description = "Mobile application package name")
                                                 @RequestParam String pkgName,
                                                 @Parameter(description = "Platform type",
                                                         schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
@@ -59,7 +59,7 @@ public class MobileV2Controller extends BaseController {
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         HomeDashboardInfo homeDashboardInfo = getHomeDashboardInfo(securityUser, user.getAdditionalInfo());
         MobileAppBundle mobileAppBundle = mobileAppBundleService.findMobileAppBundleByPkgNameAndPlatform(securityUser.getTenantId(), pkgName, platform);
-        return new MobileUserInfo(user, homeDashboardInfo, mobileAppBundle != null ? mobileAppBundle.getLayoutConfig() : null);
+        return new UserMobileInfo(user, homeDashboardInfo, mobileAppBundle != null ? mobileAppBundle.getLayoutConfig() : null);
     }
 
 }

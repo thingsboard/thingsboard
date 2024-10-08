@@ -16,9 +16,9 @@
 package org.thingsboard.server.dao.mobile;
 
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
+import org.thingsboard.server.common.data.mobile.QrCodeConfig;
 import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 
 public interface QrCodeSettingService {
 
@@ -26,9 +26,7 @@ public interface QrCodeSettingService {
 
     QrCodeSettings getQrCodeSettings(TenantId tenantId);
 
-    AndroidQrCodeConfig getAndroidQrCodeConfig(TenantId sysTenantId);
-
-    IosQrCodeConfig getIosQrCodeConfig(TenantId sysTenantId);
+    QrCodeConfig findAppQrCodeConfig(TenantId sysTenantId, PlatformType platformType);
 
     void deleteByTenantId(TenantId tenantId);
 

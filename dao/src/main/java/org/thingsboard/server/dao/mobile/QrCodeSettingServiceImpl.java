@@ -21,11 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.BadgePosition;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
+import org.thingsboard.server.common.data.mobile.QrCodeConfig;
 import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 
@@ -75,17 +75,10 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
     }
 
     @Override
-    public AndroidQrCodeConfig getAndroidQrCodeConfig(TenantId tenantId) {
-        log.trace("Executing getAndroidAppConfig for tenant [{}] ", tenantId);
+    public QrCodeConfig findAppQrCodeConfig(TenantId tenantId, PlatformType platformType) {
+        log.trace("Executing findAppQrCodeConfig for tenant [{}] ", tenantId);
         QrCodeSettings qrCodeSettings = getQrCodeSettings(tenantId);
-        return qrCodeSettings.getMobileAppBundleId() != null ? mobileAppService.findAndroidQrCodeConfig(tenantId, qrCodeSettings.getMobileAppBundleId()) : null;
-    }
-
-    @Override
-    public IosQrCodeConfig getIosQrCodeConfig(TenantId tenantId) {
-        log.trace("Executing getIOSAppConfig for tenant [{}] ", tenantId);
-        QrCodeSettings qrCodeSettings = getQrCodeSettings(tenantId);
-        return qrCodeSettings.getMobileAppBundleId() != null ? mobileAppService.findIosQrCodeConfig(tenantId, qrCodeSettings.getMobileAppBundleId()) : null;
+        return qrCodeSettings.getMobileAppBundleId() != null ? mobileAppService.findByBundleIdAndPlatformType(tenantId, qrCodeSettings.getMobileAppBundleId(), platformType).getQrCodeConfig() : null;
     }
 
     @Override

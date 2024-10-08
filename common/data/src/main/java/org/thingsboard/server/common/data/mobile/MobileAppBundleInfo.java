@@ -35,6 +35,12 @@ public class MobileAppBundleInfo extends MobileAppBundle {
     @Schema(description = "List of available oauth2 clients")
     private List<OAuth2ClientInfo> oauth2ClientInfos;
 
+    public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName) {
+        super(mobileApp);
+        this.androidPkgName = androidPkgName;
+        this.iosPkgName = iosPkgName;
+    }
+
     public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName, List<OAuth2ClientInfo> oauth2ClientInfos) {
         super(mobileApp);
         this.androidPkgName = androidPkgName;

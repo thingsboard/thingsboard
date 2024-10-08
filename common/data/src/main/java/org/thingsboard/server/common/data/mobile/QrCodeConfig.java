@@ -33,5 +33,6 @@ public interface QrCodeConfig {
 
     PlatformType getType();
 
+    String getStoreLink();
 
 }

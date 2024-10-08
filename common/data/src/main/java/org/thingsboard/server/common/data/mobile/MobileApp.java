@@ -16,7 +16,6 @@
 package org.thingsboard.server.common.data.mobile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
@@ -31,7 +30,6 @@ import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.validation.Length;
-import org.thingsboard.server.common.data.validation.NoXss;
 
 @EqualsAndHashCode(callSuper = true)
 @Data
@@ -53,9 +51,8 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @Schema(description = "Application status: PUBLISHED, DEPRECATED, SUSPENDED", requiredMode = Schema.RequiredMode.REQUIRED)
     private MobileAppStatus status;
     @Schema(description = "Application version info")
-    @NoXss
-    @Length(fieldName = "versionInfo", max = 16384)
-    private JsonNode versionInfo;
+    @Valid
+    private MobileAppVersionInfo versionInfo;
     @Schema(description = "Application qr code configuration")
     @Valid
     private QrCodeConfig qrCodeConfig;

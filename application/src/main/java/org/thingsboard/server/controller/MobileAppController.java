@@ -76,16 +76,16 @@ public class MobileAppController extends BaseController {
     @ApiOperation(value = "Get mobile app infos (getTenantMobileAppInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mobile/app")
-    public PageData<MobileApp> getTenantMobileAppInfos(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
-                                                           @RequestParam int pageSize,
-                                                           @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
-                                                           @RequestParam int page,
-                                                           @Parameter(description = "Case-insensitive 'substring' filter based on app's name")
-                                                           @RequestParam(required = false) String textSearch,
-                                                           @Parameter(description = SORT_PROPERTY_DESCRIPTION)
-                                                           @RequestParam(required = false) String sortProperty,
-                                                           @Parameter(description = SORT_ORDER_DESCRIPTION)
-                                                           @RequestParam(required = false) String sortOrder) throws ThingsboardException {
+    public PageData<MobileApp> getTenantMobileApps(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+                                                   @RequestParam int pageSize,
+                                                   @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
+                                                   @RequestParam int page,
+                                                   @Parameter(description = "Case-insensitive 'substring' filter based on app's name")
+                                                   @RequestParam(required = false) String textSearch,
+                                                   @Parameter(description = SORT_PROPERTY_DESCRIPTION)
+                                                   @RequestParam(required = false) String sortProperty,
+                                                   @Parameter(description = SORT_ORDER_DESCRIPTION)
+                                                   @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.MOBILE_APP, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return mobileAppService.findMobileAppsByTenantId(getTenantId(), pageLink);
@@ -94,7 +94,7 @@ public class MobileAppController extends BaseController {
     @ApiOperation(value = "Get mobile info by id (getMobileAppInfoById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mobile/app/{id}")
-    public MobileApp getMobileAppInfoById(@PathVariable UUID id) throws ThingsboardException {
+    public MobileApp getMobileAppById(@PathVariable UUID id) throws ThingsboardException {
         MobileAppId mobileAppId = new MobileAppId(id);
         return checkEntityId(mobileAppId, mobileAppService::findMobileAppById, Operation.READ);
     }

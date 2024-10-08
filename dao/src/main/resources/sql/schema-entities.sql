@@ -641,15 +641,19 @@ CREATE TABLE IF NOT EXISTS mobile_app (
 );
 
 CREATE TABLE IF NOT EXISTS mobile_app_bundle (
-     id uuid NOT NULL CONSTRAINT mobile_app_bundle_pkey PRIMARY KEY,
-     created_time bigint NOT NULL,
-     tenant_id uuid,
-     title varchar(255),
-     android_app_id uuid,
-     ios_app_id uuid,
-     description varchar(1024),
-     layout_config varchar(16384),
-     oauth2_enabled boolean
+        id uuid NOT NULL CONSTRAINT mobile_app_bundle_pkey PRIMARY KEY,
+        created_time bigint NOT NULL,
+        tenant_id uuid,
+        title varchar(255),
+        android_app_id uuid,
+        ios_app_id uuid,
+        description varchar(1024),
+        layout_config varchar(16384),
+        oauth2_enabled boolean,
+        CONSTRAINT android_app_id_unq_key UNIQUE (android_app_id),
+        CONSTRAINT ios_app_id_unq_key UNIQUE (ios_app_id),
+        CONSTRAINT fk_android_app_id FOREIGN KEY (android_app_id) REFERENCES mobile_app(id),
+        CONSTRAINT fk_ios_app_id FOREIGN KEY (ios_app_id) REFERENCES mobile_app(id)
 );
 
 CREATE TABLE IF NOT EXISTS domain_oauth2_client (

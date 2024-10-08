@@ -97,17 +97,9 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     }
 
     @Override
-    public AndroidQrCodeConfig findAndroidQrCodeConfig(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
+    public MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType) {
         log.trace("Executing findAndroidQrConfig, tenantId [{}], mobileAppBundleId [{}]", tenantId, mobileAppBundleId);
-        MobileApp mobileApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
-        return mobileApp != null ? JacksonUtil.convertValue(mobileApp.getQrCodeConfig(), AndroidQrCodeConfig.class) : null;
-    }
-
-    @Override
-    public IosQrCodeConfig findIosQrCodeConfig(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
-        log.trace("Executing findAndroidQrConfig, tenantId [{}], mobileAppBundleId [{}]", tenantId, mobileAppBundleId);
-        MobileApp mobileApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.IOS);
-        return mobileApp != null ? JacksonUtil.convertValue(mobileApp.getQrCodeConfig(), IosQrCodeConfig.class) : null;
+        return mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, platformType);
     }
 
     @Override

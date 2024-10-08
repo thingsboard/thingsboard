@@ -28,6 +28,7 @@ import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileAppStatus;
 import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.MobileAppVersionInfo;
 import org.thingsboard.server.common.data.mobile.QrCodeConfig;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.model.BaseSqlEntity;
@@ -82,7 +83,7 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         this.appSecret = mobile.getAppSecret();
         this.platformType = mobile.getPlatformType();
         this.status = mobile.getStatus();
-        this.versionInfo = mobile.getVersionInfo();
+        this.versionInfo = toJson(mobile.getVersionInfo());
         this.qrCodeConfig = toJson(mobile.getQrCodeConfig());
     }
 
@@ -98,7 +99,7 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         mobile.setAppSecret(appSecret);
         mobile.setPlatformType(platformType);
         mobile.setStatus(status);
-        mobile.setVersionInfo(versionInfo);
+        mobile.setVersionInfo(fromJson(versionInfo, MobileAppVersionInfo.class));
         mobile.setQrCodeConfig(fromJson(qrCodeConfig, QrCodeConfig.class));
         return mobile;
     }

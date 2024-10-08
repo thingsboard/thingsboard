@@ -106,7 +106,7 @@ public class MobileAppBundleController extends BaseController {
                                                                        @RequestParam(required = false) String sortProperty,
                                                                        @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                                        @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.MOBILE_APP, Operation.READ);
+        accessControlService.checkPermission(getCurrentUser(), Resource.MOBILE_APP_BUNDLE, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return mobileAppBundleService.findMobileAppBundleInfosByTenantId(getTenantId(), pageLink);
     }
