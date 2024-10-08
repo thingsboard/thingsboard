@@ -34,6 +34,8 @@ public interface MobileAppService extends EntityDaoService {
 
     MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
 
+    MobileApp findMobileAppByPkgNameAndPlatformType(String pkgName, PlatformType platform);
+
     void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
     void deleteMobileAppsByTenantId(TenantId tenantId);

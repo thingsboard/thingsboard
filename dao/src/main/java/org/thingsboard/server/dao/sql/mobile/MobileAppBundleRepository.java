@@ -22,6 +22,7 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.model.sql.MobileAppBundleEntity;
 import org.thingsboard.server.dao.model.sql.MobileAppBundleInfoEntity;
 
@@ -51,7 +52,7 @@ public interface MobileAppBundleRepository extends JpaRepository<MobileAppBundle
             "LEFT JOIN MobileAppEntity a on b.androidAppId = a.id or b.iosAppID = a.id " +
             "WHERE a.pkgName = :pkgName AND a.platformType = :platformType")
     MobileAppBundleEntity findByPkgNameAndPlatformType(@Param("pkgName") String pkgName,
-                                                       @Param("platformType") String platformType);
+                                                       @Param("platformType") PlatformType platformType);
 
     @Query("SELECT b FROM MobileAppBundleEntity b WHERE b.tenantId = :tenantId AND " +
             "(:searchText is NULL OR ilike(b.title, concat('%', :searchText, '%')) = true)")

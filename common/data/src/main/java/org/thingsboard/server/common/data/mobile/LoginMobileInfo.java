@@ -19,5 +19,5 @@ import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 
 import java.util.List;
 
-public record LoginMobileInfo(List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos) {
+public record LoginMobileInfo(List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos, MobileAppVersionInfo versionInfo) {
 }

@@ -84,7 +84,7 @@ public class JpaMobileAppBundleDao extends JpaAbstractDao<MobileAppBundleEntity,
 
     @Override
     public MobileAppBundle findByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
-        return DaoUtil.getData(mobileAppBundleRepository.findByPkgNameAndPlatformType(pkgName, platform.name()));
+        return DaoUtil.getData(mobileAppBundleRepository.findByPkgNameAndPlatformType(pkgName, platform));
     }
 
     @Override
