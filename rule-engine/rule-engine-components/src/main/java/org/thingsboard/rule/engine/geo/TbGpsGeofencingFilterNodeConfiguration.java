@@ -15,6 +15,7 @@
  */
 package org.thingsboard.rule.engine.geo;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
 import org.thingsboard.rule.engine.api.NodeConfiguration;
 
@@ -22,6 +23,7 @@ import org.thingsboard.rule.engine.api.NodeConfiguration;
  * Created by ashvayka on 19.01.18.
  */
 @Data
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration<TbGpsGeofencingFilterNodeConfiguration> {
 
     private String latitudeKeyName;
