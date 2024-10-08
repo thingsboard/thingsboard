@@ -13,25 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data.id;
 
-import jakarta.persistence.Transient;
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-import java.io.Serializable;
 import java.util.UUID;
 
-@NoArgsConstructor
-@AllArgsConstructor
-@Data
-public class MobileAppOauth2ClientCompositeKey implements Serializable {
+@Schema
+public class QrCodeSettingsId extends UUIDBased {
 
-    @Transient
-    private static final long serialVersionUID = -245388185894468455L;
+    private static final long serialVersionUID = 1L;
 
-    private UUID mobileAppBundleId;
-    private UUID oauth2ClientId;
+    @JsonCreator
+    public QrCodeSettingsId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
 
+    public static QrCodeSettingsId fromString(String qrCodeSettingsId) {
+        return new QrCodeSettingsId(UUID.fromString(qrCodeSettingsId));
+    }
 }

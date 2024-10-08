@@ -22,16 +22,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
+import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.mobile.MobileAppInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2Client;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
-
-import java.util.Collections;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.hamcrest.Matchers.containsString;
@@ -41,9 +37,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 @DaoSqlTest
 public class MobileAppControllerTest extends AbstractControllerTest {
 
-    static final TypeReference<PageData<MobileAppInfo>> PAGE_DATA_MOBILE_APP_TYPE_REF = new TypeReference<>() {
-    };
-    static final TypeReference<PageData<OAuth2ClientInfo>> PAGE_DATA_OAUTH2_CLIENT_TYPE_REF = new TypeReference<>() {
+    static final TypeReference<PageData<MobileApp>> PAGE_DATA_MOBILE_APP_TYPE_REF = new TypeReference<>() {
     };
 
     @Before
@@ -53,88 +47,91 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @After
     public void tearDown() throws Exception {
-        PageData<MobileAppInfo> pageData = doGetTypedWithPageLink("/api/mobileApp/infos?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        PageData<MobileApp> pageData = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
         for (MobileApp mobileApp : pageData.getData()) {
-            doDelete("/api/mobileApp/" + mobileApp.getId().getId())
-                    .andExpect(status().isOk());
-        }
-
-        PageData<OAuth2ClientInfo> clients = doGetTypedWithPageLink("/api/oauth2/client/infos?", PAGE_DATA_OAUTH2_CLIENT_TYPE_REF, new PageLink(10, 0));
-        for (OAuth2ClientInfo oAuth2ClientInfo : clients.getData()) {
-            doDelete("/api/oauth2/client/" + oAuth2ClientInfo.getId().getId().toString())
+            doDelete("/api/mobile/app/" + mobileApp.getId().getId())
                     .andExpect(status().isOk());
         }
     }
 
     @Test
     public void testSaveMobileApp() throws Exception {
-        PageData<MobileAppInfo> pageData = doGetTypedWithPageLink("/api/mobileApp/infos?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        PageData<MobileApp> pageData = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
         assertThat(pageData.getData()).isEmpty();
 
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.test.package", true);
-        MobileApp savedMobileApp = doPost("/api/mobileApp", mobileApp, MobileApp.class);
+        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.test.package");
+        MobileApp savedMobileApp = doPost("/api/mobile/app", mobileApp, MobileApp.class);
 
-        PageData<MobileAppInfo> pageData2 = doGetTypedWithPageLink("/api/mobileApp/infos?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        PageData<MobileApp> pageData2 = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
         assertThat(pageData2.getData()).hasSize(1);
-        assertThat(pageData2.getData().get(0)).isEqualTo(new MobileAppInfo(savedMobileApp, Collections.emptyList()));
+        assertThat(pageData2.getData().get(0)).isEqualTo(savedMobileApp);
 
-        MobileAppInfo retrievedMobileAppInfo = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());
-        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppInfo(savedMobileApp, Collections.emptyList()));
+        MobileApp retrievedMobileAppInfo = doGet("/api/mobile/app/{id}", MobileApp.class, savedMobileApp.getId().getId());
+        assertThat(retrievedMobileAppInfo).isEqualTo(savedMobileApp);
 
-        doDelete("/api/mobileApp/" + savedMobileApp.getId().getId());
-        doGet("/api/mobileApp/info/{id}", savedMobileApp.getId().getId())
+        doDelete("/api/mobile/app/" + savedMobileApp.getId().getId());
+        doGet("/api/mobile/app/{id}", savedMobileApp.getId().getId())
                 .andExpect(status().isNotFound());
     }
 
     @Test
     public void testSaveMobileAppWithShortAppSecret() throws Exception {
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce", true);
+        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce");
         mobileApp.setAppSecret("short");
-        doPost("/api/mobileApp", mobileApp)
+        doPost("/api/mobile/app", mobileApp)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("appSecret must be at least 16 and max 2048 characters")));
     }
 
     @Test
-    public void testUpdateMobileAppOauth2Clients() throws Exception {
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.test.package", true);
-        MobileApp savedMobileApp = doPost("/api/mobileApp", mobileApp, MobileApp.class);
+    public void testShouldNotSaveMobileAppWithWrongQrCodeConf() throws Exception {
+        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce");
+        AndroidQrCodeConfig androidQrCodeConfig = AndroidQrCodeConfig.builder()
+                .enabled(true)
+                .appPackage(null)
+                .sha256CertFingerprints(null)
+                .build();
+        mobileApp.setQrCodeConfig(androidQrCodeConfig);
 
-        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
-        OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
+        doPost("/api/mobile/app", mobileApp)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Validation error: appPackage must not be blank, sha256CertFingerprints must not be blank, storeLink must not be blank")));
 
-        OAuth2Client oAuth2Client2 = createOauth2Client(TenantId.SYS_TENANT_ID, "test facebook client");
-        OAuth2Client savedOAuth2Client2 = doPost("/api/oauth2/client", oAuth2Client2, OAuth2Client.class);
+        androidQrCodeConfig.setAppPackage("test_app_package");
+        doPost("/api/mobile/app", mobileApp)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Validation error: sha256CertFingerprints must not be blank, storeLink must not be blank")));
 
-        doPut("/api/mobileApp/" + savedMobileApp.getId() + "/oauth2Clients", List.of(savedOAuth2Client.getId().getId(), savedOAuth2Client2.getId().getId()));
-
-        MobileAppInfo retrievedMobileAppInfo = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());
-        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppInfo(savedMobileApp, List.of(new OAuth2ClientInfo(savedOAuth2Client2),
-                new OAuth2ClientInfo(savedOAuth2Client))));
-
-        doPut("/api/mobileApp/" + savedMobileApp.getId() + "/oauth2Clients", List.of(savedOAuth2Client2.getId().getId()));
-        MobileAppInfo retrievedMobileAppInfo2 = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());
-        assertThat(retrievedMobileAppInfo2).isEqualTo(new MobileAppInfo(savedMobileApp, List.of(new OAuth2ClientInfo(savedOAuth2Client2))));
+        androidQrCodeConfig.setSha256CertFingerprints("test_sha_256");
+        androidQrCodeConfig.setStoreLink("https://store.com");
+        doPost("/api/mobile/app", mobileApp)
+                .andExpect(status().isOk());
     }
 
     @Test
-    public void testCreateMobileAppWithOauth2Clients() throws Exception {
-        OAuth2Client oAuth2Client = createOauth2Client(TenantId.SYS_TENANT_ID, "test google client");
-        OAuth2Client savedOAuth2Client = doPost("/api/oauth2/client", oAuth2Client, OAuth2Client.class);
+    public void testShouldNotSaveMobileAppWithWrongIosConf() throws Exception {
+        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce");
+        IosQrCodeConfig iosQrCodeConfig = IosQrCodeConfig.builder()
+                .enabled(true)
+                .appId(null)
+                .build();
+        mobileApp.setQrCodeConfig(iosQrCodeConfig);
 
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.test.package", true);
-        MobileApp savedMobileApp = doPost("/api/mobileApp?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), mobileApp, MobileApp.class);
+        doPost("/api/mobile/app", mobileApp)
+                .andExpect(status().isBadRequest())
+                .andExpect(statusReason(containsString("Validation error: appId must not be blank, storeLink must not be blank")));
 
-        MobileAppInfo retrievedMobileAppInfo = doGet("/api/mobileApp/info/{id}", MobileAppInfo.class, savedMobileApp.getId().getId());
-        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppInfo(savedMobileApp, List.of(new OAuth2ClientInfo(savedOAuth2Client))));
+        iosQrCodeConfig.setAppId("test_app_id");
+        iosQrCodeConfig.setStoreLink("https://store.com");
+        doPost("/api/mobile/app", mobileApp)
+                .andExpect(status().isOk());
     }
 
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, boolean oauth2Enabled) {
+    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName) {
         MobileApp MobileApp = new MobileApp();
         MobileApp.setTenantId(tenantId);
         MobileApp.setPkgName(mobileAppName);
         MobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
-        MobileApp.setOauth2Enabled(oauth2Enabled);
         return MobileApp;
     }
 

@@ -13,16 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.mobile;
+package org.thingsboard.server.common.data.mobile;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
-import org.thingsboard.server.dao.Dao;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import org.thingsboard.server.common.data.HomeDashboardInfo;
+import org.thingsboard.server.common.data.User;
 
-
-public interface MobileAppSettingsDao extends Dao<MobileAppSettings> {
-
-    MobileAppSettings findByTenantId(TenantId tenantId);
-
-    void removeByTenantId(TenantId tenantId);
+@Data
+@AllArgsConstructor
+public class MobileUserInfo {
+    User user;
+    HomeDashboardInfo homeDashboardInfo;
+    MobileLayoutConfig layoutConfig;
 }

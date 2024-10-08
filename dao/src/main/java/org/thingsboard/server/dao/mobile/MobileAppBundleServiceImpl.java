@@ -1,0 +1,170 @@
+/**
+ * Copyright © 2016-2024 The Thingsboard Authors
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ *     http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.thingsboard.server.dao.mobile;
+
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.id.HasId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
+import org.thingsboard.server.common.data.mobile.MobileAppBundleOauth2Client;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
+import org.thingsboard.server.common.data.page.PageData;
+import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.dao.entity.AbstractEntityService;
+import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
+import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
+import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
+
+import java.util.Comparator;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.Set;
+import java.util.stream.Collectors;
+
+@Slf4j
+@Service
+public class MobileAppBundleServiceImpl extends AbstractEntityService implements MobileAppBundleService {
+
+    @Autowired
+    private OAuth2ClientDao oauth2ClientDao;
+    @Autowired
+    private MobileAppBundleDao mobileAppBundleDao;
+    @Autowired
+    private MobileAppService mobileAppService;
+
+    @Override
+    public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileApp) {
+        log.trace("Executing saveMobileApp [{}]", mobileApp);
+        try {
+            MobileAppBundle savedMobileApp = mobileAppBundleDao.save(tenantId, mobileApp);
+            eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedMobileApp).build());
+            return savedMobileApp;
+        } catch (Exception e) {
+            checkConstraintViolation(e,
+                    Map.of("android_app_id_unq_key", "Android mobile app already exists in another bundle!",
+                            "ios_app_id_unq_key", "IOS mobile app already exists in another bundle!"));
+            throw e;
+        }
+    }
+
+    @Override
+    public void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
+        log.trace("Executing deleteMobileAppById [{}]", mobileAppBundleId.getId());
+        mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
+        eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
+    }
+
+    @Override
+    public MobileAppBundle findMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
+        log.trace("Executing findMobileAppBundleById [{}] [{}]", tenantId, mobileAppBundleId);
+        return mobileAppBundleDao.findById(tenantId, mobileAppBundleId.getId());
+    }
+
+    @Override
+    public PageData<MobileAppBundleInfo> findMobileAppBundleInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        log.trace("Executing findMobileAppInfosByTenantId [{}]", tenantId);
+        PageData<MobileAppBundle> mobileBundles = mobileAppBundleDao.findByTenantId(tenantId, pageLink);
+        return mobileBundles.mapData(this::getMobileAppBundleInfo);
+    }
+
+    @Override
+    public MobileAppBundleInfo findMobileAppBundleInfoById(TenantId tenantId, MobileAppBundleId mobileAppIdBundle) {
+        log.trace("Executing findMobileAppInfoById [{}] [{}]", tenantId, mobileAppIdBundle);
+        MobileAppBundle mobileAppBundle = mobileAppBundleDao.findById(tenantId, mobileAppIdBundle.getId());
+        if (mobileAppBundle == null) {
+            return null;
+        }
+        return getMobileAppBundleInfo(mobileAppBundle);
+    }
+
+    @Override
+    public void updateOauth2Clients(TenantId tenantId, MobileAppBundleId mobileAppBundleId, List<OAuth2ClientId> oAuth2ClientIds) {
+        log.trace("Executing updateOauth2Clients, mobileAppId [{}], oAuth2ClientIds [{}]", mobileAppBundleId, oAuth2ClientIds);
+        Set<MobileAppBundleOauth2Client> newClientList = oAuth2ClientIds.stream()
+                .map(clientId -> new MobileAppBundleOauth2Client(mobileAppBundleId, clientId))
+                .collect(Collectors.toSet());
+
+        List<MobileAppBundleOauth2Client> existingClients = mobileAppBundleDao.findOauth2ClientsByMobileAppBundleId(tenantId, mobileAppBundleId);
+        List<MobileAppBundleOauth2Client> toRemoveList = existingClients.stream()
+                .filter(client -> !newClientList.contains(client))
+                .toList();
+        newClientList.removeIf(existingClients::contains);
+
+        for (MobileAppBundleOauth2Client client : toRemoveList) {
+            mobileAppBundleDao.removeOauth2Client(client);
+        }
+        for (MobileAppBundleOauth2Client client : newClientList) {
+            mobileAppBundleDao.addOauth2Client(client);
+        }
+        eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
+                .entityId(mobileAppBundleId).created(false).build());
+    }
+
+    @Override
+    public MobileAppBundle findMobileAppBundleByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
+        log.trace("Executing findMobileAppBundle, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
+        return mobileAppBundleDao.findByPkgNameAndPlatform(tenantId, pkgName, platform);
+    }
+
+    @Override
+    public Optional<HasId<?>> findEntity(TenantId tenantId, EntityId entityId) {
+        return Optional.ofNullable(findMobileAppBundleById(tenantId, new MobileAppBundleId(entityId.getId())));
+    }
+
+    @Override
+    @Transactional
+    public void deleteEntity(TenantId tenantId, EntityId id, boolean force) {
+        deleteMobileAppBundleById(tenantId, (MobileAppBundleId) id);
+    }
+
+    @Override
+    public void deleteMobileAppsByTenantId(TenantId tenantId) {
+        log.trace("Executing deleteMobileAppsByTenantId, tenantId [{}]", tenantId);
+        mobileAppBundleDao.deleteByTenantId(tenantId);
+    }
+
+    @Override
+    public void deleteByTenantId(TenantId tenantId) {
+        deleteMobileAppsByTenantId(tenantId);
+    }
+
+    private MobileAppBundleInfo getMobileAppBundleInfo(MobileAppBundle mobileAppBundle) {
+        List<OAuth2ClientInfo> clients = oauth2ClientDao.findByMobileAppBundleId(mobileAppBundle.getUuidId()).stream()
+                .map(OAuth2ClientInfo::new)
+                .sorted(Comparator.comparing(OAuth2ClientInfo::getTitle))
+                .collect(Collectors.toList());
+        MobileApp androidApp = mobileAppService.findMobileAppById(mobileAppBundle.getTenantId(), mobileAppBundle.getAndroidAppId());
+        MobileApp iosApp = mobileAppService.findMobileAppById(mobileAppBundle.getTenantId(), mobileAppBundle.getIosAppId());
+        return new MobileAppBundleInfo(mobileAppBundle, androidApp != null ? androidApp.getPkgName() : null,
+                iosApp != null ? iosApp.getPkgName() : null, clients);
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP_BUNDLE;
+    }
+}

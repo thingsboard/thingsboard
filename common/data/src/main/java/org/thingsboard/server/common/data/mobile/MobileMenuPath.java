@@ -13,17 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.mobile;
+package org.thingsboard.server.common.data.mobile;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientEntity;
+public enum MobileMenuPath {
 
-import java.util.List;
-import java.util.UUID;
-
-public interface MobileAppOauth2ClientRepository extends JpaRepository<MobileAppOauth2ClientEntity, MobileAppOauth2ClientCompositeKey> {
-
-    List<MobileAppOauth2ClientEntity> findAllByMobileAppId(UUID mobileAppId);
-
+    HOME,
+    ASSETS,
+    DEVICES,
+    DEVICE_LIST,
+    ALARMS,
+    DASHBOARDS,
+    DASHBOARD,
+    AUDIT_LOGS,
+    CUSTOMERS,
+    CUSTOMER,
+    NOTIFICATION,
+    CUSTOM
 }

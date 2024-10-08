@@ -96,10 +96,6 @@ public class DashboardController extends BaseController {
 
     private final TbDashboardService tbDashboardService;
     private final ImageService imageService;
-    public static final String DASHBOARD_ID = "dashboardId";
-
-    private static final String HOME_DASHBOARD_ID = "homeDashboardId";
-    private static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
     public static final String DASHBOARD_INFO_DEFINITION = "The Dashboard Info object contains lightweight information about the dashboard (e.g. title, image, assigned customers) but does not contain the heavyweight configuration JSON.";
     public static final String DASHBOARD_DEFINITION = "The Dashboard object is a heavyweight object that contains information about the dashboard (e.g. title, image, assigned customers) and also configuration JSON (e.g. layouts, widgets, entity aliases).";
     public static final String HIDDEN_FOR_MOBILE = "Exclude dashboards that are hidden for mobile";
@@ -460,21 +456,7 @@ public class DashboardController extends BaseController {
         }
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         JsonNode additionalInfo = user.getAdditionalInfo();
-        HomeDashboardInfo homeDashboardInfo;
-        homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
-        if (homeDashboardInfo == null) {
-            if (securityUser.isCustomerUser()) {
-                Customer customer = customerService.findCustomerById(securityUser.getTenantId(), securityUser.getCustomerId());
-                additionalInfo = customer.getAdditionalInfo();
-                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
-            }
-            if (homeDashboardInfo == null) {
-                Tenant tenant = tenantService.findTenantById(securityUser.getTenantId());
-                additionalInfo = tenant.getAdditionalInfo();
-                homeDashboardInfo = extractHomeDashboardInfoFromAdditionalInfo(additionalInfo);
-            }
-        }
-        return homeDashboardInfo;
+        return getHomeDashboardInfo(securityUser, additionalInfo);
     }
 
     @ApiOperation(value = "Get Tenant Home Dashboard Info (getTenantHomeDashboardInfo)",
@@ -525,22 +507,6 @@ public class DashboardController extends BaseController {
         }
         tenant.setAdditionalInfo(additionalInfo);
         tenantService.saveTenant(tenant);
-    }
-
-    private HomeDashboardInfo extractHomeDashboardInfoFromAdditionalInfo(JsonNode additionalInfo) {
-        try {
-            if (additionalInfo != null && additionalInfo.has(HOME_DASHBOARD_ID) && !additionalInfo.get(HOME_DASHBOARD_ID).isNull()) {
-                String strDashboardId = additionalInfo.get(HOME_DASHBOARD_ID).asText();
-                DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
-                checkDashboardId(dashboardId, Operation.READ);
-                boolean hideDashboardToolbar = true;
-                if (additionalInfo.has(HOME_DASHBOARD_HIDE_TOOLBAR)) {
-                    hideDashboardToolbar = additionalInfo.get(HOME_DASHBOARD_HIDE_TOOLBAR).asBoolean();
-                }
-                return new HomeDashboardInfo(dashboardId, hideDashboardToolbar);
-            }
-        } catch (Exception ignored) {}
-        return null;
     }
 
     private HomeDashboard extractHomeDashboardFromAdditionalInfo(JsonNode additionalInfo) {

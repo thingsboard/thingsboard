@@ -22,13 +22,15 @@ import lombok.Data;
 import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasTenantId;
-import org.thingsboard.server.common.data.id.MobileAppSettingsId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.QrCodeSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 
 @Schema
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class MobileAppSettings extends BaseData<MobileAppSettingsId> implements HasTenantId {
+public class QrCodeSettings extends BaseData<QrCodeSettingsId> implements HasTenantId {
 
     private static final long serialVersionUID = 2628323657987010348L;
 
@@ -36,12 +38,8 @@ public class MobileAppSettings extends BaseData<MobileAppSettingsId> implements 
     private TenantId tenantId;
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Type of application: true means use default Thingsboard app", example = "true")
     private boolean useDefaultApp;
-    @Valid
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Android mobile app configuration.")
-    private AndroidConfig androidConfig;
-    @Valid
-    @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "Ios mobile app configuration.")
-    private IosConfig iosConfig;
+    @Schema(description = "Mobile app bundle.")
+    private MobileAppBundleId mobileAppBundleId;
     @Valid
     @Schema(requiredMode = Schema.RequiredMode.REQUIRED, description = "QR code config configuration.")
     private QRCodeConfig qrCodeConfig;
@@ -52,10 +50,10 @@ public class MobileAppSettings extends BaseData<MobileAppSettingsId> implements 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
     private String defaultAppStoreLink;
 
-    public MobileAppSettings() {
+    public QrCodeSettings() {
     }
 
-    public MobileAppSettings(MobileAppSettingsId id) {
+    public QrCodeSettings(QrCodeSettingsId id) {
         super(id);
     }
 

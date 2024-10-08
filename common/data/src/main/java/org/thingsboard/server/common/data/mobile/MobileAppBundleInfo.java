@@ -18,7 +18,7 @@ package org.thingsboard.server.common.data.mobile;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.MobileAppId;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
 
 import java.util.List;
@@ -26,22 +26,28 @@ import java.util.List;
 @EqualsAndHashCode(callSuper = true)
 @Data
 @Schema
-public class MobileAppInfo extends MobileApp {
+public class MobileAppBundleInfo extends MobileAppBundle {
 
+    @Schema(description = "Android package name")
+    private String androidPkgName;
+    @Schema(description = "IOS package name")
+    private String iosPkgName;
     @Schema(description = "List of available oauth2 clients")
     private List<OAuth2ClientInfo> oauth2ClientInfos;
 
-    public MobileAppInfo(MobileApp mobileApp, List<OAuth2ClientInfo> oauth2ClientInfos) {
+    public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName, List<OAuth2ClientInfo> oauth2ClientInfos) {
         super(mobileApp);
+        this.androidPkgName = androidPkgName;
+        this.iosPkgName = iosPkgName;
         this.oauth2ClientInfos = oauth2ClientInfos;
     }
 
-    public MobileAppInfo() {
+    public MobileAppBundleInfo() {
         super();
     }
 
-    public MobileAppInfo(MobileAppId mobileAppId) {
-        super(mobileAppId);
+    public MobileAppBundleInfo(MobileAppBundleId mobileAppBundleId) {
+        super(mobileAppBundleId);
     }
 
 }

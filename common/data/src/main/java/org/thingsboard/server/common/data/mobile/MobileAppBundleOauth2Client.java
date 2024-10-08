@@ -13,21 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.mobile;
+package org.thingsboard.server.common.data.mobile;
 
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
-import org.thingsboard.server.common.data.oauth2.PlatformType;
-import org.thingsboard.server.common.data.page.PageData;
-import org.thingsboard.server.common.data.page.PageLink;
-import org.thingsboard.server.dao.Dao;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
-public interface MobileAppDao extends Dao<MobileApp> {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MobileAppBundleOauth2Client {
 
-    MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
+    private MobileAppBundleId mobileAppBundleId;
+    private OAuth2ClientId oAuth2ClientId;
 
-    PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink);
-
-    void deleteByTenantId(TenantId tenantId);
 }

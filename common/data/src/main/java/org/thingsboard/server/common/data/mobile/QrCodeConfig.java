@@ -15,24 +15,23 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import lombok.AllArgsConstructor;
-import lombok.Builder;
-import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.validation.NoXss;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import com.fasterxml.jackson.annotation.JsonSubTypes;
+import com.fasterxml.jackson.annotation.JsonTypeInfo;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 
-@Data
-@Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-public class IosConfig {
+@JsonIgnoreProperties(ignoreUnknown = true)
+@JsonTypeInfo(
+        use = JsonTypeInfo.Id.NAME,
+        include = JsonTypeInfo.As.EXISTING_PROPERTY,
+        property = "type")
+@JsonSubTypes({
+        @JsonSubTypes.Type(value = AndroidQrCodeConfig.class, name = "ANDROID"),
+        @JsonSubTypes.Type(value = IosQrCodeConfig.class, name = "IOS")
+})
+public interface QrCodeConfig {
 
-    private boolean enabled;
-    @NoXss
-    private String appId;
-    @NoXss
-    private String storeLink;
+    PlatformType getType();
+
 
 }
