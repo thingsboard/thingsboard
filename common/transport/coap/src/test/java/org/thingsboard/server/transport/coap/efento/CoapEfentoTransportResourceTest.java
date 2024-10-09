@@ -29,6 +29,7 @@ import org.thingsboard.server.transport.coap.efento.utils.CoapEfentoUtils;
 
 import java.nio.ByteBuffer;
 import java.time.Instant;
+import java.util.Arrays;
 import java.util.List;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -172,7 +173,7 @@ class CoapEfentoTransportResourceTest {
     @ParameterizedTest
     @MethodSource
     void checkPulseCounterSensors(MeasurementType minorType, List<Integer> minorSampleOffsets, MeasurementType majorType, List<Integer> majorSampleOffsets,
-                                  String propertyPrefix, double expectedValue) {
+                                  String totalPropertyName, double expectedTotalValue) {
         long tsInSec = Instant.now().getEpochSecond();
         ProtoMeasurements measurements = ProtoMeasurements.newBuilder()
                 .setSerialNum(integerToByteString(1234))
@@ -184,34 +185,34 @@ class CoapEfentoTransportResourceTest {
                 .setNextTransmissionAt(1000)
                 .setTransferReason(0)
                 .setHash(0)
-                .addAllChannels(List.of(MeasurementsProtos.ProtoChannel.newBuilder()
-                        .setType(minorType)
-                        .setTimestamp(Math.toIntExact(tsInSec))
-                        .addAllSampleOffsets(minorSampleOffsets)
-                        .build(),
-                        MeasurementsProtos.ProtoChannel.newBuilder()
+                .addAllChannels(Arrays.asList(MeasurementsProtos.ProtoChannel.newBuilder()
                                 .setType(majorType)
                                 .setTimestamp(Math.toIntExact(tsInSec))
                                 .addAllSampleOffsets(majorSampleOffsets)
+                                .build(),
+                        MeasurementsProtos.ProtoChannel.newBuilder()
+                                .setType(minorType)
+                                .setTimestamp(Math.toIntExact(tsInSec))
+                                .addAllSampleOffsets(minorSampleOffsets)
                                 .build()))
                 .build();
         List<CoapEfentoTransportResource.EfentoTelemetry> efentoMeasurements = coapEfentoTransportResource.getEfentoMeasurements(measurements, UUID.randomUUID());
         assertThat(efentoMeasurements).hasSize(1);
         assertThat(efentoMeasurements.get(0).getTs()).isEqualTo(tsInSec * 1000);
-        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(propertyPrefix + "_total_value").getAsDouble()).isEqualTo(expectedValue);
+        assertThat(efentoMeasurements.get(0).getValues().getAsJsonObject().get(totalPropertyName + "_2").getAsDouble()).isEqualTo(expectedTotalValue);
         checkDefaultMeasurements(measurements, efentoMeasurements, 180, false);
     }
 
     private static Stream<Arguments> checkPulseCounterSensors() {
         return Stream.of(
-                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(125), MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR,
-                        List.of(2500), "water_cnt_acc", 62520.0),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(180), MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR,
-                        List.of(1200), "pulse_cnt_acc", 300030.0),
-                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(550), MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR,
-                        List.of(5500), "elec_meter_acc", 1375091.0),
-                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(230), MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR,
-                        List.of(1700), "pulse_cnt_acc_wide", 425000038.0));
+                Arguments.of(MEASUREMENT_TYPE_WATER_METER_ACC_MINOR, List.of(15*6), MEASUREMENT_TYPE_WATER_METER_ACC_MAJOR,
+                        List.of(625*4), "water_cnt_acc_total", 625.0*100 + 15),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_MINOR, List.of(10*6), MEASUREMENT_TYPE_PULSE_CNT_ACC_MAJOR,
+                        List.of(300*4), "pulse_cnt_acc_total", 300.0*1000 + 10),
+                Arguments.of(MEASUREMENT_TYPE_ELEC_METER_ACC_MINOR, List.of(12*6), MEASUREMENT_TYPE_ELEC_METER_ACC_MAJOR,
+                        List.of(100*4), "elec_meter_acc_total", 100.0*1000 + 12),
+                Arguments.of(MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MINOR, List.of(13*6), MEASUREMENT_TYPE_PULSE_CNT_ACC_WIDE_MAJOR,
+                        List.of(440*4), "pulse_cnt_acc_wide_total", 440.0*1000000 + 13));
     }
 
 
