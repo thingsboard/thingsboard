@@ -57,6 +57,10 @@ public class KvUtils {
             throw new DataValidationException("Validation error: key length must be equal or less than 255");
         }
 
+        if (key.contains(",")) {
+            throw new DataValidationException("Validation error: key can't contain commas");
+        }
+
         if (validatedKeys.getIfPresent(key) == null) {
             if (!NoXssValidator.isValid(key)) {
                 throw new DataValidationException("Validation error: key is malformed");
