@@ -23,6 +23,10 @@
 @import './scss/mixins';
 @import './scss/fonts';
 
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
 body, html {
   height: 100%;
   min-height: 100%;
@@ -58,6 +62,10 @@ tb-root {
  * TYPE DEFAULTS
  ***************/
 
+*, ::before, ::after {
+  border-style: none;
+}
+
 body,
 button,
 html,
@@ -70,7 +78,7 @@ th {
   font-size: 16px;
 }
 
-body {
+body, button {
   line-height: normal;
 }
 
@@ -314,40 +322,6 @@ pre.tb-highlight {
   z-index: 0;
 }
 
-mat-label {
-  &.tb-title {
-    font-size: 13px;
-    font-weight: 400;
-    color: #666;
-    pointer-events: none;
-
-    &.no-padding {
-      padding-bottom: 0;
-    }
-
-    &.tb-required::after {
-      font-size: 13px;
-      color: rgba(0, 0, 0, .54);
-      vertical-align: top;
-      content: " *";
-    }
-
-    &.tb-error {
-      color: rgb(221, 44, 0);
-
-      &.tb-required::after {
-        color: rgb(221, 44, 0);
-      }
-    }
-  }
-}
-
-mat-icon {
-  &.tb-error {
-    color: rgb(221, 44, 0);
-  }
-}
-
 .tb-error-messages {
   height: 24px; //30px
   margin-top: -6px;
@@ -516,6 +490,40 @@ mat-icon {
     font-weight: 400;
     line-height: 1.6rem;
     letter-spacing: .01em;
+  }
+
+  mat-label {
+    &.tb-title {
+      font-size: 13px;
+      font-weight: 400;
+      color: #666;
+      pointer-events: none;
+
+      &.no-padding {
+        padding-bottom: 0;
+      }
+
+      &.tb-required::after {
+        font-size: 13px;
+        color: rgba(0, 0, 0, .54);
+        vertical-align: top;
+        content: " *";
+      }
+
+      &.tb-error {
+        color: rgb(221, 44, 0);
+
+        &.tb-required::after {
+          color: rgb(221, 44, 0);
+        }
+      }
+    }
+  }
+
+  mat-icon {
+    &.tb-error {
+      color: rgb(221, 44, 0);
+    }
   }
 
   .mat-mdc-tooltip {

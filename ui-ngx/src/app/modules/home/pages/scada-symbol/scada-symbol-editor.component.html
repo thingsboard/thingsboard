@@ -70,7 +70,7 @@
       </button>
     </div>
     <tb-toggle-select appearance="fill"
-                      [disabled]="!svgContentFormControl.valid"
+                      [disabled]="!readonly && !svgContentFormControl.valid"
                       fillHeight
                       extraPadding
                       primaryBackground
