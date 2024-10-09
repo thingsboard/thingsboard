@@ -37,11 +37,6 @@ import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID
 @Slf4j
 public class RpcLwm2mIntegrationReadCollectedValueTest extends AbstractRpcLwM2MIntegrationTest {
 
-    @Before
-    public void startInitRPC() throws Exception {
-        initRpc(true);
-    }
-
     /**
      * Read {"id":"/3303/12/5700"}
      * Trigger a Send operation from the client with multiple values for the same resource as a payload

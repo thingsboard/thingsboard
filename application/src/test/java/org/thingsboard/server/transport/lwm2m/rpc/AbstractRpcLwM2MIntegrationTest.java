@@ -22,13 +22,13 @@ import org.junit.Before;
 import org.mockito.Mockito;
 import org.springframework.boot.test.mock.mockito.SpyBean;
 import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.credentials.lwm2m.LwM2MDeviceCredentials;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.transport.lwm2m.AbstractLwM2MIntegrationTest;
 import org.thingsboard.server.transport.lwm2m.server.LwM2mTransportServerHelper;
-import org.thingsboard.server.transport.lwm2m.server.uplink.DefaultLwM2mUplinkMsgHandler;
 
 import java.util.List;
 import java.util.Set;
@@ -99,9 +99,6 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
     protected String idVer_19_0_0;
 
     @SpyBean
-    protected DefaultLwM2mUplinkMsgHandler defaultUplinkMsgHandlerTest;
-
-    @SpyBean
     protected LwM2mTransportServerHelper lwM2mTransportServerHelperTest;
 
     public AbstractRpcLwM2MIntegrationTest() {
@@ -110,13 +107,19 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     @Before
     public void startInitRPC() throws Exception {
-        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")){
+        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationWriteCborTest")) {
             supportFormatOnly_SenMLJSON_SenMLCBOR = true;
         }
-        initRpc(false);
+        if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationObserveTest")) {
+            initRpc(0);
+        } else if (this.getClass().getSimpleName().equals("RpcLwm2mIntegrationReadCollectedValueTest")) {
+            initRpc(3303);
+        } else {
+            initRpc(1);
+        }
     }
 
-    protected void initRpc(boolean isCollected) throws Exception {
+    protected void initRpc(int typeConfigProfile) throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
         createNewClient(SECURITY_NO_SEC, null, true, endpoint);
         expectedObjects = ConcurrentHashMap.newKeySet();
@@ -151,7 +154,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
         idVer_3_0_0 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
         idVer_3_0_9 = objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_9;
-        id_3_0_9 =  fromVersionedIdToObjectId(idVer_3_0_9);
+        id_3_0_9 = fromVersionedIdToObjectId(idVer_3_0_9);
         idVer_19_0_0 = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
 
         String ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE =
@@ -184,6 +187,28 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         String TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE =
                 "    {\n" +
                         "    \"keyName\": {\n" +
+                        "      \"" + idVer_3_0_9 + "\": \"" + RESOURCE_ID_NAME_3_9 + "\",\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\": \"" + RESOURCE_ID_NAME_3_14 + "\",\n" +
+                        "      \"" + idVer_19_0_0 + "\": \"" + RESOURCE_ID_NAME_19_0_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\": \"" + RESOURCE_ID_NAME_19_1_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\": \"" + RESOURCE_ID_NAME_19_0_2 + "\"\n" +
+                        "    },\n" +
+                        "    \"observe\": [\n" +
+                        "    ],\n" +
+                        "    \"attribute\": [\n" +
+                        "      \"" + objectIdVer_3 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_14 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_2 + "\"\n" +
+                        "    ],\n" +
+                        "    \"telemetry\": [\n" +
+                        "      \"" + idVer_3_0_9 + "\",\n" +
+                        "      \"" + idVer_19_0_0 + "\",\n" +
+                        "      \"" + objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_1 + "/" + RESOURCE_ID_0 + "\"\n" +
+                        "    ],\n" +
+                        "    \"attributeLwm2m\": {}\n" +
+                        "  }";
+        String TELEMETRY_WITH_PARAMS_RPC_COLLECTED_VALUE =
+                "    {\n" +
+                        "    \"keyName\": {\n" +
                         "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\": \"" + RESOURCE_ID_NAME_3303_12_5700 + "\"\n" +
                         "    },\n" +
                         "    \"observe\": [\n" +
@@ -194,15 +219,19 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                         "      \"" + objectIdVer_3303 + "/" + OBJECT_INSTANCE_ID_12 + "/" + RESOURCE_ID_5700 + "\"\n" +
                         "    ],\n" +
                         "    \"attributeLwm2m\": {}\n" +
-                        "  }" ;
-
-        CONFIG_PROFILE_WITH_PARAMS_RPC = isCollected ? TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE : ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE;
-
+                        "  }";
+        CONFIG_PROFILE_WITH_PARAMS_RPC =
+                switch (typeConfigProfile) {
+                    case 0 -> ATTRIBUTES_TELEMETRY_WITH_PARAMS_RPC_WITH_OBSERVE;
+                    case 1 -> TELEMETRY_WITH_PARAMS_RPC_WITHOUT_OBSERVE;
+                    case 3303 -> TELEMETRY_WITH_PARAMS_RPC_COLLECTED_VALUE;
+                    default -> throw new IllegalStateException("Unexpected value: " + typeConfigProfile);
+                };
         Lwm2mDeviceProfileTransportConfiguration transportConfiguration = getTransportConfiguration(CONFIG_PROFILE_WITH_PARAMS_RPC, getBootstrapServerCredentialsNoSec(NONE));
-        createDeviceProfile(transportConfiguration);
+        DeviceProfile deviceProfile  = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
 
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(endpoint));
-        final Device device = createDevice(deviceCredentials, endpoint);
+        final Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
         deviceId = device.getId().getId().toString();
 
         lwM2MTestClient.start(true);
@@ -248,14 +277,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
         log.trace("updateRegAtLeastOnceAfterAction: newInvocationCount [{}]", newInvocationCount.get());
     }
 
-    protected long countUpdateReg() {
-        return Mockito.mockingDetails(defaultUplinkMsgHandlerTest)
-                .getInvocations().stream()
-                .filter(invocation -> invocation.getMethod().getName().equals("updatedReg"))
-                .count();
-    }
-
-   protected long countSendParametersOnThingsboardTelemetryResource(String rezName) {
+    protected long countSendParametersOnThingsboardTelemetryResource(String rezName) {
         return Mockito.mockingDetails(lwM2mTransportServerHelperTest)
                 .getInvocations().stream()
                 .filter(invocation ->
@@ -268,5 +290,4 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
                 )
                 .count();
     }
-
 }

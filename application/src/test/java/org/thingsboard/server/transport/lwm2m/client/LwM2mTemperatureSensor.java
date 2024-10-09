@@ -76,7 +76,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     @Override
     public synchronized ReadResponse read(LwM2mServer identity, int resourceId) {
         log.trace("Read on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
-        if (this.registeredServer == null) {
+        if (this.registeredServer == null && this.leshanClient != null && getId() == 12) {
             try {
                 Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = Instant.now().toEpochMilli();
                 this.registeredServer = this.leshanClient.getRegisteredServers().values().iterator().next();
