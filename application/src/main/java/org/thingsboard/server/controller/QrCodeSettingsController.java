@@ -31,10 +31,13 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
+import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.mobile.MobileAppService;
@@ -49,6 +52,8 @@ import org.thingsboard.server.service.security.system.SystemSecurityService;
 import java.net.URI;
 import java.net.URISyntaxException;
 
+import static org.thingsboard.server.common.data.oauth2.PlatformType.ANDROID;
+import static org.thingsboard.server.common.data.oauth2.PlatformType.IOS;
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
 
@@ -96,7 +101,7 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Get associated android applications (getAssetLinks)")
     @GetMapping(value = "/.well-known/assetlinks.json")
     public ResponseEntity<JsonNode> getAssetLinks() {
-        AndroidQrCodeConfig androidQrConfig = qrCodeSettingService.getAndroidQrCodeConfig(TenantId.SYS_TENANT_ID);
+        AndroidQrCodeConfig androidQrConfig = (AndroidQrCodeConfig) qrCodeSettingService.findAppQrCodeConfig(TenantId.SYS_TENANT_ID, ANDROID);
         if (androidQrConfig != null && androidQrConfig.isEnabled()) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(ASSET_LINKS_PATTERN, androidQrConfig.getAppPackage(), androidQrConfig.getSha256CertFingerprints())));
         } else {
@@ -107,8 +112,8 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Get associated ios applications (getAppleAppSiteAssociation)")
     @GetMapping(value = "/.well-known/apple-app-site-association")
     public ResponseEntity<JsonNode> getAppleAppSiteAssociation() {
-        IosQrCodeConfig iosQrCodeConfig = qrCodeSettingService.getIosQrCodeConfig(TenantId.SYS_TENANT_ID);
-        if (iosQrCodeConfig != null && iosQrCodeConfig.isEnabled() && iosQrCodeConfig.getAppId() != null) {
+        IosQrCodeConfig iosQrCodeConfig = (IosQrCodeConfig) qrCodeSettingService.findAppQrCodeConfig(TenantId.SYS_TENANT_ID, IOS);
+        if (iosQrCodeConfig != null && iosQrCodeConfig.isEnabled()) {
             return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, iosQrCodeConfig.getAppId())));
         } else {
             return ResponseEntity.notFound().build();
@@ -134,7 +139,7 @@ public class QrCodeSettingsController extends BaseController {
     public QrCodeSettings getMobileAppSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
-        return qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID);
+        return qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
     }
 
     @ApiOperation(value = "Get the deep link to the associated mobile application (getMobileAppDeepLink)",
@@ -145,7 +150,7 @@ public class QrCodeSettingsController extends BaseController {
         String secret = mobileAppSecretService.generateMobileAppSecret(getCurrentUser());
         String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, null, request);
         String platformDomain = new URI(baseUrl).getHost();
-        QrCodeSettings qrCodeSettings = qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID);
+        QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
         String appDomain;
         if (!qrCodeSettings.isUseDefaultApp()) {
             appDomain = platformDomain;
@@ -170,23 +175,29 @@ public class QrCodeSettingsController extends BaseController {
 
     @GetMapping(value = "/api/noauth/qr")
     public ResponseEntity<?> getApplicationRedirect(@RequestHeader(value = "User-Agent") String userAgent) {
-        QrCodeSettings qrCodeSettings = qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID);
+        QrCodeSettings qrCodeSettings = qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
         boolean useDefaultApp = qrCodeSettings.isUseDefaultApp();
         if (userAgent.contains("Android")) {
-            String googlePlayLink = useDefaultApp ? qrCodeSettings.getDefaultGooglePlayLink() :
-                    mobileAppService.findAndroidQrCodeConfig(TenantId.SYS_TENANT_ID, qrCodeSettings.getMobileAppBundleId()).getStoreLink();
+            String googlePlayLink = useDefaultApp ? qrCodeSettings.getDefaultGooglePlayLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), ANDROID);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", googlePlayLink)
                     .build();
         } else if (userAgent.contains("iPhone") || userAgent.contains("iPad")) {
-            String appStoreLink = useDefaultApp ? qrCodeSettings.getDefaultAppStoreLink() :
-                    mobileAppService.findIosQrCodeConfig(TenantId.SYS_TENANT_ID, qrCodeSettings.getMobileAppBundleId()).getStoreLink();
+            String appStoreLink = useDefaultApp ? qrCodeSettings.getDefaultAppStoreLink() : getStoreLink(qrCodeSettings.getMobileAppBundleId(), IOS);
             return ResponseEntity.status(HttpStatus.FOUND)
                     .header("Location", appStoreLink)
                     .build();
         } else {
             return response(HttpStatus.NOT_FOUND);
         }
+    }
+
+    private String getStoreLink(MobileAppBundleId mobileAppBundleId, PlatformType platformType) {
+        if (mobileAppBundleId == null) {
+            return null;
+        }
+        MobileApp mobileApp = mobileAppService.findByBundleIdAndPlatformType(TenantId.SYS_TENANT_ID, mobileAppBundleId, platformType);
+        return (mobileApp != null && mobileApp.getQrCodeConfig() != null) ? mobileApp.getQrCodeConfig().getStoreLink() : null;
     }
 
 }

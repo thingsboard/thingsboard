@@ -15,15 +15,9 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import org.thingsboard.server.common.data.HomeDashboardInfo;
-import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 
-@Data
-@AllArgsConstructor
-public class MobileUserInfo {
-    User user;
-    HomeDashboardInfo homeDashboardInfo;
-    MobileLayoutConfig layoutConfig;
+import java.util.List;
+
+public record LoginMobileInfo(List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos, MobileAppVersionInfo versionInfo) {
 }

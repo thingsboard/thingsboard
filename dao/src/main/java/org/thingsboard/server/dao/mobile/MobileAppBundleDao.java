@@ -18,6 +18,7 @@ package org.thingsboard.server.dao.mobile;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.mobile.MobileAppBundleOauth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -28,13 +29,15 @@ import java.util.List;
 
 public interface MobileAppBundleDao extends Dao<MobileAppBundle> {
 
-    PageData<MobileAppBundle> findByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<MobileAppBundleInfo> findInfosByTenantId(TenantId tenantId, PageLink pageLink);
+
+    MobileAppBundleInfo findInfoById(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
 
     List<MobileAppBundleOauth2Client> findOauth2ClientsByMobileAppBundleId(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
 
-    void addOauth2Client(MobileAppBundleOauth2Client mobileAppBundleOauth2Client);
+    void addOauth2Client(TenantId tenantId, MobileAppBundleOauth2Client mobileAppBundleOauth2Client);
 
-    void removeOauth2Client(MobileAppBundleOauth2Client mobileAppBundleOauth2Client);
+    void removeOauth2Client(TenantId tenantId, MobileAppBundleOauth2Client mobileAppBundleOauth2Client);
 
     MobileAppBundle findByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform);
 

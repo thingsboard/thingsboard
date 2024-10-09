@@ -30,4 +30,6 @@ public interface MobileAppDao extends Dao<MobileApp> {
     PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink);
 
     void deleteByTenantId(TenantId tenantId);
+
+    MobileApp findByPkgNameAndPlatformType(TenantId tenantId, String pkgName, PlatformType platform);
 }

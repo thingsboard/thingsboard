@@ -52,14 +52,11 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
 
     @Override
     public MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType) {
-        switch (platformType) {
-            case ANDROID:
-                return DaoUtil.getData(mobileAppRepository.findAndroidAppByBundleId(mobileAppBundleId.getId()));
-            case IOS:
-                return DaoUtil.getData(mobileAppRepository.findIOSAppByBundleId(mobileAppBundleId.getId()));
-            default:
-                return null;
-        }
+        return switch (platformType) {
+            case ANDROID -> DaoUtil.getData(mobileAppRepository.findAndroidAppByBundleId(mobileAppBundleId.getId()));
+            case IOS -> DaoUtil.getData(mobileAppRepository.findIOSAppByBundleId(mobileAppBundleId.getId()));
+            default -> null;
+        };
     }
 
     @Override
@@ -70,6 +67,11 @@ public class JpaMobileAppDao extends JpaAbstractDao<MobileAppEntity, MobileApp> 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         mobileAppRepository.deleteByTenantId(tenantId.getId());
+    }
+
+    @Override
+    public MobileApp findByPkgNameAndPlatformType(TenantId tenantId, String pkgName, PlatformType platform) {
+        return DaoUtil.getData(mobileAppRepository.findByPkgNameAndPlatformType(pkgName, platform));
     }
 
     @Override

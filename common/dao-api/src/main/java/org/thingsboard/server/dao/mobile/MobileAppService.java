@@ -18,9 +18,8 @@ package org.thingsboard.server.dao.mobile;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.entity.EntityDaoService;
@@ -29,15 +28,15 @@ public interface MobileAppService extends EntityDaoService {
 
     MobileApp saveMobileApp(TenantId tenantId, MobileApp mobileApp);
 
-    void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
-
     MobileApp findMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
     PageData<MobileApp> findMobileAppsByTenantId(TenantId tenantId, PageLink pageLink);
 
-    AndroidQrCodeConfig findAndroidQrCodeConfig(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
+    MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
 
-    IosQrCodeConfig findIosQrCodeConfig(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
+    MobileApp findMobileAppByPkgNameAndPlatformType(String pkgName, PlatformType platform);
+
+    void deleteMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
     void deleteMobileAppsByTenantId(TenantId tenantId);
 

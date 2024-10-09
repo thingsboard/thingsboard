@@ -31,8 +31,6 @@ public interface MobileAppBundleService extends EntityDaoService {
 
     MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileAppBundle);
 
-    void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
-
     MobileAppBundle findMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
 
     PageData<MobileAppBundleInfo> findMobileAppBundleInfosByTenantId(TenantId tenantId, PageLink pageLink);
@@ -43,5 +41,7 @@ public interface MobileAppBundleService extends EntityDaoService {
 
     MobileAppBundle findMobileAppBundleByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform);
 
-    void deleteMobileAppsByTenantId(TenantId tenantId);
+    void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId);
+
+    void deleteMobileAppBundlesByTenantId(TenantId tenantId);
 }

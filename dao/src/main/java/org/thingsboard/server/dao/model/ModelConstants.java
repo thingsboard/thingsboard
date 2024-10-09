@@ -464,7 +464,7 @@ public class ModelConstants {
     public static final String MOBILE_APP_BUNDLE_LAYOUT_CONFIG_PROPERTY = "layout_config";
     public static final String MOBILE_APP_BUNDLE_OAUTH2_ENABLED_PROPERTY = "oauth2_enabled";
 
-    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_TABLE_NAME = "mobile_app_oauth2_client";
+    public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_TABLE_NAME = "mobile_app_bundle_oauth2_client";
     public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_CLIENT_ID_PROPERTY = "oauth2_client_id";
     public static final String MOBILE_APP_BUNDLE_OAUTH2_CLIENT_MOBILE_APP_BUNDLE_ID_PROPERTY = "mobile_app_bundle_id";
 

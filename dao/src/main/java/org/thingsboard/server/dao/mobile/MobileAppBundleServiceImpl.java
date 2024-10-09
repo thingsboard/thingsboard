@@ -25,7 +25,6 @@ import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.mobile.MobileAppBundleOauth2Client;
@@ -53,14 +52,12 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     private OAuth2ClientDao oauth2ClientDao;
     @Autowired
     private MobileAppBundleDao mobileAppBundleDao;
-    @Autowired
-    private MobileAppService mobileAppService;
 
     @Override
-    public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileApp) {
-        log.trace("Executing saveMobileApp [{}]", mobileApp);
+    public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileAppBundle) {
+        log.trace("Executing saveMobileAppBundle [{}]", mobileAppBundle);
         try {
-            MobileAppBundle savedMobileApp = mobileAppBundleDao.save(tenantId, mobileApp);
+            MobileAppBundle savedMobileApp = mobileAppBundleDao.save(tenantId, mobileAppBundle);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedMobileApp).build());
             return savedMobileApp;
         } catch (Exception e) {
@@ -73,9 +70,18 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
 
     @Override
     public void deleteMobileAppBundleById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
-        log.trace("Executing deleteMobileAppById [{}]", mobileAppBundleId.getId());
+        log.trace("Executing deleteMobileAppBundleById [{}]", mobileAppBundleId.getId());
         mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
         eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
+
+        try {
+            mobileAppBundleDao.removeById(tenantId, mobileAppBundleId.getId());
+            eventPublisher.publishEvent(DeleteEntityEvent.builder().tenantId(tenantId).entityId(mobileAppBundleId).build());
+        } catch (Exception e) {
+            checkConstraintViolation(e, "fk_android_app_id", "The mobile app referenced by the mobile bundle cannot be deleted!",
+                    "fk_ios_app_id", "The mobile app referenced by the mobile bundle cannot be deleted!");
+            throw e;
+        }
     }
 
     @Override
@@ -86,19 +92,20 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
 
     @Override
     public PageData<MobileAppBundleInfo> findMobileAppBundleInfosByTenantId(TenantId tenantId, PageLink pageLink) {
-        log.trace("Executing findMobileAppInfosByTenantId [{}]", tenantId);
-        PageData<MobileAppBundle> mobileBundles = mobileAppBundleDao.findByTenantId(tenantId, pageLink);
-        return mobileBundles.mapData(this::getMobileAppBundleInfo);
+        log.trace("Executing findMobileAppBundleInfosByTenantId [{}]", tenantId);
+        PageData<MobileAppBundleInfo> mobileBundles = mobileAppBundleDao.findInfosByTenantId(tenantId, pageLink);
+        mobileBundles.getData().forEach(this::fetchOauth2Clients);
+        return mobileBundles;
     }
 
     @Override
     public MobileAppBundleInfo findMobileAppBundleInfoById(TenantId tenantId, MobileAppBundleId mobileAppIdBundle) {
-        log.trace("Executing findMobileAppInfoById [{}] [{}]", tenantId, mobileAppIdBundle);
-        MobileAppBundle mobileAppBundle = mobileAppBundleDao.findById(tenantId, mobileAppIdBundle.getId());
-        if (mobileAppBundle == null) {
-            return null;
+        log.trace("Executing findMobileAppBundleInfoById [{}] [{}]", tenantId, mobileAppIdBundle);
+        MobileAppBundleInfo mobileAppBundleInfo = mobileAppBundleDao.findInfoById(tenantId, mobileAppIdBundle);
+        if (mobileAppBundleInfo != null) {
+            fetchOauth2Clients(mobileAppBundleInfo);
         }
-        return getMobileAppBundleInfo(mobileAppBundle);
+        return mobileAppBundleInfo;
     }
 
     @Override
@@ -115,10 +122,10 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
         newClientList.removeIf(existingClients::contains);
 
         for (MobileAppBundleOauth2Client client : toRemoveList) {
-            mobileAppBundleDao.removeOauth2Client(client);
+            mobileAppBundleDao.removeOauth2Client(tenantId, client);
         }
         for (MobileAppBundleOauth2Client client : newClientList) {
-            mobileAppBundleDao.addOauth2Client(client);
+            mobileAppBundleDao.addOauth2Client(tenantId, client);
         }
         eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId)
                 .entityId(mobileAppBundleId).created(false).build());
@@ -126,7 +133,7 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
 
     @Override
     public MobileAppBundle findMobileAppBundleByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
-        log.trace("Executing findMobileAppBundle, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
+        log.trace("Executing findMobileAppBundleByPkgNameAndPlatform, tenantId [{}], pkgName [{}], platform [{}]", tenantId, pkgName, platform);
         return mobileAppBundleDao.findByPkgNameAndPlatform(tenantId, pkgName, platform);
     }
 
@@ -142,29 +149,26 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     }
 
     @Override
-    public void deleteMobileAppsByTenantId(TenantId tenantId) {
+    public void deleteMobileAppBundlesByTenantId(TenantId tenantId) {
         log.trace("Executing deleteMobileAppsByTenantId, tenantId [{}]", tenantId);
         mobileAppBundleDao.deleteByTenantId(tenantId);
     }
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
-        deleteMobileAppsByTenantId(tenantId);
-    }
-
-    private MobileAppBundleInfo getMobileAppBundleInfo(MobileAppBundle mobileAppBundle) {
-        List<OAuth2ClientInfo> clients = oauth2ClientDao.findByMobileAppBundleId(mobileAppBundle.getUuidId()).stream()
-                .map(OAuth2ClientInfo::new)
-                .sorted(Comparator.comparing(OAuth2ClientInfo::getTitle))
-                .collect(Collectors.toList());
-        MobileApp androidApp = mobileAppService.findMobileAppById(mobileAppBundle.getTenantId(), mobileAppBundle.getAndroidAppId());
-        MobileApp iosApp = mobileAppService.findMobileAppById(mobileAppBundle.getTenantId(), mobileAppBundle.getIosAppId());
-        return new MobileAppBundleInfo(mobileAppBundle, androidApp != null ? androidApp.getPkgName() : null,
-                iosApp != null ? iosApp.getPkgName() : null, clients);
+        deleteMobileAppBundlesByTenantId(tenantId);
     }
 
     @Override
     public EntityType getEntityType() {
         return EntityType.MOBILE_APP_BUNDLE;
+    }
+
+    private void fetchOauth2Clients(MobileAppBundleInfo mobileAppBundleInfo) {
+        List<OAuth2ClientInfo> clients = oauth2ClientDao.findByMobileAppBundleId(mobileAppBundleInfo.getUuidId()).stream()
+                .map(OAuth2ClientInfo::new)
+                .sorted(Comparator.comparing(OAuth2ClientInfo::getTitle))
+                .collect(Collectors.toList());
+        mobileAppBundleInfo.setOauth2ClientInfos(clients);
     }
 }

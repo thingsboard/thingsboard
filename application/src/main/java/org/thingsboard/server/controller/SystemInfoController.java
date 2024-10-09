@@ -142,7 +142,7 @@ public class SystemInfoController extends BaseController {
             DefaultTenantProfileConfiguration tenantProfileConfiguration = tenantProfileCache.get(tenantId).getDefaultProfileConfiguration();
             systemParams.setMaxResourceSize(tenantProfileConfiguration.getMaxResourceSize());
         }
-        systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.getQrCodeSettings(TenantId.SYS_TENANT_ID))
+        systemParams.setMobileQrEnabled(Optional.ofNullable(qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID))
                 .map(QrCodeSettings::getQrCodeConfig).map(QRCodeConfig::isShowOnHomePage)
                 .orElse(false));
         return systemParams;

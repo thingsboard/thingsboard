@@ -46,7 +46,7 @@ import org.thingsboard.server.common.data.id.TenantProfileId;
 import org.thingsboard.server.common.data.id.UserCredentialsId;
 import org.thingsboard.server.common.data.id.UserId;
 import org.thingsboard.server.common.data.mobile.MobileSessionInfo;
-import org.thingsboard.server.common.data.mobile.UserMobileInfo;
+import org.thingsboard.server.common.data.mobile.UserMobileSessionInfo;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
@@ -468,8 +468,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
     public void saveMobileSession(TenantId tenantId, UserId userId, String mobileToken, MobileSessionInfo sessionInfo) {
         removeMobileSession(tenantId, mobileToken); // unassigning fcm token from other users, in case we didn't clean up it on log out or mobile app uninstall
 
-        UserMobileInfo mobileInfo = findMobileInfo(tenantId, userId).orElseGet(() -> {
-            UserMobileInfo newMobileInfo = new UserMobileInfo();
+        UserMobileSessionInfo mobileInfo = findMobileInfo(tenantId, userId).orElseGet(() -> {
+            UserMobileSessionInfo newMobileInfo = new UserMobileSessionInfo();
             newMobileInfo.setSessions(new HashMap<>());
             return newMobileInfo;
         });
@@ -479,7 +479,7 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public Map<String, MobileSessionInfo> findMobileSessions(TenantId tenantId, UserId userId) {
-        return findMobileInfo(tenantId, userId).map(UserMobileInfo::getSessions).orElse(Collections.emptyMap());
+        return findMobileInfo(tenantId, userId).map(UserMobileSessionInfo::getSessions).orElse(Collections.emptyMap());
     }
 
     @Override
@@ -495,9 +495,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         }
     }
 
-    private Optional<UserMobileInfo> findMobileInfo(TenantId tenantId, UserId userId) {
+    private Optional<UserMobileSessionInfo> findMobileInfo(TenantId tenantId, UserId userId) {
         return Optional.ofNullable(userSettingsService.findUserSettings(tenantId, userId, UserSettingsType.MOBILE))
-                .map(UserSettings::getSettings).map(settings -> JacksonUtil.treeToValue(settings, UserMobileInfo.class));
+                .map(UserSettings::getSettings).map(settings -> JacksonUtil.treeToValue(settings, UserMobileSessionInfo.class));
     }
 
     @Override

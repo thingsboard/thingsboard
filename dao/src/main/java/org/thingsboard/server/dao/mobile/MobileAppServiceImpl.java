@@ -19,15 +19,12 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.HasId;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -97,17 +94,15 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     }
 
     @Override
-    public AndroidQrCodeConfig findAndroidQrCodeConfig(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
+    public MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType) {
         log.trace("Executing findAndroidQrConfig, tenantId [{}], mobileAppBundleId [{}]", tenantId, mobileAppBundleId);
-        MobileApp mobileApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.ANDROID);
-        return mobileApp != null ? JacksonUtil.convertValue(mobileApp.getQrCodeConfig(), AndroidQrCodeConfig.class) : null;
+        return mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, platformType);
     }
 
     @Override
-    public IosQrCodeConfig findIosQrCodeConfig(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
-        log.trace("Executing findAndroidQrConfig, tenantId [{}], mobileAppBundleId [{}]", tenantId, mobileAppBundleId);
-        MobileApp mobileApp = mobileAppDao.findByBundleIdAndPlatformType(tenantId, mobileAppBundleId, PlatformType.IOS);
-        return mobileApp != null ? JacksonUtil.convertValue(mobileApp.getQrCodeConfig(), IosQrCodeConfig.class) : null;
+    public MobileApp findMobileAppByPkgNameAndPlatformType(String pkgName, PlatformType platform) {
+        log.trace("Executing findMobileAppByPkgNameAndPlatformType, pkgName [{}], platform [{}]", pkgName, platform);
+        return mobileAppDao.findByPkgNameAndPlatformType(TenantId.SYS_TENANT_ID, pkgName, platform);
     }
 
     @Override

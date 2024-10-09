@@ -32,7 +32,10 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
@@ -55,24 +58,24 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
     public void setUp() throws Exception {
         loginSysAdmin();
 
-        androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID, true);
+        androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID);
         androidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
 
-        iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS, true);
+        iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS);
         iosApp = doPost("/api/mobile/app", iosApp, MobileApp.class);
     }
 
     @After
     public void tearDown() throws Exception {
-        PageData<MobileApp> pageData = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
-        for (MobileApp mobileApp : pageData.getData()) {
-            doDelete("/api/mobile/app/" + mobileApp.getId().getId())
+        PageData<MobileAppBundleInfo> pageData2 = doGetTypedWithPageLink("/api/mobile/bundle/infos?", PAGE_DATA_MOBILE_APP_BUNDLE_TYPE_REF, new PageLink(10, 0));
+        for (MobileAppBundleInfo appBundleInfo : pageData2.getData()) {
+            doDelete("/api/mobile/bundle/" + appBundleInfo.getId().getId())
                     .andExpect(status().isOk());
         }
 
-        PageData<MobileAppBundleInfo> pageData2 = doGetTypedWithPageLink("/api/mobile/bundle?", PAGE_DATA_MOBILE_APP_BUNDLE_TYPE_REF, new PageLink(10, 0));
-        for (MobileAppBundleInfo appBundleInfo : pageData2.getData()) {
-            doDelete("/api/mobile/bundle/" + appBundleInfo.getId().getId())
+        PageData<MobileApp> pageData = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        for (MobileApp mobileApp : pageData.getData()) {
+            doDelete("/api/mobile/app/" + mobileApp.getId().getId())
                     .andExpect(status().isOk());
         }
 
@@ -84,7 +87,7 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
     }
 
     @Test
-    public void testSaveMobileApp() throws Exception {
+    public void testSaveMobileAppBundle() {
         MobileAppBundle mobileAppBundle = new MobileAppBundle();
         mobileAppBundle.setTitle("Test bundle");
         mobileAppBundle.setAndroidAppId(androidApp.getId());
@@ -97,7 +100,7 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
 
 
     @Test
-    public void testUpdateMobileAppOauth2Clients() throws Exception {
+    public void testUpdateMobileAppBundleOauth2Clients() throws Exception {
         MobileAppBundle mobileAppBundle = new MobileAppBundle();
         mobileAppBundle.setTitle("Test bundle");
         mobileAppBundle.setAndroidAppId(androidApp.getId());
@@ -113,11 +116,14 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
 
         doPut("/api/mobile/bundle/" + savedAppBundle.getId() + "/oauth2Clients", List.of(savedOAuth2Client.getId().getId(), savedOAuth2Client2.getId().getId()));
 
-        MobileAppBundleInfo retrievedMobileAppInfo = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedAppBundle.getId().getId());
-        assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppBundleInfo(savedAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), List.of(new OAuth2ClientInfo(oAuth2Client))));
+        MobileAppBundleInfo retrievedMobileAppBundleInfo = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedAppBundle.getId().getId());
+        assertThat(retrievedMobileAppBundleInfo).isEqualTo(new MobileAppBundleInfo(savedAppBundle, androidApp.getPkgName(), iosApp.getPkgName(),
+                Stream.of(new OAuth2ClientInfo(savedOAuth2Client), new OAuth2ClientInfo(savedOAuth2Client2))
+                        .sorted(Comparator.comparing(OAuth2ClientInfo::getTitle)).collect(Collectors.toList())
+        ));
 
         doPut("/api/mobile/bundle/" + savedAppBundle.getId() + "/oauth2Clients", List.of(savedOAuth2Client2.getId().getId()));
-        MobileAppBundleInfo retrievedMobileAppInfo2 = doGet("/api/mobileApp/info/{id}", MobileAppBundleInfo.class, savedOAuth2Client.getId().getId());
+        MobileAppBundleInfo retrievedMobileAppInfo2 = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedAppBundle.getId().getId());
         assertThat(retrievedMobileAppInfo2).isEqualTo(new MobileAppBundleInfo(savedAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), List.of(new OAuth2ClientInfo(savedOAuth2Client2))));
     }
 
@@ -133,17 +139,17 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
 
         MobileAppBundle savedMobileAppBundle = doPost("/api/mobile/bundle?oauth2ClientIds=" + savedOAuth2Client.getId().getId(), mobileAppBundle, MobileAppBundle.class);
 
-        MobileAppBundleInfo retrievedMobileAppInfo = doGet("/api/mobileApp/info/{id}", MobileAppBundleInfo.class, savedMobileAppBundle.getId().getId());
+        MobileAppBundleInfo retrievedMobileAppInfo = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedMobileAppBundle.getId().getId());
         assertThat(retrievedMobileAppInfo).isEqualTo(new MobileAppBundleInfo(savedMobileAppBundle, androidApp.getPkgName(), iosApp.getPkgName(), List.of(new OAuth2ClientInfo(savedOAuth2Client))));
     }
 
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType, boolean oauth2Enabled) {
-        MobileApp MobileApp = new MobileApp();
-        MobileApp.setTenantId(tenantId);
-        MobileApp.setPkgName(mobileAppName);
-        MobileApp.setPlatformType(platformType);
-        MobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
-        return MobileApp;
+    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType) {
+        MobileApp mobileApp = new MobileApp();
+        mobileApp.setTenantId(tenantId);
+        mobileApp.setPkgName(mobileAppName);
+        mobileApp.setPlatformType(platformType);
+        mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        return mobileApp;
     }
 
 }

@@ -22,6 +22,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.mobile.MobileAppBundleOauth2Client;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -29,8 +30,8 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.DaoUtil;
 import org.thingsboard.server.dao.mobile.MobileAppBundleDao;
 import org.thingsboard.server.dao.model.sql.MobileAppBundleEntity;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
 import org.thingsboard.server.dao.model.sql.MobileAppBundleOauth2ClientEntity;
+import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -56,8 +57,13 @@ public class JpaMobileAppBundleDao extends JpaAbstractDao<MobileAppBundleEntity,
     }
 
     @Override
-    public PageData<MobileAppBundle> findByTenantId(TenantId tenantId, PageLink pageLink) {
-        return DaoUtil.toPageData(mobileAppBundleRepository.findByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    public PageData<MobileAppBundleInfo> findInfosByTenantId(TenantId tenantId, PageLink pageLink) {
+        return DaoUtil.toPageData(mobileAppBundleRepository.findInfoByTenantId(tenantId.getId(), pageLink.getTextSearch(), DaoUtil.toPageable(pageLink)));
+    }
+
+    @Override
+    public MobileAppBundleInfo findInfoById(TenantId tenantId, MobileAppBundleId mobileAppBundleId) {
+        return DaoUtil.getData(mobileAppBundleRepository.findInfoById(mobileAppBundleId.getId()));
     }
 
     @Override
@@ -66,19 +72,19 @@ public class JpaMobileAppBundleDao extends JpaAbstractDao<MobileAppBundleEntity,
     }
 
     @Override
-    public void addOauth2Client(MobileAppBundleOauth2Client mobileAppBundleOauth2Client) {
+    public void addOauth2Client(TenantId tenantId, MobileAppBundleOauth2Client mobileAppBundleOauth2Client) {
         mobileOauth2ProviderRepository.save(new MobileAppBundleOauth2ClientEntity(mobileAppBundleOauth2Client));
     }
 
     @Override
-    public void removeOauth2Client(MobileAppBundleOauth2Client mobileAppBundleOauth2Client) {
+    public void removeOauth2Client(TenantId tenantId, MobileAppBundleOauth2Client mobileAppBundleOauth2Client) {
         mobileOauth2ProviderRepository.deleteById(new MobileAppOauth2ClientCompositeKey(mobileAppBundleOauth2Client.getMobileAppBundleId().getId(),
                 mobileAppBundleOauth2Client.getOAuth2ClientId().getId()));
     }
 
     @Override
     public MobileAppBundle findByPkgNameAndPlatform(TenantId tenantId, String pkgName, PlatformType platform) {
-        return DaoUtil.getData(mobileAppBundleRepository.findByPkgNameAndPlatformType(pkgName, platform.name()));
+        return DaoUtil.getData(mobileAppBundleRepository.findByPkgNameAndPlatformType(pkgName, platform));
     }
 
     @Override
