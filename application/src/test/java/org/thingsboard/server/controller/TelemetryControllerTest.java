@@ -220,6 +220,17 @@ public class TelemetryControllerTest extends AbstractControllerTest {
         doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody2, String.class, status().isBadRequest());
     }
 
+    @Test
+    public void testKeyWithCommaIsProhibited() throws Exception {
+        loginTenantAdmin();
+        Device device = createDevice();
+        String invalidRequestBody = "{\"key,key2\": \"value\"}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody, String.class, status().isBadRequest());
+
+        String invalidRequestBody2 = "{\"key,\": \"value\"}";
+        doPostAsync("/api/plugins/telemetry/DEVICE/" + device.getId() + "/timeseries/smth", invalidRequestBody2, String.class, status().isBadRequest());
+    }
+
     private Device createDevice() throws Exception {
         String testToken = "TEST_TOKEN";
 
