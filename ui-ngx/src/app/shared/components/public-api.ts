@@ -31,3 +31,4 @@ export * from './icon.component';
 export * from './hint-tooltip-icon.component';
 export * from './grid/scroll-grid-datasource';
 export * from './grid/scroll-grid.component';
+export * from './table/table-datasource.abstract';
