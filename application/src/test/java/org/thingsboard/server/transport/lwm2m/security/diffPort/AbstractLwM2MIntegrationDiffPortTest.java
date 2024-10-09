@@ -23,6 +23,7 @@ import org.eclipse.leshan.server.registration.RegistrationStore;
 import org.eclipse.leshan.server.registration.RegistrationUpdate;
 import org.junit.Assert;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.common.data.device.profile.Lwm2mDeviceProfileTransportConfiguration;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
@@ -59,8 +60,8 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
             return invocation.callRealMethod();
         }).when(registrationStoreTest).updateRegistration(any(RegistrationUpdate.class));
 
-        createDeviceProfile(transportConfiguration);
-        createDevice(deviceCredentials, clientEndpoint);
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
+        createLwm2mDevice(deviceCredentials, clientEndpoint, deviceProfile.getId());
         createNewClient(security, null, true, clientEndpoint);
         lwM2MTestClient.start(true);
         await(awaitAlias)

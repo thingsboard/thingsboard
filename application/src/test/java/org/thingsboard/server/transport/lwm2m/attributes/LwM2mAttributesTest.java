@@ -49,13 +49,13 @@ public class LwM2mAttributesTest {
     @ParameterizedTest(name = "Tests {index} : {0}")
     @MethodSource("doesntSupportAttributesWithoutValue")
     public void check_attribute_can_not_be_created_without_value(LwM2mAttributeModel<?> model) {
-        assertThrows(UnsupportedOperationException.class, () -> LwM2mAttributes.create(model));
+        assertThrows(IllegalArgumentException.class, () -> LwM2mAttributes.create(model));
     }
 
     @ParameterizedTest(name = "Tests {index} : {0}")
     @MethodSource("doesntSupportAttributesWithValueNull")
     public void check_attribute_can_not_be_created_with_null(LwM2mAttributeModel<?> model) {
-        assertThrows(NullPointerException.class, () -> LwM2mAttributes.create(model, null));
+        assertThrows(IllegalArgumentException.class, () -> LwM2mAttributes.create(model, null));
     }
 
    private static Stream<Arguments> supportNullAttributes() throws InvalidAttributeException {

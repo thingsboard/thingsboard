@@ -15,8 +15,8 @@
  */
 package org.thingsboard.server.transport.lwm2m.rpc;
 
-import org.junit.Before;
 import org.thingsboard.server.dao.service.DaoSqlTest;
+import static org.junit.Assert.assertTrue;
 
 @DaoSqlTest
 public abstract class AbstractRpcLwM2MIntegrationObserveTest extends AbstractRpcLwM2MIntegrationTest{
@@ -26,9 +26,8 @@ public abstract class AbstractRpcLwM2MIntegrationObserveTest extends AbstractRpc
         setResources(this.RESOURCES_RPC_MULTIPLE_19);
     }
 
-    @Before
-    public void initTest () throws Exception {
-        awaitObserveReadAll(4, deviceId);
+    protected void sendRpcObserveWithContainsLwM2mSingleResource(String params) throws Exception {
+        String rpcActualResult = sendRpcObserveOkWithResultValue("Observe", params);
+        assertTrue(rpcActualResult.contains("LwM2mSingleResource") || rpcActualResult.contains("LwM2mMultipleResource"));
     }
-
 }

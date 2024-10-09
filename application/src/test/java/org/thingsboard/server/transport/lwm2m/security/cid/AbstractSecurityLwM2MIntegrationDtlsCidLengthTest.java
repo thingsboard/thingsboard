@@ -20,7 +20,7 @@ import org.eclipse.californium.elements.config.Configuration;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpoint;
 import org.eclipse.leshan.client.californium.endpoint.CaliforniumClientEndpointsProvider;
 import org.junit.Assert;
-import org.thingsboard.server.common.data.Device;
+import org.thingsboard.server.common.data.DeviceProfile;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 import org.thingsboard.server.transport.lwm2m.security.AbstractSecurityLwM2MIntegrationTest;
 
@@ -49,9 +49,8 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthTest extends 
 
     protected void basicTestConnectionDtlsCidLength(Integer clientDtlsCidLength,
                                                     Integer serverDtlsCidLength) throws Exception {
-        createDeviceProfile(transportConfiguration);
-        final Device device = createDevice(deviceCredentials, clientEndpoint);
-        device.getId().getId().toString();
+        DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + clientEndpoint, transportConfiguration);
+        createLwm2mDevice(deviceCredentials, clientEndpoint, deviceProfile.getId());
         createNewClient(security, null, true, clientEndpoint, clientDtlsCidLength);
         lwM2MTestClient.start(true);
         await(awaitAlias)

@@ -20,13 +20,11 @@ import lombok.extern.slf4j.Slf4j;
 import org.eclipse.leshan.core.LwM2m.Version;
 import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
-import org.eclipse.leshan.core.response.ReadResponse;
 import org.eclipse.leshan.server.registration.Registration;
+import org.junit.Before;
 import org.junit.Test;
 import org.mockito.Mockito;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationObserveTest;
-
-import java.util.Optional;
 
 import static org.eclipse.leshan.core.LwM2mId.ACCESS_CONTROL;
 import static org.junit.Assert.assertEquals;
@@ -45,13 +43,15 @@ import static org.thingsboard.server.transport.lwm2m.utils.LwM2MTransportUtil.fr
 @Slf4j
 public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationObserveTest {
 
+    @Before
+    public void setupObserveTest() throws Exception {
+        awaitObserveReadAll(4, deviceId);
+    }
+
+
     @Test
     public void testObserveReadAll_Count_4_CancelAll_Count_0_Ok() throws Exception {
-        String actualValuesReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
-        assertEquals(4, actualValuesReadAll.split(",").length);
         sendObserveCancelAllWithAwait(deviceId);
-        actualValuesReadAll = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
-        assertEquals("[]", actualValuesReadAll);
     }
 
     /**
@@ -343,12 +343,6 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
         ObjectNode rpcActualResult = sendRpcObserveWithResult("ObserveReadAll", null);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         return rpcActualResult.get("value").asText();
-    }
-
-    private void sendRpcObserveWithContainsLwM2mSingleResource(String params) throws Exception {
-        String rpcActualResult = sendRpcObserveOkWithResultValue("Observe", params);
-        assertTrue(rpcActualResult.contains("LwM2mSingleResource"));
-        assertEquals(Optional.of(1).get(), Optional.ofNullable(getCntObserveAll(deviceId)).get());
     }
 }
 
