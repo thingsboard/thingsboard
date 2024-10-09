@@ -237,34 +237,32 @@ export class ResourcesService {
                                          standaloneComponents: []
                                        },
                                        visitedModules: Set<any> = new Set<any>()): ModulesWithComponents {
-    if (module && ['object', 'function'].includes(typeof module)) {
+    if (module && ['object', 'function'].includes(typeof module) && !visitedModules.has(module)) {
+      visitedModules.add(module);
       if (ɵNG_MOD_DEF in module) {
         const moduleDef: ɵNgModuleDef<any> = module[ɵNG_MOD_DEF];
-        if (!visitedModules.has(moduleDef.type)) {
-          visitedModules.add(moduleDef.type);
-          const moduleInfo: ModuleInfo = {
-            module: moduleDef,
-            components: []
-          }
-          modulesWithComponents.modules.push(moduleInfo);
-          const exportsDecl = moduleDef.exports;
-          let exports: Type<any>[];
-          if (Array.isArray(exportsDecl)) {
-            exports = exportsDecl;
-          } else {
-            exports = exportsDecl();
-          }
-          for (const element of exports) {
-            if (ɵNG_COMP_DEF in element) {
-              const component: ɵComponentDef<any> = element[ɵNG_COMP_DEF];
-              if (!component.standalone) {
-                moduleInfo.components.push(component);
-              } else {
-                modulesWithComponents.standaloneComponents.push(component);
-              }
+        const moduleInfo: ModuleInfo = {
+          module: moduleDef,
+          components: []
+        }
+        modulesWithComponents.modules.push(moduleInfo);
+        const exportsDecl = moduleDef.exports;
+        let exports: Type<any>[];
+        if (Array.isArray(exportsDecl)) {
+          exports = exportsDecl;
+        } else {
+          exports = exportsDecl();
+        }
+        for (const element of exports) {
+          if (ɵNG_COMP_DEF in element) {
+            const component: ɵComponentDef<any> = element[ɵNG_COMP_DEF];
+            if (!component.standalone) {
+              moduleInfo.components.push(component);
             } else {
-              this.extractModulesWithComponents(module, modulesWithComponents, visitedModules);
+              modulesWithComponents.standaloneComponents.push(component);
             }
+          } else {
+            this.extractModulesWithComponents(module, modulesWithComponents, visitedModules);
           }
         }
       } else if (ɵNG_COMP_DEF in module) {
