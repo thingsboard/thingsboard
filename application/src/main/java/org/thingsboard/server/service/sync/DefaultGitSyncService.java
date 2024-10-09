@@ -28,7 +28,6 @@ import org.thingsboard.server.service.sync.vc.GitRepository.FileType;
 import org.thingsboard.server.service.sync.vc.GitRepository.RepoFile;
 
 import java.net.URI;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
 import java.util.Map;
@@ -64,7 +63,7 @@ public class DefaultGitSyncService implements GitSyncService {
 
         executor.scheduleWithFixedDelay(() -> {
             GitRepository repository = repositories.get(key);
-            if (repository == null || Files.notExists(Path.of(repository.getDirectory()))) {
+            if (repository == null || !GitRepository.exists(repository.getDirectory())) {
                 initRepository(key, settings);
                 return;
             }
@@ -111,7 +110,7 @@ public class DefaultGitSyncService implements GitSyncService {
     private GitRepository getRepository(String key) {
         GitRepository repository = repositories.get(key);
         if (repository != null) {
-            if (Files.notExists(Path.of(repository.getDirectory()))) {
+            if (!GitRepository.exists(repository.getDirectory())) {
                 // reinitializing the repository because folder was deleted
                 initRepository(key, repository.getSettings());
             }

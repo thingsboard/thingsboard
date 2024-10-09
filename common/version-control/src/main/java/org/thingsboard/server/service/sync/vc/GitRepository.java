@@ -140,12 +140,13 @@ public class GitRepository {
 
     public static GitRepository openOrClone(Path directory, RepositorySettings settings, boolean fetch) throws IOException, GitAPIException {
         GitRepository repository;
-        if (Files.exists(directory)) {
+        if (GitRepository.exists(directory.toString())) {
             repository = GitRepository.open(directory.toFile(), settings);
             if (fetch) {
                 repository.fetch();
             }
         } else {
+            FileUtils.deleteDirectory(directory.toFile());
             Files.createDirectories(directory);
             if (settings.isLocalOnly()) {
                 repository = GitRepository.create(settings, directory.toFile());
@@ -434,6 +435,10 @@ public class GitRepository {
             throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
         }
         return result;
+    }
+
+    public static boolean exists(String directory) {
+        return Files.exists(Path.of(directory, ".git"));
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {

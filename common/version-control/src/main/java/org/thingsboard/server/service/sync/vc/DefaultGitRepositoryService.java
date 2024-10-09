@@ -40,7 +40,6 @@ import org.thingsboard.server.service.sync.vc.GitRepository.Diff;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
-import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
@@ -203,7 +202,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         GitRepository gitRepository = Optional.ofNullable(repositories.get(tenantId))
                 .orElseThrow(() -> new IllegalStateException("Repository is not initialized"));
 
-        if (!Files.exists(Path.of(gitRepository.getDirectory()))) {
+        if (!GitRepository.exists(gitRepository.getDirectory())) {
             try {
                 return openOrCloneRepository(tenantId, gitRepository.getSettings(), false);
             } catch (Exception e) {
