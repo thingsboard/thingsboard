@@ -123,7 +123,7 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Create Or Update the Mobile application settings (saveMobileAppSettings)",
             notes = "The request payload contains configuration for android/iOS applications and platform qr code widget settings." + SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
-    @PostMapping(value = "/api/qr/settings")
+    @PostMapping(value = "/api/mobile/qr/settings")
     public QrCodeSettings saveMobileAppSettings(@Parameter(description = "A JSON value representing the mobile apps configuration")
                                                 @RequestBody QrCodeSettings qrCodeSettings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
@@ -135,7 +135,7 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Get Mobile application settings (getMobileAppSettings)",
             notes = "The response payload contains configuration for android/iOS applications and platform qr code widget settings." + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/api/qr/settings")
+    @GetMapping(value = "/api/mobile/qr/settings")
     public QrCodeSettings getMobileAppSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
         accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
@@ -145,7 +145,7 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Get the deep link to the associated mobile application (getMobileAppDeepLink)",
             notes = "Fetch the url that takes user to linked mobile application " + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @GetMapping(value = "/api/qr/deepLink", produces = "text/plain")
+    @GetMapping(value = "/api/mobile/qr/deepLink", produces = "text/plain")
     public String getMobileAppDeepLink(HttpServletRequest request) throws ThingsboardException, URISyntaxException {
         String secret = mobileAppSecretService.generateMobileAppSecret(getCurrentUser());
         String baseUrl = systemSecurityService.getBaseUrl(TenantId.SYS_TENANT_ID, null, request);

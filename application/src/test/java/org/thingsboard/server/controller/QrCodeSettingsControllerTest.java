@@ -94,7 +94,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
 
         mobileAppBundle = doPost("/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class);
 
-        QrCodeSettings qrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
         QRCodeConfig qrCodeConfig = new QRCodeConfig();
         qrCodeConfig.setQrCodeLabel(TEST_LABEL);
         qrCodeSettings.setUseDefaultApp(true);
@@ -123,61 +123,61 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
     @Test
     public void testSaveQrCodeSettings() throws Exception {
         loginSysAdmin();
-        QrCodeSettings qrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
         assertThat(qrCodeSettings.getQrCodeConfig().getQrCodeLabel()).isEqualTo(TEST_LABEL);
         assertThat(qrCodeSettings.isUseDefaultApp()).isTrue();
 
         qrCodeSettings.setUseDefaultApp(false);
         qrCodeSettings.setMobileAppBundleId(mobileAppBundle.getId());
 
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isOk());
 
-        QrCodeSettings updatedQrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings updatedQrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
         assertThat(updatedQrCodeSettings.isUseDefaultApp()).isFalse();
     }
 
     @Test
     public void testShouldNotSaveQrCodeSettingsWithoutRequiredConfig() throws Exception {
         loginSysAdmin();
-        QrCodeSettings qrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
 
         qrCodeSettings.setUseDefaultApp(false);
         qrCodeSettings.setQrCodeConfig(null);
         qrCodeSettings.setMobileAppBundleId(null);
 
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Mobile app bundle is required to use custom application!")));
 
         qrCodeSettings.setMobileAppBundleId(mobileAppBundle.getId());
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("Qr code configuration is required!")));
 
         qrCodeSettings.setQrCodeConfig(QRCodeConfig.builder().showOnHomePage(false).build());
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testShouldSaveQrCodeSettingsForDefaultApp() throws Exception {
         loginSysAdmin();
-        QrCodeSettings qrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
         qrCodeSettings.setUseDefaultApp(true);
         qrCodeSettings.setMobileAppBundleId(null);
 
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isOk());
     }
 
     @Test
     public void testGetApplicationAssociations() throws Exception {
         loginSysAdmin();
-        QrCodeSettings qrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
         qrCodeSettings.setUseDefaultApp(true);
         qrCodeSettings.setMobileAppBundleId(mobileAppBundle.getId());
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isOk());
 
         JsonNode assetLinks = doGet("/.well-known/assetlinks.json", JsonNode.class);
@@ -191,7 +191,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
     @Test
     public void testGetMobileDeepLink() throws Exception {
         loginSysAdmin();
-        String deepLink = doGet("/api/qr/deepLink", String.class);
+        String deepLink = doGet("/api/mobile/qr/deepLink", String.class);
 
         Pattern expectedPattern = Pattern.compile("\"https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)&host=([^&]+)\"");
         Matcher parsedDeepLink = expectedPattern.matcher(deepLink);
@@ -206,7 +206,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         assertThat(jwtPair).isNotNull();
 
         loginTenantAdmin();
-        String tenantDeepLink = doGet("/api/qr/deepLink", String.class);
+        String tenantDeepLink = doGet("/api/mobile/qr/deepLink", String.class);
         Matcher tenantParsedDeepLink = expectedPattern.matcher(tenantDeepLink);
         assertThat(tenantParsedDeepLink.matches()).isTrue();
         String tenantSecret = tenantParsedDeepLink.group(2);
@@ -215,7 +215,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         assertThat(tenantJwtPair).isNotNull();
 
         loginCustomerUser();
-        String customerDeepLink = doGet("/api/qr/deepLink", String.class);
+        String customerDeepLink = doGet("/api/mobile/qr/deepLink", String.class);
         Matcher customerParsedDeepLink = expectedPattern.matcher(customerDeepLink);
         assertThat(customerParsedDeepLink.matches()).isTrue();
         String customerSecret = customerParsedDeepLink.group(2);
@@ -225,25 +225,25 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
 
         // update mobile setting to use custom one
         loginSysAdmin();
-        QrCodeSettings qrCodeSettings = doGet("/api/qr/settings", QrCodeSettings.class);
+        QrCodeSettings qrCodeSettings = doGet("/api/mobile/qr/settings", QrCodeSettings.class);
         qrCodeSettings.setUseDefaultApp(false);
         qrCodeSettings.setMobileAppBundleId(mobileAppBundle.getId());
-        doPost("/api/qr/settings", qrCodeSettings);
+        doPost("/api/mobile/qr/settings", qrCodeSettings);
 
-        String customAppDeepLink = doGet("/api/qr/deepLink", String.class);
+        String customAppDeepLink = doGet("/api/mobile/qr/deepLink", String.class);
         Pattern customAppExpectedPattern = Pattern.compile("\"https://([^/]+)/api/noauth/qr\\?secret=([^&]+)&ttl=([^&]+)\"");
         Matcher customAppParsedDeepLink = customAppExpectedPattern.matcher(customAppDeepLink);
         assertThat(customAppParsedDeepLink.matches()).isTrue();
         assertThat(customAppParsedDeepLink.group(1)).isEqualTo("localhost");
 
         loginTenantAdmin();
-        String tenantCustomAppDeepLink = doGet("/api/qr/deepLink", String.class);
+        String tenantCustomAppDeepLink = doGet("/api/mobile/qr/deepLink", String.class);
         Matcher tenantCustomAppParsedDeepLink = customAppExpectedPattern.matcher(tenantCustomAppDeepLink);
         assertThat(tenantCustomAppParsedDeepLink.matches()).isTrue();
         assertThat(tenantCustomAppParsedDeepLink.group(1)).isEqualTo("localhost");
 
         loginCustomerUser();
-        String customerCustomAppDeepLink = doGet("/api/qr/deepLink", String.class);
+        String customerCustomAppDeepLink = doGet("/api/mobile/qr/deepLink", String.class);
         Matcher customerCustomAppParsedDeepLink = customAppExpectedPattern.matcher(customerCustomAppDeepLink);
         assertThat(customerCustomAppParsedDeepLink.matches()).isTrue();
         assertThat(customerCustomAppParsedDeepLink.group(1)).isEqualTo("localhost");
