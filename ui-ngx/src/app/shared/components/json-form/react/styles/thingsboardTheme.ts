@@ -14,9 +14,9 @@
 /// limitations under the License.
 ///
 
-import { indigo, deepOrange } from '@material-ui/core/colors';
-import { ThemeOptions } from '@material-ui/core/styles';
-import { PaletteOptions } from '@material-ui/core/styles/createPalette';
+import { indigo, deepOrange } from '@mui/material/colors';
+import { ThemeOptions } from '@mui/material/styles';
+import { PaletteOptions } from '@mui/material/styles/createPalette';
 import { mergeDeep } from '@core/utils';
 
 const PRIMARY_COLOR = '#305680';

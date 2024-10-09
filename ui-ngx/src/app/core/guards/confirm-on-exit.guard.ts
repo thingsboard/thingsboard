@@ -15,7 +15,7 @@
 ///
 
 import { Injectable } from '@angular/core';
-import { ActivatedRouteSnapshot, CanDeactivate, RouterStateSnapshot } from '@angular/router';
+import { ActivatedRouteSnapshot, RouterStateSnapshot } from '@angular/router';
 import { UntypedFormGroup } from '@angular/forms';
 import { select, Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -39,7 +39,7 @@ export interface HasDirtyFlag {
 @Injectable({
   providedIn: 'root'
 })
-export class ConfirmOnExitGuard implements CanDeactivate<HasConfirmForm & HasDirtyFlag> {
+export class ConfirmOnExitGuard  {
 
   constructor(private store: Store<AppState>,
               private dialogService: DialogService,

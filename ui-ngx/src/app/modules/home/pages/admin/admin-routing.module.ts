@@ -15,15 +15,7 @@
 ///
 
 import { inject, NgModule } from '@angular/core';
-import {
-  ActivatedRouteSnapshot,
-  Resolve,
-  ResolveFn,
-  Router,
-  RouterModule,
-  RouterStateSnapshot,
-  Routes
-} from '@angular/router';
+import { ActivatedRouteSnapshot, ResolveFn, Router, RouterModule, RouterStateSnapshot, Routes } from '@angular/router';
 
 import { MailServerComponent } from '@modules/home/pages/admin/mail-server.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';

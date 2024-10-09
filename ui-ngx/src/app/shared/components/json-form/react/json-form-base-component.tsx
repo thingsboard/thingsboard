@@ -21,7 +21,7 @@ import { isDefinedAndNotNull } from '@core/utils';
 export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
   extends React.Component<P, JsonFormFieldState> {
 
-    constructor(props) {
+    constructor(props: P) {
         super(props);
         this.onChangeValidate = this.onChangeValidate.bind(this);
         const value = this.defaultValue();
@@ -42,8 +42,10 @@ export default ThingsboardBaseComponent => class<P extends JsonFormFieldProps>
     onChangeValidate(e, forceUpdate?: boolean) {
         let value = null;
         if (this.props.form.schema.type === 'integer' || this.props.form.schema.type === 'number') {
-            if (e.target.value === null || e.target.value === '') {
+            if (!e || e.target?.value === null || e.target?.value === '') {
                 value = undefined;
+            } else if (typeof e === 'number') {
+                value = Number(e);
             } else if (e.target.value.indexOf('.') === -1) {
                 value = parseInt(e.target.value, 10);
             } else {
