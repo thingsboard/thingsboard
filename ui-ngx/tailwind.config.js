@@ -60,7 +60,14 @@ module.exports = {
         min: '1920px'
       }
     },
-    extend: {},
+    extend: {
+      gap: {
+        '0.75': '0.1875rem'
+      }
+    },
+  },
+  corePlugins: {
+    preflight: false
   },
   plugins: [],
 }

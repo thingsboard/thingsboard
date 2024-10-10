@@ -36,23 +36,18 @@
   <mat-sidenav-content>
     <div class="flex flex-col" role="main" style="height: 100%;">
       <mat-toolbar color="primary" class="tb-primary-toolbar flex flex-row">
-        <button [class]="{
-                  '!hidden': forceFullscreen,
-                  'tb-invisible': displaySearchMode()
-                }"
-                class="gt-sm:hidden" (click)="sidenav.toggle()">
+        <button mat-icon-button id="main"
+                [class.!hidden]="forceFullscreen || displaySearchMode()"
+                class="gt-sm:!hidden" (click)="sidenav.toggle()">
           <mat-icon class="material-icons">menu</mat-icon>
         </button>
         <button mat-icon-button
-                [class]="{
-                  '!hidden': !forceFullscreen,
-                  'tb-invisible': displaySearchMode()
-                }"
+                [class.!hidden]="!forceFullscreen || displaySearchMode"
                 (click)="goBack()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
         <button mat-icon-button
-                [class.tb-invisible]="!displaySearchMode()"
+                [class.!hidden]="!displaySearchMode()"
                 (click)="closeSearch()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
