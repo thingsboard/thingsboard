@@ -33,10 +33,9 @@ import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.common.data.mobile.StoreInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.security.model.JwtPair;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -101,9 +100,10 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Get associated android applications (getAssetLinks)")
     @GetMapping(value = "/.well-known/assetlinks.json")
     public ResponseEntity<JsonNode> getAssetLinks() {
-        AndroidQrCodeConfig androidQrConfig = (AndroidQrCodeConfig) qrCodeSettingService.findAppQrCodeConfig(TenantId.SYS_TENANT_ID, ANDROID);
-        if (androidQrConfig != null && androidQrConfig.isEnabled()) {
-            return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(ASSET_LINKS_PATTERN, androidQrConfig.getAppPackage(), androidQrConfig.getSha256CertFingerprints())));
+        MobileApp mobileApp = qrCodeSettingService.findAppFromQrCodeSettings(TenantId.SYS_TENANT_ID, ANDROID);
+        StoreInfo storeInfo = mobileApp != null ? mobileApp.getStoreInfo() : null;
+        if (storeInfo != null && storeInfo.isEnabled() && storeInfo.getSha256CertFingerprints() != null) {
+            return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(ASSET_LINKS_PATTERN, mobileApp.getPkgName(), storeInfo.getSha256CertFingerprints())));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -112,9 +112,10 @@ public class QrCodeSettingsController extends BaseController {
     @ApiOperation(value = "Get associated ios applications (getAppleAppSiteAssociation)")
     @GetMapping(value = "/.well-known/apple-app-site-association")
     public ResponseEntity<JsonNode> getAppleAppSiteAssociation() {
-        IosQrCodeConfig iosQrCodeConfig = (IosQrCodeConfig) qrCodeSettingService.findAppQrCodeConfig(TenantId.SYS_TENANT_ID, IOS);
-        if (iosQrCodeConfig != null && iosQrCodeConfig.isEnabled()) {
-            return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, iosQrCodeConfig.getAppId())));
+        MobileApp mobileApp = qrCodeSettingService.findAppFromQrCodeSettings(TenantId.SYS_TENANT_ID, IOS);
+        StoreInfo storeInfo = mobileApp != null ? mobileApp.getStoreInfo() : null;
+        if (storeInfo != null && storeInfo.isEnabled() && storeInfo.getAppId() != null) {
+            return ResponseEntity.ok(JacksonUtil.toJsonNode(String.format(APPLE_APP_SITE_ASSOCIATION_PATTERN, storeInfo.getAppId())));
         } else {
             return ResponseEntity.notFound().build();
         }
@@ -197,7 +198,7 @@ public class QrCodeSettingsController extends BaseController {
             return null;
         }
         MobileApp mobileApp = mobileAppService.findByBundleIdAndPlatformType(TenantId.SYS_TENANT_ID, mobileAppBundleId, platformType);
-        return (mobileApp != null && mobileApp.getQrCodeConfig() != null) ? mobileApp.getQrCodeConfig().getStoreLink() : null;
+        return (mobileApp != null && mobileApp.getStoreInfo() != null) ? mobileApp.getStoreInfo().getStoreLink() : null;
     }
 
 }

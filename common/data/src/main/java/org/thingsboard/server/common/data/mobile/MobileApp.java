@@ -55,9 +55,9 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @Schema(description = "Application version info")
     @Valid
     private MobileAppVersionInfo versionInfo;
-    @Schema(description = "Application qr code configuration")
+    @Schema(description = "Application store information")
     @Valid
-    private QrCodeConfig qrCodeConfig;
+    private StoreInfo storeInfo;
 
     public MobileApp() {
         super();
@@ -75,7 +75,7 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
         this.platformType = mobile.platformType;
         this.status = mobile.status;
         this.versionInfo = mobile.versionInfo;
-        this.qrCodeConfig = mobile.qrCodeConfig;
+        this.storeInfo = mobile.storeInfo;
     }
 
     @Override

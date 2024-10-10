@@ -109,13 +109,13 @@ $$
                     androidAppId := uuid_generate_v4();
                     INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, qr_code_config)
                     VALUES (androidAppId, (extract(epoch from now()) * 1000), qrCodeRecord.tenant_id,
-                            qrCodeRecord.android_config::jsonb ->> 'appPackage', 'ANDROID', 'PUBLISHED', qrCodeRecord.android_config::jsonb || '{"type": "ANDROID"}'::jsonb);
+                            qrCodeRecord.android_config::jsonb ->> 'appPackage', 'ANDROID', 'PUBLISHED', qrCodeRecord.android_config::jsonb - 'appPackage');
                     generatedBundleId := uuid_generate_v4();
                     INSERT INTO mobile_app_bundle(id, created_time, tenant_id, title, android_app_id)
                     VALUES (generatedBundleId, (extract(epoch from now()) * 1000), qrCodeRecord.tenant_id, 'App bundle for qr code', androidAppId);
                     UPDATE qr_code_settings SET mobile_app_bundle_id = generatedBundleId WHERE id = qrCodeRecord.id;
                 ELSE
-                    UPDATE mobile_app SET qr_code_config = qrCodeRecord.android_config::jsonb || '{"type": "ANDROID"}'::jsonb WHERE id = androidAppId;
+                    UPDATE mobile_app SET qr_code_config = qrCodeRecord.android_config::jsonb - 'appPackage' WHERE id = androidAppId;
                     UPDATE qr_code_settings SET mobile_app_bundle_id = (SELECT id FROM mobile_app_bundle WHERE mobile_app_bundle.android_app_id = androidAppId) WHERE id = qrCodeRecord.id;
                 END IF;
 
@@ -126,7 +126,7 @@ $$
                     iosAppId := uuid_generate_v4();
                     INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, qr_code_config)
                     VALUES (iosAppId, (extract(epoch from now()) * 1000), qrCodeRecord.tenant_id,
-                            iosPkgName, 'IOS', 'PUBLISHED', qrCodeRecord.ios_config::jsonb || '{"type": "IOS"}'::jsonb);
+                            iosPkgName, 'IOS', 'PUBLISHED', qrCodeRecord.ios_config);
                     IF generatedBundleId IS NULL THEN
                         generatedBundleId := uuid_generate_v4();
                         INSERT INTO mobile_app_bundle(id, created_time, tenant_id, title, ios_app_id)
@@ -136,7 +136,7 @@ $$
                         UPDATE mobile_app_bundle SET ios_app_id = iosAppId WHERE id = generatedBundleId;
                     END IF;
                 ELSE
-                    UPDATE mobile_app SET qr_code_config = qrCodeRecord.ios_config::jsonb || '{"type": "IOS"}'::jsonb WHERE id = iosAppId;
+                    UPDATE mobile_app SET qr_code_config = qrCodeRecord.ios_config WHERE id = iosAppId;
                     UPDATE qr_code_settings SET mobile_app_bundle_id = (SELECT id FROM mobile_app_bundle WHERE mobile_app_bundle.ios_app_id = iosAppId) WHERE id = qrCodeRecord.id;
                 END IF;
             END LOOP;

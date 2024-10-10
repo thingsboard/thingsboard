@@ -23,13 +23,12 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
 import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.common.data.mobile.StoreInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -68,22 +67,21 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         loginSysAdmin();
 
         MobileApp androidApp = validMobileApp( "my.android.package", PlatformType.ANDROID);
-        AndroidQrCodeConfig androidQrCodeConfig = AndroidQrCodeConfig.builder()
-                .appPackage(ANDROID_PACKAGE_NAME)
+        StoreInfo androidStoreInfo = StoreInfo.builder()
                 .sha256CertFingerprints(ANDROID_APP_SHA256)
                 .storeLink(ANDROID_STORE_LINK)
                 .enabled(true)
                 .build();
-        androidApp.setQrCodeConfig(androidQrCodeConfig);
+        androidApp.setStoreInfo(androidStoreInfo);
         MobileApp savedAndroidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
 
         MobileApp iosApp = validMobileApp( "my.ios.package", PlatformType.IOS);
-        IosQrCodeConfig iosQrCodeConfig = IosQrCodeConfig.builder()
+        StoreInfo iosQrCodeConfig = StoreInfo.builder()
                 .appId(APPLE_APP_ID)
                 .enabled(true)
                 .storeLink(IOS_STORE_LINK)
                 .build();
-        iosApp.setQrCodeConfig(iosQrCodeConfig);
+        iosApp.setStoreInfo(iosQrCodeConfig);
         MobileApp savedIosApp = doPost("/api/mobile/app", iosApp, MobileApp.class);
 
         mobileAppBundle = new MobileAppBundle();
@@ -180,7 +178,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
 
         JsonNode assetLinks = doGet("/.well-known/assetlinks.json", JsonNode.class);
-        assertThat(assetLinks.get(0).get("target").get("package_name").asText()).isEqualTo(ANDROID_PACKAGE_NAME);
+        assertThat(assetLinks.get(0).get("target").get("package_name").asText()).isEqualTo("my.android.package");
         assertThat(assetLinks.get(0).get("target").get("sha256_cert_fingerprints").get(0).asText()).isEqualTo(ANDROID_APP_SHA256);
 
         JsonNode appleAssociation = doGet("/.well-known/apple-app-site-association", JsonNode.class);

@@ -21,8 +21,6 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
-import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
@@ -81,50 +79,6 @@ public class MobileAppControllerTest extends AbstractControllerTest {
         doPost("/api/mobile/app", mobileApp)
                 .andExpect(status().isBadRequest())
                 .andExpect(statusReason(containsString("appSecret must be at least 16 and max 2048 characters")));
-    }
-
-    @Test
-    public void testShouldNotSaveMobileAppWithWrongQrCodeConf() throws Exception {
-        MobileApp mobileApp = validMobileApp("mobileApp.ce", PlatformType.ANDROID);
-        AndroidQrCodeConfig androidQrCodeConfig = AndroidQrCodeConfig.builder()
-                .enabled(true)
-                .appPackage(null)
-                .sha256CertFingerprints(null)
-                .build();
-        mobileApp.setQrCodeConfig(androidQrCodeConfig);
-
-        doPost("/api/mobile/app", mobileApp)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Validation error: appPackage must not be blank, sha256CertFingerprints must not be blank, storeLink must not be blank")));
-
-        androidQrCodeConfig.setAppPackage("test_app_package");
-        doPost("/api/mobile/app", mobileApp)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Validation error: sha256CertFingerprints must not be blank, storeLink must not be blank")));
-
-        androidQrCodeConfig.setSha256CertFingerprints("test_sha_256");
-        androidQrCodeConfig.setStoreLink("https://store.com");
-        doPost("/api/mobile/app", mobileApp)
-                .andExpect(status().isOk());
-    }
-
-    @Test
-    public void testShouldNotSaveMobileAppWithWrongIosConf() throws Exception {
-        MobileApp mobileApp = validMobileApp("mobileApp.ce", PlatformType.ANDROID);
-        IosQrCodeConfig iosQrCodeConfig = IosQrCodeConfig.builder()
-                .enabled(true)
-                .appId(null)
-                .build();
-        mobileApp.setQrCodeConfig(iosQrCodeConfig);
-
-        doPost("/api/mobile/app", mobileApp)
-                .andExpect(status().isBadRequest())
-                .andExpect(statusReason(containsString("Validation error: appId must not be blank, storeLink must not be blank")));
-
-        iosQrCodeConfig.setAppId("test_app_id");
-        iosQrCodeConfig.setStoreLink("https://store.com");
-        doPost("/api/mobile/app", mobileApp)
-                .andExpect(status().isOk());
     }
 
     @Test
