@@ -82,7 +82,9 @@ public class AuthController extends BaseController {
     @GetMapping(value = "/auth/user")
     public User getUser() throws ThingsboardException {
         SecurityUser securityUser = getCurrentUser();
-        return userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+        User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
+        checkDashboardInfo(user.getAdditionalInfo());
+        return user;
     }
 
     @ApiOperation(value = "Logout (logout)",
