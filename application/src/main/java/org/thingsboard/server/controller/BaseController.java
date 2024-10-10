@@ -201,10 +201,10 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @TbCoreComponent
 public abstract class BaseController {
 
-    public static final String DASHBOARD_ID = "dashboardId";
+    protected static final String DASHBOARD_ID = "dashboardId";
 
-    public static final String HOME_DASHBOARD_ID = "homeDashboardId";
-    public static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
+    protected static final String HOME_DASHBOARD_ID = "homeDashboardId";
+    protected static final String HOME_DASHBOARD_HIDE_TOOLBAR = "homeDashboardHideToolbar";
 
     protected final Logger log = org.slf4j.LoggerFactory.getLogger(getClass());
 

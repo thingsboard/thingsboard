@@ -61,7 +61,7 @@ public enum EntityType {
     OAUTH2_CLIENT(35),
     DOMAIN(36),
     MOBILE_APP(37),
-    MOBILE_APP_BUNDLE(37);
+    MOBILE_APP_BUNDLE(38);
 
     @Getter
     private final int protoNumber; // Corresponds to EntityTypeProto

@@ -60,7 +60,7 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
         } catch (Exception e) {
             handleEvictEvent(new QrCodeSettingsEvictEvent(tenantId));
             checkConstraintViolation(e, Map.of(
-                    "mobile_app_settings_tenant_id_unq_key", "Mobile application for specified tenant already exists!"
+                    "qr_code_settings_tenant_id_unq_key", "Mobile application for specified tenant already exists!"
             ));
             throw e;
         }
