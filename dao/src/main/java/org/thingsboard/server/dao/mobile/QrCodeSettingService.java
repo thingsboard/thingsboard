@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.dao.mobile;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MobileAppOauth2Client {
+public interface QrCodeSettingService {
 
-    private MobileAppId mobileAppId;
-    private OAuth2ClientId oAuth2ClientId;
+    QrCodeSettings saveQrCodeSettings(TenantId tenantId, QrCodeSettings qrCodeSettings);
+
+    QrCodeSettings findQrCodeSettings(TenantId tenantId);
+
+    MobileApp findAppFromQrCodeSettings(TenantId sysTenantId, PlatformType platformType);
+
+    void deleteByTenantId(TenantId tenantId);
 
 }

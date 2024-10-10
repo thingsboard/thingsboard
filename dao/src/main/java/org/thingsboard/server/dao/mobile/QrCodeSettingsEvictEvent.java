@@ -13,10 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.dao.mobile;
 
-import org.thingsboard.server.common.data.HomeDashboardInfo;
-import org.thingsboard.server.common.data.User;
+import lombok.Data;
+import org.thingsboard.server.common.data.id.TenantId;
 
-public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, MobileLayoutConfig layoutConfig) {
+@Data
+public class QrCodeSettingsEvictEvent {
+    private final TenantId tenantId;
 }

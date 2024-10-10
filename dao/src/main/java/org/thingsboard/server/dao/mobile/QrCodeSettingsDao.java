@@ -13,17 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.sql.mobile;
+package org.thingsboard.server.dao.mobile;
 
-import org.springframework.data.jpa.repository.JpaRepository;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
-import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientEntity;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
+import org.thingsboard.server.dao.Dao;
 
-import java.util.List;
-import java.util.UUID;
 
-public interface MobileAppOauth2ClientRepository extends JpaRepository<MobileAppOauth2ClientEntity, MobileAppOauth2ClientCompositeKey> {
+public interface QrCodeSettingsDao extends Dao<QrCodeSettings> {
 
-    List<MobileAppOauth2ClientEntity> findAllByMobileAppId(UUID mobileAppId);
+    QrCodeSettings findByTenantId(TenantId tenantId);
 
+    void removeByTenantId(TenantId tenantId);
 }

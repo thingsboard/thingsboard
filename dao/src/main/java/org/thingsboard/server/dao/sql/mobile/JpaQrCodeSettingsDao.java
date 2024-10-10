@@ -20,10 +20,10 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Component;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 import org.thingsboard.server.dao.DaoUtil;
-import org.thingsboard.server.dao.mobile.MobileAppSettingsDao;
-import org.thingsboard.server.dao.model.sql.MobileAppSettingsEntity;
+import org.thingsboard.server.dao.mobile.QrCodeSettingsDao;
+import org.thingsboard.server.dao.model.sql.QrCodeSettingsEntity;
 import org.thingsboard.server.dao.sql.JpaAbstractDao;
 import org.thingsboard.server.dao.util.SqlDao;
 
@@ -33,29 +33,29 @@ import java.util.UUID;
 @Component
 @Slf4j
 @SqlDao
-public class JpaMobileAppSettingsDao extends JpaAbstractDao<MobileAppSettingsEntity, MobileAppSettings> implements MobileAppSettingsDao {
+public class JpaQrCodeSettingsDao extends JpaAbstractDao<QrCodeSettingsEntity, QrCodeSettings> implements QrCodeSettingsDao {
 
     @Autowired
-    private MobileAppSettingsRepository mobileAppSettingsRepository;
+    private QrCodeSettingsRepository qrCodeSettingsRepository;
 
 
     @Override
-    public MobileAppSettings findByTenantId(TenantId tenantId) {
-        return DaoUtil.getData(mobileAppSettingsRepository.findByTenantId(tenantId.getId()));
+    public QrCodeSettings findByTenantId(TenantId tenantId) {
+        return DaoUtil.getData(qrCodeSettingsRepository.findByTenantId(tenantId.getId()));
     }
 
     @Override
     public void removeByTenantId(TenantId tenantId) {
-        mobileAppSettingsRepository.deleteByTenantId(tenantId.getId());
+        qrCodeSettingsRepository.deleteByTenantId(tenantId.getId());
     }
 
     @Override
-    protected Class<MobileAppSettingsEntity> getEntityClass() {
-        return MobileAppSettingsEntity.class;
+    protected Class<QrCodeSettingsEntity> getEntityClass() {
+        return QrCodeSettingsEntity.class;
     }
 
     @Override
-    protected JpaRepository<MobileAppSettingsEntity, UUID> getRepository() {
-        return mobileAppSettingsRepository;
+    protected JpaRepository<QrCodeSettingsEntity, UUID> getRepository() {
+        return qrCodeSettingsRepository;
     }
 }

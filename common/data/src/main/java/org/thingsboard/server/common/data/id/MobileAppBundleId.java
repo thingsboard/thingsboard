@@ -17,21 +17,23 @@ package org.thingsboard.server.common.data.id;
 
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import io.swagger.v3.oas.annotations.media.Schema;
+import org.thingsboard.server.common.data.EntityType;
 
 import java.util.UUID;
 
-@Schema
-public class MobileAppSettingsId extends UUIDBased {
-
-    private static final long serialVersionUID = 1L;
+public class MobileAppBundleId extends UUIDBased implements EntityId{
 
     @JsonCreator
-    public MobileAppSettingsId(@JsonProperty("id") UUID id) {
+    public MobileAppBundleId(@JsonProperty("id") UUID id) {
         super(id);
     }
 
-    public static MobileAppSettingsId fromString(String mobileAppSettingsId) {
-        return new MobileAppSettingsId(UUID.fromString(mobileAppSettingsId));
+    public static MobileAppBundleId fromString(String mobileAppId) {
+        return new MobileAppBundleId(UUID.fromString(mobileAppId));
+    }
+
+    @Override
+    public EntityType getEntityType() {
+        return EntityType.MOBILE_APP_BUNDLE;
     }
 }

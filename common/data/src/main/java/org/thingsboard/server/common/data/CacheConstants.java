@@ -51,6 +51,6 @@ public class CacheConstants {
     public static final String ENTITY_COUNT_CACHE = "entityCount";
     public static final String RESOURCE_INFO_CACHE = "resourceInfo";
     public static final String ALARM_TYPES_CACHE = "alarmTypes";
-    public static final String MOBILE_APP_SETTINGS_CACHE = "mobileAppSettings";
+    public static final String QR_CODE_SETTINGS_CACHE = "qrCodeSettings";
     public static final String MOBILE_SECRET_KEY_CACHE = "mobileSecretKey";
 }

@@ -13,10 +13,25 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.id;
 
-import org.thingsboard.server.common.data.HomeDashboardInfo;
-import org.thingsboard.server.common.data.User;
+import com.fasterxml.jackson.annotation.JsonCreator;
+import com.fasterxml.jackson.annotation.JsonProperty;
+import io.swagger.v3.oas.annotations.media.Schema;
 
-public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, MobileLayoutConfig layoutConfig) {
+import java.util.UUID;
+
+@Schema
+public class QrCodeSettingsId extends UUIDBased {
+
+    private static final long serialVersionUID = 1L;
+
+    @JsonCreator
+    public QrCodeSettingsId(@JsonProperty("id") UUID id) {
+        super(id);
+    }
+
+    public static QrCodeSettingsId fromString(String qrCodeSettingsId) {
+        return new QrCodeSettingsId(UUID.fromString(qrCodeSettingsId));
+    }
 }

@@ -16,19 +16,21 @@
 package org.thingsboard.server.dao.mobile;
 
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.cache.CacheManager;
+import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.stereotype.Service;
-import org.thingsboard.server.cache.CaffeineTbTransactionalCache;
+import org.thingsboard.server.cache.CacheSpecsMap;
+import org.thingsboard.server.cache.RedisTbTransactionalCache;
+import org.thingsboard.server.cache.TBRedisCacheConfiguration;
+import org.thingsboard.server.cache.TbJsonRedisSerializer;
 import org.thingsboard.server.common.data.CacheConstants;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 
-@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "caffeine", matchIfMissing = true)
-@Service("MobileAppCache")
-public class MobileAppSettingsCaffeineCache extends CaffeineTbTransactionalCache<TenantId, MobileAppSettings> {
+@ConditionalOnProperty(prefix = "cache", value = "type", havingValue = "redis")
+@Service("QrCodeSettingsCache")
+public class QrCodeSettingsRedisCache extends RedisTbTransactionalCache<TenantId, QrCodeSettings> {
 
-    public MobileAppSettingsCaffeineCache(CacheManager cacheManager) {
-        super(cacheManager, CacheConstants.MOBILE_APP_SETTINGS_CACHE);
+    public QrCodeSettingsRedisCache(TBRedisCacheConfiguration configuration, CacheSpecsMap cacheSpecsMap, RedisConnectionFactory connectionFactory) {
+        super(CacheConstants.QR_CODE_SETTINGS_CACHE, cacheSpecsMap, connectionFactory, configuration, new TbJsonRedisSerializer<>(QrCodeSettings.class));
     }
-
 }

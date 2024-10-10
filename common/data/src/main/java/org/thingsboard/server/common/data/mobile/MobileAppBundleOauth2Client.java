@@ -15,8 +15,18 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import org.thingsboard.server.common.data.HomeDashboardInfo;
-import org.thingsboard.server.common.data.User;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.NoArgsConstructor;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
-public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, MobileLayoutConfig layoutConfig) {
+@Data
+@NoArgsConstructor
+@AllArgsConstructor
+public class MobileAppBundleOauth2Client {
+
+    private MobileAppBundleId mobileAppBundleId;
+    private OAuth2ClientId oAuth2ClientId;
+
 }

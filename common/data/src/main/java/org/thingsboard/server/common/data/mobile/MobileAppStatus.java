@@ -15,8 +15,10 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
-import org.thingsboard.server.common.data.HomeDashboardInfo;
-import org.thingsboard.server.common.data.User;
+public enum MobileAppStatus {
 
-public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, MobileLayoutConfig layoutConfig) {
+    PUBLISHED,
+    DEPRECATED,
+    SUSPENDED
+
 }

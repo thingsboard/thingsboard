@@ -13,17 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.mobile;
+package org.thingsboard.server.common.data.mobile;
 
-import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import lombok.Builder;
+import lombok.Data;
+import org.thingsboard.server.common.data.validation.NoXss;
 
-public interface MobileAppSettingsService {
+@Data
+@Builder
+public class StoreInfo {
 
-    MobileAppSettings saveMobileAppSettings(TenantId tenantId, MobileAppSettings settings);
-
-    MobileAppSettings getMobileAppSettings(TenantId tenantId);
-
-    void deleteByTenantId(TenantId tenantId);
+    private boolean enabled;
+    @NoXss
+    private String appId;
+    @NoXss
+    private String sha256CertFingerprints;
+    @NoXss
+    private String storeLink;
 
 }

@@ -16,21 +16,14 @@
 package org.thingsboard.server.dao.sql.mobile;
 
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.Query;
-import org.springframework.data.repository.query.Param;
-import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.server.dao.model.sql.MobileAppSettingsEntity;
+import org.thingsboard.server.dao.model.sql.MobileAppOauth2ClientCompositeKey;
+import org.thingsboard.server.dao.model.sql.MobileAppBundleOauth2ClientEntity;
 
+import java.util.List;
 import java.util.UUID;
 
+public interface MobileAppBundleOauth2ClientRepository extends JpaRepository<MobileAppBundleOauth2ClientEntity, MobileAppOauth2ClientCompositeKey> {
 
-public interface MobileAppSettingsRepository extends JpaRepository<MobileAppSettingsEntity, UUID> {
+    List<MobileAppBundleOauth2ClientEntity> findAllByMobileAppBundleId(UUID mobileAppId);
 
-    MobileAppSettingsEntity findByTenantId(@Param("tenantId") UUID tenantId);
-
-    @Transactional
-    @Modifying
-    @Query("DELETE FROM MobileAppSettingsEntity r WHERE r.tenantId = :tenantId")
-    void deleteByTenantId(@Param("tenantId") UUID tenantId);
 }

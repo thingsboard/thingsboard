@@ -16,32 +16,25 @@
 package org.thingsboard.server.common.data.mobile;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientInfo;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-@EqualsAndHashCode(callSuper = true)
 @Data
-@Schema
-public class MobileAppInfo extends MobileApp {
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class MobileLayoutConfig {
 
-    @Schema(description = "List of available oauth2 clients")
-    private List<OAuth2ClientInfo> oauth2ClientInfos;
-
-    public MobileAppInfo(MobileApp mobileApp, List<OAuth2ClientInfo> oauth2ClientInfos) {
-        super(mobileApp);
-        this.oauth2ClientInfos = oauth2ClientInfos;
-    }
-
-    public MobileAppInfo() {
-        super();
-    }
-
-    public MobileAppInfo(MobileAppId mobileAppId) {
-        super(mobileAppId);
-    }
+    @Schema(description = "List of custom menu items", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Valid
+    private List<MobileMenuItem> items = new ArrayList<>();
 
 }

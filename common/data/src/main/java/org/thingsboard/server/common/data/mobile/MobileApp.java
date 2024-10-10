@@ -17,8 +17,10 @@ package org.thingsboard.server.common.data.mobile;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -27,6 +29,7 @@ import org.thingsboard.server.common.data.HasName;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.validation.Length;
 
 @EqualsAndHashCode(callSuper = true)
@@ -44,8 +47,17 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @NotEmpty
     @Length(fieldName = "appSecret", min = 16, max = 2048, message = "must be at least 16 and max 2048 characters")
     private String appSecret;
-    @Schema(description = "Whether OAuth2 settings are enabled or not")
-    private boolean oauth2Enabled;
+    @Schema(description = "Application platform type: ANDROID or IOS", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
+    private PlatformType platformType;
+    @Schema(description = "Application status: PUBLISHED, DEPRECATED, SUSPENDED, DRAFT", requiredMode = Schema.RequiredMode.REQUIRED)
+    private MobileAppStatus status;
+    @Schema(description = "Application version info")
+    @Valid
+    private MobileAppVersionInfo versionInfo;
+    @Schema(description = "Application store information")
+    @Valid
+    private StoreInfo storeInfo;
 
     public MobileApp() {
         super();
@@ -60,7 +72,10 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
         this.tenantId = mobile.tenantId;
         this.pkgName = mobile.pkgName;
         this.appSecret = mobile.appSecret;
-        this.oauth2Enabled = mobile.oauth2Enabled;
+        this.platformType = mobile.platformType;
+        this.status = mobile.status;
+        this.versionInfo = mobile.versionInfo;
+        this.storeInfo = mobile.storeInfo;
     }
 
     @Override

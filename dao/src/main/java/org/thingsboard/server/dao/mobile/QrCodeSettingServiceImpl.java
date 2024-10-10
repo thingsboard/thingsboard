@@ -21,11 +21,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.AndroidConfig;
 import org.thingsboard.server.common.data.mobile.BadgePosition;
-import org.thingsboard.server.common.data.mobile.IosConfig;
-import org.thingsboard.server.common.data.mobile.MobileAppSettings;
+import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.service.DataValidator;
 
@@ -36,7 +36,7 @@ import static org.thingsboard.server.dao.service.Validator.validateId;
 @Service
 @Slf4j
 @RequiredArgsConstructor
-public class BaseMobileAppSettingsService extends AbstractCachedEntityService<TenantId, MobileAppSettings, MobileAppSettingsEvictEvent> implements MobileAppSettingsService {
+public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<TenantId, QrCodeSettings, QrCodeSettingsEvictEvent> implements QrCodeSettingService {
 
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
     private static final String DEFAULT_QR_CODE_LABEL = "Scan to connect or download mobile app";
@@ -46,57 +46,59 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
     @Value("${mobileApp.appStoreLink:https://apps.apple.com/us/app/thingsboard-live/id1594355695}")
     private String appStoreLink;
 
-    private final MobileAppSettingsDao mobileAppSettingsDao;
-    private final DataValidator<MobileAppSettings> mobileAppSettingsDataValidator;
+    private final QrCodeSettingsDao qrCodeSettingsDao;
+    private final MobileAppService mobileAppService;
+    private final DataValidator<QrCodeSettings> mobileAppSettingsDataValidator;
 
     @Override
-    public MobileAppSettings saveMobileAppSettings(TenantId tenantId, MobileAppSettings mobileAppSettings) {
-        mobileAppSettingsDataValidator.validate(mobileAppSettings, s -> tenantId);
+    public QrCodeSettings saveQrCodeSettings(TenantId tenantId, QrCodeSettings qrCodeSettings) {
+        mobileAppSettingsDataValidator.validate(qrCodeSettings, s -> tenantId);
         try {
-            MobileAppSettings savedMobileAppSettings = mobileAppSettingsDao.save(tenantId, mobileAppSettings);
-            publishEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
-            return constructMobileAppSettings(savedMobileAppSettings);
+            QrCodeSettings savedQrCodeSettings = qrCodeSettingsDao.save(tenantId, qrCodeSettings);
+            publishEvictEvent(new QrCodeSettingsEvictEvent(tenantId));
+            return constructMobileAppSettings(savedQrCodeSettings);
         } catch (Exception e) {
-            handleEvictEvent(new MobileAppSettingsEvictEvent(tenantId));
+            handleEvictEvent(new QrCodeSettingsEvictEvent(tenantId));
             checkConstraintViolation(e, Map.of(
-                    "mobile_app_settings_tenant_id_unq_key", "Mobile application for specified tenant already exists!"
+                    "qr_code_settings_tenant_id_unq_key", "Mobile application for specified tenant already exists!"
             ));
             throw e;
         }
     }
 
     @Override
-    public MobileAppSettings getMobileAppSettings(TenantId tenantId) {
+    public QrCodeSettings findQrCodeSettings(TenantId tenantId) {
         log.trace("Executing getMobileAppSettings for tenant [{}] ", tenantId);
-        MobileAppSettings mobileAppSettings = cache.getAndPutInTransaction(tenantId,
-                () -> mobileAppSettingsDao.findByTenantId(tenantId), true);
-        return constructMobileAppSettings(mobileAppSettings);
+        QrCodeSettings qrCodeSettings = cache.getAndPutInTransaction(tenantId,
+                () -> qrCodeSettingsDao.findByTenantId(tenantId), true);
+        return constructMobileAppSettings(qrCodeSettings);
+    }
+
+    @Override
+    public MobileApp findAppFromQrCodeSettings(TenantId tenantId, PlatformType platformType) {
+        log.trace("Executing findAppQrCodeConfig for tenant [{}] ", tenantId);
+        QrCodeSettings qrCodeSettings = findQrCodeSettings(tenantId);
+        return qrCodeSettings.getMobileAppBundleId() != null ? mobileAppService.findByBundleIdAndPlatformType(tenantId, qrCodeSettings.getMobileAppBundleId(), platformType) : null;
     }
 
     @Override
     public void deleteByTenantId(TenantId tenantId) {
         log.trace("Executing deleteByTenantId, tenantId [{}]", tenantId);
         validateId(tenantId, id -> INCORRECT_TENANT_ID + id);
-        mobileAppSettingsDao.removeByTenantId(tenantId);
+        qrCodeSettingsDao.removeByTenantId(tenantId);
     }
 
-    @TransactionalEventListener(classes = MobileAppSettingsEvictEvent.class)
+    @TransactionalEventListener(classes = QrCodeSettingsEvictEvent.class)
     @Override
-    public void handleEvictEvent(MobileAppSettingsEvictEvent event) {
+    public void handleEvictEvent(QrCodeSettingsEvictEvent event) {
         cache.evict(event.getTenantId());
     }
 
-    private MobileAppSettings constructMobileAppSettings(MobileAppSettings mobileAppSettings) {
-        if (mobileAppSettings == null) {
-            mobileAppSettings = new MobileAppSettings();
-            mobileAppSettings.setUseDefaultApp(true);
+    private QrCodeSettings constructMobileAppSettings(QrCodeSettings qrCodeSettings) {
+        if (qrCodeSettings == null) {
+            qrCodeSettings = new QrCodeSettings();
+            qrCodeSettings.setUseDefaultApp(true);
 
-            AndroidConfig androidConfig = AndroidConfig.builder()
-                    .enabled(true)
-                    .build();
-            IosConfig iosConfig = IosConfig.builder()
-                    .enabled(true)
-                    .build();
             QRCodeConfig qrCodeConfig = QRCodeConfig.builder()
                     .showOnHomePage(true)
                     .qrCodeLabelEnabled(true)
@@ -106,15 +108,14 @@ public class BaseMobileAppSettingsService extends AbstractCachedEntityService<Te
                     .badgeEnabled(true)
                     .build();
 
-            mobileAppSettings.setQrCodeConfig(qrCodeConfig);
-            mobileAppSettings.setAndroidConfig(androidConfig);
-            mobileAppSettings.setIosConfig(iosConfig);
+            qrCodeSettings.setQrCodeConfig(qrCodeConfig);
+            qrCodeSettings.setMobileAppBundleId(qrCodeSettings.getMobileAppBundleId());
         }
-        if (mobileAppSettings.isUseDefaultApp()) {
-            mobileAppSettings.setDefaultGooglePlayLink(googlePlayLink);
-            mobileAppSettings.setDefaultAppStoreLink(appStoreLink);
+        if (qrCodeSettings.isUseDefaultApp()) {
+            qrCodeSettings.setDefaultGooglePlayLink(googlePlayLink);
+            qrCodeSettings.setDefaultAppStoreLink(appStoreLink);
         }
-        return mobileAppSettings;
+        return qrCodeSettings;
     }
 
 }

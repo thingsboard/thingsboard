@@ -15,26 +15,35 @@
  */
 package org.thingsboard.server.common.data.mobile;
 
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.validation.NoXss;
+import org.thingsboard.server.common.data.validation.Length;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode
-public class AndroidConfig {
+public class MobileAppVersionInfo {
 
-    private boolean enabled;
-    @NoXss
-    private String appPackage;
-    @NoXss
-    private String sha256CertFingerprints;
-    @NoXss
-    private String storeLink;
+    @Schema(description = "Minimum supported version")
+    @Length(fieldName = "minVersion", max = 20)
+    private String minVersion;
+
+    @Schema(description = "Release notes of minimum supported version")
+    @Length(fieldName = "minVersionReleaseNotes", max = 10000)
+    private String minVersionReleaseNotes;
+
+    @Schema(description = "Latest supported version")
+    @Length(fieldName = "latestVersion", max = 20)
+    private String latestVersion;
+
+    @Schema(description = "Release notes of latest supported version")
+    @Length(fieldName = "latestVersionReleaseNotes", max = 10000)
+    private String latestVersionReleaseNotes;
 
 }
