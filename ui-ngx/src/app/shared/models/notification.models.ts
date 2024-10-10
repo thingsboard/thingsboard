@@ -366,6 +366,7 @@ interface SlackDeliveryMethodNotificationTemplate {
 interface MicrosoftTeamsDeliveryMethodNotificationTemplate {
   subject?: string;
   button: NotificationButtonConfig;
+  themeColor?: string;
 }
 
 interface MobileDeliveryMethodNotificationTemplate {
