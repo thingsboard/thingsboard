@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.plugin.ComponentLifecycleEvent;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
@@ -129,13 +130,64 @@ public class TbEntityLocalSubsInfo {
         if (!subs.remove(sub)) {
             return null;
         }
-        if (subs.isEmpty()) {
+        if (isEmpty()) {
             return toEvent(ComponentLifecycleEvent.DELETED);
         }
-        TbSubscriptionsInfo oldState = state.copy();
-        TbSubscriptionsInfo newState = new TbSubscriptionsInfo();
+        TbSubscriptionType type = sub.getType();
+        TbSubscriptionsInfo newState = state.copy();
+        clearState(newState, type);
+        return updateState(Set.of(type), newState);
+    }
+
+    public TbEntitySubEvent removeAll(List<? extends TbSubscription<?>> subsToRemove) {
+        Set<TbSubscriptionType> changedTypes = new HashSet<>();
+        TbSubscriptionsInfo newState = state.copy();
+        for (TbSubscription<?> sub : subsToRemove) {
+            log.trace("[{}][{}][{}] Removing: {}", tenantId, entityId, sub.getSubscriptionId(), sub);
+            if (!subs.remove(sub)) {
+                continue;
+            }
+            if (isEmpty()) {
+                return toEvent(ComponentLifecycleEvent.DELETED);
+            }
+            TbSubscriptionType type = sub.getType();
+            if (changedTypes.contains(type)) {
+                continue;
+            }
+
+            clearState(newState, type);
+            changedTypes.add(type);
+        }
+
+        return updateState(changedTypes, newState);
+    }
+
+    private void clearState(TbSubscriptionsInfo state, TbSubscriptionType type) {
+        switch (type) {
+            case NOTIFICATIONS:
+            case NOTIFICATIONS_COUNT:
+                state.notifications = false;
+                break;
+            case ALARMS:
+                state.alarms = false;
+                break;
+            case ATTRIBUTES:
+                state.attrAllKeys = false;
+                state.attrKeys = null;
+                break;
+            case TIMESERIES:
+                state.tsAllKeys = false;
+                state.tsKeys = null;
+        }
+    }
+
+    private TbEntitySubEvent updateState(Set<TbSubscriptionType> updatedTypes, TbSubscriptionsInfo newState) {
         for (TbSubscription<?> subscription : subs) {
-            switch (subscription.getType()) {
+            TbSubscriptionType type = subscription.getType();
+            if (!updatedTypes.contains(type)) {
+                continue;
+            }
+            switch (type) {
                 case NOTIFICATIONS:
                 case NOTIFICATIONS_COUNT:
                     if (!newState.notifications) {
@@ -173,7 +225,7 @@ public class TbEntityLocalSubsInfo {
                     break;
             }
         }
-        if (newState.equals(oldState)) {
+        if (newState.equals(state)) {
             return null;
         } else {
             this.state = newState;
@@ -196,7 +248,7 @@ public class TbEntityLocalSubsInfo {
 
 
     public boolean isEmpty() {
-        return state.isEmpty();
+        return subs.isEmpty();
     }
 
     public TbSubscription<?> registerPendingSubscription(TbSubscription<?> subscription, TbEntitySubEvent event) {
