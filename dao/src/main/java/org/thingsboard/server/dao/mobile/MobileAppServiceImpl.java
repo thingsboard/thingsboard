@@ -71,9 +71,9 @@ public class MobileAppServiceImpl extends AbstractEntityService implements Mobil
     }
 
     @Override
-    public PageData<MobileApp> findMobileAppsByTenantId(TenantId tenantId, PageLink pageLink) {
+    public PageData<MobileApp> findMobileAppsByTenantId(TenantId tenantId, PlatformType platformType, PageLink pageLink) {
         log.trace("Executing findMobileAppInfosByTenantId [{}]", tenantId);
-        return mobileAppDao.findByTenantId(tenantId, pageLink);
+        return mobileAppDao.findByTenantId(tenantId, platformType, pageLink);
     }
 
     @Override

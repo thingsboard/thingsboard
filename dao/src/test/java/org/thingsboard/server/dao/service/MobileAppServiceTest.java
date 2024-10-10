@@ -21,6 +21,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.mobile.MobileAppService;
@@ -48,7 +49,7 @@ public class MobileAppServiceTest extends AbstractServiceTest {
 
     @Test
     public void testSaveMobileApp() {
-        MobileApp MobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce", true);
+        MobileApp MobileApp = validMobileApp("mobileApp.ce", PlatformType.IOS);
         MobileApp savedMobileApp = mobileAppService.saveMobileApp(SYSTEM_TENANT_ID, MobileApp);
 
         MobileApp retrievedMobileApp = mobileAppService.findMobileAppById(savedMobileApp.getTenantId(), savedMobileApp.getId());
@@ -70,20 +71,19 @@ public class MobileAppServiceTest extends AbstractServiceTest {
     public void testGetTenantMobileApps() {
         List<MobileApp> mobileApps = new ArrayList<>();
         for (int i = 0; i < 5; i++) {
-            MobileApp oAuth2Client = validMobileApp(TenantId.SYS_TENANT_ID, StringUtils.randomAlphabetic(5), true);
+            MobileApp oAuth2Client = validMobileApp(StringUtils.randomAlphabetic(5), PlatformType.ANDROID);
             MobileApp savedOauth2Client = mobileAppService.saveMobileApp(SYSTEM_TENANT_ID, oAuth2Client);
             mobileApps.add(savedOauth2Client);
         }
-        PageData<MobileApp> retrieved = mobileAppService.findMobileAppsByTenantId(TenantId.SYS_TENANT_ID, new PageLink(10, 0));
+        PageData<MobileApp> retrieved = mobileAppService.findMobileAppsByTenantId(TenantId.SYS_TENANT_ID, null, new PageLink(10, 0));
         assertThat(retrieved.getData()).containsOnlyOnceElementsOf(mobileApps);
     }
 
-
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, boolean oauth2Enabled) {
+    private MobileApp validMobileApp(String mobileAppName, PlatformType platformType) {
         MobileApp MobileApp = new MobileApp();
-        MobileApp.setTenantId(tenantId);
         MobileApp.setPkgName(mobileAppName);
         MobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        MobileApp.setPlatformType(platformType);
         return MobileApp;
     }
 }

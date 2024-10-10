@@ -27,7 +27,7 @@ public interface MobileAppDao extends Dao<MobileApp> {
 
     MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
 
-    PageData<MobileApp> findByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<MobileApp> findByTenantId(TenantId tenantId, PlatformType platformType, PageLink pageLink);
 
     void deleteByTenantId(TenantId tenantId);
 

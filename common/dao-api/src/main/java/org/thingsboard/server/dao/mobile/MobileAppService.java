@@ -30,7 +30,7 @@ public interface MobileAppService extends EntityDaoService {
 
     MobileApp findMobileAppById(TenantId tenantId, MobileAppId mobileAppId);
 
-    PageData<MobileApp> findMobileAppsByTenantId(TenantId tenantId, PageLink pageLink);
+    PageData<MobileApp> findMobileAppsByTenantId(TenantId tenantId, PlatformType platformType, PageLink pageLink);
 
     MobileApp findByBundleIdAndPlatformType(TenantId tenantId, MobileAppBundleId mobileAppBundleId, PlatformType platformType);
 

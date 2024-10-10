@@ -31,6 +31,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.config.annotations.ApiOperation;
@@ -76,7 +77,9 @@ public class MobileAppController extends BaseController {
     @ApiOperation(value = "Get mobile app infos (getTenantMobileAppInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
     @GetMapping(value = "/mobile/app")
-    public PageData<MobileApp> getTenantMobileApps(@Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
+    public PageData<MobileApp> getTenantMobileApps(@Parameter(description = "Platform type: ANDROID or IOS")
+                                                   @RequestParam(required = false) PlatformType platformType,
+                                                   @Parameter(description = PAGE_SIZE_DESCRIPTION, required = true)
                                                    @RequestParam int pageSize,
                                                    @Parameter(description = PAGE_NUMBER_DESCRIPTION, required = true)
                                                    @RequestParam int page,
@@ -88,7 +91,7 @@ public class MobileAppController extends BaseController {
                                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
         accessControlService.checkPermission(getCurrentUser(), Resource.MOBILE_APP, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
-        return mobileAppService.findMobileAppsByTenantId(getTenantId(), pageLink);
+        return mobileAppService.findMobileAppsByTenantId(getTenantId(), platformType, pageLink);
     }
 
     @ApiOperation(value = "Get mobile info by id (getMobileAppInfoById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)

@@ -20,6 +20,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.ToString;
@@ -47,8 +48,9 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @Length(fieldName = "appSecret", min = 16, max = 2048, message = "must be at least 16 and max 2048 characters")
     private String appSecret;
     @Schema(description = "Application platform type: ANDROID or IOS", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
     private PlatformType platformType;
-    @Schema(description = "Application status: PUBLISHED, DEPRECATED, SUSPENDED", requiredMode = Schema.RequiredMode.REQUIRED)
+    @Schema(description = "Application status: PUBLISHED, DEPRECATED, SUSPENDED, DRAFT", requiredMode = Schema.RequiredMode.REQUIRED)
     private MobileAppStatus status;
     @Schema(description = "Application version info")
     @Valid

@@ -36,6 +36,7 @@ import org.thingsboard.server.dao.entity.AbstractEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.oauth2.OAuth2ClientDao;
+import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.Comparator;
 import java.util.List;
@@ -52,10 +53,14 @@ public class MobileAppBundleServiceImpl extends AbstractEntityService implements
     private OAuth2ClientDao oauth2ClientDao;
     @Autowired
     private MobileAppBundleDao mobileAppBundleDao;
+    @Autowired
+    private DataValidator<MobileAppBundle> mobileAppBundleDataValidator;
+
 
     @Override
     public MobileAppBundle saveMobileAppBundle(TenantId tenantId, MobileAppBundle mobileAppBundle) {
         log.trace("Executing saveMobileAppBundle [{}]", mobileAppBundle);
+        mobileAppBundleDataValidator.validate(mobileAppBundle, b -> tenantId);
         try {
             MobileAppBundle savedMobileApp = mobileAppBundleDao.save(tenantId, mobileAppBundle);
             eventPublisher.publishEvent(SaveEntityEvent.builder().tenantId(tenantId).entity(savedMobileApp).build());

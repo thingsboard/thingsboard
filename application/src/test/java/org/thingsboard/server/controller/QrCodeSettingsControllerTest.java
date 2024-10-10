@@ -23,14 +23,13 @@ import org.junit.Before;
 import org.junit.Test;
 import org.springframework.beans.factory.annotation.Value;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
 import org.thingsboard.server.common.data.mobile.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.MobileAppBundleInfo;
-import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 import org.thingsboard.server.common.data.mobile.QRCodeConfig;
+import org.thingsboard.server.common.data.mobile.QrCodeSettings;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
@@ -68,7 +67,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
     public void setUp() throws Exception {
         loginSysAdmin();
 
-        MobileApp androidApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.android.package", PlatformType.ANDROID, true);
+        MobileApp androidApp = validMobileApp( "my.android.package", PlatformType.ANDROID);
         AndroidQrCodeConfig androidQrCodeConfig = AndroidQrCodeConfig.builder()
                 .appPackage(ANDROID_PACKAGE_NAME)
                 .sha256CertFingerprints(ANDROID_APP_SHA256)
@@ -78,7 +77,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         androidApp.setQrCodeConfig(androidQrCodeConfig);
         MobileApp savedAndroidApp = doPost("/api/mobile/app", androidApp, MobileApp.class);
 
-        MobileApp iosApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.ios.package", PlatformType.IOS, true);
+        MobileApp iosApp = validMobileApp( "my.ios.package", PlatformType.IOS);
         IosQrCodeConfig iosQrCodeConfig = IosQrCodeConfig.builder()
                 .appId(APPLE_APP_ID)
                 .enabled(true)
@@ -101,7 +100,7 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         qrCodeSettings.setMobileAppBundleId(null);
         qrCodeSettings.setQrCodeConfig(qrCodeConfig);
 
-        doPost("/api/qr/settings", qrCodeSettings)
+        doPost("/api/mobile/qr/settings", qrCodeSettings)
                 .andExpect(status().isOk());
     }
 
@@ -249,12 +248,12 @@ public class QrCodeSettingsControllerTest extends AbstractControllerTest {
         assertThat(customerCustomAppParsedDeepLink.group(1)).isEqualTo("localhost");
     }
 
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName, PlatformType platformType, boolean oauth2Enabled) {
-        MobileApp MobileApp = new MobileApp();
-        MobileApp.setTenantId(tenantId);
-        MobileApp.setPkgName(mobileAppName);
-        MobileApp.setPlatformType(platformType);
-        MobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
-        return MobileApp;
+    private MobileApp validMobileApp(String mobileAppName, PlatformType platformType) {
+        MobileApp mobileApp = new MobileApp();
+        mobileApp.setTenantId(tenantId);
+        mobileApp.setPkgName(mobileAppName);
+        mobileApp.setPlatformType(platformType);
+        mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        return mobileApp;
     }
 }

@@ -30,8 +30,10 @@ import java.util.UUID;
 public interface MobileAppRepository extends JpaRepository<MobileAppEntity, UUID> {
 
     @Query("SELECT a FROM MobileAppEntity a WHERE a.tenantId = :tenantId AND " +
+            "(:platformType is NULL OR a.platformType = :platformType) AND" +
             "(:searchText is NULL OR ilike(a.pkgName, concat('%', :searchText, '%')) = true)")
     Page<MobileAppEntity> findByTenantId(@Param("tenantId") UUID tenantId,
+                                         @Param("platformType") PlatformType platformType,
                                          @Param("searchText") String searchText,
                                          Pageable pageable);
 

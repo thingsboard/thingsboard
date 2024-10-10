@@ -21,10 +21,10 @@ import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
 import org.thingsboard.server.common.data.StringUtils;
-import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.mobile.AndroidQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.IosQrCodeConfig;
 import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
@@ -59,7 +59,7 @@ public class MobileAppControllerTest extends AbstractControllerTest {
         PageData<MobileApp> pageData = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
         assertThat(pageData.getData()).isEmpty();
 
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "my.test.package");
+        MobileApp mobileApp = validMobileApp("my.test.package", PlatformType.ANDROID);
         MobileApp savedMobileApp = doPost("/api/mobile/app", mobileApp, MobileApp.class);
 
         PageData<MobileApp> pageData2 = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
@@ -76,7 +76,7 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @Test
     public void testSaveMobileAppWithShortAppSecret() throws Exception {
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce");
+        MobileApp mobileApp = validMobileApp( "mobileApp.ce", PlatformType.ANDROID);
         mobileApp.setAppSecret("short");
         doPost("/api/mobile/app", mobileApp)
                 .andExpect(status().isBadRequest())
@@ -85,7 +85,7 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @Test
     public void testShouldNotSaveMobileAppWithWrongQrCodeConf() throws Exception {
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce");
+        MobileApp mobileApp = validMobileApp("mobileApp.ce", PlatformType.ANDROID);
         AndroidQrCodeConfig androidQrCodeConfig = AndroidQrCodeConfig.builder()
                 .enabled(true)
                 .appPackage(null)
@@ -110,7 +110,7 @@ public class MobileAppControllerTest extends AbstractControllerTest {
 
     @Test
     public void testShouldNotSaveMobileAppWithWrongIosConf() throws Exception {
-        MobileApp mobileApp = validMobileApp(TenantId.SYS_TENANT_ID, "mobileApp.ce");
+        MobileApp mobileApp = validMobileApp("mobileApp.ce", PlatformType.ANDROID);
         IosQrCodeConfig iosQrCodeConfig = IosQrCodeConfig.builder()
                 .enabled(true)
                 .appId(null)
@@ -127,12 +127,27 @@ public class MobileAppControllerTest extends AbstractControllerTest {
                 .andExpect(status().isOk());
     }
 
-    private MobileApp validMobileApp(TenantId tenantId, String mobileAppName) {
-        MobileApp MobileApp = new MobileApp();
-        MobileApp.setTenantId(tenantId);
-        MobileApp.setPkgName(mobileAppName);
-        MobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
-        return MobileApp;
+    @Test
+    public void testGetTenantAppsByPlatformTypeSaveMobileApp() throws Exception {
+        MobileApp androidApp = doPost("/api/mobile/app", validMobileApp("android.1", PlatformType.ANDROID), MobileApp.class);
+        MobileApp androidApp2 = doPost("/api/mobile/app", validMobileApp("android.2", PlatformType.ANDROID), MobileApp.class);
+        MobileApp iosApp = doPost("/api/mobile/app", validMobileApp("ios.1", PlatformType.IOS), MobileApp.class);
+
+        PageData<MobileApp> pageData = doGetTypedWithPageLink("/api/mobile/app?", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        assertThat(pageData.getData()).hasSize(3);
+        assertThat(pageData.getData()).containsExactlyInAnyOrder(androidApp, androidApp2, iosApp);
+
+        PageData<MobileApp> androidPageData = doGetTypedWithPageLink("/api/mobile/app?platformType=ANDROID&", PAGE_DATA_MOBILE_APP_TYPE_REF, new PageLink(10, 0));
+        assertThat(androidPageData.getData()).hasSize(2);
+        assertThat(androidPageData.getData()).containsExactlyInAnyOrder(androidApp, androidApp2);
+    }
+
+    private MobileApp validMobileApp(String mobileAppName, PlatformType platformType) {
+        MobileApp mobileApp = new MobileApp();
+        mobileApp.setPkgName(mobileAppName);
+        mobileApp.setAppSecret(StringUtils.randomAlphanumeric(24));
+        mobileApp.setPlatformType(platformType);
+        return mobileApp;
     }
 
 }
