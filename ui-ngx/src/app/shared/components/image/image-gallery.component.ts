@@ -174,8 +174,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
 
   authUser = getCurrentAuthUser(this.store);
 
-  actionColumnWidth = '240px';
-
   get isScada() {
     return this.imageSubType === ResourceSubType.SCADA_SYMBOL;
   }
@@ -244,9 +242,6 @@ export class ImageGalleryComponent extends PageComponent implements OnInit, OnDe
     if (this.mode === 'list') {
       this.dataSource = new ImagesDatasource(this.imageService, null,
           entity => this.deleteEnabled(entity));
-    }
-    if (this.isScada) {
-      this.actionColumnWidth = '192px';
     }
   }
 

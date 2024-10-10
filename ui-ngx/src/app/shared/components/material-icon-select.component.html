@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div *ngIf="!asBoxInput; else boxInput"  fxLayout="row" [formGroup]="materialIconFormGroup">
-  <tb-icon class="icon-value" [ngStyle]="color ? { color: color } : {}" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</tb-icon>
-  <mat-form-field fxFlex>
+<div *ngIf="!asBoxInput; else boxInput"  class="flex flex-row" [formGroup]="materialIconFormGroup">
+  <tb-icon class="icon-value" [style]="color ? { color: color } : {}" (click)="openIconDialog()">{{materialIconFormGroup.get('icon').value}}</tb-icon>
+  <mat-form-field class="flex-1">
     <mat-label>{{ label }}</mat-label>
     <input [required]="required" matInput formControlName="icon" (mousedown)="openIconDialog()">
     <button *ngIf="iconClearButton"

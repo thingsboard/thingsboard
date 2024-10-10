@@ -48,7 +48,7 @@
          [matTooltip]="tooltipValue()"
          [matTooltipPosition]="tooltipPosition"
          (click)="toggleTimezone($event)">
-  <div class="tb-timezone-label" [fxHide]="hideLabel">
+  <div class="tb-timezone-label" [class.!hidden]="hideLabel">
     {{displayValue()}}
   </div>
 </section>
