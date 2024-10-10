@@ -111,6 +111,12 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
     }
 
     @Override
+    public ListenableFuture<List<ReadTsKvQueryResult>> findAllAsync(TenantId tenantId, List<EntityId> entitiesId, List<ReadTsKvQuery> queries) {
+        return processFindAllAsync(tenantId, entitiesId, queries);
+
+    }
+
+    @Override
     public ListenableFuture<Integer> save(TenantId tenantId, EntityId entityId, TsKvEntry tsKvEntry, long ttl) {
         int dataPointDays = getDataPointDays(tsKvEntry, computeTtl(ttl));
         String strKey = tsKvEntry.getKey();
@@ -158,7 +164,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
             long endTs = Math.max(query.getStartTs() + 1, query.getEndTs());
             long timeBucket = query.getInterval();
             List<Optional<? extends AbstractTsKvEntity>> data = findAllAndAggregateAsync(entityId, query.getKey(), startTs, endTs, timeBucket, query.getAggregation());
-            return getReadTsKvQueryResultFuture(query, Futures.immediateFuture(data));
+            return getReadTsKvQueryResultFuture(entityId, query, Futures.immediateFuture(data));
         } else {
             //TODO: @dshvaika improve according to native capabilities of Timescale.
             long startPeriod = query.getStartTs();
@@ -170,7 +176,7 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
                 timescaleTsKvEntities.addAll(switchAggregation(query.getKey(), startTs, endTs, endTs - startTs, query.getAggregation(), entityId.getId()));
                 startPeriod = endTs;
             }
-            return getReadTsKvQueryResultFuture(query, Futures.immediateFuture(toResultList(entityId, query.getKey(), timescaleTsKvEntities)));
+            return getReadTsKvQueryResultFuture(entityId, query, Futures.immediateFuture(toResultList(entityId, query.getKey(), timescaleTsKvEntities)));
         }
     }
 
@@ -191,7 +197,9 @@ public class TimescaleTimeseriesDao extends AbstractSqlTimeseriesDao implements 
         timescaleTsKvEntities.forEach(tsKvEntity -> tsKvEntity.setStrKey(strKey));
         var tsKvEntries = DaoUtil.convertDataList(timescaleTsKvEntities);
         long lastTs = tsKvEntries.stream().map(TsKvEntry::getTs).max(Long::compare).orElse(query.getStartTs());
-        return new ReadTsKvQueryResult(query.getId(), tsKvEntries, lastTs);
+        ReadTsKvQueryResult result = new ReadTsKvQueryResult(query.getId(), tsKvEntries, lastTs);
+        result.setEntityId(entityId);
+        return result;
     }
 
     private List<Optional<? extends AbstractTsKvEntity>> findAllAndAggregateAsync(EntityId entityId, String key, long startTs, long endTs, long timeBucket, Aggregation aggregation) {
