@@ -23,20 +23,17 @@ import com.google.gson.JsonObject;
 import com.nimbusds.oauth2.sdk.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.lang3.tuple.Pair;
-import org.thingsboard.common.util.DonAsynchron;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
-import org.thingsboard.server.common.data.relation.EntityRelation;
-import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
-import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -46,6 +43,8 @@ import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.ExecutionException;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.common.util.DonAsynchron.withCallback;
 
 @Slf4j
 @RuleNode(type = ComponentType.ACTION,
@@ -67,17 +66,17 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
-        DonAsynchron.withCallback(findMatchedZones(ctx, msg), matchedGeofenceIds -> {
-            try {
-                processGeofenceResponse(ctx, msg, msg.getOriginator(), geofencingProcessor.process(msg.getMetaDataTs(), ctx.getSelfId(), msg.getOriginator(), matchedGeofenceIds));
-                ctx.tellSuccess(msg);
-            } catch (ExecutionException | InterruptedException e) {
-                throw new RuntimeException(e);
-            }
+        ListenableFuture<List<EntityId>> matchedZonesFuture = findMatchedZones(ctx, msg);
+
+        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(msg.getMetaDataTs(), ctx.getSelfId(), msg.getOriginator(), matchedZones), ctx.getDbCallbackExecutor());
+
+        withCallback(geofenceResponseFuture, geofenceResponse -> {
+            processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);
+            ctx.tellSuccess(msg);
         }, t -> {
             log.error("Failed to process geofencing", t);
             ctx.tellFailure(msg, t);
-        }, ctx.getDbCallbackExecutor());
+        }, MoreExecutors.directExecutor());
     }
 
     private void processGeofenceResponse(TbContext ctx, TbMsg originalMsg, EntityId originatorId, GeofenceResponse geofenceResponse) {
@@ -100,32 +99,16 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         }
     }
 
-    protected ListenableFuture<List<EntityId>> findMatchedZones(TbContext tbContext, TbMsg tbMsg) throws TbNodeException {
+    private ListenableFuture<List<EntityId>> findMatchedZones(TbContext tbContext, TbMsg tbMsg) throws TbNodeException {
         JsonObject msgDataObj = getJsonObject(tbMsg);
         double latitude = getValueFromMessageByName(tbMsg, msgDataObj, config.getLatitudeKeyName());
         double longitude = getValueFromMessageByName(tbMsg, msgDataObj, config.getLongitudeKeyName());
 
-        if (config.getEntityRelationsQuery() == null) {
+        if (config.getRelationsQuery() == null) {
             return Futures.immediateFuture(Collections.emptyList());
         }
 
-        EntityRelationsQuery initialQuery = config.getEntityRelationsQuery();
-        final EntityRelationsQuery entityRelationsQuery;
-
-        if (initialQuery.getParameters().getRootId() == null || initialQuery.getParameters().getRootType() == null) {
-            entityRelationsQuery = copyEntityRelationsQuery(tbMsg.getOriginator(), initialQuery);
-        } else {
-            entityRelationsQuery = initialQuery;
-        }
-
-        ListenableFuture<List<EntityRelation>> entityRelationsFuture = tbContext.getRelationService()
-                .findByQuery(tbContext.getTenantId(), entityRelationsQuery);
-
-        ListenableFuture<List<EntityId>> entityIdsFuture = Futures.transform(entityRelationsFuture,
-                entityRelationsList -> entityRelationsList.stream()
-                        .map(entityRelation -> getEntityIdFromEntityRelation(entityRelationsQuery, entityRelation))
-                        .collect(Collectors.toList()),
-                MoreExecutors.directExecutor());
+        ListenableFuture<List<EntityId>> entityIdsFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(tbContext, tbMsg.getOriginator(), config.getRelationsQuery());
 
         ListenableFuture<List<Pair<EntityId, Optional<AttributeKvEntry>>>> entityIdToAttributesFuture = Futures.transformAsync(entityIdsFuture, relatedZones -> {
             List<ListenableFuture<Pair<EntityId, Optional<AttributeKvEntry>>>> attributeFutures = relatedZones.stream()
@@ -162,19 +145,6 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         }, MoreExecutors.directExecutor());
     }
 
-
-    private EntityRelationsQuery copyEntityRelationsQuery(EntityId originatorId, EntityRelationsQuery entityRelationsQuery) {
-        EntityRelationsQuery copy = new EntityRelationsQuery();
-        copy.setParameters(entityRelationsQuery.getParameters());
-        copy.getParameters().setRootId(originatorId.getId());
-        copy.getParameters().setRootType(originatorId.getEntityType());
-        copy.setFilters(entityRelationsQuery.getFilters());
-        return copy;
-    }
-
-    private EntityId getEntityIdFromEntityRelation(EntityRelationsQuery entityRelationsQuery, EntityRelation entityRelation) {
-        return EntitySearchDirection.FROM.equals(entityRelationsQuery.getParameters().getDirection()) ? entityRelation.getTo() : entityRelation.getFrom();
-    }
 
     private Perimeter mapToPerimeter(AttributeKvEntry attributeKvEntry) {
         Optional<String> jsonValue = attributeKvEntry.getJsonValue();

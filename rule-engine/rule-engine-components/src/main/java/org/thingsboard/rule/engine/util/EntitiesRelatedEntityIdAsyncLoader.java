@@ -21,9 +21,14 @@ import org.apache.commons.collections4.CollectionUtils;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.id.EntityId;
+import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
+
+import java.util.Collections;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class EntitiesRelatedEntityIdAsyncLoader {
 
@@ -32,9 +37,7 @@ public class EntitiesRelatedEntityIdAsyncLoader {
             EntityId originator,
             RelationsQuery relationsQuery
     ) {
-        var relationService = ctx.getRelationService();
-        var query = buildQuery(originator, relationsQuery);
-        var relationListFuture = relationService.findByQuery(ctx.getTenantId(), query);
+        var relationListFuture = findByQuery(ctx, originator, relationsQuery);
         if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
             return Futures.transformAsync(relationListFuture,
                     relationList -> CollectionUtils.isNotEmpty(relationList) ?
@@ -47,6 +50,40 @@ public class EntitiesRelatedEntityIdAsyncLoader {
                             : Futures.immediateFuture(null), ctx.getDbCallbackExecutor());
         }
         return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
+    }
+
+    public static ListenableFuture<List<EntityId>> findEntitiesAsync(
+            TbContext ctx,
+            EntityId originator,
+            RelationsQuery relationsQuery
+    ) {
+        var relationListFuture = findByQuery(ctx, originator, relationsQuery);
+        if (relationsQuery.getDirection() == EntitySearchDirection.FROM) {
+            return Futures.transformAsync(relationListFuture,
+                    relationList -> CollectionUtils.isNotEmpty(relationList) ?
+                            Futures.immediateFuture(
+                                    relationList.stream()
+                                            .map(EntityRelation::getTo)
+                                            .collect(Collectors.toList())
+                            )
+                            : Futures.immediateFuture(Collections.emptyList()), ctx.getDbCallbackExecutor());
+        } else if (relationsQuery.getDirection() == EntitySearchDirection.TO) {
+            return Futures.transformAsync(relationListFuture,
+                    relationList -> CollectionUtils.isNotEmpty(relationList) ?
+                            Futures.immediateFuture(
+                                    relationList.stream()
+                                            .map(EntityRelation::getFrom)
+                                            .collect(Collectors.toList())
+                            )
+                            : Futures.immediateFuture(Collections.emptyList()), ctx.getDbCallbackExecutor());
+        }
+        return Futures.immediateFailedFuture(new IllegalStateException("Unknown direction"));
+    }
+
+    private static ListenableFuture<List<EntityRelation>> findByQuery(TbContext ctx, EntityId originator, RelationsQuery relationsQuery) {
+        var relationService = ctx.getRelationService();
+        var query = buildQuery(originator, relationsQuery);
+        return relationService.findByQuery(ctx.getTenantId(), query);
     }
 
     private static EntityRelationsQuery buildQuery(EntityId originator, RelationsQuery relationsQuery) {
