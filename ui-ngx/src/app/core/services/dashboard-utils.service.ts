@@ -751,10 +751,10 @@ export class DashboardUtilsService {
     }
     for (const w of Object.keys(layout.widgets)) {
       const widget = layout.widgets[w];
-      widget.row = Math.round(widget.row * ratio);
-      widget.col = Math.round(widget.col * ratio);
-      widget.sizeX = Math.round(widget.sizeX * ratio);
-      widget.sizeY = Math.round(widget.sizeY * ratio);
+      widget.row = Math.floor(widget.row * ratio);
+      widget.col = Math.floor(widget.col * ratio);
+      widget.sizeX = Math.floor(widget.sizeX * ratio);
+      widget.sizeY = Math.floor(widget.sizeY * ratio);
     }
   }
 
