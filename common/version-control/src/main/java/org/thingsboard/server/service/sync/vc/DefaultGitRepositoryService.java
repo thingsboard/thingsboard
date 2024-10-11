@@ -203,7 +203,7 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         GitRepository gitRepository = Optional.ofNullable(repositories.get(tenantId))
                 .orElseThrow(() -> new IllegalStateException("Repository is not initialized"));
 
-        if (!Files.exists(Path.of(gitRepository.getDirectory()))) {
+        if (!GitRepository.exists(gitRepository.getDirectory())) {
             try {
                 return openOrCloneRepository(tenantId, gitRepository.getSettings(), false);
             } catch (Exception e) {
@@ -285,12 +285,13 @@ public class DefaultGitRepositoryService implements GitRepositoryService {
         Path repositoryDirectory = Path.of(repositoriesFolder, settings.isLocalOnly() ? "local_" + settings.getRepositoryUri() : tenantId.getId().toString());
 
         GitRepository repository;
-        if (Files.exists(repositoryDirectory)) {
+        if (GitRepository.exists(repositoryDirectory.toString())) {
             repository = GitRepository.open(repositoryDirectory.toFile(), settings);
             if (fetch) {
                 repository.fetch();
             }
         } else {
+            FileUtils.deleteDirectory(repositoryDirectory.toFile());
             Files.createDirectories(repositoryDirectory);
             if (settings.isLocalOnly()) {
                 repository = GitRepository.create(settings, repositoryDirectory.toFile());
