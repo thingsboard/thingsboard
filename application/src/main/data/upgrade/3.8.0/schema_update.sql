@@ -14,3 +14,24 @@
 -- limitations under the License.
 --
 
+-- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY START
+
+ALTER TABLE rule_node
+    ADD COLUMN IF NOT EXISTS debug_strategy varchar(32) DEFAULT 'DISABLED';
+ALTER TABLE rule_node
+    ADD COLUMN IF NOT EXISTS last_update_ts bigint NOT NULL DEFAULT extract(epoch from now()) * 1000;
+DO
+$$
+    BEGIN
+        IF EXISTS (SELECT 1
+                   FROM information_schema.columns
+                   WHERE table_name = 'rule_node' AND column_name = 'debug_mode') THEN
+            UPDATE rule_node
+            SET debug_strategy = CASE WHEN debug_mode = true THEN 'ALL_EVENTS' ELSE 'DISABLED' END;
+            ALTER TABLE rule_node
+                DROP COLUMN debug_mode;
+        END IF;
+    END
+$$;
+
+-- UPDATE RULE NODE DEBUG MODE TO DEBUG STRATEGY END

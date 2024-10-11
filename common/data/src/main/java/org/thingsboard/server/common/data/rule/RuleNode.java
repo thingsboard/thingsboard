@@ -45,15 +45,17 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Length(fieldName = "name")
     @Schema(description = "User defined name of the rule node. Used on UI and for logging. ", example = "Process sensor reading")
     private String name;
-    @Schema(description = "Enable/disable debug. ", example = "false")
-    private boolean debugMode;
+    @Schema(description = "Timestamp of the last rule node update.")
+    private long lastUpdateTs;
+    @Schema(description = "Debug strategy. ", example = "ALL_EVENTS")
+    private DebugStrategy debugStrategy;
     @Schema(description = "Enable/disable singleton mode. ", example = "false")
     private boolean singletonMode;
     @Schema(description = "Queue name. ", example = "Main")
     private String queueName;
     @Schema(description = "Version of rule node configuration. ", example = "0")
     private int configurationVersion;
-    @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "JSON with the rule node configuration. Structure depends on the rule node implementation.", implementation = JsonNode.class)
     private transient JsonNode configuration;
     @JsonIgnore
     private byte[] configurationBytes;
@@ -73,7 +75,8 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         this.ruleChainId = ruleNode.getRuleChainId();
         this.type = ruleNode.getType();
         this.name = ruleNode.getName();
-        this.debugMode = ruleNode.isDebugMode();
+        this.lastUpdateTs = ruleNode.getLastUpdateTs();
+        this.debugStrategy = ruleNode.getDebugStrategy();
         this.singletonMode = ruleNode.isSingletonMode();
         this.setConfiguration(ruleNode.getConfiguration());
         this.externalId = ruleNode.getExternalId();
@@ -82,6 +85,10 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     @Override
     public String getName() {
         return name;
+    }
+
+    public DebugStrategy getDebugStrategy() {
+        return debugStrategy == null ? DebugStrategy.DISABLED : debugStrategy;
     }
 
     public JsonNode getConfiguration() {
@@ -93,9 +100,9 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
     }
 
     @Schema(description = "JSON object with the Rule Node Id. " +
-            "Specify this field to update the Rule Node. " +
-            "Referencing non-existing Rule Node Id will cause error. " +
-            "Omit this field to create new rule node.")
+                          "Specify this field to update the Rule Node. " +
+                          "Referencing non-existing Rule Node Id will cause error. " +
+                          "Omit this field to create new rule node.")
     @Override
     public RuleNodeId getId() {
         return super.getId();
@@ -107,10 +114,9 @@ public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements 
         return super.getCreatedTime();
     }
 
-    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.", implementation = com.fasterxml.jackson.databind.JsonNode.class)
+    @Schema(description = "Additional parameters of the rule node. Contains 'layoutX' and 'layoutY' properties for visualization.", implementation = JsonNode.class)
     @Override
     public JsonNode getAdditionalInfo() {
         return super.getAdditionalInfo();
     }
-
 }

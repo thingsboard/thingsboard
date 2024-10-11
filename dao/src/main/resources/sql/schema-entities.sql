@@ -193,7 +193,8 @@ CREATE TABLE IF NOT EXISTS rule_node (
     configuration varchar(10000000),
     type varchar(255),
     name varchar(255),
-    debug_mode boolean,
+    last_update_ts bigint NOT NULL,
+    debug_strategy varchar(32) DEFAULT 'DISABLED',
     singleton_mode boolean,
     queue_name varchar(255),
     external_id uuid

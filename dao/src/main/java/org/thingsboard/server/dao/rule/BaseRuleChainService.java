@@ -44,6 +44,7 @@ import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.plugin.ComponentClusteringMode;
 import org.thingsboard.server.common.data.relation.EntityRelation;
 import org.thingsboard.server.common.data.relation.RelationTypeGroup;
+import org.thingsboard.server.common.data.rule.DebugStrategy;
 import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChain;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
@@ -214,9 +215,11 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
         }
         RuleChainId ruleChainId = ruleChain.getId();
         if (nodes != null) {
+            long lastUpdateTs = System.currentTimeMillis();
             for (RuleNode node : toAddOrUpdate) {
                 node.setRuleChainId(ruleChainId);
                 node = ruleNodeUpdater.apply(node);
+                node.setLastUpdateTs(lastUpdateTs);
                 RuleChainDataValidator.validateRuleNode(node);
                 RuleNode savedNode = ruleNodeDao.save(tenantId, node);
                 relations.add(new EntityRelation(ruleChainMetaData.getRuleChainId(), savedNode.getId(),
@@ -261,7 +264,7 @@ public class BaseRuleChainService extends AbstractEntityService implements RuleC
                     layout.remove("description");
                     layout.remove("ruleChainNodeId");
                     targetNode.setAdditionalInfo(layout);
-                    targetNode.setDebugMode(false);
+                    targetNode.setDebugStrategy(DebugStrategy.DISABLED);
                     targetNode = ruleNodeDao.save(tenantId, targetNode);
 
                     EntityRelation sourceRuleChainToRuleNode = new EntityRelation();

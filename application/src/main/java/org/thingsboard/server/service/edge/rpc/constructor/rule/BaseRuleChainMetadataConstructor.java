@@ -24,6 +24,7 @@ import org.thingsboard.server.common.data.rule.NodeConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainConnectionInfo;
 import org.thingsboard.server.common.data.rule.RuleChainMetaData;
 import org.thingsboard.server.common.data.rule.RuleNode;
+import org.thingsboard.server.gen.edge.v1.DebugStrategy;
 import org.thingsboard.server.gen.edge.v1.EdgeVersion;
 import org.thingsboard.server.gen.edge.v1.NodeConnectionInfoProto;
 import org.thingsboard.server.gen.edge.v1.RuleChainConnectionInfoProto;
@@ -88,7 +89,8 @@ public abstract class BaseRuleChainMetadataConstructor implements RuleChainMetad
                 .setIdLSB(node.getId().getId().getLeastSignificantBits())
                 .setType(node.getType())
                 .setName(node.getName())
-                .setDebugMode(node.isDebugMode())
+                .setLastUpdateTs(node.getLastUpdateTs())
+                .setDebugStrategy(DebugStrategy.forNumber(node.getDebugStrategy().getProtoNumber()))
                 .setConfiguration(JacksonUtil.toString(node.getConfiguration()))
                 .setAdditionalInfo(JacksonUtil.toString(node.getAdditionalInfo()))
                 .setSingletonMode(node.isSingletonMode())
