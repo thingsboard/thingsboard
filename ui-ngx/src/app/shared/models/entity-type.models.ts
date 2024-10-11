@@ -47,6 +47,7 @@ export enum EntityType {
   NOTIFICATION_TEMPLATE = 'NOTIFICATION_TEMPLATE',
   OAUTH2_CLIENT = 'OAUTH2_CLIENT',
   DOMAIN = 'DOMAIN',
+  MOBILE_APP_BUNDLE = 'MOBILE_APP_BUNDLE',
   MOBILE_APP = 'MOBILE_APP'
 }
 
@@ -458,9 +459,9 @@ export const entityTypeTranslations = new Map<EntityType | AliasEntityType, Enti
         typePlural: 'entity.type-mobile-apps',
         list: 'entity.list-of-mobile-apps',
         details: 'admin.oauth2.mobile-app-details',
-        add: 'admin.oauth2.add-mobile-app',
-        noEntities: 'admin.oauth2.no-mobile-apps',
-        search: 'admin.oauth2.search-mobile-apps'
+        add: 'mobile.add-application',
+        noEntities: 'mobile.no=application',
+        search: 'mobile.search-application'
       }
     ]
   ]

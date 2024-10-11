@@ -15,30 +15,19 @@
 ///
 
 import { NgModule } from '@angular/core';
-import { ClientComponent } from '@home/pages/admin/oauth2/clients/client.component';
-import { Oauth2RoutingModule } from '@home/pages/admin/oauth2/oauth2-routing.module';
+import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { HomeComponentsModule } from '@home/components/home-components.module';
-import { CommonModule } from '@angular/common';
-import { ClientTableHeaderComponent } from '@home/pages/admin/oauth2/clients/client-table-header.component';
-import { DomainComponent } from '@home/pages/admin/oauth2/domains/domain.component';
-import { ClientDialogComponent } from '@home/pages/admin/oauth2/clients/client-dialog.component';
-import { DomainTableHeaderComponent } from '@home/pages/admin/oauth2/domains/domain-table-header.component';
+import { MobileRoutingModule } from '@home/pages/mobile/mobile-routing.module';
+import { ApplicationModule } from '@home/pages/mobile/applications/applications.module';
 
 @NgModule({
-  declarations: [
-    ClientComponent,
-    ClientDialogComponent,
-    ClientTableHeaderComponent,
-    DomainComponent,
-    DomainTableHeaderComponent
-  ],
   imports: [
-    Oauth2RoutingModule,
     CommonModule,
     SharedModule,
-    HomeComponentsModule
+    HomeComponentsModule,
+    ApplicationModule,
+    MobileRoutingModule,
   ]
 })
-export class OAuth2Module {
-}
+export class MobileModule { }

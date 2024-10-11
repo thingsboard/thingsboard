@@ -14,20 +14,14 @@
 /// limitations under the License.
 ///
 
-import { Component } from '@angular/core';
-import { EntityTableHeaderComponent } from '@home/components/entity/entity-table-header.component';
-import { Store } from '@ngrx/store';
-import { AppState } from '@core/core.state';
-import { MobileAppInfo } from '@shared/models/oauth2.models';
+import { EntityId } from '@shared/models/id/entity-id';
+import { EntityType } from '@shared/models/entity-type.models';
 
-@Component({
-  selector: 'tb-mobile-app-table-header',
-  templateUrl: './mobile-app-table-header.component.html',
-  styleUrls: []
-})
-export class MobileAppTableHeaderComponent extends EntityTableHeaderComponent<MobileAppInfo> {
+export class MobileAppBundleId implements EntityId {
+  entityType = EntityType.MOBILE_APP_BUNDLE;
+  id: string;
 
-  constructor(protected store: Store<AppState>) {
-    super(store);
+  constructor(id: string) {
+    this.id = id;
   }
 }

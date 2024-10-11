@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+:host{
+  width: 100000px;
 
-public enum MobileAppStatus {
-
-    DRAFT,
-    PUBLISHED,
-    DEPRECATED,
-    SUSPENDED
-
+  .tb-entity-title-container {
+    display: flex;
+    align-items: center;
+  }
 }

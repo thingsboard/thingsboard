@@ -18,9 +18,9 @@ import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { defaultHttpOptionsFromConfig, RequestConfig } from '@core/http/http-utils';
 import { Observable } from 'rxjs';
-import { MobileApp, MobileAppInfo } from '@shared/models/oauth2.models';
 import { PageLink } from '@shared/models/page/page-link';
 import { PageData } from '@shared/models/page/page-data';
+import { MobileApp, MobileAppBundle, MobileAppBundleInfo } from '@shared/models/mobile-app.models';
 
 @Injectable({
   providedIn: 'root'
@@ -32,25 +32,37 @@ export class MobileAppService {
   ) {
   }
 
-  public saveMobileApp(mobileApp: MobileApp, oauth2ClientIds: Array<string>, config?: RequestConfig): Observable<MobileApp> {
-    return this.http.post<MobileApp>(`/api/mobileApp?oauth2ClientIds=${oauth2ClientIds.join(',')}`,
-      mobileApp, defaultHttpOptionsFromConfig(config));
+  public saveMobileApp(mobileApp: MobileApp, config?: RequestConfig): Observable<MobileApp> {
+    return this.http.post<MobileApp>(`/api/mobile/app`, mobileApp, defaultHttpOptionsFromConfig(config));
   }
 
-  public updateOauth2Clients(id: string, oauth2ClientRegistrationIds: Array<string>, config?: RequestConfig): Observable<void> {
-    return this.http.put<void>(`/api/mobileApp/${id}/oauth2Clients`, oauth2ClientRegistrationIds, defaultHttpOptionsFromConfig(config));
+  public getTenantMobileAppInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<MobileApp>> {
+    return this.http.get<PageData<MobileApp>>(`/api/mobile/app${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
   }
 
-  public getTenantMobileAppInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<MobileAppInfo>> {
-    return this.http.get<PageData<MobileAppInfo>>(`/api/mobileApp/infos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
-  }
-
-  public getMobileAppInfoById(id: string, config?: RequestConfig): Observable<MobileAppInfo> {
-    return this.http.get<MobileAppInfo>(`/api/mobileApp/info/${id}`, defaultHttpOptionsFromConfig(config));
+  public getMobileAppInfoById(id: string, config?: RequestConfig): Observable<MobileApp> {
+    return this.http.get<MobileApp>(`/api/mobile/app/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
   public deleteMobileApp(id: string, config?: RequestConfig): Observable<void> {
-    return this.http.delete<void>(`/api/mobileApp/${id}`, defaultHttpOptionsFromConfig(config));
+    return this.http.delete<void>(`/api/mobile/app/${id}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public saveMobileAppBundle(mobileAppBundle: MobileAppBundle, oauth2ClientIds?: Array<string>, config?: RequestConfig) {
+    return this.http.post<MobileApp>(`/api/mobile/bundle${oauth2ClientIds ? '?oauth2ClientIds=' + oauth2ClientIds.join(',') : ''}`,
+      mobileAppBundle, defaultHttpOptionsFromConfig(config));
+  }
+
+  public updateOauth2Clients(id: string, oauth2ClientIds?: Array<string>, config?: RequestConfig) {
+    return this.http.put(`/mobile/bundle/${id}/oauth2Clients`, oauth2ClientIds, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getTenantMobileAppBundleInfos(pageLink: PageLink, config?: RequestConfig): Observable<PageData<MobileAppBundleInfo>> {
+    return this.http.get<PageData<MobileAppBundleInfo>>(`/api/mobile/bundle/infos${pageLink.toQuery()}`, defaultHttpOptionsFromConfig(config));
+  }
+
+  public getMobileAppBundleInfoById(id: string, config?: RequestConfig): Observable<MobileAppBundleInfo> {
+    return this.http.get<MobileAppBundleInfo>(`/api/mobile/bundle/infos/${id}`, defaultHttpOptionsFromConfig(config));
   }
 
 }

@@ -15,4 +15,14 @@
     limitations under the License.
 
 -->
-<div tb-help="oauth2Settings" style="margin-left: -20px"></div>
+<div fxFlex="100" fxLayout="row" fxLayoutAlign="space-between center" fxLayoutAlign.xs="start center">
+  <section fxHide fxShow.gt-xs class="tb-entity-title-container">
+    <div tbTruncateWithTooltip translate>mobile.applications</div>
+<!--    <div tb-help="oauth2Settings"></div>-->
+  </section>
+  <button mat-stroked-button color="primary" (click)="createMobile($event)">
+    <div fxLayout="row" fxLayoutAlign="start center">
+      <mat-icon>add</mat-icon>{{ 'mobile.add-application' | translate }}
+    </div>
+  </button>
+</div>

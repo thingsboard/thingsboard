@@ -65,6 +65,9 @@ export enum MenuId {
   notification_recipients = 'notification_recipients',
   notification_templates = 'notification_templates',
   notification_rules = 'notification_rules',
+  mobile_center = 'mobile_center',
+  mobile_apps = 'mobile_apps',
+  mobile_app_settings = 'mobile_app_settings',
   settings = 'settings',
   general = 'general',
   mail_server = 'mail_server',
@@ -73,13 +76,11 @@ export enum MenuId {
   repository_settings = 'repository_settings',
   auto_commit_settings = 'auto_commit_settings',
   queues = 'queues',
-  mobile_app_settings = 'mobile_app_settings',
   security_settings = 'security_settings',
   security_settings_general = 'security_settings_general',
   two_fa = 'two_fa',
   oauth2 = 'oauth2',
   domains = 'domains',
-  mobile_apps = 'mobile_apps',
   clients = 'clients',
   audit_log = 'audit_log',
   alarms = 'alarms',
@@ -272,6 +273,37 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
+    MenuId.mobile_center,
+    {
+      id: MenuId.mobile_center,
+      name: 'mobile.mobile-center',
+      type: 'link',
+      path: '/mobile-center',
+      icon: 'smartphone'
+    }
+  ],
+  [
+    MenuId.mobile_apps,
+    {
+      id: MenuId.mobile_apps,
+      name: 'mobile.applications',
+      type: 'link',
+      path: '/mobile-center/applications',
+      icon: 'list'
+    }
+  ],
+  [
+    MenuId.mobile_app_settings,
+    {
+      id: MenuId.mobile_app_settings,
+      name: 'admin.mobile-app.mobile-app',
+      fullName: 'admin.mobile-app.mobile-app',
+      type: 'link',
+      path: '/mobile-center/mobile-app',
+      icon: 'smartphone'
+    }
+  ],
+  [
     MenuId.settings,
     {
       id: MenuId.settings,
@@ -357,17 +389,6 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
     }
   ],
   [
-    MenuId.mobile_app_settings,
-    {
-      id: MenuId.mobile_app_settings,
-      name: 'admin.mobile-app.mobile-app',
-      fullName: 'admin.mobile-app.mobile-app',
-      type: 'link',
-      path: '/settings/mobile-app',
-      icon: 'smartphone'
-    }
-  ],
-  [
     MenuId.security_settings,
     {
       id: MenuId.security_settings,
@@ -416,16 +437,6 @@ export const menuSectionMap = new Map<MenuId, MenuSection>([
       type: 'link',
       path: '/security-settings/oauth2/domains',
       icon: 'domain'
-    }
-  ],
-  [
-    MenuId.mobile_apps,
-    {
-      id: MenuId.mobile_apps,
-      name: 'admin.oauth2.mobile-apps',
-      type: 'link',
-      path: '/security-settings/oauth2/mobile-applications',
-      icon: 'smartphone'
     }
   ],
   [
@@ -688,13 +699,19 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
         ]
       },
       {
+        id: MenuId.mobile_center,
+        pages: [
+          {id: MenuId.mobile_apps},
+          {id: MenuId.mobile_app_settings}
+        ]
+      },
+      {
         id: MenuId.settings,
         pages: [
           {id: MenuId.general},
           {id: MenuId.mail_server},
           {id: MenuId.notification_settings},
-          {id: MenuId.queues},
-          {id: MenuId.mobile_app_settings}
+          {id: MenuId.queues}
         ]
       },
       {
@@ -706,7 +723,6 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
             id: MenuId.oauth2,
             pages: [
               {id: MenuId.domains},
-              {id: MenuId.mobile_apps},
               {id: MenuId.clients}
             ]
           }

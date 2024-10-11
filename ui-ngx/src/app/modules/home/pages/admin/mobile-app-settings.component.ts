@@ -25,7 +25,7 @@ import { MobileApplicationService } from '@core/http/mobile-application.service'
 import {
   BadgePosition,
   badgePositionTranslationsMap,
-  MobileAppSettings
+  QrCodeSettings
 } from '@shared/models/mobile-app.models';
 import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 
@@ -38,7 +38,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
 
   mobileAppSettingsForm: FormGroup;
 
-  mobileAppSettings: MobileAppSettings;
+  mobileAppSettings: QrCodeSettings;
 
   private readonly destroy$ = new Subject<void>();
 
@@ -150,7 +150,7 @@ export class MobileAppSettingsComponent extends PageComponent implements HasConf
     });
   }
 
-  private processMobileAppSettings(mobileAppSettings: MobileAppSettings): void {
+  private processMobileAppSettings(mobileAppSettings: QrCodeSettings): void {
     this.mobileAppSettings = {...mobileAppSettings};
     this.mobileAppSettingsForm.reset(this.mobileAppSettings);
   }

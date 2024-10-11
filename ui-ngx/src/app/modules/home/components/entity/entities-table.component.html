@@ -159,7 +159,8 @@
                                [fxHide.lt-lg]="column.mobileHide"
                                *matHeaderCellDef [ngStyle]="headerCellStyle(column)" mat-sort-header [disabled]="!column.sortable">
                 {{ column.ignoreTranslate ? column.title : (column.title | translate) }} </mat-header-cell>
-              <mat-cell [ngClass]="{'mat-number-cell': column.isNumberColumn}"
+              <mat-cell [ngClass]="{'mat-number-cell': column.isNumberColumn,
+                                    'cell-action': column.actionCell?.type === cellActionType.COPY_BUTTON}"
                         [fxHide.lt-lg]="column.mobileHide"
                         *matCellDef="let entity; let row = index"
                         [matTooltip]="cellTooltip(entity, column, row)"
@@ -182,6 +183,7 @@
                   <ng-container [ngSwitch]="column.actionCell.type">
                     <ng-template [ngSwitchCase]="cellActionType.COPY_BUTTON">
                       <tb-copy-button
+                        class="copy-button"
                         [disabled]="isLoading$ | async"
                         [fxShow]="column.actionCell.isEnabled(entity)"
                         [copyText]="column.actionCell.onAction(null, entity)"
