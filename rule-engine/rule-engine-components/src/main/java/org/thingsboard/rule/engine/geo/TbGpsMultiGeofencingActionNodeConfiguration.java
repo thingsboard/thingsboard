@@ -15,23 +15,20 @@
  */
 package org.thingsboard.rule.engine.geo;
 
-import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import lombok.Data;
+import lombok.EqualsAndHashCode;
+import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.EntityType;
-import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.relation.EntityRelationsQuery;
 import org.thingsboard.server.common.data.relation.EntitySearchDirection;
 import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
-import org.thingsboard.server.common.data.relation.RelationsSearchParameters;
 
 import java.util.List;
-import java.util.UUID;
 
 @Data
-@JsonIgnoreProperties(ignoreUnknown = true)
+@EqualsAndHashCode(callSuper = true)
 public class TbGpsMultiGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
 
-    private EntityRelationsQuery entityRelationsQuery;
+    private RelationsQuery relationsQuery;
     private String perimeterAttributeKey;
     private Long insideDurationMs;
     private Long outsideDurationMs;
@@ -40,12 +37,12 @@ public class TbGpsMultiGeofencingActionNodeConfiguration extends TbGpsGeofencing
     public TbGpsMultiGeofencingActionNodeConfiguration defaultConfiguration() {
         TbGpsMultiGeofencingActionNodeConfiguration configuration = new TbGpsMultiGeofencingActionNodeConfiguration();
         configuration.setPerimeterAttributeKey("geofences");
-        RelationsSearchParameters relationsSearchParameters = new RelationsSearchParameters(new DeviceId(UUID.randomUUID()), EntitySearchDirection.FROM, 1, true);
-        EntityRelationsQuery entityRelationsQuery = new EntityRelationsQuery();
-        entityRelationsQuery.setParameters(relationsSearchParameters);
+        RelationsQuery relationsQuery = new RelationsQuery();
+        relationsQuery.setDirection(EntitySearchDirection.FROM);
+        relationsQuery.setMaxLevel(1);
         RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
-        entityRelationsQuery.setFilters(List.of(filter));
-        configuration.setEntityRelationsQuery(entityRelationsQuery);
+        relationsQuery.setFilters(List.of(filter));
+        configuration.setRelationsQuery(relationsQuery);
         configuration.setInsideDurationMs(1000L);
         configuration.setOutsideDurationMs(1000L);
         return configuration;

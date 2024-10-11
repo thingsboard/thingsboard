@@ -1,12 +1,12 @@
 /**
  * Copyright © 2016-2024 The Thingsboard Authors
- *
+ * <p>
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
- *     http://www.apache.org/licenses/LICENSE-2.0
- *
+ * <p>
+ * http://www.apache.org/licenses/LICENSE-2.0
+ * <p>
  * Unless required by applicable law or agreed to in writing, software
  * distributed under the License is distributed on an "AS IS" BASIS,
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
@@ -22,12 +22,15 @@ import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
+import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.common.util.ListeningExecutor;
+import org.thingsboard.rule.engine.TestDbCallbackExecutor;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
+import org.thingsboard.rule.engine.data.RelationsQuery;
 import org.thingsboard.server.common.data.AttributeScope;
-import org.thingsboard.server.common.data.Device;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
@@ -37,30 +40,38 @@ import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
 import org.thingsboard.server.common.data.kv.JsonDataEntry;
 import org.thingsboard.server.common.data.msg.TbMsgType;
-import org.thingsboard.server.common.data.relation.*;
+import org.thingsboard.server.common.data.relation.EntityRelation;
+import org.thingsboard.server.common.data.relation.EntitySearchDirection;
+import org.thingsboard.server.common.data.relation.RelationEntityTypeFilter;
+import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
 import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 
-import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.any;
+import static org.mockito.Mockito.atLeastOnce;
+import static org.mockito.Mockito.eq;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 
 public class TbGpsMultiGeofencingActionNodeTest {
 
     private TbGpsMultiGeofencingActionNode node;
-    private TbGpsMultiGeofencingActionNodeConfiguration nodeConfiguration;
     private TbContext ctx;
     private AttributesService attributesService;
     private DeviceId deviceId;
     private AssetId zoneId;
     private String geofenceStateAttributeKey;
+
+    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
 
     @BeforeEach
     public void setUp() throws TbNodeException {
@@ -75,12 +86,15 @@ public class TbGpsMultiGeofencingActionNodeTest {
         configuration.setLongitudeKeyName("longitude");
         configuration.setInsideDurationMs(10L);
         configuration.setOutsideDurationMs(10L);
-        EntityRelationsQuery entityRelationsQuery = new EntityRelationsQuery();
-        entityRelationsQuery.setParameters(new RelationsSearchParameters(new DeviceId(UUID.randomUUID()), EntitySearchDirection.FROM, 1, true));
-        entityRelationsQuery.setFilters(Collections.emptyList());
-        configuration.setEntityRelationsQuery(entityRelationsQuery);
 
-        nodeConfiguration = configuration;
+        RelationsQuery relationsQuery = new RelationsQuery();
+        relationsQuery.setDirection(EntitySearchDirection.FROM);
+        relationsQuery.setMaxLevel(1);
+        RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
+        relationsQuery.setFilters(List.of(filter));
+        configuration.setRelationsQuery(relationsQuery);
+        configuration.setInsideDurationMs(1000L);
+        configuration.setOutsideDurationMs(1000L);
 
         JsonNode jsonNode = JacksonUtil.valueToTree(configuration);
         TbNodeConfiguration tbNodeConfiguration = new TbNodeConfiguration(jsonNode);
@@ -94,7 +108,8 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(ctx.getRelationService()).thenReturn(relationService);
-        when(ctx.getDeviceService()).thenReturn(deviceService);
+
+        when(ctx.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
         deviceId = (DeviceId) EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, UUID.randomUUID().toString());
         zoneId = (AssetId) EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, UUID.randomUUID().toString());
@@ -113,9 +128,6 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.empty()));
 
-        Device device = new Device(deviceId);
-        device.setName("container");
-        when(deviceService.findDeviceById(any(), any())).thenReturn(device);
     }
 
     @Test
@@ -144,7 +156,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        Thread.sleep(10L);
+        Thread.sleep(1000L);
 
         TbMsg msgInside = createTbMsgWithCoordinates(deviceId, 48.8566, 2.3522);
 
@@ -192,7 +204,7 @@ public class TbGpsMultiGeofencingActionNodeTest {
         attributeKvEntry = captureStateAttribute();
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        Thread.sleep(10L);
+        Thread.sleep(1000L);
 
         TbMsg msgOutside = createTbMsgWithCoordinates(deviceId, 40.7128, -74.0060);
 
