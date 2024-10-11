@@ -33,7 +33,7 @@ CREATE TABLE IF NOT EXISTS mobile_app_bundle (
 ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS platform_type varchar(32),
     ADD COLUMN IF NOT EXISTS status varchar(32),
     ADD COLUMN IF NOT EXISTS version_info varchar(16384),
-    ADD COLUMN IF NOT EXISTS qr_code_config varchar(16384),
+    ADD COLUMN IF NOT EXISTS store_info varchar(16384),
     DROP CONSTRAINT IF EXISTS mobile_app_pkg_name_key;
 
 -- rename mobile_app_oauth2_client to mobile_app_bundle_oauth2_client
@@ -107,7 +107,7 @@ $$
                 SELECT id into androidAppId FROM mobile_app WHERE pkg_name = qrCodeRecord.android_config::jsonb ->> 'appPackage' AND platform_type = 'ANDROID';
                 IF androidAppId IS NULL THEN
                     androidAppId := uuid_generate_v4();
-                    INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, qr_code_config)
+                    INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, store_info)
                     VALUES (androidAppId, (extract(epoch from now()) * 1000), qrCodeRecord.tenant_id,
                             qrCodeRecord.android_config::jsonb ->> 'appPackage', 'ANDROID', 'PUBLISHED', qrCodeRecord.android_config::jsonb - 'appPackage');
                     generatedBundleId := uuid_generate_v4();
@@ -115,7 +115,7 @@ $$
                     VALUES (generatedBundleId, (extract(epoch from now()) * 1000), qrCodeRecord.tenant_id, 'App bundle for qr code', androidAppId);
                     UPDATE qr_code_settings SET mobile_app_bundle_id = generatedBundleId WHERE id = qrCodeRecord.id;
                 ELSE
-                    UPDATE mobile_app SET qr_code_config = qrCodeRecord.android_config::jsonb - 'appPackage' WHERE id = androidAppId;
+                    UPDATE mobile_app SET store_info = qrCodeRecord.android_config::jsonb - 'appPackage' WHERE id = androidAppId;
                     UPDATE qr_code_settings SET mobile_app_bundle_id = (SELECT id FROM mobile_app_bundle WHERE mobile_app_bundle.android_app_id = androidAppId) WHERE id = qrCodeRecord.id;
                 END IF;
 
@@ -124,7 +124,7 @@ $$
                 SELECT id into iosAppId FROM mobile_app WHERE pkg_name = iosPkgName AND platform_type = 'IOS';
                 IF iosAppId IS NULL THEN
                     iosAppId := uuid_generate_v4();
-                    INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, qr_code_config)
+                    INSERT INTO mobile_app(id, created_time, tenant_id, pkg_name, platform_type, status, store_info)
                     VALUES (iosAppId, (extract(epoch from now()) * 1000), qrCodeRecord.tenant_id,
                             iosPkgName, 'IOS', 'PUBLISHED', qrCodeRecord.ios_config);
                     IF generatedBundleId IS NULL THEN
@@ -136,7 +136,7 @@ $$
                         UPDATE mobile_app_bundle SET ios_app_id = iosAppId WHERE id = generatedBundleId;
                     END IF;
                 ELSE
-                    UPDATE mobile_app SET qr_code_config = qrCodeRecord.ios_config WHERE id = iosAppId;
+                    UPDATE mobile_app SET store_info = qrCodeRecord.ios_config WHERE id = iosAppId;
                     UPDATE qr_code_settings SET mobile_app_bundle_id = (SELECT id FROM mobile_app_bundle WHERE mobile_app_bundle.ios_app_id = iosAppId) WHERE id = qrCodeRecord.id;
                 END IF;
             END LOOP;

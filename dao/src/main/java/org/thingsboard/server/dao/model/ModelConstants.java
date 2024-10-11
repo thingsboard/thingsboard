@@ -451,7 +451,7 @@ public class ModelConstants {
     public static final String MOBILE_APP_PLATFORM_TYPE_PROPERTY = "platform_type";
     public static final String MOBILE_APP_STATUS_PROPERTY = "status";
     public static final String MOBILE_APP_VERSION_INFO_PROPERTY = "version_info";
-    public static final String MOBILE_APP_QR_CODE_CONFIG_PROPERTY = "qr_code_config";
+    public static final String MOBILE_APP_STORE_INFO_PROPERTY = "store_info";
 
     /**
      * Mobile application bundle constants.

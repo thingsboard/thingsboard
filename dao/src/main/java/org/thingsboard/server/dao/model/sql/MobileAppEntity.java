@@ -67,8 +67,8 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
     private JsonNode versionInfo;
 
     @Convert(converter = JsonConverter.class)
-    @Column(name = ModelConstants.MOBILE_APP_QR_CODE_CONFIG_PROPERTY)
-    private JsonNode qrCodeConfig;
+    @Column(name = ModelConstants.MOBILE_APP_STORE_INFO_PROPERTY)
+    private JsonNode storeInfo;
 
     public MobileAppEntity() {
         super();
@@ -84,7 +84,7 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         this.platformType = mobile.getPlatformType();
         this.status = mobile.getStatus();
         this.versionInfo = toJson(mobile.getVersionInfo());
-        this.qrCodeConfig = toJson(mobile.getStoreInfo());
+        this.storeInfo = toJson(mobile.getStoreInfo());
     }
 
     @Override
@@ -100,7 +100,7 @@ public class MobileAppEntity extends BaseSqlEntity<MobileApp> {
         mobile.setPlatformType(platformType);
         mobile.setStatus(status);
         mobile.setVersionInfo(fromJson(versionInfo, MobileAppVersionInfo.class));
-        mobile.setStoreInfo(fromJson(qrCodeConfig, StoreInfo.class));
+        mobile.setStoreInfo(fromJson(storeInfo, StoreInfo.class));
         return mobile;
     }
 }
