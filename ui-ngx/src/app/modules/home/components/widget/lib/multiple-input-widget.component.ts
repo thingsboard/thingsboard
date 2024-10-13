@@ -33,7 +33,7 @@ import {
   isUndefined
 } from '@core/utils';
 import { EntityType } from '@shared/models/entity-type.models';
-import * as _moment from 'moment';
+import _moment from 'moment';
 import { UntypedFormBuilder, UntypedFormGroup, ValidatorFn, Validators } from '@angular/forms';
 import { RequestConfig } from '@core/http/http-utils';
 import { AttributeService } from '@core/http/attribute.service';

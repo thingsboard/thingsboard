@@ -14,16 +14,7 @@
 /// limitations under the License.
 ///
 
-import {
-  AfterViewInit,
-  Component,
-  ComponentFactoryResolver,
-  Inject,
-  Injector,
-  SkipSelf,
-  ViewChild
-} from '@angular/core';
-import { ErrorStateMatcher } from '@angular/material/core';
+import { Component, Inject, ViewChild } from '@angular/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
@@ -68,7 +59,7 @@ export interface AddDeviceProfileDialogData {
   styleUrls: ['./add-device-profile-dialog.component.scss']
 })
 export class AddDeviceProfileDialogComponent extends
-  DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> implements AfterViewInit {
+  DialogComponent<AddDeviceProfileDialogComponent, DeviceProfile> {
 
   @ViewChild('addDeviceProfileStepper', {static: true}) addDeviceProfileStepper: MatStepper;
   stepperOrientation: Observable<StepperOrientation>;
@@ -105,10 +96,7 @@ export class AddDeviceProfileDialogComponent extends
               protected router: Router,
               @Inject(MAT_DIALOG_DATA) public data: AddDeviceProfileDialogData,
               public dialogRef: MatDialogRef<AddDeviceProfileDialogComponent, DeviceProfile>,
-              private componentFactoryResolver: ComponentFactoryResolver,
-              private injector: Injector,
               private breakpointObserver: BreakpointObserver,
-              @SkipSelf() private errorStateMatcher: ErrorStateMatcher,
               private deviceProfileService: DeviceProfileService,
               private fb: UntypedFormBuilder) {
     super(store, router, dialogRef);
@@ -160,9 +148,6 @@ export class AddDeviceProfileDialogComponent extends
     const deviceTransportType: DeviceTransportType = this.transportConfigFormGroup.get('transportType').value;
     this.transportConfigFormGroup.patchValue(
       {transportConfiguration: createDeviceProfileTransportConfiguration(deviceTransportType)});
-  }
-
-  ngAfterViewInit(): void {
   }
 
   cancel(): void {

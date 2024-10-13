@@ -150,7 +150,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     setMarkerLocation(e: FormattedData, lat?: number, lng?: number) {
-      let markerValue;
+      let markerValue: {[p: string]: any};
       if (isDefined(lat) && isDefined(lng)) {
         const point = lat != null && lng !== null ? L.latLng(lat, lng) : null;
         markerValue = this.map.convertToCustomFormat(point);
@@ -169,7 +169,7 @@ export class MapWidgetController implements MapWidgetInterface {
     }
 
     savePolygonLocation(e: FormattedData, coordinates?: Array<any>) {
-      let polygonValue;
+      let polygonValue: {[p: string]: any};
       if (isDefined(coordinates)) {
         polygonValue = this.map.convertToPolygonFormat(coordinates);
       } else {

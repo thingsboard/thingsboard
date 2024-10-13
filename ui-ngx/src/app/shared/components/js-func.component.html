@@ -45,6 +45,6 @@
     <div #javascriptEditor id="tb-javascript-input" [ngStyle]="fillHeight ? {} : {minHeight: minHeight}" [ngClass]="{'fill-height': fillHeight}"></div>
   </div>
   <div *ngIf="!hideBrackets" fxLayout="row" fxLayoutAlign="start center" style="height: 40px;">
-    <label class="tb-title no-padding" [ngClass]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">}</label>
+    <label class="tb-title no-padding" [ngClass]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">&#125;</label>
   </div>
 </div>

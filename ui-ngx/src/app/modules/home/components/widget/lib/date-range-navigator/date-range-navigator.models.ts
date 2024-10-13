@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import * as _moment from 'moment';
+import _moment from 'moment';
 
 export type DateRangeInterval = 'hour' | 'day' | 'week' | 'twoWeeks' | 'month' | 'threeMonths' | 'sixMonths';
 

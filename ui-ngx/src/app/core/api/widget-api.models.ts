@@ -42,7 +42,6 @@ import { RafService } from '@core/services/raf.service';
 import { EntityAliases } from '@shared/models/alias.models';
 import { EntityInfo } from '@app/shared/models/entity.models';
 import { IDashboardComponent } from '@home/models/dashboard-component.models';
-import moment_ from 'moment';
 import {
   AlarmData,
   AlarmDataPageLink,

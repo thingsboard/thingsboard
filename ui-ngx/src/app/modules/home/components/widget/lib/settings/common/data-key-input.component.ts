@@ -194,7 +194,7 @@ export class DataKeyInputComponent implements ControlValueAccessor, OnInit, OnCh
         }
       }),
       filter((value) => typeof value === 'string'),
-      map((value) => value ? (typeof value === 'string' ? value : value.name) : ''),
+      map((value) => value ? value : ''),
       mergeMap(name => this.fetchKeys(name) ),
       share()
     );

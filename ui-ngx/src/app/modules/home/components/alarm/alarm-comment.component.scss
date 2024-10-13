@@ -16,8 +16,8 @@
 @use '@angular/material' as mat;
 @import '../theme.scss';
 
-$primary-color: rgba(mat.get-color-from-palette($tb-primary, 50), 0.4);
-$border: 1px solid mat.get-color-from-palette($tb-primary);
+$primary-color: rgba(mat.m2-get-color-from-palette($tb-primary, 50), 0.4);
+$border: 1px solid mat.m2-get-color-from-palette($tb-primary);
 
 :host {
   .tb-alarm-comments {

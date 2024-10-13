@@ -33,7 +33,7 @@ export class TranslateDefaultCompiler extends TranslateMessageFormatCompiler {
     super(config);
   }
 
-  public compile(value: string, lang: string): (params: any) => string {
+  public compile(value: string, lang: string): any {
     return this.defaultCompile(value, lang);
   }
 
