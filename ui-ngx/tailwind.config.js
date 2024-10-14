@@ -84,7 +84,8 @@ module.exports = {
         full: '1 1 100%'
       },
       gap: {
-        '0.75': '0.1875rem'
+        '0.75': '0.1875rem',
+        '1.25': '0.3125rem'
       },
       minHeight: {
         '19': '4.75rem'
