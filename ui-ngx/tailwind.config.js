@@ -86,6 +86,9 @@ module.exports = {
       gap: {
         '0.75': '0.1875rem'
       },
+      minHeight: {
+        '19': '4.75rem'
+      },
       minWidth: {
         '25': '6.25rem',
         '37.5': '9.375rem'
