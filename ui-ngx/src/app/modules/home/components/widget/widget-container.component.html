@@ -40,21 +40,21 @@
          [class]="{'tb-widget-actions-absolute': !(widget.showWidgetTitlePanel && !widgetComponent.widgetContext?.embedTitlePanel && (widget.showTitle||widget.hasAggregation))}"
          (mousedown)="$event.stopPropagation()">
       <button mat-icon-button *ngFor="let action of widget.customHeaderActions"
-              [fxShow]="!isEdit"
+              [class.!hidden]="isEdit"
               (click)="action.onAction($event)"
               matTooltip="{{ action.displayName }}"
               matTooltipPosition="above">
         <tb-icon>{{ action.icon }}</tb-icon>
       </button>
       <button mat-icon-button *ngFor="let action of widget.widgetActions"
-              [fxShow]="!isEdit && action.show"
+              [class.!hidden]="isEdit || !action.show"
               (click)="action.onAction($event)"
               matTooltip="{{ action.name | translate }}"
               matTooltipPosition="above">
         <tb-icon>{{ action.icon }}</tb-icon>
       </button>
       <button mat-icon-button
-              [fxShow]="!isEdit && widget.enableFullscreen"
+              [class.!hidden]="isEdit || !widget.enableFullscreen"
               (click)="$event.stopPropagation(); widget.isFullscreen = !widget.isFullscreen; updateEditWidgetActionsTooltipState()"
               matTooltip="{{(widget.isFullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
               matTooltipPosition="above">
