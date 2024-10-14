@@ -45,10 +45,9 @@
   <mat-header-row class="mat-row-select" *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
   <mat-row class="mat-row-select" *matRowDef="let attribute; columns: displayedColumns;"></mat-row>
 </table>
-<span [fxShow]="dataSource.data.length === 0"
-      fxFlex fxLayoutAlign="center center"
-      class="no-data-found">{{ 'attribute.no-telemetry-text' | translate }}</span>
-<span fxFlex [fxShow]="dataSource.data.length !== 0"></span>
+<span [class.!hidden]="dataSource.data.length !== 0"
+      class="flex-1 justify-center items-center no-data-found">{{ 'attribute.no-telemetry-text' | translate }}</span>
+<span class="flex-1" [class.!hidden]="dataSource.data.length === 0"></span>
 <mat-divider></mat-divider>
 <mat-paginator [length]="dataSource.data.length"
                [pageIndex]="pageLink.page"

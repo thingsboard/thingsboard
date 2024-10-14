@@ -15,16 +15,15 @@
     limitations under the License.
 
 -->
-<mat-toolbar color="primary">
+<mat-toolbar color="primary" class="justify-between">
   <h2 translate>gateway.rpc.save-template</h2>
-  <span fxFlex></span>
   <button mat-icon-button
           (click)="close()"
           type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<div mat-dialog-content style="width: 600px" class="mat-content" fxLayout="column">
+<div mat-dialog-content style="width: 600px" class="mat-content flex flex-col">
   <mat-form-field class="mat-block tb-value-type" style="flex-grow: 0">
     <mat-label translate>gateway.rpc.template-name</mat-label>
     <input matInput [formControl]="templateNameCtrl" required/>
@@ -39,7 +38,7 @@
     {{ 'gateway.rpc.template-name-duplicate' | translate }}
   </div>
 </div>
-<div mat-dialog-actions fxLayoutAlign="end center">
+<div mat-dialog-actions class="justify-end">
   <button mat-button
           type="button"
           (click)="close()">

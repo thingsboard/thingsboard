@@ -37,10 +37,11 @@
     [ngTemplateOutletContext]="{ $implicit: config, innerValue: false }">
   </ng-container>
   <ng-template #RPCTemplateRef let-config let-innerValue='innerValue'>
-    <div [fxLayout]="isObject(config.value) ? 'column': 'row'"
-         [fxLayoutAlign]="!isObject(config.value) ? 'space-between center' : ''"
-         [ngStyle]="{'padding-left': innerValue ? '16px': '0'}"
-         class="rpc-params-row">
+    <div [class]="{
+        'flex-col': isObject(config.value),
+        'flex-row justify-between items-center': !isObject(config.value),
+      }" [style]="{'padding-left': innerValue ? '16px': '0'}"
+         class="rpc-params-row flex">
       <div class="template-key">
         {{!innerValue ? ('gateway.rpc.' + config.key | translate) : config.key}}
       </div>
@@ -49,7 +50,7 @@
       </div>
       <ng-container *ngIf="isObject(config.value)" [ngTemplateOutlet]="RPCObjectRow"></ng-container>
       <div *ngIf="!isObject(config.value) && !isArray(config.value)"
-           [ngClass]="{'boolean-true': config.value === true,
+           [class]="{'boolean-true': config.value === true,
                    'boolean-false': config.value === false  }">
         <ng-container *ngIf="config.key === 'method' else value" [ngTemplateOutlet]="SNMPMethod"></ng-container>
       </div>

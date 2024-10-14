@@ -35,25 +35,27 @@
           required
         >
       </tb-entity-gateway-select>
-      <div fxLayout="column">
-        <mat-form-field fxFlex>
-          <mat-label>{{'gateway.security-type' | translate }}</mat-label>
-          <mat-select formControlName="securityType" >
-            <mat-option *ngFor="let securityType of securityTypes | keyvalue" [value]="securityType.key">
-              {{ securityType.value.toString() | translate }}
-            </mat-option>
-          </mat-select>
-        </mat-form-field>
-      </div>
-      <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap">
-        <mat-form-field fxFlex>
+      <mat-form-field class="flex">
+        <mat-label>{{'gateway.security-type' | translate }}</mat-label>
+        <mat-select formControlName="securityType" >
+          <mat-option *ngFor="let securityType of securityTypes | keyvalue" [value]="securityType.key">
+            {{ securityType.value.toString() | translate }}
+          </mat-option>
+        </mat-select>
+      </mat-form-field>
+      <div class="flex" [class]="{
+        'gap-1.25': layoutGap,
+        'flex-row': alignment,
+        'flex-col': !alignment
+      }">
+        <mat-form-field class="flex-1">
           <mat-label>{{ 'gateway.thingsboard-host' | translate }}</mat-label>
           <input matInput type="text" formControlName="host">
           <mat-error *ngIf="gatewayConfigurationGroup.get('host').hasError('required')" translate>
             gateway.thingsboard-host-required
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>{{ 'gateway.thingsboard-port' | translate }}</mat-label>
           <input matInput type="number" formControlName="port">
           <mat-error *ngIf="gatewayConfigurationGroup.get('port').hasError('required')" translate>
@@ -71,16 +73,16 @@
         </mat-form-field>
       </div>
 
-      <div *ngIf="gatewayConfigurationGroup.get('securityType').value == 'tls'" fxLayout="column">
-        <mat-form-field fxFlex>
+      <div *ngIf="gatewayConfigurationGroup.get('securityType').value == 'tls'" class="flex flex-col">
+        <mat-form-field>
           <mat-label>{{ 'gateway.tls-path-ca-certificate' | translate }}</mat-label>
           <input matInput type="text" formControlName="caCertPath">
         </mat-form-field>
-        <mat-form-field fxFlex>
+        <mat-form-field>
           <mat-label>{{ 'gateway.tls-path-private-key' | translate }}</mat-label>
           <input matInput type="text" formControlName="privateKeyPath">
         </mat-form-field>
-        <mat-form-field fxFlex>
+        <mat-form-field>
           <mat-label>{{ 'gateway.tls-path-client-certificate' | translate }}</mat-label>
           <input matInput type="text" formControlName="certPath">
         </mat-form-field>
@@ -88,8 +90,12 @@
 
       <mat-checkbox formControlName="remoteConfiguration">{{ 'gateway.remote' | translate }}</mat-checkbox>
 
-      <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap">
-        <mat-form-field fxFlex>
+      <div class="flex" [class]="{
+        'gap-1.25': layoutGap,
+        'flex-row': alignment,
+        'flex-col': !alignment
+      }">
+        <mat-form-field class="flex-1">
           <mat-label>{{'gateway.remote-logging-level' | translate }}</mat-label>
           <mat-select formControlName="remoteLoggingLevel">
             <mat-option *ngFor="let logLevel of gatewayLogLevels" [value]="logLevel">
@@ -98,7 +104,7 @@
           </mat-select>
         </mat-form-field>
 
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>{{ 'gateway.path-logs' | translate }}</mat-label>
           <input matInput type="text" formControlName="remoteLoggingPathToLogs">
           <mat-error *ngIf="gatewayConfigurationGroup.get('remoteLoggingPathToLogs').hasError('required')" translate>
@@ -116,8 +122,8 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
 
-      <div fxLayout="column">
-        <mat-form-field fxFlex>
+      <div class="flex flex-col">
+        <mat-form-field>
           <mat-label>{{'gateway.storage-type' | translate }}</mat-label>
           <mat-select formControlName="storageType">
             <mat-option *ngFor="let storageType of storageTypes | keyvalue" [value]="storageType.key">
@@ -126,8 +132,12 @@
           </mat-select>
         </mat-form-field>
 
-        <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap">
-          <mat-form-field fxFlex>
+        <div class="flex" [class]="{
+            'gap-1.25': layoutGap,
+            'flex-row': alignment,
+            'flex-col': !alignment
+          }">
+          <mat-form-field class="flex-1">
             <mat-label>{{ 'gateway.storage-pack-size' | translate }}</mat-label>
             <input matInput type="number" formControlName="readRecordsCount">
             <mat-error *ngIf="gatewayConfigurationGroup.get('readRecordsCount').hasError('required')" translate>
@@ -141,7 +151,7 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field fxFlex>
+          <mat-form-field class="flex-1">
             <mat-label >
               {{ (gatewayConfigurationGroup.get('storageType').value !== 'file' ? 'gateway.storage-max-records' : 'gateway.storage-max-file-records') | translate}}
             </mat-label>
@@ -158,8 +168,12 @@
           </mat-form-field>
         </div>
 
-        <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap" *ngIf="gatewayConfigurationGroup.get('storageType').value == 'file'">
-          <mat-form-field fxFlex>
+        <div class="flex" [class]="{
+            'gap-1.25': layoutGap,
+            'flex-row': alignment,
+            'flex-col': !alignment
+          }" *ngIf="gatewayConfigurationGroup.get('storageType').value == 'file'">
+          <mat-form-field class="flex-1">
             <mat-label>{{ 'gateway.storage-max-files' | translate }}</mat-label>
             <input matInput type="number" formControlName="maxFilesCount">
             <mat-error *ngIf="gatewayConfigurationGroup.get('maxFilesCount').hasError('required')" translate>
@@ -173,7 +187,7 @@
             </mat-error>
           </mat-form-field>
 
-          <mat-form-field fxFlex>
+          <mat-form-field class="flex-1">
             <mat-label>{{ 'gateway.storage-path' | translate }}</mat-label>
             <input matInput type="text" formControlName="dataFolderPath">
             <mat-error *ngIf="gatewayConfigurationGroup.get('dataFolderPath').hasError('required')" translate>
@@ -191,14 +205,18 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
 
-      <div fxLayout="column" class="gateway-config">
+      <div class="flex flex-col gateway-config">
         <section formArrayName="connectors" *ngFor="let connector of connectors.controls; let i = index;">
-          <div [formGroupName]="i" fxLayout="row" fxLayoutAlign="space-between stretch" fxLayoutGap="8px">
-            <div fxLayout="column" fxLayoutAlign="center start">
+          <div [formGroupName]="i" class="flex flex-row justify-between items-stretch gap-2">
+            <div class="flex flex-col justify-center">
               <mat-slide-toggle formControlName="enabled"></mat-slide-toggle>
             </div>
-            <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap" fxFlex>
-              <mat-form-field fxFlex>
+            <div class="flex flex-full" [class]="{
+                'gap-1.25': layoutGap,
+                'flex-row': alignment,
+                'flex-col': !alignment
+              }">
+              <mat-form-field class="flex-1">
                 <mat-label>{{'gateway.connector-type' | translate }}</mat-label>
                 <mat-select formControlName="configType" (selectionChange)="changeConnectorType(connector)">
                   <mat-option *ngFor="let connectorType of connectorTypes" [value]="connectorType">
@@ -210,7 +228,7 @@
                 </mat-error>
               </mat-form-field>
 
-              <mat-form-field fxFlex>
+              <mat-form-field class="flex-1">
                 <mat-label>{{ 'gateway.connector-name' | translate }}</mat-label>
                 <input matInput type="text" formControlName="name" (blur)="changeConnectorName(connector, i)">
                 <mat-error *ngIf="connector.get('name').hasError('required')" translate>
@@ -218,12 +236,15 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div [fxLayout]="alignment" [fxLayoutGap]="layoutGap"
-                 fxLayoutAlign="{{alignment == 'row' ? 'end center' : 'space-evenly center'}}" class="action-buttons">
+            <div class="flex action-buttons" [class]="{
+                'gap-1.25': layoutGap,
+                'flex-row justify-end item-center': alignment,
+                'flex-col justify-evenly item-center': !alignment
+              }">
               <button [disabled]="isReadOnlyForm" mat-icon-button (click)="openConfigDialog($event, i, connector.get('config').value, connector.get('name').value)"
                          matTooltip="{{ 'gateway.update-config' | translate }}"
                          matTooltipPosition="above"
-                         [ngClass]="{'mat-warn': connector.get('config').invalid}">
+                         [class.mat-warn]="connector.get('config').invalid">
                 <mat-icon>more_horiz</mat-icon>
               </button>
               <button [disabled]="isReadOnlyForm"
@@ -235,9 +256,9 @@
             </div>
           </div>
         </section>
-        <span [fxShow]="!connectors.length" fxLayoutAlign="center center" class="no-data-found">{{'gateway.no-connectors' | translate}}</span>
+        <span [class.!hidden]="connectors.length" class="no-data-found justify-center items-center">{{'gateway.no-connectors' | translate}}</span>
         <div>
-          <button [fxShow]="!isReadOnlyForm" mat-raised-button type="button" (click)="addNewConnector()"
+          <button [class.!hidden]="isReadOnlyForm" mat-raised-button type="button" (click)="addNewConnector()"
                   matTooltip="{{ 'gateway.connector-add' | translate }}"
                   matTooltipPosition="above">
             {{ 'action.add' | translate }}
@@ -246,8 +267,7 @@
       </div >
     </mat-expansion-panel>
   </mat-accordion>
-  <section [fxShow]="!isReadOnlyForm"
-           fxLayout="row" fxLayoutAlign="end center" class="form-action-buttons">
+  <section [class.!hidden]="isReadOnlyForm" class="flex flex-row justify-end items-center form-action-buttons">
     <button mat-raised-button color="primary" type="button"
             (click)="exportConfig()"
             *ngIf="!gatewayConfigurationGroup.get('remoteConfiguration').value"
