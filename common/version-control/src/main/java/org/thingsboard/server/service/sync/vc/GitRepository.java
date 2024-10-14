@@ -21,6 +21,7 @@ import com.google.common.collect.Streams;
 import lombok.Data;
 import lombok.Getter;
 import lombok.RequiredArgsConstructor;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.commons.io.FileUtils;
 import org.apache.commons.lang3.StringUtils;
@@ -75,6 +76,7 @@ import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
+import java.nio.file.Path;
 import java.security.KeyPair;
 import java.security.PublicKey;
 import java.util.ArrayList;
@@ -407,6 +409,12 @@ public class GitRepository {
             throw new IllegalArgumentException("Failed to parse git revision string: \"" + rev + "\"");
         }
         return result;
+    }
+
+    @SneakyThrows
+    public static boolean exists(String directory) {
+        File gitDirectory = Path.of(directory, ".git").toFile();
+        return FileUtils.isDirectory(gitDirectory) && !FileUtils.isEmptyDirectory(gitDirectory);
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
