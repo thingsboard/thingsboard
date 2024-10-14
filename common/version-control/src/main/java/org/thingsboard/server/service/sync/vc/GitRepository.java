@@ -437,8 +437,10 @@ public class GitRepository {
         return result;
     }
 
+    @SneakyThrows
     public static boolean exists(String directory) {
-        return Files.exists(Path.of(directory, ".git"));
+        File gitDirectory = Path.of(directory, ".git").toFile();
+        return FileUtils.isDirectory(gitDirectory) && !FileUtils.isEmptyDirectory(gitDirectory);
     }
 
     private <C extends GitCommand<T>, T> T execute(C command) throws GitAPIException {
