@@ -34,12 +34,12 @@
           <div class="flex flex-col">
             <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
                let $index = index; last as isLast;"
-                 class="flex flex-row justify-start items-center" [class.pb-2]="!isLast">
+                 class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
               <mat-expansion-panel class="entity-type-config flex-1" [formGroup]="entityTypeFormGroup" [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)">
                 <mat-expansion-panel-header>
-                  <div class="flex-1 flex flex-row justify-start items-center">
+                  <div class="flex flex-1 flex-row items-center justify-start">
                     <mat-panel-title>
-                      <div class="flex-1 flex flex-row justify-start items-center">
+                      <div class="flex flex-1 flex-row items-center justify-start">
                         <div [innerHTML]="entityTypeText(entityTypeFormGroup)"></div>
                       </div>
                     </mat-panel-title>
@@ -73,7 +73,7 @@
                           </tb-branch-autocomplete>
                         </div>
                       </div>
-                      <div class="flex-1 flex flex-row justify-start items-center gap-4 xs:flex-col xs:justify-start xs:items-start xs:gap-0"
+                      <div class="flex flex-1 flex-row items-center justify-start gap-4 xs:flex-col xs:items-start xs:justify-start xs:gap-0"
                            formGroupName="config">
                         <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="saveCredentials">
                           {{ 'version-control.export-credentials' | translate }}
@@ -92,7 +92,7 @@
             </div>
             <div *ngIf="!entityTypesFormGroupArray().length">
               <span translate
-                    class="tb-prompt flex justify-center items-center">admin.no-auto-commit-entities-prompt</span>
+                    class="tb-prompt flex items-center justify-center">admin.no-auto-commit-entities-prompt</span>
             </div>
             <div style="padding-top: 16px;"  class="flex flex-row">
               <button mat-raised-button color="primary"
@@ -112,7 +112,7 @@
           </div>
         </fieldset>
         <div class="tb-hint" *ngIf="isReadOnly | async" translate>version-control.auto-commit-settings-read-only-hint</div>
-        <div class="flex flex-row justify-end items-center gap-4 xs:flex-col xs:justify-end xs:items-stretch">
+        <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch xs:justify-end">
           <button mat-raised-button color="warn" type="button" [class.!hidden]="!settings"
                   [disabled]="(isLoading$ | async) || (isReadOnly | async)" (click)="delete(formDirective)">
             {{'action.delete' | translate}}

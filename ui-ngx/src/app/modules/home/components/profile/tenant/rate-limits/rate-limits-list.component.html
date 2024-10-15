@@ -20,7 +20,7 @@
     <div class="tb-rate-limits-operation" *ngIf="$index > 0 && rateLimitsFormArray.controls.length > 1" translate>
       tenant-profile.rate-limits.but-less-than
     </div>
-    <div class="flex-1 flex flex-row gap-2">
+    <div class="flex flex-1 flex-row gap-2">
       <mat-form-field hideRequiredMarker appearance="fill" class="mat-block flex-1">
         <mat-label translate>tenant-profile.rate-limits.number-of-messages</mat-label>
         <input matInput placeholder="{{ 'tenant-profile.rate-limits.number-of-messages' | translate }}"
@@ -59,7 +59,7 @@
           [matTooltip]="'tenant-profile.rate-limits.add-limit' | translate" matTooltipPosition="above">
     <span translate>tenant-profile.rate-limits.add-limit</span>
   </button>
-  <div class="tb-rate-limits-preview flex-1 flex flex-col gap-2" [class.tb-rate-limits-preview-short]="!disabled">
+  <div class="tb-rate-limits-preview flex flex-1 flex-col gap-2" [class.tb-rate-limits-preview-short]="!disabled">
     <span translate>tenant-profile.rate-limits.preview</span>
     <tb-rate-limits-text [rateLimitsArray]="rateLimitsArray" [disabled]="disabled"></tb-rate-limits-text>
   </div>

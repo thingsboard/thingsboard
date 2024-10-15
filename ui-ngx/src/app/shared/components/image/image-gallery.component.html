@@ -17,16 +17,16 @@
 -->
 <div class="tb-images tb-absolute-fill" [class.tb-dialog-mode]="dialogMode" [class.mat-padding]="!dialogMode">
   <div class="tb-images-content flex flex-1 flex-col" [class.tb-outlined-border]="pageMode">
-    <mat-toolbar class="mat-mdc-table-toolbar lt-lg:flex lt-lg:flex-col lt-lg:justify-start lt-lg:items-stretch"
+    <mat-toolbar class="mat-mdc-table-toolbar lt-lg:flex lt-lg:flex-col lt-lg:items-stretch lt-lg:justify-start"
                  [class.!hidden]="textSearchMode || !(mode === 'grid' || dataSource?.selection.isEmpty())"
                  [class.multi-row]="!isSysAdmin">
-      <div class="flex flex-1 flex-row justify-start items-center">
+      <div class="flex flex-1 flex-row items-center justify-start">
         <div class="mat-toolbar-tools">
           <div class="tb-images-title lt-md:!hidden">
             <div tbTruncateWithTooltip>{{ (isScada ? 'scada.symbols' : 'image.gallery') | translate }}</div>
             <div *ngIf="isScada" tb-help="scada"></div>
           </div>
-          <div class="tb-images-view-type-toolbar flex flex-row justify-start items-center">
+          <div class="tb-images-view-type-toolbar flex flex-row items-center justify-start">
             <div class="tb-toolbar-button" [class.tb-selected]="mode === 'list'">
               <button mat-icon-button
                       (click)="setMode('list')"
@@ -49,9 +49,9 @@
                             [ngModel]="includeSystemImages"
                             (ngModelChange)="includeSystemImagesChanged($event)">{{ (isScada ? 'scada.include-system-symbols' : 'image.include-system-images') | translate }}</mat-slide-toggle>
         </div>
-        <section class="flex flex-1 flex-row justify-start items-center gt-md:gap-4">
+        <section class="flex flex-1 flex-row items-center justify-start gt-md:gap-4">
           <span class="flex-1"></span>
-          <section class="flex flex-row justify-start items-center">
+          <section class="flex flex-row items-center justify-start">
             <button [disabled]="isLoading$ | async"
                     mat-icon-button
                     (click)="enterFilterMode()"
@@ -205,7 +205,7 @@
                       [class.gt-md:min-w-48]="isScada"
                       [class.gt-md:max-w-48]="isScada"
                       [class.gt-md:w-48]="isScada">
-              <div class="lt-lg:!hidden flex flex-1 flex-row justify-end items-stretch">
+              <div class="flex flex-1 flex-row items-stretch justify-end lt-lg:!hidden">
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ (isScada ? 'scada.download-symbol' : 'image.download-image' ) | translate }}"
                         matTooltipPosition="above"
@@ -297,7 +297,7 @@
           <ng-container *ngTemplateOutlet="noImages"></ng-container>
         </ng-container>
         <span [class.!hidden]="!dataSource.dataLoading"
-              class="no-data-found flex justify-center items-center">{{ 'common.loading' | translate }}</span>
+              class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
       </div>
       <mat-divider></mat-divider>
       <mat-paginator [length]="dataSource.total() | async"
@@ -322,7 +322,7 @@
   </div>
 </div>
 <ng-template #loadingImages>
-  <div class="tb-absolute-fill flex flex-col justify-center items-center">
+  <div class="tb-absolute-fill flex flex-col items-center justify-center">
         <span>
           {{ 'common.loading' | translate }}
         </span>

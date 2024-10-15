@@ -18,7 +18,7 @@
 <div class="tb-json-content flex flex-col" style="background: #fff;" [class]="{'fill-height': fillHeight}"
      tb-fullscreen
      [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
-  <div style="height: 40px;" class="tb-json-content-toolbar flex flex-row justify-start items-center" *ngIf="!hideToolbar">
+  <div style="height: 40px;" class="tb-json-content-toolbar flex flex-row items-center justify-start" *ngIf="!hideToolbar">
     <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (!contentValid || required && !contentBody), 'tb-required': !disabled && required}">{{ label }}</label>
     <span class="flex-1"></span>
     <button type="button"

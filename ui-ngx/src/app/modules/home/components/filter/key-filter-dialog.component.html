@@ -28,13 +28,13 @@
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async" class="flex flex-col">
       <section class="entity-key flex flex-row gap-2">
-        <section class="flex-full flex flex-row gap-2"
+        <section class="flex flex-full flex-row gap-2"
                  [class]="{
                     'max-w-45%': isConstantKeyType,
                     'max-w-70%': !isConstantKeyType
                  }"
                  formGroupName="key">
-          <mat-form-field class="mat-block flex-full max-w-40%">
+          <mat-form-field class="mat-block max-w-40% flex-full">
             <mat-label translate>filter.key-type.key-type</mat-label>
             <mat-select required formControlName="type">
               <mat-option *ngFor="let type of entityKeyTypes" [value]="type">
@@ -42,7 +42,7 @@
               </mat-option>
             </mat-select>
           </mat-form-field>
-          <mat-form-field class="mat-block flex-full max-w-60%">
+          <mat-form-field class="mat-block max-w-60% flex-full">
             <mat-label translate>filter.key-name</mat-label>
             <input matInput required formControlName="key"
                    #keyNameInput
@@ -123,7 +123,7 @@
       </tb-filter-predicate-list>
     </fieldset>
   </div>
-  <div mat-dialog-actions class="flex justify-end items-center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

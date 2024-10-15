@@ -40,7 +40,7 @@
                     dndDraggingSourceClass="tb-chip-dragging"
                     [removable]="!disabled && !isCountDatasource"
                     (removed)="remove(key)">
-        <div dndDragImageRef class="tb-attribute-chip flex flex-row justify-start items-center gap-1"
+        <div dndDragImageRef class="tb-attribute-chip flex flex-row items-center justify-start gap-1"
              [class.tb-dragging-chip-image]="$index === dragIndex">
           <div class="tb-absolute-fill tb-dragging-chip-image-fill"></div>
           <div dndHandle *ngIf="!disabled && !dragDisabled" class="tb-chip-drag-handle">

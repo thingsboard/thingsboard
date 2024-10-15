@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div class="flex-1 flex flex-row justify-start items-center gap-2" [formGroup]="alarmDurationPredicateValueFormGroup">
-  <div class="flex-1 flex flex-col" [class.!hidden]="dynamicMode">
+<div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="alarmDurationPredicateValueFormGroup">
+  <div class="flex flex-1 flex-col" [class.!hidden]="dynamicMode">
     <mat-form-field class="mat-block" subscriptSizing="dynamic">
       <input required type="number" matInput
              step="1" min="1" max="2147483647"
@@ -36,9 +36,9 @@
       </mat-error>
     </mat-form-field>
   </div>
-  <div class="flex-1 flex flex-col" [class.!hidden]="!dynamicMode">
-    <div formGroupName="dynamicValue" class="flex flex-row justify-start items-center gap-2">
-      <div class="flex-full max-w-40% flex flex-col">
+  <div class="flex flex-1 flex-col" [class.!hidden]="!dynamicMode">
+    <div formGroupName="dynamicValue" class="flex flex-row items-center justify-start gap-2">
+      <div class="flex max-w-40% flex-full flex-col">
         <mat-form-field class="mat-block" subscriptSizing="dynamic">
           <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
             <mat-option [value]="null">
@@ -50,7 +50,7 @@
           </mat-select>
         </mat-form-field>
       </div>
-      <div class="flex-1 flex flex-col">
+      <div class="flex flex-1 flex-col">
         <mat-form-field class="mat-block source-attribute" subscriptSizing="dynamic">
           <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
         </mat-form-field>

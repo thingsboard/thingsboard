@@ -37,7 +37,7 @@
       <div class="tb-entity-table-content tb-outlined-border flex flex-col">
         <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode || !dataSource.selection.isEmpty()">
           <div class="mat-toolbar-tools">
-            <div class="title-container flex flex-row justify-start items-center xs:flex-col xs:justify-center xs:items-start">
+            <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
               <span *ngIf="entitiesTableConfig.tableTitle" class="tb-entity-table-title">{{ entitiesTableConfig.tableTitle }}</span>
               <tb-anchor #entityTableHeader></tb-anchor>
               <tb-timewindow *ngIf="entitiesTableConfig.useTimePageLink" [(ngModel)]="timewindow"
@@ -237,7 +237,7 @@
               </mat-header-cell>
               <mat-cell *matCellDef="let entity">
                 <ng-container *ngIf="cellActionDescriptors.length">
-                  <div [class.lt-lg:!hidden]="cellActionDescriptors.length !== 1" class="flex flex-row justify-end items-stretch"
+                  <div [class.lt-lg:!hidden]="cellActionDescriptors.length !== 1" class="flex flex-row items-stretch justify-end"
                        [style.width]="(cellActionDescriptors.length * 48) + 'px'"
                        [style.min-width]="(cellActionDescriptors.length * 48) + 'px'"
                        [style.max-width]="(cellActionDescriptors.length * 48) + 'px'">
@@ -281,9 +281,9 @@
                      *matRowDef="let entity; columns: displayedColumns;" (click)="onRowClick($event, entity)"></mat-row>
           </table>
           <span [class.!hidden]="(isLoading$ | async) || (dataSource.isEmpty() | async) === false || dataSource.dataLoading"
-                class="no-data-found flex justify-center items-center">{{ translations.noEntities | translate }}</span>
+                class="no-data-found flex items-center justify-center">{{ translations.noEntities | translate }}</span>
           <span [class.!hidden]="!dataSource.dataLoading"
-                class="no-data-found flex justify-center items-center">{{ 'common.loading' | translate }}</span>
+                class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
         </div>
         <mat-divider *ngIf="displayPagination"></mat-divider>
         <mat-paginator *ngIf="displayPagination"

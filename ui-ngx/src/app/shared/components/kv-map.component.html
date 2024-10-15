@@ -17,7 +17,7 @@
 -->
 <section class="tb-kv-map flex flex-col" [formGroup]="kvListFormGroup">
   <label translate class="tb-title">{{ titleText }}</label>
-  <div class="flex flex-row justify-start items-center gap-2"
+  <div class="flex flex-row items-center justify-start gap-2"
        formArrayName="keyVals"
        *ngFor="let keyValControl of keyValsFormArray().controls; let $index = index">
     <mat-form-field class="mat-block flex-1" subscriptSizing="{{ subscriptSizing }}">
@@ -42,7 +42,7 @@
           'disabled': disabled,
           '!hidden': keyValsFormArray().length
         }"
-        class="no-data-found flex justify-center items-center" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
+        class="no-data-found flex items-center justify-center" translate>{{noDataText ? noDataText : 'key-val.no-data'}}</span>
   <div style="margin-top: 8px;">
     <button mat-button mat-raised-button color="primary"
             [class.!hidden]="disabled"

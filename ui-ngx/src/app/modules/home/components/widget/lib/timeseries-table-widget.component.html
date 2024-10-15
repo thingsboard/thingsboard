@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
-  <div class="tb-absolute-fill flex-1 flex flex-col">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
@@ -72,7 +72,7 @@
                 </mat-header-cell>
                 <mat-cell *matCellDef="let row; let rowIndex = index" [style]="rowStyle(source, row, rowIndex)">
                   <ng-container *ngIf="source.timeseriesDatasource.countCellButtonAction">
-                    <div [class.lt-lg:!hidden]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" class="flex flex-row justify-end items-stretch"
+                    <div [class.lt-lg:!hidden]="showCellActionsMenu && source.timeseriesDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                          [style.min-width]="(source.timeseriesDatasource.countCellButtonAction * 40) + 'px'">
                       <ng-container *ngFor="let actionDescriptor of row.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                         <span *ngIf="!actionDescriptor.icon" style="width: 40px;"></span>
@@ -114,7 +114,7 @@
                        (click)="onRowClick($event, row)"></mat-row>
             </table>
             <span [class.!hidden]="(source.timeseriesDatasource.isEmpty() | async) === false"
-                  class="no-data-found flex justify-center items-center">{{ noDataDisplayMessageText }}</span>
+                  class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
           </div>
           <mat-divider *ngIf="displayPagination"></mat-divider>
           <mat-paginator *ngIf="displayPagination"

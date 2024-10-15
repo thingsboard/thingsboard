@@ -16,10 +16,10 @@
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill">
-  <div class="tb-entity-table-content tb-outlined-border flex-1 flex flex-col">
+  <div class="tb-entity-table-content tb-outlined-border flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="mode !== 'default' || textSearchMode || !dataSource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
-        <div class="title-container flex flex-row justify-start items-center xs:flex-col xs:justify-center xs:items-start">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
           <span class="tb-entity-table-title">{{telemetryTypeTranslationsMap.get(attributeScope) | translate}}</span>
           <mat-form-field class="mat-block tb-attribute-scope" *ngIf="!disableAttributeScopeSelection && !attributeScopeSelectionReadonly">
             <mat-label translate>attribute.attributes-scope</mat-label>
@@ -106,7 +106,7 @@
     </mat-toolbar>
     <mat-toolbar class="mat-mdc-table-toolbar" color="primary" [class.!hidden]="mode !== 'widget'">
       <div class="mat-toolbar-tools gap-2 xs:flex xs:flex-row xs:flex-wrap">
-        <div class="flex-1 flex flex-row justify-start items-stretch">
+        <div class="flex flex-1 flex-row items-stretch justify-start">
           <span class="tb-details-subtitle">{{ 'widgets-bundle.current' | translate }}</span>
           <tb-widgets-bundle-select class="flex-1"
                                     style="margin-left: 5%"
@@ -182,8 +182,8 @@
           <mat-cell *matCellDef="let attribute"
                     class="tb-value-cell attribute"
                     (click)="editAttribute($event, attribute)">
-            <div class="flex-1 flex flex-row" style="align-items: center">
-              <div class="flex-1 flex flex-row" style="overflow: hidden; align-items: center;">
+            <div class="flex flex-1 flex-row" style="align-items: center">
+              <div class="flex flex-1 flex-row" style="overflow: hidden; align-items: center;">
                 <span class="ellipsis">{{attribute.value | tbJson}}</span>
                 <tb-copy-button
                   *ngIf="attribute.value !== ''"
@@ -212,7 +212,7 @@
                  *matRowDef="let attribute; columns: displayedColumns;" (click)="dataSource.selection.toggle(attribute)"></mat-row>
       </table>
       <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
-            class="no-data-found flex justify-center items-center" translate>{{
+            class="no-data-found flex items-center justify-center" translate>{{
           attributeScope === latestTelemetryTypes.LATEST_TELEMETRY
               ? 'attribute.no-telemetry-text'
               : 'attribute.no-attributes-text'
@@ -275,8 +275,8 @@
     <span translate *ngIf="mode === 'widget' && widgetsLoaded &&
                            widgetsList.length === 0 &&
                            widgetBundleSet"
-          class="mat-headline-5 flex-1 flex justify-center items-center">widgets-bundle.empty</span>
+          class="mat-headline-5 flex flex-1 items-center justify-center">widgets-bundle.empty</span>
     <span translate *ngIf="mode === 'widget' && !widgetBundleSet"
-          class="mat-headline-5 flex-1 flex justify-center items-center">widget.select-widgets-bundle</span>
+          class="mat-headline-5 flex flex-1 items-center justify-center">widget.select-widgets-bundle</span>
   </div>
 </div>

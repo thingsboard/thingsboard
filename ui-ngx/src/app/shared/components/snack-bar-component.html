@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="flex flex-row justify-start items-center"
+<div class="flex flex-row items-center justify-start"
      [@showHideAnimation]="{value: animationState, params: animationParams}"
      (@showHideAnimation.done)="onHideFinished($event)"
      [class.tb-toast]="!notification.modern"

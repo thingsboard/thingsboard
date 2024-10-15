@@ -22,7 +22,7 @@
        [class.pb-2]="!isLast">
     <mat-expansion-panel class="flex-1" [expanded]="true">
       <mat-expansion-panel-header>
-        <div class="flex-1 flex flex-row justify-start items-center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           <mat-panel-title>
             {{ getTitle(queuesControl.value.name) }}
           </mat-panel-title>
@@ -43,7 +43,7 @@
   </div>
   <div *ngIf="!queuesFormArray.controls.length">
       <span translate
-            class="tb-prompt flex justify-center items-center">tenant-profile.no-queue</span>
+            class="tb-prompt flex items-center justify-center">tenant-profile.no-queue</span>
   </div>
   <div *ngIf="!disabled" style="padding-top: 16px;">
     <button mat-raised-button color="primary"

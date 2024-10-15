@@ -90,7 +90,7 @@
       </mat-slide-toggle>
       <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
         <tb-unit-input class="flex" formControlName="valueUnits"></tb-unit-input>
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="valueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
         </mat-form-field>
@@ -186,7 +186,7 @@
         {{ 'widgets.slider.left-icon' | translate }}
       </div>
       <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="leftIconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-css-unit-select fxFlex formControlName="leftIconSizeUnit"></tb-css-unit-select>
@@ -205,7 +205,7 @@
         {{ 'widgets.slider.right-icon' | translate }}
       </div>
       <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="rightIconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-css-unit-select fxFlex formControlName="rightIconSizeUnit"></tb-css-unit-select>

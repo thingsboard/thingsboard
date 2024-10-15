@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-row justify-center items-center"
+<div class="tb-two-factor-auth-login-content mat-app-background tb-dark flex flex-row items-center justify-center"
      style="width: 100%;">
   <mat-card appearance="raised" class="tb-two-factor-auth-login-card flex-initial">
     <mat-card-header>
-      <mat-card-title class="mat-headline-5 flex flex-row justify-start items-center">
+      <mat-card-title class="mat-headline-5 flex flex-row items-center justify-start">
         <button mat-icon-button type="button" (click)="cancelLogin()">
           <mat-icon>chevron_left</mat-icon>
         </button>
@@ -69,8 +69,8 @@
               {{ 'action.continue' | translate }}
             </button>
             <span style="height: 16px;"></span>
-            <div class="action-row flex flex-row justify-between items-center gap-2">
-              <div *ngIf="showResendAction" class="action-resend flex flex-1 justify-center items-center">
+            <div class="action-row flex flex-row items-center justify-between gap-2">
+              <div *ngIf="showResendAction" class="action-resend flex flex-1 items-center justify-center">
                 <div *ngIf="countDownTime" class="timer">
                   {{ 'login.resend-code-wait' | translate : {time: countDownTime} }}
                 </div>

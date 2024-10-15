@@ -50,7 +50,7 @@
         {{ 'widgets.liquid-level-card.icon' | translate }}
       </mat-slide-toggle>
       <div class="tb-flex row flex-end align-center">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
@@ -165,7 +165,7 @@
           </mat-select>
         </mat-form-field>
         <mat-form-field *ngIf="levelCardWidgetConfigForm.get('volumeSource').value === DataSourceType.static; else volumeAttributes"
-                        appearance="outline" class="flex number" subscriptSizing="dynamic">
+                        appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="volumeConstant" type="number"
                  min="0.1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           <mat-icon matSuffix
@@ -227,7 +227,7 @@
          *ngIf="levelCardWidgetConfigForm.get('layout').value !== LevelCardLayout.simple">
       <div class="fixed-title-width" translate>widgets.liquid-level-card.value</div>
       <div class="tb-flex row flex-end align-center">
-        <mat-form-field style="max-width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field style="max-width: 40%;" appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number"
                  min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
@@ -256,7 +256,7 @@
       [disabled]="!levelCardWidgetConfigForm.get('showTooltip').value">
       <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide flex justify-center items-stretch" formControlName="showTooltip" (click)="$event.stopPropagation()">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
             {{ 'widget-config.tooltip' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -271,7 +271,7 @@
                            [tagFilter]="unitsType.capacity"
                            formControlName="tooltipUnits">
             </tb-unit-input>
-            <mat-form-field style="width: 40%;" appearance="outline" class="flex number" subscriptSizing="dynamic">
+            <mat-form-field style="width: 40%;" appearance="outline" class="number flex" subscriptSizing="dynamic">
               <input matInput formControlName="tooltipLevelDecimals" type="number" min="0"
                      max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
               <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>

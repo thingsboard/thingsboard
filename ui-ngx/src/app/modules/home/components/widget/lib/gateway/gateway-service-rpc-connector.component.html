@@ -205,9 +205,9 @@
         <mat-slide-toggle class="mat-slide margin" formControlName="withResponse">
           {{ 'gateway.rpc.withResponse' | translate }}
         </mat-slide-toggle>
-        <fieldset class="fields border flex flex-col gap-2.5" formArrayName="oid">
+        <fieldset class="fields flex flex-col gap-2.5 border" formArrayName="oid">
           <span class="fields-label">{{ 'gateway.rpc.oids' | translate }}*</span>
-          <div class="flex flex-1 flex-row justify-center items-center gap-2.5"
+          <div class="flex flex-1 flex-row items-center justify-center gap-2.5"
                *ngFor="let control of getFormArrayControls('oid'); let i = index">
             <mat-form-field class="tb-inline-field flex-1" appearance="outline" subscriptSizing="dynamic">
               <input matInput [formControl]="control" required/>
@@ -231,7 +231,7 @@
           <input matInput formControlName="methodFilter" placeholder="post_attributes"/>
         </mat-form-field>
         <div class="flex flex-1 flex-row gap-2.5">
-          <mat-form-field class="flex-[1_1_33%] max-w-4/12">
+          <mat-form-field class="max-w-4/12 flex-[1_1_33%]">
             <mat-label>{{ 'gateway.rpc.httpMethod' | translate }}</mat-label>
             <mat-select formControlName="httpMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
@@ -266,16 +266,16 @@
           <mat-label>{{ 'gateway.rpc.valueExpression' | translate }}</mat-label>
           <input matInput formControlName="valueExpression" placeholder="${params}"/>
         </mat-form-field>
-        <fieldset class="fields border flex flex-col gap-2.5" formArrayName="httpHeaders">
+        <fieldset class="fields flex flex-col gap-2.5 border" formArrayName="httpHeaders">
           <span class="fields-label">{{ 'gateway.rpc.httpHeaders' | translate }}</span>
-          <div class="border flex flex-col gap-2.5" *ngIf="getFormArrayControls('httpHeaders').length">
-            <div class="flex flex-row justify-center items-center gap-2.5">
+          <div class="flex flex-col gap-2.5 border" *ngIf="getFormArrayControls('httpHeaders').length">
+            <div class="flex flex-row items-center justify-center gap-2.5">
               <span class="title flex-1">{{ 'gateway.rpc.header-name' | translate }}</span>
               <span class="title flex-1">{{ 'gateway.rpc.value' | translate }}</span>
               <span style="width: 30px"></span>
             </div>
             <mat-divider></mat-divider>
-            <div class="flex flex-row justify-center items-center gap-2.5"
+            <div class="flex flex-row items-center justify-center gap-2.5"
                  *ngFor="let control of getFormArrayControls('httpHeaders'); let i = index">
               <ng-container [formGroupName]="i">
                 <mat-form-field appearance="outline" class="flex-1">
@@ -304,8 +304,8 @@
           <mat-label>{{ 'gateway.rpc.methodFilter' | translate }}</mat-label>
           <input matInput formControlName="methodFilter" placeholder="echo"/>
         </mat-form-field>
-        <div class="flex flex-row justify-center items-center gap-2.5">
-          <mat-form-field class="flex-[1_1_33%] max-w-4/12">
+        <div class="flex flex-row items-center justify-center gap-2.5">
+          <mat-form-field class="max-w-4/12 flex-[1_1_33%]">
             <mat-label>{{ 'gateway.rpc.httpMethod' | translate }}</mat-label>
             <mat-select formControlName="httpMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
@@ -318,7 +318,7 @@
             <input matInput formControlName="requestUrlExpression" placeholder="http://127.0.0.1:5000/my_devices"/>
           </mat-form-field>
         </div>
-        <div class="flex flex-row justify-center items-center gap-2.5">
+        <div class="flex flex-row items-center justify-center gap-2.5">
           <mat-form-field class="flex-1">
             <mat-label>{{ 'gateway.rpc.responseTimeout' | translate }}</mat-label>
             <input matInput formControlName="responseTimeout" type="number"
@@ -343,16 +343,16 @@
           <mat-label>{{ 'gateway.rpc.responseValueExpression' | translate }}</mat-label>
           <input matInput formControlName="responseValueExpression" placeholder="${temp}"/>
         </mat-form-field>
-        <fieldset class="fields border flex flex-col gap-2.5" formArrayName="httpHeaders">
+        <fieldset class="fields flex flex-col gap-2.5 border" formArrayName="httpHeaders">
           <span class="fields-label">{{ 'gateway.rpc.httpHeaders' | translate }}</span>
-          <div class="border flex flex-col gap-2.5" *ngIf="getFormArrayControls('httpHeaders').length">
-            <div class="flex flex-row justify-center items-center gap-2.5">
+          <div class="flex flex-col gap-2.5 border" *ngIf="getFormArrayControls('httpHeaders').length">
+            <div class="flex flex-row items-center justify-center gap-2.5">
               <span class="title flex-1">{{ 'gateway.rpc.header-name' | translate }}</span>
               <span class="title flex-1">{{ 'gateway.rpc.value' | translate }}</span>
               <span style="width: 30px"></span>
             </div>
             <mat-divider></mat-divider>
-            <div class="flex flex-row justify-center items-center gap-2.5"
+            <div class="flex flex-row items-center justify-center gap-2.5"
                  *ngFor="let control of getFormArrayControls('httpHeaders'); let i = index">
               <ng-container [formGroupName]="i">
                 <mat-form-field appearance="outline" class="flex-1">

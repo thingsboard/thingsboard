@@ -99,7 +99,7 @@
               </mat-form-field>
             </section>
           </fieldset>
-          <div class="flex flex-row justify-end items-center gap-4 xs:flex-col xs:justify-end xs:items-stretch">
+          <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch xs:justify-end">
             <button mat-raised-button color="warn" type="button" [class.!hidden]="!settings"
                     [disabled]="(isLoading$ | async)" (click)="delete(formDirective)">
               {{'action.delete' | translate}}

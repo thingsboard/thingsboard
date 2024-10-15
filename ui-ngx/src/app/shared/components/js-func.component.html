@@ -18,7 +18,7 @@
 <div class="tb-js-func flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'tb-hide-brackets': hideBrackets}"
      tb-fullscreen
      [fullscreen]="fullscreen">
-  <div style="min-height: 40px;" class="tb-js-func-toolbar flex flex-row justify-start items-center">
+  <div style="min-height: 40px;" class="tb-js-func-toolbar flex flex-row items-center justify-start">
     <label class="tb-title no-padding"
            [class]="{'tb-error': !disabled && (hasErrors || !functionValid || required && !modelValue), 'tb-required': !disabled && required}">
       {{ functionLabel }}
@@ -44,7 +44,7 @@
   <div id="tb-javascript-panel" class="tb-js-func-panel flex flex-col" tb-toast toastTarget="{{toastTargetId}}">
     <div #javascriptEditor id="tb-javascript-input" [style]="fillHeight ? {} : {minHeight: minHeight}" [class.fill-height]="fillHeight"></div>
   </div>
-  <div *ngIf="!hideBrackets" class="flex flex-row justify-start items-center" style="height: 40px;">
+  <div *ngIf="!hideBrackets" class="flex flex-row items-center justify-start" style="height: 40px;">
     <label class="tb-title no-padding" [class]="{'tb-error': hasErrors || !functionValid || required && !modelValue}">&#125;</label>
   </div>
 </div>

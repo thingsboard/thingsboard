@@ -23,13 +23,13 @@
            [class.tb-dashboard-toolbar-closed]="!toolbarOpened">
     <tb-dashboard-toolbar [class.!hidden]="widgetEditMode || hideToolbar" [forceFullscreen]="forceFullscreen"
                           [toolbarOpened]="toolbarOpened" (triggerClick)="openToolbar()">
-      <div class="tb-dashboard-action-panels flex flex-col justify-center items-stretch gt-sm:flex-row gt-sm:justify-between gt-sm:items-center">
+      <div class="tb-dashboard-action-panels flex flex-col items-stretch justify-center gt-sm:flex-row gt-sm:items-center gt-sm:justify-between">
         <div class="tb-dashboard-action-panel tb-left-panel" [class.!hidden]="isMobileApp && !isEdit">
           <tb-user-menu *ngIf="!isPublicUser() && forceFullscreen" class="gt-sm:!hidden" displayUserInfo="true">
           </tb-user-menu>
           <ng-container *ngIf="isEdit">
             <div style="flex: 1 1 100%" class="gt-sm:!hidden"></div>
-            <div class="flex flex-row justify-end items-center lt-md:flex-1 gt-sm:justify-start gt-sm:items-center lt-lg:gap-0.75 lg:gap-1.5 gt-lg:gap-3">
+            <div class="flex flex-row items-center justify-end lg:gap-1.5 lt-md:flex-1 lt-lg:gap-0.75 gt-sm:items-center gt-sm:justify-start gt-lg:gap-3">
               <mat-divider class="tb-toolbar-divider" vertical></mat-divider>
               <button class="gt-md:!hidden" mat-icon-button
                       matTooltip="{{'layout.manage' | translate}}"
@@ -275,7 +275,7 @@
            [class.tb-dashboard-toolbar-animated]="isToolbarOpenedAnimate"
            [class.tb-dashboard-toolbar-closed]="!toolbarOpened">
     <mat-drawer-container hasBackdrop="false" class="tb-absolute-fill tb-dashboard-drawer-container">
-      <mat-drawer-content #dashboardContent class="flex flex-col justify-center items-start">
+      <mat-drawer-content #dashboardContent class="flex flex-col items-start justify-center">
         <section *ngIf="!widgetEditMode" class="tb-dashboard-title"
                  [style.color]="dashboard.configuration.settings.titleColor">
           <h3 [class.!hidden]="isEdit || !displayTitle()">{{ translatedDashboardTitle }}</h3>
@@ -335,7 +335,7 @@
             </div>
           </mat-drawer-content>
         </mat-drawer-container>
-        <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap justify-start items-end" *ngIf="!readonly && (hideToolbar || widgetEditMode)">
+        <section data-html2canvas-ignore class="tb-header-buttons tb-enter-edit-mode flex flex-row flex-wrap items-end justify-start" *ngIf="!readonly && (hideToolbar || widgetEditMode)">
           <button [class.!hidden]="isEdit"
                   color="primary"
                   mat-mini-fab
@@ -380,7 +380,7 @@
                           headerSubtitle="{{ editingWidgetSubtitle }}"
                           [isReadOnly]="true"
                           (closeDetails)="onEditWidgetClosed()">
-          <div class="details-buttons flex flex-row justify-start items-center gap-4">
+          <div class="details-buttons flex flex-row items-center justify-start gap-4">
             <tb-toggle-select *ngIf="tbEditWidget.widgetConfig?.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs" [(ngModel)]="tbEditWidget.widgetConfigMode">
               <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
               <tb-toggle-option value="advanced">{{ 'widget.advanced-mode' | translate }}</tb-toggle-option>
@@ -425,7 +425,7 @@
                                                         ? 'widgets-bundle.search' : 'widget.search') | translate }}">
             </tb-widgets-bundle-search>
           </div>
-          <div class="details-buttons flex flex-row justify-start items-center" *ngIf="isAddingWidget">
+          <div class="details-buttons flex flex-row items-center justify-start" *ngIf="isAddingWidget">
             <button mat-button type="button" (click)="importWidget($event)"
                     *ngIf="dashboardWidgetSelectComponent?.selectWidgetMode === 'bundles' && !dashboardWidgetSelectComponent?.widgetsBundle">
               <mat-icon>file_upload</mat-icon>{{ 'dashboard.import-widget' | translate }}</button>

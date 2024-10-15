@@ -16,10 +16,10 @@
 
 -->
 <div class="mat-padding tb-entity-table tb-absolute-fill" [class.tb-popover-mode]="popoverComponent">
-  <div class="tb-entity-table-content flex-1 flex flex-col" [class.tb-outlined-border]="!popoverComponent">
+  <div class="tb-entity-table-content flex flex-1 flex-col" [class.tb-outlined-border]="!popoverComponent">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
       <div class="mat-toolbar-tools">
-        <div class="title-container flex flex-row justify-start items-center xs:flex-col xs:justify-center xs:items-start">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
           <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
           <tb-branch-autocomplete
             #branchAutocompleteComponent
@@ -32,7 +32,7 @@
           </tb-branch-autocomplete>
         </div>
         <span class="flex-1"></span>
-        <div class="flex flex-row justify-center items-center xs:flex-col xs:justify-center xs:items-end">
+        <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center">
           <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
                   #createVersionButton
                   [disabled]="(isLoading$ | async) || (isReadOnly | async)"
@@ -128,7 +128,7 @@
                                              [class.min-w-10]="!singleEntityMode" [class.max-w-10]="!singleEntityMode" [class.w-10]="!singleEntityMode">
           </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
-            <div class="flex-1 flex flex-row justify-end items-stretch">
+            <div class="flex flex-1 flex-row items-stretch justify-end">
               <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
                       matTooltip="{{ 'version-control.compare-with-current' | translate }}"
                       matTooltipPosition="above"
@@ -157,13 +157,13 @@
         <mat-row [class.!hidden]="dataSource.dataLoading" *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
       </table>
       <span [class.!hidden]="(isLoading$ | async) || (dataSource.isEmpty() | async) === false || dataSource.dataLoading"
-            class="no-data-found flex justify-center items-center" translate>{{
+            class="no-data-found flex items-center justify-center" translate>{{
         singleEntityMode
           ? 'version-control.no-entity-versions-text'
           : 'version-control.no-versions-text'
         }}</span>
       <span [class.!hidden]="!dataSource.dataLoading"
-            class="no-data-found flex justify-center items-center">{{ 'common.loading' | translate }}</span>
+            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"

@@ -26,7 +26,7 @@
   <mat-spinner *ngIf="!entityDataInfo" mode="indeterminate" diameter="80"></mat-spinner>
   <form *ngIf="entityDataInfo" [formGroup]="restoreFormGroup" style="padding-top: 16px;">
     <fieldset [disabled]="isLoading$ | async">
-      <div class="flex-1 flex flex-col">
+      <div class="flex flex-1 flex-col">
         <mat-checkbox *ngIf="entityDataInfo.hasCredentials" formControlName="loadCredentials" style="margin-bottom: 16px;">
           {{ 'version-control.load-credentials' | translate }}
         </mat-checkbox>
@@ -39,7 +39,7 @@
       </div>
     </fieldset>
   </form>
-  <div *ngIf="entityDataInfo"  class="flex justify-end items-center gap-2">
+  <div *ngIf="entityDataInfo"  class="flex items-center justify-end gap-2">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -58,7 +58,7 @@
   <section *ngIf="(versionLoadResult$ | async)?.done || errorMessage; else progress">
     <section *ngIf="errorMessage">
       <div class="mat-headline-6 vc-result-message error" [innerHTML]="errorMessage"></div>
-      <div class="flex justify-end items-center gap-2">
+      <div class="flex items-center justify-end gap-2">
         <button mat-button color="primary"
                 type="button"
                 [disabled]="(isLoading$ | async)"
@@ -69,7 +69,7 @@
     </section>
   </section>
   <ng-template #progress>
-    <section class="flex flex-col justify-center items-center">
+    <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.restoring-entity-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>

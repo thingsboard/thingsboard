@@ -68,9 +68,9 @@
                *matRowDef="let row; columns: displayedColumns;"></mat-row>
     </table>
     <span [class.!hidden]="dataSource.data.length !== 0 || isNumericData"
-          class="no-data-found justify-center items-start">{{ 'attribute.no-telemetry-text' | translate }}</span>
-    <div class="legend flex flex-1 flex-row justify-center items-center" [class.!hidden]="!isNumericData">
-      <div class="legend-keys flex flex-row justify-center items-center" *ngFor="let legendKey of legendData?.keys">
+          class="no-data-found items-start justify-center">{{ 'attribute.no-telemetry-text' | translate }}</span>
+    <div class="legend flex flex-1 flex-row items-center justify-center" [class.!hidden]="!isNumericData">
+      <div class="legend-keys flex flex-row items-center justify-center" *ngFor="let legendKey of legendData?.keys">
         <span class="legend-line" [style.background-color]="legendKey.dataKey.color"></span>
         <div class="legend-label"
              (click)="onLegendKeyHiddenChange(legendKey.dataIndex)"

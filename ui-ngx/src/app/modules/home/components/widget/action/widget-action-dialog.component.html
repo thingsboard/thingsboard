@@ -99,7 +99,7 @@
                                [disabled]="!widgetActionFormGroup.get('useShowWidgetActionFunction').value">
             <mat-expansion-panel-header class="flex flex-row flex-wrap">
               <mat-panel-title>
-                <mat-slide-toggle class="mat-slide flex justify-center items-stretch" formControlName="useShowWidgetActionFunction" (click)="$event.stopPropagation()">
+                <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="useShowWidgetActionFunction" (click)="$event.stopPropagation()">
                   {{ 'widget-config.show-hide-action-using-function' | translate }}
                 </mat-slide-toggle>
               </mat-panel-title>
@@ -125,7 +125,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions class="flex justify-end items-center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
-  <div class="tb-absolute-fill flex-1 flex flex-col">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
@@ -61,7 +61,7 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let entity; let row = index" [style]="rowStyle(entity, row)">
             <ng-container *ngIf="entityDatasource.countCellButtonAction">
-              <div [class.lt-lg:!hidden]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" class="flex flex-row justify-end items-stretch"
+              <div [class.lt-lg:!hidden]="showCellActionsMenu && entityDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                    [style.min-width]="(entityDatasource.countCellButtonAction * 48) + 'px'">
                 <ng-container *ngFor="let actionDescriptor of entity.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                   <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
@@ -103,9 +103,9 @@
                  (click)="onRowClick($event, entity)" (dblclick)="onRowClick($event, entity, true)"></mat-row>
       </table>
       <span [class.!hidden]="(entityDatasource.isEmpty() | async) === false || entityDatasource.dataLoading"
-            class="no-data-found flex justify-center items-center">{{ noDataDisplayMessageText }}</span>
+            class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
       <span [class.!hidden]="!entityDatasource.dataLoading"
-            class="no-data-found flex justify-center items-center">{{ 'common.loading' | translate }}</span>
+            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider *ngIf="displayPagination"></mat-divider>
     <mat-paginator *ngIf="displayPagination"

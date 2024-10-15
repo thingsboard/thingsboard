@@ -54,7 +54,7 @@
     </div>
     <div *ngIf="[ScadaSymbolBehaviorType.value, ScadaSymbolBehaviorType.action].includes(behaviorFormGroup.get('type').value)" class="tb-form-row">
       <div class="fixed-title-width" translate>scada.behavior.value-type</div>
-      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="flex tb-value-type">
+      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-value-type flex">
         <mat-select formControlName="valueType">
           <mat-select-trigger *ngIf="behaviorFormGroup.get('valueType').value">
             <div class="tb-value-type-row">

@@ -89,7 +89,7 @@
                 <tb-icon>delete</tb-icon>
               </button>
             </ng-template>
-            <div class="flex flex-1 flex-row justify-end items-stretch lt-lg:!hidden"
+            <div class="flex flex-1 flex-row items-stretch justify-end lt-lg:!hidden"
                  [style]="{ minWidth: '96px', textAlign: 'center'}">
               <ng-container [ngTemplateOutlet]="rowActions"></ng-container>
             </div>
@@ -109,7 +109,7 @@
         <mat-row *matRowDef="let mapping; columns: displayedColumns;"></mat-row>
       </table>
       <section [class.!hidden]="textSearchMode || (dataSource.isEmpty() | async) === false"
-               class="mat-headline-5 tb-absolute-fill tb-add-new justify-center items-center">
+               class="mat-headline-5 tb-absolute-fill tb-add-new items-center justify-center">
         <button mat-button class="connector"
                 (click)="manageMapping($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
@@ -118,7 +118,7 @@
       </section>
     </div>
     <span [class.!hidden]="!textSearchMode || (dataSource.isEmpty() | async) === false"
-          class="no-data-found justify-center items-center" translate>
+          class="no-data-found items-center justify-center" translate>
       widget.no-data-found
     </span>
   </div>

@@ -44,7 +44,7 @@
             </tb-file-input>
           </fieldset>
         </form>
-        <div class="flex flex-row justify-end items-center gap-5">
+        <div class="flex flex-row items-center justify-end gap-5">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="cancel()">{{ 'action.cancel' | translate }}</button>
@@ -76,7 +76,7 @@
             </div>
           </fieldset>
         </form>
-        <div class="flex flex-row flex-wrap justify-between items-center">
+        <div class="flex flex-row flex-wrap items-center justify-between">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="previousStep()">{{ 'action.back' | translate }}</button>
@@ -96,7 +96,7 @@
           <ng-template matStepLabel>{{ 'import.stepper-text.column-type' | translate }}</ng-template>
           <tb-table-columns-assignment #columnsAssignmentComponent formControlName="columnsParam" [entityType]="entityType"></tb-table-columns-assignment>
         </form>
-        <div class="flex flex-row flex-wrap justify-between items-center">
+        <div class="flex flex-row flex-wrap items-center justify-between">
           <button mat-button
                   [disabled]="(isLoading$ | async)"
                   (click)="previousStep()">{{ 'action.back' | translate }}</button>
@@ -140,7 +140,7 @@
             <div #failureDetailsEditor class="tb-failure-details"></div>
           </mat-expansion-panel>
         </div>
-        <div class="flex flex-row justify-end items-center gap-5">
+        <div class="flex flex-row items-center justify-end gap-5">
           <button mat-raised-button
                   [disabled]="(isLoading$ | async)"
                   color="primary"

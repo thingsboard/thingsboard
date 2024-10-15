@@ -24,8 +24,8 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
       <div class="flex flex-row">
-        <span class="flex-full max-w-8%"></span>
-        <div class="flex-full max-w-92% flex flex-row justify-start items-center">
+        <span class="max-w-8% flex-full"></span>
+        <div class="flex max-w-92% flex-full flex-row items-center justify-start">
           <label translate class="tb-title no-padding flex-1">filter.key-name</label>
           <label translate class="tb-title no-padding flex-1">filter.key-type.key-type</label>
           <span [class.!hidden]="disabled" style="min-width: 80px;">&nbsp;</span>
@@ -34,14 +34,14 @@
       </div>
       <mat-divider></mat-divider>
       <div class="key-filter-list">
-        <div class="flex flex-row justify-start items-stretch" style="max-height: 76px;"
+        <div class="flex flex-row items-stretch justify-start" style="max-height: 76px;"
              formArrayName="keyFilters"
              *ngFor="let keyFilterControl of keyFiltersFormArray.controls; let $index = index">
-          <div class="filters-operation flex-full max-w-8%">
+          <div class="filters-operation max-w-8% flex-full">
             <span *ngIf="$index > 0" translate>filter.operation.and</span>
           </div>
-          <div class="flex-full max-w-92% flex flex-col">
-            <div class="flex flex-row justify-start items-center">
+          <div class="flex max-w-92% flex-full flex-col">
+            <div class="flex flex-row items-center justify-start">
               <div class="flex-1">{{ keyFilterControl.value.key.key }}</div>
               <div class="flex-1">{{ entityKeyTypeTranslations.get(keyFilterControl.value.key.type) | translate }}</div>
               <button mat-icon-button color="primary"
@@ -65,7 +65,7 @@
         </div>
         <span [class.!hidden]="!!keyFiltersFormArray.length"
               [class.disabled]="disabled"
-              class="no-data-found flex justify-center items-center" translate>filter.no-key-filters</span>
+              class="no-data-found flex items-center justify-center" translate>filter.no-key-filters</span>
       </div>
       <div style="margin-top: 16px;">
         <button mat-button mat-raised-button color="primary"

@@ -17,7 +17,7 @@
 -->
 <div [formGroup]="alarmCommentFormGroup" class="tb-alarm-comments flex flex-col">
   <div class="header" [class.activity-only]="alarmActivityOnly">
-    <div class="header-container flex flex-row justify-between items-center"
+    <div class="header-container flex flex-row items-center justify-between"
          [class.asc]="isDirectionAscending()"
          [class.activity-only]="alarmActivityOnly">
       <span class="header-title" translate>
@@ -67,12 +67,12 @@
           </span>
         </div>
         <ng-template #userComment>
-          <div class="user-comment flex flex-row justify-start items-center gap-2"
+          <div class="user-comment flex flex-row items-center justify-start gap-2"
                *ngIf="!displayDataElement.edit; else commentEditing"
                (mouseenter)="onCommentMouseEnter(displayDataElement.commentId, i)"
                (mouseleave)="onCommentMouseLeave(i)">
             <div *ngIf="displayDataElement.userExists; else userDeleted"
-                 class="user-avatar flex flex-row justify-center items-center self-start xs:!hidden"
+                 class="user-avatar flex flex-row items-center justify-center self-start xs:!hidden"
                  [style.background-color]="displayDataElement.avatarBgColor">
               {{ getUserInitials(displayDataElement.displayName) }}
             </div>
@@ -80,7 +80,7 @@
               <mat-icon class="mat-icon tb-mat-28 xs:!hidden">no_accounts</mat-icon>
             </ng-template>
             <div class="flex flex-1 flex-col" style="gap: 5px">
-              <div class="flex flex-row justify-start items-center gap-2">
+              <div class="flex flex-row items-center justify-start gap-2">
                 <span class="user-name">{{ displayDataElement.displayName }}</span>
                 <span class="time"
                       [matTooltip]="displayDataElement.createdTime"
@@ -110,8 +110,8 @@
             </div>
           </div>
           <ng-template #commentEditing>
-            <div class="flex flex-row justify-start items-center gap-2">
-              <div class="user-avatar flex flex-row justify-center items-center"
+            <div class="flex flex-row items-center justify-start gap-2">
+              <div class="user-avatar flex flex-row items-center justify-center"
                    [style.background-color]="displayDataElement.avatarBgColor">
                 {{ getUserInitials(displayDataElement.displayName) }}
               </div>
@@ -153,8 +153,8 @@
          [class.newest-first]="!isDirectionAscending()"
          [class.oldest-first]="isDirectionAscending()"
          [class.activity-only]="alarmActivityOnly">
-      <div class="inner-wrap flex flex-row justify-start items-center gap-2">
-        <div class="user-avatar flex flex-row justify-center items-center"
+      <div class="inner-wrap flex flex-row items-center justify-start gap-2">
+        <div class="user-avatar flex flex-row items-center justify-center"
              *ngIf="userDisplayName$ | async; let userDisplayName"
              [style.background-color]="getCurrentUserBgColor(userDisplayName)">
           {{ getUserInitials(userDisplayName) }}

@@ -34,7 +34,7 @@
         <mat-panel-title>
           <div *ngIf="!readonly" tb-hint-tooltip-icon="{{ 'image.embed-to-html-hint' | translate }}"
                class="tb-form-row no-border no-padding">
-            <mat-slide-toggle class="mat-slide flex justify-center items-stretch" [formControl]="publicStatusControl" (click)="$event.stopPropagation()">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" [formControl]="publicStatusControl" (click)="$event.stopPropagation()">
               <div class="tb-form-panel-title">{{ 'image.embed-to-html' | translate }}</div>
             </mat-slide-toggle>
           </div>

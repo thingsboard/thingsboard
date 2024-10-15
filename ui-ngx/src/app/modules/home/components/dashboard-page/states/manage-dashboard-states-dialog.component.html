@@ -99,7 +99,7 @@
                   <mat-header-cell *matHeaderCellDef style="min-width: 120px; max-width: 120px; width: 120px">
                   </mat-header-cell>
                   <mat-cell *matCellDef="let state">
-                    <div class="flex-1 flex flex-row">
+                    <div class="flex flex-1 flex-row">
                       <button mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
                               matTooltip="{{ 'dashboard.edit-state' | translate }}"
@@ -129,7 +129,7 @@
                          *matRowDef="let state; columns: displayedColumns;"></mat-row>
               </table>
               <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
-                    class="no-data-found flex justify-center items-center" translate>{{ 'dashboard.no-states-text' }}</span>
+                    class="no-data-found flex items-center justify-center" translate>{{ 'dashboard.no-states-text' }}</span>
             </div>
             <mat-divider></mat-divider>
             <mat-paginator [length]="dataSource.total() | async"
@@ -141,7 +141,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions class="flex justify-end items-center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

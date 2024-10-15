@@ -17,7 +17,7 @@
 -->
 <div class="mat-content mat-padding flex flex-col">
   <div *ngFor="let filter of filtersInfo | keyvalue; let last = last">
-    <div class="flex flex-row justify-start items-center">
+    <div class="flex flex-row items-center justify-start">
       <mat-label class="flex-1">{{filter.value.filter}}</mat-label>
       <button mat-icon-button color="primary"
               style="min-width: 40px;"

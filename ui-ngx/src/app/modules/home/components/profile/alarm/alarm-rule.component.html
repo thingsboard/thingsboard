@@ -20,7 +20,7 @@
   </tb-alarm-rule-condition>
   <tb-alarm-schedule-info formControlName="schedule">
   </tb-alarm-schedule-info>
-  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" class="flex flex-row justify-start items-center">
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('alarmDetails').value" class="flex flex-row items-center justify-start">
     <span class="tb-alarm-rule-details title" (click)="openEditDetailsDialog($event)">
       {{ ('device-profile.alarm-rule-additional-info' | translate) + ': ' }}
     </span>
@@ -35,7 +35,7 @@
       <mat-icon>{{ disabled ? 'visibility' : (alarmRuleFormGroup.get('alarmDetails').value ? 'edit' : 'add') }}</mat-icon>
     </button>
   </div>
-  <div *ngIf="!disabled || alarmRuleFormGroup.get('dashboardId').value" class="flex flex-col justify-start items-start gt-sm:flex-row gt-sm:items-center">
+  <div *ngIf="!disabled || alarmRuleFormGroup.get('dashboardId').value" class="flex flex-col items-start justify-start gt-sm:flex-row gt-sm:items-center">
     <span class="tb-alarm-rule-dashboard title">
       {{ ('device-profile.alarm-rule-mobile-dashboard' | translate) + ': ' }}
     </span>

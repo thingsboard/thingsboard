@@ -16,7 +16,7 @@
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
-  <div class="tb-absolute-fill flex-1 flex flex-col">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
     <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode || !alarmsDatasource.selection.isEmpty()">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
@@ -87,7 +87,7 @@
                     [class.tb-pointer]="columnHasCellClick($index)">
             <span [innerHTML]="cellContent(alarm, column, row)"></span>
             <ng-container *ngIf="column.entityKey.key === 'assignee'">
-              <span class="assignee-cell flex flex-row justify-start items-center">
+              <span class="assignee-cell flex flex-row items-center justify-start">
                 <span *ngIf="alarm.assigneeId && checkAssigneeHasName(alarm.assignee); else unassigned"
                       class="assigned-container">
                   <span class="user-avatar" [style.backgroundColor]="getAvatarBgColor(alarm.assignee)">
@@ -131,7 +131,7 @@
           </mat-header-cell>
           <mat-cell *matCellDef="let alarm; let row = index" [style]="rowStyle(alarm, row)">
             <ng-container *ngIf="alarmsDatasource.countCellButtonAction">
-              <div [class.lt-lg:!hidden]="showCellActionsMenu && alarmsDatasource.countCellButtonAction !== 1" class="flex flex-row justify-end items-stretch"
+              <div [class.lt-lg:!hidden]="showCellActionsMenu && alarmsDatasource.countCellButtonAction !== 1" class="flex flex-row items-stretch justify-end"
                    [style.min-width]="(alarmsDatasource.countCellButtonAction * 48) + 'px'">
                 <ng-container *ngFor="let actionDescriptor of alarm.actionCellButtons; trackBy: trackByActionCellDescriptionId">
                   <span *ngIf="!actionDescriptor.icon" style="width: 48px;"></span>
@@ -175,9 +175,9 @@
                  (click)="onRowClick($event, alarm)"></mat-row>
       </table>
       <span [class.!hidden]="(alarmsDatasource.isEmpty() | async) === false || alarmsDatasource.dataLoading"
-            class="no-data-found flex justify-center items-center">{{ noDataDisplayMessageText }}</span>
+            class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
       <span [class.!hidden]="!alarmsDatasource.dataLoading"
-            class="no-data-found flex justify-center items-center" >{{ 'common.loading' | translate }}</span>
+            class="no-data-found flex items-center justify-center" >{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider *ngIf="displayPagination"></mat-divider>
     <mat-paginator *ngIf="displayPagination"

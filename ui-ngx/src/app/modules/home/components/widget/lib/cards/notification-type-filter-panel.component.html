@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<form class="mat-content mat-padding flex-1 flex flex-col" (ngSubmit)="update()">
+<form class="mat-content mat-padding flex flex-1 flex-col" (ngSubmit)="update()">
   <div class="tb-form-panel no-padding">
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>widgets.notification.notification-types</div>
-      <mat-form-field floatLabel="auto" appearance="outline" subscriptSizing="dynamic" class="flex fb-chips">
+      <mat-form-field floatLabel="auto" appearance="outline" subscriptSizing="dynamic" class="fb-chips flex">
         <mat-chip-grid #chipList>
           <mat-chip-row
             *ngFor="let type of selectedNotificationTypes"
@@ -54,7 +54,7 @@
     </div>
   </div>
 
-  <div class="tb-panel-actions flex flex-row justify-end items-center">
+  <div class="tb-panel-actions flex flex-row items-center justify-end">
     <button type="button"
             mat-button
             (click)="reset()"

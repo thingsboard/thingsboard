@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="interval-section flex-1 flex flex-row">
+<section class="interval-section flex flex-1 flex-row">
   <mat-form-field class="flex-1" [subscriptSizing]="subscriptSizing" [appearance]="appearance">
     <mat-label *ngIf="displayLabel" translate>timewindow.interval</mat-label>
     <mat-select [disabled]="disabled" [(ngModel)]="modelValue" (ngModelChange)="onIntervalChange()">

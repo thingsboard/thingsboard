@@ -20,7 +20,7 @@
     {{ 'gateway.rpc.hint.modbus-response-reading' | translate }}<br>
     {{ 'gateway.rpc.hint.modbus-writing-functions' | translate }}
   </div>
-  <div class="flex flex-row flex-1 gap-2.5">
+  <div class="flex flex-1 flex-row gap-2.5">
     <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.type' | translate }}</mat-label>
       <mat-select formControlName="type">
@@ -34,7 +34,7 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div class="flex flex-row flex-1 gap-2.5">
+  <div class="flex flex-1 flex-row gap-2.5">
     <mat-form-field class="flex-1">
       <mat-label>{{ 'gateway.rpc.address' | translate }}</mat-label>
       <input matInput type="number" min="0" max="50000" name="value" formControlName="address" placeholder="{{ 'gateway.set' | translate }}"/>

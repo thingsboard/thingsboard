@@ -43,7 +43,7 @@
           {{ 'widget-config.preview' | translate }}
         </button>
       </div>
-      <div class="tb-widget-config-header-suffix lt-md:flex-1 flex flex-row justify-end items-center gap-3">
+      <div class="tb-widget-config-header-suffix flex flex-row items-center justify-end gap-3 lt-md:flex-1">
         <button *ngIf="!previewMode"
                 class="lt-md:!hidden"
                 [disabled]="!widgetFormGroup.valid"
@@ -52,7 +52,7 @@
           <mat-icon>visibility</mat-icon>
           {{ 'widget-config.preview' | translate }}
         </button>
-        <div class="flex flex-row justify-start items-center gap-3">
+        <div class="flex flex-row items-center justify-start gap-3">
           <button [disabled]="!widgetFormGroup.dirty"
             mat-stroked-button color="primary"
             (click)="onRevertWidgetConfig()">

@@ -29,7 +29,7 @@
   </mat-progress-bar>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div class="flex-1 flex flex-col">
+      <div class="flex flex-1 flex-col">
         <tb-key-filter-list
           [displayUserParameters]="false"
           [allowUserDynamicSource]="false"
@@ -51,12 +51,12 @@
           </mat-form-field>
           <div class="flex flex-row xs:flex-col gt-xs:gap-4" *ngIf="conditionFormGroup.get('spec.type').value != AlarmConditionType.SIMPLE">
             <tb-alarm-duration-predicate-value
-              class="flex-1 flex flex-row"
+              class="flex flex-1 flex-row"
               formControlName="predicate"
               [alarmConditionType]="conditionFormGroup.get('spec.type').value"
             >
             </tb-alarm-duration-predicate-value>
-            <div class="flex-full max-w-23%" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
+            <div class="max-w-23% flex-full" *ngIf="conditionFormGroup.get('spec.type').value == AlarmConditionType.DURATION">
               <mat-form-field class="mat-block" subscriptSizing="dynamic">
                 <mat-select formControlName="unit" required
                             placeholder="{{ 'device-profile.condition-duration-time-unit' | translate }}">
@@ -74,7 +74,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions class="flex justify-end items-center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

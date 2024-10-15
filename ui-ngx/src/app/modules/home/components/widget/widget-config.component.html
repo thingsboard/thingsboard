@@ -40,7 +40,7 @@
         </mat-slide-toggle>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widget-config.title</div>
-          <div class="flex-1 flex flex-row justify-start items-center gap-2">
+          <div class="flex flex-1 flex-row items-center justify-start gap-2">
             <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>
@@ -65,7 +65,7 @@
           <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
             {{ 'widget-config.display-icon' | translate }}
           </mat-slide-toggle>
-          <div class="flex flex-row justify-start items-center gap-2">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" subscriptSizing="dynamic">
               <input matInput formControlName="iconSize">
             </mat-form-field>
@@ -82,7 +82,7 @@
         </div>
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
-            <mat-panel-description class="flex justify-start items-stretch" translate>
+            <mat-panel-description class="flex items-stretch justify-start" translate>
               widget-config.advanced-title-style
             </mat-panel-description>
           </mat-expansion-panel-header>
@@ -134,7 +134,7 @@
         </mat-slide-toggle>
         <mat-expansion-panel class="tb-settings">
           <mat-expansion-panel-header>
-            <mat-panel-description class="flex justify-start items-stretch" translate>
+            <mat-panel-description class="flex items-stretch justify-start" translate>
               widget-config.advanced-widget-style
             </mat-panel-description>
           </mat-expansion-panel-header>
@@ -236,7 +236,7 @@
       </tb-timewindow-config-panel>
     </ng-container>
     <div *ngIf="widgetType === widgetTypes.alarm" [formGroup]="dataSettings" class="tb-form-panel">
-      <div class="flex flex-row justify-between items-center">
+      <div class="flex flex-row items-center justify-between">
         <div class="tb-form-panel-title" translate>alarm.filter</div>
         <button mat-button color="primary"
                 (click)="alarmFilterConfig.reset()">

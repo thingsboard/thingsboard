@@ -41,7 +41,7 @@
       <ng-template [ngSwitchCase]="getValueAction.EXECUTE_RPC">
         <div class="tb-form-row" formGroupName="executeRpc">
           <div class="fixed-title-width" >{{ 'widgets.value-action.method' | translate }}*</div>
-          <mat-form-field class="flex tb-suffix-absolute" appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="tb-suffix-absolute flex" appearance="outline" subscriptSizing="dynamic">
             <input matInput required formControlName="method" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
                       matTooltipPosition="above"

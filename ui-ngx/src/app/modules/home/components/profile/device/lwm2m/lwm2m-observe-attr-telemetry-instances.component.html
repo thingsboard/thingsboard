@@ -25,10 +25,10 @@
       [disabled]="isExpend">
       <mat-expansion-panel-header>
         <mat-panel-title class="tb-panel flex flex-row">
-          <div class="flex-full max-w-30% flex justify-start items-center">
+          <div class="flex max-w-30% flex-full items-center justify-start">
             <span class="tb-panel-title">{{ 'device-profile.lwm2m.instance' | translate }}</span>&nbsp;#{{instances.get('id').value}}
           </div>
-          <div class="flex-full max-w-10% flex justify-center items-center">
+          <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="warn"
                           [disabled]="this.disabled"
                           [checked]="getChecked(instances, 'attribute')"
@@ -37,7 +37,7 @@
                           [indeterminate]="getIndeterminate(instances, 'attribute')">
             </mat-checkbox>
           </div>
-          <div class="flex-full max-w-10% flex justify-center items-center">
+          <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="primary"
                           [disabled]="this.disabled"
                           [checked]="getChecked(instances, 'telemetry')"
@@ -46,7 +46,7 @@
                           [indeterminate]="getIndeterminate(instances, 'telemetry')">
             </mat-checkbox>
           </div>
-          <div class="flex-full max-w-10% flex justify-center items-center">
+          <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="primary"
                           [disabled]="disableObserve(instances)"
                           [checked]="getChecked(instances, 'observe')"

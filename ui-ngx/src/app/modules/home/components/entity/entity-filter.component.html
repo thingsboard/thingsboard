@@ -192,26 +192,26 @@
                                  entityFilterFormGroup.get('type').value === aliasFilterType.entityViewSearchQuery ?
                                  entityFilterFormGroup.get('type').value : ''">
       <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-      <section class="tb-root-state-entity-switch flex flex-row justify-start items-center" style="padding-left: 0;">
+      <section class="tb-root-state-entity-switch flex flex-row items-center justify-start" style="padding-left: 0;">
         <mat-slide-toggle class="root-state-entity-switch"
                           formControlName="rootStateEntity">
         </mat-slide-toggle>
         <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
       </section>
-      <div class="flex-1 flex flex-row" *ngIf="!filterFormGroup.get('rootStateEntity').value">
+      <div class="flex flex-1 flex-row" *ngIf="!filterFormGroup.get('rootStateEntity').value">
         <tb-entity-select class="flex-1"
                           required
                           useAliasEntityTypes="true"
                           formControlName="rootEntity">
         </tb-entity-select>
       </div>
-      <div class="flex-1 flex flex-col gt-sm:flex-row" *ngIf="filterFormGroup.get('rootStateEntity').value">
+      <div class="flex flex-1 flex-col gt-sm:flex-row" *ngIf="filterFormGroup.get('rootStateEntity').value">
         <mat-form-field floatLabel="always" class="mat-block" style="margin-top: 24px; padding-right: 8px;">
           <mat-label translate>alias.state-entity-parameter-name</mat-label>
           <input matInput formControlName="stateEntityParamName"
                  placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
         </mat-form-field>
-        <div class="flex-1 flex flex-col">
+        <div class="flex flex-1 flex-col">
           <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
           <tb-entity-select class="flex-1"
                             useAliasEntityTypes="true"
@@ -219,15 +219,15 @@
           </tb-entity-select>
         </div>
       </div>
-      <div class="flex-1 flex flex-row">
-        <section class="tb-root-state-entity-switch flex flex-row justify-start items-center" style="padding-left: 0;">
+      <div class="flex flex-1 flex-row">
+        <section class="tb-root-state-entity-switch flex flex-row items-center justify-start" style="padding-left: 0;">
           <mat-slide-toggle class="root-state-entity-switch"
                             formControlName="fetchLastLevelOnly">
           </mat-slide-toggle>
           <label class="tb-small root-state-entity-label" translate>alias.last-level-relation</label>
         </section>
       </div>
-      <div class="flex-1 flex flex-row xs:flex-col gap-2">
+      <div class="flex flex-1 flex-row gap-2 xs:flex-col">
         <mat-form-field class="mat-block" style="min-width: 100px;">
           <mat-label translate>relation.direction</mat-label>
           <mat-select required formControlName="direction">

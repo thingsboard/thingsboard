@@ -17,7 +17,7 @@
 -->
 <div class="markdown-content" [class.tb-edit-mode]="!readonly"
      tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
-  <div style="min-height: 40px;" class="markdown-editor-toolbar flex flex-row justify-start items-center">
+  <div style="min-height: 40px;" class="markdown-editor-toolbar flex flex-row items-center justify-start">
     <label class="tb-title no-padding" [class]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>
     <span class="flex-1"></span>
     <button [class.!hidden]="editorMode"

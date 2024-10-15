@@ -92,7 +92,7 @@
       </div>
     </section>
     <ng-template #dividerLayout>
-    <div class="flex flex-col justify-start items-center gap-5">
+    <div class="flex flex-col items-center justify-start gap-5">
       <mat-button-toggle-group aria-label="Select width value type"
                                formControlName="type"
                                [class.!hidden]="!isDividerLayout">
@@ -103,13 +103,13 @@
           {{ 'layout.fixed-width' | translate }}
         </mat-button-toggle>
       </mat-button-toggle-group>
-      <div class="tb-layout-preview flex flex-row justify-center items-center">
-        <div class="tb-layout-preview-container flex flex-row justify-start items-center"
+      <div class="tb-layout-preview flex flex-row items-center justify-center">
+        <div class="tb-layout-preview-container flex flex-row items-center justify-start"
              #tooltip="matTooltip"
              matTooltip=""
              matTooltipPosition="below">
           <div [style.flex-basis]="buttonFlexValue() + '%'" [style.max-width]="buttonFlexValue() + '%'"
-               class="tb-layout-preview-container-main flex-1 flex flex-col justify-start items-center">
+               class="tb-layout-preview-container-main flex flex-1 flex-col items-center justify-start">
             <button mat-icon-button
                     type="button"
                     matTooltip="{{ 'layout.settings' | translate }}"
@@ -152,7 +152,7 @@
                      required>
             </div>
           </div>
-          <div class="flex-1 flex flex-col justify-start items-center" *ngIf="isDividerLayout" matTooltip="">
+          <div class="flex flex-1 flex-col items-center justify-start" *ngIf="isDividerLayout" matTooltip="">
             <button mat-icon-button
                     type="button"
                     matTooltip="{{ 'layout.settings' | translate }}"
@@ -196,7 +196,7 @@
           </div>
         </div>
       </div>
-      <div class="flex flex-col justify-center items-center gap-2" *ngIf="isDividerLayout" style="width: 80%">
+      <div class="flex flex-col items-center justify-center gap-2" *ngIf="isDividerLayout" style="width: 80%">
         <mat-slider *ngIf="layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE"
                     step="1"
                     min="{{ layoutPercentageSize.MIN }}"
@@ -215,7 +215,7 @@
                     discrete
                     [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderFixed"/>
         </mat-slider>
-        <div class="tb-hint tb-hint-group flex flex-row justify-between items-center" style="width: 100%;">
+        <div class="tb-hint tb-hint-group flex flex-row items-center justify-between" style="width: 100%;">
           <label>
             {{layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE ? layoutPercentageSize.MIN + '%' : layoutFixedSize.MIN + 'px'}}
           </label>
@@ -227,7 +227,7 @@
     </div>
     </ng-template>
   </div>
-  <div mat-dialog-actions class="flex justify-end items-center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button
             color="primary"
             type="button"

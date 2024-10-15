@@ -52,7 +52,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
         {{ 'widgets.value-card.label' | translate }}
       </mat-slide-toggle>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="label" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -67,8 +67,8 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widgets.value-card.icon' | translate }}
       </mat-slide-toggle>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
@@ -83,9 +83,9 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.value-card.value</div>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <tb-unit-input class="flex" formControlName="units"></tb-unit-input>
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
           <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
         </mat-form-field>
@@ -100,7 +100,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">
         {{ 'widgets.value-card.date' | translate }}
       </mat-slide-toggle>
-      <div class="gt-xs:flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
         <tb-date-format-select class="flex-1" formControlName="dateFormat"></tb-date-format-select>
         <tb-font-settings formControlName="dateFont"
                           [previewText]="datePreviewFn">

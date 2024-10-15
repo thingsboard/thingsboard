@@ -26,8 +26,8 @@
 </div>
 <div class="tb-absolute-fill tb-widget-no-data" *ngIf="displayNoData">
   <span style="display: flex;"
-        class="tb-absolute-fill flex justify-center items-center">{{ noDataDisplayMessageText }}</span>
+        class="tb-absolute-fill flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
 </div>
-<div class="tb-absolute-fill tb-widget-loading flex flex-col justify-center items-center" [class.!hidden]="!loadingData">
+<div class="tb-absolute-fill tb-widget-loading flex flex-col items-center justify-center" [class.!hidden]="!loadingData">
   <mat-spinner color="accent" mode="indeterminate" diameter="40"></mat-spinner>
 </div>

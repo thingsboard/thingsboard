@@ -134,7 +134,7 @@
   </mat-horizontal-stepper>
 </div>
 <div mat-dialog-actions style="padding: 0">
-  <div class="dialog-actions-row flex-1 flex flex-row justify-end items-center">
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end">
     <button mat-stroked-button *ngIf="selectedIndex > 0"
             [disabled]="(isLoading$ | async)"
             (click)="previousStep()">{{ 'action.back' | translate }}</button>
@@ -146,7 +146,7 @@
             (click)="nextStep()">{{ 'action.next-with-label' | translate:{label: (getFormLabel(this.selectedIndex+1) | translate)} }}</button>
   </div>
   <mat-divider style="width: 100%"></mat-divider>
-  <div class="dialog-actions-row flex-1 flex flex-row justify-end items-center gap-2">
+  <div class="dialog-actions-row flex flex-1 flex-row items-center justify-end gap-2">
     <button mat-button
             [disabled]="(isLoading$ | async)"
             (click)="cancel()">{{ 'action.cancel' | translate }}</button>

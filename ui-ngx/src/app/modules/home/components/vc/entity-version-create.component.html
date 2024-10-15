@@ -25,7 +25,7 @@
   </mat-progress-bar>
   <form [formGroup]="createVersionFormGroup" style="padding-top: 16px;">
     <fieldset [disabled]="isLoading$ | async">
-      <div class="flex-1 flex flex-col">
+      <div class="flex flex-1 flex-col">
         <tb-branch-autocomplete
           required
           formControlName="branch">
@@ -50,7 +50,7 @@
       </div>
     </fieldset>
   </form>
-  <div class="flex justify-end items-center gap-2">
+  <div class="flex items-center justify-end gap-2">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -69,7 +69,7 @@
   <section *ngIf="(versionCreateResult$ | async)?.done || resultMessage; else progress">
     <section *ngIf="resultMessage">
       <div class="mat-headline-6 vc-result-message">{{ resultMessage }}</div>
-      <div class="flex justify-end items-center gap-2">
+      <div class="flex items-center justify-end gap-2">
         <button mat-button color="primary"
                 type="button"
                 [disabled]="(isLoading$ | async)"
@@ -80,7 +80,7 @@
     </section>
   </section>
   <ng-template #progress>
-    <section class="flex flex-col justify-center items-center">
+    <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.creating-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>

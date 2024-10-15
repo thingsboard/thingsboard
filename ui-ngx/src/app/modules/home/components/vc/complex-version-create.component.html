@@ -52,7 +52,7 @@
       formControlName="entityTypes">
     </tb-entity-types-version-create>
   </form>
-  <div class="flex justify-end items-center gap-2" style="padding-top: 16px;">
+  <div class="flex items-center justify-end gap-2" style="padding-top: 16px;">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -71,7 +71,7 @@
   <section *ngIf="resultMessage">
     <div class="mat-headline-6 vc-result-message" [innerHtml]="resultMessage"></div>
   </section>
-  <div *ngIf="(versionCreateResult$ | async)?.done || hasError; else progress" class="flex justify-end items-center gap-2">
+  <div *ngIf="(versionCreateResult$ | async)?.done || hasError; else progress" class="flex items-center justify-end gap-2">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -80,7 +80,7 @@
     </button>
   </div>
   <ng-template #progress>
-    <section class="flex flex-col justify-center items-center">
+    <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.creating-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>

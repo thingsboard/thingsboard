@@ -17,7 +17,7 @@
 -->
 <h2 mat-dialog-title>{{data.title}}</h2>
 <div mat-dialog-content [innerHTML]="data.message | safe: 'html'"></div>
-<div mat-dialog-actions class="flex justify-end items-center">
+<div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" [mat-dialog-close]="false">{{data.cancel}}</button>
   <button mat-button color="primary" [mat-dialog-close]="true" cdkFocusInitial>{{data.ok}}</button>
 </div>

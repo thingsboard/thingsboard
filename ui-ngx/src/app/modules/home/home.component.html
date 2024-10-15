@@ -29,7 +29,7 @@
         </div>
       </mat-toolbar>
     </header>
-    <mat-toolbar color="primary" class="flex flex-1 flex-col tb-side-menu-toolbar" role="navigation">
+    <mat-toolbar color="primary" class="tb-side-menu-toolbar flex flex-1 flex-col" role="navigation">
       <tb-side-menu></tb-side-menu>
     </mat-toolbar>
   </mat-sidenav>
@@ -55,7 +55,7 @@
             [class.!hidden]="displaySearchMode()"
             class="mat-toolbar-tools flex-1">
         </tb-breadcrumb>
-        <div [class.!hidden]="!displaySearchMode()" class="tb-dark flex-1 flex flex-row">
+        <div [class.!hidden]="!displaySearchMode()" class="tb-dark flex flex-1 flex-row">
           <mat-form-field class="tb-appearance-transparent flex-1">
             <input #searchInput matInput
                    [formControl]="textSearch"

@@ -16,7 +16,7 @@
 
 -->
 <div class="entity-state-controller">
-  <div *ngIf="!isMobile || stateObject.length === 1" class="flex flex-row justify-start items-center">
+  <div *ngIf="!isMobile || stateObject.length === 1" class="flex flex-row items-center justify-start">
         <span *ngFor="let state of stateObject; index as i; last as isLast" class="state-entry"
               [style.font-weight]="isLast ? 'bold' : 'normal'"
               [style.cursor]="isLast ? 'default' : 'pointer'" (click)="navigatePrevState(i)">

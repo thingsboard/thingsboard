@@ -593,7 +593,7 @@
           <div class="tb-form-panel-title" translate>gateway.statistics.commands</div>
           <div class="tb-form-panel-hint" translate>gateway.hints.commands</div>
           <ng-container formGroupName="statistics">
-            <div formArrayName="commands" class="flex flex-row statistics-container"
+            <div formArrayName="commands" class="statistics-container flex flex-row"
                  *ngFor="let commandControl of commandFormArray().controls; let $index = index">
               <section [formGroupName]="$index" class="tb-form-panel stroked no-padding-bottom no-gap command-container">
                 <section class="tb-form-row no-border no-padding tb-standard-fields column-xs">

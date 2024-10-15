@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="notification flex flex-row justify-between items-start"
+<section class="notification flex flex-row items-start justify-between"
          [style]="{borderColor: notificationColor(), backgroundColor: notificationBackgroundColor()}">
   <div *ngIf="showIcon; else defaultIcon">
     <tb-icon class="icon" [style.color]="notification.additionalConfig.icon.color">
@@ -35,7 +35,7 @@
       {{ buttonLabel }}
     </button>
   </div>
-  <div class="description flex flex-col justify-start items-end">
+  <div class="description flex flex-col items-end justify-start">
     <span class="time">{{ notification.createdTime ?? currentDate | dateAgo }}</span>
     <button mat-icon-button (click)="markRead($event)" *ngIf="!hideMarkAsReadButton"
             matTooltip="{{ 'notification.mark-as-read' | translate }}" matTooltipPosition="above">

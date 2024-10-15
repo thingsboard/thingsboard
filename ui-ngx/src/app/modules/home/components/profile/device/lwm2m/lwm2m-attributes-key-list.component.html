@@ -17,15 +17,15 @@
 -->
 <section class="name-value-map flex flex-col" [formGroup]="attributesValueFormGroup">
   <div class="flex flex-row gap-2" style="max-height: 40px; margin-top: 8px;">
-    <label class="tb-title no-padding flex-full max-w-40%" style="min-width: 230px;" translate>device-profile.lwm2m.attribute-name</label>
-    <label class="tb-title no-padding flex-full max-w-60%" translate>device-profile.lwm2m.attribute-value</label>
+    <label class="tb-title no-padding max-w-40% flex-full" style="min-width: 230px;" translate>device-profile.lwm2m.attribute-name</label>
+    <label class="tb-title no-padding max-w-60% flex-full" translate>device-profile.lwm2m.attribute-value</label>
     <span [class.!hidden]="disabled" style="width: 40px;"></span>
   </div>
   <div class="map-list flex flex-col"
        *ngFor="let nameValueControl of attributesValueFormArray().controls; let $index = index"
         [formGroup]="nameValueControl">
-    <div class="flex flex-row justify-start items-center gap-2">
-      <mat-form-field class="flex-full max-w-40%">
+    <div class="flex flex-row items-center justify-start gap-2">
+      <mat-form-field class="max-w-40% flex-full">
         <mat-select formControlName="name" required>
           <mat-option *ngFor="let attributeName of attributeNames" [value]="attributeName"
                       [disabled]="isDisabledAttributeName(attributeName, $index)">
@@ -36,7 +36,7 @@
           {{ 'device-profile.lwm2m.attribute-name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field class="flex-full max-w-60%">
+      <mat-form-field class="max-w-60% flex-full">
         <input formControlName="value" matInput required type="number"
                placeholder="{{ 'key-val.value' | translate }}">
         <mat-error class="flex flex-row" *ngIf="nameValueControl.get('value').hasError('required')">
@@ -58,7 +58,7 @@
     </div>
   </div>
   <div [class.!hidden]="attributesValueFormArray().length"
-        class="map-list flex justify-center items-center" translate>device-profile.lwm2m.no-attributes-set</div>
+        class="map-list flex items-center justify-center" translate>device-profile.lwm2m.no-attributes-set</div>
   <div style="margin-top: 9px;" *ngIf="!disabled && isAddEnabled">
     <button mat-stroked-button color="primary"
             [disabled]="isLoading$ | async"

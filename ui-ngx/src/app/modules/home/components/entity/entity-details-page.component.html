@@ -17,14 +17,14 @@
 -->
 <mat-card appearance="outlined" class="settings-card">
   <mat-toolbar class="details-toolbar">
-    <div class="mat-toolbar-tools flex flex-row justify-start items-center gap-2">
+    <div class="mat-toolbar-tools flex flex-row items-center justify-start gap-2">
       <button mat-icon-button
               matTooltip="{{ 'action.back' | translate }}"
               matTooltipPosition="above"
               (click)="goBack()">
         <mat-icon>arrow_back</mat-icon>
       </button>
-      <div class="tb-details-title-header flex flex-col justify-center items-start">
+      <div class="tb-details-title-header flex flex-col items-start justify-center">
         <div class="tb-details-title tb-ellipsis">{{ headerTitle }}</div>
         <div class="tb-details-subtitle tb-ellipsis">{{ headerSubtitle }}</div>
       </div>
@@ -52,7 +52,7 @@
     </div>
   </mat-toolbar>
   <mat-card-content class="flex-full">
-    <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill w-full h-full" [class.tb-headless]="hideDetailsTabs()" [(selectedIndex)]="selectedTab">
+    <mat-tab-group mat-stretch-tabs="false" class="tb-absolute-fill size-full" [class.tb-headless]="hideDetailsTabs()" [(selectedIndex)]="selectedTab">
       <mat-tab label="{{ 'details.details' | translate }}">
         <tb-anchor #entityDetailsForm></tb-anchor>
       </mat-tab>

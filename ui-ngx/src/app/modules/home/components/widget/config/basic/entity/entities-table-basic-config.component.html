@@ -43,7 +43,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.card-title' | translate }}
       </mat-slide-toggle>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -62,7 +62,7 @@
       <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div class="flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="entitiesTableWidgetConfigForm.get('iconColor').value"

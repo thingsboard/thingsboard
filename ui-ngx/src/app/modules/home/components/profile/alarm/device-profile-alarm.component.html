@@ -17,9 +17,9 @@
 -->
 <mat-expansion-panel class="device-profile-alarm flex-1" [formGroup]="alarmFormGroup" [(expanded)]="expanded">
   <mat-expansion-panel-header>
-    <div class="flex-1 flex flex-row justify-start items-center">
+    <div class="flex flex-1 flex-row items-center justify-start">
       <mat-panel-title>
-        <div class="flex-1 flex flex-row justify-start items-center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           {{ alarmTypeTitle }}
         </div>
       </mat-panel-title>
@@ -53,7 +53,7 @@
     <mat-expansion-panel class="advanced-settings" [expanded]="false">
       <mat-expansion-panel-header>
         <mat-panel-title>
-          <div class="flex-1 flex flex-row justify-end items-center">
+          <div class="flex flex-1 flex-row items-center justify-end">
             <div class="tb-small" translate>device-profile.advanced-settings</div>
           </div>
         </mat-panel-title>
@@ -89,17 +89,17 @@
         </mat-checkbox>
       </ng-template>
     </mat-expansion-panel>
-    <div class="flex-1 flex flex-col">
+    <div class="flex flex-1 flex-col">
       <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.create-alarm-rules</div>
       <tb-create-alarm-rules formControlName="createRules"
                              style="padding-bottom: 16px;"
                              [deviceProfileId]="deviceProfileId">
       </tb-create-alarm-rules>
       <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.clear-alarm-rule</div>
-      <div class="flex flex-row justify-start items-center gap-2"
+      <div class="flex flex-row items-center justify-start gap-2"
            [class.!hidden]="!alarmFormGroup.get('clearRule').value"
            style="padding-bottom: 8px;">
-        <div class="clear-alarm-rule flex-1 flex flex-row">
+        <div class="clear-alarm-rule flex flex-1 flex-row">
           <tb-alarm-rule formControlName="clearRule" class="flex-1" [deviceProfileId]="deviceProfileId">
           </tb-alarm-rule>
         </div>
@@ -114,7 +114,7 @@
       </div>
       <div *ngIf="disabled && !alarmFormGroup.get('clearRule').value">
         <span translate style="margin: 16px 0"
-              class="tb-prompt flex justify-center items-center">device-profile.no-clear-alarm-rule</span>
+              class="tb-prompt flex items-center justify-center">device-profile.no-clear-alarm-rule</span>
       </div>
       <div *ngIf="!disabled" [class.!hidden]="alarmFormGroup.get('clearRule').value">
         <button mat-stroked-button color="primary"

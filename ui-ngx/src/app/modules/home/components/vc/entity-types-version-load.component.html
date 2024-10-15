@@ -20,13 +20,13 @@
   <div class="flex flex-col" style="flex: 1; overflow: auto;">
     <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
              let $index = index; last as isLast;"
-         class="flex flex-row justify-start items-center" [class.pb-2]="!isLast">
+         class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
       <mat-expansion-panel class="entity-type-config flex-1" [class.load]="loading" [formGroup]="entityTypeFormGroup"
                            [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)" (opened)="loading = false">
         <mat-expansion-panel-header>
-          <div class="flex-1 flex flex-row justify-start items-center">
+          <div class="flex flex-1 flex-row items-center justify-start">
             <mat-panel-title>
-              <div class="flex-1 flex flex-row justify-start items-center">
+              <div class="flex flex-1 flex-row items-center justify-start">
                 <div>{{ entityTypeText(entityTypeFormGroup) }}</div>
               </div>
             </mat-panel-title>
@@ -51,8 +51,8 @@
               [filterAllowedEntityTypes]="false"
               [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
             </tb-entity-type-select>
-            <div class="flex-1 flex flex-row xs:flex-col gt-xs:gap-4 xs:gap-2" formGroupName="config">
-              <div class="flex-1 flex flex-col">
+            <div class="flex flex-1 flex-row xs:flex-col xs:gap-2 gt-xs:gap-4" formGroupName="config">
+              <div class="flex flex-1 flex-col">
                 <mat-checkbox #removeOtherEntitiesCheckbox
                               formControlName="removeOtherEntities"
                               (change)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup)">
@@ -62,7 +62,7 @@
                   {{ 'version-control.find-existing-entity-by-name' | translate }}
                 </mat-checkbox>
               </div>
-              <div class="flex-1 flex flex-col">
+              <div class="flex flex-1 flex-col">
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="loadCredentials">
                   {{ 'version-control.load-credentials' | translate }}
                 </mat-checkbox>
@@ -80,7 +80,7 @@
     </div>
     <div *ngIf="!entityTypesFormGroupArray().length">
           <span translate
-                class="tb-prompt flex justify-center items-center">version-control.no-entities-to-restore-prompt</span>
+                class="tb-prompt flex items-center justify-center">version-control.no-entities-to-restore-prompt</span>
     </div>
   </div>
   <div style="padding-top: 16px;" class="flex flex-row">

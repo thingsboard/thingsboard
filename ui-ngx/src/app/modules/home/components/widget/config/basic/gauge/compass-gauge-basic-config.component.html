@@ -35,7 +35,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width"  formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -54,7 +54,7 @@
       <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
         {{ 'widget-config.icon' | translate }}
       </mat-slide-toggle>
-      <div class="flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="compassGaugeWidgetConfigForm.get('iconColor').value"
@@ -72,7 +72,7 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.compass-appearance</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.gauge.labels</div>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <tb-string-items-list
           style="display: flex"
           class="flex-1"
@@ -85,7 +85,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.label-style</div>
-      <div class="flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="majorTickFont"
                           disabledLineHeight>
         </tb-font-settings>

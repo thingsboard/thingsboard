@@ -18,7 +18,7 @@
 <div class="tb-css flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight}"
      tb-fullscreen
      [fullscreen]="fullscreen">
-  <div style="height: 40px;" class="tb-css-toolbar flex flex-row justify-start items-center">
+  <div style="height: 40px;" class="tb-css-toolbar flex flex-row items-center justify-start">
     <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
     <span class="flex-1"></span>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyCss()">

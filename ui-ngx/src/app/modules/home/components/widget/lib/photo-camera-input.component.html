@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<div class="tb-web-camera flex flex-col justify-center items-center" tb-fullscreen [fullscreen]="isShowCamera">
+<div class="tb-web-camera flex flex-col items-center justify-center" tb-fullscreen [fullscreen]="isShowCamera">
   <div *ngIf="isEntityDetected && dataKeyDetected && isCameraSupport && isProtocolHttps" class="image-container">
-    <div [class.!hidden]="isShowCamera" class="flex flex-col justify-between items-center w-full h-full">
+    <div [class.!hidden]="isShowCamera" class="flex size-full flex-col items-center justify-between">
       <div class="tb-web-camera__last-photo flex-1">
         <span [class.!hidden]="lastPhoto" class="tb-web-camera__last-photo_text" translate>widgets.input-widgets.no-image</span>
         <img [class.!hidden]="!lastPhoto" class="tb-web-camera__last-photo_img" [src]="lastPhoto" alt="last photo"/>
@@ -26,10 +26,10 @@
         {{ "widgets.input-widgets.take-photo" | translate }}
       </button>
     </div>
-    <div [class.!hidden]="!isShowCamera" class="camera-container flex flex-col justify-center items-center">
+    <div [class.!hidden]="!isShowCamera" class="camera-container flex flex-col items-center justify-center">
       <div class="camera" [class.!hidden]="isPreviewPhoto">
         <video autoplay muted playsinline class="camera-stream" #videoStream></video>
-        <div class="camera-controls flex flex-row flex-wrap justify-between items-end">
+        <div class="camera-controls flex flex-row flex-wrap items-end justify-between">
           <div class="flex-1"></div>
           <button mat-mini-fab color="primary" (click)="switchWebCamera()" [disabled]="singleDevice">
             <mat-icon>switch_camera</mat-icon>
@@ -46,7 +46,7 @@
       <div class="camera" [class.!hidden]="!isPreviewPhoto">
         <img alt="preview photo" class="camera-stream" [src]="previewPhoto">
         <canvas #canvas style="display:none;"></canvas>
-        <div class="camera-controls flex flex-row justify-between items-end">
+        <div class="camera-controls flex flex-row items-end justify-between">
           <div class="flex-1"></div>
           <button mat-fab color="primary" [disabled]="updatePhoto" (click)="cancelPhoto()">
             <mat-icon>close</mat-icon>

@@ -205,9 +205,9 @@
         </mat-panel-title>
       </mat-expansion-panel-header>
 
-      <div class="flex flex-col gateway-config">
+      <div class="gateway-config flex flex-col">
         <section formArrayName="connectors" *ngFor="let connector of connectors.controls; let i = index;">
-          <div [formGroupName]="i" class="flex flex-row justify-between items-stretch gap-2">
+          <div [formGroupName]="i" class="flex flex-row items-stretch justify-between gap-2">
             <div class="flex flex-col justify-center">
               <mat-slide-toggle formControlName="enabled"></mat-slide-toggle>
             </div>
@@ -236,7 +236,7 @@
                 </mat-error>
               </mat-form-field>
             </div>
-            <div class="flex action-buttons" [class]="{
+            <div class="action-buttons flex" [class]="{
                 'gap-1.25': layoutGap,
                 'flex-row justify-end item-center': alignment,
                 'flex-col justify-evenly item-center': !alignment
@@ -256,7 +256,7 @@
             </div>
           </div>
         </section>
-        <span [class.!hidden]="connectors.length" class="no-data-found justify-center items-center">{{'gateway.no-connectors' | translate}}</span>
+        <span [class.!hidden]="connectors.length" class="no-data-found items-center justify-center">{{'gateway.no-connectors' | translate}}</span>
         <div>
           <button [class.!hidden]="isReadOnlyForm" mat-raised-button type="button" (click)="addNewConnector()"
                   matTooltip="{{ 'gateway.connector-add' | translate }}"
@@ -267,7 +267,7 @@
       </div >
     </mat-expansion-panel>
   </mat-accordion>
-  <section [class.!hidden]="isReadOnlyForm" class="flex flex-row justify-end items-center form-action-buttons">
+  <section [class.!hidden]="isReadOnlyForm" class="form-action-buttons flex flex-row items-center justify-end">
     <button mat-raised-button color="primary" type="button"
             (click)="exportConfig()"
             *ngIf="!gatewayConfigurationGroup.get('remoteConfiguration').value"

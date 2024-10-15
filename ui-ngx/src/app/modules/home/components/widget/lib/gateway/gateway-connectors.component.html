@@ -16,7 +16,7 @@
 
 -->
 <div class="connector-container tb-form-panel no-border">
-  <section class="table-section tb-form-panel no-padding flex section-container">
+  <section class="table-section tb-form-panel no-padding section-container flex">
     <mat-toolbar class="mat-mdc-table-toolbar justify-between">
       <h2>{{ 'gateway.connectors' | translate }}</h2>
       <button *ngIf="dataSource?.data?.length"
@@ -30,7 +30,7 @@
     </mat-toolbar>
     <div class="table-container">
       <section *ngIf="!dataSource?.data?.length"
-               class="mat-headline-5 tb-absolute-fill tb-add-new justify-center items-center">
+               class="mat-headline-5 tb-absolute-fill tb-add-new items-center justify-center">
         <button mat-button class="connector"
         (click)="onAddConnector($event)">
           <mat-icon class="tb-mat-96">add</mat-icon>
@@ -167,7 +167,7 @@
       </tb-toggle-select>
     </div>
     <span [class.!hidden]="initialConnector"
-          class="no-data-found justify-center items-center" translate>
+          class="no-data-found items-center justify-center" translate>
       gateway.select-connector
     </span>
     <section class="tb-form-panel section-container no-border no-padding tb-flex space-between" *ngIf="initialConnector">

@@ -31,7 +31,7 @@
     <mat-checkbox [formControl]="exportWidgetsFormControl">{{ 'widgets-bundle.export-widgets-bundle-widgets-prompt' | translate }}</mat-checkbox>
   </fieldset>
 </div>
-<div mat-dialog-actions class="flex justify-end items-center">
+<div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary"
           type="button"
           [disabled]="(isLoading$ | async) && !ignoreLoading"

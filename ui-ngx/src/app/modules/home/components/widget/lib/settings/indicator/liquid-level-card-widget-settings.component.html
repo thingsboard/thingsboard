@@ -122,7 +122,7 @@
             </mat-select>
           </mat-form-field>
           <mat-form-field *ngIf="levelCardWidgetSettingsForm.get('volumeSource').value ===  DataSourceType.static; else volumeAttributes"
-                          appearance="outline" class="flex number" subscriptSizing="dynamic">
+                          appearance="outline" class="number flex" subscriptSizing="dynamic">
             <input matInput formControlName="volumeConstant" type="number"
                    min="0.1" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <mat-icon matSuffix
@@ -242,7 +242,7 @@
               <tb-unit-input [tagFilter]="unitsType.capacity"
                              required class="flex" formControlName="tooltipUnits">
               </tb-unit-input>
-              <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
                 <input matInput formControlName="tooltipLevelDecimals" type="number" min="0"
                        max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
                 <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>

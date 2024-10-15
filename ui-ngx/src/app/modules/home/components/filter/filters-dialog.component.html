@@ -29,25 +29,25 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="(isLoading$ | async) === false"></div>
   <div mat-dialog-content>
-    <div class="tb-filters-header flex flex-row justify-start items-center">
-      <span class="flex-full max-w-5%"></span>
-      <div class="flex-full max-w-95% flex flex-row justify-start items-center">
+    <div class="tb-filters-header flex flex-row items-center justify-start">
+      <span class="max-w-5% flex-full"></span>
+      <div class="flex max-w-95% flex-full flex-row items-center justify-start">
         <div class="tb-header-label flex-1" translate>filter.filter</div>
-        <div class="tb-header-label flex-1 basis-20 min-w-20 max-w-20 flex flex-col justify-center items-center" translate
+        <div class="tb-header-label flex min-w-20 max-w-20 flex-1 basis-20 flex-col items-center justify-center" translate
              style="padding-left: 5px;">filter.editable</div>
         <div style="min-width: 132px;"></div>
       </div>
     </div>
     <fieldset [disabled]="isLoading$ | async">
       <mat-divider></mat-divider>
-      <div class="flex-1 flex flex-row justify-start items-center"
+      <div class="flex flex-1 flex-row items-center justify-start"
            formArrayName="filters"
            *ngFor="let filterControl of filtersFormArray().controls; let $index = index">
-        <span class="flex-full max-w-5%">{{$index + 1}}.</span>
-        <div class="mat-elevation-z4 tb-filter flex-full max-w-5% flex flex-row justify-start items-center">
+        <span class="max-w-5% flex-full">{{$index + 1}}.</span>
+        <div class="mat-elevation-z4 tb-filter flex max-w-5% flex-full flex-row items-center justify-start">
           <mat-label class="flex-1">{{filterControl.get('filter').value}}</mat-label>
           <section style="padding-left: 10px;"
-                   class="tb-editable-switch flex-1 basis-20 min-w-20 max-w-20 flex flex-col justify-center items-center">
+                   class="tb-editable-switch flex min-w-20 max-w-20 flex-1 basis-20 flex-col items-center justify-center">
             <mat-slide-toggle class="editable-switch"
                               [formControl]="filterControl.get('editable')">
             </mat-slide-toggle>

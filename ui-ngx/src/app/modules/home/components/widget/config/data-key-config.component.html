@@ -104,7 +104,7 @@
       <div class="tb-form-panel stroked tb-slide-toggle">
         <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('comparisonEnabled').value" [disabled]="!dataKeyFormGroup.get('comparisonEnabled').value">
         <mat-expansion-panel-header class="flex flex-row flex-wrap">
-          <mat-panel-title class="flex flex-col justify-center items-start gap-2">
+          <mat-panel-title class="flex flex-col items-start justify-center gap-2">
             <mat-slide-toggle class="mat-slide" formControlName="comparisonEnabled" (click)="$event.stopPropagation()">
               {{ 'datakey.enable-delta-calculation' | translate }}
             </mat-slide-toggle>
@@ -164,7 +164,7 @@
       <mat-expansion-panel class="tb-settings" [expanded]="dataKeyFormGroup.get('usePostProcessing').value" [disabled]="!dataKeyFormGroup.get('usePostProcessing').value">
         <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide flex justify-center items-stretch" formControlName="usePostProcessing" (click)="$event.stopPropagation()">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="usePostProcessing" (click)="$event.stopPropagation()">
               {{ 'datakey.use-data-post-processing-func' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>

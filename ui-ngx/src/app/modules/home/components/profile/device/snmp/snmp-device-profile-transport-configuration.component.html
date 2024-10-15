@@ -16,7 +16,7 @@
 
 -->
 <form [formGroup]="snmpDeviceProfileTransportConfigurationFormGroup" style="padding: 8px 0 16px;">
-  <section class="flex flex-row xs:flex-col gap-2">
+  <section class="flex flex-row gap-2 xs:flex-col">
     <mat-form-field class="flex-1">
       <mat-label translate>device-profile.snmp.timeout-ms</mat-label>
       <input matInput formControlName="timeoutMs" type="number" min="0" required/>

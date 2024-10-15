@@ -68,7 +68,7 @@
       <mat-expansion-panel class="tb-settings" [expanded]="!toggleButtonWidgetConfigForm.get('autoScale').value" disabled>
         <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide flex justify-center items-stretch" formControlName="autoScale" (click)="$event.stopPropagation()">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="autoScale" (click)="$event.stopPropagation()">
               {{ 'widgets.toggle-button.auto-scale' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -91,7 +91,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -110,8 +110,8 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div class="flex-1 flex flex-row justify-start items-center gap-2">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
@@ -128,7 +128,7 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div class="flex flex-row justify-between items-center">
+    <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>widgets.toggle-button.button-appearance</div>
       <tb-toggle-select [(ngModel)]="buttonAppearanceType" [ngModelOptions]="{standalone: true}">
         <tb-toggle-option value="checked">{{ 'widgets.toggle-button.checked' | translate }}</tb-toggle-option>

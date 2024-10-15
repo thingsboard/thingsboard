@@ -18,7 +18,7 @@
 <div class="tb-svg-xml flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'no-label': noLabel}"
      tb-fullscreen
      [fullscreen]="fullscreen">
-  <div style="min-height: 40px;" class="tb-svg-xml-toolbar flex flex-row justify-start items-center">
+  <div style="min-height: 40px;" class="tb-svg-xml-toolbar flex flex-row items-center justify-start">
     <label *ngIf="!noLabel" class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
     <span class="flex-1"></span>
     <fieldset style="width: initial">

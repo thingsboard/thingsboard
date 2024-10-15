@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<div class="flex-1 flex flex-row justify-start items-center gap-2" [formGroup]="filterPredicateFormGroup">
-  <div class="flex-1 flex flex-col" [ngSwitch]="type">
+<div class="flex flex-1 flex-row items-center justify-start gap-2" [formGroup]="filterPredicateFormGroup">
+  <div class="flex flex-1 flex-col" [ngSwitch]="type">
     <ng-template [ngSwitchCase]="filterPredicateType.STRING">
       <tb-string-filter-predicate
         [allowUserDynamicSource]="allowUserDynamicSource"
@@ -52,7 +52,7 @@
   </div>
   <tb-filter-user-info *ngIf="type !== filterPredicateType.COMPLEX && displayUserParameters"
                        style="width: 60px;"
-                       class="flex flex-row justify-center items-stretch"
+                       class="flex flex-row items-stretch justify-center"
                        [valueType]="valueType"
                        [operation]="filterPredicateFormGroup.get('predicate').value?.operation"
                        [key]="key"
