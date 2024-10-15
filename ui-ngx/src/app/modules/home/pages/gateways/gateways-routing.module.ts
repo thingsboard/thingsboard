@@ -33,7 +33,7 @@ export const gatewaysDashboardResolver: ResolveFn<Dashboard> = (
 
 export const gatewaysRoutes: Routes = [
   {
-    path: 'entities/gateways',
+    path: 'gateways',
     component: DashboardViewComponent,
     data: {
       auth: [Authority.TENANT_ADMIN],
@@ -48,8 +48,16 @@ export const gatewaysRoutes: Routes = [
   }
 ];
 
+const routes: Routes = [
+  {
+    path: 'gateways',
+    pathMatch: 'full',
+    redirectTo: '/entities/gateways'
+  },
+];
+
 @NgModule({
-  imports: [RouterModule.forChild(gatewaysRoutes)],
+  imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
 export class GatewaysRoutingModule { }
