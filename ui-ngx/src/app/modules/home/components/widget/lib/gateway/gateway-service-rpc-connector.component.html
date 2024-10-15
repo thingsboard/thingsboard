@@ -213,7 +213,7 @@
               <input matInput [formControl]="control" required/>
             </mat-form-field>
             <mat-icon style="cursor:pointer; max-width:30px;min-width:30px"
-                      class="flex-[1_1_30px]"
+                      class=" min-w-7.5 max-w-7.5 flex-1 basis-7.5"
                       (click)="removeSNMPoid(i)"
                       matTooltip="{{ 'gateway.rpc.remove' | translate }}">delete
             </mat-icon>
@@ -231,7 +231,7 @@
           <input matInput formControlName="methodFilter" placeholder="post_attributes"/>
         </mat-form-field>
         <div class="flex flex-1 flex-row gap-2.5">
-          <mat-form-field class="max-w-4/12 flex-[1_1_33%]">
+          <mat-form-field class="max-w-4/12 flex-full">
             <mat-label>{{ 'gateway.rpc.httpMethod' | translate }}</mat-label>
             <mat-select formControlName="httpMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
@@ -305,7 +305,7 @@
           <input matInput formControlName="methodFilter" placeholder="echo"/>
         </mat-form-field>
         <div class="flex flex-row items-center justify-center gap-2.5">
-          <mat-form-field class="max-w-4/12 flex-[1_1_33%]">
+          <mat-form-field class="max-w-4/12 flex-full">
             <mat-label>{{ 'gateway.rpc.httpMethod' | translate }}</mat-label>
             <mat-select formControlName="httpMethod">
               <mat-option *ngFor="let method of hTTPMethods" [value]="method">
