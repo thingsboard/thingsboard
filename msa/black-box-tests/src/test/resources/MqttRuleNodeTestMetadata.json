@@ -9,7 +9,7 @@
       },
       "type": "org.thingsboard.rule.engine.mqtt.TbMqttNode",
       "name": "test mqtt",
-      "debugMode": true,
+      "debugStrategy": "ALL_EVENTS",
       "singletonMode": true,
       "queueName": "HighPriority",
       "configurationVersion": 0,
@@ -36,7 +36,7 @@
       },
       "type": "org.thingsboard.rule.engine.telemetry.TbMsgTimeseriesNode",
       "name": "save timeseries",
-      "debugMode": true,
+      "debugStrategy": "ALL_EVENTS",
       "singletonMode": false,
       "configurationVersion": 0,
       "configuration": {
@@ -54,7 +54,7 @@
       },
       "type": "org.thingsboard.rule.engine.filter.TbMsgTypeSwitchNode",
       "name": "switch",
-      "debugMode": false,
+      "debugStrategy": "DISABLED",
       "singletonMode": false,
       "configurationVersion": 0,
       "configuration": {

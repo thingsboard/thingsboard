@@ -16,6 +16,7 @@
 package org.thingsboard.server.common.data.rule;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -32,6 +33,7 @@ import org.thingsboard.server.common.data.validation.NoXss;
 @Data
 @EqualsAndHashCode(callSuper = true)
 @Slf4j
+@JsonIgnoreProperties(ignoreUnknown = true)
 public class RuleNode extends BaseDataWithAdditionalInfo<RuleNodeId> implements HasName {
 
     private static final long serialVersionUID = -5656679015121235465L;
