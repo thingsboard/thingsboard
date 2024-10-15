@@ -154,6 +154,7 @@
     "eslint-plugin-import": "latest",
     "eslint-plugin-jsdoc": "latest",
     "eslint-plugin-prefer-arrow": "latest",
+    "eslint-plugin-tailwindcss": "^3.17.5",
     "ngrx-store-freeze": "^0.2.4",
     "patch-package": "^8.0.0",
     "postcss": "^8.4.47",
