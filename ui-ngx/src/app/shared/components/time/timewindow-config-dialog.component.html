@@ -63,7 +63,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindowForm.get('realtime.disableCustomInterval').value"
-            [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                             timewindowForm.get('realtime.realtimeType').value === realtimeTypes.LAST_INTERVAL">
           </tb-timeinterval>
         </div>
@@ -83,7 +83,7 @@
           onlyCurrentInterval="true"
           subscriptSizing="dynamic"
           appearance="outline"
-          [required]="timewindow.selectedTab === timewindowTypes.REALTIME &&
+          [required]="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME &&
                           timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL">
         </tb-quick-time-interval>
       </div>
@@ -118,7 +118,7 @@
             subscriptSizing="dynamic"
             appearance="outline"
             [disabledAdvanced]="timewindowForm.get('history.disableCustomInterval').value"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                           timewindowForm.get('history.historyType').value === historyTypes.LAST_INTERVAL">
           </tb-timeinterval>
         </div>
@@ -135,7 +135,7 @@
           subscriptSizing="dynamic"
           appearance="outline"
           class="history-time-input"
-          [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+          [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.FIXED">
         </tb-datetime-period>
       </div>
@@ -151,7 +151,7 @@
             formControlName="quickInterval"
             subscriptSizing="dynamic"
             appearance="outline"
-            [required]="timewindow.selectedTab === timewindowTypes.HISTORY &&
+            [required]="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY &&
                         timewindowForm.get('history.historyType').value === historyTypes.INTERVAL">
           </tb-quick-time-interval>
         </div>
@@ -198,7 +198,7 @@
       <section class="tb-form-panel" [fxShow]="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
         <div class="tb-form-panel-title">{{ 'aggregation.group-interval' | translate }}</div>
 
-        <ng-container *ngIf="timewindow.selectedTab === timewindowTypes.REALTIME">
+        <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">
           <div class="tb-form-row" formGroupName="realtime">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomGroupInterval">
               {{ 'timewindow.disable-custom-interval' | translate }}
@@ -219,7 +219,7 @@
             </ng-container>
           </div>
         </ng-container>
-        <ng-container *ngIf="timewindow.selectedTab === timewindowTypes.HISTORY">
+        <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.HISTORY">
           <div class="tb-form-row" formGroupName="history">
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="disableCustomGroupInterval">
               {{ 'timewindow.disable-custom-interval' | translate }}
