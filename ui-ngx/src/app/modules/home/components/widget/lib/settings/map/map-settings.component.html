@@ -39,7 +39,7 @@
   </tb-circle-settings>
   <tb-marker-clustering-settings
     *ngIf="!routeMap"
-    [fxShow]="mapSettingsFormGroup.get('mapProviderSettings').value.provider !== mapProvider.image"
+    [class.!hidden]="mapSettingsFormGroup.get('mapProviderSettings').value.provider === mapProvider.image"
     formControlName="markerClusteringSettings">
   </tb-marker-clustering-settings>
   <tb-route-map-settings
@@ -47,7 +47,7 @@
     formControlName="routeMapSettings">
   </tb-route-map-settings>
   <tb-map-editor-settings
-    [fxShow]="displayEditorSettings()"
+    [class.!hidden]="!displayEditorSettings()"
     formControlName="mapEditorSettings">
   </tb-map-editor-settings>
 </section>
