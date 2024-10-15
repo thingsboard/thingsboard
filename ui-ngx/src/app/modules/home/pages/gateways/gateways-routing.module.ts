@@ -43,7 +43,7 @@ export const gatewaysRoutes: Routes = [
       }
     },
     resolve: {
-      gatewaysDashboard: gatewaysDashboardResolver
+      dashboard: gatewaysDashboardResolver
     }
   }
 ];
