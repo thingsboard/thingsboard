@@ -121,6 +121,12 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public byte[] getResourceData(TenantId tenantId, TbResourceId resourceId) {
+        log.trace("Executing getResourceData [{}] [{}]", tenantId, resourceId);
+        return resourceDao.getResourceData(tenantId, resourceId);
+    }
+
+    @Override
     public TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId) {
         log.trace("Executing findResourceInfoById [{}] [{}]", tenantId, resourceId);
         Validator.validateId(resourceId, id -> INCORRECT_RESOURCE_ID + id);
@@ -256,4 +262,5 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
             cache.evict(new ResourceInfoCacheKey(event.getTenantId(), event.getResourceId()));
         }
     }
+
 }

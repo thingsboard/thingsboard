@@ -138,6 +138,25 @@ public class GitRepository {
         return new GitRepository(git, settings, authHandler, directory.getAbsolutePath());
     }
 
+    public static GitRepository openOrClone(Path directory, RepositorySettings settings, boolean fetch) throws IOException, GitAPIException {
+        GitRepository repository;
+        if (GitRepository.exists(directory.toString())) {
+            repository = GitRepository.open(directory.toFile(), settings);
+            if (fetch) {
+                repository.fetch();
+            }
+        } else {
+            FileUtils.deleteDirectory(directory.toFile());
+            Files.createDirectories(directory);
+            if (settings.isLocalOnly()) {
+                repository = GitRepository.create(settings, directory.toFile());
+            } else {
+                repository = GitRepository.clone(settings, directory.toFile());
+            }
+        }
+        return repository;
+    }
+
     public static void test(RepositorySettings settings, File directory) throws Exception {
         if (settings.isLocalOnly()) {
             return;
@@ -235,22 +254,29 @@ public class GitRepository {
         return iterableToPageData(commits, this::toCommit, pageLink, revCommitComparatorFunction);
     }
 
-    public List<String> listFilesAtCommit(String commitId) throws IOException {
-        return listFilesAtCommit(commitId, null);
+    public List<String> listFilesAtCommit(String commitId, String path) {
+        return listFilesAtCommit(commitId, path, -1).stream().map(RepoFile::path).toList();
     }
 
-    public List<String> listFilesAtCommit(String commitId, String path) throws IOException {
+    @SneakyThrows
+    public List<RepoFile> listFilesAtCommit(String commitId, String path, int depth) {
         log.debug("Executing listFilesAtCommit [{}][{}][{}]", settings.getRepositoryUri(), commitId, path);
-        List<String> files = new ArrayList<>();
+        List<RepoFile> files = new ArrayList<>();
         RevCommit revCommit = resolveCommit(commitId);
         try (TreeWalk treeWalk = new TreeWalk(git.getRepository())) {
             treeWalk.reset(revCommit.getTree().getId());
             if (StringUtils.isNotEmpty(path)) {
                 treeWalk.setFilter(PathFilter.create(path));
             }
-            treeWalk.setRecursive(true);
+            boolean fixedDepth = depth != -1;
+            treeWalk.setRecursive(!fixedDepth);
             while (treeWalk.next()) {
-                files.add(treeWalk.getPathString());
+                if (!fixedDepth || treeWalk.getDepth() == depth) {
+                    files.add(new RepoFile(treeWalk.getPathString(), treeWalk.getNameString(), treeWalk.isSubtree() ? FileType.DIRECTORY : FileType.FILE));
+                }
+                if (fixedDepth && treeWalk.getDepth() < depth) {
+                    treeWalk.enterSubtree();
+                }
             }
         }
         return files;
@@ -590,6 +616,12 @@ public class GitRepository {
         private String fileContentAtCommit1;
         private String fileContentAtCommit2;
         private String diffStringValue;
+    }
+
+    public record RepoFile(String path, String name, FileType type) {}
+
+    public enum FileType {
+        FILE, DIRECTORY
     }
 
 }
