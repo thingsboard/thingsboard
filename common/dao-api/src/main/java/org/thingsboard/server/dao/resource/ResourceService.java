@@ -38,6 +38,8 @@ public interface ResourceService extends EntityDaoService {
 
     TbResource findResourceById(TenantId tenantId, TbResourceId resourceId);
 
+    byte[] getResourceData(TenantId tenantId, TbResourceId resourceId);
+
     TbResourceInfo findResourceInfoById(TenantId tenantId, TbResourceId resourceId);
 
     TbResourceInfo findResourceInfoByTenantIdAndKey(TenantId tenantId, ResourceType resourceType, String resourceKey);
