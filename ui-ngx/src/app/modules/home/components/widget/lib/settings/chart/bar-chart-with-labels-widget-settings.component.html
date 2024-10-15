@@ -173,7 +173,7 @@
           </div>
           <div class="tb-form-row space-between">
             <div>{{ 'tooltip.value' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="tooltipValueFont"
                                 [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipValueColor').value }"
                                 [previewText]="tooltipValuePreviewFn">
@@ -188,8 +188,8 @@
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
               {{ 'tooltip.date' | translate }}
             </mat-slide-toggle>
-            <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-              <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+            <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+              <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
                                      formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [initialPreviewStyle]="{ color: barChartWidgetSettingsForm.get('tooltipDateColor').value }"
