@@ -144,10 +144,12 @@ export class ImportExportService {
 
   public exportDashboard(dashboardId: string) {
     this.dashboardService.exportDashboard(dashboardId).subscribe({
-      next: (dashboard) => {
+      next: (exportData) => {
+        let dashboard = exportData.dashboard;
         let name = dashboard.title;
         name = name.toLowerCase().replace(/\W/g, '_');
-        this.exportToPc(this.prepareDashboardExport(dashboard), name);
+        exportData.dashboard = this.prepareDashboardExport(dashboard)
+        this.exportToPc(exportData, name);
       },
       error: (e) => {
         this.handleExportError(e, 'dashboard.export-failed-error');
@@ -155,6 +157,7 @@ export class ImportExportService {
     });
   }
 
+  // FIXME: backward compatibility - support old export structure
   public importDashboard(onEditMissingAliases: editMissingAliasesFunction): Observable<Dashboard> {
     return this.openImportDialog('dashboard.import', 'dashboard.dashboard-file').pipe(
       mergeMap((dashboard: Dashboard) => {

@@ -16,11 +16,19 @@
 package org.thingsboard.server.service.entitiy.widgets.type;
 
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
+import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.widget.WidgetExportData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
 
 public interface TbWidgetTypeService extends SimpleTbEntityService<WidgetTypeDetails> {
 
     WidgetTypeDetails save(WidgetTypeDetails widgetTypeDetails, boolean updateExistingByFqn, User user) throws Exception;
+
+    WidgetExportData exportWidgetType(TenantId tenantId, WidgetTypeDetails widgetTypeDetails, SecurityUser user) throws ThingsboardException;
+
+    WidgetTypeDetails importWidgetType(WidgetExportData exportData, SecurityUser user) throws Exception;
 
 }

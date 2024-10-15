@@ -26,18 +26,22 @@ import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.HttpMethod;
 import org.springframework.test.context.ContextConfiguration;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.DashboardInfo;
 import org.thingsboard.server.common.data.DeviceProfile;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.asset.AssetProfile;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.dashboard.DashboardExportData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DashboardId;
@@ -49,6 +53,7 @@ import org.thingsboard.server.dao.exception.DataValidationException;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -575,7 +580,37 @@ public class DashboardControllerTest extends AbstractControllerTest {
                 .andReturn().getResponse().getContentAsString();
         String errorMessage = JacksonUtil.toJsonNode(response).get("message").asText();
         assertThat(errorMessage).containsIgnoringCase("referenced by an asset profile");
+    }
 
+    @Test
+    public void testExportImportDashboard() throws Exception {
+        TbResourceInfo imageInfo = uploadImage(HttpMethod.POST, "/api/image", "image12.png", "image/png", ImageControllerTest.PNG_IMAGE);
+        Dashboard dashboard = new Dashboard();
+        dashboard.setTitle("My dashboard");
+        dashboard.setConfiguration(JacksonUtil.newObjectNode()
+                .put("someImage", "tb-image;/api/images/tenant/" + imageInfo.getResourceKey()));
+        dashboard = doPost("/api/dashboard", dashboard, Dashboard.class);
+
+        DashboardExportData dashboardExportData = doGet("/api/dashboard/" + dashboard.getUuidId() + "/export", DashboardExportData.class);
+        String imageRef = dashboardExportData.getDashboard().getConfiguration().get("someImage").asText();
+        assertThat(imageRef).isEqualTo("tb-image:" + Base64.getEncoder().encodeToString(imageInfo.getResourceKey().getBytes()) + ":"
+                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes()) + ":"
+                + Base64.getEncoder().encodeToString(imageInfo.getResourceSubType().name().getBytes()) + ":"
+                + imageInfo.getEtag() + ";data:image/png;base64,");
+
+        List<ResourceExportData> resources = dashboardExportData.getResources();
+        assertThat(resources).singleElement().satisfies(resource -> {
+            assertThat(resource.getResourceKey()).isEqualTo(imageInfo.getResourceKey());
+            assertThat(resource.getData()).isEqualTo(Base64.getEncoder().encodeToString(ImageControllerTest.PNG_IMAGE));
+        });
+
+        doDelete("/api/dashboard/" + dashboard.getId()).andExpect(status().isOk());
+        doDelete("/api/images/tenant/" + imageInfo.getResourceKey()).andExpect(status().isOk());
+
+        Dashboard importedDashboard = doPost("/api/dashboard/import", dashboardExportData, Dashboard.class);
+        assertThat(importedDashboard.getConfiguration().get("someImage").asText()).isEqualTo("tb-image;/api/images/tenant/" + imageInfo.getResourceKey());
+        TbResourceInfo importedImageInfo = doGet("/api/images/tenant/" + imageInfo.getResourceKey() + "/info", TbResourceInfo.class);
+        assertThat(importedImageInfo.getEtag()).isEqualTo(imageInfo.getEtag());
     }
 
     private Dashboard createDashboard(String title) {

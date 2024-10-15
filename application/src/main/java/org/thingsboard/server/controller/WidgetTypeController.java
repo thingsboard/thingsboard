@@ -21,7 +21,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -39,12 +41,12 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
 import org.thingsboard.server.common.data.widget.DeprecatedFilter;
+import org.thingsboard.server.common.data.widget.WidgetExportData;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetTypeFilter;
 import org.thingsboard.server.common.data.widget.WidgetTypeInfo;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
-import org.thingsboard.server.common.data.widget.WidgetsBundleFilter;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.dao.resource.ImageService;
@@ -56,6 +58,7 @@ import org.thingsboard.server.service.security.permission.Resource;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.UUID;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 import static org.thingsboard.server.controller.ControllerConstants.INLINE_IMAGES;
@@ -93,8 +96,7 @@ public class WidgetTypeController extends AutoCommitController {
     @ApiOperation(value = "Get Widget Type Details (getWidgetTypeById)",
             notes = "Get the Widget Type Details based on the provided Widget Type Id. " + WIDGET_TYPE_DETAILS_DESCRIPTION + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
-    @RequestMapping(value = "/widgetType/{widgetTypeId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/widgetType/{widgetTypeId}")
     public WidgetTypeDetails getWidgetTypeById(
             @Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
             @PathVariable("widgetTypeId") String strWidgetTypeId,
@@ -107,6 +109,14 @@ public class WidgetTypeController extends AutoCommitController {
             imageService.inlineImages(result);
         }
         return result;
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @GetMapping(value = "/widgetType/{widgetTypeId}/export")
+    public WidgetExportData exportWidgetType(@Parameter(description = WIDGET_TYPE_ID_PARAM_DESCRIPTION, required = true)
+                                             @PathVariable("widgetTypeId") UUID widgetTypeId) throws ThingsboardException {
+        WidgetTypeDetails widgetTypeDetails = checkWidgetTypeId(new WidgetTypeId(widgetTypeId), Operation.READ);
+        return tbWidgetTypeService.exportWidgetType(getTenantId(), widgetTypeDetails, getCurrentUser());
     }
 
     @ApiOperation(value = "Get Widget Type Info (getWidgetTypeInfoById)",
@@ -149,6 +159,15 @@ public class WidgetTypeController extends AutoCommitController {
 
         checkEntity(widgetTypeDetails.getId(), widgetTypeDetails, Resource.WIDGET_TYPE);
         return tbWidgetTypeService.save(widgetTypeDetails, updateExistingByFqn != null && updateExistingByFqn, currentUser);
+    }
+
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
+    @PostMapping(value = "/widgetType/import")
+    public WidgetTypeDetails importWidgetType(@RequestBody WidgetExportData exportData) throws Exception {
+        WidgetTypeDetails widgetTypeDetails = exportData.getWidgetTypeDetails();
+        widgetTypeDetails.setTenantId(getTenantId());
+        checkEntity(widgetTypeDetails.getId(), widgetTypeDetails, Resource.WIDGET_TYPE);
+        return tbWidgetTypeService.importWidgetType(exportData, getCurrentUser());
     }
 
     @ApiOperation(value = "Delete widget type (deleteWidgetType)",

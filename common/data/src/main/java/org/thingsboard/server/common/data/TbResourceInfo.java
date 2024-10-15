@@ -17,11 +17,11 @@ package org.thingsboard.server.common.data;
 
 import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
+import lombok.SneakyThrows;
 import lombok.extern.slf4j.Slf4j;
 import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
@@ -134,11 +134,12 @@ public class TbResourceInfo extends BaseData<TbResourceId> implements HasName, H
         return title;
     }
 
-    public <T> T getDescriptor(Class<T> type) throws JsonProcessingException {
+    @SneakyThrows
+    public <T> T getDescriptor(Class<T> type) {
         return descriptor != null ? mapper.treeToValue(descriptor, type) : null;
     }
 
-    public <T> void updateDescriptor(Class<T> type, UnaryOperator<T> updater) throws JsonProcessingException {
+    public <T> void updateDescriptor(Class<T> type, UnaryOperator<T> updater) {
         T descriptor = getDescriptor(type);
         descriptor = updater.apply(descriptor);
         setDescriptorValue(descriptor);

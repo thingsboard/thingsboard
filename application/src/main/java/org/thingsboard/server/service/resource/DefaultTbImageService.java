@@ -24,7 +24,9 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.cluster.TbClusterService;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ImageDescriptor;
-import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceSubType;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbImageDeleteResult;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -37,12 +39,18 @@ import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.gen.transport.TransportProtos;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
+
+import static org.thingsboard.server.common.data.StringUtils.isNotEmpty;
 
 @Service
 @Slf4j
@@ -89,7 +97,7 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
         try {
             var oldEtag = getEtag(image);
             TbResourceInfo existingImage = null;
-            if (image.getId() == null && StringUtils.isNotEmpty(image.getResourceKey())) {
+            if (image.getId() == null && isNotEmpty(image.getResourceKey())) {
                 existingImage = imageService.getImageInfoByTenantIdAndKey(tenantId, image.getResourceKey());
                 if (existingImage != null) {
                     image.setId(existingImage.getId());
@@ -172,6 +180,60 @@ public class DefaultTbImageService extends AbstractTbEntityService implements Tb
             logEntityActionService.logEntityAction(tenantId, imageId, ActionType.DELETED, user, e, imageId.toString());
             throw e;
         }
+    }
+
+    @Override
+    public ResourceExportData exportImage(TbResourceInfo imageInfo) {
+        ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
+        byte[] data = imageService.getImageData(imageInfo.getTenantId(), imageInfo.getId());
+        return ResourceExportData.builder()
+                .mediaType(descriptor.getMediaType())
+                .fileName(imageInfo.getFileName())
+                .title(imageInfo.getTitle())
+                .type(ResourceType.IMAGE)
+                .subType(imageInfo.getResourceSubType())
+                .resourceKey(imageInfo.getResourceKey())
+                .isPublic(imageInfo.isPublic())
+                .publicResourceKey(imageInfo.getPublicResourceKey())
+                .data(Base64.getEncoder().encodeToString(data))
+                .build();
+    }
+
+    @Override
+    public TbResourceInfo importImage(ResourceExportData imageData, boolean checkExisting, SecurityUser user) throws Exception {
+        TbResource image = new TbResource();
+        image.setTenantId(user.getTenantId());
+        accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.CREATE, null, image);
+
+        byte[] data = Base64.getDecoder().decode(imageData.getData());
+        if (checkExisting) {
+            String etag = imageService.calculateImageEtag(data);
+            TbResourceInfo existingImage = imageService.findSystemOrTenantImageByEtag(user.getTenantId(), etag);
+            if (existingImage != null) {
+                return existingImage;
+            }
+        }
+
+        image.setFileName(imageData.getFileName());
+        if (isNotEmpty(imageData.getTitle())) {
+            image.setTitle(imageData.getTitle());
+        } else {
+            image.setTitle(imageData.getFileName());
+        }
+        if (imageData.getSubType() != null) {
+            image.setResourceSubType(imageData.getSubType());
+        } else {
+            image.setResourceSubType(ResourceSubType.IMAGE);
+        }
+        image.setResourceType(ResourceType.IMAGE);
+        image.setResourceKey(imageData.getResourceKey());
+        image.setPublic(imageData.isPublic());
+        image.setPublicResourceKey(imageData.getPublicResourceKey());
+        ImageDescriptor descriptor = new ImageDescriptor();
+        descriptor.setMediaType(imageData.getMediaType());
+        image.setDescriptorValue(descriptor);
+        image.setData(data);
+        return save(image, user);
     }
 
     private void evictFromCache(TenantId tenantId, List<ImageCacheKey> toEvict) {

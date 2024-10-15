@@ -55,7 +55,7 @@ import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.EntityView;
 import org.thingsboard.server.common.data.EntityViewInfo;
 import org.thingsboard.server.common.data.EventInfo;
-import org.thingsboard.server.common.data.ImageExportData;
+import org.thingsboard.server.common.data.ResourceExportData;
 import org.thingsboard.server.common.data.OtaPackage;
 import org.thingsboard.server.common.data.OtaPackageInfo;
 import org.thingsboard.server.common.data.ResourceSubType;
@@ -3802,14 +3802,14 @@ public class RestClient implements Closeable {
         return IOUtils.toByteArray(image.getInputStream());
     }
 
-    public ImageExportData exportImage(String type, String key) {
-        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ImageExportData.class, Map.of(
+    public ResourceExportData exportImage(String type, String key) {
+        return restTemplate.getForObject(baseURL + "/api/images/{type}/{key}/export", ResourceExportData.class, Map.of(
                 "type", type,
                 "key", key
         ));
     }
 
-    public TbResourceInfo importImage(ImageExportData exportData) {
+    public TbResourceInfo importImage(ResourceExportData exportData) {
         return restTemplate.exchange(baseURL + "/api/image/import", HttpMethod.PUT, new HttpEntity<>(exportData), TbResourceInfo.class).getBody();
     }
 

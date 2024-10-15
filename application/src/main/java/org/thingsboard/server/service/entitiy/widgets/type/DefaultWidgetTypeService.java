@@ -18,15 +18,27 @@ package org.thingsboard.server.service.entitiy.widgets.type;
 import lombok.AllArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.widget.WidgetExportData;
 import org.thingsboard.server.common.data.widget.WidgetType;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.resource.TbImageService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
+
+import java.util.List;
 
 @Service
 @TbCoreComponent
@@ -35,6 +47,8 @@ public class DefaultWidgetTypeService extends AbstractTbEntityService implements
 
 
     private final WidgetTypeService widgetTypeService;
+    private final ImageService imageService;
+    private final TbImageService tbImageService;
 
     @Override
     public WidgetTypeDetails save(WidgetTypeDetails entity, User user) throws Exception {
@@ -75,4 +89,30 @@ public class DefaultWidgetTypeService extends AbstractTbEntityService implements
             throw e;
         }
     }
+
+    @Override
+    public WidgetExportData exportWidgetType(TenantId tenantId, WidgetTypeDetails widgetTypeDetails, SecurityUser user) throws ThingsboardException {
+        List<TbResourceInfo> images = imageService.inlineImages(widgetTypeDetails);
+        for (TbResourceInfo imageInfo : images) {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, imageInfo.getId(), imageInfo);
+        }
+
+        WidgetExportData exportData = new WidgetExportData();
+        exportData.setWidgetTypeDetails(widgetTypeDetails);
+        exportData.setResources(images.stream()
+                .map(tbImageService::exportImage)
+                .toList());
+        return exportData;
+    }
+
+    @Override
+    public WidgetTypeDetails importWidgetType(WidgetExportData exportData, SecurityUser user) throws Exception {
+        for (ResourceExportData resourceExportData : exportData.getResources()) {
+            if (resourceExportData.getType() == ResourceType.IMAGE) {
+                tbImageService.importImage(resourceExportData, true, user);
+            }
+        }
+        return save(exportData.getWidgetTypeDetails(), user);
+    }
+
 }

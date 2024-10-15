@@ -20,9 +20,13 @@ import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.Customer;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
+import org.thingsboard.server.common.data.ResourceExportData;
+import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.ShortCustomerInfo;
+import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
+import org.thingsboard.server.common.data.dashboard.DashboardExportData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -30,10 +34,16 @@ import org.thingsboard.server.common.data.id.DashboardId;
 import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.dao.dashboard.DashboardService;
+import org.thingsboard.server.dao.resource.ImageService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
+import org.thingsboard.server.service.resource.TbImageService;
+import org.thingsboard.server.service.security.model.SecurityUser;
+import org.thingsboard.server.service.security.permission.Operation;
+import org.thingsboard.server.service.security.permission.Resource;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 @Service
@@ -42,6 +52,8 @@ import java.util.Set;
 public class DefaultTbDashboardService extends AbstractTbEntityService implements TbDashboardService {
 
     private final DashboardService dashboardService;
+    private final ImageService imageService;
+    private final TbImageService tbImageService;
 
     @Override
     public Dashboard save(Dashboard dashboard, User user) throws Exception {
@@ -281,6 +293,31 @@ public class DefaultTbDashboardService extends AbstractTbEntityService implement
             logEntityActionService.logEntityAction(tenantId, emptyId(EntityType.DASHBOARD), actionType, user, e, dashboardId.toString());
             throw e;
         }
+    }
+
+    @Override
+    public DashboardExportData exportDashboard(TenantId tenantId, Dashboard dashboard, SecurityUser user) throws ThingsboardException {
+        List<TbResourceInfo> images = imageService.inlineImages(dashboard);
+        for (TbResourceInfo imageInfo : images) {
+            accessControlService.checkPermission(user, Resource.TB_RESOURCE, Operation.READ, imageInfo.getId(), imageInfo);
+        }
+
+        DashboardExportData exportData = new DashboardExportData();
+        exportData.setDashboard(dashboard);
+        exportData.setResources(images.stream()
+                .map(tbImageService::exportImage)
+                .toList());
+        return exportData;
+    }
+
+    @Override
+    public Dashboard importDashboard(DashboardExportData exportData, SecurityUser user) throws Exception {
+        for (ResourceExportData resourceExportData : exportData.getResources()) {
+            if (resourceExportData.getType() == ResourceType.IMAGE) {
+                tbImageService.importImage(resourceExportData, true, user);
+            }
+        }
+        return save(exportData.getDashboard(), user);
     }
 
 }

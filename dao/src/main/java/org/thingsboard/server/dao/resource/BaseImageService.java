@@ -15,7 +15,6 @@
  */
 package org.thingsboard.server.dao.resource;
 
-import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
@@ -56,12 +55,12 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
-import org.thingsboard.server.dao.util.JsonNodeProcessingTask;
 import org.thingsboard.server.dao.util.JsonPathProcessingTask;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
@@ -72,7 +71,11 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.Queue;
 import java.util.Set;
+import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.BiFunction;
 import java.util.regex.Pattern;
+
+import static org.apache.commons.lang3.ArrayUtils.get;
 
 @Service
 @Slf4j
@@ -293,6 +296,9 @@ public class BaseImageService extends BaseResourceService implements ImageServic
 
     @Override
     public TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag) {
+        if (StringUtils.isEmpty(etag)) {
+            return null;
+        }
         log.trace("Executing findSystemOrTenantImageByEtag [{}] [{}]", tenantId, etag);
         return resourceInfoDao.findSystemOrTenantImageByEtag(tenantId, ResourceType.IMAGE, etag);
     }
@@ -430,60 +436,67 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         return base64ToImageUrl(tenantId, name, data, false);
     }
 
-    private static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:([^:]*):([^:]*):?([^:]*)?;data:(.*);.*");
+    private static final Pattern TB_IMAGE_METADATA_PATTERN = Pattern.compile("^tb-image:([^;]+);data:(.*);.*");
 
     private UpdateResult base64ToImageUrl(TenantId tenantId, String name, String data, boolean strict) {
         if (StringUtils.isBlank(data)) {
             return UpdateResult.of(false, data);
         }
+
+        String resourceKey = null;
+        String resourceName = null;
+        String resourceSubType = null;
+        String etag = null;
+        String mediaType;
         var matcher = TB_IMAGE_METADATA_PATTERN.matcher(data);
-        boolean matches = matcher.matches();
-        String mdResourceKey = null;
-        String mdResourceName = null;
-        String mdResourceSubType = null;
-        String mdMediaType;
-        if (matches) {
-            mdResourceKey = new String(Base64.getDecoder().decode(matcher.group(1)), StandardCharsets.UTF_8);
-            mdResourceName = new String(Base64.getDecoder().decode(matcher.group(2)), StandardCharsets.UTF_8);
-            if (StringUtils.isNotBlank(matcher.group(3))) {
-                mdResourceSubType = new String(Base64.getDecoder().decode(matcher.group(3)), StandardCharsets.UTF_8);
-            }
-            mdMediaType = matcher.group(4);
+        if (matcher.matches()) {
+            String[] metadata = matcher.group(1).split(":");
+            resourceKey = decode(get(metadata, 0));
+            resourceName = decode(get(metadata, 1));
+            resourceSubType = decode(get(metadata, 2));
+            etag = get(metadata, 3);
+            mediaType = matcher.group(2);
         } else if (data.startsWith(DataConstants.TB_IMAGE_PREFIX + "data:image/") || (!strict && data.startsWith("data:image/"))) {
-            mdMediaType = StringUtils.substringBetween(data, "data:", ";base64");
+            mediaType = StringUtils.substringBetween(data, "data:", ";base64");
         } else {
             return UpdateResult.of(false, data);
         }
+
         String base64Data = StringUtils.substringAfter(data, "base64,");
-        String extension = ImageUtils.mediaTypeToFileExtension(mdMediaType);
-        byte[] imageData = Base64.getDecoder().decode(base64Data);
-        String etag = calculateEtag(imageData);
+        byte[] imageData = StringUtils.isNotEmpty(base64Data) ? Base64.getDecoder().decode(base64Data) : null;
+        if (StringUtils.isBlank(etag)) {
+            etag = calculateEtag(imageData);
+        }
         var imageInfo = findSystemOrTenantImageByEtag(tenantId, etag);
         if (imageInfo == null) {
+            if (imageData == null) {
+                return UpdateResult.of(false, data);
+            }
             TbResource image = new TbResource();
             image.setTenantId(tenantId);
             image.setResourceType(ResourceType.IMAGE);
-            if (StringUtils.isBlank(mdResourceName)) {
-                mdResourceName = name;
+            if (StringUtils.isBlank(resourceName)) {
+                resourceName = name;
             }
-            image.setTitle(mdResourceName);
+            image.setTitle(resourceName);
 
             String fileName;
-            if (StringUtils.isBlank(mdResourceKey)) {
-                fileName = StringUtils.strip(mdResourceName.toLowerCase()
+            if (StringUtils.isBlank(resourceKey)) {
+                String extension = ImageUtils.mediaTypeToFileExtension(mediaType);
+                fileName = StringUtils.strip(resourceName.toLowerCase()
                         .replaceAll("['\"]", "")
                         .replaceAll("[^\\pL\\d]+", "_"), "_") // leaving only letters and numbers
                         + "." + extension;
             } else {
-                fileName = mdResourceKey;
+                fileName = resourceKey;
             }
-            if (StringUtils.isBlank(mdResourceSubType)) {
+            if (StringUtils.isBlank(resourceSubType)) {
                 image.setResourceSubType(ResourceSubType.IMAGE);
             } else {
-                image.setResourceSubType(ResourceSubType.valueOf(mdResourceSubType));
+                image.setResourceSubType(ResourceSubType.valueOf(resourceSubType));
             }
             image.setFileName(fileName);
-            image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mdMediaType));
+            image.setDescriptor(JacksonUtil.newObjectNode().put("mediaType", mediaType));
             image.setData(imageData);
             image.setPublic(true);
             try {
@@ -503,159 +516,127 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     private boolean base64ToImageUrlRecursively(TenantId tenantId, String title, JsonNode root) {
-        boolean updated = false;
-        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
-        tasks.add(new JsonNodeProcessingTask(title, root));
-        while (!tasks.isEmpty()) {
-            JsonNodeProcessingTask task = tasks.poll();
-            JsonNode node = task.getNode();
-            if (node == null) {
-                continue;
+        AtomicBoolean updated = new AtomicBoolean(false);
+        JacksonUtil.replaceAll(root, title, (path, value) -> {
+            UpdateResult result = base64ToImageUrl(tenantId, path, value, true);
+            if (result.isUpdated()) {
+                updated.set(true);
             }
-            String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + " ");
-            if (node.isObject()) {
-                ObjectNode on = (ObjectNode) node;
-                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
-                    String childName = it.next();
-                    JsonNode childValue = on.get(childName);
-                    if (childValue.isTextual()) {
-                        UpdateResult result = base64ToImageUrl(tenantId, currentPath + childName, childValue.asText(), true);
-                        on.put(childName, result.getValue());
-                        updated |= result.isUpdated();
-                    } else if (childValue.isObject() || childValue.isArray()) {
-                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
-                    }
-                }
-            } else if (node.isArray()) {
-                ArrayNode childArray = (ArrayNode) node;
-                for (int i = 0; i < childArray.size(); i++) {
-                    JsonNode element = childArray.get(i);
-                    if (element.isObject()) {
-                        tasks.add(new JsonNodeProcessingTask(currentPath + " " + i, element));
-                    } else if (element.isTextual()) {
-                        UpdateResult result = base64ToImageUrl(tenantId, currentPath + "." + i, element.asText(), true);
-                        childArray.set(i, result.getValue());
-                        updated |= result.isUpdated();
-                    }
-                }
-            }
-        }
-        return updated;
+            return result.getValue();
+        });
+        return updated.get();
     }
 
     @Override
     public void inlineImage(HasImage entity) {
         log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true));
+        inlineImage(entity, null);
     }
 
     @Override
-    public void inlineImages(Dashboard dashboard) {
+    public List<TbResourceInfo> inlineImages(Dashboard dashboard) {
         log.trace("Executing inlineImage [{}] [Dashboard] [{}]", dashboard.getTenantId(), dashboard.getId());
-        inlineImage(dashboard);
-        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration());
+        List<TbResourceInfo> images = new ArrayList<>();
+        inlineImage(dashboard, images);
+        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), images);
+        return images;
     }
 
     @Override
-    public void inlineImages(WidgetTypeDetails widgetTypeDetails) {
+    public List<TbResourceInfo> inlineImages(WidgetTypeDetails widgetTypeDetails) {
         log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
-        inlineImage(widgetTypeDetails);
+        List<TbResourceInfo> images = new ArrayList<>();
+        inlineImage(widgetTypeDetails, images);
         ObjectNode descriptor = (ObjectNode) widgetTypeDetails.getDescriptor();
-        inlineIntoJson(widgetTypeDetails.getTenantId(), descriptor);
+        inlineIntoJson(widgetTypeDetails.getTenantId(), descriptor, images);
         if (descriptor.has(DEFAULT_CONFIG_TAG) && descriptor.get(DEFAULT_CONFIG_TAG).isTextual()) {
             try {
                 var defaultConfig = JacksonUtil.toJsonNode(descriptor.get(DEFAULT_CONFIG_TAG).asText());
-                inlineIntoJson(widgetTypeDetails.getTenantId(), defaultConfig);
+                inlineIntoJson(widgetTypeDetails.getTenantId(), defaultConfig, images);
                 descriptor.put(DEFAULT_CONFIG_TAG, JacksonUtil.toString(defaultConfig));
             } catch (Exception e) {
                 log.debug("[{}][{}] Failed to process default config: ", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId(), e);
             }
         }
+        return images;
     }
 
     @Override
     public void inlineImageForEdge(HasImage entity) {
         log.trace("Executing inlineImageForEdge [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
-        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), false));
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), false, null));
     }
 
     @Override
     public void inlineImagesForEdge(Dashboard dashboard) {
         log.trace("Executing inlineImagesForEdge [{}] [Dashboard] [{}]", dashboard.getTenantId(), dashboard.getId());
         inlineImageForEdge(dashboard);
-        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), false);
+        inlineIntoJson(dashboard.getTenantId(), dashboard.getConfiguration(), false, null);
     }
 
     @Override
     public void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails) {
         log.trace("Executing inlineImage [{}] [WidgetTypeDetails] [{}]", widgetTypeDetails.getTenantId(), widgetTypeDetails.getId());
         inlineImageForEdge(widgetTypeDetails);
-        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), false);
+        inlineIntoJson(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), false, null);
     }
 
-    private void inlineIntoJson(TenantId tenantId, JsonNode root) {
-        inlineIntoJson(tenantId, root, true);
+    private void inlineImage(HasImage entity, List<TbResourceInfo> processedImages) {
+        log.trace("Executing inlineImage [{}] [{}] [{}]", entity.getTenantId(), entity.getClass().getSimpleName(), entity.getName());
+        entity.setImage(inlineImage(entity.getTenantId(), "image", entity.getImage(), true, processedImages));
     }
 
-    private void inlineIntoJson(TenantId tenantId, JsonNode root, boolean addTbImagePrefix) {
-        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
-        tasks.add(new JsonNodeProcessingTask("", root));
-        while (!tasks.isEmpty()) {
-            JsonNodeProcessingTask task = tasks.poll();
-            JsonNode node = task.getNode();
-            if (node == null) {
-                continue;
-            }
-            String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
-            if (node.isObject()) {
-                ObjectNode on = (ObjectNode) node;
-                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
-                    String childName = it.next();
-                    JsonNode childValue = on.get(childName);
-                    if (childValue.isTextual()) {
-                        on.put(childName, inlineImage(tenantId, currentPath + childName, childValue.asText(), addTbImagePrefix));
-                    } else if (childValue.isObject() || childValue.isArray()) {
-                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
-                    }
-                }
-            } else if (node.isArray()) {
-                ArrayNode childArray = (ArrayNode) node;
-                for (int i = 0; i < childArray.size(); i++) {
-                    JsonNode element = childArray.get(i);
-                    if (element.isObject()) {
-                        tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
-                    } else if (element.isTextual()) {
-                        childArray.set(i, inlineImage(tenantId, currentPath + "." + i, element.asText(), addTbImagePrefix));
-                    }
+    private void inlineIntoJson(TenantId tenantId, JsonNode root, List<TbResourceInfo> processedImages) {
+        inlineIntoJson(tenantId, root, true, processedImages);
+    }
+
+    private void inlineIntoJson(TenantId tenantId, JsonNode root, boolean addTbImagePrefix, List<TbResourceInfo> processedImages) {
+        JacksonUtil.replaceAll(root, "", (path, value) -> inlineImage(tenantId, path, value, addTbImagePrefix, processedImages));
+    }
+
+    private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix, List<TbResourceInfo> processedImages) {
+        return inlineImage(tenantId, path, url, (key, imageInfo) -> {
+            String tbImagePrefix = "";
+            boolean addData = true;
+            if (addTbImagePrefix) {
+                tbImagePrefix = "tb-image:" + encode(imageInfo.getResourceKey()) + ":"
+                        + encode(imageInfo.getName()) + ":"
+                        + encode(imageInfo.getResourceSubType().name()) + ":"
+                        + imageInfo.getEtag() + ";";
+
+                if (processedImages != null && !key.isPreview()) {
+                    addData = false;
+                    processedImages.add(imageInfo);
                 }
             }
-        }
+
+            byte[] data;
+            if (addData) {
+                data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
+            } else {
+                data = null;
+            }
+            ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
+            return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + encode(data);
+        });
     }
 
-    private String inlineImage(TenantId tenantId, String path, String url, boolean addTbImagePrefix) {
+    private String inlineImage(TenantId tenantId, String path, String imageUrl, BiFunction<ImageCacheKey, TbResourceInfo, String> inliner) {
         try {
-            ImageCacheKey key = getKeyFromUrl(tenantId, url);
+            ImageCacheKey key = getKeyFromUrl(tenantId, imageUrl);
             if (key != null) {
                 var imageInfo = getImageInfoByTenantIdAndKey(key.getTenantId(), key.getResourceKey());
                 if (imageInfo != null && !(TenantId.SYS_TENANT_ID.equals(imageInfo.getTenantId()) && ResourceSubType.SCADA_SYMBOL.equals(imageInfo.getResourceSubType()))) {
-                    byte[] data = key.isPreview() ? getImagePreview(tenantId, imageInfo.getId()) : getImageData(tenantId, imageInfo.getId());
-                    ImageDescriptor descriptor = getImageDescriptor(imageInfo, key.isPreview());
-                    String tbImagePrefix = "";
-                    if (addTbImagePrefix) {
-                        tbImagePrefix = "tb-image:" + Base64.getEncoder().encodeToString(imageInfo.getResourceKey().getBytes(StandardCharsets.UTF_8)) + ":"
-                                + Base64.getEncoder().encodeToString(imageInfo.getName().getBytes(StandardCharsets.UTF_8)) + ":"
-                                + Base64.getEncoder().encodeToString(imageInfo.getResourceSubType().name().getBytes(StandardCharsets.UTF_8)) + ";";
-                    }
-                    return tbImagePrefix + "data:" + descriptor.getMediaType() + ";base64," + Base64.getEncoder().encodeToString(data);
+                    return inliner.apply(key, imageInfo);
                 }
             }
         } catch (Exception e) {
-            log.warn("[{}][{}][{}] Failed to inline image.", tenantId, path, url, e);
+            log.warn("[{}][{}][{}] Failed to inline image.", tenantId, path, imageUrl, e);
         }
-        return url;
+        return imageUrl;
     }
 
-    private ImageDescriptor getImageDescriptor(TbResourceInfo imageInfo, boolean preview) throws JsonProcessingException {
+    private ImageDescriptor getImageDescriptor(TbResourceInfo imageInfo, boolean preview) {
         ImageDescriptor descriptor = imageInfo.getDescriptor(ImageDescriptor.class);
         return preview ? descriptor.getPreviewDescriptor() : descriptor;
     }
@@ -679,6 +660,24 @@ public class BaseImageService extends BaseResourceService implements ImageServic
             }
         }
         return null;
+    }
+
+    private String encode(String data) {
+        return encode(data.getBytes(StandardCharsets.UTF_8));
+    }
+
+    private String encode(byte[] data) {
+        if (data == null || data.length == 0) {
+            return "";
+        }
+        return Base64.getEncoder().encodeToString(data);
+    }
+
+    private String decode(String value) {
+        if (value == null) {
+            return null;
+        }
+        return new String(Base64.getDecoder().decode(value), StandardCharsets.UTF_8);
     }
 
     @Data(staticConstructor = "of")

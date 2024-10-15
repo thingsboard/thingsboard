@@ -32,7 +32,9 @@ import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
 import com.google.common.collect.Lists;
+import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.thingsboard.server.common.data.kv.DataType;
 import org.thingsboard.server.common.data.kv.KvEntry;
 
@@ -46,10 +48,13 @@ import java.nio.file.Path;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Queue;
 import java.util.Set;
 import java.util.UUID;
+import java.util.function.BiFunction;
 import java.util.function.UnaryOperator;
 import java.util.regex.Pattern;
 
@@ -265,7 +270,7 @@ public class JacksonUtil {
             return value != null ? OBJECT_MAPPER.readTree(value) : null;
         } catch (IOException e) {
             throw new IllegalArgumentException("The given InputStream value: "
-                                               + value + " cannot be transformed to a JsonNode", e);
+                    + value + " cannot be transformed to a JsonNode", e);
         }
     }
 
@@ -424,6 +429,52 @@ public class JacksonUtil {
             }
         } else {
             entityNode.put(key, kvEntry.getValueAsString());
+        }
+    }
+
+    public static void replaceAll(JsonNode root, String pathPrefix, BiFunction<String, String, String> processor) {
+        Queue<JsonNodeProcessingTask> tasks = new LinkedList<>();
+        tasks.add(new JsonNodeProcessingTask(pathPrefix, root));
+        while (!tasks.isEmpty()) {
+            JsonNodeProcessingTask task = tasks.poll();
+            JsonNode node = task.getNode();
+            if (node == null) {
+                continue;
+            }
+            String currentPath = StringUtils.isBlank(task.getPath()) ? "" : (task.getPath() + ".");
+            if (node.isObject()) {
+                ObjectNode on = (ObjectNode) node;
+                for (Iterator<String> it = on.fieldNames(); it.hasNext(); ) {
+                    String childName = it.next();
+                    JsonNode childValue = on.get(childName);
+                    if (childValue.isTextual()) {
+                        on.put(childName, processor.apply(currentPath + childName, childValue.asText()));
+                    } else if (childValue.isObject() || childValue.isArray()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + childName, childValue));
+                    }
+                }
+            } else if (node.isArray()) {
+                ArrayNode childArray = (ArrayNode) node;
+                for (int i = 0; i < childArray.size(); i++) {
+                    JsonNode element = childArray.get(i);
+                    if (element.isObject()) {
+                        tasks.add(new JsonNodeProcessingTask(currentPath + "." + i, element));
+                    } else if (element.isTextual()) {
+                        childArray.set(i, processor.apply(currentPath + "." + i, element.asText()));
+                    }
+                }
+            }
+        }
+    }
+
+    @Data
+    public static class JsonNodeProcessingTask {
+        private final String path;
+        private final JsonNode node;
+
+        public JsonNodeProcessingTask(String path, JsonNode node) {
+            this.path = path;
+            this.node = node;
         }
     }
 

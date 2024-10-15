@@ -26,7 +26,10 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpStatus;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.DeleteMapping;
+import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
@@ -42,6 +45,7 @@ import org.thingsboard.server.common.data.HomeDashboard;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.dashboard.DashboardExportData;
 import org.thingsboard.server.common.data.edge.Edge;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.CustomerId;
@@ -111,8 +115,7 @@ public class DashboardController extends BaseController {
             notes = "Get the server time (milliseconds since January 1, 1970 UTC). " +
                     "Used to adjust view of the dashboards according to the difference between browser and server time.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/dashboard/serverTime", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/dashboard/serverTime")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "1636023857137")))
     public long getServerTime() throws ThingsboardException {
         return System.currentTimeMillis();
@@ -124,8 +127,7 @@ public class DashboardController extends BaseController {
                     "It also impacts the 'Grouping interval' in case of any other 'Data aggregation function' is selected. " +
                     "The actual value of the limit is configurable in the system configuration file.")
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/dashboard/maxDatapointsLimit", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/dashboard/maxDatapointsLimit")
     @ApiResponse(responseCode = "200", description = "OK", content = @Content(mediaType = "application/json", examples = @ExampleObject(value = "5000")))
     public long getMaxDatapointsLimit() throws ThingsboardException {
         return maxDatapointsLimit;
@@ -134,8 +136,7 @@ public class DashboardController extends BaseController {
     @ApiOperation(value = "Get Dashboard Info (getDashboardInfoById)",
             notes = "Get the information about the dashboard based on 'dashboardId' parameter. " + DASHBOARD_INFO_DEFINITION)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/dashboard/info/{dashboardId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/dashboard/info/{dashboardId}")
     public DashboardInfo getDashboardInfoById(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
@@ -148,8 +149,7 @@ public class DashboardController extends BaseController {
             notes = "Get the dashboard based on 'dashboardId' parameter. " + DASHBOARD_DEFINITION + TENANT_OR_CUSTOMER_AUTHORITY_PARAGRAPH
     )
     @PreAuthorize("hasAnyAuthority('TENANT_ADMIN', 'CUSTOMER_USER')")
-    @RequestMapping(value = "/dashboard/{dashboardId}", method = RequestMethod.GET)
-    @ResponseBody
+    @GetMapping(value = "/dashboard/{dashboardId}")
     public Dashboard getDashboardById(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
@@ -164,6 +164,15 @@ public class DashboardController extends BaseController {
         return result;
     }
 
+    @GetMapping(value = "/dashboard/{dashboardId}/export")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    public DashboardExportData exportDashboard(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
+                                               @PathVariable(DASHBOARD_ID) UUID id) throws ThingsboardException {
+        DashboardId dashboardId = new DashboardId(id);
+        Dashboard dashboard = checkDashboardId(dashboardId, Operation.READ);
+        return tbDashboardService.exportDashboard(getTenantId(), dashboard, getCurrentUser());
+    }
+
     @ApiOperation(value = "Create Or Update Dashboard (saveDashboard)",
             notes = "Create or update the Dashboard. When creating dashboard, platform generates Dashboard Id as " + UUID_WIKI_LINK +
                     "The newly created Dashboard id will be present in the response. " +
@@ -172,24 +181,30 @@ public class DashboardController extends BaseController {
                     "Remove 'id', 'tenantId' and optionally 'customerId' from the request body example (below) to create new Dashboard entity. " +
                     TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/dashboard", method = RequestMethod.POST)
-    @ResponseBody
-    public Dashboard saveDashboard(
-            @io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
-            @RequestBody Dashboard dashboard) throws Exception {
+    @PostMapping(value = "/dashboard")
+    public Dashboard saveDashboard(@io.swagger.v3.oas.annotations.parameters.RequestBody(description = "A JSON value representing the dashboard.")
+                                   @RequestBody Dashboard dashboard) throws Exception {
         dashboard.setTenantId(getTenantId());
         checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
         return tbDashboardService.save(dashboard, getCurrentUser());
     }
 
+    @PostMapping(value = "/dashboard/import")
+    @PreAuthorize("hasAuthority('TENANT_ADMIN')")
+    public Dashboard importDashboard(@RequestBody DashboardExportData exportData) throws Exception {
+        Dashboard dashboard = exportData.getDashboard();
+        dashboard.setTenantId(getTenantId());
+        dashboard.setId(null);
+        checkEntity(dashboard.getId(), dashboard, Resource.DASHBOARD);
+        return tbDashboardService.importDashboard(exportData, getCurrentUser());
+    }
+
     @ApiOperation(value = "Delete the Dashboard (deleteDashboard)",
             notes = "Delete the Dashboard." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/dashboard/{dashboardId}", method = RequestMethod.DELETE)
-    @ResponseStatus(value = HttpStatus.OK)
-    public void deleteDashboard(
-            @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
-            @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
+    @DeleteMapping(value = "/dashboard/{dashboardId}")
+    public void deleteDashboard(@Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
+                                @PathVariable(DASHBOARD_ID) String strDashboardId) throws ThingsboardException {
         checkParameter(DASHBOARD_ID, strDashboardId);
         DashboardId dashboardId = new DashboardId(toUUID(strDashboardId));
         Dashboard dashboard = checkDashboardId(dashboardId, Operation.DELETE);
@@ -200,8 +215,7 @@ public class DashboardController extends BaseController {
             notes = "Assign the Dashboard to specified Customer or do nothing if the Dashboard is already assigned to that Customer. " +
                     "Returns the Dashboard object." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/dashboard/{dashboardId}", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/customer/{customerId}/dashboard/{dashboardId}")
     public Dashboard assignDashboardToCustomer(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -222,8 +236,7 @@ public class DashboardController extends BaseController {
             notes = "Unassign the Dashboard from specified Customer or do nothing if the Dashboard is already assigned to that Customer. " +
                     "Returns the Dashboard object." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/customer/{customerId}/dashboard/{dashboardId}", method = RequestMethod.DELETE)
-    @ResponseBody
+    @DeleteMapping(value = "/customer/{customerId}/dashboard/{dashboardId}")
     public Dashboard unassignDashboardFromCustomer(
             @Parameter(description = CUSTOMER_ID_PARAM_DESCRIPTION)
             @PathVariable(CUSTOMER_ID) String strCustomerId,
@@ -243,8 +256,7 @@ public class DashboardController extends BaseController {
                     "Returns the Dashboard object. " + TENANT_AUTHORITY_PARAGRAPH)
 
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/dashboard/{dashboardId}/customers", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/dashboard/{dashboardId}/customers")
     public Dashboard updateDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
@@ -261,8 +273,7 @@ public class DashboardController extends BaseController {
             notes = "Adds the list of Customers to the existing list of assignments for the Dashboard. Keeps previous assignments to customers that are not in the provided list. " +
                     "Returns the Dashboard object." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/dashboard/{dashboardId}/customers/add", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/dashboard/{dashboardId}/customers/add")
     public Dashboard addDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
@@ -279,8 +290,7 @@ public class DashboardController extends BaseController {
             notes = "Removes the list of Customers from the existing list of assignments for the Dashboard. Keeps other assignments to customers that are not in the provided list. " +
                     "Returns the Dashboard object." + TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAuthority('TENANT_ADMIN')")
-    @RequestMapping(value = "/dashboard/{dashboardId}/customers/remove", method = RequestMethod.POST)
-    @ResponseBody
+    @PostMapping(value = "/dashboard/{dashboardId}/customers/remove")
     public Dashboard removeDashboardCustomers(
             @Parameter(description = DASHBOARD_ID_PARAM_DESCRIPTION)
             @PathVariable(DASHBOARD_ID) String strDashboardId,
@@ -655,4 +665,5 @@ public class DashboardController extends BaseController {
         }
         return customerIds;
     }
+
 }
