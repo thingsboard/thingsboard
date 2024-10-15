@@ -21,7 +21,7 @@ import { Dashboard } from '@shared/models/dashboard.models';
 import { ResourcesService } from '@core/services/resources.service';
 import { Observable } from 'rxjs';
 import { MenuId } from '@core/services/menu.models';
-import { GatewaysComponent } from '@home/pages/gateways/gateways.component';
+import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
 
 const gatewaysDashboardJson = '/api/resource/dashboard/system/gateways_dashboard.json';
 
@@ -31,10 +31,10 @@ export const gatewaysDashboardResolver: ResolveFn<Dashboard> = (
   resourcesService = inject(ResourcesService)
 ): Observable<Dashboard> => resourcesService.loadJsonResource(gatewaysDashboardJson);
 
-const routes: Routes = [
+export const gatewaysRoutes: Routes = [
   {
     path: 'entities/gateways',
-    component: GatewaysComponent,
+    component: DashboardViewComponent,
     data: {
       auth: [Authority.TENANT_ADMIN],
       title: 'gateway.gateways',
@@ -49,7 +49,7 @@ const routes: Routes = [
 ];
 
 @NgModule({
-  imports: [RouterModule.forChild(routes)],
+  imports: [RouterModule.forChild(gatewaysRoutes)],
   exports: [RouterModule]
 })
 export class GatewaysRoutingModule { }

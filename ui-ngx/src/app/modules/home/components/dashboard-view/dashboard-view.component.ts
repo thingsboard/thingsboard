@@ -22,13 +22,13 @@ import { Dashboard } from '@shared/models/dashboard.models';
 import { ActivatedRoute } from '@angular/router';
 
 @Component({
-  selector: 'tb-gateways',
-  templateUrl: './gateways.component.html',
-  styleUrls: ['./gateways.component.scss']
+  selector: 'tb-dashboard-view',
+  templateUrl: './dashboard-view.component.html',
+  styleUrls: ['./dashboard-view.component.scss']
 })
-export class GatewaysComponent extends PageComponent {
+export class DashboardViewComponent extends PageComponent {
 
-  gatewaysDashboard: Dashboard = this.route.snapshot.data.gatewaysDashboard;
+  dashboard: Dashboard = this.route.snapshot.data.dashboard;
 
   constructor(protected store: Store<AppState>,
               private route: ActivatedRoute) {

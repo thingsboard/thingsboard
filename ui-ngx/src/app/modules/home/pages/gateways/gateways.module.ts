@@ -18,14 +18,9 @@ import { NgModule } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { SharedModule } from '@app/shared/shared.module';
 import { HomeComponentsModule } from '@modules/home/components/home-components.module';
-import { GatewaysComponent } from '@home/pages/gateways/gateways.component';
 import { GatewaysRoutingModule } from '@home/pages/gateways/gateways-routing.module';
 
 @NgModule({
-  declarations:
-    [
-      GatewaysComponent
-    ],
   imports: [
     CommonModule,
     SharedModule,
