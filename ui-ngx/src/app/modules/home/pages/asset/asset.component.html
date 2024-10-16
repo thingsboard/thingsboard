@@ -15,63 +15,63 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons xs:flex xs:flex-col">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'makePublic')"
-          [fxShow]="!isEdit && assetScope === 'tenant' && !isAssignedToCustomer(entity) && !entity?.customerIsPublic">
+          [class.!hidden]="isEdit || assetScope !== 'tenant' || isAssignedToCustomer(entity) || entity?.customerIsPublic">
     {{'asset.make-public' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'assignToCustomer')"
-          [fxShow]="!isEdit && assetScope === 'tenant' && !isAssignedToCustomer(entity)">
+          [class.!hidden]="isEdit || assetScope !== 'tenant' || isAssignedToCustomer(entity)">
     {{'asset.assign-to-customer' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromCustomer')"
-          [fxShow]="!isEdit && (assetScope === 'customer' || assetScope === 'tenant') && isAssignedToCustomer(entity)">
+          [class.!hidden]="isEdit || (assetScope !== 'customer' && assetScope !== 'tenant') || !isAssignedToCustomer(entity)">
     {{ (entity?.customerIsPublic ? 'asset.make-private' : 'asset.unassign-from-customer') | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
-          [fxShow]="!isEdit && assetScope === 'edge'">
+          [class.!hidden]="isEdit || assetScope !== 'edge'">
     {{ 'edge.unassign-from-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{'asset.delete' | translate }}
   </button>
-  <div fxLayout="row" fxLayout.xs="column">
+  <div class="flex flex-row xs:flex-col">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onAssetIdCopied($event)"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>asset.copyId</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <mat-form-field class="mat-block"
-                  [fxShow]="!isEdit && isAssignedToCustomer(entity)
-                              && !entity?.customerIsPublic && assetScope === 'tenant'">
+                  [class.!hidden]="isEdit || !isAssignedToCustomer(entity)
+                              || entity?.customerIsPublic || assetScope !== 'tenant'">
     <mat-label translate>asset.assignedToCustomer</mat-label>
     <input matInput disabled [ngModel]="entity?.customerTitle">
   </mat-form-field>
   <div class="tb-small" style="padding-bottom: 10px; padding-left: 2px;"
-       [fxShow]="!isEdit && entity?.customerIsPublic && (assetScope === 'customer' || assetScope === 'tenant')">
+       [class.!hidden]="isEdit || !entity?.customerIsPublic || (assetScope !== 'customer' && assetScope !== 'tenant')">
     {{ 'asset.asset-public' | translate }}
   </div>
   <form [formGroup]="entityForm">
