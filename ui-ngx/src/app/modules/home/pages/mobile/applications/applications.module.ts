@@ -21,11 +21,13 @@ import { CommonModule } from '@angular/common';
 import { SharedModule } from '@shared/shared.module';
 import { HomeComponentsModule } from '@home/components/home-components.module';
 import { ApplicationsRoutingModule } from '@home/pages/mobile/applications/applications-routing.module';
+import { ReleaseNotesPanelComponent } from '@home/pages/mobile/applications/release-notes-panel.component';
 
 @NgModule({
   declarations: [
     MobileAppComponent,
-    MobileAppTableHeaderComponent
+    MobileAppTableHeaderComponent,
+    ReleaseNotesPanelComponent
   ],
   imports: [
     CommonModule,

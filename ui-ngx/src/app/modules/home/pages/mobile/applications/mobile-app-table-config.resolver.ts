@@ -120,7 +120,7 @@ export class MobileAppTableConfigResolver  {
         backgroundColor = 'rgba(209, 39, 48, 0.06)';
         break;
       case MobileAppStatus.DRAFT:
-        backgroundColor = 'rgba(160, 160, 160, 0.06)';
+        backgroundColor = 'rgba(0, 148, 255, 0.06)';
         break;
     }
     return `<div style="border-radius: 14px; height: 28px; line-height: 20px; padding: 4px 10px;
@@ -142,7 +142,7 @@ export class MobileAppTableConfigResolver  {
         styleObj.color = '#D12730';
         break;
       case MobileAppStatus.DRAFT:
-        styleObj.color = '#A0A0A0';
+        styleObj.color = '#0094FF';
         break;
     }
     return styleObj;

@@ -4067,6 +4067,7 @@
         "application-details": "Application details",
         "application-package": "Application Package",
         "application-secret": "Application Secret",
+        "application-secret-required": "Application Secret is required",
         "applications": "Applications",
         "copy-app-id": "Copy App ID",
         "copy-app-store-link": "Copy App Store link",
@@ -4100,7 +4101,9 @@
             "suspended": "Suspended"
         },
         "store-information": "Store information",
-        "version-information": "Version information"
+        "version-information": "Version information",
+        "min-version-release-notes": "Min version release notes",
+        "latest-version-release-notes": "Latest version release notes"
     },
     "notification": {
         "action-button": "Action button",

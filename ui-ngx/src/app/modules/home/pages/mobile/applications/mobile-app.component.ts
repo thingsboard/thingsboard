@@ -14,7 +14,7 @@
 /// limitations under the License.
 ///
 
-import { ChangeDetectorRef, Component, Inject } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, Renderer2, ViewContainerRef } from '@angular/core';
 import { EntityComponent } from '@home/components/entity/entity.component';
 import { AppState } from '@core/core.state';
 import { EntityTableConfig } from '@home/models/entity/entities-table-config.models';
@@ -26,6 +26,9 @@ import { EntityType } from '@shared/models/entity-type.models';
 import { MobileApp, MobileAppStatus, mobileAppStatusTranslations } from '@shared/models/mobile-app.models';
 import { PlatformType, platformTypeTranslations } from '@shared/models/oauth2.models';
 import { takeUntilDestroyed } from '@angular/core/rxjs-interop';
+import { MatButton } from '@angular/material/button';
+import { TbPopoverService } from '@shared/components/popover.service';
+import { ReleaseNotesPanelComponent } from '@home/pages/mobile/applications/release-notes-panel.component';
 
 @Component({
   selector: 'tb-mobile-app',
@@ -51,7 +54,10 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
               @Inject('entity') protected entityValue: MobileApp,
               @Inject('entitiesTableConfig') protected entitiesTableConfigValue: EntityTableConfig<MobileApp>,
               protected cd: ChangeDetectorRef,
-              public fb: FormBuilder) {
+              public fb: FormBuilder,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private viewContainerRef: ViewContainerRef) {
     super(store, fb, entityValue, entitiesTableConfigValue, cd);
   }
 
@@ -64,7 +70,9 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
       status: [entity?.status ? entity.status : MobileAppStatus.DRAFT],
       versionInfo: this.fb.group({
         minVersion: [entity?.versionInfo?.minVersion ? entity.versionInfo.minVersion : ''],
+        minVersionReleaseNotes: [entity?.versionInfo?.minVersionReleaseNotes ? entity.versionInfo.minVersionReleaseNotes : ''],
         latestVersion: [entity?.versionInfo?.latestVersion ? entity.versionInfo.latestVersion : ''],
+        latestVersionReleaseNotes: [entity?.versionInfo?.latestVersionReleaseNotes ? entity.versionInfo.latestVersionReleaseNotes : ''],
       }),
       storeInfo: this.fb.group({
         storeLink: [entity?.storeInfo?.storeLink ? entity.storeInfo.storeLink : ''],
@@ -89,7 +97,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     form.get('status').valueChanges.pipe(
       takeUntilDestroyed()
     ).subscribe((value: MobileAppStatus) => {
-      if (value === MobileAppStatus.PUBLISHED) {
+      if (value !== MobileAppStatus.DRAFT) {
         form.get('storeInfo.storeLink').addValidators(Validators.required);
         form.get('storeInfo.sha256CertFingerprints').addValidators(Validators.required);
         form.get('storeInfo.appId').addValidators(Validators.required);
@@ -113,6 +121,7 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
   override updateFormState(): void {
     super.updateFormState();
     if (this.isEdit && this.entityForm && !this.isAdd) {
+      this.entityForm.get('status').updateValueAndValidity({onlySelf: false});
       this.entityForm.get('platformType').disable({emitEvent: false});
       if (this.entityForm.get('platformType').value === PlatformType.ANDROID) {
         this.entityForm.get('storeInfo.appId').disable({emitEvent: false});
@@ -134,6 +143,40 @@ export class MobileAppComponent extends EntityComponent<MobileApp> {
     $event.stopPropagation();
     this.entityForm.get('appSecret').setValue(btoa(randomAlphanumeric(64)));
     this.entityForm.get('appSecret').markAsDirty();
+  }
+
+  editReleaseNote($event: Event, matButton: MatButton, isLatest: boolean) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = matButton._elementRef.nativeElement;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const ctx: any = {
+        disabled: !(this.isAdd || this.isEdit),
+        isLatest: isLatest,
+        releaseNotes: isLatest
+          ? this.entityForm.get('versionInfo.latestVersionReleaseNotes').value
+          : this.entityForm.get('versionInfo.minVersionReleaseNotes').value
+      };
+      const releaseNotesPanelPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, ReleaseNotesPanelComponent, ['leftOnly', 'leftBottomOnly', 'leftTopOnly'], true, null,
+        ctx,
+        {},
+        {}, {}, false, () => {}, {padding: '16px 24px'});
+      releaseNotesPanelPopover.tbComponentRef.instance.popover = releaseNotesPanelPopover;
+      releaseNotesPanelPopover.tbComponentRef.instance.releaseNotesApplied.subscribe((releaseNotes) => {
+        releaseNotesPanelPopover.hide();
+        if (isLatest) {
+          this.entityForm.get('versionInfo.latestVersionReleaseNotes').setValue(releaseNotes);
+          this.entityForm.get('versionInfo.latestVersionReleaseNotes').markAsDirty();
+        } else {
+          this.entityForm.get('versionInfo.minVersionReleaseNotes').setValue(releaseNotes);
+          this.entityForm.get('versionInfo.minVersionReleaseNotes').markAsDirty();
+        }
+      });
+    }
   }
 
   private base64Format(control: UntypedFormControl): { [key: string]: boolean } | null {

@@ -68,6 +68,9 @@
       </tb-copy-button>
     </div>
     <mat-hint> </mat-hint>
+    <mat-error *ngIf="entityForm.get('appSecret').hasError('required')">
+      {{ 'mobile.application-secret-required' | translate }}
+    </mat-error>
   </mat-form-field>
   <mat-form-field appearance="outline">
     <mat-label translate>mobile.status</mat-label>
@@ -80,14 +83,36 @@
   <section class="tb-form-panel stroked no-padding-bottom" formGroupName="versionInfo" style="margin-bottom: 21px;">
     <div class="tb-form-panel-title" translate>mobile.version-information</div>
     <section fxLayout="column">
-      <mat-form-field appearance="outline">
-        <mat-label translate>mobile.min-version</mat-label>
-        <input matInput formControlName="minVersion">
-      </mat-form-field>
-      <mat-form-field appearance="outline">
-        <mat-label translate>mobile.latest-version</mat-label>
-        <input matInput formControlName="latestVersion">
-      </mat-form-field>
+      <section fxLayout="row" fxLayoutAlign="start start">
+        <mat-form-field fxFlex appearance="outline">
+          <mat-label translate>mobile.min-version</mat-label>
+          <input matInput formControlName="minVersion">
+        </mat-form-field>
+        <button mat-icon-button
+                style="margin-top: 4px; color:#00000061"
+                type="button"
+                matTooltip="{{ 'mobile.min-version-release-notes' | translate }}"
+                matTooltipPosition="above"
+                #editMinReleaseNotesVersionButton
+                (click)="editReleaseNote($event, editMinReleaseNotesVersionButton, false)">
+          <tb-icon>mdi:text-box-edit</tb-icon>
+        </button>
+      </section>
+      <section fxLayout="row" fxLayoutAlign="start start">
+        <mat-form-field fxFlex appearance="outline">
+          <mat-label translate>mobile.latest-version</mat-label>
+          <input matInput formControlName="latestVersion">
+        </mat-form-field>
+        <button mat-icon-button
+                style="margin-top: 4px; color:#00000061"
+                type="button"
+                matTooltip="{{ 'mobile.latest-version-release-notes' | translate }}"
+                matTooltipPosition="above"
+                #editLatestReleaseNotesVersionButton
+                (click)="editReleaseNote($event, editLatestReleaseNotesVersionButton, true)">
+          <tb-icon>mdi:text-box-edit</tb-icon>
+        </button>
+      </section>
     </section>
   </section>
   <section class="tb-form-panel stroked no-padding-bottom" formGroupName="storeInfo">
