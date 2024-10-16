@@ -18,7 +18,7 @@
 <form [formGroup]="addEntitiesToCustomerFormGroup" (ngSubmit)="assign()">
   <mat-toolbar color="primary">
     <h2>{{ assignToCustomerTitle | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -39,7 +39,7 @@
       </tb-entity-list>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
