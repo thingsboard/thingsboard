@@ -388,12 +388,6 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return credentials;
     }
 
-    private static void awaitClientDestroy(LeshanClient leshanClient) {
-        await("Destroy LeshanClient: delete All is registered Servers.")
-                .atMost(DEFAULT_WAIT_TIMEOUT_SECONDS, TimeUnit.SECONDS)
-                .until(() -> leshanClient.getRegisteredServers().size() == 0);
-    }
-
     protected  void awaitObserveReadAll(int cntObserve, String deviceIdStr) throws Exception {
         await("ObserveReadAll: countObserve " + cntObserve)
                 .atMost(40, TimeUnit.SECONDS)

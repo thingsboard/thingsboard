@@ -1101,21 +1101,16 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     private void sendToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, UUID routingKey, TransportServiceCallback<Void> callback) {
-        // TODO remove before PR
-        try {
-            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
-            if (log.isTraceEnabled()) {
-                log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
-            }
-            TransportTbQueueCallback transportTbQueueCallback = callback != null ?
-                    new TransportTbQueueCallback(callback) : null;
-            tbCoreProducerStats.incrementTotal();
-            StatsCallback wrappedCallback = new StatsCallback(transportTbQueueCallback, tbCoreProducerStats);
-            tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(routingKey, msg), wrappedCallback);
-        } catch (TenantNotFoundException e) {
-            log.trace("Failed to send message to core. Tenant with ID [{}] not found in the database. Message delivery aborted.", tenantId, e);
         }
+
+        TransportTbQueueCallback transportTbQueueCallback = callback != null ?
+                new TransportTbQueueCallback(callback) : null;
+        tbCoreProducerStats.incrementTotal();
+        StatsCallback wrappedCallback = new StatsCallback(transportTbQueueCallback, tbCoreProducerStats);
+        tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(routingKey, msg), wrappedCallback);
     }
 
     private void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, CustomerId customerId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,
