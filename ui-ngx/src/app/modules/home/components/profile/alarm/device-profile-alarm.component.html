@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<mat-expansion-panel class="device-profile-alarm" fxFlex [formGroup]="alarmFormGroup" [(expanded)]="expanded">
+<mat-expansion-panel class="device-profile-alarm flex-1" [formGroup]="alarmFormGroup" [(expanded)]="expanded">
   <mat-expansion-panel-header>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+    <div class="flex flex-1 flex-row items-center justify-start">
       <mat-panel-title>
-        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           {{ alarmTypeTitle }}
         </div>
       </mat-panel-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
               type="button"
               (click)="removeAlarm.emit()"
@@ -34,9 +34,9 @@
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
-    <div fxLayout="column" fxLayoutGap="0.5em">
+    <div class="flex flex-col gap-2">
       <mat-divider></mat-divider>
-      <mat-form-field fxFlex floatLabel="always">
+      <mat-form-field class="flex-1" floatLabel="always">
         <mat-label>{{'device-profile.alarm-type' | translate}}</mat-label>
         <input required matInput formControlName="alarmType" placeholder="Enter alarm type">
         <mat-error *ngIf="alarmFormGroup.get('alarmType').hasError('required')">
@@ -53,7 +53,7 @@
     <mat-expansion-panel class="advanced-settings" [expanded]="false">
       <mat-expansion-panel-header>
         <mat-panel-title>
-          <div fxFlex fxLayout="row" fxLayoutAlign="end center">
+          <div class="flex flex-1 flex-row items-center justify-end">
             <div class="tb-small" translate>device-profile.advanced-settings</div>
           </div>
         </mat-panel-title>
@@ -89,18 +89,18 @@
         </mat-checkbox>
       </ng-template>
     </mat-expansion-panel>
-    <div fxFlex fxLayout="column">
+    <div class="flex flex-1 flex-col">
       <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.create-alarm-rules</div>
       <tb-create-alarm-rules formControlName="createRules"
                              style="padding-bottom: 16px;"
                              [deviceProfileId]="deviceProfileId">
       </tb-create-alarm-rules>
       <div translate class="tb-small" style="padding-bottom: 8px;">device-profile.clear-alarm-rule</div>
-      <div fxLayout="row" fxLayoutGap="8px;" fxLayoutAlign="start center"
-           [fxShow]="alarmFormGroup.get('clearRule').value"
+      <div class="flex flex-row items-center justify-start gap-2"
+           [class.!hidden]="!alarmFormGroup.get('clearRule').value"
            style="padding-bottom: 8px;">
-        <div class="clear-alarm-rule" fxFlex fxLayout="row">
-          <tb-alarm-rule formControlName="clearRule" fxFlex [deviceProfileId]="deviceProfileId">
+        <div class="clear-alarm-rule flex flex-1 flex-row">
+          <tb-alarm-rule formControlName="clearRule" class="flex-1" [deviceProfileId]="deviceProfileId">
           </tb-alarm-rule>
         </div>
         <button *ngIf="!disabled"
@@ -113,10 +113,10 @@
         </button>
       </div>
       <div *ngIf="disabled && !alarmFormGroup.get('clearRule').value">
-        <span translate fxLayoutAlign="center center" style="margin: 16px 0"
-              class="tb-prompt">device-profile.no-clear-alarm-rule</span>
+        <span translate style="margin: 16px 0"
+              class="tb-prompt flex items-center justify-center">device-profile.no-clear-alarm-rule</span>
       </div>
-      <div *ngIf="!disabled" [fxShow]="!alarmFormGroup.get('clearRule').value">
+      <div *ngIf="!disabled" [class.!hidden]="alarmFormGroup.get('clearRule').value">
         <button mat-stroked-button color="primary"
                 type="button"
                 (click)="addClearAlarmRule()"

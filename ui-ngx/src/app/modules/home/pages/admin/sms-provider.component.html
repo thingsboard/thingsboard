@@ -20,7 +20,7 @@
     <mat-card-title>
       <span class="mat-headline-5" translate>admin.sms-provider-settings</span>
     </mat-card-title>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div tb-help="smsProviderSettings"></div>
   </mat-card-header>
   <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
@@ -32,7 +32,7 @@
         required
         formControlName="configuration">
       </tb-sms-provider-configuration>
-      <div fxLayout="row" fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end" fxLayoutGap="16px">
+      <div class="flex flex-row items-center justify-end gap-4 xs:flex-col xs:items-stretch">
         <button mat-raised-button type="button"
                 [disabled]="(isLoading$ | async) || smsProvider.invalid" (click)="sendTestSms()">
           {{'admin.send-test-sms' | translate}}
@@ -50,7 +50,7 @@
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.slack-settings</span>
       </mat-card-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <div tb-help="slackSettings"></div>
     </mat-card-header>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
@@ -66,7 +66,7 @@
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.mobile-settings</span>
       </mat-card-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <!--    <div tb-help="mobileSettings"></div>-->
     </mat-card-header>
     <mat-card-content formGroupName="MOBILE_APP" *ngIf="isSysAdmin()">
@@ -79,7 +79,7 @@
                      (fileNameChanged)="notificationSettingsForm?.get('deliveryMethodsConfigs.MOBILE_APP.firebaseServiceAccountCredentialsFileName').patchValue($event)">
       </tb-file-input>
     </mat-card-content>
-    <mat-card-actions fxLayoutAlign="end center" fxLayout.xs="column" fxLayoutAlign.xs="end">
+    <mat-card-actions  class="flex items-center justify-end xs:flex-col xs:items-stretch">
       <button mat-button mat-raised-button color="primary"
               [disabled]="(isLoading$ | async) || notificationSettingsForm.invalid || !notificationSettingsForm.dirty"
               type="submit">{{'action.save' | translate}}

@@ -24,9 +24,9 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <section fxLayout="column" [ngSwitch]="datasourceFormGroup.get('type').value">
+  <section class="flex flex-col" [ngSwitch]="datasourceFormGroup.get('type').value">
     <ng-template [ngSwitchCase]="datasourceType.function">
-      <mat-form-field *ngIf="!hideDatasourceLabel" fxFlex>
+      <mat-form-field *ngIf="!hideDatasourceLabel" class="flex-1">
         <mat-label translate>datasource.label</mat-label>
         <input matInput
                formControlName="name">
@@ -55,15 +55,15 @@
         [callbacks]="entityAliasSelectCallbacks">
       </tb-entity-alias-select>
       <mat-form-field *ngIf="!hideDatasourceLabel && [datasourceType.entityCount, datasourceType.alarmCount].includes(datasourceFormGroup.get('type').value)"
-                      fxFlex>
+                      class="flex-1">
         <input matInput
                placeholder="{{ 'datasource.label' | translate }}"
                formControlName="name">
       </mat-form-field>
     </ng-template>
   </section>
-  <section *ngIf="!hideDataKeys" fxLayout="column" fxLayoutAlign="stretch" fxFlex>
-    <tb-data-keys class="tb-data-keys" fxFlex
+  <section *ngIf="!hideDataKeys" class="flex flex-1 flex-col items-stretch justify-start">
+    <tb-data-keys class="tb-data-keys flex-1"
                   [widgetType]="widgetType"
                   [datasourceType]="datasourceFormGroup.get('type').value"
                   [maxDataKeys]="maxDataKeys"
@@ -80,7 +80,7 @@
                   [deviceId]="datasourceFormGroup.get('deviceId').value"
                   formControlName="dataKeys">
     </tb-data-keys>
-    <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys" fxFlex
+    <tb-data-keys *ngIf="hasAdditionalLatestDataKeys" class="tb-data-keys flex-1"
                   [widgetType]="widgetTypes.latest"
                   [datasourceType]="datasourceFormGroup.get('type').value"
                   latestDataKeys

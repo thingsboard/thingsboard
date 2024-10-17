@@ -16,10 +16,10 @@
 
 -->
 <header>
-  <mat-toolbar class="details-toolbar" color="primary" [ngStyle]="{height: headerHeightPx+'px'}">
-    <div class="mat-toolbar-tools" fxLayout="row" fxLayoutAlign="start center" style="height: 100%;">
-      <div class="mat-toolbar-tools tb-details-title-header" fxFlex fxLayout="column" fxLayoutAlign="start start" [fxHide]="showSearchPane">
-        <div class="tb-details-title" fxLayout="row" fxLayoutAlign="start center">
+  <mat-toolbar class="details-toolbar" color="primary" [style.height]="headerHeightPx+'px'">
+    <div class="mat-toolbar-tools flex flex-row items-center justify-start" style="height: 100%;">
+      <div class="mat-toolbar-tools tb-details-title-header flex flex-1 flex-col items-start justify-start" [class.!hidden]="showSearchPane">
+        <div class="tb-details-title flex flex-row items-center justify-start">
           <ng-content select=".prefix-title-buttons"></ng-content>
           <span class="tb-details-title-text">{{ headerTitle }}</span>
         </div>
@@ -28,7 +28,7 @@
           <ng-content select=".header-pane"></ng-content>
         </span>
       </div>
-      <div *ngIf="isShowSearch" [fxHide]="!showSearchPane" fxLayout="row" fxLayoutAlign="start center" style="width: 100%;">
+      <div *ngIf="isShowSearch" [class.!hidden]="!showSearchPane" class="flex flex-row items-center justify-start" style="width: 100%;">
         <button mat-icon-button (click)="onToggleSearch()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
@@ -44,13 +44,13 @@
         <mat-icon class="material-icons">close</mat-icon>
       </button>
     </div>
-    <section *ngIf="!isReadOnly" fxLayout="row" class="layout-wrap tb-header-buttons">
+    <section *ngIf="!isReadOnly" class="layout-wrap tb-header-buttons flex flex-row">
       <button [disabled]="(isLoading$ | async) || theForm?.invalid || !theForm?.dirty"
               mat-fab
               matTooltip="{{ 'action.apply-changes' | translate }}"
               matTooltipPosition="above"
               color="accent" class="tb-btn-header mat-fab-bottom-right"
-              [ngClass]="{'tb-hide': !isEdit}"
+              [class.tb-hide]="!isEdit"
               (click)="onApplyDetails()">
         <mat-icon class="material-icons">done</mat-icon>
       </button>
@@ -65,6 +65,6 @@
     </section>
   </mat-toolbar>
 </header>
-<div fxFlex class="mat-content" [ngStyle]="{backgroundColor: backgroundColor}">
+<div class="mat-content flex-1" [style.background-color]="backgroundColor">
   <ng-content></ng-content>
 </div>

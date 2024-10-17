@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" [formGroup]="entityFilterFormGroup" class="tb-entity-filter">
+<div [formGroup]="entityFilterFormGroup" class="tb-entity-filter flex flex-col">
   <mat-form-field class="mat-block">
     <mat-label translate>alias.filter-type</mat-label>
     <mat-select required formControlName="type">
@@ -27,7 +27,7 @@
       {{ 'alias.filter-type-required' | translate }}
     </mat-error>
   </mat-form-field>
-  <section fxLayout="column" [formGroup]="filterFormGroup" [ngSwitch]="entityFilterFormGroup.get('type').value">
+  <section class="flex flex-col" [formGroup]="filterFormGroup" [ngSwitch]="entityFilterFormGroup.get('type').value">
     <ng-template [ngSwitchCase]="aliasFilterType.singleEntity">
       <tb-entity-select required
                         useAliasEntityTypes="true"
@@ -78,9 +78,9 @@
         <input matInput formControlName="stateEntityParamName"
                placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
       </mat-form-field>
-      <div fxLayout="column">
+      <div class="flex flex-col">
         <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
-        <tb-entity-select fxFlex
+        <tb-entity-select class="flex-1"
                           useAliasEntityTypes="true"
                           formControlName="defaultStateEntity">
         </tb-entity-select>
@@ -192,42 +192,42 @@
                                  entityFilterFormGroup.get('type').value === aliasFilterType.entityViewSearchQuery ?
                                  entityFilterFormGroup.get('type').value : ''">
       <label class="tb-small">{{ 'alias.root-entity' | translate }}</label>
-      <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0;">
+      <section class="tb-root-state-entity-switch flex flex-row items-center justify-start" style="padding-left: 0;">
         <mat-slide-toggle class="root-state-entity-switch"
                           formControlName="rootStateEntity">
         </mat-slide-toggle>
         <label class="tb-small root-state-entity-label" translate>alias.root-state-entity</label>
       </section>
-      <div fxFlex fxLayout="row" *ngIf="!filterFormGroup.get('rootStateEntity').value">
-        <tb-entity-select fxFlex
+      <div class="flex flex-1 flex-row" *ngIf="!filterFormGroup.get('rootStateEntity').value">
+        <tb-entity-select class="flex-1"
                           required
                           useAliasEntityTypes="true"
                           formControlName="rootEntity">
         </tb-entity-select>
       </div>
-      <div fxFlex fxLayout="column" fxLayout.gt-sm="row" *ngIf="filterFormGroup.get('rootStateEntity').value">
+      <div class="flex flex-1 flex-col gt-sm:flex-row" *ngIf="filterFormGroup.get('rootStateEntity').value">
         <mat-form-field floatLabel="always" class="mat-block" style="margin-top: 24px; padding-right: 8px;">
           <mat-label translate>alias.state-entity-parameter-name</mat-label>
           <input matInput formControlName="stateEntityParamName"
                  placeholder="{{ 'alias.default-entity-parameter-name' | translate }}">
         </mat-form-field>
-        <div fxFlex fxLayout="column">
+        <div class="flex flex-1 flex-col">
           <label class="tb-small">{{ 'alias.default-state-entity' | translate }}</label>
-          <tb-entity-select fxFlex
+          <tb-entity-select class="flex-1"
                             useAliasEntityTypes="true"
                             formControlName="defaultStateEntity">
           </tb-entity-select>
         </div>
       </div>
-      <div fxFlex fxLayout="row">
-        <section class="tb-root-state-entity-switch" fxLayout="row" fxLayoutAlign="start center" style="padding-left: 0;">
+      <div class="flex flex-1 flex-row">
+        <section class="tb-root-state-entity-switch flex flex-row items-center justify-start" style="padding-left: 0;">
           <mat-slide-toggle class="root-state-entity-switch"
                             formControlName="fetchLastLevelOnly">
           </mat-slide-toggle>
           <label class="tb-small root-state-entity-label" translate>alias.last-level-relation</label>
         </section>
       </div>
-      <div fxFlex fxLayoutGap="8px" fxLayout="row" fxLayout.xs="column">
+      <div class="flex flex-1 flex-row gap-2 xs:flex-col">
         <mat-form-field class="mat-block" style="min-width: 100px;">
           <mat-label translate>relation.direction</mat-label>
           <mat-select required formControlName="direction">
@@ -236,7 +236,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field fxFlex floatLabel="always" class="mat-block">
+        <mat-form-field floatLabel="always" class="mat-block flex-1">
           <mat-label translate>alias.max-relation-level</mat-label>
           <input matInput
                  type="number"
@@ -248,7 +248,7 @@
       </div>
       <div class="mat-caption" style="color: rgba(0,0,0,0.57);" translate>relation.relation-type</div>
       <tb-relation-type-autocomplete
-        fxFlex
+        class="flex-1"
         formControlName="relationType">
       </tb-relation-type-autocomplete>
     </ng-template>

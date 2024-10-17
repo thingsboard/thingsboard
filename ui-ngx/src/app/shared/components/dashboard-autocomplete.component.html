@@ -30,7 +30,7 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="dashboardAutocomplete"
-         [fxShow]="!useDashboardLink || !disabled || !selectDashboardFormGroup.get('dashboard').value">
+         [class.!hidden]="useDashboardLink && disabled && selectDashboardFormGroup.get('dashboard').value">
   <a *ngIf="useDashboardLink && selectDashboardFormGroup.get('dashboard').value && disabled" aria-label="Open device profile" [routerLink]=dashboardURL>
     {{ displayDashboardFn(selectDashboardFormGroup.get('dashboard').value) | customTranslate }}
   </a>

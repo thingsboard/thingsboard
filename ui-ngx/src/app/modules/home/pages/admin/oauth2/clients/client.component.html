@@ -72,7 +72,7 @@
   </div>
   <mat-expansion-panel class="configuration-panel mat-elevation-z0" [expanded]="advancedExpanded">
     <mat-expansion-panel-header>
-      <mat-panel-title fxLayoutAlign="start center" translate>
+      <mat-panel-title class="flex items-center justify-start" translate>
         admin.oauth2.advanced-settings
       </mat-panel-title>
     </mat-expansion-panel-header>
@@ -235,7 +235,7 @@
                   </mat-select>
                 </mat-form-field>
                 <mat-form-field class="flex"
-                                [fxShow]="entityForm.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">
+                                [class.!hidden]="entityForm.get('mapperConfig.basic.tenantNameStrategy').value !== 'CUSTOM'">
                   <mat-label translate>admin.oauth2.tenant-name-pattern</mat-label>
                   <input matInput formControlName="tenantNamePattern"
                          [required]="entityForm.get('mapperConfig.basic.tenantNameStrategy').value === 'CUSTOM'">

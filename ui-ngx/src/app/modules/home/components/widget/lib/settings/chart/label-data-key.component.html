@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<mat-expansion-panel class="label-data-key" fxFlex [formGroup]="labelDataKeyFormGroup" [(expanded)]="expanded">
+<mat-expansion-panel class="label-data-key flex=1" [formGroup]="labelDataKeyFormGroup" [(expanded)]="expanded">
   <mat-expansion-panel-header>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+    <div class="flex flex-1 flex-row items-center justify-start">
       <mat-panel-title>
-        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           {{ labelDataKeyText() }}
         </div>
       </mat-panel-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
               type="button"
               (click)="removeLabelDataKey.emit()"
@@ -34,18 +34,18 @@
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
-    <div fxLayout="column" fxLayoutGap="0.5em">
+    <div class="flex flex-col gap-2">
       <mat-divider></mat-divider>
-      <section class="tb-widget-settings" fxLayout="column">
-        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-          <mat-form-field fxFlex class="mat-block">
+      <section class="tb-widget-settings flex flex-col">
+        <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.chart.key-name</mat-label>
             <input required matInput formControlName="name">
             <mat-error *ngIf="labelDataKeyFormGroup.get('name').hasError('required')">
               {{ 'widgets.chart.key-name-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.chart.key-type</mat-label>
             <mat-select formControlName="type">
               <mat-option [value]="'attribute'">

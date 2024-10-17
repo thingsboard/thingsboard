@@ -16,53 +16,53 @@
 
 -->
 <section [formGroup]="resourcesFormGroup">
-  <div fxLayout="row" fxLayoutAlign="start center">
-    <div fxFlex="30">
+  <div class="flex flex-row items-center justify-start">
+    <div class="max-w-30% flex-full">
       <mat-label translate>device-profile.lwm2m.resource-label</mat-label>
     </div>
-    <div fxFlex="10" class="checkbox-column-title">
+    <div class="checkbox-column-title max-w-10% flex-full">
       <mat-label translate>device-profile.lwm2m.attribute-label</mat-label>
     </div>
-    <div fxFlex="10" class="checkbox-column-title">
+    <div class="checkbox-column-title max-w-10% flex-full">
       <mat-label translate>device-profile.lwm2m.telemetry-label</mat-label>
     </div>
-    <div fxFlex="10" class="checkbox-column-title">
+    <div class="checkbox-column-title max-w-10% flex-full">
       <mat-label translate>device-profile.lwm2m.observe-label</mat-label>
     </div>
-    <div fxFlex>
+    <div class="flex-1">
       <mat-label translate>device-profile.lwm2m.key-name</mat-label>
     </div>
   </div>
   <mat-divider></mat-divider>
   <div formArrayName="resources"
     *ngFor="let resourceLwM2M of resourcesFormArray.controls; let $index = index; trackBy: trackByParams">
-    <div [formGroupName]="$index" fxLayout="row" fxLayoutAlign="start center" class="resource-list">
-      <div class="resource-name" fxFlex="30">
+    <div [formGroupName]="$index" class="resource-list flex flex-row items-center justify-start">
+      <div class="resource-name max-w-30% flex-full">
         #{{resourceLwM2M.get('id').value}} <span class="name">{{resourceLwM2M.get('name').value}}</span>
       </div>
-      <div fxFlex="10" fxLayoutAlign="center center">
+      <div class="flex max-w-10% flex-full items-center justify-center">
         <mat-checkbox formControlName="attribute" color="warn">
         </mat-checkbox>
       </div>
-      <div fxFlex="10" fxLayoutAlign="center center">
+      <div class="flex max-w-10% flex-full items-center justify-center">
         <mat-checkbox formControlName="telemetry" color="primary">
         </mat-checkbox>
       </div>
-      <div fxFlex="10" fxLayoutAlign="center center">
-        <mat-checkbox fxFlex="10" formControlName="observe" color="primary"
+      <div class="flex max-w-10% flex-full items-center justify-center">
+        <mat-checkbox class="max-w-10% flex-full" formControlName="observe" color="primary"
                       matTooltip="{{ 'device-profile.lwm2m.edit-observe-select'  | translate }}"
                       [matTooltipDisabled]="disabled || !isDisabledObserve($index)"
                       matTooltipPosition="above">
         </mat-checkbox>
       </div>
-      <mat-form-field fxFlex="33">
+      <mat-form-field class="max-w-33% flex-full">
         <input matInput type="text" formControlName="keyName" required>
         <mat-error *ngIf="resourceLwM2M.get('keyName').hasError('required') ||
                             resourceLwM2M.get('keyName').hasError('pattern')">
           {{ 'device-profile.lwm2m.key-name-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <tb-profile-lwm2m-attributes
         formControlName="attributes"
         [isAttributeTelemetry]="isDisabledObserve($index)"

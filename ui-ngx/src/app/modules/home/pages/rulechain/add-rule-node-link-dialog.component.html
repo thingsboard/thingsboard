@@ -18,7 +18,7 @@
 <form [formGroup]="ruleNodeLinkFormGroup" (ngSubmit)="add()" style="width: 480px;">
   <mat-toolbar color="primary">
     <h2 translate>rulenode.add-link</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div [tb-help]="'ruleEngine'"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -39,7 +39,7 @@
       </tb-rule-node-link>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

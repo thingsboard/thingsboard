@@ -21,7 +21,7 @@
     <span *ngIf="label">{{label}}</span>
   </mat-label>
   <div matPrefix class="tb-color-preview" (click)="!disabled && showColorPicker($event)">
-    <div class="tb-color-result" [ngStyle]="{background: colorFormGroup.get('color').value}"></div>
+    <div class="tb-color-result" [style.background]="colorFormGroup.get('color').value"></div>
   </div>
   <input matInput formControlName="color" (keydown)="$event.preventDefault();" (click)="openOnInput && showColorPicker($event)" [required]="required">
   <button *ngIf="colorClearButton && !disabled"
@@ -38,11 +38,11 @@
   <button type="button"
           mat-stroked-button
           class="tb-box-button"
-          [ngClass]="{'button-no-border': noBorder}"
+          [class.button-no-border]="noBorder"
           [disabled]="disabled"
           #matButton
           (click)="openColorPickerPopup($event, matButton._elementRef)">
-    <div class="tb-color-preview no-margin box" [ngClass]="{'disabled': disabled}">
+    <div class="tb-color-preview no-margin box" [class.disabled]="disabled">
       <div class="tb-color-result" [style]="!disabled ? {background: colorFormGroup.get('color').value} : {}"></div>
     </div>
   </button>

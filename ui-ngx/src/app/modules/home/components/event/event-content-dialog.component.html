@@ -15,21 +15,21 @@
     limitations under the License.
 
 -->
-<mat-toolbar fxLayout="row" color="primary">
+<mat-toolbar class="flex flex-row" color="primary">
   <h2 translate>{{ title }}</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-icon-button
           [mat-dialog-close]="false"
           type="button">
     <mat-icon class="material-icons">close</mat-icon>
   </button>
 </mat-toolbar>
-<div mat-dialog-content fxLayout="column">
+<div mat-dialog-content class="flex flex-col">
   <div #eventContentEditor class="tb-event-content">
   </div>
 </div>
-<div mat-dialog-actions fxLayout="row">
-  <span fxFlex></span>
+<div mat-dialog-actions class="flex flex-row">
+  <span class="flex-1"></span>
   <button mat-button color="primary"
           type="button"
           [disabled]="(isLoading$ | async)"

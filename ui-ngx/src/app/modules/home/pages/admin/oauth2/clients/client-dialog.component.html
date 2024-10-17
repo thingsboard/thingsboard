@@ -18,7 +18,7 @@
 <form (ngSubmit)="save()" style="width: 850px;max-height: 100vh">
   <mat-toolbar color="primary">
     <h2>{{ 'admin.oauth2.add-client' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div [tb-help]="helpLinkId()"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -32,7 +32,7 @@
   <div mat-dialog-content style="padding: 0">
     <tb-client createNewDialog #clientComponent></tb-client>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

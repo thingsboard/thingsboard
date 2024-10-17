@@ -25,7 +25,7 @@
          (keydown)="tenantProfileEnter($event)"
          (keypress)="tenantProfileEnter($event)"
          [matAutocomplete]="tenantProfileAutocomplete"
-         [fxShow]="!showDetailsPageLink || !disabled || !selectTenantProfileFormGroup.get('tenantProfile').value">
+         [class.!hidden]="showDetailsPageLink && disabled && selectTenantProfileFormGroup.get('tenantProfile').value">
   <a *ngIf="showDetailsPageLink && selectTenantProfileFormGroup.get('tenantProfile').value && disabled" aria-label="Open tenant profile" [routerLink]=tenantProfileURL>
     {{ displayTenantProfileFn(selectTenantProfileFormGroup.get('tenantProfile').value) }}
   </a>

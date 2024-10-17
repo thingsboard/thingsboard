@@ -18,7 +18,7 @@
 <div class="tb-form-row no-border no-padding column-lt-md" style="gap: 10px;" [formGroup]="thresholdFormGroup">
   <tb-value-source style="flex: 1" [aliasController]="aliasController" formControlName="valueSource"></tb-value-source>
   <div class="tb-form-row no-border no-padding" style="gap: 10px;">
-      <mat-form-field fxFlex.lt-md appearance="outline" class="number" subscriptSizing="dynamic">
+      <mat-form-field appearance="outline" class="number lt-md:flex-1" subscriptSizing="dynamic">
         <input matInput formControlName="lineWidth" type="number" min="0" placeholder="{{ 'widgets.chart.line-width' | translate }}">
       </mat-form-field>
       <tb-color-input asBoxInput

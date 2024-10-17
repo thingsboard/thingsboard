@@ -18,7 +18,7 @@
 <form (ngSubmit)="save()" style="width: 1000px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'device-profile.add' : 'device-profile.edit' ) | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -36,7 +36,7 @@
       [isEdit]="true">
     </tb-device-profile>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

@@ -18,7 +18,7 @@
 <form [formGroup]="editDetailsFormGroup" (ngSubmit)="save()" style="width: 800px;">
   <mat-toolbar color="primary">
     <h2>{{ 'device-profile.edit-alarm-rule-additional-info' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -29,7 +29,7 @@
   </mat-progress-bar>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-col">
         <mat-form-field class="mat-block">
           <textarea matInput formControlName="alarmDetails" rows="5"
             placeholder="{{ 'device-profile.alarm-rule-additional-info-placeholder' | translate }}"></textarea>
@@ -38,7 +38,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<form (ngSubmit)="add()" style="min-width: 400px; width: 750px;" [ngStyle]="entitiesTableConfig.addDialogStyle">
+<form (ngSubmit)="add()" style="min-width: 400px; width: 750px;" [style]="entitiesTableConfig.addDialogStyle">
   <mat-toolbar color="primary">
     <h2 translate>{{ translations.add }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div [tb-help]="helpLinkId()"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -32,7 +32,7 @@
   <div mat-dialog-content>
     <tb-anchor #entityDetailsForm></tb-anchor>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

@@ -16,8 +16,8 @@
 
 -->
 <form [formGroup]="smppSmsProviderConfigurationFormGroup" style="padding-bottom: 16px;">
-  <div fxLayout="row wrap" fxLayoutGap="6px">
-    <mat-form-field fxFlex.lt-sm="100" fxFlex.gt-xs="25" class="mat-block">
+  <div class="flex flex-row flex-wrap gap-1.5">
+    <mat-form-field class="mat-block lt-sm:flex-full gt-xs:max-w-25% gt-xs:flex-full">
       <mat-label translate>admin.smpp-provider.smpp-version</mat-label>
       <mat-select formControlName="protocolVersion">
         <mat-option *ngFor="let smppVersion of smppVersions" [value]="smppVersion.value">
@@ -25,14 +25,14 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>admin.smpp-provider.smpp-host</mat-label>
       <input required matInput formControlName="host">
       <mat-error *ngIf="smppSmsProviderConfigurationFormGroup.get('host').hasError('required')">
         {{'admin.smpp-provider.smpp-host-required' | translate}}
       </mat-error>
     </mat-form-field>
-    <mat-form-field fxFlex.lt-sm="100" fxFlex.gt-xs="25" class="mat-block">
+    <mat-form-field class="mat-block lt-sm:flex-full gt-xs:max-w-25% gt-xs:flex-full">
       <mat-label translate>admin.smpp-provider.smpp-port</mat-label>
       <input required matInput type="number" formControlName="port">
       <mat-error *ngIf="smppSmsProviderConfigurationFormGroup.get('port').hasError('required')">
@@ -40,15 +40,15 @@
       </mat-error>
     </mat-form-field>
   </div>
-  <div fxLayout="row wrap" fxLayoutGap="6px">
-    <mat-form-field fxFlex class="mat-block">
+  <div class="flex flex-row flex-wrap gap-1.5">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>admin.smpp-provider.system-id</mat-label>
       <input required matInput formControlName="systemId">
       <mat-error *ngIf="smppSmsProviderConfigurationFormGroup.get('systemId').hasError('required')">
         {{'admin.smpp-provider.system-id-required' | translate}}
       </mat-error>
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>admin.smpp-provider.password</mat-label>
       <input required matInput type="password" autocomplete="new-password" formControlName="password">
       <tb-toggle-password matSuffix></tb-toggle-password>

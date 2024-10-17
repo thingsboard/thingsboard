@@ -18,7 +18,7 @@
 <form [formGroup]="timewindowForm" mat-dialog-content  class="tb-timewindow-form">
   <mat-toolbar color="primary">
     <h2>{{ 'timewindow.timewindow-settings' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <!--  <div tb-help="#"></div>-->
     <button mat-icon-button
             (click)="cancel()"
@@ -195,7 +195,7 @@
         </div>
       </section>
 
-      <section class="tb-form-panel" [fxShow]="timewindowForm.get('aggregation.type').value !== aggregationTypes.NONE">
+      <section class="tb-form-panel" [class.!hidden]="timewindowForm.get('aggregation.type').value === aggregationTypes.NONE">
         <div class="tb-form-panel-title">{{ 'aggregation.group-interval' | translate }}</div>
 
         <ng-container *ngIf="timewindowForm.get('selectedTab').value === timewindowTypes.REALTIME">

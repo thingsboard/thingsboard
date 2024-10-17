@@ -16,48 +16,44 @@
 
 -->
 <div class="tb-form-panel no-border no-padding padding-top" [formGroup]="workersConfigFormGroup">
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width tb-required" [style.width.%]="50"
+  <div class="tb-form-row column-xs">
+    <div class="fixed-title-width tb-required" style="width: 50%"
          tb-hint-tooltip-icon="{{ 'gateway.max-number-of-workers-hint' | translate }}">
       <div tbTruncateWithTooltip>{{ 'gateway.max-number-of-workers' | translate }}</div>
     </div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput name="value" type="number" min="1" formControlName="maxNumberOfWorkers"
-               placeholder="{{ 'gateway.set' | translate }}"/>
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="('gateway.max-number-of-workers-required') | translate"
-                  *ngIf="workersConfigFormGroup.get('maxNumberOfWorkers').hasError('min') ||
-                                           (workersConfigFormGroup.get('maxNumberOfWorkers').hasError('required') &&
-                                           workersConfigFormGroup.get('maxNumberOfWorkers').touched)"
-                  class="tb-error">
-          warning
-        </mat-icon>
-      </mat-form-field>
-    </div>
+    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+      <input matInput name="value" type="number" min="1" formControlName="maxNumberOfWorkers"
+             placeholder="{{ 'gateway.set' | translate }}"/>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="('gateway.max-number-of-workers-required') | translate"
+                *ngIf="workersConfigFormGroup.get('maxNumberOfWorkers').hasError('min') ||
+                                         (workersConfigFormGroup.get('maxNumberOfWorkers').hasError('required') &&
+                                         workersConfigFormGroup.get('maxNumberOfWorkers').touched)"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
   </div>
-  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
-    <div class="fixed-title-width tb-required" [style.width.%]="50"
+  <div class="tb-form-row column-xs">
+    <div class="fixed-title-width tb-required" style="width: 50%"
          tb-hint-tooltip-icon="{{ 'gateway.max-messages-queue-for-worker-hint' | translate }}">
       <div tbTruncateWithTooltip>{{ 'gateway.max-messages-queue-for-worker' | translate }}</div>
     </div>
-    <div class="tb-flex no-gap">
-      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-        <input matInput name="value" type="number" min="1" formControlName="maxMessageNumberPerWorker"
-               placeholder="{{ 'gateway.set' | translate }}"/>
-        <mat-icon matSuffix
-                  matTooltipPosition="above"
-                  matTooltipClass="tb-error-tooltip"
-                  [matTooltip]="('gateway.max-messages-queue-for-worker-required') | translate"
-                  *ngIf="workersConfigFormGroup.get('maxMessageNumberPerWorker').hasError('min') ||
-                                           (workersConfigFormGroup.get('maxMessageNumberPerWorker').hasError('required') &&
-                                           workersConfigFormGroup.get('maxMessageNumberPerWorker').touched)"
-                  class="tb-error">
-          warning
-        </mat-icon>
-      </mat-form-field>
-    </div>
+    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+      <input matInput name="value" type="number" min="1" formControlName="maxMessageNumberPerWorker"
+             placeholder="{{ 'gateway.set' | translate }}"/>
+      <mat-icon matSuffix
+                matTooltipPosition="above"
+                matTooltipClass="tb-error-tooltip"
+                [matTooltip]="('gateway.max-messages-queue-for-worker-required') | translate"
+                *ngIf="workersConfigFormGroup.get('maxMessageNumberPerWorker').hasError('min') ||
+                                         (workersConfigFormGroup.get('maxMessageNumberPerWorker').hasError('required') &&
+                                         workersConfigFormGroup.get('maxMessageNumberPerWorker').touched)"
+                class="tb-error">
+        warning
+      </mat-icon>
+    </mat-form-field>
   </div>
 </div>

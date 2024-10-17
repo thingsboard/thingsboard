@@ -19,17 +19,17 @@
   <div class="tb-font-settings-title" translate>widgets.widget-font.font-settings</div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.size</div>
-    <div *ngIf="!autoScale" fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-      <mat-form-field fxFlex appearance="outline" class="number" subscriptSizing="dynamic">
+    <div *ngIf="!autoScale" class="flex flex-1 flex-row items-center justify-start gap-3">
+      <mat-form-field appearance="outline" class="number flex-1" subscriptSizing="dynamic">
         <input matInput type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
-      <tb-css-unit-select fxFlex formControlName="sizeUnit"></tb-css-unit-select>
+      <tb-css-unit-select class="flex-1" formControlName="sizeUnit"></tb-css-unit-select>
     </div>
     <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
   </div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-family</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <input matInput #familyInput
              formControlName="family" placeholder="{{ 'widget-config.set' | translate }}"
              [matAutocomplete]="familyAutocomplete">
@@ -51,7 +51,7 @@
   </div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-weight</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="weight" placeholder="{{ 'widget-config.set' | translate }}">
         <mat-option [value]="null">
         </mat-option>
@@ -63,7 +63,7 @@
   </div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>widgets.widget-font.font-style</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="style" placeholder="{{ 'widget-config.set' | translate }}">
         <mat-option [value]="null">
         </mat-option>
@@ -75,7 +75,7 @@
   </div>
   <div class="tb-form-row no-border no-padding" *ngIf="!disabledLineHeight">
     <div class="fixed-title-width" translate>widgets.widget-font.line-height</div>
-    <mat-form-field *ngIf="!autoScale" fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field *ngIf="!autoScale" class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <input matInput formControlName="lineHeight" placeholder="{{ 'widget-config.set' | translate }}">
     </mat-form-field>
     <div *ngIf="autoScale" class="tb-font-settings-auto" translate>widgets.widget-font.auto</div>
@@ -83,7 +83,7 @@
   <mat-divider></mat-divider>
   <div class="tb-form-row no-border no-padding font-preview">
     <div class="fixed-title-width" translate>widgets.widget-font.preview</div>
-    <div class="preview-text" fxFlex [style]="previewStyle" [innerHTML]="previewText | safe:'html'"></div>
+    <div class="preview-text flex-1" [style]="previewStyle" [innerHTML]="previewText | safe:'html'"></div>
   </div>
   <div class="tb-font-settings-panel-buttons">
     <button *ngIf="clearButton"
@@ -93,7 +93,7 @@
             [disabled]="clearDisabled()">
       {{ 'action.clear' | translate }}
     </button>
-    <span *ngIf="clearButton" fxFlex></span>
+    <span *ngIf="clearButton" class="flex-1"></span>
     <button mat-button
             color="primary"
             type="button"

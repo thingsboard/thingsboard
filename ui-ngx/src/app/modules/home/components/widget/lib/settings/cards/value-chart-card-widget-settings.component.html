@@ -39,7 +39,7 @@
       <mat-slide-toggle class="mat-slide" formControlName="showValue">
         {{ 'widgets.value-chart-card.value' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="valueFont"
                           [autoScale]="valueChartCardWidgetSettingsForm.get('autoScale').value"
                           [previewText]="valuePreviewFn">

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="gpioPanelWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="gpioPanelWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gpio.panel-settings</legend>
     <tb-color-input
@@ -26,11 +26,11 @@
     </tb-color-input>
     <fieldset class="fields-group">
       <legend class="group-title" translate>widgets.gpio.gpio-leds</legend>
-      <div fxLayout="column">
+      <div class="flex flex-col">
         <div class="tb-control-list">
           <div *ngFor="let gpioItemControl of gpioListFormArray().controls; trackBy: trackByGpioItem;
                  let $index = index; last as isLast;"
-               fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+               class="flex flex-col" [class.pb-2]="!isLast">
             <tb-gpio-item [formControl]="gpioItemControl"
                           [hasColor]="true"
                           [expanded]="gpioItemControl.new"
@@ -39,8 +39,8 @@
           </div>
         </div>
         <div *ngIf="!gpioListFormArray().controls.length">
-            <span translate fxLayoutAlign="center center"
-                  class="tb-prompt">widgets.gpio.no-gpio-leds</span>
+            <span translate
+                  class="tb-prompt flex items-center justify-center">widgets.gpio.no-gpio-leds</span>
         </div>
         <div style="padding-top: 16px;">
           <button mat-raised-button color="primary"

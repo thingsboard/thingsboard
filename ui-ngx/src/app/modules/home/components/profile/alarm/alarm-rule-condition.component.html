@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" fxLayoutAlign="start center" [formGroup]="alarmRuleConditionFormGroup" (click)="openFilterDialog($event)" style="min-width: 0;">
+<div class="flex flex-row items-center justify-start" [formGroup]="alarmRuleConditionFormGroup" (click)="openFilterDialog($event)" style="min-width: 0;">
   <span class="tb-alarm-rule-condition title">{{('device-profile.condition' | translate) + ': '}}</span>
-  <div class="tb-alarm-rule-condition" fxFlex fxLayout="column" fxLayoutAlign="center">
+  <div class="tb-alarm-rule-condition flex flex-1 flex-col items-stretch justify-center">
     <tb-filter-text formControlName="condition"
                     [nowrap]="true"
                     required
                     addFilterPrompt="{{'device-profile.enter-alarm-rule-condition-prompt' | translate}}">
     </tb-filter-text>
-    <span *ngIf="specText" class="tb-alarm-rule-condition-spec" [ngClass]="{disabled: this.disabled}" [innerHTML]="specText">
+    <span *ngIf="specText" class="tb-alarm-rule-condition-spec" [class.disabled]="disabled" [innerHTML]="specText">
     </span>
   </div>
   <button mat-icon-button

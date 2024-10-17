@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="tb-expired-link-content mat-app-background tb-dark tb-flex row center align-center"
+<div class="tb-expired-link-content mat-app-background tb-dark flex flex-row items-center justify-center"
      style="width: 100%;">
   <mat-card appearance="raised" class="tb-expired-link-card">
     <mat-card-header style="justify-content: center">
@@ -29,7 +29,7 @@
     <mat-card-content style="padding: 24px 16px">
       <div>{{ message | translate }}</div>
     </mat-card-content>
-    <mat-card-actions class="tb-flex row center">
+    <mat-card-actions class="flex flex-row justify-center">
       <button mat-raised-button color="accent"
               [disabled]="(isLoading$ | async)"
               (click)="navigateToLoginPage()">

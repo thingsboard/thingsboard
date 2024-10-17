@@ -18,7 +18,7 @@
 <form [formGroup]="layoutsFormGroup" (ngSubmit)="save()">
   <mat-toolbar color="primary">
     <h2 translate>layout.manage</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
       (click)="cancel()"
             type="button">
@@ -80,7 +80,7 @@
             </ng-container>
           </div>
         </div>
-        <button mat-button fxFlex class="tb-add-breakpoint-button"
+        <button mat-button class="tb-add-breakpoint-button flex-1"
                 matTooltip="{{ 'layout.add-new-breakpoint' | translate }}"
                 matTooltipPosition="above"
                 color="primary"
@@ -92,25 +92,24 @@
       </div>
     </section>
     <ng-template #dividerLayout>
-    <div fxLayout="column" fxLayoutAlign="start center" fxLayoutGap="20px">
+    <div class="flex flex-col items-center justify-start gap-5">
       <mat-button-toggle-group aria-label="Select width value type"
                                formControlName="type"
-                               [fxShow]="isDividerLayout">
-        <mat-button-toggle fxFlex value="percentage">
+                               [class.!hidden]="!isDividerLayout">
+        <mat-button-toggle class="flex-1" value="percentage">
           {{ 'layout.percentage-width' | translate }}
         </mat-button-toggle>
-        <mat-button-toggle fxFlex value="fixed">
+        <mat-button-toggle class="flex-1" value="fixed">
           {{ 'layout.fixed-width' | translate }}
         </mat-button-toggle>
       </mat-button-toggle-group>
-      <div fxLayout="row" fxLayoutAlign="center center" class="tb-layout-preview">
-        <div fxLayout="row"
-             fxLayoutAlign="start center"
-             class="tb-layout-preview-container"
+      <div class="tb-layout-preview flex flex-row items-center justify-center">
+        <div class="tb-layout-preview-container flex flex-row items-center justify-start"
              #tooltip="matTooltip"
              matTooltip=""
              matTooltipPosition="below">
-          <div fxLayout="column" fxLayoutAlign="start center" fxFlex="{{ buttonFlexValue() }}" class="tb-layout-preview-container-main">
+          <div [style.flex-basis]="buttonFlexValue() + '%'" [style.max-width]="buttonFlexValue() + '%'"
+               class="tb-layout-preview-container-main flex flex-1 flex-col items-center justify-start">
             <button mat-icon-button
                     type="button"
                     matTooltip="{{ 'layout.settings' | translate }}"
@@ -118,25 +117,24 @@
                     (click)="openLayoutSettings('main')"
                     class="tb-layout-preview-element"
                     aria-label="Layout settings"
-                    [ngClass]="layoutButtonClass('main')">
+                    [class]="layoutButtonClass('main')">
               <mat-icon>settings</mat-icon>
             </button>
-            <button fxFlex
-                    type="button"
+            <button type="button"
                     mat-raised-button
                     color="primary"
-                    class="tb-layout-button"
+                    class="tb-layout-button flex-1"
                     (mouseover)="mainLayoutTooltip.show()"
                     (mouseleave)="mainLayoutTooltip.hide()"
                     (click)="setFixedLayout('main')"
-                    [ngClass]="layoutButtonClass('main', true)">
+                    [class]="layoutButtonClass('main', true)">
               <span [matTooltip]="layoutButtonText('main')"
                     #mainLayoutTooltip="matTooltip"
                     matTooltipPosition="above">
                 {{ (isDividerLayout ? 'layout.left' : 'layout.main')  | translate }}
               </span>
             </button>
-            <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('main')">
+            <div class="tb-layout-preview-element tb-layout-preview-input flex-1" *ngIf="showPreviewInputs('main')">
               <input *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.FIXED"
                      formControlName="leftWidthPercentage"
                      type="number"
@@ -154,7 +152,7 @@
                      required>
             </div>
           </div>
-          <div fxLayout="column" fxLayoutAlign="start center" fxFlex *ngIf="isDividerLayout" matTooltip="">
+          <div class="flex flex-1 flex-col items-center justify-start" *ngIf="isDividerLayout" matTooltip="">
             <button mat-icon-button
                     type="button"
                     matTooltip="{{ 'layout.settings' | translate }}"
@@ -162,25 +160,24 @@
                     (click)="openLayoutSettings('right')"
                     class="tb-layout-preview-element"
                     aria-label="Layout settings"
-                    [ngClass]="layoutButtonClass('right')">
+                    [class]="layoutButtonClass('right')">
               <mat-icon>settings</mat-icon>
             </button>
-            <button fxFlex
-                    type="button"
+            <button type="button"
                     mat-raised-button
                     color="primary"
-                    class="tb-layout-button tb-layout-button-right"
+                    class="tb-layout-button tb-layout-button-right flex-1"
                     (mouseover)="rightLayoutTooltip.show()"
                     (mouseleave)="rightLayoutTooltip.hide()"
                     (click)="setFixedLayout('right')"
-                    [ngClass]="layoutButtonClass('right')">
+                    [class]="layoutButtonClass('right')">
               <span [matTooltip]="layoutButtonText('right')"
                     #rightLayoutTooltip="matTooltip"
                     matTooltipPosition="above">
                 {{ 'layout.right' | translate }}
               </span>
             </button>
-            <div fxFlex class="tb-layout-preview-element tb-layout-preview-input" *ngIf="showPreviewInputs('right')">
+            <div class="tb-layout-preview-element tb-layout-preview-input flex-1" *ngIf="showPreviewInputs('right')">
               <input *ngIf="layoutsFormGroup.get('type').value !== layoutWidthType.FIXED"
                      formControlName="rightWidthPercentage"
                      type="number"
@@ -199,7 +196,7 @@
           </div>
         </div>
       </div>
-      <div fxLayout="column" fxLayoutAlign="center center" fxLayoutGap="8px" *ngIf="isDividerLayout" style="width: 80%">
+      <div class="flex flex-col items-center justify-center gap-2" *ngIf="isDividerLayout" style="width: 80%">
         <mat-slider *ngIf="layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE"
                     step="1"
                     min="{{ layoutPercentageSize.MIN }}"
@@ -218,7 +215,7 @@
                     discrete
                     [displayWith]="formatSliderTooltipLabel.bind(this)"><input matSliderThumb formControlName="sliderFixed"/>
         </mat-slider>
-        <div fxLayout="row" fxLayoutAlign="space-between center" class="tb-hint tb-hint-group" style="width: 100%;">
+        <div class="tb-hint tb-hint-group flex flex-row items-center justify-between" style="width: 100%;">
           <label>
             {{layoutsFormGroup.get('type').value === layoutWidthType.PERCENTAGE ? layoutPercentageSize.MIN + '%' : layoutFixedSize.MIN + 'px'}}
           </label>
@@ -230,7 +227,7 @@
     </div>
     </ng-template>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button
             color="primary"
             type="button"

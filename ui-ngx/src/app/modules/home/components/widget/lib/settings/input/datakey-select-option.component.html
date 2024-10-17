@@ -15,18 +15,18 @@
     limitations under the License.
 
 -->
-<mat-expansion-panel class="datakey-select-option" fxFlex [formGroup]="selectOptionFormGroup" [(expanded)]="expanded">
+<mat-expansion-panel class="datakey-select-option flex-1" [formGroup]="selectOptionFormGroup" [(expanded)]="expanded">
   <mat-expansion-panel-header>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+    <div class="flex flex-1 flex-row items-center justify-start">
       <mat-panel-title>
-        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           <div>
             <span>{{ selectOptionFormGroup.value.value || 'Undefined' }} </span>
             <span *ngIf="selectOptionFormGroup.value.label">(<small>{{ selectOptionFormGroup.value.label }}</small>)</span>
           </div>
         </div>
       </mat-panel-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
               type="button"
               (click)="removeSelectOption.emit()"
@@ -37,15 +37,15 @@
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
-    <div fxLayout="column" fxLayoutGap="0.5em">
+    <div class="flex flex-col gap-2">
       <mat-divider></mat-divider>
-      <section class="tb-widget-settings" fxLayout="column">
-        <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-          <mat-form-field fxFlex class="mat-block">
+      <section class="tb-widget-settings flex flex-col">
+        <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.input-widgets.option-value</mat-label>
             <input required matInput formControlName="value">
           </mat-form-field>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.input-widgets.option-label</mat-label>
             <input matInput formControlName="label">
           </mat-form-field>

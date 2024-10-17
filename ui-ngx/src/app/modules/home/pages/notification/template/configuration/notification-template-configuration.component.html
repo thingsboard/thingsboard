@@ -31,7 +31,7 @@
            [formGroupName]="NotificationDeliveryMethod.WEB"
            *ngIf="templateConfigurationForm.get('WEB.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.WEB) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.WEB).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.WEB).name | translate }}
@@ -62,7 +62,7 @@
             <mat-slide-toggle formControlName="enabled" class="mat-slide">
               {{ 'icon.icon' | translate }}
             </mat-slide-toggle>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-material-icon-select asBoxInput
                                        [color]="templateConfigurationForm.get('WEB.additionalConfig.icon.color').value"
                                        formControlName="icon">
@@ -84,7 +84,7 @@
            [formGroupName]="NotificationDeliveryMethod.MOBILE_APP"
            *ngIf="templateConfigurationForm.get('MOBILE_APP.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.MOBILE_APP) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MOBILE_APP).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MOBILE_APP).name | translate }}
@@ -125,7 +125,7 @@
             <mat-slide-toggle formControlName="enabled" class="mat-slide">
               {{ 'icon.icon' | translate }}
             </mat-slide-toggle>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-material-icon-select asBoxInput
                                        [color]="templateConfigurationForm.get('MOBILE_APP.additionalConfig.icon.color').value"
                                        formControlName="icon">
@@ -149,7 +149,7 @@
            [formGroupName]="NotificationDeliveryMethod.SMS"
            *ngIf="templateConfigurationForm.get('SMS.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.SMS) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SMS).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SMS).name | translate }}
@@ -181,7 +181,7 @@
            [formGroupName]="NotificationDeliveryMethod.EMAIL"
            *ngIf="templateConfigurationForm.get('EMAIL.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.EMAIL) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.EMAIL).name | translate }}
@@ -211,7 +211,7 @@
            [formGroupName]="NotificationDeliveryMethod.SLACK"
            *ngIf="templateConfigurationForm.get('SLACK.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.SLACK) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.SLACK).name | translate }}
@@ -237,7 +237,7 @@
            [formGroupName]="NotificationDeliveryMethod.MICROSOFT_TEAMS"
            *ngIf="templateConfigurationForm.get('MICROSOFT_TEAMS.enabled').value">
     <mat-expansion-panel class="tb-settings" expanded="{{ expandedForm(NotificationDeliveryMethod.MICROSOFT_TEAMS) }}">
-      <mat-expansion-panel-header fxLayout="row wrap" class="fill-width">
+      <mat-expansion-panel-header class="fill-width flex flex-row flex-wrap">
         <mat-panel-title class="template-tittle">
           <tb-icon>{{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MICROSOFT_TEAMS).icon }}</tb-icon>
           {{ NotificationDeliveryMethodInfoMap.get(NotificationDeliveryMethod.MICROSOFT_TEAMS).name | translate }}

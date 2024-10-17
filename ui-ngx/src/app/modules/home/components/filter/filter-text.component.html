@@ -15,5 +15,5 @@
     limitations under the License.
 
 -->
-<div class="tb-filter-text" [ngClass]="{disabled: disabled, required: requiredClass, nowrap: nowrap}"
+<div class="tb-filter-text" [class.disabled]="disabled" [class.required]="requiredClass" [class.nowrap]="nowrap"
      [innerHTML]="filterText"></div>

@@ -35,8 +35,8 @@
       <mat-slide-toggle class="mat-slide fixed-title-width"  formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-font-settings formControlName="titleFont"
@@ -54,7 +54,7 @@
       <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
         {{ 'widget-config.icon' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="compassGaugeWidgetConfigForm.get('iconColor').value"
@@ -72,10 +72,10 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.compass-appearance</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.gauge.labels</div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <tb-string-items-list
           style="display: flex"
-          fxFlex
+          class="flex-1"
           appearance="outline"
           subscriptSizing="dynamic"
           editable
@@ -85,7 +85,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.label-style</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="majorTickFont"
                           disabledLineHeight>
         </tb-font-settings>

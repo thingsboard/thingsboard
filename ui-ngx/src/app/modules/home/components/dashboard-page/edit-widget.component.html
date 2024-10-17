@@ -35,7 +35,7 @@
           {{ 'action.back' | translate }}
         </button>
         <button *ngIf="!previewMode"
-                fxHide.gt-sm
+                class="gt-sm:!hidden"
                 [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
                 (click)="previewMode = true">
@@ -43,16 +43,16 @@
           {{ 'widget-config.preview' | translate }}
         </button>
       </div>
-      <div fxFlex.lt-md class="tb-widget-config-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
+      <div class="tb-widget-config-header-suffix flex flex-row items-center justify-end gap-3 lt-md:flex-1">
         <button *ngIf="!previewMode"
-                fxHide.lt-md
+                class="lt-md:!hidden"
                 [disabled]="!widgetFormGroup.valid"
                 mat-button color="primary"
                 (click)="previewMode = true">
           <mat-icon>visibility</mat-icon>
           {{ 'widget-config.preview' | translate }}
         </button>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+        <div class="flex flex-row items-center justify-start gap-3">
           <button [disabled]="!widgetFormGroup.dirty"
             mat-stroked-button color="primary"
             (click)="onRevertWidgetConfig()">

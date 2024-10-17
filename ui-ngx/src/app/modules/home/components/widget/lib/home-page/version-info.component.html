@@ -15,48 +15,48 @@
     limitations under the License.
 
 -->
-<div class="tb-card-content" fxLayout="column">
+<div class="tb-card-content flex flex-col">
   <div class="tb-card-header">
     <div class="tb-card-title">
       <div class="tb-title" translate>widgets.version-info.title</div>
     </div>
     <a mat-button color="primary" class="tb-contact-us" href="https://thingsboard.io/docs/contact-us/" target="_blank">{{ 'widgets.version-info.contact-us' | translate }}</a>
   </div>
-  <div fxLayout="row" fxLayoutGap="8px" fxLayout.gt-md-lg="column" fxFlex>
-    <div class="tb-version-info-container" fxLayout="row" fxFlex>
-      <div fxFlex fxLayout="column" fxLayoutAlign="space-evenly stretch">
+  <div class="flex flex-1 flex-row gap-2 gt-md-lg:flex-col">
+    <div class="tb-version-info-container flex flex-1 flex-row">
+      <div class="flex flex-1 flex-col items-stretch justify-evenly">
         <div class="tb-card-header">
           <a class="tb-version-link" [href]="updateMessage?.currentVersionReleaseNotesUrl" target="_blank">
-            <span fxHide.md-lg translate>widgets.version-info.current-version</span>
-            <span fxHide.lt-md fxHide.gt-md-lg translate>widgets.version-info.current</span>
+            <span class="md-lg:!hidden" translate>widgets.version-info.current-version</span>
+            <span class="lt-md:!hidden gt-md-lg:!hidden" translate>widgets.version-info.current</span>
           </a>
         </div>
         <div class="tb-version">{{ updateMessage?.currentVersion }}</div>
-        <div fxHide.gt-md-lg style="height: 24px;">
+        <div class="gt-md-lg:!hidden" style="height: 24px;">
         </div>
       </div>
     </div>
-    <div class="tb-version-info-container" fxLayout="row" fxFlex *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
-      <div fxFlex fxLayout="column" fxLayoutAlign="space-evenly stretch">
+    <div class="tb-version-info-container flex flex-1 flex-row" *ngIf="updateMessage?.updateAvailable; else versionUpToDate">
+      <div class="flex flex-1 flex-col items-stretch justify-evenly">
         <div class="tb-card-header">
           <a class="tb-version-link" [href]="updateMessage?.latestVersionReleaseNotesUrl" target="_blank">
-            <span fxHide.md-lg translate>widgets.version-info.available-version</span>
-            <span fxHide.lt-md fxHide.gt-md-lg translate>widgets.version-info.available</span>
+            <span class="md-lg:!hidden" translate>widgets.version-info.available-version</span>
+            <span class="lt-md:!hidden gt-md-lg:!hidden" translate>widgets.version-info.available</span>
           </a>
         </div>
         <div class="tb-version">{{ updateMessage?.latestVersion }}</div>
-        <div fxHide.gt-md-lg fxLayout="row" fxLayoutAlign="end end">
+        <div class="flex flex-row items-end justify-end gt-md-lg:!hidden">
           <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
         </div>
       </div>
-      <div fxHide.lt-md fxHide.md-lg fxLayout="column" fxLayoutAlign="center">
+      <div class="flex flex-col items-stretch justify-center md-lg:!hidden lt-md:!hidden">
         <a mat-flat-button color="primary" class="tb-upgrade" [href]="updateMessage?.upgradeInstructionsUrl" target="_blank">{{ 'widgets.version-info.upgrade' | translate }}</a>
       </div>
     </div>
   </div>
 </div>
 <ng-template #versionUpToDate>
-  <div class="tb-version-info-container up-to-date" fxFlex fxLayout="column" fxLayoutAlign="space-evenly center">
+  <div class="tb-version-info-container up-to-date flex flex-1 flex-col items-center justify-evenly">
     <div class="material-icons-round check-icon">check</div>
     <div class="up-to-date-text" translate>widgets.version-info.version-is-up-to-date</div>
   </div>

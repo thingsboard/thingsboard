@@ -26,7 +26,7 @@
       formControlName="datasources">
   </tb-datasources>
   <div class="tb-form-panel">
-    <div fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" tb-hint-tooltip-icon="{{ seriesMode === 'comparison' ? ('widgets.time-series-chart.comparison.comparison-hint' | translate) : null }}">
         {{ 'widgets.chart.series' | translate }}
       </div>
@@ -58,7 +58,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="comparisonEnabled">
         {{ 'widgets.time-series-chart.comparison.comparison' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <mat-select formControlName="timeForComparison">
             <mat-option [value]="'previousInterval'">
@@ -81,7 +81,7 @@
             </mat-option>
           </mat-select>
         </mat-form-field>
-        <mat-form-field [fxShow]="timeSeriesChartWidgetConfigForm.get('timeForComparison').value === 'customInterval'"
+        <mat-form-field [class.!hidden]="timeSeriesChartWidgetConfigForm.get('timeForComparison').value !== 'customInterval'"
                         appearance="outline" class="number flex-lt-md" subscriptSizing="dynamic">
           <input matInput formControlName="comparisonCustomIntervalValue" type="number" min="0" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -120,7 +120,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -139,11 +139,11 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="timeSeriesChartWidgetConfigForm.get('iconColor').value"
@@ -188,10 +188,9 @@
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetConfigForm.get('showLegend').value"
                          [disabled]="!timeSeriesChartWidgetConfigForm.get('showLegend').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
             {{ 'widget-config.legend' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -199,7 +198,7 @@
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between">
           <div>{{ 'legend.label' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="legendLabelFont"
                               [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendLabelColor').value}"
                               previewText="Temperature">
@@ -212,7 +211,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'legend.value' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="legendValueFont"
                               [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendValueColor').value}"
                               previewText="22 °C">
@@ -225,7 +224,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'legend.column-title' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="legendColumnTitleFont"
                               [initialPreviewStyle]="{color: timeSeriesChartWidgetConfigForm.get('legendColumnTitleColor').value}"
                               previewText="{{ 'legend.Avg' | translate }}">
@@ -245,10 +244,9 @@
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="timeSeriesChartWidgetConfigForm.get('showTooltip').value"
                          [disabled]="!timeSeriesChartWidgetConfigForm.get('showTooltip').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
             {{ 'widget-config.tooltip' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -265,7 +263,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'tooltip.label' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="tooltipLabelFont"
                               [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipLabelColor').value }"
                               previewText="Temperature">
@@ -278,7 +276,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'tooltip.value' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="tooltipValueFont"
                               [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipValueColor').value }"
                               [previewText]="tooltipValuePreviewFn">
@@ -293,8 +291,8 @@
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
             {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
-          <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+          <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+            <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
                                    formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [initialPreviewStyle]="{ color: timeSeriesChartWidgetConfigForm.get('tooltipDateColor').value }"

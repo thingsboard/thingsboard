@@ -30,7 +30,7 @@
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
            [class.tb-draggable-form-table-row]="!disabled"
            *ngFor="let propertyControl of propertiesFormArray().controls; trackBy: trackByProperty; let $index = index;">
-        <tb-scada-symbol-metadata-property-row fxFlex
+        <tb-scada-symbol-metadata-property-row class="flex-1"
                                                [index]="$index"
                                                [booleanPropertyIds]="booleanPropertyIds"
                                                [formControl]="propertyControl"
@@ -41,7 +41,7 @@
                   *ngIf="!disabled"
                   type="button"
                   cdkDragHandle
-                  [ngClass]="{'tb-hidden': !dragEnabled}"
+                  [class.tb-hidden]="!dragEnabled"
                   matTooltip="{{ 'action.drag' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>drag_indicator</mat-icon>
@@ -59,6 +59,5 @@
 </div>
 
 <ng-template #noProperties>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'scada.property.no-properties' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'scada.property.no-properties' | translate }}</span>
 </ng-template>

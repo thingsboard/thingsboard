@@ -21,9 +21,9 @@
       *ngFor="let objectLwM2M of modelsFormArray.controls; let $index = index; trackBy: trackByParams"
       [formGroupName]="$index">
       <mat-expansion-panel-header >
-        <mat-panel-title fxLayoutAlign="start center" >
+        <mat-panel-title class="flex items-center justify-start">
           <span class="tb-panel-title">{{ objectLwM2M.get('name').value}}</span>&nbsp;#{{ objectLwM2M.get('keyId').value}}
-          <span fxFlex></span>
+          <span class="flex-1"></span>
           <tb-profile-lwm2m-attributes
             formControlName="attributes"
             [modelName]="getNameObject(objectLwM2M.value)">

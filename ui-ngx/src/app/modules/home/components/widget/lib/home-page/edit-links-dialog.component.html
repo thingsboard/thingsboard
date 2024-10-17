@@ -18,7 +18,7 @@
 <form class="tb-edit-links-dialog" [formGroup]="editLinksFormGroup">
   <mat-toolbar style="background: transparent;">
     <h2>{{ (mode === 'docs' ? 'widgets.documentation.title' : 'widgets.quick-links.title') | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="close()"
             type="button">
@@ -28,12 +28,12 @@
   <div mat-dialog-content>
     <div class="tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
          (cdkDropListDropped)="linkDrop($event)" [cdkDropListDisabled]="editMode || addMode">
-      <div cdkDrag class="tb-draggable" *ngFor="let linkControl of linksFormArray().controls; trackBy: trackByLink;
+      <div cdkDrag class="tb-draggable flex flex-row items-center justify-start" *ngFor="let linkControl of linksFormArray().controls; trackBy: trackByLink;
                let $index = index; last as isLast;"
-           fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+           [class.pb-2]="!isLast">
         <ng-container [ngSwitch]="mode">
           <ng-template [ngSwitchCase]="'docs'">
-            <tb-doc-link fxFlex #docLink [formControl]="linkControl"
+            <tb-doc-link class="flex-1" #docLink [formControl]="linkControl"
                          [disableEdit]="editMode || addMode"
                          (editModeChanged)="editMode = $event"
                          (docLinkUpdated)="update()"
@@ -44,7 +44,7 @@
             </ng-container>
           </ng-template>
           <ng-template [ngSwitchCase]="'quickLinks'">
-            <tb-quick-link fxFlex #quickLink [formControl]="linkControl"
+            <tb-quick-link class="flex-1" #quickLink [formControl]="linkControl"
                            [disableEdit]="editMode || addMode"
                            (editModeChanged)="editMode = $event"
                            (quickLinkUpdated)="update()"
@@ -67,7 +67,7 @@
     </div>
   </div>
   <div mat-dialog-actions>
-    <div *ngIf="!editMode && !addMode" fxFlex class="tb-add-link-button"
+    <div *ngIf="!editMode && !addMode" class="tb-add-link-button flex-1"
          matTooltip="{{ (mode === 'docs' ? 'widgets.documentation.add-link' : 'widgets.quick-links.add-link') | translate }}"
          matTooltipPosition="above"
          (click)="addLink()">
@@ -76,14 +76,14 @@
     <ng-container *ngIf="addMode">
       <ng-container [ngSwitch]="mode">
         <ng-template [ngSwitchCase]="'docs'">
-          <tb-doc-link fxFlex [(ngModel)]="addingLink"
+          <tb-doc-link class="flex-1" [(ngModel)]="addingLink"
                        [ngModelOptions]="{standalone: true}"
                        (docLinkAdded)="linkAdded($event)"
                        (docLinkAddCanceled)="addMode = false">
           </tb-doc-link>
         </ng-template>
         <ng-template [ngSwitchCase]="'quickLinks'">
-          <tb-quick-link fxFlex [(ngModel)]="addingLink"
+          <tb-quick-link class="flex-1" [(ngModel)]="addingLink"
                        [ngModelOptions]="{standalone: true}"
                        (quickLinkAdded)="linkAdded($event)"
                        (quickLinkAddCanceled)="addMode = false">

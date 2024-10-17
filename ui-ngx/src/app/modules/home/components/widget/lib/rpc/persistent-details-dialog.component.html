@@ -18,7 +18,7 @@
 <form [formGroup]="persistentFormGroup" style="min-width: 480px;">
   <mat-toolbar color="primary">
     <h2>{{ persistentFormGroup.get('rpcId').value }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="close()"
             type="button">
@@ -30,31 +30,32 @@
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)"></div>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div fxLayout="row" fxLayout.xs="column" fxLayoutGap="6px">
-        <mat-form-field fxFlex class="mat-block">
+      <div class="flex flex-row gap-1.5 xs:flex-col">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.created-time</mat-label>
           <input matInput formControlName="createdTime" readonly>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.expiration-time</mat-label>
           <input matInput formControlName="expirationTime" readonly>
         </mat-form-field>
       </div>
-      <div fxLayout="row wrap" fxLayout.xs="column" fxLayoutGap="6px">
-        <mat-form-field fxFlex class="mat-block">
+      <div class="flex flex-row flex-wrap gap-1.5 xs:flex-col">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.message-type</mat-label>
           <input matInput formControlName="messageType" readonly>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.status</mat-label>
           <input matInput formControlName="status" readonly
-                 [ngStyle]="{ fontWeight: 'bold', color: rpcStatusColorsMap.get(data.persistentRequest.status) }">
+                 style="font-weight: bold;"
+                 [style.color]="rpcStatusColorsMap.get(data.persistentRequest.status)">
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.persistent-table.method</mat-label>
           <input matInput formControlName="method" readonly>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block"
+        <mat-form-field class="mat-block flex-1"
                         *ngIf="persistentFormGroup.get('retries').value">
           <mat-label translate>widgets.persistent-table.retries</mat-label>
           <input matInput formControlName="retries" readonly>
@@ -96,7 +97,7 @@
       </mat-accordion>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayout="row">
+  <div mat-dialog-actions class="flex flex-row">
     <button mat-raised-button
             *ngIf="allowDelete"
             color="primary"
@@ -105,8 +106,8 @@
             [disabled]="(isLoading$ | async)">
       {{ 'widgets.persistent-table.delete' | translate }}
     </button>
-    <span fxFlex></span>
-    <div fxLayout="row" fxLayoutGap="8px">
+    <span class="flex-1"></span>
+    <div class="flex flex-row gap-2">
       <button mat-button color="primary"
               type="button"
               [disabled]="(isLoading$ | async)"

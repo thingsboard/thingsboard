@@ -25,7 +25,7 @@
          (keydown)="assetProfileEnter($event)"
          (keypress)="assetProfileEnter($event)"
          [matAutocomplete]="assetProfileAutocomplete"
-         [fxShow]="!showDetailsPageLink || !useAssetProfileLink || !disabled || !selectAssetProfileFormGroup.get('assetProfile').value">
+         [class.!hidden]="showDetailsPageLink && useAssetProfileLink && disabled && selectAssetProfileFormGroup.get('assetProfile').value">
   <a *ngIf="showDetailsPageLink && useAssetProfileLink && selectAssetProfileFormGroup.get('assetProfile').value && disabled"
      aria-label="Open asset profile" [routerLink]=assetProfileURL>
     {{ displayAssetProfileFn(selectAssetProfileFormGroup.get('assetProfile').value) }}

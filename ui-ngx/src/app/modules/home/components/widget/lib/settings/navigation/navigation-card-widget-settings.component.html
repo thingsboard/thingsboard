@@ -15,17 +15,17 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="navigationCardWidgetSettingsForm" fxLayout="column">
-  <mat-form-field fxFlex class="mat-block">
+<section class="tb-widget-settings flex flex-col" [formGroup]="navigationCardWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>widgets.navigation.title</mat-label>
     <input required matInput formControlName="name">
   </mat-form-field>
-  <tb-material-icon-select fxFlex
+  <tb-material-icon-select class="flex-1"
                            iconClearButton
                            required
                            formControlName="icon">
   </tb-material-icon-select>
-  <mat-form-field fxFlex class="mat-block">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>widgets.navigation.navigation-path</mat-label>
     <input required matInput formControlName="path">
   </mat-form-field>

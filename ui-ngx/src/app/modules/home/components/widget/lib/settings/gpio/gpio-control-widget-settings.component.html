@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="gpioControlWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="gpioControlWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.gpio.panel-settings</legend>
     <tb-color-input
@@ -26,11 +26,11 @@
     </tb-color-input>
     <fieldset class="fields-group">
       <legend class="group-title" translate>widgets.gpio.gpio-switches</legend>
-      <div fxLayout="column">
+      <div class="flex flex-col">
         <div class="tb-control-list">
           <div *ngFor="let gpioItemControl of gpioListFormArray().controls; trackBy: trackByGpioItem;
                  let $index = index; last as isLast;"
-               fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+               class="flex flex-col" [class.pb-2]="!isLast">
             <tb-gpio-item [formControl]="gpioItemControl"
                           [expanded]="gpioItemControl.new"
                           (removeGpioItem)="removeGpioItem($index)">
@@ -38,8 +38,8 @@
           </div>
         </div>
         <div *ngIf="!gpioListFormArray().controls.length">
-            <span translate fxLayoutAlign="center center"
-                  class="tb-prompt">widgets.gpio.no-gpio-switches</span>
+            <span translate
+                  class="tb-prompt flex items-center justify-center">widgets.gpio.no-gpio-switches</span>
         </div>
         <div style="padding-top: 16px;">
           <button mat-raised-button color="primary"
@@ -53,13 +53,13 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input required matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>
     <fieldset class="fields-group" formGroupName="gpioStatusRequest">
       <legend class="group-title" translate>widgets.gpio.gpio-status-request</legend>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.gpio.method-name</mat-label>
         <input required matInput formControlName="method">
       </mat-form-field>
@@ -73,7 +73,7 @@
     </fieldset>
     <fieldset class="fields-group" formGroupName="gpioStatusChangeRequest">
       <legend class="group-title" translate>widgets.gpio.gpio-status-change-request</legend>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.gpio.method-name</mat-label>
         <input required matInput formControlName="method">
       </mat-form-field>

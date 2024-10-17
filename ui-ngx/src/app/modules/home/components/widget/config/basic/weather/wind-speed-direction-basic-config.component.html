@@ -30,8 +30,8 @@
     <div class="tb-form-panel-title" translate>widgets.wind-speed-direction.values</div>
     <div class="tb-form-row">
       <div class="fixed-title-width tb-required" translate>widgets.wind-speed-direction.wind-direction</div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-data-key-row fxFlex
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <tb-data-key-row class="flex-1"
                          formControlName="windDirectionKey"
                          required
                          [datasourceType]="datasource?.type"
@@ -55,8 +55,8 @@
     </div>
     <div class="tb-form-row column-xs">
       <div class="fixed-title-width" translate>widgets.wind-speed-direction.center-value</div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-data-key-row fxFlex
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <tb-data-key-row class="flex-1"
                          formControlName="centerValueKey"
                          [datasourceType]="datasource?.type"
                          [deviceId]="datasource?.deviceId"
@@ -94,7 +94,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -113,11 +113,11 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widgets.wind-speed-direction.icon' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="windSpeedDirectionWidgetConfigForm.get('iconColor').value"
@@ -153,8 +153,8 @@
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.wind-speed-direction.major-ticks' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings [fxShow]="majorTicksFontEnabled"
+      <div class="flex flex-row items-center justify-start gap-2">
+        <tb-font-settings [class.!hidden]="!majorTicksFontEnabled"
                           formControlName="majorTicksFont"
                           [initialPreviewStyle]="{ color: windSpeedDirectionWidgetConfigForm.get('majorTicksColor').value }"
                           [autoScale]="true"
@@ -167,8 +167,8 @@
     </div>
     <div class="tb-form-row space-between">
       <div>{{ 'widgets.wind-speed-direction.minor-ticks' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-font-settings [fxShow]="minorTicksFontEnabled"
+      <div class="flex flex-row items-center justify-start gap-2">
+        <tb-font-settings [class.!hidden]="!minorTicksFontEnabled"
                           formControlName="minorTicksFont"
                           [initialPreviewStyle]="{ color: windSpeedDirectionWidgetConfigForm.get('minorTicksColor').value }"
                           [autoScale]="true"

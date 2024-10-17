@@ -49,24 +49,24 @@ const processImageFunctionTemplate =
   '  imageDialogTemplate =\n' +
   '    \'<div aria-label="Image">\' +\n' +
   '    \'<form #theForm="ngForm">\' +\n' +
-  '    \'<mat-toolbar fxLayout="row" color="primary">\' +\n' +
+  '    \'<mat-toolbar class="flex flex-row" color="primary">\' +\n' +
   '    \'<h2>{{title}}</h2>\' +\n' +
-  '    \'<span fxFlex></span>\' +\n' +
+  '    \'<span class="flex-1"></span>\' +\n' +
   '    \'<button mat-icon-button (click)="close()">\' +\n' +
   '    \'<mat-icon>close</mat-icon>\' +\n' +
   '    \'</button>\' +\n' +
   '    \'</mat-toolbar>\' +\n' +
   '    \'<div mat-dialog-content>\' +\n' +
   '    \'<div class="mat-content mat-padding">\' +\n' +
-  '    \'<div fxLayout="column" fxFlex>\' +\n' +
+  '    \'<div class="flex flex-1 flex-col">\' +\n' +
   '    \'<div style="padding-top: 20px;">\' +\n' +
   '    \'<img [src]="imageUrl" style="height: 300px;"/>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</div>\' +\n' +
-  '    \'<div mat-dialog-actions fxLayout="row">\' +\n' +
-  '    \'<span fxFlex></span>\' +\n' +
+  '    \'<div mat-dialog-actions class="flex flex-row">\' +\n' +
+  '    \'<span class="flex-1"></span>\' +\n' +
   '    \'<button mat-button (click)="close()" style="margin-right:20px;">Close</button>\' +\n' +
   '    \'</div>\' +\n' +
   '    \'</form>\' +\n' +

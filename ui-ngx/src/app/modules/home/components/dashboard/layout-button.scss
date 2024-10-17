@@ -30,3 +30,11 @@
     }
   }
 }
+
+:host ::ng-deep {
+  button.tb-layout-button {
+    .mdc-button__label {
+      line-height: 36px;
+    }
+  }
+}

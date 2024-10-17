@@ -443,6 +443,8 @@ export class PersistentTableComponent extends PageComponent implements OnInit, O
     });
     this.ctx.detectChanges();
   }
+
+  protected readonly rpcStatusColorsMap = rpcStatusColors;
 }
 
 class PersistentDatasource implements DataSource<PersistentRpcData> {

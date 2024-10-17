@@ -19,8 +19,8 @@
   <mat-toolbar color="primary">
     <div class="tb-add-widget-toolbar">
       <h2>{{'widget.add' | translate}}:</h2>
-      <span fxFlex>{{data.widgetInfo.widgetName}}</span>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap.gt-xs="16px" style="min-width: fit-content;">
+      <span class="flex-1">{{data.widgetInfo.widgetName}}</span>
+      <div class="flex flex-row items-center justify-start gt-xs:gap-4" style="min-width: fit-content;">
         <tb-toggle-select *ngIf="widgetConfig.hasBasicMode" appearance="fill-invert" selectMediaBreakpoint="xs"
                           [(ngModel)]="widgetConfigMode" [ngModelOptions]="{standalone: true}">
           <tb-toggle-option value="basic">{{ 'widget.basic-mode' | translate }}</tb-toggle-option>
@@ -66,14 +66,14 @@
       </div>
     </tb-widget-preview>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="space-between center">
+  <div mat-dialog-actions class="flex items-center justify-between">
     <button mat-button color="primary"
             type="button"
             (click)="cancel()"
             cdkFocusInitial>
       {{ 'action.cancel' | translate }}
     </button>
-    <div fxLayout="row" fxLayoutGap="8px">
+    <div class="flex flex-row gap-2">
       <button *ngIf="!previewMode"
               mat-button color="primary"
               type="button"

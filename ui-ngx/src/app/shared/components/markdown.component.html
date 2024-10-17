@@ -22,5 +22,5 @@
                                                       background: #efefef;">
   {{error}}
 </div>
-<div #fallbackElement [fxShow]="usePlainMarkdown || (error && fallbackToPlainMarkdown)" class="tb-markdown-view" [ngClass]="markdownClass" [ngStyle]="style">
+<div #fallbackElement [class.!hidden]="!usePlainMarkdown && !(error && fallbackToPlainMarkdown)" class="tb-markdown-view" [class]="markdownClass" [style]="style">
 </div>

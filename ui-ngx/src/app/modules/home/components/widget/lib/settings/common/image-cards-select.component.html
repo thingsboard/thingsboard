@@ -17,10 +17,10 @@
 -->
 <div class="tb-image-cards-select tb-form-panel stroked no-padding">
   <mat-expansion-panel class="tb-settings" [expanded]="expanded" disabled>
-    <mat-expansion-panel-header fxLayout="row wrap">
-      <div fxFlex class="tb-form-row no-border"  [class.expanded]="expanded">
+    <mat-expansion-panel-header class="flex flex-row flex-wrap">
+      <div class="tb-form-row no-border flex-1"  [class.expanded]="expanded">
         <div class="fixed-title-width">{{ label }}</div>
-        <mat-form-field class="tb-image-cards-value-field" fxFlex appearance="outline" subscriptSizing="dynamic" (click)="toggleSelectPanel($event)">
+        <mat-form-field class="tb-image-cards-value-field flex-1" appearance="outline" subscriptSizing="dynamic" (click)="toggleSelectPanel($event)">
           <input readonly matInput [formControl]="valueFormControl" placeholder="{{ 'widget-config.set' | translate }}">
           <mat-icon matSuffix>{{ expanded ? 'expand_less' : 'expand_more' }}</mat-icon>
         </mat-form-field>

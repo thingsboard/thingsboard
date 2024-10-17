@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="tb-scada-symbol-editor-shape" [fxShow]="editorMode === 'svg'" #scadaSymbolShape></div>
-<div class="tb-scada-symbol-editor-tooltips" [fxShow]="editorMode === 'svg'" #tooltipsContainer>
+<div class="tb-scada-symbol-editor-shape" [class.!hidden]="editorMode !== 'svg'" #scadaSymbolShape></div>
+<div class="tb-scada-symbol-editor-tooltips" [class.!hidden]="editorMode !== 'svg'" #tooltipsContainer>
   <tb-anchor #tooltipsContainerComponent></tb-anchor>
 </div>
-<div class="tb-scada-symbol-editor-svg-xml" [fxShow]="editorMode === 'xml'">
+<div class="tb-scada-symbol-editor-svg-xml" [class.!hidden]="editorMode !== 'xml'">
   <tb-svg-xml [formControl]="svgContentFormControl"
               fillHeight
               noLabel>
@@ -27,7 +27,7 @@
 </div>
 <div class="tb-scada-symbol-editor-buttons">
   <div class="tb-scada-symbol-editor-view-buttons">
-    <div class="tb-scada-symbol-editor-zoom-buttons tb-primary-fill" [fxShow]="editorMode === 'svg'">
+    <div class="tb-scada-symbol-editor-zoom-buttons tb-primary-fill" [class.!hidden]="editorMode !== 'svg'">
       <button mat-icon-button
               [disabled]="zoomInDisabled"
               (click)="zoomIn()"
@@ -43,7 +43,7 @@
         <mat-icon>remove</mat-icon>
       </button>
     </div>
-    <div *ngIf="displayShowHidden" [fxShow]="editorMode === 'svg'" class="tb-primary-fill">
+    <div *ngIf="displayShowHidden" [class.!hidden]="editorMode !== 'svg'" class="tb-primary-fill">
       <button mat-icon-button
               (click)="toggleShowHidden()"
               matTooltip="{{ (showHiddenElements ? 'scada.hide-hidden-elements' : 'scada.show-hidden-elements') | translate }}"
@@ -70,7 +70,7 @@
       </button>
     </div>
     <tb-toggle-select appearance="fill"
-                      [disabled]="!svgContentFormControl.valid"
+                      [disabled]="!readonly && !svgContentFormControl.valid"
                       fillHeight
                       extraPadding
                       primaryBackground

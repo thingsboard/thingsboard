@@ -3,9 +3,9 @@
 ```html
 {:code-style="max-height: 400px;"}
 <form [formGroup]="addEntityFormGroup" (ngSubmit)="save()" style="min-width:480px;">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar class="flex flex-row" color="primary">
     <h2>Add new User</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button (click)="cancel()" type="button">
       <mat-icon class="material-icons">close</mat-icon>
     </button>
@@ -15,10 +15,9 @@
   </mat-progress-bar>
   <div style="height: 4px;" *ngIf="!(isLoading$ | async)">
   </div>
-  <div mat-dialog-content fxLayout="column">
-    <div fxLayout="row" fxLayoutGap="8px"
-         fxLayout.xs="column" fxLayoutGap.xs="0">
-      <mat-form-field fxFlex class="mat-block">
+  <div mat-dialog-content class="flex flex-col">
+    <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
+      <mat-form-field class="mat-block flex-1">
         <mat-label>Email</mat-label>
         <input matInput formControlName="email" required
                ng-pattern='/^(([^<>()\[\]\\.,;:\s@"]+(\.[^<>()\[\]\\.,;:\s@"]+)*)|(".+"))@((\[[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}\.[0-9]{1,3}])|(([a-zA-Z\_\-0-9]+\.)+[a-zA-Z]{2,}))$/'>
@@ -30,25 +29,22 @@
         </mat-error>
       </mat-form-field>
     </div>
-    <div fxLayout="row" fxLayoutGap="8px"
-         fxLayout.xs="column" fxLayoutGap.xs="0">
-      <mat-form-field fxFlex class="mat-block">
+    <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
+      <mat-form-field class="mat-block flex-1">
         <mat-label>First Name</mat-label>
         <input matInput
                formControlName="firstName">
       </mat-form-field>
     </div>
-    <div fxLayout="row" fxLayoutGap="8px"
-         fxLayout.xs="column" fxLayoutGap.xs="0">
-      <mat-form-field fxFlex class="mat-block">
+    <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
+      <mat-form-field class="mat-block flex-1">
         <mat-label>Last Name</mat-label>
         <input matInput
                formControlName="lastName">
       </mat-form-field>
     </div>
-    <div fxLayout="row" fxLayoutGap="8px"
-         fxLayout.xs="column" fxLayoutGap.xs="0">
-      <mat-form-field fxFlex class="mat-block">
+    <div class="flex flex-row gap-2 xs:flex-col xs:gap-0">
+      <mat-form-field class="mat-block flex-1">
         <mat-label>User activation method</mat-label>
         <mat-select matInput formControlName="userActivationMethod">
           <mat-option *ngFor="let activationMethod of activationMethods" [value]="activationMethod.value">
@@ -60,8 +56,7 @@
       </mat-form-field>
     </div>
   </div>
-  <div mat-dialog-actions fxLayout="row"
-       fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex flex-row items-center justify-end">
     <button mat-button color="primary" type="button"
             [disabled]="(isLoading$ | async)"
             (click)="cancel()" cdkFocusInitial>

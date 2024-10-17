@@ -49,8 +49,8 @@
       <mat-slide-toggle class="mat-slide fixed-title-width"  formControlName="showTitle">
         {{ 'widget-config.card-title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
         <tb-font-settings formControlName="titleFont"
@@ -68,7 +68,7 @@
       <mat-slide-toggle class="mat-slide"  formControlName="showTitleIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="latestChartWidgetConfigForm.get('iconColor').value"
@@ -101,10 +101,9 @@
   <ng-container *ngTemplateOutlet="latestChartConfigTemplate()"></ng-container>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="latestChartWidgetConfigForm.get('showLegend').value" [disabled]="!latestChartWidgetConfigForm.get('showLegend').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
             {{ 'widget-config.legend' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -122,7 +121,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'legend.label' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="legendLabelFont"
                               previewText="Wind">
             </tb-font-settings>
@@ -134,7 +133,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div>{{ 'legend.value' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="legendValueFont"
                               [previewText]="valuePreviewFn">
             </tb-font-settings>
@@ -149,10 +148,9 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="latestChartWidgetConfigForm.get('showTooltip').value" [disabled]="!latestChartWidgetConfigForm.get('showTooltip').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
             {{ 'widget-config.tooltip' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -160,7 +158,7 @@
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row space-between column-xs">
           <div>{{ 'tooltip.value' | translate }}</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field class="medium-width" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="tooltipValueType">
                 <mat-option *ngFor="let type of latestChartTooltipValueTypes" [value]="type">
@@ -170,7 +168,7 @@
             </mat-form-field>
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput formControlName="tooltipValueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-              <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+              <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
             </mat-form-field>
             <tb-font-settings formControlName="tooltipValueFont"
                               [previewText]="tooltipValuePreviewFn">
@@ -240,8 +238,8 @@
         <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showLabel">
           {{ 'widgets.pie-chart.label' | translate }}
         </mat-slide-toggle>
-        <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+        <div class="flex flex-1 flex-row items-center justify-start gap-2">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="labelPosition">
               <mat-option *ngFor="let position of pieChartLabelPositions" [value]="position">
                 {{ pieChartLabelPositionTranslationMap.get(position) | translate }}
@@ -261,7 +259,7 @@
       </div>
       <div class="tb-form-row space-between">
         <div>{{ 'widgets.pie-chart.border' | translate }}</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="borderWidth" type="number" min="0" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>px</div>
@@ -274,7 +272,7 @@
       </div>
       <div class="tb-form-row space-between">
         <div>{{ 'widgets.pie-chart.radius' | translate }}</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="radius" type="number" min="0" max="100" step="1" placeholder="{{ 'widget-config.set' | translate }}">
             <div matSuffix>%</div>
@@ -316,9 +314,9 @@
           {{ 'widgets.latest-chart.clockwise-layout' | translate }}
         </mat-slide-toggle>
       </div>
-      <div [fxShow]="doughnutTotalEnabled" class="tb-form-row space-between">
+      <div [class.!hidden]="!doughnutTotalEnabled" class="tb-form-row space-between">
         <div>{{ 'widgets.doughnut.central-total-value' | translate }}</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <tb-font-settings formControlName="totalValueFont"
                             [previewText]="valuePreviewFn">
           </tb-font-settings>
@@ -343,7 +341,7 @@
       <div class="tb-form-panel-title" translate>widgets.bar-chart.bar-axis</div>
       <div class="tb-form-row space-between column-xs">
         <div translate>widgets.chart.chart-axis.scale</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="axisMin"
@@ -383,7 +381,7 @@
       <div class="tb-form-panel-title" translate>widgets.polar-area-chart.polar-axis</div>
       <div class="tb-form-row space-between column-xs">
         <div translate>widgets.chart.chart-axis.scale</div>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div class="tb-small-label" translate>widgets.chart.chart-axis.scale-min</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="axisMin"
@@ -440,8 +438,8 @@
         <mat-slide-toggle class="mat-slide" formControlName="showLine">
           {{ 'widgets.radar-chart.line' | translate }}
         </mat-slide-toggle>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field class="medium-width" fxFlex.xs appearance="outline" subscriptSizing="dynamic">
+        <div class="flex flex-row items-center justify-start gap-2">
+          <mat-form-field class="medium-width xs:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="lineType">
               <mat-option *ngFor="let type of chartLineTypes" [value]="type">
                 {{ chartLineTypeTranslations.get(type) | translate }}
@@ -458,8 +456,8 @@
         <mat-slide-toggle class="mat-slide" formControlName="showPoints">
           {{ 'widgets.radar-chart.points' | translate }}
         </mat-slide-toggle>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field class="medium-width" fxFlex.xs appearance="outline" subscriptSizing="dynamic">
+        <div class="flex flex-row items-center justify-start gap-2">
+          <mat-form-field class="medium-width xs:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="pointShape">
               <mat-option *ngFor="let shape of chartShapes" [value]="shape">
                 {{ chartShapeTranslations.get(shape) | translate }}
@@ -476,8 +474,8 @@
         <mat-slide-toggle class="mat-slide" formControlName="showLabel">
           {{ 'widgets.radar-chart.points-label' | translate }}
         </mat-slide-toggle>
-        <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
-          <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+        <div class="flex flex-row items-center justify-start gap-2 lt-md:flex-1">
+          <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="labelPosition">
               <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
                 {{ chartLabelPositionTranslations.get(position) | translate }}
@@ -517,7 +515,7 @@
         <mat-slide-toggle class="mat-slide" formControlName="axisShowTickLabels">
           {{ 'widgets.radar-chart.ticks-label' | translate }}
         </mat-slide-toggle>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <tb-font-settings formControlName="axisTickLabelFont"
                             clearButton
                             disabledLineHeight

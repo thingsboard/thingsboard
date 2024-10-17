@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section fxLayout="row" class="layout-wrap tb-footer-fab-buttons" [ngClass]="{'relative-buttons': relative}">
+<section class="tb-footer-fab-buttons flex flex-row flex-wrap" [class.relative-buttons]="relative">
   <div class="fab-container">
     <button [disabled]="isLoading$ | async"
             mat-fab class="fab-toggler tb-btn-footer"

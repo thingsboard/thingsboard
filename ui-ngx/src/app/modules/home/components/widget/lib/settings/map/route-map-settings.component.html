@@ -18,12 +18,12 @@
 <section class="tb-widget-settings" [formGroup]="routeMapSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.maps.route-map-settings</legend>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="!flex flex-row xs:flex-col gt-xs:gap-2">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.stroke-weight</mat-label>
         <input matInput type="number" min="0" formControlName="strokeWeight">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="flex-1">
         <mat-label translate>widgets.maps.stroke-opacity</mat-label>
         <input matInput type="number" min="0" max="1" formControlName="strokeOpacity">
       </mat-form-field>

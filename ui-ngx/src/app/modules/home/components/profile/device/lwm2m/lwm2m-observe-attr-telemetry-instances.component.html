@@ -24,11 +24,11 @@
       [expanded]="isExpend"
       [disabled]="isExpend">
       <mat-expansion-panel-header>
-        <mat-panel-title class="tb-panel" fxLayout="row">
-          <div fxFlex="30" fxLayoutAlign="start center">
+        <mat-panel-title class="tb-panel flex flex-row">
+          <div class="flex max-w-30% flex-full items-center justify-start">
             <span class="tb-panel-title">{{ 'device-profile.lwm2m.instance' | translate }}</span>&nbsp;#{{instances.get('id').value}}
           </div>
-          <div fxLayoutAlign="center center" fxFlex="10">
+          <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="warn"
                           [disabled]="this.disabled"
                           [checked]="getChecked(instances, 'attribute')"
@@ -37,7 +37,7 @@
                           [indeterminate]="getIndeterminate(instances, 'attribute')">
             </mat-checkbox>
           </div>
-          <div fxLayoutAlign="center center" fxFlex="10">
+          <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="primary"
                           [disabled]="this.disabled"
                           [checked]="getChecked(instances, 'telemetry')"
@@ -46,7 +46,7 @@
                           [indeterminate]="getIndeterminate(instances, 'telemetry')">
             </mat-checkbox>
           </div>
-          <div fxLayoutAlign="center center" fxFlex="10">
+          <div class="flex max-w-10% flex-full items-center justify-center">
             <mat-checkbox color="primary"
                           [disabled]="disableObserve(instances)"
                           [checked]="getChecked(instances, 'observe')"
@@ -55,7 +55,7 @@
                           [indeterminate]="getIndeterminate(instances, 'observe')">
             </mat-checkbox>
           </div>
-          <span fxFlex></span>
+          <span class="flex-1"></span>
           <tb-profile-lwm2m-attributes
             formControlName="attributes"
             [isAttributeTelemetry]="disableObserveInstance(instances)"

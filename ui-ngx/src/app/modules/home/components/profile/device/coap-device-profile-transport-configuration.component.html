@@ -19,7 +19,7 @@
   <section formGroupName="coapDeviceTypeConfiguration">
     <fieldset class="fields-group">
       <legend class="group-title" translate>device-profile.coap-device-type</legend>
-      <div fxLayoutGap="8px" fxLayout="column">
+      <div class="flex flex-col gap-2">
         <mat-form-field class="mat-block">
           <mat-select formControlName="coapDeviceType" required>
             <mat-option *ngFor="let type of coapTransportDeviceTypes" [value]="type">
@@ -35,7 +35,7 @@
     <div *ngIf="coapDeviceTypeDefault" formGroupName="transportPayloadTypeConfiguration">
       <fieldset class="fields-group">
         <legend class="group-title" translate>device-profile.coap-device-payload-type</legend>
-        <div fxLayoutGap="8px" fxLayout="column">
+        <div class="flex flex-col gap-2">
           <mat-form-field class="mat-block">
             <mat-select formControlName="transportPayloadType" required>
               <mat-option *ngFor="let type of transportPayloadTypes" [value]="type">
@@ -46,10 +46,10 @@
               {{ 'device-profile.mqtt-payload-type-required' | translate }}
             </mat-error>
           </mat-form-field>
-          <div *ngIf="protoPayloadType" fxLayout="column">
+          <div *ngIf="protoPayloadType" class="flex flex-col">
             <ng-container>
               <tb-protobuf-content
-                fxFlex
+                class="flex-1"
                 formControlName="deviceTelemetryProtoSchema"
                 label="{{ 'device-profile.telemetry-proto-schema' | translate }}"
                 [fillHeight]="true">
@@ -60,7 +60,7 @@
             </ng-container>
             <ng-container>
               <tb-protobuf-content
-                fxFlex
+                class="flex-1"
                 formControlName="deviceAttributesProtoSchema"
                 label="{{ 'device-profile.attributes-proto-schema' | translate }}"
                 [fillHeight]="true">
@@ -71,7 +71,7 @@
             </ng-container>
             <ng-container>
               <tb-protobuf-content
-                fxFlex
+                class="flex-1"
                 formControlName="deviceRpcRequestProtoSchema"
                 label="{{ 'device-profile.rpc-request-proto-schema' | translate }}"
                 [fillHeight]="true">
@@ -82,7 +82,7 @@
             </ng-container>
             <ng-container>
               <tb-protobuf-content
-                fxFlex
+                class="flex-1"
                 formControlName="deviceRpcResponseProtoSchema"
                 label="{{ 'device-profile.rpc-response-proto-schema' | translate }}"
                 [fillHeight]="true">

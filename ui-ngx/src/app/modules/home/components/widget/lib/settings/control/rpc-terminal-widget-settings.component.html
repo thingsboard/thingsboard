@@ -15,29 +15,29 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="rpcTerminalWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="rpcTerminalWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input required matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.rpc.persistent-rpc-settings</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="rpcTerminalWidgetSettingsForm.get('requestPersistent').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             <mat-slide-toggle formControlName="requestPersistent" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+                              class="flex items-stretch justify-center">
               {{ 'widgets.rpc.request-persistent' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.rpc.persistent-polling-interval</mat-label>
             <input matInput type="number" min="1000" formControlName="persistentPollingInterval">
           </mat-form-field>

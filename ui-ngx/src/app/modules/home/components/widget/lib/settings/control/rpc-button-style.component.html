@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="rpcButtonStyleFormGroup" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="rpcButtonStyleFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.button-style</legend>
     <mat-slide-toggle formControlName="isRaised" class="slide-block">
@@ -24,13 +24,13 @@
     <mat-slide-toggle formControlName="isPrimary" class="slide-block">
       {{ 'widgets.rpc.button-primary' | translate }}
     </mat-slide-toggle>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-      <tb-color-input fxFlex
+    <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+      <tb-color-input class="flex-1"
                       formControlName="textColor"
                       icon="format_color_fill"
                       label="{{ 'widgets.rpc.button-text-color' | translate }}" openOnInput colorClearButton>
       </tb-color-input>
-      <tb-color-input fxFlex
+      <tb-color-input class="flex-1"
                       formControlName="bgColor"
                       icon="format_color_fill"
                       label="{{ 'widgets.rpc.button-background-color' | translate }}" openOnInput colorClearButton>

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-aliases-entity-select" fxLayout="row" fxLayoutAlign="start center" *ngIf="hasSelectableAliasEntities">
+<section class="tb-aliases-entity-select flex flex-row items-center justify-start" *ngIf="hasSelectableAliasEntities">
   <button mat-icon-button
           cdkOverlayOrigin #aliasEntitySelectPanelOrigin="cdkOverlayOrigin"
           (click)="openEditMode()"
@@ -23,7 +23,7 @@
           [matTooltipPosition]="tooltipPosition">
     <mat-icon class="material-icons">devices_other</mat-icon>
   </button>
-  <span fxHide.lt-lg
+  <span class="lt-lg:!hidden"
         (click)="openEditMode()"
         matTooltip="{{ 'entity.select-entities' | translate }}"
         [matTooltipPosition]="tooltipPosition">

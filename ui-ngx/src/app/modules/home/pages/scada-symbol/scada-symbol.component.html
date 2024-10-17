@@ -15,21 +15,21 @@
     limitations under the License.
 
 -->
-<div class="tb-scada-symbol-editor mat-content" fxLayout="column">
-  <section class="tb-scada-symbol-editor-container" fxFlex fxLayout="column">
-    <div class="tb-scada-symbol-editor-layout" fxFlex fxLayout="row">
-      <mat-drawer-container style="width: 100%; height: 100%;">
+<div class="tb-scada-symbol-editor mat-content flex flex-col">
+  <section class="tb-scada-symbol-editor-container flex flex-1 flex-col">
+    <div class="tb-scada-symbol-editor-layout flex flex-1 flex-row">
+      <mat-drawer-container class="size-full">
         <mat-drawer class="tb-scada-symbol-editor-details-drawer mat-elevation-z4"
                     disableClose="true"
                     mode="side"
                     opened
                     position="end">
-          <tb-details-panel fxFlex
+          <tb-details-panel class="flex-1"
                             [isReadOnly]="true"
                             [showCloseDetails]="false"
                             headerHeightPx="64"
                             headerTitle="{{symbolData?.imageResource?.title}}">
-            <div class="details-buttons" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="16px">
+            <div class="details-buttons flex flex-row items-center justify-start gap-4">
               <div tb-help="scadaSymbolDev"></div>
               <button mat-stroked-button
                       [disabled]="scadaSymbolFormGroup.invalid"
@@ -77,7 +77,7 @@
                 </div>
               </div>
             </div>
-            <div [fxShow]="!previewMode" [formGroup]="scadaSymbolFormGroup">
+            <div [class.!hidden]="previewMode" [formGroup]="scadaSymbolFormGroup">
               <tb-scada-symbol-metadata
                 #symbolMetadata
                 [tags]="tags"
@@ -85,7 +85,7 @@
                 [callbacks]="widgetActionCallbacks"
                 formControlName="metadata">
                 <div class="tb-scada-symbol-metadata-header-prefix">
-                  <button fxHide.gt-sm
+                  <button class="gt-sm:!hidden"
                           [disabled]="scadaSymbolFormGroup.invalid || !symbolEditorValid"
                           mat-button color="primary"
                           (click)="enterPreviewMode()">
@@ -93,15 +93,15 @@
                     {{ 'scada.preview' | translate }}
                   </button>
                 </div>
-                <div fxFlex.lt-md class="tb-scada-symbol-metadata-header-suffix" fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="12px">
-                  <button fxHide.lt-md
+                <div class="tb-scada-symbol-metadata-header-suffix flex flex-row items-center justify-end gap-3 lt-md:flex-1">
+                  <button class="lt-md:!hidden"
                           [disabled]="scadaSymbolFormGroup.invalid || !symbolEditorValid"
                           mat-button color="primary"
                           (click)="enterPreviewMode()">
                     <mat-icon>visibility</mat-icon>
                     {{ 'scada.preview' | translate }}
                   </button>
-                  <div *ngIf="!readonly" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
+                  <div *ngIf="!readonly" class="flex flex-row items-center justify-start gap-3">
                     <button [disabled]="!(scadaSymbolFormGroup.dirty || symbolEditorDirty)"
                             mat-stroked-button color="primary"
                             (click)="onRevertScadaSymbolConfig()">

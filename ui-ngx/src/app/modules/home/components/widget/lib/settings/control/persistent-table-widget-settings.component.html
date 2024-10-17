@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="persistentTableWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="persistentTableWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.persistent-table.general-settings</legend>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px">
-      <section fxLayout="column" fxFlex>
+    <section class="flex flex-col gt-xs:flex-row gt-xs:gap-2">
+      <section class="flex flex-1 flex-col">
         <mat-checkbox formControlName="enableFilter">
           {{ 'widgets.persistent-table.enable-filter' | translate }}
         </mat-checkbox>
       </section>
-      <section fxLayout="column" fxFlex>
+      <section class="flex flex-1 flex-col">
         <mat-checkbox formControlName="enableStickyHeader">
           {{ 'widgets.persistent-table.enable-sticky-header' | translate }}
         </mat-checkbox>
@@ -33,8 +33,8 @@
         </mat-checkbox>
       </section>
     </section>
-    <section fxLayout="column" fxLayoutGap.gt-xs="8px">
-      <mat-slide-toggle fxFlex formControlName="displayDetails">
+    <section class="flex flex-col gt-xs:gap-2">
+      <mat-slide-toggle class="flex-1" formControlName="displayDetails">
         {{ 'widgets.persistent-table.display-request-details' | translate }}
       </mat-slide-toggle>
       <mat-slide-toggle formControlName="allowSendRequest">
@@ -43,16 +43,16 @@
       <mat-slide-toggle formControlName="allowDelete">
         {{ 'widgets.persistent-table.allow-delete-request' | translate }}
       </mat-slide-toggle>
-      <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap="8px" fxLayoutAlign.gt-xs="start center">
-        <mat-slide-toggle fxFlex formControlName="displayPagination">
+      <section class="flex flex-col gap-2 gt-xs:flex-row gt-xs:items-center gt-xs:justify-start">
+        <mat-slide-toggle class="flex-1" formControlName="displayPagination">
           {{ 'widgets.table.display-pagination' | translate }}
         </mat-slide-toggle>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.table.default-page-size</mat-label>
           <input matInput type="number" min="1" step="1" formControlName="defaultPageSize">
         </mat-form-field>
       </section>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.table.default-sort-order</mat-label>
         <input matInput formControlName="defaultSortOrder">
       </mat-form-field>
@@ -60,7 +60,7 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.persistent-table.columns-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.persistent-table.display-columns</mat-label>
       <mat-chip-grid #columnsChipList class="tb-drop-list"
                      required

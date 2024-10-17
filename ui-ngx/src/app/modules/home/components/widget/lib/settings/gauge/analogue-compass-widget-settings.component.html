@@ -20,10 +20,10 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.ticks-settings</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.gauge.labels</div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <tb-string-items-list
           style="display: flex"
-          fxFlex
+          class="flex-1"
           appearance="outline"
           subscriptSizing="dynamic"
           editable
@@ -33,7 +33,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.label-style</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="majorTickFont"
                           disabledLineHeight>
         </tb-font-settings>
@@ -53,7 +53,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div translate>widgets.gauge.minor-ticks</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="minorTicks">
         </mat-form-field>
@@ -84,7 +84,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showBorder">
         {{ 'widgets.gauge.show-plate-border' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="borderOuterWidth" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -100,7 +100,7 @@
     <div class="tb-form-panel-title" translate>widgets.gauge.needle-settings</div>
     <div class="tb-form-row space-between column-xs">
       <div translate>widgets.gauge.needle-circle</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field class="number" appearance="outline" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="needleCircleSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -121,21 +121,20 @@
 
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="analogueCompassWidgetSettingsForm.get('animation').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="animation" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="animation" (click)="$event.stopPropagation()">
             {{ 'widgets.gauge.enable-animation' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widgets.gauge.animation-target</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <mat-select formControlName="animationTarget">
               <mat-option [value]="'needle'">
                 {{ 'widgets.gauge.animation-target-needle' | translate }}
@@ -148,7 +147,7 @@
         </div>
         <div class="tb-form-row space-between">
           <div translate>widgets.gauge.animation-duration-rule</div>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
               <input matInput type="number" min="0" formControlName="animationDuration" placeholder="{{ 'widget-config.set' | translate }}">
             </mat-form-field>

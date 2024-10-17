@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<div class="markdown-content" [ngClass]="{'tb-edit-mode': !readonly}"
+<div class="markdown-content" [class.tb-edit-mode]="!readonly"
      tb-fullscreen [fullscreen]="fullscreen" (fullscreenChanged)="onFullscreen()">
-  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;" class="markdown-editor-toolbar">
-    <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>
-    <span fxFlex></span>
-    <button [fxShow]="!editorMode"
+  <div style="min-height: 40px;" class="markdown-editor-toolbar flex flex-row items-center justify-start">
+    <label class="tb-title no-padding" [class]="{'tb-error': !disabled && required && !markdownValue, 'tb-required': !disabled && required}">{{ label }}</label>
+    <span class="flex-1"></span>
+    <button [class.!hidden]="editorMode"
             type="button"
             mat-button (click)="toggleEditMode()">{{ 'markdown.edit' | translate }}</button>
-    <button [fxShow]="editorMode"
+    <button [class.!hidden]="!editorMode"
             type="button"
             mat-button (click)="toggleEditMode()">{{ 'markdown.preview' | translate }}</button>
     <div *ngIf = "helpId" [tb-help-popup]="helpId"></div>
@@ -38,9 +38,9 @@
       </div>
     </fieldset>
   </div>
-  <div [fxShow]="!readonly && !disabled" class="markdown-content-editor">
-    <div [fxShow]="editorMode" #markdownEditor class="tb-markdown-editor"></div>
-    <div [fxShow]="!editorMode" class="tb-markdown-view-container">
+  <div [class.!hidden]="readonly || disabled" class="markdown-content-editor">
+    <div [class.!hidden]="!editorMode" #markdownEditor class="tb-markdown-editor"></div>
+    <div [class.!hidden]="editorMode" class="tb-markdown-view-container">
       <tb-markdown [data]="renderValue" lineNumbers fallbackToPlainMarkdown></tb-markdown>
     </div>
   </div>

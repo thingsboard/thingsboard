@@ -30,7 +30,7 @@
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
            [class.tb-draggable-form-table-row]="!disabled"
            *ngFor="let behaviorControl of behaviorsFormArray().controls; trackBy: trackByBehavior; let $index = index;">
-        <tb-scada-symbol-metadata-behavior-row fxFlex
+        <tb-scada-symbol-metadata-behavior-row class="flex-1"
           [index]="$index"
           [formControl]="behaviorControl"
           [aliasController]="aliasController"
@@ -42,7 +42,7 @@
                   *ngIf="!disabled"
                   type="button"
                   cdkDragHandle
-                  [ngClass]="{'tb-hidden': !dragEnabled}"
+                  [class.tb-hidden]="!dragEnabled"
                   matTooltip="{{ 'action.drag' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>drag_indicator</mat-icon>
@@ -60,6 +60,5 @@
 </div>
 
 <ng-template #noBehaviors>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'scada.behavior.no-behaviors' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'scada.behavior.no-behaviors' | translate }}</span>
 </ng-template>

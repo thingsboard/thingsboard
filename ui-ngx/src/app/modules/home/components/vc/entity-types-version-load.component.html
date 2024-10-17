@@ -15,22 +15,22 @@
     limitations under the License.
 
 -->
-<fieldset class="fields-group" [formGroup]="entityTypesVersionLoadFormGroup" fxLayout="column">
+<fieldset class="fields-group flex flex-col" [formGroup]="entityTypesVersionLoadFormGroup">
   <legend class="group-title" translate>version-control.entities-to-restore</legend>
-  <div fxLayout="column" style="flex: 1; overflow: auto;">
+  <div class="flex flex-col" style="flex: 1; overflow: auto;">
     <div *ngFor="let entityTypeFormGroup of entityTypesFormGroupArray(); trackBy: trackByEntityType;
              let $index = index; last as isLast;"
-         fxLayout="row" fxLayoutAlign="start center" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-      <mat-expansion-panel class="entity-type-config" [ngClass]="{'load': loading}" fxFlex [formGroup]="entityTypeFormGroup"
+         class="flex flex-row items-center justify-start" [class.pb-2]="!isLast">
+      <mat-expansion-panel class="entity-type-config flex-1" [class.load]="loading" [formGroup]="entityTypeFormGroup"
                            [expanded]="entityTypesFormGroupExpanded(entityTypeFormGroup)" (opened)="loading = false">
         <mat-expansion-panel-header>
-          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+          <div class="flex flex-1 flex-row items-center justify-start">
             <mat-panel-title>
-              <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+              <div class="flex flex-1 flex-row items-center justify-start">
                 <div>{{ entityTypeText(entityTypeFormGroup) }}</div>
               </div>
             </mat-panel-title>
-            <span fxFlex></span>
+            <span class="flex-1"></span>
             <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
                     type="button"
                     (click)="removeEntityType($index)"
@@ -40,19 +40,19 @@
             </button>
           </div>
         </mat-expansion-panel-header>
-        <div class="entity-type-config-content" fxLayout="column" fxLayoutGap="0.5em">
+        <div class="entity-type-config-content flex flex-col gap-2">
           <mat-divider></mat-divider>
-          <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="32px">
+          <div class="flex flex-row xs:flex-col gt-xs:gap-8">
             <tb-entity-type-select
-              fxFlex
+              class="flex-1"
               showLabel
               formControlName="entityType"
               required
               [filterAllowedEntityTypes]="false"
               [allowedEntityTypes]="allowedEntityTypes(entityTypeFormGroup)">
             </tb-entity-type-select>
-            <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="16px" fxLayoutGap.xs="8px" formGroupName="config">
-              <div fxFlex fxLayout="column">
+            <div class="flex flex-1 flex-row xs:flex-col xs:gap-2 gt-xs:gap-4" formGroupName="config">
+              <div class="flex flex-1 flex-col">
                 <mat-checkbox #removeOtherEntitiesCheckbox
                               formControlName="removeOtherEntities"
                               (change)="onRemoveOtherEntities(removeOtherEntitiesCheckbox, entityTypeFormGroup)">
@@ -62,7 +62,7 @@
                   {{ 'version-control.find-existing-entity-by-name' | translate }}
                 </mat-checkbox>
               </div>
-              <div fxFlex fxLayout="column">
+              <div class="flex flex-1 flex-col">
                 <mat-checkbox *ngIf="entityTypeFormGroup.get('entityType').value === entityTypes.DEVICE" formControlName="loadCredentials">
                   {{ 'version-control.load-credentials' | translate }}
                 </mat-checkbox>
@@ -79,18 +79,18 @@
       </mat-expansion-panel>
     </div>
     <div *ngIf="!entityTypesFormGroupArray().length">
-          <span translate fxLayoutAlign="center center"
-                class="tb-prompt">version-control.no-entities-to-restore-prompt</span>
+          <span translate
+                class="tb-prompt flex items-center justify-center">version-control.no-entities-to-restore-prompt</span>
     </div>
   </div>
-  <div style="padding-top: 16px;" fxLayout="row">
+  <div style="padding-top: 16px;" class="flex flex-row">
     <button mat-raised-button color="primary"
             type="button"
             [disabled]="!addEnabled()"
             (click)="addEntityType()">
       <span translate>version-control.add-entity-type</span>
     </button>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-raised-button color="primary"
             type="button"
             [disabled]="!entityTypesFormGroupArray().length"

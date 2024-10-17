@@ -21,7 +21,7 @@
       <mat-card-title>
         <span class="mat-headline-5" translate>admin.2fa.2fa</span>
       </mat-card-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <div tb-help="twoFactorAuthentication"></div>
     </mat-card-header>
     <mat-progress-bar color="warn" mode="indeterminate" *ngIf="isLoading$ | async">
@@ -36,7 +36,7 @@
               <ng-container *ngFor="let provider of providersForm.controls; let i = index; let $last = last; trackBy: trackByElement">
                 <mat-expansion-panel class="provider" [formGroupName]="i">
                   <mat-expansion-panel-header>
-                    <mat-panel-title fxLayoutAlign="start center">
+                    <mat-panel-title class="flex items-center justify-start">
                       <mat-slide-toggle
                         (mousedown)="toggleExtensionPanel($event, i, provider.get('enable').value)"
                         formControlName="enable">
@@ -48,7 +48,7 @@
                   <ng-template matExpansionPanelContent>
                     <ng-container [ngSwitch]="provider.get('providerType').value">
                       <ng-container *ngSwitchCase="twoFactorAuthProviderType.TOTP">
-                        <mat-form-field fxFlex class="mat-block">
+                        <mat-form-field class="mat-block flex-1">
                           <mat-label translate>admin.2fa.issuer-name</mat-label>
                           <input matInput formControlName="issuerName" required>
                           <mat-error *ngIf="provider.get('issuerName').hasError('required') ||
@@ -58,8 +58,8 @@
                         </mat-form-field>
                       </ng-container>
                       <div *ngSwitchCase="twoFactorAuthProviderType.SMS"
-                           fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                        <mat-form-field fxFlex class="mat-block">
+                           class="flex flex-row xs:flex-col gt-xs:gap-2">
+                        <mat-form-field class="mat-block flex-1">
                           <mat-label translate>admin.2fa.verification-message-template</mat-label>
                           <input matInput formControlName="smsVerificationMessageTemplate" required>
                           <mat-error *ngIf="provider.get('smsVerificationMessageTemplate').hasError('required')">
@@ -70,7 +70,7 @@
                           </mat-error>
                         </mat-form-field>
 
-                        <mat-form-field fxFlex class="mat-block">
+                        <mat-form-field class="mat-block flex-1">
                           <mat-label translate>admin.2fa.verification-code-lifetime</mat-label>
                           <input matInput formControlName="verificationCodeLifetime" type="number" step="1" min="1" required>
                           <mat-error *ngIf="provider.get('verificationCodeLifetime').hasError('required')">
@@ -83,7 +83,7 @@
                         </mat-form-field>
                       </div>
                       <div *ngSwitchCase="twoFactorAuthProviderType.EMAIL">
-                        <mat-form-field fxFlex class="mat-block">
+                        <mat-form-field class="mat-block flex-1">
                           <mat-label translate>admin.2fa.verification-code-lifetime</mat-label>
                           <input matInput formControlName="verificationCodeLifetime" type="number" step="1" min="1" required>
                           <mat-error *ngIf="provider.get('verificationCodeLifetime').hasError('required')">
@@ -96,7 +96,7 @@
                         </mat-form-field>
                       </div>
                       <div *ngSwitchCase="twoFactorAuthProviderType.BACKUP_CODE">
-                        <mat-form-field fxFlex class="mat-block">
+                        <mat-form-field class="mat-block flex-1">
                           <mat-label translate>admin.2fa.number-of-codes</mat-label>
                           <input matInput formControlName="codesQuantity" type="number" step="1" min="1" required>
                           <mat-error *ngIf="provider.get('codesQuantity').hasError('required')">
@@ -116,8 +116,8 @@
             </fieldset>
             <fieldset class="fields-group">
               <legend class="group-title" translate>admin.2fa.verification-limitations</legend>
-              <div class="input-row" fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                <mat-form-field fxFlex class="mat-block">
+              <div class="input-row flex flex-row xs:flex-col gt-xs:gap-2">
+                <mat-form-field class="mat-block flex-1">
                   <mat-label translate>admin.2fa.total-allowed-time-for-verification</mat-label>
                   <input matInput required formControlName="totalAllowedTimeForVerification" type="number" step="1" min="60">
                   <mat-error *ngIf="twoFaFormGroup.get('totalAllowedTimeForVerification').hasError('required')">
@@ -128,7 +128,7 @@
                     {{ 'admin.2fa.total-allowed-time-for-verification-pattern' | translate }}
                   </mat-error>
                 </mat-form-field>
-                <mat-form-field fxFlex class="mat-block">
+                <mat-form-field class="mat-block flex-1">
                   <mat-label translate>admin.2fa.retry-verification-code-period</mat-label>
                   <input matInput required formControlName="minVerificationCodeSendPeriod" type="number" step="1" min="5">
                   <mat-error *ngIf="twoFaFormGroup.get('minVerificationCodeSendPeriod').hasError('required')">
@@ -139,7 +139,7 @@
                     {{ 'admin.2fa.retry-verification-code-period-pattern' | translate }}
                   </mat-error>
                 </mat-form-field>
-                <mat-form-field fxFlex class="mat-block">
+                <mat-form-field class="mat-block flex-1">
                   <mat-label translate>admin.2fa.max-verification-failures-before-user-lockout</mat-label>
                   <input matInput formControlName="maxVerificationFailuresBeforeUserLockout" type="number" step="1" min="0" max="65535">
                   <mat-error *ngIf="twoFaFormGroup.get('maxVerificationFailuresBeforeUserLockout').hasError('pattern')
@@ -152,7 +152,7 @@
 
               <mat-expansion-panel class="provider">
                 <mat-expansion-panel-header>
-                  <mat-panel-title fxLayoutAlign="start center">
+                  <mat-panel-title class="flex items-center justify-start">
                     <mat-slide-toggle (mousedown)="toggleExtensionPanel($event, providersForm.length, twoFaFormGroup.get('verificationCodeCheckRateLimitEnable').value)"
                                       formControlName="verificationCodeCheckRateLimitEnable">
                     </mat-slide-toggle>
@@ -160,8 +160,8 @@
                   </mat-panel-title>
                 </mat-expansion-panel-header>
                 <ng-template matExpansionPanelContent>
-                  <div fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-                    <mat-form-field fxFlex class="mat-block">
+                  <div class="flex flex-row xs:flex-col gt-xs:gap-2">
+                    <mat-form-field class="mat-block flex-1">
                       <mat-label translate>admin.2fa.number-of-checking-attempts</mat-label>
                       <input matInput formControlName="verificationCodeCheckRateLimitNumber" required type="number" step="1" min="1">
                       <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimitNumber').hasError('required')">
@@ -172,7 +172,7 @@
                         {{ 'admin.2fa.number-of-checking-attempts-pattern' | translate }}
                       </mat-error>
                     </mat-form-field>
-                    <mat-form-field fxFlex class="mat-block">
+                    <mat-form-field class="mat-block flex-1">
                       <mat-label translate>admin.2fa.within-time</mat-label>
                       <input matInput formControlName="verificationCodeCheckRateLimitTime" required type="number" step="1" min="1">
                       <mat-error *ngIf="twoFaFormGroup.get('verificationCodeCheckRateLimitTime').hasError('required')">
@@ -188,7 +188,7 @@
               </mat-expansion-panel>
             </fieldset>
           </div>
-          <div fxLayout="row" fxLayoutAlign="end center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-end gap-2">
             <button mat-button mat-raised-button color="primary"
                     [disabled]="(isLoading$ | async) || twoFaFormGroup.invalid || !twoFaFormGroup.dirty"
                     type="submit">

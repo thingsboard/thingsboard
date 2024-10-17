@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div fxLayout="column">
+<div class="flex flex-col">
   <mat-accordion multi="true">
     <div *ngFor="let serverConfig of serverConfigsFromArray.controls; trackBy: trackByParams; let $index = index;">
       <tb-profile-lwm2m-device-config-server
@@ -27,8 +27,8 @@
     </div>
   </mat-accordion>
   <div *ngIf="!serverConfigsFromArray.controls.length" style="margin:32px 0">
-      <span translate fxLayoutAlign="center center"
-            class="tb-prompt">device-profile.lwm2m.no-config-servers</span>
+      <span translate
+            class="tb-prompt flex items-center justify-center">device-profile.lwm2m.no-config-servers</span>
   </div>
   <div *ngIf="!disabled" style="padding-top: 16px;">
     <button mat-raised-button color="primary"

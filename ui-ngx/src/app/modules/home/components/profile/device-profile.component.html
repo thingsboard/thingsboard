@@ -15,43 +15,43 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column" *ngIf="!standalone">
+<div class="tb-details-buttons xs:flex xs:flex-col" *ngIf="!standalone">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'device-profile.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setDefault')"
-          [fxShow]="!isEdit && !entity?.default">
+          [class.!hidden]="isEdit || entity?.default">
     {{'device-profile.set-default' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{'device-profile.delete' | translate }}
   </button>
-  <div fxLayout="row" fxLayout.xs="column">
+  <div class="flex flex-row xs:flex-col">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onDeviceProfileIdCopied($event)"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>device-profile.copyId</span>
     </button>
   </div>
 </div>
-<div [ngClass]="{'mat-padding': !standalone}" fxLayout="column">
+<div [class.mat-padding]="!standalone" class="flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit" style="min-width: 0;">
       <mat-form-field class="mat-block">
@@ -97,7 +97,7 @@
         [deviceProfileId]="deviceProfileId?.id"
         formControlName="softwareId">
       </tb-ota-package-autocomplete>
-      <mat-form-field fxHide class="mat-block">
+      <mat-form-field class="mat-block !hidden">
         <mat-label translate>device-profile.type</mat-label>
         <mat-select formControlName="type" required>
           <mat-option *ngFor="let type of deviceProfileTypes" [value]="type">
@@ -108,7 +108,7 @@
           {{ 'device-profile.type-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-gallery-image-input fxFlex
+      <tb-gallery-image-input class="flex-1"
                       label="{{'device-profile.image' | translate}}"
                       formControlName="image">
       </tb-gallery-image-input>

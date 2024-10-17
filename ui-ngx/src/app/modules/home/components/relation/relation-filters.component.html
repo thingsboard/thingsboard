@@ -52,8 +52,8 @@
           </button>
         </div>
       </div>
-      <div [fxShow]="!relationFiltersFormArray.length">
-        <span fxLayoutAlign="center center" class="tb-prompt" translate>relation.any-relation</span>
+      <div [class.!hidden]="relationFiltersFormArray.length">
+        <span class="tb-prompt flex items-center justify-center" translate>relation.any-relation</span>
       </div>
     </div>
   </div>

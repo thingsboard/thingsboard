@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="gatewayConfigSingleDeviceWidgetSettingsForm" fxLayout="column">
-  <mat-form-field fxFlex class="mat-block">
+<section class="tb-widget-settings flex flex-col" [formGroup]="gatewayConfigSingleDeviceWidgetSettingsForm">
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>widgets.gateway.gateway-title</mat-label>
     <input matInput formControlName="gatewayTitle">
   </mat-form-field>

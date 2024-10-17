@@ -18,18 +18,18 @@
 <div class="tb-form-row no-padding no-border" style="gap: 0; width: 100%;" [formGroup]="advancedRangeLevelFormGroup">
   <div class="range-container">
     <div class="range-input range-input-fields">
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <div class="flex flex-1 flex-row items-center justify-start">
         <div class="range-text" translate>widgets.color.from</div>
-        <tb-value-source-data-key fxFlex
+        <tb-value-source-data-key class="flex-1"
                                   formControlName="from"
                                   [aliasController]="aliasController"
                                   [dataKeyCallbacks]="dataKeyCallbacks"
                                   [datasource]="datasource">
         </tb-value-source-data-key>
       </div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+      <div class="flex flex-1 flex-row items-center justify-start">
         <div class="range-text" translate>widgets.color.to</div>
-        <tb-value-source-data-key fxFlex
+        <tb-value-source-data-key class="flex-1"
                                   formControlName="to"
                                   [aliasController]="aliasController"
                                   [dataKeyCallbacks]="dataKeyCallbacks"

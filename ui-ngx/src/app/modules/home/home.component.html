@@ -23,50 +23,53 @@
                [opened]="sidenavOpened && !forceFullscreen">
     <header class="tb-nav-header">
       <mat-toolbar color="primary" class="tb-nav-header-toolbar">
-        <div fxFlex="auto" fxLayout="row">
+        <div class="flex flex-auto">
           <img [src]="logo"
                aria-label="logo" class="tb-logo-title"/>
         </div>
       </mat-toolbar>
     </header>
-    <mat-toolbar color="primary" fxFlex="0%" class="tb-side-menu-toolbar" fxLayout="column" role="navigation">
+    <mat-toolbar color="primary" class="tb-side-menu-toolbar flex flex-1 flex-col" role="navigation">
       <tb-side-menu></tb-side-menu>
     </mat-toolbar>
   </mat-sidenav>
   <mat-sidenav-content>
-    <div fxLayout="column" role="main" style="height: 100%;">
-      <mat-toolbar fxLayout="row" color="primary" class="tb-primary-toolbar">
-        <button [fxShow]="!forceFullscreen" mat-icon-button id="main"
-                [ngClass]="{'tb-invisible': displaySearchMode()}"
-                fxHide.gt-sm (click)="sidenav.toggle()">
+    <div class="flex flex-col" role="main" style="height: 100%;">
+      <mat-toolbar color="primary" class="tb-primary-toolbar flex flex-row">
+        <button mat-icon-button id="main"
+                [class.!hidden]="forceFullscreen || displaySearchMode()"
+                class="gt-sm:!hidden" (click)="sidenav.toggle()">
           <mat-icon class="material-icons">menu</mat-icon>
         </button>
-        <button [fxShow]="forceFullscreen" mat-icon-button
-                [ngClass]="{'tb-invisible': displaySearchMode()}"
+        <button mat-icon-button
+                [class.!hidden]="!forceFullscreen || displaySearchMode"
                 (click)="goBack()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
         <button mat-icon-button
-                [ngClass]="{'tb-invisible': !displaySearchMode()}"
+                [class.!hidden]="!displaySearchMode()"
                 (click)="closeSearch()">
           <mat-icon class="material-icons">arrow_back</mat-icon>
         </button>
-        <tb-breadcrumb [fxShow]="!displaySearchMode()"
-             fxFlex class="mat-toolbar-tools">
+        <tb-breadcrumb
+            [class.!hidden]="displaySearchMode()"
+            class="mat-toolbar-tools flex-1">
         </tb-breadcrumb>
-        <div [fxShow]="displaySearchMode()" fxFlex fxLayout="row" class="tb-dark">
-          <mat-form-field fxFlex class="tb-appearance-transparent">
+        <div [class.!hidden]="!displaySearchMode()" class="tb-dark flex flex-1 flex-row">
+          <mat-form-field class="tb-appearance-transparent flex-1">
             <input #searchInput matInput
                    [formControl]="textSearch"
                    placeholder="{{ 'common.enter-search' | translate }}"/>
           </mat-form-field>
         </div>
-        <button [fxShow]="searchEnabled"
+        <button [class.!hidden]="!searchEnabled"
                 mat-icon-button (click)="openSearch()">
           <mat-icon class="material-icons">search</mat-icon>
         </button>
-        <button *ngIf="fullscreenEnabled" [fxShow]="!displaySearchMode()"
-                mat-icon-button fxHide.lt-md (click)="toggleFullscreen()">
+        <button *ngIf="fullscreenEnabled"
+                [class.!hidden]="displaySearchMode()"
+                class="lt-md:!hidden"
+                mat-icon-button (click)="toggleFullscreen()">
           <mat-icon class="material-icons">{{ isFullscreen() ? 'fullscreen_exit' : 'fullscreen' }}</mat-icon>
         </button>
         <tb-notification-bell></tb-notification-bell>
@@ -75,7 +78,7 @@
       <mat-progress-bar color="warn" style="z-index: 10; margin-bottom: -4px; width: 100%;" mode="indeterminate"
                         *ngIf="!hideLoadingBar && (isLoading$ | async)">
       </mat-progress-bar>
-      <div fxFlex fxLayout="column" tb-toast class="tb-main-content">
+      <div tb-toast class="tb-main-content flex flex-1 flex-col">
         <router-outlet (activate)="activeComponentChanged($event)"></router-outlet>
       </div>
     </div>

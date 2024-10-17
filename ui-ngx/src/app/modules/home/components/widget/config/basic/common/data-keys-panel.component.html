@@ -38,7 +38,7 @@
       <div cdkDrag [cdkDragDisabled]="!dragEnabled"
            class="tb-draggable-form-table-row"
            *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
-        <tb-data-key-row fxFlex
+        <tb-data-key-row class="flex-1"
                          [formControl]="keyControl"
                          required
                          [datasourceType]="datasourceType"
@@ -60,11 +60,11 @@
                          (keyRemoved)="removeKey($index)">
         </tb-data-key-row>
         <div class="tb-form-table-row-cell-buttons">
-          <button fxHide.lt-lg
-                  mat-icon-button
+          <button mat-icon-button
                   type="button"
                   cdkDragHandle
-                  [ngClass]="{'tb-hidden': !dragEnabled}"
+                  class="lt-lg:!hidden"
+                  [class.tb-hidden]="!dragEnabled"
                   matTooltip="{{ 'action.drag' | translate }}"
                   matTooltipPosition="above">
             <mat-icon>drag_indicator</mat-icon>
@@ -81,6 +81,5 @@
   </div>
 </div>
 <ng-template #noKeys>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ noKeysText }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ noKeysText }}</span>
 </ng-template>

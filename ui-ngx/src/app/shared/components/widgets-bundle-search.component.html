@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div class="input-wrapper" [ngClass]="{'focus': focus}" fxLayoutAlign="start center" fxLayoutGap="16px">
+<div class="input-wrapper flex items-center justify-start gap-4" [class.focus]="focus">
   <mat-icon>search</mat-icon>
   <input type="text"
          [(ngModel)]="searchText"

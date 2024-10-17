@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div class="mat-padding tb-entity-table tb-absolute-fill" [ngClass]="{'tb-popover-mode': popoverComponent}">
-  <div fxFlex fxLayout="column" class="tb-entity-table-content" [ngClass]="{'tb-outlined-border': !popoverComponent}">
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
+<div class="mat-padding tb-entity-table tb-absolute-fill" [class.tb-popover-mode]="popoverComponent">
+  <div class="tb-entity-table-content flex flex-1 flex-col" [class.tb-outlined-border]="!popoverComponent">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
       <div class="mat-toolbar-tools">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayout.xs="column" fxLayoutAlign.xs="center start" class="title-container">
+        <div class="title-container flex flex-row items-center justify-start xs:flex-col xs:items-start xs:justify-center">
           <span class="tb-entity-table-title">{{(singleEntityMode ? 'version-control.entity-versions' : 'version-control.versions') | translate}}</span>
           <tb-branch-autocomplete
             #branchAutocompleteComponent
@@ -31,8 +31,8 @@
             (ngModelChange)="branchChanged($event)">
           </tb-branch-autocomplete>
         </div>
-        <span fxFlex></span>
-        <div fxLayout="row" fxLayoutAlign="center center" fxLayout.xs="column" fxLayoutAlign.xs="center end">
+        <span class="flex-1"></span>
+        <div class="flex flex-row items-center justify-center xs:flex-col xs:items-end xs:justify-center">
           <button *ngIf="singleEntityMode" mat-stroked-button color="primary"
                   #createVersionButton
                   [disabled]="(isLoading$ | async) || (isReadOnly | async)"
@@ -47,7 +47,7 @@
             <mat-icon>update</mat-icon>
             {{'version-control.create-entities-version' | translate }}
           </button>
-          <div fxLayout="row">
+          <div class="flex flex-row">
             <button mat-icon-button [disabled]="isLoading$ | async" (click)="updateData()"
                     matTooltip="{{ 'action.refresh' | translate }}"
                     matTooltipPosition="above">
@@ -64,14 +64,14 @@
         </div>
       </div>
     </mat-toolbar>
-    <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+    <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
       <div class="mat-toolbar-tools">
         <button mat-icon-button
                 matTooltip="{{ 'action.search' | translate }}"
                 matTooltipPosition="above">
           <mat-icon>search</mat-icon>
         </button>
-        <mat-form-field fxFlex>
+        <mat-form-field class="flex-1">
           <mat-label>&nbsp;</mat-label>
           <input #searchInput matInput
                  [formControl]="textSearch"
@@ -84,7 +84,7 @@
         </button>
       </div>
     </mat-toolbar>
-    <div fxFlex class="table-container">
+    <div class="table-container flex-1">
       <table mat-table [dataSource]="dataSource"
              matSort [matSortActive]="pageLink.sortOrder.property" [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
         <ng-container matColumnDef="timestamp">
@@ -124,11 +124,11 @@
           </mat-cell>
         </ng-container>
         <ng-container matColumnDef="actions" stickyEnd>
-          <mat-header-cell *matHeaderCellDef [ngStyle]="singleEntityMode ? {minWidth: '80px', maxWidth: '80px', width: '80px'} :
-                                                                           {minWidth: '40px', maxWidth: '40px', width: '40px'}">
+          <mat-header-cell *matHeaderCellDef [class.min-w-20]="singleEntityMode" [class.max-w-20]="singleEntityMode" [class.w-20]="singleEntityMode"
+                                             [class.min-w-10]="!singleEntityMode" [class.max-w-10]="!singleEntityMode" [class.w-10]="!singleEntityMode">
           </mat-header-cell>
           <mat-cell *matCellDef="let entityVersion">
-            <div fxFlex fxLayout="row" fxLayoutAlign="end">
+            <div class="flex flex-1 flex-row items-stretch justify-end">
               <button *ngIf="singleEntityMode" mat-icon-button [disabled]="isLoading$ | async"
                       matTooltip="{{ 'version-control.compare-with-current' | translate }}"
                       matTooltipPosition="above"
@@ -154,18 +154,16 @@
           </mat-cell>
         </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
-        <mat-row [fxShow]="!dataSource.dataLoading" *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
+        <mat-row [class.!hidden]="dataSource.dataLoading" *matRowDef="let entityVersion; columns: displayedColumns;"></mat-row>
       </table>
-      <span [fxShow]="!(isLoading$ | async) && (dataSource.isEmpty() | async) && !dataSource.dataLoading"
-            fxLayoutAlign="center center"
-            class="no-data-found" translate>{{
+      <span [class.!hidden]="(isLoading$ | async) || (dataSource.isEmpty() | async) === false || dataSource.dataLoading"
+            class="no-data-found flex items-center justify-center" translate>{{
         singleEntityMode
           ? 'version-control.no-entity-versions-text'
           : 'version-control.no-versions-text'
         }}</span>
-      <span [fxShow]="dataSource.dataLoading"
-            fxLayoutAlign="center center"
-            class="no-data-found">{{ 'common.loading' | translate }}</span>
+      <span [class.!hidden]="!dataSource.dataLoading"
+            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
     </div>
     <mat-divider></mat-divider>
     <mat-paginator [length]="dataSource.total() | async"

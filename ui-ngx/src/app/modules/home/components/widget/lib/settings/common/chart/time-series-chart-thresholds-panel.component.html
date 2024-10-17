@@ -29,7 +29,7 @@
     </div>
     <div *ngIf="thresholdsFormArray().controls.length; else noThresholds" class="tb-form-table-body">
       <div *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold; let $index = index; let $last = last">
-        <tb-time-series-chart-threshold-row fxFlex
+        <tb-time-series-chart-threshold-row class="flex-1"
                                     [formControl]="thresholdControl"
                                     [hideYAxis]="hideYAxis"
                                     [yAxisIds]="yAxisIds"
@@ -46,6 +46,5 @@
   </div>
 </div>
 <ng-template #noThresholds>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.threshold.no-thresholds' | translate }}</span>
 </ng-template>

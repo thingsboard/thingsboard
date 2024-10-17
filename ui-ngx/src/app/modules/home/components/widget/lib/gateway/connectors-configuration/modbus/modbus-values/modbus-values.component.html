@@ -17,7 +17,7 @@
 -->
 
 <ng-container *ngIf="singleMode else multipleView">
-  <div [formGroup]="valuesFormGroup" class="tb-form-panel no-border no-padding padding-top" fxLayout="column">
+  <div [formGroup]="valuesFormGroup" class="tb-form-panel no-border no-padding padding-top">
     <ng-container [ngTemplateOutlet]="singleView" [ngTemplateOutletContext]="{$implicit: null}"></ng-container>
   </div>
 </ng-container>
@@ -25,7 +25,7 @@
 <ng-template #multipleView>
   <mat-tab-group [formGroup]="valuesFormGroup">
     <mat-tab *ngFor="let register of modbusRegisterTypes" label="{{ ModbusValuesTranslationsMap.get(register) | translate }}">
-      <div [formGroup]="valuesFormGroup.get(register)" class="tb-form-panel no-border no-padding padding-top" fxLayout="column">
+      <div [formGroup]="valuesFormGroup.get(register)" class="tb-form-panel no-border no-padding padding-top">
         <ng-container [ngTemplateOutlet]="singleView" [ngTemplateOutletContext]="{$implicit: register}"></ng-container>
       </div>
     </mat-tab>

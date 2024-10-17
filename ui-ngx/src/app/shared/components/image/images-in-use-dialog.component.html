@@ -63,15 +63,15 @@
                     (click)="toggleShowReferences($event, image, showReferencesButton)">{{ 'image.references' | translate }}</button>
           </mat-cell>
         </ng-container>
-        <mat-header-row [ngClass]="{'mat-row-select': true}" *matHeaderRowDef="['select', 'preview', 'title', 'references']; sticky: true"></mat-header-row>
-        <mat-row [ngClass]="{'mat-row-select': true,
-                                 'mat-selected': dataSource.selection.isSelected(image)}"
+        <mat-header-row class="mat-row-select" *matHeaderRowDef="['select', 'preview', 'title', 'references']; sticky: true"></mat-header-row>
+        <mat-row class="mat-row-select"
+                 [class.mat-selected]="dataSource.selection.isSelected(image)"
                  *matRowDef="let image; columns: ['select', 'preview', 'title', 'references'];"></mat-row>
       </table>
     </div>
   </ng-container>
 </div>
-<div mat-dialog-actions fxLayoutAlign="end center">
+<div mat-dialog-actions class="flex items-center justify-end">
   <button mat-button color="primary" (click)="cancel()">{{'action.cancel' | translate}}</button>
   <button mat-raised-button color="accent" (click)="delete()" [disabled]="data.multiple && dataSource.selection.isEmpty()"
           cdkFocusInitial>{{ (data.multiple ? 'action.delete-selected' : 'action.delete-anyway') | translate}}</button>
