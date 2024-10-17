@@ -1106,7 +1106,7 @@ public class DefaultTransportService extends TransportActivityManager implements
             tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
         } catch (TenantNotFoundException e) {
             log.trace("Failed to send message to core. Tenant with ID [{}] not found in the database. Message delivery aborted.", tenantId, e);
-            tpi = TopicPartitionInfo.builder().topic(e.getMessage()).build();
+            tpi = TopicPartitionInfo.builder().topic("").build();
             if (callback != null) {
                 callback.onError(e);
             }
