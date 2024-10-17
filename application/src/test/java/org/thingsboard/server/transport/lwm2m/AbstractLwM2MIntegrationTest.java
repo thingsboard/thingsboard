@@ -30,6 +30,7 @@ import org.junit.Before;
 import org.mockito.Mockito;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.mock.mockito.SpyBean;
+import org.springframework.http.HttpStatus;
 import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ThingsBoardThreadFactory;
@@ -188,7 +189,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
 
     @After
     public void after() throws Exception {
-        clientDestroy();
+        this.clientDestroy(true);
         if (executor != null && !executor.isShutdown()) {
             executor.shutdownNow();
         }
@@ -231,9 +232,8 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         getWsClient().waitForReply();
 
         getWsClient().registerWaitForUpdate();
-        createNewClient(security, null, false, endpoint, null, queueMode);
-        deviceId = device.getId().getId().toString();
-        awaitObserveReadAll(0, deviceId);
+        this.createNewClient(security, null, false, endpoint, null, queueMode, device.getId().getId().toString());
+        awaitObserveReadAll(0, lwM2MTestClient.getDeviceIdStr());
         String msg = getWsClient().waitForUpdate();
 
         EntityDataUpdate update = JacksonUtil.fromString(msg, EntityDataUpdate.class);
@@ -301,18 +301,18 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
-                                String endpoint) throws Exception {
-        this.createNewClient(security, securityBs, isRpc, endpoint, null, false);
+                                String endpoint, String deviceIdStr) throws Exception {
+        this.createNewClient(security, securityBs, isRpc, endpoint, null, false, deviceIdStr);
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
-                                String endpoint, Integer clientDtlsCidLength) throws Exception {
-        this.createNewClient(security, securityBs, isRpc, endpoint, clientDtlsCidLength, false);
+                                String endpoint, Integer clientDtlsCidLength, String deviceIdStr) throws Exception {
+        this.createNewClient(security, securityBs, isRpc, endpoint, clientDtlsCidLength, false, deviceIdStr);
     }
 
     public void createNewClient(Security security, Security securityBs, boolean isRpc,
-                                String endpoint, Integer clientDtlsCidLength, boolean queueMode) throws Exception {
-        this.clientDestroy();
+                                String endpoint, Integer clientDtlsCidLength, boolean queueMode, String deviceIdStr) throws Exception {
+        this.clientDestroy(false);
         lwM2MTestClient = new LwM2MTestClient(this.executor, endpoint);
 
         try (ServerSocket socket = new ServerSocket(0)) {
@@ -321,13 +321,17 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                     this.defaultLwM2mUplinkMsgHandlerTest, this.clientContextTest,
                     clientDtlsCidLength, queueMode, supportFormatOnly_SenMLJSON_SenMLCBOR);
         }
+        lwM2MTestClient.setDeviceIdStr(deviceIdStr);
     }
 
-    private void clientDestroy() {
+    private void clientDestroy(boolean isAfter) {
         try {
             if (lwM2MTestClient != null) {
+                if (isAfter) {
+                    sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
+                    awaitDeleteDevice(lwM2MTestClient.getDeviceIdStr());
+                }
                 lwM2MTestClient.destroy();
-                awaitClientDestroy(lwM2MTestClient.getLeshanClient());
             }
         } catch (Exception e) {
             log.error("Failed client Destroy", e);
@@ -395,6 +399,15 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> cntObserve == getCntObserveAll(deviceIdStr));
     }
+    protected  void awaitDeleteDevice(String deviceIdStr) throws Exception {
+        await("Delete device with id:  " + deviceIdStr)
+                .atMost(40, TimeUnit.SECONDS)
+                .until(() -> {
+                    doDelete("/api/device/" + deviceIdStr)
+                            .andExpect(status().isOk());
+                   return HttpStatus.NOT_FOUND.value() == doGet("/api/device/" + deviceIdStr).andReturn().getResponse().getStatus();
+                });
+    }
 
     protected Integer getCntObserveAll(String deviceIdStr) throws Exception {
         String actualResult = sendObserveOK("ObserveReadAll", null, deviceIdStr);
@@ -408,7 +421,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         String actualResultCancelAll = sendObserveOK("ObserveCancelAll", null, deviceIdStr);
         ObjectNode rpcActualResultCancelAll = JacksonUtil.fromString(actualResultCancelAll, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResultCancelAll.get("result").asText());
-        awaitObserveReadAll(0, deviceId);
+        awaitObserveReadAll(0, lwM2MTestClient.getDeviceIdStr());
     }
 
     protected String sendRpcObserveOkWithResultValue(String method, String params) throws Exception {
@@ -418,7 +431,7 @@ public abstract class AbstractLwM2MIntegrationTest extends AbstractTransportInte
         return rpcActualResult.get("value").asText();
     }
     protected String sendRpcObserveOk(String method, String params) throws Exception {
-        return sendObserveOK(method, params, deviceId);
+        return sendObserveOK(method, params, lwM2MTestClient.getDeviceIdStr());
     }
     protected String sendObserveOK(String method, String params, String deviceIdStr) throws Exception {
         String sendRpcRequest;

@@ -45,6 +45,7 @@ import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.StringUtils;
 import org.thingsboard.server.common.data.Tenant;
 import org.thingsboard.server.common.data.device.data.PowerMode;
+import org.thingsboard.server.common.data.exception.TenantNotFoundException;
 import org.thingsboard.server.common.data.id.CustomerId;
 import org.thingsboard.server.common.data.id.DeviceId;
 import org.thingsboard.server.common.data.id.DeviceProfileId;
@@ -1100,16 +1101,21 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     private void sendToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, UUID routingKey, TransportServiceCallback<Void> callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        if (log.isTraceEnabled()) {
+        // TODO remove before PR
+        try {
+            TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
+            if (log.isTraceEnabled()) {
+                log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
+            }
+            TransportTbQueueCallback transportTbQueueCallback = callback != null ?
+                    new TransportTbQueueCallback(callback) : null;
+            tbCoreProducerStats.incrementTotal();
+            StatsCallback wrappedCallback = new StatsCallback(transportTbQueueCallback, tbCoreProducerStats);
+            tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(routingKey, msg), wrappedCallback);
+        } catch (TenantNotFoundException e) {
+            log.trace("Failed to send message to core. Tenant with ID [{}] not found in the database. Message delivery aborted.", tenantId, e);
         }
-
-        TransportTbQueueCallback transportTbQueueCallback = callback != null ?
-                new TransportTbQueueCallback(callback) : null;
-        tbCoreProducerStats.incrementTotal();
-        StatsCallback wrappedCallback = new StatsCallback(transportTbQueueCallback, tbCoreProducerStats);
-        tbCoreMsgProducer.send(tpi, new TbProtoQueueMsg<>(routingKey, msg), wrappedCallback);
     }
 
     private void sendToRuleEngine(TenantId tenantId, DeviceId deviceId, CustomerId customerId, TransportProtos.SessionInfoProto sessionInfo, JsonObject json,

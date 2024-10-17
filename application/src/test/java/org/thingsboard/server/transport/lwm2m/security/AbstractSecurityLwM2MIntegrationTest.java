@@ -207,7 +207,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
                                        boolean isStartLw) throws Exception {
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         final Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
-        createNewClient(security, securityBs, true, endpoint);
+        createNewClient(security, securityBs, true, endpoint, device.getId().getId().toString());
         lwM2MTestClient.start(isStartLw);
         if (isAwaitObserveReadAll) {
             awaitObserveReadAll(0, device.getId().getId().toString());
@@ -253,7 +253,7 @@ public abstract class AbstractSecurityLwM2MIntegrationTest extends AbstractLwM2M
         DeviceProfile deviceProfile = createLwm2mDeviceProfile("profileFor" + endpoint, transportConfiguration);
         final Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
         String deviceIdStr = device.getId().getId().toString();
-        createNewClient(security, securityBs, true, endpoint);
+        createNewClient(security, securityBs, true, endpoint, deviceIdStr);
         lwM2MTestClient.start(true);
         awaitObserveReadAll(0, deviceIdStr);
         await(awaitAlias)
