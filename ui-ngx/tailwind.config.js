@@ -155,7 +155,10 @@ module.exports = {
       }
     },
   },
-  safelist: [],
+  safelist: [
+    'lt-md:gap-3',
+    'md:!hidden'
+  ],
   corePlugins: {
     preflight: false
   },

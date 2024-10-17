@@ -224,13 +224,11 @@
             <ng-container matColumnDef="actions" stickyEnd>
               <mat-header-cell *matHeaderCellDef>
                 <ng-container *ngIf="cellActionDescriptors.length">
-                  <div class="gt-md:!hidden" style="width: 48px; min-width: 48px; max-width: 48px;">
+                  <div class="gt-md:!hidden" style="min-width: 48px;">
                     {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
                   </div>
                   <div class="lt-lg:!hidden"
-                       [style.width]="(cellActionDescriptors.length * 48) + 'px'"
-                       [style.min-width]="(cellActionDescriptors.length * 48) + 'px'"
-                       [style.max-width]="(cellActionDescriptors.length * 48) + 'px'">
+                       [style.min-width]="(cellActionDescriptors.length * 48) + 'px'">
                     {{ entitiesTableConfig.actionsColumnTitle ? (entitiesTableConfig.actionsColumnTitle | translate) : '' }}
                   </div>
                 </ng-container>
@@ -238,9 +236,7 @@
               <mat-cell *matCellDef="let entity">
                 <ng-container *ngIf="cellActionDescriptors.length">
                   <div [class.lt-lg:!hidden]="cellActionDescriptors.length !== 1" class="flex flex-row items-stretch justify-end"
-                       [style.width]="(cellActionDescriptors.length * 48) + 'px'"
-                       [style.min-width]="(cellActionDescriptors.length * 48) + 'px'"
-                       [style.max-width]="(cellActionDescriptors.length * 48) + 'px'">
+                       [style.min-width]="(cellActionDescriptors.length * 48) + 'px'">
                     <button mat-icon-button [disabled]="(isLoading$ | async) || !actionDescriptor.isEnabled(entity)"
                             *ngFor="let actionDescriptor of cellActionDescriptors"
                             matTooltip="{{ actionDescriptor.nameFunction ? actionDescriptor.nameFunction(entity) : actionDescriptor.name }}"
