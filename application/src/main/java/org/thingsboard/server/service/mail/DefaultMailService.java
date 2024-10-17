@@ -443,17 +443,16 @@ public class DefaultMailService implements MailService {
         }
     }
 
-    private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) {
+    private void sendMailWithTimeout(JavaMailSender mailSender, MimeMessage msg, long timeout) throws ThingsboardException {
         var submittedMail = Futures.withTimeout(
                 mailExecutorService.submit(() -> mailSender.send(msg)),
                 timeout, TimeUnit.MILLISECONDS, timeoutScheduler);
         try {
             submittedMail.get(timeout, TimeUnit.MILLISECONDS);
         } catch (TimeoutException e) {
-            log.debug("Error during mail submission", e);
             throw new RuntimeException("Timeout!");
         } catch (Exception e) {
-            throw new RuntimeException(ExceptionUtils.getRootCause(e));
+            throw new ThingsboardException("Unable to send mail", ExceptionUtils.getRootCause(e), ThingsboardErrorCode.GENERAL);
         }
     }
 
@@ -463,20 +462,20 @@ public class DefaultMailService implements MailService {
             Template template = freemarkerConfig.getTemplate(templateLocation);
             return FreeMarkerTemplateUtils.processTemplateIntoString(template, model);
         } catch (Exception e) {
-            throw handleException(e);
+            log.warn("Failed to process mail template: {}", ExceptionUtils.getRootCauseMessage(e));
+            throw new ThingsboardException("Failed to process mail template: " + e.getMessage(), e, ThingsboardErrorCode.GENERAL);
         }
     }
 
-    protected ThingsboardException handleException(Exception exception) {
-        String message;
-        if (exception instanceof NestedRuntimeException) {
-            message = ((NestedRuntimeException) exception).getMostSpecificCause().getMessage();
-        } else {
-            message = exception.getMessage();
+    protected ThingsboardException handleException(Throwable exception) {
+        if (exception instanceof ThingsboardException thingsboardException) {
+            return thingsboardException;
         }
-        log.warn("Unable to send mail: {}", message);
-        return new ThingsboardException(String.format("Unable to send mail: %s", message),
-                ThingsboardErrorCode.GENERAL);
+        if (exception instanceof NestedRuntimeException) {
+            exception = ((NestedRuntimeException) exception).getMostSpecificCause();
+        }
+        log.warn("Unable to send mail: {}", exception.getMessage());
+        return new ThingsboardException("Unable to send mail: " + exception.getMessage(), ThingsboardErrorCode.GENERAL);
     }
 
 }
