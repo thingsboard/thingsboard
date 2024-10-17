@@ -16,7 +16,7 @@
 
 FROM thingsboard/openjdk17:bookworm-slim
 
-ENV PG_MAJOR=15
+ENV PG_MAJOR=16
 
 ENV DATA_FOLDER=/data
 
