@@ -13,12 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
-import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
+import java.util.ArrayList;
 import java.util.List;
 
-public record LoginMobileInfo(List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos, MobileAppVersionInfo versionInfo) {
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode
+public class MobileLayoutConfig {
+
+    @Schema(description = "List of pages")
+    @Valid
+    private List<MobilePage> pages = new ArrayList<>();
+
 }

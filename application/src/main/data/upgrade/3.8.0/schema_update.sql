@@ -34,14 +34,15 @@ ALTER TABLE mobile_app ADD COLUMN IF NOT EXISTS platform_type varchar(32),
     ADD COLUMN IF NOT EXISTS status varchar(32),
     ADD COLUMN IF NOT EXISTS version_info varchar(16384),
     ADD COLUMN IF NOT EXISTS store_info varchar(16384),
-    DROP CONSTRAINT IF EXISTS mobile_app_pkg_name_key;
+    DROP CONSTRAINT IF EXISTS mobile_app_pkg_name_key,
+    DROP CONSTRAINT IF EXISTS mobile_app_unq_key;
 
 -- rename mobile_app_oauth2_client to mobile_app_bundle_oauth2_client
 DO
 $$
     BEGIN
         -- in case of running the upgrade script a second time
-        IF EXISTS(SELECT * FROM information_schema.tables WHERE table_name = 'mobile_app_oauth2_client') THEN
+        IF EXISTS(SELECT 1 FROM information_schema.tables WHERE table_name = 'mobile_app_oauth2_client') THEN
             ALTER TABLE mobile_app_oauth2_client RENAME TO mobile_app_bundle_oauth2_client;
             ALTER TABLE mobile_app_bundle_oauth2_client DROP CONSTRAINT IF EXISTS fk_domain;
             ALTER TABLE mobile_app_bundle_oauth2_client RENAME COLUMN mobile_app_id TO mobile_app_bundle_id;
@@ -61,9 +62,9 @@ $$
         mobileAppRecord RECORD;
     BEGIN
         -- in case of running the upgrade script a second time
-        IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'mobile_app' and column_name = 'oauth2_enabled') THEN
+        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'mobile_app' and column_name = 'oauth2_enabled') THEN
             UPDATE mobile_app SET platform_type = 'ANDROID' WHERE platform_type IS NULL;
-            UPDATE mobile_app SET status = 'PUBLISHED' WHERE mobile_app.status IS NULL;
+            UPDATE mobile_app SET status = 'DRAFT' WHERE mobile_app.status IS NULL;
             FOR mobileAppRecord IN SELECT * FROM mobile_app
             LOOP
                 -- duplicate app for iOS platform type
@@ -79,8 +80,8 @@ $$
             END LOOP;
         END IF;
         ALTER TABLE mobile_app DROP COLUMN IF EXISTS oauth2_enabled;
-        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'pkg_platform_unique') THEN
-            ALTER TABLE mobile_app ADD CONSTRAINT pkg_platform_unique UNIQUE (pkg_name, platform_type);
+        IF NOT EXISTS(SELECT 1 FROM pg_constraint WHERE conname = 'pkg_name_platform_unique') THEN
+            ALTER TABLE mobile_app ADD CONSTRAINT pkg_name_platform_unique UNIQUE (pkg_name, platform_type);
         END IF;
     END;
 $$;
@@ -99,7 +100,7 @@ $$
         qrCodeRecord RECORD;
     BEGIN
         -- in case of running the upgrade script a second time
-        IF EXISTS(SELECT * FROM information_schema.columns WHERE table_name = 'qr_code_settings' and column_name = 'android_config') THEN
+        IF EXISTS(SELECT 1 FROM information_schema.columns WHERE table_name = 'qr_code_settings' and column_name = 'android_config') THEN
             FOR qrCodeRecord IN SELECT * FROM qr_code_settings
             LOOP
                 generatedBundleId := NULL;

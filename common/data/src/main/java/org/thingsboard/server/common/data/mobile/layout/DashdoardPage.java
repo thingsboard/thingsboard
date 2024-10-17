@@ -13,32 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.model.sql;
+package org.thingsboard.server.common.data.mobile.layout;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Table;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
-import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
-
-import static org.thingsboard.server.dao.model.ModelConstants.MOBILE_APP_BUNDLE_TABLE_NAME;
+import lombok.NoArgsConstructor;
 
 @Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-@Entity
-@Table(name = MOBILE_APP_BUNDLE_TABLE_NAME)
-public final class MobileAppBundleEntity extends AbstractMobileAppBundleEntity<MobileAppBundle> {
+public class DashdoardPage extends AbstractMobilePage {
 
-    public MobileAppBundleEntity() {
-        super();
-    }
-
-    public MobileAppBundleEntity(MobileAppBundle mobileAppBundle) {
-        super(mobileAppBundle);
-    }
+    @Schema(description = "Dashboard id", example = "784f394c-42b6-435a-983c-b7beff2784f9")
+    private String dashboardId;
 
     @Override
-    public MobileAppBundle toData() {
-        return super.toMobileAppBundle();
+    public MobilePageType getType() {
+        return MobilePageType.DASHBOARD;
     }
 }

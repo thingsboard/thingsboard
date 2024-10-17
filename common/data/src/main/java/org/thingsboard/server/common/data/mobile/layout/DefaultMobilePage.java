@@ -13,11 +13,28 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
-public enum BadgePosition {
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-    RIGHT,
-    LEFT;
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class DefaultMobilePage extends AbstractMobilePage {
+
+    @Schema(description = "Identifier for default page", example = "HOME")
+    private DefaultPageId id;
+
+    @Override
+    public MobilePageType getType() {
+        return MobilePageType.DEFAULT;
+    }
 
 }

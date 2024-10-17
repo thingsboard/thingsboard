@@ -13,12 +13,27 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
-import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+import io.swagger.v3.oas.annotations.media.Schema;
+import lombok.AllArgsConstructor;
+import lombok.Builder;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.NoArgsConstructor;
 
-import java.util.List;
+@Data
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
+@EqualsAndHashCode(callSuper = true)
+public class WebViewPage extends  AbstractMobilePage {
 
-public record LoginMobileInfo(List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos, MobileAppVersionInfo versionInfo) {
+    @Schema(description = "Url", example = "/url")
+    private String url;
+
+    @Override
+    public MobilePageType getType() {
+        return MobilePageType.WEB_VIEW;
+    }
 }

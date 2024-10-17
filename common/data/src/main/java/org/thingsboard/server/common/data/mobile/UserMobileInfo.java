@@ -17,6 +17,7 @@ package org.thingsboard.server.common.data.mobile;
 
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.mobile.layout.MobileLayoutConfig;
 
 public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, MobileLayoutConfig layoutConfig) {
 }

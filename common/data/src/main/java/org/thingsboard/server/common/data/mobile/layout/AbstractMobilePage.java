@@ -13,22 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
-import lombok.Builder;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
-import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
-@Builder
-public class StoreInfo {
+public abstract class AbstractMobilePage implements MobilePage {
 
-    private boolean enabled;
-    @NoXss
-    private String appId;
-    @NoXss
-    private String sha256CertFingerprints;
-    @NoXss
-    private String storeLink;
-
+    @Schema(description = "Page label", example = "Air quality", requiredMode = Schema.RequiredMode.REQUIRED)
+    protected String label;
+    @Schema(description = "Indicates if page is visible", example = "true", requiredMode = Schema.RequiredMode.REQUIRED)
+    protected boolean visible;
+    @Schema(description = "URL of the page icon", example = "home_icon")
+    protected String icon;
 }

@@ -23,7 +23,7 @@ import jakarta.persistence.Table;
 import lombok.Data;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
-import org.thingsboard.server.common.data.mobile.MobileAppBundleOauth2Client;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundleOauth2Client;
 import org.thingsboard.server.dao.model.ToData;
 
 import java.util.UUID;

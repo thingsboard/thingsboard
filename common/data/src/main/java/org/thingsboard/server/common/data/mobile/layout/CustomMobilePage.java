@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.AllArgsConstructor;
@@ -21,29 +21,19 @@ import lombok.Builder;
 import lombok.Data;
 import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.validation.Length;
 
 @Data
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
-public class MobileAppVersionInfo {
+@EqualsAndHashCode(callSuper = true)
+public class CustomMobilePage extends AbstractMobilePage {
 
-    @Schema(description = "Minimum supported version")
-    @Length(fieldName = "minVersion", max = 20)
-    private String minVersion;
+    @Schema(description = "Path", example = "")
+    private String path;
 
-    @Schema(description = "Release notes of minimum supported version")
-    @Length(fieldName = "minVersionReleaseNotes", max = 10000)
-    private String minVersionReleaseNotes;
-
-    @Schema(description = "Latest supported version")
-    @Length(fieldName = "latestVersion", max = 20)
-    private String latestVersion;
-
-    @Schema(description = "Release notes of latest supported version")
-    @Length(fieldName = "latestVersionReleaseNotes", max = 10000)
-    private String latestVersionReleaseNotes;
-
+    @Override
+    public MobilePageType getType() {
+        return MobilePageType.CUSTOM;
+    }
 }

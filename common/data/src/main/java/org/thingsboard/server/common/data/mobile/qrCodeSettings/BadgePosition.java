@@ -13,12 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.qrCodeSettings;
 
-import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
-import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
+public enum BadgePosition {
 
-import java.util.List;
+    RIGHT,
+    LEFT;
 
-public record LoginMobileInfo(List<OAuth2ClientLoginInfo> oAuth2ClientLoginInfos, MobileAppVersionInfo versionInfo) {
 }

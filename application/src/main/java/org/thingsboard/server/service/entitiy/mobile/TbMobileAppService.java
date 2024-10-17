@@ -16,7 +16,7 @@
 package org.thingsboard.server.service.entitiy.mobile;
 
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
 
 public interface TbMobileAppService {
 

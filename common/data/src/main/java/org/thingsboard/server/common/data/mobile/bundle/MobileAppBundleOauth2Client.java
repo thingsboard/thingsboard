@@ -13,28 +13,20 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.bundle;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import jakarta.validation.Valid;
 import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
 import lombok.NoArgsConstructor;
-
-import java.util.ArrayList;
-import java.util.List;
+import org.thingsboard.server.common.data.id.MobileAppBundleId;
+import org.thingsboard.server.common.data.id.OAuth2ClientId;
 
 @Data
-@Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@EqualsAndHashCode
-public class MobileLayoutConfig {
+public class MobileAppBundleOauth2Client {
 
-    @Schema(description = "List of custom menu items", requiredMode = Schema.RequiredMode.REQUIRED)
-    @Valid
-    private List<MobileMenuItem> items = new ArrayList<>();
+    private MobileAppBundleId mobileAppBundleId;
+    private OAuth2ClientId oAuth2ClientId;
 
 }

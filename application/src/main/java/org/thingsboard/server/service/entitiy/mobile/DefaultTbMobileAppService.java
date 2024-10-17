@@ -16,19 +16,15 @@
 package org.thingsboard.server.service.entitiy.mobile;
 
 import lombok.AllArgsConstructor;
-import org.apache.commons.collections4.CollectionUtils;
 import org.springframework.stereotype.Service;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.MobileAppId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
 import org.thingsboard.server.common.data.id.TenantId;
-import org.thingsboard.server.common.data.mobile.MobileApp;
+import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.dao.mobile.MobileAppService;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
-
-import java.util.List;
 
 @Service
 @AllArgsConstructor

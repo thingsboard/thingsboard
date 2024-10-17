@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.app;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -51,6 +51,7 @@ public class MobileApp extends BaseData<MobileAppId> implements HasTenantId, Has
     @NotNull
     private PlatformType platformType;
     @Schema(description = "Application status: PUBLISHED, DEPRECATED, SUSPENDED, DRAFT", requiredMode = Schema.RequiredMode.REQUIRED)
+    @NotNull
     private MobileAppStatus status;
     @Schema(description = "Application version info")
     @Valid

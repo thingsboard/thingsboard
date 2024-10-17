@@ -13,27 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.app;
 
-import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
-import lombok.EqualsAndHashCode;
-import lombok.NoArgsConstructor;
 import org.thingsboard.server.common.data.validation.NoXss;
 
 @Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@EqualsAndHashCode
-public class QRCodeConfig {
+public class StoreInfo {
 
-    private boolean showOnHomePage;
-    private boolean badgeEnabled;
-    private boolean qrCodeLabelEnabled;
-    private BadgePosition badgePosition;
+    private boolean enabled;
     @NoXss
-    private String qrCodeLabel;
+    private String appId;
+    @NoXss
+    private String sha256CertFingerprints;
+    @NoXss
+    private String storeLink;
 
 }

@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.bundle;
 
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Data;
@@ -34,17 +34,21 @@ public class MobileAppBundleInfo extends MobileAppBundle {
     private String iosPkgName;
     @Schema(description = "List of available oauth2 clients")
     private List<OAuth2ClientInfo> oauth2ClientInfos;
+    @Schema(description = "Indicates if qr code is available for bundle")
+    private boolean qrCodeEnabled;
 
-    public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName) {
+    public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName, boolean qrCodeEnabled) {
         super(mobileApp);
         this.androidPkgName = androidPkgName;
         this.iosPkgName = iosPkgName;
+        this.qrCodeEnabled = qrCodeEnabled;
     }
 
-    public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName, List<OAuth2ClientInfo> oauth2ClientInfos) {
+    public MobileAppBundleInfo(MobileAppBundle mobileApp, String androidPkgName, String iosPkgName, boolean qrCodeEnabled, List<OAuth2ClientInfo> oauth2ClientInfos) {
         super(mobileApp);
         this.androidPkgName = androidPkgName;
         this.iosPkgName = iosPkgName;
+        this.qrCodeEnabled = qrCodeEnabled;
         this.oauth2ClientInfos = oauth2ClientInfos;
     }
 

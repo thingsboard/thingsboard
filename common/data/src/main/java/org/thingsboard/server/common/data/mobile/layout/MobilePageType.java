@@ -13,20 +13,12 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
-import lombok.AllArgsConstructor;
-import lombok.Data;
-import lombok.NoArgsConstructor;
-import org.thingsboard.server.common.data.id.MobileAppBundleId;
-import org.thingsboard.server.common.data.id.OAuth2ClientId;
+public enum MobilePageType {
 
-@Data
-@NoArgsConstructor
-@AllArgsConstructor
-public class MobileAppBundleOauth2Client {
-
-    private MobileAppBundleId mobileAppBundleId;
-    private OAuth2ClientId oAuth2ClientId;
-
+    DEFAULT,
+    DASHBOARD,
+    WEB_VIEW,
+    CUSTOM
 }

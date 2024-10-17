@@ -17,7 +17,7 @@ package org.thingsboard.server.service.entitiy.mobile;
 
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.id.OAuth2ClientId;
-import org.thingsboard.server.common.data.mobile.MobileAppBundle;
+import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 
 import java.util.List;
 

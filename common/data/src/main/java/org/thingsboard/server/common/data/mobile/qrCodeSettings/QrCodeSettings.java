@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.qrCodeSettings;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -23,7 +23,6 @@ import lombok.EqualsAndHashCode;
 import org.thingsboard.server.common.data.BaseData;
 import org.thingsboard.server.common.data.HasTenantId;
 import org.thingsboard.server.common.data.id.MobileAppBundleId;
-import org.thingsboard.server.common.data.id.MobileAppId;
 import org.thingsboard.server.common.data.id.QrCodeSettingsId;
 import org.thingsboard.server.common.data.id.TenantId;
 

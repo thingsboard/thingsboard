@@ -13,20 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data.mobile;
+package org.thingsboard.server.common.data.mobile.layout;
 
-public enum MobileMenuPath {
+public enum DefaultPageId {
 
     HOME,
-    ASSETS,
-    DEVICES,
-    DEVICE_LIST,
     ALARMS,
-    DASHBOARDS,
-    DASHBOARD,
-    AUDIT_LOGS,
+    DEVICES,
     CUSTOMERS,
-    CUSTOMER,
-    NOTIFICATION,
-    CUSTOM
+    ASSETS,
+    AUDIT_LOGS,
+    NOTIFICATIONS
 }
