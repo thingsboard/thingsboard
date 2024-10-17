@@ -17,6 +17,7 @@ package org.thingsboard.server.service.entitiy.dashboard;
 
 import org.junit.Test;
 import org.springframework.mock.web.MockHttpServletResponse;
+import org.springframework.test.context.TestPropertySource;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.controller.AbstractControllerTest;
@@ -29,6 +30,9 @@ import static org.awaitility.Awaitility.await;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
 @DaoSqlTest
+@TestPropertySource(properties = {
+        "transport.gateway.dashboard.sync.enabled=true"
+})
 public class DashboardSyncServiceTest extends AbstractControllerTest {
 
     @Test

@@ -15,29 +15,22 @@
  */
 package org.thingsboard.server.service.entitiy.widgets.bundle;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.audit.ActionType;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.id.WidgetTypeId;
 import org.thingsboard.server.common.data.id.WidgetsBundleId;
-import org.thingsboard.server.common.data.widget.WidgetType;
-import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.common.data.widget.WidgetsBundle;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
 import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.entitiy.AbstractTbEntityService;
 
-import java.util.ArrayList;
 import java.util.List;
-import java.util.stream.Stream;
 
 @Service
 @TbCoreComponent
@@ -87,70 +80,6 @@ public class DefaultWidgetsBundleService extends AbstractTbEntityService impleme
     public void updateWidgetsBundleWidgetFqns(WidgetsBundleId widgetsBundleId, List<String> widgetFqns, User user) throws Exception {
         widgetTypeService.updateWidgetsBundleWidgetFqns(user.getTenantId(), widgetsBundleId, widgetFqns);
         autoCommit(user, widgetsBundleId);
-    }
-
-    @Transactional
-    @Override
-    public void updateWidgets(TenantId tenantId, Stream<JsonNode> bundles, Stream<JsonNode> widgets) {
-        widgets.forEach(widgetTypeJson -> {
-            try {
-                WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                WidgetType existingWidget = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, widgetTypeDetails.getFqn());
-                if (existingWidget != null) {
-                    widgetTypeDetails.setId(existingWidget.getId());
-                    widgetTypeDetails.setCreatedTime(existingWidget.getCreatedTime());
-                }
-                widgetTypeDetails.setTenantId(tenantId);
-                widgetTypeService.saveWidgetType(widgetTypeDetails);
-                log.debug("{} widget type {}", existingWidget == null ? "Created" : "Updated", widgetTypeDetails.getFqn());
-            } catch (Exception e) {
-                throw new RuntimeException("Unable to load widget type from json: " + widgetTypeJson, e);
-            }
-        });
-
-        bundles.forEach(widgetsBundleDescriptorJson -> {
-            if (widgetsBundleDescriptorJson == null || !widgetsBundleDescriptorJson.has("widgetsBundle")) {
-                throw new RuntimeException("Invalid widgets bundle json: [" + widgetsBundleDescriptorJson + "]");
-            }
-
-            JsonNode widgetsBundleJson = widgetsBundleDescriptorJson.get("widgetsBundle");
-            WidgetsBundle widgetsBundle = JacksonUtil.treeToValue(widgetsBundleJson, WidgetsBundle.class);
-            WidgetsBundle existingWidgetsBundle = widgetsBundleService.findWidgetsBundleByTenantIdAndAlias(tenantId, widgetsBundle.getAlias());
-            if (existingWidgetsBundle != null) {
-                widgetsBundle.setId(existingWidgetsBundle.getId());
-                widgetsBundle.setCreatedTime(existingWidgetsBundle.getCreatedTime());
-            }
-            widgetsBundle.setTenantId(tenantId);
-            widgetsBundle = widgetsBundleService.saveWidgetsBundle(widgetsBundle);
-            log.debug("{} widgets bundle {}", existingWidgetsBundle == null ? "Created" : "Updated", widgetsBundle.getAlias());
-
-            List<String> widgetTypeFqns = new ArrayList<>();
-            if (widgetsBundleDescriptorJson.has("widgetTypes")) {
-                JsonNode widgetTypesArrayJson = widgetsBundleDescriptorJson.get("widgetTypes");
-                widgetTypesArrayJson.forEach(widgetTypeJson -> {
-                    try {
-                        WidgetTypeDetails widgetTypeDetails = JacksonUtil.treeToValue(widgetTypeJson, WidgetTypeDetails.class);
-                        WidgetType existingWidget = widgetTypeService.findWidgetTypeByTenantIdAndFqn(tenantId, widgetTypeDetails.getFqn());
-                        if (existingWidget != null) {
-                            widgetTypeDetails.setId(existingWidget.getId());
-                            widgetTypeDetails.setCreatedTime(existingWidget.getCreatedTime());
-                        }
-                        widgetTypeDetails.setTenantId(tenantId);
-                        widgetTypeDetails = widgetTypeService.saveWidgetType(widgetTypeDetails);
-                        widgetTypeFqns.add(widgetTypeDetails.getFqn());
-                    } catch (Exception e) {
-                        throw new RuntimeException("Unable to load widget type from json: " + widgetsBundleDescriptorJson, e);
-                    }
-                });
-            }
-            if (widgetsBundleDescriptorJson.has("widgetTypeFqns")) {
-                JsonNode widgetFqnsArrayJson = widgetsBundleDescriptorJson.get("widgetTypeFqns");
-                widgetFqnsArrayJson.forEach(fqnJson -> {
-                    widgetTypeFqns.add(fqnJson.asText());
-                });
-            }
-            widgetTypeService.updateWidgetsBundleWidgetFqns(tenantId, widgetsBundle.getId(), widgetTypeFqns);
-        });
     }
 
 }
