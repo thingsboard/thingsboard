@@ -1,5 +1,5 @@
 --
--- Copyright © 2016-2024 The Thingsboard Authors
+-- ThingsBoard, Inc. ("COMPANY") CONFIDENTIAL
 --
 -- Licensed under the Apache License, Version 2.0 (the "License");
 -- you may not use this file except in compliance with the License.
@@ -895,4 +895,32 @@ CREATE TABLE IF NOT EXISTS mobile_app_settings (
     ios_config VARCHAR(1000),
     qr_code_config VARCHAR(100000),
     CONSTRAINT mobile_app_settings_tenant_id_unq_key UNIQUE (tenant_id)
+);
+
+CREATE TABLE IF NOT EXISTS calculated_field (
+    id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_id uuid NOT NULL,
+    type varchar(32) NOT NULL,
+    name varchar(255) NOT NULL,
+    configuration_version int DEFAULT 0,
+    configuration varchar(1000000),
+    version BIGINT DEFAULT 1,
+    external_id UUID,
+    CONSTRAINT calculated_field_unq_key UNIQUE (entity_id, name),
+    CONSTRAINT device_external_id_unq_key UNIQUE (tenant_id, external_id)
+);
+
+CREATE TABLE IF NOT EXISTS calculated_field_link (
+    id uuid NOT NULL CONSTRAINT calculated_field_pkey PRIMARY KEY,
+    created_time bigint NOT NULL,
+    tenant_id uuid NOT NULL,
+    entity_id uuid NOT NULL,
+--     target_id uuid NOT NULL,
+    calculated_field_id uuid NOT NULL,
+    configuration varchar(10000),
+    CONSTRAINT calculated_field_link_unq_key UNIQUE (entity_id, calculated_field_id),
+    CONSTRAINT device_external_id_unq_key UNIQUE (tenant_id, external_id),
+    CONSTRAINT fk_calculated_field_id FOREIGN KEY (calculated_field_id) REFERENCES calculated_field(id) ON DELETE CASCADE
 );
