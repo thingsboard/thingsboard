@@ -50,6 +50,8 @@ public class DashboardSyncService {
     private boolean enabled;
     @Value("${transport.gateway.dashboard.sync.repository_url:}")
     private String repoUrl;
+    @Value("${transport.gateway.dashboard.sync.branch:main}")
+    private String branch;
     @Value("${transport.gateway.dashboard.sync.fetch_frequency:24}")
     private int fetchFrequencyHours;
 
@@ -61,7 +63,7 @@ public class DashboardSyncService {
         if (!enabled) {
             return;
         }
-        gitSyncService.registerSync(REPO_KEY, repoUrl, "main", TimeUnit.HOURS.toMillis(fetchFrequencyHours), this::update);
+        gitSyncService.registerSync(REPO_KEY, repoUrl, branch, TimeUnit.HOURS.toMillis(fetchFrequencyHours), this::update);
     }
 
     private void update() {
