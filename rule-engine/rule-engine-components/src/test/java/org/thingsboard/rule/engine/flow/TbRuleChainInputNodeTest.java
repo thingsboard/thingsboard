@@ -43,6 +43,7 @@ import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.id.RuleChainId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.msg.TbMsgType;
+import org.thingsboard.server.common.data.rule.RuleNode;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -64,6 +65,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     private final TenantId TENANT_ID = new TenantId(UUID.fromString("4ba69ea5-6b27-42df-ab66-e7a727a67027"));
     private final DeviceId DEVICE_ID = new DeviceId(UUID.fromString("97731954-2147-4176-8f1a-d14f1b73e4e6"));
     private final AssetId ASSET_ID = new AssetId(UUID.fromString("841a47bd-4e8e-4ea5-88e6-420da0d70e51"));
+    private final RuleChainId RULE_CHAIN_ID = new RuleChainId(UUID.fromString("57baa640-8c7f-11ef-ae92-ed5a145c8601"));
 
     private TbRuleChainInputNode node;
     private TbRuleChainInputNodeConfiguration config;
@@ -96,6 +98,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         config.setRuleChainId(ruleChainIdStr);
         config.setForwardMsgToDefaultRuleChain(forwardMsgToDefaultRuleChain);
         nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+        mockSelfNode();
 
         //WHEN
         assertThatCode(() -> node.init(ctxMock, nodeConfiguration))
@@ -133,6 +136,40 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
     }
 
     @Test
+    public void givenForwardMsgToDefaultIsTrue_whenDefaultRuleChainIsEqualToSelf_thenShouldTransferToRuleChainFromConfig() throws TbNodeException {
+        //GIVEN
+        DeviceProfile deviceProfile = new DeviceProfile();
+        deviceProfile.setDefaultRuleChainId(RULE_CHAIN_ID);
+
+        TbMsg msg = getMsg(DEVICE_ID);
+
+        String ruleChainIdFromConfigStr = "acbc924f-7f95-4a9b-a854-e4822deb74c7";
+        config.setRuleChainId(ruleChainIdFromConfigStr);
+        config.setForwardMsgToDefaultRuleChain(true);
+        nodeConfiguration = new TbNodeConfiguration(JacksonUtil.valueToTree(config));
+
+        when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
+        when(ctxMock.getDeviceProfileCache()).thenReturn(deviceProfileCacheMock);
+        when(deviceProfileCacheMock.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
+        mockSelfNode();
+
+        node.init(ctxMock, nodeConfiguration);
+
+        //WHEN
+        node.onMsg(ctxMock, msg);
+
+        //THEN
+        ArgumentCaptor<RuleChainId> ruleChainArgumentCaptor = ArgumentCaptor.forClass(RuleChainId.class);
+        verify(ctxMock).input(eq(msg), ruleChainArgumentCaptor.capture());
+        RuleChainId expectedRuleChainId = ruleChainArgumentCaptor.getValue();
+        RuleChainId ruleChainIdFromConfig = new RuleChainId(UUID.fromString(ruleChainIdFromConfigStr));
+        assertThat(expectedRuleChainId).isEqualTo(ruleChainIdFromConfig);
+
+        RuleChainId ruleChainId = (RuleChainId) ReflectionTestUtils.getField(node, "ruleChainId");
+        assertThat(ruleChainId).isEqualTo(ruleChainIdFromConfig);
+    }
+
+    @Test
     public void givenForwardMsgToDefaultIsTrue_whenOnMsg_thenShouldTransferToDeviceDefaultRuleChain() throws TbNodeException {
         //GIVEN
         DeviceProfile deviceProfile = new DeviceProfile();
@@ -149,6 +186,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getDeviceProfileCache()).thenReturn(deviceProfileCacheMock);
         when(deviceProfileCacheMock.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
+        mockSelfNode();
 
         node.init(ctxMock, nodeConfiguration);
 
@@ -182,6 +220,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getAssetProfileCache()).thenReturn(assetProfileCacheMock);
         when(assetProfileCacheMock.get(any(TenantId.class), any(AssetId.class))).thenReturn(assetProfile);
+        mockSelfNode();
 
         node.init(ctxMock, nodeConfiguration);
 
@@ -214,6 +253,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getDeviceProfileCache()).thenReturn(deviceProfileCacheMock);
         when(deviceProfileCacheMock.get(any(TenantId.class), any(DeviceId.class))).thenReturn(deviceProfile);
+        mockSelfNode();
 
         node.init(ctxMock, nodeConfiguration);
 
@@ -242,6 +282,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         when(ctxMock.getTenantId()).thenReturn(TENANT_ID);
         when(ctxMock.getAssetProfileCache()).thenReturn(assetProfileCacheMock);
         when(assetProfileCacheMock.get(any(TenantId.class), any(AssetId.class))).thenReturn(assetProfile);
+        mockSelfNode();
 
         node.init(ctxMock, nodeConfiguration);
 
@@ -261,6 +302,7 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
         RuleChainId ruleChainIdFromConfig = new RuleChainId(UUID.fromString(ruleChainIdFromConfigStr));
 
         TbMsg msg = getMsg(DEVICE_ID);
+        mockSelfNode();
 
         config.setRuleChainId(ruleChainIdFromConfigStr);
         config.setForwardMsgToDefaultRuleChain(false);
@@ -301,5 +343,11 @@ public class TbRuleChainInputNodeTest extends AbstractRuleNodeUpgradeTest {
 
     private TbMsg getMsg(EntityId entityId) {
         return TbMsg.newMsg(TbMsgType.POST_TELEMETRY_REQUEST, entityId, TbMsgMetaData.EMPTY, TbMsg.EMPTY_STRING);
+    }
+
+    private void mockSelfNode() {
+        RuleNode self = new RuleNode();
+        self.setRuleChainId(RULE_CHAIN_ID);
+        when(ctxMock.getSelf()).thenReturn(self);
     }
 }
