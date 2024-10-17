@@ -27,7 +27,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(callSuper = true)
-public class WebViewPage extends  AbstractMobilePage {
+public class WebViewPage extends AbstractMobilePage {
 
     @Schema(description = "Url", example = "/url")
     private String url;

@@ -128,7 +128,7 @@ public class QrCodeSettingsController extends BaseController {
     public QrCodeSettings saveMobileAppSettings(@Parameter(description = "A JSON value representing the mobile apps configuration")
                                                 @RequestBody QrCodeSettings qrCodeSettings) throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.WRITE);
+        accessControlService.checkPermission(currentUser, Resource.QR_CODE_SETTINGS, Operation.WRITE);
         qrCodeSettings.setTenantId(getTenantId());
         return qrCodeSettingService.saveQrCodeSettings(currentUser.getTenantId(), qrCodeSettings);
     }
@@ -139,7 +139,7 @@ public class QrCodeSettingsController extends BaseController {
     @GetMapping(value = "/api/mobile/qr/settings")
     public QrCodeSettings getMobileAppSettings() throws ThingsboardException {
         SecurityUser currentUser = getCurrentUser();
-        accessControlService.checkPermission(currentUser, Resource.MOBILE_APP_SETTINGS, Operation.READ);
+        accessControlService.checkPermission(currentUser, Resource.QR_CODE_SETTINGS, Operation.READ);
         return qrCodeSettingService.findQrCodeSettings(TenantId.SYS_TENANT_ID);
     }
 

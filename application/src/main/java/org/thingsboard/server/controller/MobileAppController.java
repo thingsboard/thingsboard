@@ -46,7 +46,7 @@ import static org.thingsboard.server.controller.ControllerConstants.PAGE_NUMBER_
 import static org.thingsboard.server.controller.ControllerConstants.PAGE_SIZE_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_ORDER_DESCRIPTION;
 import static org.thingsboard.server.controller.ControllerConstants.SORT_PROPERTY_DESCRIPTION;
-import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_AUTHORITY_PARAGRAPH;
+import static org.thingsboard.server.controller.ControllerConstants.SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH;
 import static org.thingsboard.server.controller.ControllerConstants.UUID_WIKI_LINK;
 
 @RestController
@@ -63,8 +63,8 @@ public class MobileAppController extends BaseController {
                     "The newly created Mobile App Id will be present in the response. " +
                     "Specify existing Mobile App Id to update the mobile app. " +
                     "Referencing non-existing Mobile App Id will cause 'Not Found' error." +
-                    "\n\nThe pair of mobile app package name and platform type is unique for entire platform setup.\n\n" + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+                    "\n\nThe pair of mobile app package name and platform type is unique for entire platform setup.\n\n" + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @PostMapping(value = "/mobile/app")
     public MobileApp saveMobileApp(
             @Parameter(description = "A JSON value representing the Mobile Application.", required = true)
@@ -74,8 +74,8 @@ public class MobileAppController extends BaseController {
         return tbMobileAppService.save(mobileApp, getCurrentUser());
     }
 
-    @ApiOperation(value = "Get mobile app infos (getTenantMobileAppInfos)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @ApiOperation(value = "Get mobile app infos (getTenantMobileAppInfos)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/mobile/app")
     public PageData<MobileApp> getTenantMobileApps(@Parameter(description = "Platform type: ANDROID or IOS")
                                                    @RequestParam(required = false) PlatformType platformType,
@@ -89,13 +89,12 @@ public class MobileAppController extends BaseController {
                                                    @RequestParam(required = false) String sortProperty,
                                                    @Parameter(description = SORT_ORDER_DESCRIPTION)
                                                    @RequestParam(required = false) String sortOrder) throws ThingsboardException {
-        accessControlService.checkPermission(getCurrentUser(), Resource.MOBILE_APP, Operation.READ);
         PageLink pageLink = createPageLink(pageSize, page, textSearch, sortProperty, sortOrder);
         return mobileAppService.findMobileAppsByTenantId(getTenantId(), platformType, pageLink);
     }
 
-    @ApiOperation(value = "Get mobile info by id (getMobileAppInfoById)", notes = SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAnyAuthority('SYS_ADMIN')")
+    @ApiOperation(value = "Get mobile info by id (getMobileAppInfoById)", notes = SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/mobile/app/{id}")
     public MobileApp getMobileAppById(@PathVariable UUID id) throws ThingsboardException {
         MobileAppId mobileAppId = new MobileAppId(id);
@@ -103,8 +102,8 @@ public class MobileAppController extends BaseController {
     }
 
     @ApiOperation(value = "Delete Mobile App by ID (deleteMobileApp)",
-            notes = "Deletes Mobile App by ID. Referencing non-existing mobile app Id will cause an error." + SYSTEM_AUTHORITY_PARAGRAPH)
-    @PreAuthorize("hasAuthority('SYS_ADMIN')")
+            notes = "Deletes Mobile App by ID. Referencing non-existing mobile app Id will cause an error." + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @DeleteMapping(value = "/mobile/app/{id}")
     public void deleteMobileApp(@PathVariable UUID id) throws Exception {
         MobileAppId mobileAppId = new MobileAppId(id);

@@ -43,6 +43,8 @@ import java.io.Serializable;
         property = "type")
 @JsonSubTypes({
         @JsonSubTypes.Type(value = DefaultMobilePage.class, name = "DEFAULT"),
+        @JsonSubTypes.Type(value = DashdoardPage.class, name = "DASHBOARD"),
+        @JsonSubTypes.Type(value = WebViewPage.class, name = "WEB_VIEW"),
         @JsonSubTypes.Type(value = CustomMobilePage.class, name = "CUSTOM")
 })
 public interface MobilePage extends Serializable {

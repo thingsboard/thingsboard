@@ -50,7 +50,7 @@ public enum Resource {
     VERSION_CONTROL,
     NOTIFICATION(EntityType.NOTIFICATION_TARGET, EntityType.NOTIFICATION_TEMPLATE,
             EntityType.NOTIFICATION_REQUEST, EntityType.NOTIFICATION_RULE),
-    MOBILE_APP_SETTINGS;
+    QR_CODE_SETTINGS;
     private final Set<EntityType> entityTypes;
 
     Resource() {

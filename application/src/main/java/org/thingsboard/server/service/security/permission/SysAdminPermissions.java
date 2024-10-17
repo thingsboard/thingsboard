@@ -36,15 +36,15 @@ public class SysAdminPermissions extends AbstractPermissions {
         put(Resource.WIDGETS_BUNDLE, systemEntityPermissionChecker);
         put(Resource.WIDGET_TYPE, systemEntityPermissionChecker);
         put(Resource.OAUTH2_CLIENT, PermissionChecker.allowAllPermissionChecker);
-        put(Resource.MOBILE_APP, PermissionChecker.allowAllPermissionChecker);
-        put(Resource.MOBILE_APP_BUNDLE, PermissionChecker.allowAllPermissionChecker);
+        put(Resource.MOBILE_APP, systemEntityPermissionChecker);
+        put(Resource.MOBILE_APP_BUNDLE, systemEntityPermissionChecker);
         put(Resource.DOMAIN, PermissionChecker.allowAllPermissionChecker);
         put(Resource.OAUTH2_CONFIGURATION_TEMPLATE, PermissionChecker.allowAllPermissionChecker);
         put(Resource.TENANT_PROFILE, PermissionChecker.allowAllPermissionChecker);
         put(Resource.TB_RESOURCE, systemEntityPermissionChecker);
         put(Resource.QUEUE, systemEntityPermissionChecker);
         put(Resource.NOTIFICATION, systemEntityPermissionChecker);
-        put(Resource.MOBILE_APP_SETTINGS, PermissionChecker.allowAllPermissionChecker);
+        put(Resource.QR_CODE_SETTINGS, PermissionChecker.allowAllPermissionChecker);
     }
 
     private static final PermissionChecker systemEntityPermissionChecker = new PermissionChecker() {
