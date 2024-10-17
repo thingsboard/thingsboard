@@ -37,7 +37,6 @@ import java.util.List;
 import java.util.Random;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_0;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_VALUE_1;
 import static org.thingsboard.server.transport.lwm2m.Lwm2mTestHelper.RESOURCE_ID_VALUE_3303_12_5700_DELTA_TS;
@@ -77,7 +76,7 @@ public class LwM2mTemperatureSensor extends BaseInstanceEnabler implements Destr
     @Override
     public synchronized ReadResponse read(LwM2mServer identity, int resourceId) {
         log.trace("Read on Temperature resource /[{}]/[{}]/[{}]", getModel().id, getId(), resourceId);
-        if (this.registeredServer == null) {
+        if (this.registeredServer == null && this.leshanClient != null && getId() == 12) {
             try {
                 Lwm2mTestHelper.RESOURCE_ID_3303_12_5700_TS_0 = Instant.now().toEpochMilli();
                 this.registeredServer = this.leshanClient.getRegisteredServers().values().iterator().next();
