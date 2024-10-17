@@ -2837,6 +2837,7 @@
         "function": "Function"
     },
     "gateway": {
+        "gateways": "Gateways",
         "address": "Address",
         "address-required": "Address required",
         "add-entry": "Add configuration",
