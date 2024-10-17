@@ -16,30 +16,14 @@
 package org.thingsboard.rule.engine.geo;
 
 import lombok.Data;
-import org.thingsboard.rule.engine.api.NodeConfiguration;
+import lombok.EqualsAndHashCode;
 
 /**
  * Created by ashvayka on 19.01.18.
  */
 @Data
-public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration<TbGpsGeofencingFilterNodeConfiguration> {
-
-    private String latitudeKeyName;
-    private String longitudeKeyName;
-    private PerimeterType perimeterType;
-
-    private boolean fetchPerimeterInfoFromMessageMetadata;
-    // If Perimeter is fetched from metadata
-    private String perimeterKeyName;
-
-    //For Polygons
-    private String polygonsDefinition;
-
-    //For Circles
-    private Double centerLatitude;
-    private Double centerLongitude;
-    private Double range;
-    private RangeUnit rangeUnit;
+@EqualsAndHashCode(callSuper = true)
+public class TbGpsGeofencingFilterNodeConfiguration extends AbstractTbGpsGeofencingNodeConfiguration<TbGpsGeofencingFilterNodeConfiguration> {
 
     @Override
     public TbGpsGeofencingFilterNodeConfiguration defaultConfiguration() {
@@ -51,4 +35,5 @@ public class TbGpsGeofencingFilterNodeConfiguration implements NodeConfiguration
         configuration.setPerimeterKeyName("ss_perimeter");
         return configuration;
     }
+
 }

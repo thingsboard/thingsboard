@@ -15,25 +15,24 @@
  */
 package org.thingsboard.rule.engine.geo;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.util.concurrent.Futures;
 import com.google.common.util.concurrent.ListenableFuture;
 import com.google.common.util.concurrent.MoreExecutors;
 import com.google.gson.JsonObject;
-import com.nimbusds.oauth2.sdk.util.CollectionUtils;
 import lombok.extern.slf4j.Slf4j;
-import org.apache.commons.lang3.tuple.Pair;
+import org.springframework.util.CollectionUtils;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.rule.engine.api.RuleNode;
 import org.thingsboard.rule.engine.api.TbContext;
 import org.thingsboard.rule.engine.api.TbNodeConfiguration;
 import org.thingsboard.rule.engine.api.TbNodeException;
 import org.thingsboard.rule.engine.util.EntitiesRelatedEntityIdAsyncLoader;
+import org.thingsboard.rule.engine.util.GpsGeofencingEvents;
 import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.id.EntityId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
-import org.thingsboard.server.common.data.msg.TbMsgType;
 import org.thingsboard.server.common.data.plugin.ComponentType;
+import org.thingsboard.server.common.data.util.TbPair;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 
@@ -66,13 +65,19 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
     @Override
     public void onMsg(TbContext ctx, TbMsg msg) throws ExecutionException, InterruptedException, TbNodeException {
+        if (config.getRelationsQuery() == null) {
+            log.warn("Geofencing relations query is not configured!");
+            ctx.ack(msg);
+            return;
+        }
+
         ListenableFuture<List<EntityId>> matchedZonesFuture = findMatchedZones(ctx, msg);
 
-        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(msg.getMetaDataTs(), ctx.getSelfId(), msg.getOriginator(), matchedZones), ctx.getDbCallbackExecutor());
+        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(msg, ctx.getSelfId(),matchedZones), MoreExecutors.directExecutor());
 
         withCallback(geofenceResponseFuture, geofenceResponse -> {
             processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);
-            ctx.tellSuccess(msg);
+            ctx.ack(msg);
         }, t -> {
             log.error("Failed to process geofencing", t);
             ctx.tellFailure(msg, t);
@@ -83,10 +88,10 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
         TbMsgMetaData metaData = originalMsg.getMetaData().copy();
         metaData.putValue("originatorId", originatorId.toString());
 
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getEnteredGeofences(), "Entered");
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getLeftGeofences(), "Left");
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getInsideGeofences(), "Inside");
-        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), "Outside");
+        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getEnteredGeofences(), GpsGeofencingEvents.ENTERED);
+        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getLeftGeofences(), GpsGeofencingEvents.LEFT);
+        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getInsideGeofences(), GpsGeofencingEvents.INSIDE);
+        processGeofenceEvents(ctx, originalMsg, metaData, geofenceResponse.getOutsideGeofences(), GpsGeofencingEvents.OUTSIDE);
     }
 
     private void processGeofenceEvents(TbContext ctx, TbMsg originalMsg, TbMsgMetaData metaData, List<EntityId> geofences, String relationType) {
@@ -94,13 +99,13 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
             return;
         }
         for (EntityId geofence : geofences) {
-            TbMsg tbMsg = TbMsg.newMsg(TbMsgType.valueOf(originalMsg.getType()), geofence, metaData, originalMsg.getData());
+            TbMsg tbMsg = TbMsg.newMsg(originalMsg.getInternalType(), geofence, metaData, originalMsg.getData());
             ctx.enqueueForTellNext(tbMsg, relationType);
         }
     }
 
     private ListenableFuture<List<EntityId>> findMatchedZones(TbContext tbContext, TbMsg tbMsg) throws TbNodeException {
-        JsonObject msgDataObj = getJsonObject(tbMsg);
+        JsonObject msgDataObj = getMsgDataAsJsonObject(tbMsg);
         double latitude = getValueFromMessageByName(tbMsg, msgDataObj, config.getLatitudeKeyName());
         double longitude = getValueFromMessageByName(tbMsg, msgDataObj, config.getLongitudeKeyName());
 
@@ -110,12 +115,12 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
         ListenableFuture<List<EntityId>> entityIdsFuture = EntitiesRelatedEntityIdAsyncLoader.findEntitiesAsync(tbContext, tbMsg.getOriginator(), config.getRelationsQuery());
 
-        ListenableFuture<List<Pair<EntityId, Optional<AttributeKvEntry>>>> entityIdToAttributesFuture = Futures.transformAsync(entityIdsFuture, relatedZones -> {
-            List<ListenableFuture<Pair<EntityId, Optional<AttributeKvEntry>>>> attributeFutures = relatedZones.stream()
+        ListenableFuture<List<TbPair<EntityId, Optional<AttributeKvEntry>>>> entityIdToAttributesFuture = Futures.transformAsync(entityIdsFuture, relatedZones -> {
+            List<ListenableFuture<TbPair<EntityId, Optional<AttributeKvEntry>>>> attributeFutures = relatedZones.stream()
                     .map(relatedGeofenceId -> Futures.transform(
                             tbContext.getAttributesService()
-                                    .find(tbContext.getTenantId(), relatedGeofenceId, AttributeScope.SERVER_SCOPE, config.getPerimeterAttributeKey()),
-                            attribute -> Pair.of(relatedGeofenceId, attribute),
+                                    .find(tbContext.getTenantId(), relatedGeofenceId, AttributeScope.SERVER_SCOPE, config.getPerimeterKeyName()),
+                            attribute -> TbPair.of(relatedGeofenceId, attribute),
                             MoreExecutors.directExecutor()
                     ))
                     .collect(Collectors.toList());
@@ -127,8 +132,8 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
             List<EntityId> matchedGeofenceIds = new ArrayList<>();
 
             entityIdAttributePairs.forEach(pair -> {
-                EntityId entityId = pair.getLeft();
-                Optional<AttributeKvEntry> attributeKvEntry = pair.getRight();
+                EntityId entityId = pair.getFirst();
+                Optional<AttributeKvEntry> attributeKvEntry = pair.getSecond();
 
                 attributeKvEntry.map(this::mapToPerimeter).ifPresent(perimeter -> {
                     try {
@@ -148,11 +153,7 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
     private Perimeter mapToPerimeter(AttributeKvEntry attributeKvEntry) {
         Optional<String> jsonValue = attributeKvEntry.getJsonValue();
-        if (jsonValue.isEmpty()) {
-            return null;
-        }
-        JsonNode jsonNode = JacksonUtil.toJsonNode(jsonValue.get());
-        return JacksonUtil.treeToValue(jsonNode, Perimeter.class);
+        return jsonValue.map(s -> JacksonUtil.fromString(s, Perimeter.class)).orElse(null);
     }
 
     @Override

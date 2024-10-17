@@ -26,25 +26,26 @@ import java.util.List;
 
 @Data
 @EqualsAndHashCode(callSuper = true)
-public class TbGpsMultiGeofencingActionNodeConfiguration extends TbGpsGeofencingFilterNodeConfiguration {
+public class TbGpsMultiGeofencingActionNodeConfiguration extends AbstractTbGpsGeofencingActionNodeConfiguration<TbGpsMultiGeofencingActionNodeConfiguration> {
 
     private RelationsQuery relationsQuery;
-    private String perimeterAttributeKey;
-    private Long insideDurationMs;
-    private Long outsideDurationMs;
 
     @Override
     public TbGpsMultiGeofencingActionNodeConfiguration defaultConfiguration() {
         TbGpsMultiGeofencingActionNodeConfiguration configuration = new TbGpsMultiGeofencingActionNodeConfiguration();
-        configuration.setPerimeterAttributeKey("geofences");
+        configuration.setPerimeterKeyName("geofences");
+        configuration.setLatitudeKeyName("latitude");
+        configuration.setLongitudeKeyName("longitude");
         RelationsQuery relationsQuery = new RelationsQuery();
         relationsQuery.setDirection(EntitySearchDirection.FROM);
         relationsQuery.setMaxLevel(1);
         RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
         relationsQuery.setFilters(List.of(filter));
         configuration.setRelationsQuery(relationsQuery);
-        configuration.setInsideDurationMs(1000L);
-        configuration.setOutsideDurationMs(1000L);
+        configuration.setMinInsideDuration(1);
+        configuration.setMinInsideDurationTimeUnit("MINUTES");
+        configuration.setMinOutsideDuration(1);
+        configuration.setMinOutsideDurationTimeUnit("MINUTES");
         return configuration;
     }
 }

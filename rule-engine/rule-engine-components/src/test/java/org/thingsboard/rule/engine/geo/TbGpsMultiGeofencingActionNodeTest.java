@@ -22,7 +22,6 @@ import com.google.common.util.concurrent.Futures;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.mockito.ArgumentCaptor;
-import org.thingsboard.common.util.AbstractListeningExecutor;
 import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.ListeningExecutor;
 import org.thingsboard.rule.engine.TestDbCallbackExecutor;
@@ -47,7 +46,6 @@ import org.thingsboard.server.common.data.relation.RelationTypeGroup;
 import org.thingsboard.server.common.msg.TbMsg;
 import org.thingsboard.server.common.msg.TbMsgMetaData;
 import org.thingsboard.server.dao.attributes.AttributesService;
-import org.thingsboard.server.dao.device.DeviceService;
 import org.thingsboard.server.dao.relation.RelationService;
 
 import java.util.List;
@@ -81,11 +79,11 @@ public class TbGpsMultiGeofencingActionNodeTest {
         geofenceStateAttributeKey = "geofenceState_" + ctx.getSelfId();
 
         TbGpsMultiGeofencingActionNodeConfiguration configuration = new TbGpsMultiGeofencingActionNodeConfiguration();
-        configuration.setPerimeterAttributeKey("perimeter");
+        configuration.setPerimeterKeyName("perimeter");
         configuration.setLatitudeKeyName("latitude");
         configuration.setLongitudeKeyName("longitude");
-        configuration.setInsideDurationMs(10L);
-        configuration.setOutsideDurationMs(10L);
+        configuration.setMinOutsideDuration(10);
+        configuration.setMinOutsideDuration(10);
 
         RelationsQuery relationsQuery = new RelationsQuery();
         relationsQuery.setDirection(EntitySearchDirection.FROM);
@@ -93,8 +91,6 @@ public class TbGpsMultiGeofencingActionNodeTest {
         RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
         relationsQuery.setFilters(List.of(filter));
         configuration.setRelationsQuery(relationsQuery);
-        configuration.setInsideDurationMs(1000L);
-        configuration.setOutsideDurationMs(1000L);
 
         JsonNode jsonNode = JacksonUtil.valueToTree(configuration);
         TbNodeConfiguration tbNodeConfiguration = new TbNodeConfiguration(jsonNode);
@@ -104,7 +100,6 @@ public class TbGpsMultiGeofencingActionNodeTest {
         AttributesService attributesService = mock(AttributesService.class);
         this.attributesService = attributesService;
         RelationService relationService = mock(RelationService.class);
-        DeviceService deviceService = mock(DeviceService.class);
 
         when(ctx.getAttributesService()).thenReturn(attributesService);
         when(ctx.getRelationService()).thenReturn(relationService);
@@ -117,14 +112,14 @@ public class TbGpsMultiGeofencingActionNodeTest {
         EntityRelation entityRelation = new EntityRelation(deviceId, zoneId, "DeviceToZone", RelationTypeGroup.COMMON);
         when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
-        BaseAttributeKvEntry perimeterAttribute = new BaseAttributeKvEntry(new JsonDataEntry(configuration.getPerimeterAttributeKey(), "{\n" +
+        BaseAttributeKvEntry perimeterAttribute = new BaseAttributeKvEntry(new JsonDataEntry(configuration.getPerimeterKeyName(), "{\n" +
                 "  \"perimeterType\": \"CIRCLE\",\n" +
                 "  \"centerLatitude\": 48.8566,\n" +
                 "  \"centerLongitude\": 2.3522,\n" +
                 "  \"range\": 5,\n" +
                 "  \"rangeUnit\": \"KILOMETER\"\n" +
                 "}"), System.currentTimeMillis());
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(configuration.getPerimeterAttributeKey()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute)));
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(configuration.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute)));
 
         when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.empty()));
 
