@@ -45,13 +45,13 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
 
     @Before
     public void setupObserveTest() throws Exception {
-        awaitObserveReadAll(4, deviceId);
+        awaitObserveReadAll(4,lwM2MTestClient.getDeviceIdStr());
     }
 
 
     @Test
     public void testObserveReadAll_Count_4_CancelAll_Count_0_Ok() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
     }
 
     /**
@@ -61,7 +61,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
     @Test
     public void testObserveOneResource_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
         long initSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0_9);
         updateRegAtLeastOnceAfterAction();
         long lastSendTelemetryAtCount = countSendParametersOnThingsboardTelemetryResource(RESOURCE_ID_NAME_3_9);
@@ -74,7 +74,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveOneObjectInstance_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         String idVer_3_0 = objectInstanceIdVer_3;
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0);
 
@@ -89,7 +89,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveOneObject_Result_CONTENT_Value_Count_3_After_Cancel_Count_2() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         String idVer_3_0 = objectInstanceIdVer_3;
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0);
 
@@ -199,7 +199,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserves_OverlappedPaths_FirstResource_SecondObjectOrInstance() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         // "19/0/0"
         sendRpcObserveOkWithResultValue("Observe", idVer_19_0_0);
         // PreviousObservation "19/0/0" change to CurrentObservation "19" - object
@@ -247,7 +247,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveResource_ObserveCancelResource_Result_CONTENT_Count_1() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
         String actualValuesReadAll = sendRpcObserveReadAllWithResult(idVer_3_0_9);
         assertEquals(1, actualValuesReadAll.split(",").length);
@@ -265,7 +265,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveObject_ObserveCancelOneResource_Result_INTERNAL_SERVER_ERROR_Than_Cancel_ObserveObject_Result_CONTENT_Count_1() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
         String actualValuesReadAll = sendRpcObserveReadAllWithResult(objectIdVer_3);
         assertEquals(1, actualValuesReadAll.split(",").length);
@@ -292,7 +292,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveResource_ObserveCancelObject_Result_CONTENT_Count_1() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         sendRpcObserveWithWithTwoResource(idVer_3_0_0, idVer_3_0_9);
         String rpcActualResul = sendRpcObserveOkWithResultValue("ObserveReadAll", null);
         assertEquals(2, rpcActualResul.split(",").length);
@@ -320,7 +320,7 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
      */
     @Test
     public void testObserveResource_Update_AfterUpdateRegistration() throws Exception {
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
         int cntUpdate = 3;
         verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))

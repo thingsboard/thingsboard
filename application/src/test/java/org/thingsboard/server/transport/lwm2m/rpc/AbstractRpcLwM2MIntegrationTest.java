@@ -121,7 +121,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
     protected void initRpc(int typeConfigProfile) throws Exception {
         String endpoint = DEVICE_ENDPOINT_RPC_PREF + endpointSequence.incrementAndGet();
-        createNewClient(SECURITY_NO_SEC, null, true, endpoint);
+        createNewClient(SECURITY_NO_SEC, null, true, endpoint, null);
         expectedObjects = ConcurrentHashMap.newKeySet();
         expectedObjectIdVers = ConcurrentHashMap.newKeySet();
         expectedInstances = ConcurrentHashMap.newKeySet();
@@ -232,8 +232,7 @@ public abstract class AbstractRpcLwM2MIntegrationTest extends AbstractLwM2MInteg
 
         LwM2MDeviceCredentials deviceCredentials = getDeviceCredentialsNoSec(createNoSecClientCredentials(endpoint));
         final Device device = createLwm2mDevice(deviceCredentials, endpoint, deviceProfile.getId());
-        deviceId = device.getId().getId().toString();
-
+        lwM2MTestClient.setDeviceIdStr(device.getId().getId().toString());
         lwM2MTestClient.start(true);
     }
 

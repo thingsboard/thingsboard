@@ -138,6 +138,7 @@ public class LwM2MTestClient {
     private LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandlerTest;
     private LwM2mClientContext clientContext;
     private LwM2mTemperatureSensor lwM2mTemperatureSensor12;
+    private String deviceIdStr;
 
     public void init(Security security, Security securityBs, int port, boolean isRpc,
                      LwM2mUplinkMsgHandler defaultLwM2mUplinkMsgHandler,
