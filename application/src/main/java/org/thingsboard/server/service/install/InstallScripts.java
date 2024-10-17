@@ -17,7 +17,6 @@ package org.thingsboard.server.service.install;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.collect.Streams;
 import lombok.Getter;
 import lombok.Setter;
 import lombok.SneakyThrows;
@@ -49,10 +48,11 @@ import org.thingsboard.server.dao.resource.ResourceService;
 import org.thingsboard.server.dao.rule.RuleChainService;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.install.update.ImagesUpdater;
 
 import java.io.IOException;
+import java.io.UncheckedIOException;
 import java.nio.file.DirectoryStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -89,7 +89,7 @@ public class InstallScripts {
     public static final String OAUTH2_CONFIG_TEMPLATES_DIR = "oauth2_config_templates";
     public static final String DASHBOARDS_DIR = "dashboards";
     public static final String MODELS_LWM2M_DIR = "lwm2m-registry";
-    public static final String CREDENTIALS_DIR = "credentials";
+    public static final String RESOURCES_DIR = "resources";
 
     public static final String JSON_EXT = ".json";
     public static final String SVG_EXT = ".svg";
@@ -108,7 +108,7 @@ public class InstallScripts {
     private WidgetTypeService widgetTypeService;
 
     @Autowired
-    private TbWidgetsBundleService tbWidgetsBundleService;
+    private WidgetsBundleService widgetsBundleService;
 
     @Autowired
     private OAuth2ConfigTemplateService oAuth2TemplateService;
@@ -212,35 +212,10 @@ public class InstallScripts {
         log.info("Loading system widgets");
 
         Path widgetBundlesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_BUNDLES_DIR);
-        Stream<JsonNode> bundles;
-        try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetBundlesDir, path -> path.toString().endsWith(JSON_EXT))) {
-            bundles = Streams.stream(dirStream).map(path -> {
-                try {
-                    return JacksonUtil.toJsonNode(path.toFile());
-                } catch (Exception e) {
-                    log.error("Unable to parse widgets bundle from json: [{}]", path);
-                    throw new RuntimeException("Unable to parse widgets bundle from json", e);
-                }
-            });
-
-        }
-        Stream<JsonNode> widgets;
+        Stream<String> bundles = listDir(widgetBundlesDir).filter(path -> path.toString().endsWith(JSON_EXT)).map(this::getContent);
         Path widgetTypesDir = Paths.get(getDataDir(), JSON_DIR, SYSTEM_DIR, WIDGET_TYPES_DIR);
-        if (Files.exists(widgetTypesDir)) {
-            try (DirectoryStream<Path> dirStream = Files.newDirectoryStream(widgetTypesDir, path -> path.toString().endsWith(JSON_EXT))) {
-                widgets = Streams.stream(dirStream).map(path -> {
-                    try {
-                        return JacksonUtil.toJsonNode(path.toFile());
-                    } catch (Exception e) {
-                        log.error("Unable to parse widget type from json: [{}]", path);
-                        throw new RuntimeException("Unable to parse widget type from json", e);
-                    }
-                });
-            }
-        } else {
-            widgets = Stream.empty();
-        }
-        tbWidgetsBundleService.updateWidgets(TenantId.SYS_TENANT_ID, bundles, widgets);
+        Stream<String> widgets = listDir(widgetTypesDir).filter(path -> path.toString().endsWith(JSON_EXT)).map(this::getContent);
+        widgetsBundleService.updateSystemWidgets(bundles, widgets);
 
         loadSystemScadaSymbols();
     }
@@ -446,6 +421,41 @@ public class InstallScripts {
         } catch (Exception e) {
             log.error("Unable to load resources lwm2m object model from file: [{}]", resourceLwm2mPath);
             throw new RuntimeException("resource lwm2m object model from file", e);
+        }
+    }
+
+    public void loadSystemResources() {
+        Path resourcesDir = Path.of(getDataDir(), RESOURCES_DIR);
+        loadSystemResources(resourcesDir.resolve("js_modules"), ResourceType.JS_MODULE);
+        loadSystemResources(resourcesDir.resolve("dashboards"), ResourceType.DASHBOARD);
+    }
+
+    private void loadSystemResources(Path dir, ResourceType resourceType) {
+        listDir(dir).forEach(resourceFile -> {
+            String resourceKey = resourceFile.getFileName().toString();
+            try {
+                String data = getContent(resourceFile);
+                TbResource resource = resourceService.updateSystemResource(resourceType, resourceKey, data);
+                log.info("{} resource {}", (resource.getId() == null ? "Created" : "Updated"), resourceKey);
+            } catch (Exception e) {
+                throw new RuntimeException("Unable to load system resource " + resourceFile, e);
+            }
+        });
+    }
+
+    private String getContent(Path file) {
+        try {
+            return Files.readString(file);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
+        }
+    }
+
+    private Stream<Path> listDir(Path resourcesDir) {
+        try {
+            return Files.list(resourcesDir);
+        } catch (IOException e) {
+            throw new UncheckedIOException(e);
         }
     }
 
