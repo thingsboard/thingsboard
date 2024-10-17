@@ -55,6 +55,7 @@ import java.util.UUID;
 public class TbRuleChainInputNode implements TbNode {
 
     private RuleChainId ruleChainId;
+    private RuleChainId selfRuleChainId;
     private boolean forwardMsgToDefaultRuleChain;
 
     @Override
@@ -72,6 +73,7 @@ public class TbRuleChainInputNode implements TbNode {
         ruleChainId = new RuleChainId(ruleChainUUID);
         ctx.checkTenantEntity(ruleChainId);
         forwardMsgToDefaultRuleChain = config.isForwardMsgToDefaultRuleChain();
+        selfRuleChainId = ctx.getSelf().getRuleChainId();
     }
 
     @Override
@@ -105,6 +107,6 @@ public class TbRuleChainInputNode implements TbNode {
                     case ASSET ->
                             ctx.getAssetProfileCache().get(ctx.getTenantId(), (AssetId) msg.getOriginator()).getDefaultRuleChainId();
                     default -> null;
-                });
+                }).filter(id -> !id.equals(selfRuleChainId));
     }
 }
