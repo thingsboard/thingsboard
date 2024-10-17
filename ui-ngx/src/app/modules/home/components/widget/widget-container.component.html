@@ -20,16 +20,14 @@
      [fullscreenBackgroundImage]="backgroundImage"
      (fullscreenChanged)="onFullscreenChanged($event)"
      class="tb-widget"
-     [ngClass]="{
-                'tb-highlighted': isHighlighted(widget),
-                'tb-not-highlighted': isNotHighlighted(widget),
-                'mat-elevation-z4': widget.dropShadow,
-                'tb-overflow-visible': widgetComponent.widgetContext?.overflowVisible,
-                'tb-has-timewindow': widget.hasTimewindow,
-                'tb-edit': isEdit || isEditingWidget,
-                'tb-hover': hovered
-             }"
-     [ngStyle]="widget.style">
+     [class.tb-highlighted]="isHighlighted(widget)"
+     [class.tb-not-highlighted]="isNotHighlighted(widget)"
+     [class.mat-elevation-z4]="widget.dropShadow"
+     [class.tb-overflow-visible]="widgetComponent.widgetContext?.overflowVisible"
+     [class.tb-has-timewindow]="widget.hasTimewindow"
+     [class.tb-edit]="isEdit || isEditingWidget"
+     [class.tb-hover]="hovered"
+     [style]="widget.style">
   <div *ngIf="!!widgetComponent.widgetContext?.inited"
        class="tb-widget-header">
     <ng-container *ngIf="!widgetComponent.widgetContext?.embedTitlePanel">
@@ -62,7 +60,7 @@
       </button>
     </div>
   </div>
-  <div class="tb-widget-content" [ngClass]="{'tb-no-interaction': disableWidgetInteraction}">
+  <div class="tb-widget-content" [class.tb-no-interaction]="disableWidgetInteraction">
     <tb-widget #widgetComponent
                [dashboardWidget]="widget"
                [isEdit]="isEdit"

@@ -19,7 +19,7 @@
   <div class="tb-device-profile-alarms">
     <div *ngFor="let alarmControl of alarmsFormArray.controls; trackBy: trackByAlarm;
                  let $index = index; last as isLast;"
-         class="flex flex-col" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+         class="flex flex-col" [class.pb-2]="!isLast">
       <tb-device-profile-alarm [formControl]="alarmControl"
                                [expanded]="$index === 0"
                                [deviceProfileId]="deviceProfileId"
