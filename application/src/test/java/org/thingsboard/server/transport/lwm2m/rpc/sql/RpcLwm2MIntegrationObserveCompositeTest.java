@@ -315,7 +315,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
         assertEquals("1", rpcActualResult.get("value").asText());
 
-        assertEquals(0, (Object) getCntObserveAll(deviceId));
+        assertEquals(0, (Object) getCntObserveAll(lwM2MTestClient.getDeviceIdStr()));
     }
 
     /**
@@ -335,7 +335,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         String actualResult = sendCompositeRPCByIds("ObserveComposite", expectedIds);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CONTENT.getName(), rpcActualResult.get("result").asText());
-        awaitObserveReadAll(1, deviceId);
+        awaitObserveReadAll(1, lwM2MTestClient.getDeviceIdStr());
 
         // ObserveCompositeCancel two
         expectedIds = "[\"" + objectInstanceIdVer_5 + "\", \"" + expectedIdVer19_1_0_0 + "\"]";
@@ -418,7 +418,7 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         updateAttrTelemetryResourceAtLeastOnceAfterAction(initAttrTelemetryAtCount_19_0_2, idVer_19_0_2);
 
         // 2 - "ObserveReadAll": No update of all resources we are observing - after "ObserveReadCancelAll"
-        sendObserveCancelAllWithAwait(deviceId);
+        sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
         updateRegAtLeastOnceAfterAction();
         actualResultReadAll = sendCompositeRPCByKeys("ObserveReadAll", null);
         rpcActualResultReadAll = JacksonUtil.fromString(actualResultReadAll, ObjectNode.class);
@@ -479,17 +479,17 @@ public class RpcLwm2MIntegrationObserveCompositeTest extends AbstractRpcLwM2MInt
         } else {
             sendRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + params + "\"}}";
         }
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, sendRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), sendRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPCByIds(String method, String paths) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"ids\":" + paths + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPCByKeys(String method, String keys) throws Exception {
         String sendRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"keys\":" + keys + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, sendRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), sendRpcRequest, String.class, status().isOk());
     }
 
     private void updateAttrTelemetryAllAtLeastOnceAfterAction(long initialInvocationCount) {

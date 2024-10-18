@@ -15,6 +15,7 @@
  */
 package org.thingsboard.server.transport.lwm2m.server.downlink;
 
+import com.google.gson.JsonParser;
 import jakarta.annotation.PostConstruct;
 import jakarta.annotation.PreDestroy;
 import lombok.RequiredArgsConstructor;
@@ -396,7 +397,12 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
                     String msgError = "";
                     if (resourceModelWrite.multiple) {
                         try {
-                            Map<Integer, Object> value = convertMultiResourceValuesFromRpcBody(request.getValue(), resourceModelWrite.type, request.getObjectId());
+                            Object valueForMultiResource = request.getValue();
+                            if (resultIds.isResourceInstance()) {
+                                String resourceInstance = "{" + resultIds.getResourceInstanceId() + "=" + request.getValue() + "}";
+                                valueForMultiResource = JsonParser.parseString(resourceInstance);
+                            }
+                            Map<Integer, Object> value = convertMultiResourceValuesFromRpcBody(valueForMultiResource, resourceModelWrite.type, request.getObjectId());
                             downlink = new WriteRequest(contentFormat, resultIds.getObjectId(), resultIds.getObjectInstanceId(), resultIds.getResourceId(),
                                     value, resourceModelWrite.type);
                         } catch (Exception e) {
@@ -707,7 +713,7 @@ public class DefaultLwM2mDownlinkMsgHandler extends LwM2MExecutorAwareService im
         LwM2mPath pathIds = new LwM2mPath(fromVersionedIdToObjectId(versionedId));
         if (pathIds.isResourceInstance() || pathIds.isResource()) {
             ResourceModel resourceModel = client.getResourceModel(versionedId, modelProvider);
-            if (resourceModel != null && (pathIds.isResourceInstance() || (pathIds.isResource() && !resourceModel.multiple))) {
+            if (resourceModel != null && !resourceModel.multiple) {
                 ContentFormat[] desiredFormats;
                 if (OBJLNK.equals(resourceModel.type)) {
                     desiredFormats = new ContentFormat[]{ContentFormat.LINK, ContentFormat.CBOR, ContentFormat.SENML_CBOR, ContentFormat.SENML_JSON};

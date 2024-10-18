@@ -20,6 +20,7 @@ import org.eclipse.leshan.core.ResponseCode;
 import org.eclipse.leshan.core.node.LwM2mPath;
 import org.junit.Test;
 import org.thingsboard.common.util.JacksonUtil;
+import org.thingsboard.script.api.tbel.TbUtils;
 import org.thingsboard.server.transport.lwm2m.rpc.AbstractRpcLwM2MIntegrationTest;
 
 import static org.junit.Assert.assertEquals;
@@ -76,7 +77,157 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         String expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=" + expectedValue + ", type=STRING]";
         assertTrue(actualValues.contains(expected));
     }
-
+    @Test
+    public void testWriteReplaceValueMultipleResource_Result_CHANGED_Multi_Instance_Resource_must_One() throws Exception {
+        int resourceInstanceId0 = 0;
+        String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0;
+            // base64/String
+        String expectedValue = "QUJDREVGRw";
+        String actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        String actualValues = rpcActualResult.get("value").asText();
+        byte[] expectedValue0 = TbUtils.base64ToBytes(expectedValue);
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+            // base64/String
+        expectedValue = "ABCDEFG";
+        actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expectedValue0 = TbUtils.base64ToBytes(expectedValue);
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+            // hexDecimal/String
+        expectedValue = "01ABCDEF";
+        actualResult = sendRPCWriteStringById("WriteReplace", expectedPath, expectedValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue.length()/2 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+            // Integer
+        Integer expectedIntegerValue = 1234566;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedIntegerValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedIntegerValue = Integer.MAX_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedIntegerValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedIntegerValue = Integer.MIN_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedIntegerValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+            // Long
+        Long expectedLongValue = 4406483977L;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedLongValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 8 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedLongValue = Long.MAX_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedLongValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 8 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedLongValue = Long.MIN_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedLongValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 8 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+            // Float to byte[]: byte[] bytes = ByteBuffer.allocate(4).putFloat(((Float) value).floatValue()).array();
+            // Float from byte[]: float f = ByteBuffer.wrap(bytes).getFloat();
+        Float expectedFloatValue = 8.02f;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedFloatValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedFloatValue = Float.MAX_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedFloatValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedFloatValue = Float.MIN_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedFloatValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+           // Double to byte[]: byte[] bytes = ByteBuffer.allocate(8).putDouble(((Double) value).doubleValue()).array();
+           // Double from byte[]: double d = ByteBuffer.wrap(bytes).getDouble();
+        Double expectedDoubleValue = 1022.5906d;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedDoubleValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 4 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedDoubleValue = Double.MAX_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedDoubleValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 8 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        expectedDoubleValue = Double.MIN_VALUE;
+        actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedDoubleValue);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
+        actualResult = sendRPCReadById(expectedPath);
+        rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
+        actualValues = rpcActualResult.get("value").asText();
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + 8 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+    }
 
     /**
      * id
@@ -88,9 +239,9 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         String expectedPath = objectIdVer_19 + "/" + OBJECT_INSTANCE_ID_0 + "/" + RESOURCE_ID_0;
         int resourceInstanceId0 = 0;
         int resourceInstanceId15 = 15;
-        String expectedValue0 = "0000ad45675600";
-        String expectedValue15 = "1525ad45675600cdef";
-        String expectedValue = "{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId15 + "\":\"" + expectedValue15 + "\"}";
+        String expectedValue0 = "1525ad45675600cdef";
+        Integer expectedValue15 = Integer.MAX_VALUE;
+        String expectedValue = "{\"" + resourceInstanceId0 + "\":\"" + expectedValue0 + "\", \"" + resourceInstanceId15 + "\":" + expectedValue15 + "}";
         String actualResult = sendRPCWriteObjectById("WriteReplace", expectedPath, expectedValue);
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
@@ -99,12 +250,12 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualResult = sendRPCReadById(expectedPath0);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
         actualResult = sendRPCReadById(expectedPath15);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         actualValues = rpcActualResult.get("value").asText();
-        expected = "LwM2mResourceInstance [id=" + resourceInstanceId15 + ", value=" + expectedValue15.length()/2 + "Bytes, type=OPAQUE]";
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId15 + ", value=" +  Integer.toHexString(expectedValue15).length()/2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
     }
 
@@ -130,7 +281,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualResult = sendRPCReadById(expectedPath0);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length() / 2 + "Bytes, type=OPAQUE]";
         assertFalse(actualValues.contains(expected));
     }
 
@@ -193,16 +344,16 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         ObjectNode rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         assertEquals(ResponseCode.CHANGED.getName(), rpcActualResult.get("result").asText());
         String expectedPath0 = expectedPath + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0;
-        String expectedPath25 =expectedPath + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId25;
+        String expectedPath25 = expectedPath + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId25;
         actualResult = sendRPCReadById(expectedPath0);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
         actualResult = sendRPCReadById(expectedPath25);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         actualValues = rpcActualResult.get("value").asText();
-        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length()/2 + "Bytes, type=OPAQUE]";
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
     }
 
@@ -232,13 +383,14 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
         actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId25);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         actualValues = rpcActualResult.get("value").asText();
-        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length()/2 + "Bytes, type=OPAQUE]";
-        assertTrue(actualValues.contains(expected));       actualResult = sendRPCReadByKey(expectedKey3_0_14);
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length() / 2 + "Bytes, type=OPAQUE]";
+        assertTrue(actualValues.contains(expected));
+        actualResult = sendRPCReadByKey(expectedKey3_0_14);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         actualValues = rpcActualResult.get("value").asText();
         expected = "LwM2mSingleResource [id=" + RESOURCE_ID_14 + ", value=" + expectedValue3_0_14 + ", type=STRING]";
@@ -270,12 +422,12 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId0);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + resourceInstanceId0 + ", value=" + expectedValue0.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
         actualResult = sendRPCReadById(expectedPath_19_0 + "/" + RESOURCE_ID_0 + "/" + resourceInstanceId25);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         actualValues = rpcActualResult.get("value").asText();
-        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length()/2 + "Bytes, type=OPAQUE]";
+        expected = "LwM2mResourceInstance [id=" + resourceInstanceId25 + ", value=" + expectedValue25.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
     }
 
@@ -301,7 +453,7 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
         actualResult = sendRPCReadById(expectedPath19_1_0_2);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
         String actualValues = rpcActualResult.get("value").asText();
-        String expected = "LwM2mResourceInstance [id=" + RESOURCE_INSTANCE_ID_2 + ", value=" + expectedValue19_1_0_2.length()/2 + "Bytes, type=OPAQUE]";
+        String expected = "LwM2mResourceInstance [id=" + RESOURCE_INSTANCE_ID_2 + ", value=" + expectedValue19_1_0_2.length() / 2 + "Bytes, type=OPAQUE]";
         assertTrue(actualValues.contains(expected));
         actualResult = sendRPCReadByKey(expectedKey3_0_14);
         rpcActualResult = JacksonUtil.fromString(actualResult, ObjectNode.class);
@@ -346,31 +498,31 @@ public class RpcLwm2mIntegrationWriteTest extends AbstractRpcLwM2MIntegrationTes
 
     private String sendRPCWriteStringById(String method, String path, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\", \"value\": \"" + value + "\" }}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendRPCWriteObjectById(String method, String path, Object value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"id\": \"" + path + "\", \"value\": " + value + " }}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendRPCReadById(String id) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"id\": \"" + id + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendRPCWriteByKey(String method, String key, String value) throws Exception {
         String setRpcRequest = "{\"method\": \"" + method + "\", \"params\": {\"key\": \"" + key + "\", \"value\": \"" + value + "\" }}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendRPCReadByKey(String key) throws Exception {
         String setRpcRequest = "{\"method\": \"Read\", \"params\": {\"key\": \"" + key + "\"}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 
     private String sendCompositeRPC(String nodes) throws Exception {
         String setRpcRequest = "{\"method\": \"WriteComposite\", \"params\": {\"nodes\":" + nodes + "}}";
-        return doPostAsync("/api/plugins/rpc/twoway/" + deviceId, setRpcRequest, String.class, status().isOk());
+        return doPostAsync("/api/plugins/rpc/twoway/" + lwM2MTestClient.getDeviceIdStr(), setRpcRequest, String.class, status().isOk());
     }
 }
