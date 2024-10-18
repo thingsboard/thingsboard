@@ -69,4 +69,19 @@ public class JpaUserCredentialsDao extends JpaAbstractDao<UserCredentialsEntity,
         userCredentialsRepository.removeByUserId(userId.getId());
     }
 
+    @Override
+    public void setLastLoginTs(TenantId tenantId, UserId userId, long lastLoginTs) {
+        userCredentialsRepository.updateLastLoginTsByUserId(userId.getId(), lastLoginTs);
+    }
+
+    @Override
+    public int incrementFailedLoginAttempts(TenantId tenantId, UserId userId) {
+        return userCredentialsRepository.incrementFailedLoginAttemptsByUserId(userId.getId());
+    }
+
+    @Override
+    public void setFailedLoginAttempts(TenantId tenantId, UserId userId, int failedLoginAttempts) {
+        userCredentialsRepository.updateFailedLoginAttemptsByUserId(userId.getId(), failedLoginAttempts);
+    }
+
 }
