@@ -23,33 +23,41 @@ import { Observable } from 'rxjs';
 import { MenuId } from '@core/services/menu.models';
 import { DashboardViewComponent } from '@home/components/dashboard-view/dashboard-view.component';
 
-const apiUsageDashboardJson = '/assets/dashboard/api_usage.json';
+const gatewaysDashboardJson = '/api/resource/dashboard/system/gateways_dashboard.json';
 
-export const apiUsageDashboardResolver: ResolveFn<Dashboard> = (
+export const gatewaysDashboardResolver: ResolveFn<Dashboard> = (
   route: ActivatedRouteSnapshot,
   state: RouterStateSnapshot,
   resourcesService = inject(ResourcesService)
-): Observable<Dashboard> => resourcesService.loadJsonResource(apiUsageDashboardJson);
+): Observable<Dashboard> => resourcesService.loadJsonResource(gatewaysDashboardJson);
 
-const routes: Routes = [
+export const gatewaysRoutes: Routes = [
   {
-    path: 'usage',
+    path: 'gateways',
     component: DashboardViewComponent,
     data: {
       auth: [Authority.TENANT_ADMIN],
-      title: 'api-usage.api-usage',
+      title: 'gateway.gateways',
       breadcrumb: {
-        menuId: MenuId.api_usage
+        menuId: MenuId.gateways
       }
     },
     resolve: {
-      dashboard: apiUsageDashboardResolver
+      dashboard: gatewaysDashboardResolver
     }
   }
+];
+
+const routes: Routes = [
+  {
+    path: 'gateways',
+    pathMatch: 'full',
+    redirectTo: '/entities/gateways'
+  },
 ];
 
 @NgModule({
   imports: [RouterModule.forChild(routes)],
   exports: [RouterModule]
 })
-export class ApiUsageRoutingModule { }
+export class GatewaysRoutingModule { }
