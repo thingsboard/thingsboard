@@ -13,27 +13,17 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 :host {
-  background-color: #fff;
+  .mat-mdc-form-field {
+    width: 100%;
+  }
+}
 
-  .tb-timewindow-form {
-    overflow: hidden;
-
-    .tb-flex {
-      gap: 16px;
-    }
-
-    &-content {
-      overflow-y: auto;
-
-      tb-timeinterval,
-      tb-quick-time-interval,
-      tb-datetime-period,
-      tb-datapoints-limit,
-      tb-aggregation-type-select {
-        flex: 1;
-      }
-    }
+:host ::ng-deep {
+  .mat-mdc-form-field-infix {
+     width: 100%;
+  }
+  .mat-mdc-select-value {
+    min-width: 100px;
   }
 }

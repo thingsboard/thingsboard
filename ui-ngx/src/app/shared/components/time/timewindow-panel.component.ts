@@ -87,10 +87,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
 
   aggregationTypes = AggregationType;
 
-  aggregations = Object.keys(AggregationType);
-
-  aggregationTypesTranslations = aggregationTranslations;
-
   result: Timewindow;
 
   timewindowTypeOptions: ToggleHeaderOption[] = [{
@@ -517,4 +513,6 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         }
       });
   }
+
+  protected readonly AggregationType = AggregationType;
 }

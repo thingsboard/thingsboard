@@ -66,10 +66,6 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
 
   aggregationTypes = AggregationType;
 
-  aggregations = Object.keys(AggregationType);
-
-  aggregationTypesTranslations = aggregationTranslations;
-
   result: Timewindow;
 
   timewindowTypeOptions: ToggleHeaderOption[] = [

@@ -333,11 +333,12 @@ import * as AssetProfileComponent from '@home/components/profile/asset-profile.c
 import * as AssetProfileDialogComponent from '@home/components/profile/asset-profile-dialog.component';
 import * as AssetProfileAutocompleteComponent from '@home/components/profile/asset-profile-autocomplete.component';
 import * as RuleChainSelectComponent from '@shared/components/rule-chain/rule-chain-select.component';
+import * as TimezoneComponent from '@shared/components/time/timezone.component';
+import * as TimezonePanelComponent from '@shared/components/time/timezone-panel.component';
+import * as DatapointsLimitComponent from '@shared/components/time/datapoints-limit.component';
+import * as AggregationTypeSelectComponent from '@shared/components/aggregation/aggregation-type-select.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
-import { TimezoneComponent } from '@shared/components/time/timezone.component';
-import { TimezonePanelComponent } from '@shared/components/time/timezone-panel.component';
-import { DatapointsLimitComponent } from '@shared/components/time/datapoints-limit.component';
 
 class ModulesMap implements IModulesMap {
 
@@ -470,6 +471,7 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/timezone.component': TimezoneComponent,
     '@shared/components/time/timezone-panel.component': TimezonePanelComponent,
     '@shared/components/time/datapoints-limit': DatapointsLimitComponent,
+    '@shared/components/aggregation/aggregation-type-select': AggregationTypeSelectComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
     '@shared/components/entity/entity-subtype-autocomplete.component': EntitySubTypeAutocompleteComponent,

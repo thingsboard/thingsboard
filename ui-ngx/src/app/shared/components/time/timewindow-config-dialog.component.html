@@ -167,13 +167,9 @@
             </div>
           </mat-slide-toggle>
           <ng-container formGroupName="aggregation">
-            <mat-form-field class="flex" subscriptSizing="dynamic" appearance="outline">
-              <mat-select formControlName="type">
-                <mat-option *ngFor="let aggregation of aggregations" [value]="aggregation">
-                  {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
-                </mat-option>
-              </mat-select>
-            </mat-form-field>
+            <tb-aggregation-type-select class="flex" subscriptSizing="dynamic" appearance="outline" displayLabel="false"
+                                        formControlName="type">
+            </tb-aggregation-type-select>
           </ng-container>
         </div>
       </section>
