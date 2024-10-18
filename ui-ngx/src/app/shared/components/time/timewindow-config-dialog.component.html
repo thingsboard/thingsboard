@@ -169,6 +169,10 @@
           <ng-container formGroupName="aggregation">
             <tb-aggregation-type-select class="flex" subscriptSizing="dynamic" appearance="outline" displayLabel="false"
                                         formControlName="type">
+              <button matSuffix mat-icon-button type="button" class="tb-mat-24"
+                      (click)="openAggregationOptionsConfig($event)">
+                <mat-icon>edit</mat-icon>
+              </button>
             </tb-aggregation-type-select>
           </ng-container>
         </div>

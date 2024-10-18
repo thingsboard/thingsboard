@@ -337,6 +337,7 @@ import * as TimezoneComponent from '@shared/components/time/timezone.component';
 import * as TimezonePanelComponent from '@shared/components/time/timezone-panel.component';
 import * as DatapointsLimitComponent from '@shared/components/time/datapoints-limit.component';
 import * as AggregationTypeSelectComponent from '@shared/components/aggregation/aggregation-type-select.component';
+import * as AggregationOptionsConfigComponent from '@shared/components/aggregation/aggregation-options-config-panel.component';
 
 import { IModulesMap } from '@modules/common/modules-map.models';
 
@@ -470,8 +471,9 @@ class ModulesMap implements IModulesMap {
     '@shared/components/time/timezone-select.component': TimezoneSelectComponent,
     '@shared/components/time/timezone.component': TimezoneComponent,
     '@shared/components/time/timezone-panel.component': TimezonePanelComponent,
-    '@shared/components/time/datapoints-limit': DatapointsLimitComponent,
-    '@shared/components/aggregation/aggregation-type-select': AggregationTypeSelectComponent,
+    '@shared/components/time/datapoints-limit.component': DatapointsLimitComponent,
+    '@shared/components/aggregation/aggregation-type-select.component': AggregationTypeSelectComponent,
+    '@shared/components/aggregation/aggregation-options-config-panel.component': AggregationOptionsConfigComponent,
     '@shared/components/value-input.component': ValueInputComponent,
     '@shared/components/dashboard-autocomplete.component': DashboardAutocompleteComponent,
     '@shared/components/entity/entity-subtype-autocomplete.component': EntitySubTypeAutocompleteComponent,

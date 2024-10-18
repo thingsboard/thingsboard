@@ -14,9 +14,8 @@
 /// limitations under the License.
 ///
 
-import { Component, Inject, OnDestroy, OnInit } from '@angular/core';
+import { ChangeDetectorRef, Component, Inject, OnDestroy, OnInit, Renderer2, ViewContainerRef } from '@angular/core';
 import {
-  aggregationTranslations,
   AggregationType,
   DAY,
   HistoryWindowType,
@@ -38,6 +37,11 @@ import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
+import { TimezoneSelectionResult } from '@shared/components/time/timezone-panel.component';
+import { TbPopoverService } from '@shared/components/popover.service';
+import {
+  AggregationOptionsConfigPanelComponent
+} from '@shared/components/aggregation/aggregation-options-config-panel.component';
 
 export interface TimewindowConfigDialogData {
   quickIntervalOnly: boolean;
@@ -112,7 +116,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
               protected store: Store<AppState>,
               public fb: FormBuilder,
               private timeService: TimeService,
-              private translate: TranslateService) {
+              private translate: TranslateService,
+              private popoverService: TbPopoverService,
+              private renderer: Renderer2,
+              private cd: ChangeDetectorRef,
+              public viewContainerRef: ViewContainerRef) {
     super(store);
     this.quickIntervalOnly = data.quickIntervalOnly;
     this.aggregation = data.aggregation;
@@ -386,6 +394,32 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
     } else {
       return DAY;
     }
+  }
+
+  openAggregationOptionsConfig($event: Event) {
+    if ($event) {
+      $event.stopPropagation();
+    }
+    const trigger = ($event.target || $event.srcElement || $event.currentTarget) as Element;
+    if (this.popoverService.hasPopover(trigger)) {
+      this.popoverService.hidePopover(trigger);
+    } else {
+      const aggregationConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
+        this.viewContainerRef, AggregationOptionsConfigPanelComponent, ['bottomRight', 'leftBottom'], true, null,
+        {
+          allowedAggregationTypes: null,
+          onClose: (result: TimezoneSelectionResult | null) => {
+            aggregationConfigPopover.hide();
+            if (result) {
+              console.log(result);
+            }
+          }
+        },
+        {},
+        {}, {}, false);
+      aggregationConfigPopover.tbComponentRef.instance.popoverComponent = aggregationConfigPopover;
+    }
+    this.cd.detectChanges();
   }
 
 }

@@ -16,7 +16,6 @@
 
 import { Component, Inject, InjectionToken, OnDestroy, OnInit, ViewContainerRef } from '@angular/core';
 import {
-  aggregationTranslations,
   AggregationType,
   DAY,
   HistoryWindowType,
