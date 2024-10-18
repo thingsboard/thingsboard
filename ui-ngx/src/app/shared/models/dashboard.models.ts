@@ -209,6 +209,11 @@ export interface DashboardSetup extends Dashboard {
   assignedCustomerIds?: Array<string>;
 }
 
+export interface DashboardExportData {
+  dashboard?: Dashboard;
+  resources: any;
+}
+
 export const isPublicDashboard = (dashboard: DashboardInfo): boolean => {
   if (dashboard && dashboard.assignedCustomers) {
     return dashboard.assignedCustomers

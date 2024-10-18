@@ -44,7 +44,6 @@ import org.thingsboard.server.dao.service.Validator;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
 
 import static org.thingsboard.server.dao.service.Validator.validateIds;
 
@@ -218,7 +217,7 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         List<WidgetTypeId> toRemove = existingBundleWidgets.stream()
                 .map(WidgetsBundleWidget::getWidgetTypeId)
                 .filter(widgetTypeId -> bundleWidgets.stream().noneMatch(newBundleWidget ->
-                        newBundleWidget.getWidgetTypeId().equals(widgetTypeId))).collect(Collectors.toList());
+                        newBundleWidget.getWidgetTypeId().equals(widgetTypeId))).toList();
         for (WidgetTypeId widgetTypeId : toRemove) {
             widgetTypeDao.removeWidgetTypeFromWidgetsBundle(widgetsBundleId.getId(), widgetTypeId.getId());
         }
@@ -244,6 +243,12 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
     }
 
     @Override
+    public void deleteWidgetTypesByBundleId(TenantId tenantId, WidgetsBundleId bundleId) {
+        log.trace("Executing deleteWidgetTypesByBundleId, tenantId [{}], bundleId [{}]", tenantId, bundleId);
+        bundleWidgetTypesRemover.removeEntities(tenantId, bundleId);
+    }
+
+    @Override
     public void deleteByTenantId(TenantId tenantId) {
         deleteWidgetTypesByTenantId(tenantId);
     }
@@ -258,24 +263,36 @@ public class WidgetTypeServiceImpl implements WidgetTypeService {
         return EntityType.WIDGET_TYPE;
     }
 
-    private PaginatedRemover<TenantId, WidgetTypeInfo> tenantWidgetTypeRemover =
-            new PaginatedRemover<>() {
+    private final PaginatedRemover<TenantId, WidgetTypeInfo> tenantWidgetTypeRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return widgetTypeDao.findTenantWidgetTypesByTenantId(
-                            WidgetTypeFilter.builder()
-                                .tenantId(id)
-                                .fullSearch(false)
-                                .deprecatedFilter(DeprecatedFilter.ALL)
-                                .widgetTypes(null).build(),
-                            pageLink);
-                }
+        @Override
+        protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return widgetTypeDao.findTenantWidgetTypesByTenantId(
+                    WidgetTypeFilter.builder()
+                            .tenantId(id)
+                            .fullSearch(false)
+                            .deprecatedFilter(DeprecatedFilter.ALL)
+                            .widgetTypes(null).build(),
+                    pageLink);
+        }
 
-                @Override
-                protected void removeEntity(TenantId tenantId, WidgetTypeInfo entity) {
-                    deleteWidgetType(tenantId, new WidgetTypeId(entity.getUuidId()));
-                }
-            };
+        @Override
+        protected void removeEntity(TenantId tenantId, WidgetTypeInfo entity) {
+            deleteWidgetType(tenantId, new WidgetTypeId(entity.getUuidId()));
+        }
+    };
+
+    private final PaginatedRemover<WidgetsBundleId, WidgetTypeInfo> bundleWidgetTypesRemover = new PaginatedRemover<>() {
+
+        @Override
+        protected PageData<WidgetTypeInfo> findEntities(TenantId tenantId, WidgetsBundleId widgetsBundleId, PageLink pageLink) {
+            return findWidgetTypesInfosByWidgetsBundleId(tenantId, widgetsBundleId, false, DeprecatedFilter.ALL, null, pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, WidgetTypeInfo widgetTypeInfo) {
+            deleteWidgetType(tenantId, widgetTypeInfo.getId());
+        }
+    };
 
 }

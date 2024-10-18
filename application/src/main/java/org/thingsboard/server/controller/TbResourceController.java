@@ -44,10 +44,12 @@ import org.thingsboard.server.common.data.TbResourceInfo;
 import org.thingsboard.server.common.data.TbResourceInfoFilter;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TbResourceId;
+import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.lwm2m.LwM2mObject;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.security.Authority;
+import org.thingsboard.server.common.data.util.ThrowingSupplier;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.resource.TbResourceService;
@@ -106,13 +108,29 @@ public class TbResourceController extends BaseController {
                 .body(resource);
     }
 
+    @ApiOperation(value = "Download resource (downloadResource)",
+            notes = "Download resource with a given type and key for the given scope" + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
+    @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN', 'CUSTOMER_USER')")
+    @GetMapping(value = "/resource/{resourceType}/{scope}/{key}")
+    public ResponseEntity<ByteArrayResource> downloadResourceIfChanged(@Parameter(description = "Type of the resource", schema = @Schema(allowableValues = {"lwm2m_model", "jks", "pkcs_12", "js_module", "dashboard"}))
+                                                                       @PathVariable("resourceType") String resourceTypeStr,
+                                                                       @Parameter(description = "Scope of the resource", schema = @Schema(allowableValues = {"system", "tenant"}))
+                                                                       @PathVariable String scope,
+                                                                       @Parameter(description = "Key of the resource, e.g. 'extension.js'")
+                                                                       @PathVariable String key,
+                                                                       @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
+
+        ResourceType resourceType = ResourceType.valueOf(resourceTypeStr.toUpperCase());
+        return downloadResourceIfChanged(() -> checkResourceInfo(scope, resourceType, key, Operation.READ), etag);
+    }
+
     @ApiOperation(value = "Download LWM2M Resource (downloadLwm2mResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
     @PreAuthorize("hasAnyAuthority('SYS_ADMIN', 'TENANT_ADMIN')")
     @GetMapping(value = "/resource/lwm2m/{resourceId}/download", produces = "application/xml")
     public ResponseEntity<ByteArrayResource> downloadLwm2mResourceIfChanged(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                             @PathVariable(RESOURCE_ID) String strResourceId,
                                                                             @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.LWM2M_MODEL, strResourceId, etag);
+        return downloadResourceIfChanged(strResourceId, etag);
     }
 
     @ApiOperation(value = "Download PKCS_12 Resource (downloadPkcs12ResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + SYSTEM_OR_TENANT_AUTHORITY_PARAGRAPH)
@@ -121,7 +139,7 @@ public class TbResourceController extends BaseController {
     public ResponseEntity<ByteArrayResource> downloadPkcs12ResourceIfChanged(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                              @PathVariable(RESOURCE_ID) String strResourceId,
                                                                              @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.PKCS_12, strResourceId, etag);
+        return downloadResourceIfChanged(strResourceId, etag);
     }
 
     @ApiOperation(value = "Download JKS Resource (downloadJksResourceIfChanged)",
@@ -131,7 +149,7 @@ public class TbResourceController extends BaseController {
     public ResponseEntity<ByteArrayResource> downloadJksResourceIfChanged(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                           @PathVariable(RESOURCE_ID) String strResourceId,
                                                                           @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.JKS, strResourceId, etag);
+        return downloadResourceIfChanged(strResourceId, etag);
     }
 
     @ApiOperation(value = "Download JS Resource (downloadJsResourceIfChanged)", notes = DOWNLOAD_RESOURCE_IF_NOT_CHANGED + AVAILABLE_FOR_ANY_AUTHORIZED_USER)
@@ -140,7 +158,7 @@ public class TbResourceController extends BaseController {
     public ResponseEntity<ByteArrayResource> downloadJsResourceIfChanged(@Parameter(description = RESOURCE_ID_PARAM_DESCRIPTION)
                                                                          @PathVariable(RESOURCE_ID) String strResourceId,
                                                                          @RequestHeader(name = HttpHeaders.IF_NONE_MATCH, required = false) String etag) throws ThingsboardException {
-        return downloadResourceIfChanged(ResourceType.JS_MODULE, strResourceId, etag);
+        return downloadResourceIfChanged(strResourceId, etag);
     }
 
     @ApiOperation(value = "Get Resource Info (getResourceInfoById)",
@@ -211,6 +229,7 @@ public class TbResourceController extends BaseController {
         } else {
             Collections.addAll(resourceTypes, ResourceType.values());
             resourceTypes.remove(ResourceType.IMAGE);
+            resourceTypes.remove(ResourceType.DASHBOARD);
         }
         filter.resourceTypes(resourceTypes);
         if (Authority.SYS_ADMIN.equals(getCurrentUser().getAuthority())) {
@@ -271,7 +290,7 @@ public class TbResourceController extends BaseController {
                                                  @RequestParam String sortOrder,
                                                  @Parameter(description = SORT_PROPERTY_DESCRIPTION, schema = @Schema(allowableValues = {"id", "name"}, requiredMode = Schema.RequiredMode.REQUIRED))
                                                  @RequestParam String sortProperty,
-                                                 @Parameter(description = "LwM2M Object ids.",  array = @ArraySchema(schema = @Schema(type = "string")), required = true)
+                                                 @Parameter(description = "LwM2M Object ids.", array = @ArraySchema(schema = @Schema(type = "string")), required = true)
                                                  @RequestParam(required = false) String[] objectIds) throws ThingsboardException {
         return checkNotNull(tbResourceService.findLwM2mObject(getTenantId(), sortOrder, sortProperty, objectIds));
     }
@@ -288,30 +307,49 @@ public class TbResourceController extends BaseController {
         tbResourceService.delete(tbResource, getCurrentUser());
     }
 
-    private ResponseEntity<ByteArrayResource> downloadResourceIfChanged(ResourceType resourceType, String strResourceId, String etag) throws ThingsboardException {
+    private ResponseEntity<ByteArrayResource> downloadResourceIfChanged(String strResourceId, String etag) throws ThingsboardException {
         checkParameter(RESOURCE_ID, strResourceId);
         TbResourceId resourceId = new TbResourceId(toUUID(strResourceId));
+        return downloadResourceIfChanged(() -> checkResourceInfoId(resourceId, Operation.READ), etag);
+    }
+
+    private ResponseEntity<ByteArrayResource> downloadResourceIfChanged(ThrowingSupplier<TbResourceInfo> resourceInfoProvider,
+                                                                        String etag) throws ThingsboardException {
+        TbResourceInfo resourceInfo = resourceInfoProvider.get();
         if (etag != null) {
-            TbResourceInfo tbResourceInfo = checkResourceInfoId(resourceId, Operation.READ);
             etag = StringUtils.remove(etag, '\"'); // etag is wrapped in double quotes due to HTTP specification
-            if (etag.equals(tbResourceInfo.getEtag())) {
+            if (etag.equals(resourceInfo.getEtag())) {
                 return ResponseEntity.status(HttpStatus.NOT_MODIFIED)
-                        .eTag(tbResourceInfo.getEtag())
+                        .eTag(resourceInfo.getEtag())
                         .build();
             }
         }
 
-        TbResource tbResource = checkResourceId(resourceId, Operation.READ);
-
-        ByteArrayResource resource = new ByteArrayResource(tbResource.getData());
+        byte[] data = resourceService.getResourceData(resourceInfo.getTenantId(), resourceInfo.getId());
+        ByteArrayResource resource = new ByteArrayResource(data);
         return ResponseEntity.ok()
-                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + tbResource.getFileName())
-                .header("x-filename", tbResource.getFileName())
+                .header(HttpHeaders.CONTENT_DISPOSITION, "attachment;filename=" + resourceInfo.getFileName())
+                .header("x-filename", resourceInfo.getFileName())
                 .contentLength(resource.contentLength())
-                .header("Content-Type", resourceType.getMediaType())
+                .header("Content-Type", resourceInfo.getResourceType().getMediaType())
                 .cacheControl(CacheControl.noCache())
-                .eTag(tbResource.getEtag())
+                .eTag(resourceInfo.getEtag())
                 .body(resource);
+    }
+
+    private TbResourceInfo checkResourceInfo(String scope, ResourceType resourceType, String key, Operation operation) throws ThingsboardException {
+        TenantId tenantId;
+        if (scope.equals("tenant")) {
+            tenantId = getTenantId();
+        } else if (scope.equals("system")) {
+            tenantId = TenantId.SYS_TENANT_ID;
+        } else {
+            throw new IllegalArgumentException("Invalid scope");
+        }
+
+        TbResourceInfo resourceInfo = resourceService.findResourceInfoByTenantIdAndKey(tenantId, resourceType, key);
+        checkEntity(getCurrentUser(), checkNotNull(resourceInfo), operation);
+        return resourceInfo;
     }
 
 }

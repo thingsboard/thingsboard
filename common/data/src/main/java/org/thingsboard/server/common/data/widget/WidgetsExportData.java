@@ -13,18 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.dao.util;
+package org.thingsboard.server.common.data.widget;
 
-import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Data;
+import org.thingsboard.server.common.data.ResourceExportData;
+
+import java.util.List;
 
 @Data
-public class JsonNodeProcessingTask {
-    private final String path;
-    private final JsonNode node;
+public class WidgetsExportData {
+    private List<WidgetTypeDetails> widgetTypesDetails;
+    private List<ResourceExportData> resources;
 
-    public JsonNodeProcessingTask(String path, JsonNode node) {
-        this.path = path;
-        this.node = node;
-    }
 }

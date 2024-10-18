@@ -13,30 +13,15 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.thingsboard.server.common.data;
+package org.thingsboard.server.common.data.widget;
 
-import io.swagger.v3.oas.annotations.media.Schema;
-import lombok.AllArgsConstructor;
-import lombok.Builder;
 import lombok.Data;
-import lombok.NoArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
+import org.thingsboard.server.common.data.ResourceExportData;
 
-@Schema
-@Slf4j
+import java.util.List;
+
 @Data
-@NoArgsConstructor
-@AllArgsConstructor
-@Builder
-public class ImageExportData {
-
-    private String mediaType;
-    private String fileName;
-    private String title;
-    private String subType;
-    private String resourceKey;
-    private boolean isPublic;
-    private String publicResourceKey;
-    private String data;
-
+public class WidgetExportData {
+    private WidgetTypeDetails widgetTypeDetails;
+    private List<ResourceExportData> resources;
 }

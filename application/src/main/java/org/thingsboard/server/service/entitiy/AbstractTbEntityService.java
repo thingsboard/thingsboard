@@ -35,6 +35,7 @@ import org.thingsboard.server.dao.customer.CustomerService;
 import org.thingsboard.server.dao.edge.EdgeService;
 import org.thingsboard.server.dao.model.ModelConstants;
 import org.thingsboard.server.service.executors.DbCallbackExecutorService;
+import org.thingsboard.server.service.security.permission.AccessControlService;
 import org.thingsboard.server.service.sync.vc.EntitiesVersionControlService;
 import org.thingsboard.server.service.telemetry.AlarmSubscriptionService;
 
@@ -71,6 +72,8 @@ public abstract class AbstractTbEntityService {
     @Autowired(required = false)
     @Lazy
     private EntitiesVersionControlService vcService;
+    @Autowired
+    protected AccessControlService accessControlService;
 
     protected boolean isTestProfile() {
         return Set.of(this.env.getActiveProfiles()).contains("test");

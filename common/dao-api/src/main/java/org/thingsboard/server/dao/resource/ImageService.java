@@ -27,6 +27,8 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 
+import java.util.List;
+
 public interface ImageService {
 
     TbResourceInfo saveImage(TbResource image);
@@ -59,13 +61,14 @@ public interface ImageService {
 
     void inlineImage(HasImage entity);
 
-    void inlineImages(Dashboard dashboard);
+    List<TbResourceInfo> inlineImages(Dashboard dashboard);
 
-    void inlineImages(WidgetTypeDetails widgetTypeDetails);
+    List<TbResourceInfo> inlineImages(WidgetTypeDetails widgetTypeDetails);
 
     void inlineImageForEdge(HasImage entity);
 
     void inlineImagesForEdge(Dashboard dashboard);
 
     void inlineImagesForEdge(WidgetTypeDetails widgetTypeDetails);
+
 }

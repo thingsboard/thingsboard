@@ -8,7 +8,15 @@
     "type": "static",
     "sizeX": 8,
     "sizeY": 6.5,
-    "resources": [],
+    "resources": [
+      {
+        "url": {
+          "entityType": "TB_RESOURCE",
+          "id": "${RESOURCE:gateway-management-extension.js}"
+        },
+        "isModule": true
+      }
+    ],
     "templateHtml": "<tb-gateway-form\n    [ctx]=\"ctx\">\n</tb-gateway-form>\n",
     "templateCss": "",
     "controllerScript": "self.onInit = function() {\n}\n",
