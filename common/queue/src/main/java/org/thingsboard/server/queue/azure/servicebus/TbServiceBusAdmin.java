@@ -31,6 +31,7 @@ import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 
 @Slf4j
+@Deprecated(forRemoval = true, since = "3.9") // for removal in 4.0
 public class TbServiceBusAdmin implements TbQueueAdmin {
     private final String MAX_SIZE = "maxSizeInMb";
     private final String MESSAGE_TIME_TO_LIVE = "messageTimeToLiveInSec";
