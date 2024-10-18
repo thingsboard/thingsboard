@@ -1101,11 +1101,19 @@ public class DefaultTransportService extends TransportActivityManager implements
     }
 
     private void sendToCore(TenantId tenantId, EntityId entityId, ToCoreMsg msg, UUID routingKey, TransportServiceCallback<Void> callback) {
-        TopicPartitionInfo tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        TopicPartitionInfo tpi;
+        try {
+            tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
+        } catch (TenantNotFoundException e) {
+            log.trace("Failed to send message to core. Tenant with ID [{}] not found in the database. Message delivery aborted.", tenantId, e);
+            tpi = TopicPartitionInfo.builder().topic("").build();
+            if (callback != null) {
+                callback.onError(e);
+            }
+        }
         if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
         }
-
         TransportTbQueueCallback transportTbQueueCallback = callback != null ?
                 new TransportTbQueueCallback(callback) : null;
         tbCoreProducerStats.incrementTotal();
