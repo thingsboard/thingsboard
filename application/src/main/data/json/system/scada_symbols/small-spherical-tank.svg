@@ -38,6 +38,11 @@
       "actions": null
     },
     {
+      "tag": "scale-background",
+      "stateRenderFunction": "if (!ctx.properties.scale) {\n    element.hide();\n}",
+      "actions": null
+    },
+    {
       "tag": "top-layer",
       "stateRenderFunction": "if (ctx.properties.transparent || !ctx.properties.scale) {\n    element.hide();\n}",
       "actions": null
@@ -556,7 +561,7 @@
     }
   ]
 }]]></tb:metadata>
-<circle cx="300" cy="300" r="300" fill="#E5E5E5" tb:tag="background"/><circle cx="300" cy="300" r="300" fill="url(#paint0_radial_1711_268272)"/><circle cx="300" cy="300" r="298.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="300" cy="300" r="300" fill="#4A4848" fill-opacity=".5"/><mask id="mask0_1711_268272" x="16" y="16" width="568" height="568" style="mask-type:alpha" maskUnits="userSpaceOnUse">
+<circle cx="300" cy="300" r="300" fill="#E5E5E5" tb:tag="background"/><circle cx="300" cy="300" r="300" fill="url(#paint0_radial_1711_268272)"/><circle cx="300" cy="300" r="298.5" stroke="#000" stroke-opacity=".12" stroke-width="3"/><circle cx="300" cy="300" r="300" fill="#4A4848" fill-opacity=".5" tb:tag="scale-background"/><mask id="mask0_1711_268272" x="16" y="16" width="568" height="568" style="mask-type:alpha" maskUnits="userSpaceOnUse">
   <circle cx="300" cy="300" r="284" fill="#D9D9D9"/>
  </mask><g mask="url(#mask0_1711_268272)">
   <rect transform="scale(1,-1)" y="-584" width="600" height="200" fill="#1ec1f4" fill-opacity=".5" tb:tag="fluid-background"/>
