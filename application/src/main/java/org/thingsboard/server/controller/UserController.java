@@ -217,7 +217,11 @@ public class UserController extends BaseController {
         accessControlService.checkPermission(securityUser, Resource.USER, Operation.READ, user.getId(), user);
 
         UserActivationLink activationLink = tbUserService.getActivationLink(securityUser.getTenantId(), securityUser.getCustomerId(), user.getId(), request);
-        mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), email);
+        try {
+            mailService.sendActivationEmail(activationLink.value(), activationLink.ttlMs(), email);
+        } catch (Exception e) {
+            throw new ThingsboardException("Couldn't send user activation email", ThingsboardErrorCode.GENERAL);
+        }
     }
 
     @ApiOperation(value = "Get activation link (getActivationLink)",

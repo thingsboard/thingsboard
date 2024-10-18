@@ -42,7 +42,7 @@ import { MatTableDataSource } from '@angular/material/table';
 import { ActionNotificationShow } from '@core/notification/notification.actions';
 import { DialogService } from '@core/services/dialog.service';
 import { WidgetContext } from '@home/models/widget-component.models';
-import { camelCase, deepClone, generateSecret, isEqual, isString } from '@core/utils';
+import { camelCase, deepClone, isEqual, isString } from '@core/utils';
 import { NULL_UUID } from '@shared/models/id/has-uuid';
 import { IWidgetSubscription, WidgetSubscriptionOptions } from '@core/api/widget-api.models';
 import { DatasourceType, widgetType } from '@shared/models/widget.models';
@@ -59,7 +59,8 @@ import {
   GatewayConnectorDefaultTypesTranslatesMap,
   GatewayLogLevel,
   noLeadTrailSpacesRegex,
-  GatewayVersion,
+  ReportStrategyDefaultValue,
+  ReportStrategyType,
 } from './gateway-widget.models';
 import { MatDialog } from '@angular/material/dialog';
 import { AddConnectorDialogComponent } from '@home/components/widget/lib/gateway/dialog/add-connector-dialog.component';
@@ -69,6 +70,7 @@ import { PageData } from '@shared/models/page/page-data';
 import {
   GatewayConnectorVersionMappingUtil
 } from '@home/components/widget/lib/gateway/utils/gateway-connector-version-mapping.util';
+import { LatestVersionConfigPipe } from '@home/components/widget/lib/gateway/pipes/latest-version-config.pipe';
 
 export class ForceErrorStateMatcher implements ErrorStateMatcher {
   isErrorState(control: FormControl | null): boolean {
@@ -102,7 +104,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   readonly displayedColumns = ['enabled', 'key', 'type', 'syncStatus', 'errors', 'actions'];
   readonly GatewayConnectorTypesTranslatesMap = GatewayConnectorDefaultTypesTranslatesMap;
   readonly ConnectorConfigurationModes = ConfigurationModes;
-  readonly GatewayVersion = GatewayVersion;
+  readonly ReportStrategyDefaultValue = ReportStrategyDefaultValue;
 
   pageLink: PageLink;
   dataSource: MatTableDataSource<GatewayAttributeData>;
@@ -146,6 +148,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
               private telemetryWsService: TelemetryWebsocketService,
               private zone: NgZone,
               private utils: UtilsService,
+              private isLatestVersionConfig: LatestVersionConfigPipe,
               private cd: ChangeDetectorRef) {
     super(store);
 
@@ -170,18 +173,21 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     super.ngOnDestroy();
   }
 
-  saveConnector(isNew = true): void {
-    const value = this.getConnectorData();
+  onSaveConnector(): void {
+    this.saveConnector(this.getUpdatedConnectorData(this.connectorForm.value), false);
+  }
+
+  private saveConnector(connector: GatewayConnector, isNew = true): void {
     const scope = (isNew || this.activeConnectors.includes(this.initialConnector.name))
       ? AttributeScope.SHARED_SCOPE
       : AttributeScope.SERVER_SCOPE;
 
-    forkJoin(this.getEntityAttributeTasks(value, scope)).pipe(take(1)).subscribe(_ => {
-      this.showToast(!this.initialConnector
-                      ? this.translate.instant('gateway.connector-created')
-                      : this.translate.instant('gateway.connector-updated')
+    forkJoin(this.getEntityAttributeTasks(connector, scope)).pipe(take(1)).subscribe(_ => {
+      this.showToast(isNew
+        ? this.translate.instant('gateway.connector-created')
+        : this.translate.instant('gateway.connector-updated')
       );
-      this.initialConnector = value;
+      this.initialConnector = connector;
       this.updateData(true);
       this.connectorForm.markAsPristine();
     });
@@ -237,8 +243,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
   }
 
-  private getConnectorData(): GatewayConnector {
-    const value = { ...this.connectorForm.value };
+  private getUpdatedConnectorData(connector: GatewayConnector): GatewayConnector {
+    const value = {...connector };
     value.configuration = `${camelCase(value.name)}.json`;
     delete value.basicConfig;
 
@@ -247,6 +253,16 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     }
     if (value.type !== ConnectorType.CUSTOM) {
       delete value.class;
+    }
+
+    if (value.type === ConnectorType.MODBUS && this.isLatestVersionConfig.transform(value.configVersion)) {
+      if (!value.reportStrategy) {
+        value.reportStrategy = {
+          type: ReportStrategyType.OnReportPeriod,
+          reportPeriod: ReportStrategyDefaultValue.Connector
+        };
+        delete value.sendDataOnlyOnChange;
+      }
     }
 
     if (this.gatewayVersion && !value.configVersion) {
@@ -472,7 +488,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     return (connector && this.activeConnectors.includes(connectorName)) ? (connector.data[0][1] || 0) : 'Inactive';
   }
 
-  addConnector(event?: Event): void {
+  onAddConnector(event?: Event): void {
     event?.stopPropagation();
 
     this.confirmConnectorChange()
@@ -482,40 +498,58 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
         switchMap(() => this.openAddConnectorDialog()),
         filter(Boolean),
       )
-      .subscribe(value => {
-        if (this.connectorForm.disabled) {
-          this.connectorForm.enable();
-        }
-        if (!value.configurationJson) {
-          value.configurationJson = {} as ConnectorBaseConfig;
-        }
-        value.basicConfig = value.configurationJson;
-        this.initialConnector = value;
-        this.connectorForm.patchValue(value, {emitEvent: false});
-        this.generate('basicConfig.broker.clientId');
-        if (this.connectorForm.get('type').value === value.type || !this.allowBasicConfig.has(value.type)) {
-          this.saveConnector();
-        } else {
-          this.basicConfigInitSubject.pipe(take(1)).subscribe(() => {
-            this.saveConnector();
-          });
-        }
-    });
+      .subscribe(connector => this.addConnector(connector));
+  }
+
+  private addConnector(connector: GatewayConnector): void {
+    if (this.connectorForm.disabled) {
+      this.connectorForm.enable();
+    }
+    if (!connector.configurationJson) {
+      connector.configurationJson = {} as ConnectorBaseConfig;
+    }
+    if (this.gatewayVersion && !connector.configVersion) {
+      connector.configVersion = this.gatewayVersion;
+    }
+    connector.basicConfig = connector.configurationJson;
+    this.initialConnector = connector;
+
+    const previousType = this.connectorForm.get('type').value;
+
+    this.setInitialConnectorValues(connector);
+
+    this.saveConnector(this.getUpdatedConnectorData(connector));
+
+    if (previousType === connector.type || !this.allowBasicConfig.has(connector.type)) {
+      this.patchBasicConfigConnector(connector);
+    } else {
+      this.basicConfigInitSubject.pipe(take(1)).subscribe(() => {
+        this.patchBasicConfigConnector(connector);
+      });
+    }
+  }
+
+  private setInitialConnectorValues(connector: GatewayConnector): void {
+    const {basicConfig, mode, ...initialConnector} = connector;
+    this.toggleReportStrategy(connector.type);
+    this.connectorForm.get('mode').setValue(this.allowBasicConfig.has(connector.type)
+      ? connector.mode ?? ConfigurationModes.BASIC
+      : null, {emitEvent: false}
+    );
+    this.connectorForm.patchValue(initialConnector, {emitEvent: false});
   }
 
   private openAddConnectorDialog(): Observable<GatewayConnector> {
-    return this.dialog.open<AddConnectorDialogComponent, AddConnectorConfigData>(AddConnectorDialogComponent, {
-      disableClose: true,
-      panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
-      data: {
-        dataSourceData: this.dataSource.data,
-        gatewayVersion: this.gatewayVersion,
-      }
-    }).afterClosed();
-  }
-
-  generate(formControlName: string): void {
-    this.connectorForm.get(formControlName)?.patchValue('tb_gw_' + generateSecret(5));
+    return this.ctx.ngZone.run(() =>
+      this.dialog.open<AddConnectorDialogComponent, AddConnectorConfigData>(AddConnectorDialogComponent, {
+        disableClose: true,
+        panelClass: ['tb-dialog', 'tb-fullscreen-dialog'],
+        data: {
+          dataSourceData: this.dataSource.data,
+          gatewayVersion: this.gatewayVersion,
+        }
+      }).afterClosed()
+    );
   }
 
   uniqNameRequired(): ValidatorFn {
@@ -607,7 +641,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
 
         const active = attributes.find(data => data.key === 'active').value;
         const lastDisconnectedTime = attributes.find(data => data.key === 'lastDisconnectTime')?.value;
-        const lastConnectedTime = attributes.find(data => data.key === 'lastConnectTime').value;
+        const lastConnectedTime = attributes.find(data => data.key === 'lastConnectTime')?.value;
 
         this.isGatewayActive = this.getGatewayStatus(active, lastConnectedTime, lastDisconnectedTime);
       });
@@ -621,13 +655,8 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
   private observeModeChange(): void {
     this.connectorForm.get('mode').valueChanges
       .pipe(takeUntil(this.destroy$))
-      .subscribe((mode) => {
+      .subscribe(() => {
         this.connectorForm.get('mode').markAsPristine();
-        if (mode === ConfigurationModes.BASIC) {
-          this.basicConfigInitSubject.pipe(take(1)).subscribe(() => {
-            this.patchBasicConfigConnector({...this.initialConnector, mode: ConfigurationModes.BASIC});
-          });
-        }
       });
   }
 
@@ -798,13 +827,17 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       ...connector,
     }, this.gatewayVersion);
 
+    if (this.gatewayVersion && !connectorState.configVersion) {
+      connectorState.configVersion = this.gatewayVersion;
+    }
+
     connectorState.basicConfig = connectorState.configurationJson;
     this.initialConnector = connectorState;
     this.updateConnector(connectorState);
   }
 
   private updateConnector(connector: GatewayConnector): void {
-    this.toggleReportStrategy(connector.type);
+    this.jsonConfigSub?.unsubscribe();
     switch (connector.type) {
       case ConnectorType.MQTT:
       case ConnectorType.OPCUA:
@@ -814,19 +847,21 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
       default:
         this.connectorForm.patchValue({...connector, mode: null});
         this.connectorForm.markAsPristine();
+        this.createJsonConfigWatcher();
     }
-    this.createJsonConfigWatcher();
   }
 
   private updateBasicConfigConnector(connector: GatewayConnector): void {
-    this.connectorForm.get('mode').setValue(connector.mode || ConfigurationModes.BASIC, {emitEvent: false});
-    this.connectorForm.get('configVersion').setValue(connector.configVersion, {emitEvent: false});
-    if ((!connector.mode || connector.mode === ConfigurationModes.BASIC) && this.connectorForm.get('type').value !== connector.type) {
+    this.basicConfigSub?.unsubscribe();
+    const previousType = this.connectorForm.get('type').value;
+    this.setInitialConnectorValues(connector);
+
+    if (previousType === connector.type || !this.allowBasicConfig.has(connector.type)) {
+      this.patchBasicConfigConnector(connector);
+    } else {
       this.basicConfigInitSubject.asObservable().pipe(take(1)).subscribe(() => {
         this.patchBasicConfigConnector(connector);
       });
-    } else {
-      this.patchBasicConfigConnector(connector);
     }
   }
 
@@ -834,6 +869,7 @@ export class GatewayConnectorComponent extends PageComponent implements AfterVie
     this.connectorForm.patchValue(connector, {emitEvent: false});
     this.connectorForm.markAsPristine();
     this.createBasicConfigWatcher();
+    this.createJsonConfigWatcher();
   }
 
   private toggleReportStrategy(type: ConnectorType): void {

@@ -14,14 +14,19 @@
 /// limitations under the License.
 ///
 
-import { browser, by, element } from 'protractor';
+import { Pipe, PipeTransform } from '@angular/core';
+import { GatewayVersion } from '@home/components/widget/lib/gateway/gateway-widget.models';
+import {
+  GatewayConnectorVersionMappingUtil
+} from '@home/components/widget/lib/gateway/utils/gateway-connector-version-mapping.util';
 
-export class AppPage {
-  navigateTo() {
-    return browser.get(browser.baseUrl) as Promise<any>;
-  }
-
-  getTitleText() {
-    return element(by.css('tb-root h1')).getText() as Promise<string>;
+@Pipe({
+  name: 'isLatestVersionConfig',
+  standalone: true,
+})
+export class LatestVersionConfigPipe implements PipeTransform {
+  transform(configVersion: number | string): boolean {
+    return GatewayConnectorVersionMappingUtil.parseVersion(configVersion)
+      >= GatewayConnectorVersionMappingUtil.parseVersion(GatewayVersion.Current);
   }
 }

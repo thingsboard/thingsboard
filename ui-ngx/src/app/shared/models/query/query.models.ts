@@ -33,7 +33,6 @@ import {
 } from '@core/utils';
 import { TranslateService } from '@ngx-translate/core';
 import { AlarmInfo, AlarmSearchStatus, AlarmSeverity } from '../alarm.models';
-import { Filter } from '@material-ui/icons';
 import { DatePipe } from '@angular/common';
 import { UserId } from '../id/user-id';
 import { Direction } from '@shared/models/page/sort-order';

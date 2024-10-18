@@ -705,6 +705,12 @@ mat-icon {
     table-layout: auto;
     border-collapse: separate;
     margin: 0;
+    .mat-mdc-header-row {
+      height: 56px;
+    }
+    .mat-mdc-footer-row, .mat-mdc-row {
+      height: 52px;
+    }
   }
 
   .tb-table-widget {
@@ -728,14 +734,6 @@ mat-icon {
 
   .mat-mdc-footer-row::after, .mat-mdc-header-row::after, .mat-mdc-row::after {
     content: none;
-  }
-
-  .mat-mdc-header-row {
-    height: 60px;
-  }
-
-  .mat-mdc-footer-row, .mat-mdc-row {
-    height: 52px;
   }
 
   .mat-mdc-header-row, .mat-mdc-footer-row, .mat-mdc-row {
