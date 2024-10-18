@@ -220,8 +220,8 @@ export interface ScadaSymbolMetadata {
 
 export const emptyMetadata = (width?: number, height?: number): ScadaSymbolMetadata => ({
   title: '',
-  widgetSizeX: width ? width/100 : 3,
-  widgetSizeY: height ? height/100 : 3,
+  widgetSizeX: width ? Math.max(Math.round(width/100), 1) : 3,
+  widgetSizeY: height ? Math.max(Math.round(height/100), 1) : 3,
   tags: [],
   behavior: [],
   properties: []

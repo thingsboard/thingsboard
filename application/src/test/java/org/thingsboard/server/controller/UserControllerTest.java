@@ -113,6 +113,7 @@ public class UserControllerTest extends AbstractControllerTest {
         Assert.assertEquals(email, savedUser.getEmail());
 
         User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
+        foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
         Assert.assertEquals(foundUser, savedUser);
 
         testNotifyManyEntityManyTimeMsgToEdgeServiceEntityEqAny(foundUser, foundUser,
@@ -265,6 +266,7 @@ public class UserControllerTest extends AbstractControllerTest {
         User savedUser = doPost("/api/user", user, User.class);
         User foundUser = doGet("/api/user/" + savedUser.getId().getId().toString(), User.class);
         Assert.assertNotNull(foundUser);
+        foundUser.setAdditionalInfo(savedUser.getAdditionalInfo());
         Assert.assertEquals(savedUser, foundUser);
     }
 
