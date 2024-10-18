@@ -19,7 +19,7 @@
   <div class="tb-date-format-settings-title" translate>date.custom-date</div>
   <div class="tb-form-row no-border no-padding">
     <div class="fixed-title-width" translate>date.format</div>
-    <mat-form-field class="tb-date-format-input" required fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="tb-date-format-input flex-1" required appearance="outline" subscriptSizing="dynamic">
       <input matInput [formControl]="dateFormatFormControl" placeholder="{{ 'widget-config.set' | translate }}">
       <div matIconSuffix tb-help-popup="date/date-format" [tb-help-popup-style]="{width: '800px'}"></div>
     </mat-form-field>
@@ -27,7 +27,7 @@
   <mat-divider></mat-divider>
   <div class="tb-form-row no-border no-padding date-format-preview">
     <div class="fixed-title-width" translate>date.preview</div>
-    <div class="preview-text" fxFlex>{{ previewText }}</div>
+    <div class="preview-text flex-1">{{ previewText }}</div>
   </div>
   <div class="tb-date-format-settings-panel-buttons">
     <button mat-button

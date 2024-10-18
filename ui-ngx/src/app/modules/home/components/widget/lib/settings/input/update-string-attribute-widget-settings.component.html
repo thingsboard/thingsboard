@@ -15,18 +15,18 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="updateStringAttributeWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="updateStringAttributeWidgetSettingsForm">
   <tb-update-attribute-general-settings
     formControlName="updateAttributeGeneralSettings">
   </tb-update-attribute-general-settings>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.text-field-settings</legend>
-    <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-form-field fxFlex class="mat-block">
+    <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.min-length</mat-label>
         <input matInput type="number" step="1" min="0" formControlName="minLength">
       </mat-form-field>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.max-length</mat-label>
         <input matInput type="number" step="1" min="1" formControlName="maxLength">
       </mat-form-field>

@@ -46,7 +46,7 @@
       <ng-template [ngSwitchCase]="layout === valueCardLayout.horizontal ||
                                    layout === valueCardLayout.horizontal_reversed ? layout : ''">
         <ng-container *ngTemplateOutlet="iconWithLabelTpl"></ng-container>
-        <div fxFlex></div>
+        <div class="flex-1"></div>
         <ng-container *ngTemplateOutlet="valueTpl"></ng-container>
       </ng-template>
     </ng-container>

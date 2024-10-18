@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="row" fxLayoutGap="8px">
+<div class="flex flex-1 flex-row gap-2">
   <fieldset class="fieldset-element">
     <legend class="legend-element">{{ label | translate }}</legend>
-    <div [formGroup]="rateLimitsFormGroup" fxFlex fxLayout="row" fxLayoutGap="8px"
+    <div [formGroup]="rateLimitsFormGroup" class="flex flex-1 flex-row gap-2"
          (click)="onClick($event)"
          [matTooltip]="'tenant-profile.rate-limits.edit-limit' | translate" matTooltipPosition="above">
       <tb-rate-limits-text [rateLimitsArray]="rateLimitsArray" [disabled]="disabled"></tb-rate-limits-text>

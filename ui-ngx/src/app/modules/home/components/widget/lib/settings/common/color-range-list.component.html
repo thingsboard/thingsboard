@@ -16,9 +16,9 @@
 
 -->
 <ng-container  [formGroup]="colorRangeListFormGroup">
-  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="advancedMode; else basicMode">
-    <div fxFlex class="tb-form-panel-title" translate>widgets.color.settings-type</div>
-    <tb-toggle-select formControlName="advancedMode" fxFlex>
+  <div class="flex flex-row items-center justify-start" *ngIf="advancedMode; else basicMode">
+    <div class="tb-form-panel-title flex-1" translate>widgets.color.settings-type</div>
+    <tb-toggle-select formControlName="advancedMode" class="flex-1">
       <tb-toggle-option [value]="false">
         {{ 'widgets.color.basic-mode' | translate }}
       </tb-toggle-option>
@@ -29,8 +29,8 @@
   </div>
 
   <ng-template #basicMode>
-    <div fxLayout="row" fxLayoutAlign="start center">
-      <div fxFlex *ngIf="panelTitle" class="tb-form-panel-title">{{ panelTitle }}</div>
+    <div class="flex flex-row items-center justify-start">
+      <div *ngIf="panelTitle" class="tb-form-panel-title flex-1">{{ panelTitle }}</div>
     </div>
   </ng-template>
 
@@ -41,16 +41,16 @@
         <div cdkDrag class="tb-draggable tb-advanced-range-drag"
              [formGroup]="rangeFormGroup"
              *ngFor="let rangeFormGroup of rangeListFormGroups; trackBy: trackByRange; let $index = index; last as isLast;"
-             [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-          <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+             [class.pb-2]="!isLast">
+          <div class="flex flex-1 flex-row items-center justify-start">
             <div class="tb-form-row range-container">
               <div class="tb-value-range-text" translate>widgets.color.from</div>
-              <mat-form-field fxFlex appearance="outline" class="center number" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="center number flex-1" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="from" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
 
               <div class="tb-value-range-text tb-value-range-text-to" translate>widgets.color.to</div>
-              <mat-form-field fxFlex appearance="outline" class="center number" subscriptSizing="dynamic">
+              <mat-form-field appearance="outline" class="center number flex-1" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="to" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
 
@@ -84,7 +84,7 @@
            (cdkDropListDropped)="rangeDrop($event, 'rangeAdvanced')">
         <div cdkDrag class="tb-draggable tb-advanced-range-drag"
              *ngFor="let advancedRangeControl of advancedRangeControls; trackBy: trackByAdvancedRange;let $index = index; last as isLast;"
-             [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+             [class.pb-2]="!isLast">
           <tb-advanced-range [formControl]="advancedRangeControl"
                              [aliasController]="aliasController"
                              [dataKeyCallbacks]="dataKeyCallbacks"

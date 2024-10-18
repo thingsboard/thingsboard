@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<mat-form-field fxFlex [appearance]="inlineField ? 'outline': 'fill'"
+<mat-form-field class="flex-1" [appearance]="inlineField ? 'outline': 'fill'"
                 [subscriptSizing]="inlineField ? 'dynamic' : 'fixed'"
                 [class]="{'tb-inline-field': inlineField, 'flex': inlineField,
                           'tb-suffix-absolute': (inlineField && !deviceKeyFormGroup.get('key').value)}"

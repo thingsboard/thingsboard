@@ -46,7 +46,7 @@ export class FlotWidgetComponent implements OnInit {
   legendConfig: LegendConfig;
   legendData: LegendData;
   isLegendFirst: boolean;
-  legendContainerLayoutType: string;
+  legendContainerLayoutType: 'flex-row' | 'flex-col';
   legendStyle: {[klass: string]: any};
 
   public settings: TbFlotSettings;
@@ -70,7 +70,7 @@ export class FlotWidgetComponent implements OnInit {
     this.displayLegend = isDefinedAndNotNull(this.settings.showLegend) ? this.settings.showLegend
       : false;
 
-    this.legendContainerLayoutType = 'column';
+    this.legendContainerLayoutType = 'flex-col';
 
     if (this.displayLegend) {
       this.legendConfig = this.settings.legendConfig || defaultLegendConfig(widgetType.timeseries);
@@ -84,10 +84,10 @@ export class FlotWidgetComponent implements OnInit {
       }
       if (this.legendConfig.position === LegendPosition.top ||
         this.legendConfig.position === LegendPosition.bottom) {
-        this.legendContainerLayoutType = 'column';
+        this.legendContainerLayoutType = 'flex-col';
         this.isLegendFirst = this.legendConfig.position === LegendPosition.top;
       } else {
-        this.legendContainerLayoutType = 'row';
+        this.legendContainerLayoutType = 'flex-row';
         this.isLegendFirst = this.legendConfig.position === LegendPosition.left;
       }
       switch (this.legendConfig.position) {

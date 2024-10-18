@@ -15,9 +15,9 @@
     limitations under the License.
 
 -->
-<mat-toolbar fxLayout="row" color="primary">
+<mat-toolbar class="flex flex-row" color="primary">
   <h2 translate>security.2fa.dialog.enable-sms-title</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-icon-button
           (click)="closeDialog()"
           type="button">
@@ -36,8 +36,8 @@
       <ng-template matStepLabel>{{ 'security.2fa.dialog.sms-step-label' | translate }}</ng-template>
       <form [formGroup]="smsConfigForm" (ngSubmit)="nextStep()">
         <p class="mat-body step-description input" translate>security.2fa.dialog.sms-step-description</p>
-        <div fxLayout="row" fxLayoutAlign="space-between center" fxLayoutGap="15px">
-          <tb-phone-input fxFlex
+        <div class="flex flex-row items-center justify-between gap-3.75">
+          <tb-phone-input class="flex-1"
                           formControlName="phone"
                           [floatLabel]="'never'"
                           placeholder="{{ 'security.2fa.dialog.sms-step-label' | translate }}">
@@ -57,8 +57,8 @@
         <p class="mat-body step-description input">
           {{ 'security.2fa.dialog.verification-step-description' | translate : {address: smsConfigForm.get('phone').value} }}
         </p>
-        <div fxLayout="row" fxLayout.xs="column" fxLayoutAlign="space-between center" fxLayoutAlign.xs="start end">
-          <mat-form-field fxFlex class="mat-block code-container full-width-xs">
+        <div class="flex flex-row items-center justify-between xs:flex-col xs:items-end xs:justify-start">
+          <mat-form-field class="mat-block code-container full-width-xs flex-1">
             <input matInput formControlName="verificationCode"
                    maxlength="6" type="text" required
                    inputmode="numeric" pattern="[0-9]*"
@@ -68,7 +68,7 @@
               {{ 'security.2fa.dialog.verification-code-invalid' | translate }}
             </mat-error>
           </mat-form-field>
-          <div fxLayoutGap="8px">
+          <div class="flex gap-2">
             <button mat-button
                     matStepperPrevious
                     [disabled]="(isLoading$ | async)">
@@ -89,7 +89,7 @@
       <div>
         <h3 class="result-title" translate>security.2fa.dialog.success</h3>
         <p class="mat-body result-description" translate>security.2fa.dialog.activation-step-description-sms</p>
-        <div fxLayout="row" fxLayoutAlign="end center">
+        <div class="flex flex-row items-center justify-end">
           <button mat-raised-button
                   type="button"
                   color="primary"

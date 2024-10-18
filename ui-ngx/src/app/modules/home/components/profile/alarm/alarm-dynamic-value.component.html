@@ -15,21 +15,21 @@
     limitations under the License.
 
 -->
-<mat-expansion-panel [formGroup] = "dynamicValue" class="device-profile-alarm" style = "margin-bottom: 26px;" fxFlex>
+<mat-expansion-panel [formGroup] = "dynamicValue" class="device-profile-alarm flex-1" style = "margin-bottom: 26px;">
   <mat-expansion-panel-header>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+    <div class="flex flex-1 flex-row items-center justify-start">
       <mat-panel-title>
-        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           {{'filter.dynamic-value' | translate}}
         </div>
       </mat-panel-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
-    <div fxFlex fxLayout="column">
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <div fxFlex="40" fxLayout="column">
+    <div class="flex flex-1 flex-col">
+      <div class="flex flex-row items-center justify-start gap-2">
+        <div class="flex max-w-40% flex-full flex-col">
           <mat-form-field class="mat-block">
             <mat-select formControlName="sourceType" placeholder="{{'filter.dynamic-source-type' | translate}}">
               <mat-option [value]="null">
@@ -41,7 +41,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <div fxFlex fxLayout="column">
+        <div class="flex flex-1 flex-col">
           <mat-form-field class="mat-block source-attribute">
             <input matInput formControlName="sourceAttribute" placeholder="{{'filter.source-attribute' | translate}}">
           </mat-form-field>

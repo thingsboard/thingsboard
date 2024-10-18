@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form fxLayout="column" class="mat-content mat-padding" [formGroup]="persistentFilterFormGroup" (ngSubmit)="update()">
-  <mat-form-field fxFlex class="mat-block" floatLabel="always">
+<form class="mat-content mat-padding flex flex-col" [formGroup]="persistentFilterFormGroup" (ngSubmit)="update()">
+  <mat-form-field class="mat-block flex-1" floatLabel="always">
     <mat-label translate>widgets.persistent-table.rpc-status-list</mat-label>
     <mat-select formControlName="rpcStatus"
                 placeholder="{{ rpcSearchPlaceholder }}">
@@ -28,7 +28,7 @@
       </mat-option>
     </mat-select>
   </mat-form-field>
-  <div fxLayout="row" class="tb-panel-actions" fxLayoutAlign="end center">
+  <div class="tb-panel-actions flex flex-row items-center justify-end">
     <button type="button"
             mat-button
             (click)="cancel()">

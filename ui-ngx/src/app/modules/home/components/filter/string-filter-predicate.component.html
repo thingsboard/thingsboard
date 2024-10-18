@@ -15,21 +15,21 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="8px" [formGroup]="stringFilterPredicateFormGroup">
-  <div fxFlex="30" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-    <mat-form-field hideRequiredMarker fxFlex class="mat-block">
+<div class="flex flex-1 flex-row items-start justify-start gap-2" [formGroup]="stringFilterPredicateFormGroup">
+  <div class="flex max-w-30% flex-full flex-row items-center justify-start gap-2">
+    <mat-form-field hideRequiredMarker class="mat-block flex-1">
       <mat-select required formControlName="operation" placeholder="{{'filter.operation.operation' | translate}}">
         <mat-option *ngFor="let operation of stringOperations" [value]="operation">
           {{stringOperationTranslations.get(stringOperationEnum[operation]) | translate}}
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-checkbox fxLayout="row" fxLayoutAlign="center" formControlName="ignoreCase" style="min-width: 70px;">
+    <mat-checkbox class="flex flex-row items-stretch justify-center" formControlName="ignoreCase" style="min-width: 70px;">
     </mat-checkbox>
   </div>
   <tb-filter-predicate-value [allowUserDynamicSource]="allowUserDynamicSource"
                              [onlyUserDynamicSource]="onlyUserDynamicSource"
-                             fxFlex="70"
+                             class="max-w-70% flex-full"
                              [valueType]="valueTypeEnum.STRING"
                              [operation]="stringFilterPredicateFormGroup.get('operation').value"
                              formControlName="value">

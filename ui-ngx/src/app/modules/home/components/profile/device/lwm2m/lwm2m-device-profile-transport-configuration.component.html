@@ -33,7 +33,7 @@
     </mat-tab>
     <mat-tab label="{{ 'device-profile.lwm2m.bootstrap-tab' | translate }}">
       <section [formGroup]="lwm2mDeviceProfileFormGroup">
-        <div *ngIf="!isTransportWasRunWithBootstrap" style="padding:16px 0 0 8px;" fxLayout="row" fxLayoutAlign="start end">
+        <div *ngIf="!isTransportWasRunWithBootstrap" style="padding:16px 0 0 8px;" class="flex flex-row items-end justify-start">
           <mat-icon color="warn" class="material-icons" style="margin-right:8px;">warning</mat-icon>
           <span style="font-weight:500">LwM2M transport was run without bootstrap server</span>
         </div>
@@ -53,7 +53,7 @@
         <section formGroupName="clientLwM2mSettings">
           <fieldset class="fields-group">
             <legend class="group-title" translate>device-profile.lwm2m.fw-update</legend>
-            <mat-form-field class="mat-block" fxFlex>
+            <mat-form-field class="mat-block flex-1">
               <mat-label>{{ 'device-profile.lwm2m.fw-update-strategy' | translate }}</mat-label>
               <mat-select formControlName="fwUpdateStrategy">
                 <mat-option [value]=1>{{ 'device-profile.lwm2m.fw-update-strategy-package' | translate }}</mat-option>
@@ -61,7 +61,7 @@
                 <mat-option [value]=3>{{ 'device-profile.lwm2m.fw-update-strategy-data' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field class="mat-block" fxFlex *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').value === 2">
+            <mat-form-field class="mat-block flex-1" *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateStrategy').value === 2">
               <mat-label>{{ 'device-profile.lwm2m.fw-update-resource' | translate }}</mat-label>
               <input matInput formControlName="fwUpdateResource" required>
               <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.fwUpdateResource').hasError('required')">
@@ -71,14 +71,14 @@
           </fieldset>
           <fieldset class="fields-group">
             <legend class="group-title" translate>device-profile.lwm2m.sw-update</legend>
-            <mat-form-field class="mat-block" fxFlex>
+            <mat-form-field class="mat-block flex-1">
               <mat-label>{{ 'device-profile.lwm2m.sw-update-strategy' | translate }}</mat-label>
               <mat-select formControlName="swUpdateStrategy">
                 <mat-option [value]=1>{{ 'device-profile.lwm2m.sw-update-strategy-package' | translate }}</mat-option>
                 <mat-option [value]=2>{{ 'device-profile.lwm2m.sw-update-strategy-package-uri' | translate }}</mat-option>
               </mat-select>
             </mat-form-field>
-            <mat-form-field class="mat-block" fxFlex *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').value === 2">
+            <mat-form-field class="mat-block flex-1" *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateStrategy').value === 2">
               <mat-label>{{ 'device-profile.lwm2m.sw-update-resource' | translate }}</mat-label>
               <input matInput formControlName="swUpdateResource" required>
               <mat-error *ngIf="lwm2mDeviceProfileFormGroup.get('clientLwM2mSettings.swUpdateResource').hasError('required')">
@@ -93,7 +93,7 @@
           </fieldset>
           <fieldset class="fields-group">
             <legend class="group-title" translate>device-profile.lwm2m.default-object-id</legend>
-            <mat-form-field fxFlex>
+            <mat-form-field class="flex-1">
               <mat-select formControlName="defaultObjectIDVer">
                 <mat-option *ngFor="let objectIDVer of objectIDVers" [value]="objectIDVer">
                   {{ objectIDVerTranslationMap.get(objectIDVer) | translate }}

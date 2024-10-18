@@ -30,7 +30,7 @@
     </div>
     <div *ngIf="keysFormArray().controls.length; else noKeys" class="tb-form-table-body">
       <div *ngFor="let keyControl of keysFormArray().controls; trackBy: trackByKey; let $index = index;">
-        <tb-aggregated-data-key-row fxFlex
+        <tb-aggregated-data-key-row class="flex-1"
                          [formControl]="keyControl"
                          [index]="$index"
                          [datasourceType]="datasourceType"
@@ -47,6 +47,5 @@
   </div>
 </div>
 <ng-template #noKeys>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.aggregated-value-card.no-values' | translate }}</span>
 </ng-template>

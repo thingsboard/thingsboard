@@ -18,7 +18,7 @@
 <form [formGroup]="statesFormGroup" (ngSubmit)="save()" style="width: 750px;">
   <mat-toolbar color="primary">
     <h2 translate>dashboard.manage-states</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -31,11 +31,11 @@
     <fieldset [disabled]="isLoading$ | async">
       <div class="manage-dashboard-states">
         <div class="tb-entity-table">
-          <div fxLayout="column" class="tb-entity-table-content">
-            <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="!textSearchMode">
+          <div class="tb-entity-table-content flex flex-col">
+            <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="textSearchMode">
               <div class="mat-toolbar-tools">
                 <span class="tb-entity-table-title" translate>dashboard.states</span>
-                <span fxFlex></span>
+                <span class="flex-1"></span>
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         type="button"
                         (click)="addState($event)"
@@ -51,7 +51,7 @@
                 </button>
               </div>
             </mat-toolbar>
-            <mat-toolbar class="mat-mdc-table-toolbar" [fxShow]="textSearchMode">
+            <mat-toolbar class="mat-mdc-table-toolbar" [class.!hidden]="!textSearchMode">
               <div class="mat-toolbar-tools">
                 <button mat-icon-button
                         type="button"
@@ -59,7 +59,7 @@
                         matTooltipPosition="above">
                   <mat-icon>search</mat-icon>
                 </button>
-                <mat-form-field fxFlex>
+                <mat-form-field class="flex-1">
                   <mat-label>&nbsp;</mat-label>
                   <input #searchInput matInput
                          [(ngModel)]="pageLink.textSearch"
@@ -99,7 +99,7 @@
                   <mat-header-cell *matHeaderCellDef style="min-width: 120px; max-width: 120px; width: 120px">
                   </mat-header-cell>
                   <mat-cell *matCellDef="let state">
-                    <div fxFlex fxLayout="row">
+                    <div class="flex flex-1 flex-row">
                       <button mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
                               matTooltip="{{ 'dashboard.edit-state' | translate }}"
@@ -114,7 +114,7 @@
                               (click)="duplicateState($event, state)">
                         <mat-icon>content_copy</mat-icon>
                       </button>
-                      <button [fxShow]="!state.root" mat-icon-button [disabled]="isLoading$ | async"
+                      <button [class.!hidden]="state.root" mat-icon-button [disabled]="isLoading$ | async"
                               type="button"
                               matTooltip="{{ 'dashboard.delete-state' | translate }}"
                               matTooltipPosition="above"
@@ -128,9 +128,8 @@
                 <mat-row class="mat-row-select"
                          *matRowDef="let state; columns: displayedColumns;"></mat-row>
               </table>
-              <span [fxShow]="dataSource.isEmpty() | async"
-                    fxLayoutAlign="center center"
-                    class="no-data-found" translate>{{ 'dashboard.no-states-text' }}</span>
+              <span [class.!hidden]="(dataSource.isEmpty() | async) === false"
+                    class="no-data-found flex items-center justify-center" translate>{{ 'dashboard.no-states-text' }}</span>
             </div>
             <mat-divider></mat-divider>
             <mat-paginator [length]="dataSource.total() | async"
@@ -142,7 +141,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

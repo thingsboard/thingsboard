@@ -27,7 +27,7 @@
     </div>
     <div *ngIf="statesFormArray().controls.length; else noStates" class="tb-form-table-body">
       <div *ngFor="let stateControl of statesFormArray().controls; trackBy: trackByState; let $index = index; let $last = last">
-        <tb-time-series-chart-state-row fxFlex
+        <tb-time-series-chart-state-row class="flex-1"
                                         [formControl]="stateControl"
                                         (stateRemoved)="removeState($index)">
         </tb-time-series-chart-state-row>
@@ -42,6 +42,5 @@
   </div>
 </div>
 <ng-template #noStates>
-  <span fxLayoutAlign="center center"
-        class="tb-prompt">{{ 'widgets.time-series-chart.state.no-states' | translate }}</span>
+  <span class="tb-prompt flex items-center justify-center">{{ 'widgets.time-series-chart.state.no-states' | translate }}</span>
 </ng-template>

@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div fxLayout="row" fxLayoutAlign="start center" style="min-width: 0;">
+<div class="flex flex-row items-center justify-start" style="min-width: 0;">
   <span class="tb-alarm-rule-schedule title" (click)="openScheduleDialog($event)">{{('device-profile.schedule' | translate) + ': '}}</span>
   <span class="tb-alarm-rule-schedule" (click)="openScheduleDialog($event)"
        [innerHTML]="scheduleText">

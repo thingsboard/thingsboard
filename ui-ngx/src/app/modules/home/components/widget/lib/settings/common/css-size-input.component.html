@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [formGroup]="cssSizeFormGroup" fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+<div [formGroup]="cssSizeFormGroup" class="flex flex-row items-center justify-start gap-2">
   <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute number" [class.flex]="flex">
     <input matInput [required]="required"
            type="number" min="0" formControlName="size" placeholder="{{ 'widget-config.set' | translate }}">

@@ -34,8 +34,8 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showDate">
         {{ 'widgets.signal-strength.date' | translate }}
       </mat-slide-toggle>
-      <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <tb-date-format-select fxFlex formControlName="dateFormat"></tb-date-format-select>
+      <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+        <tb-date-format-select class="flex-1" formControlName="dateFormat"></tb-date-format-select>
         <tb-font-settings formControlName="dateFont"
                           [previewText]="datePreviewFn">
         </tb-font-settings>
@@ -79,10 +79,9 @@
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="signalStrengthWidgetSettingsForm.get('showTooltip').value"
                          [disabled]="!signalStrengthWidgetSettingsForm.get('showTooltip').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
             {{ 'widget-config.tooltip' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -92,7 +91,7 @@
           <mat-slide-toggle class="mat-slide" formControlName="showTooltipValue">
             {{ 'tooltip.value' | translate }}
           </mat-slide-toggle>
-          <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+          <div class="flex flex-row items-center justify-start gap-2">
             <tb-font-settings formControlName="tooltipValueFont"
                               [previewText]="tooltipValuePreviewFn">
             </tb-font-settings>
@@ -106,8 +105,8 @@
           <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTooltipDate">
             {{ 'tooltip.date' | translate }}
           </mat-slide-toggle>
-          <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-            <tb-date-format-select fxFlex formControlName="tooltipDateFormat"></tb-date-format-select>
+          <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+            <tb-date-format-select class="flex-1" formControlName="tooltipDateFormat"></tb-date-format-select>
             <tb-font-settings formControlName="tooltipDateFont"
                               [previewText]="tooltipDatePreviewFn">
             </tb-font-settings>

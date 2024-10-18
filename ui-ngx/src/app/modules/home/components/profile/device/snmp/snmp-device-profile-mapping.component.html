@@ -15,21 +15,21 @@
     limitations under the License.
 
 -->
-<div fxFlex fxLayout="column" class="mapping-config">
-  <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px" fxFlex="100">
-    <div fxFlex fxLayout="row" fxLayoutGap="8px">
-      <label fxFlex="26" class="tb-title no-padding" translate>device-profile.snmp.data-type</label>
-      <label fxFlex="37" class="tb-title tb-required no-padding" translate>device-profile.snmp.data-key</label>
-      <label fxFlex="37" class="tb-title tb-required no-padding" translate>device-profile.snmp.oid</label>
-      <span style="min-width: 40px" [fxShow]="!disabled"></span>
+<div class="mapping-config flex flex-1 flex-col">
+  <div class="flex flex-full flex-row items-center justify-start gap-2">
+    <div class="flex flex-1 flex-row gap-2">
+      <label class="tb-title no-padding max-w-26% flex-full" translate>device-profile.snmp.data-type</label>
+      <label class="tb-title tb-required no-padding max-w-37% flex-full" translate>device-profile.snmp.data-key</label>
+      <label class="tb-title tb-required no-padding max-w-37% flex-full" translate>device-profile.snmp.oid</label>
+      <span style="min-width: 40px" [class.!hidden]="disabled"></span>
     </div>
   </div>
   <mat-divider></mat-divider>
   <div *ngFor="let mappingConfig of mappingsConfigFormArray.controls; let $index = index;
-               last as isLast;" fxLayout="row" fxLayoutAlign="start center"
-       fxLayoutGap="8px" [formGroup]="mappingConfig" class="mapping-list">
-    <div class="tb-layout-fill" fxFlex fxLayout="row" fxLayoutGap="8px" fxLayoutAlign="start">
-      <mat-form-field fxFlex="26">
+               last as isLast;"
+       [formGroup]="mappingConfig" class="mapping-list flex flex-row items-center justify-start gap-2">
+    <div class="tb-layout-fill flex flex-1 flex-row items-stretch justify-start gap-2">
+      <mat-form-field class="max-w-26% flex-full">
         <mat-select formControlName="dataType" required>
           <mat-option *ngFor="let dataType of dataTypes" [value]="dataType">
             {{ dataTypesTranslationMap.get(dataType) | translate }}
@@ -39,13 +39,13 @@
           {{ 'device-profile.snmp.data-type-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex="37">
+      <mat-form-field class="max-w-37% flex-full">
         <input matInput formControlName="key" required/>
         <mat-error *ngIf="mappingConfig.get('key').hasError('required')">
           {{ 'device-profile.snmp.data-key-required' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-form-field fxFlex="37">
+      <mat-form-field class="max-w-37% flex-full">
         <input matInput formControlName="oid" required/>
         <mat-error *ngIf="mappingConfig.get('oid').hasError('required')">
           {{ 'device-profile.snmp.oid-required' | translate }}
@@ -65,7 +65,7 @@
     </div>
   </div>
   <div *ngIf="!mappingsConfigFormArray.controls.length && !disabled">
-      <span fxLayoutAlign="center center" class="tb-prompt required required-text" translate>device-profile.snmp.please-add-mapping-config</span>
+      <span class="tb-prompt required required-text flex items-center justify-center" translate>device-profile.snmp.please-add-mapping-config</span>
   </div>
   <div *ngIf="!disabled">
     <button mat-stroked-button color="primary"

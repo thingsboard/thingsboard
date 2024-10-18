@@ -32,14 +32,13 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('showLines').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showLines" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLines" (click)="$event.stopPropagation()">
             {{ 'widgets.chart.show-line' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -54,7 +53,7 @@
         <mat-slide-toggle class="mat-slide" formControlName="fillLines">
           {{ 'widgets.chart.fill-line' | translate }}
         </mat-slide-toggle>
-        <div [fxShow]="flotKeySettingsFormGroup.get('fillLines').value" class="tb-form-row space-between">
+        <div [class.!hidden]="!flotKeySettingsFormGroup.get('fillLines').value" class="tb-form-row space-between">
           <div>{{ 'widgets.chart.fill-line-opacity' | translate }}</div>
           <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
             <input matInput formControlName="fillLinesOpacity" type="number" min="0" max="1" step="0.1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -65,14 +64,13 @@
   </div>
   <div class="tb-form-panel tb-slide-toggle">
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('showPoints').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showPoints" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showPoints" (click)="$event.stopPropagation()">
             {{ 'widgets.chart.show-points' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
-        <mat-panel-description fxFlex="40" fxLayoutAlign="end center" fxHide.xs translate>
+        <mat-panel-description class="flex max-w-40% flex-full items-center justify-end xs:!hidden" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -116,7 +114,7 @@
             </mat-select>
           </mat-form-field>
         </div>
-        <tb-js-func [fxShow]="flotKeySettingsFormGroup.get('showPointShape').value === 'custom'"
+        <tb-js-func [class.!hidden]="flotKeySettingsFormGroup.get('showPointShape').value !== 'custom'"
                     formControlName="pointShapeFormatter"
                     [globalVariables]="functionScopeVariables"
                     [functionArgs]="['ctx', 'x', 'y', 'radius', 'shadow']"
@@ -143,7 +141,7 @@
     </mat-slide-toggle>
     <div class="tb-form-row">
       <div class="fixed-title-width" translate>widgets.chart.axis-title</div>
-      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+      <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="axisTitle" placeholder="{{ 'widget-config.set' | translate }}">
       </mat-form-field>
     </div>
@@ -196,7 +194,7 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div class="tb-form-panel-title" fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="tb-form-panel-title flex flex-row items-center justify-between">
       <div translate>widgets.chart.thresholds</div>
       <button mat-stroked-button
               color="primary"
@@ -204,8 +202,8 @@
         <span translate>widgets.chart.add-threshold</span>
       </button>
     </div>
-    <div *ngIf="thresholdsFormArray().length" class="tb-control-list tb-drop-list" cdkDropList cdkDropListOrientation="vertical"
-         (cdkDropListDropped)="thresholdDrop($event)" fxLayout="column" fxLayoutGap="12px">
+    <div *ngIf="thresholdsFormArray().length" class="tb-control-list tb-drop-list flex flex-col gap-3" cdkDropList cdkDropListOrientation="vertical"
+         (cdkDropListDropped)="thresholdDrop($event)">
       <div cdkDrag class="tb-draggable" *ngFor="let thresholdControl of thresholdsFormArray().controls; trackBy: trackByThreshold;
                  let $index = index;">
         <tb-flot-threshold [formControl]="thresholdControl"
@@ -219,10 +217,9 @@
     <div class="tb-form-panel-title" translate>widgets.chart.comparison-settings</div>
     <mat-expansion-panel class="tb-settings" [expanded]="flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value"
                          [disabled]="!flotKeySettingsFormGroup.get('comparisonSettings.showValuesForComparison').value">
-      <mat-expansion-panel-header fxLayout="row wrap">
+      <mat-expansion-panel-header class="flex flex-row flex-wrap">
         <mat-panel-title>
-          <mat-slide-toggle class="mat-slide" formControlName="showValuesForComparison" (click)="$event.stopPropagation()"
-                            fxLayoutAlign="center">
+          <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showValuesForComparison" (click)="$event.stopPropagation()">
             {{ 'widgets.chart.show-values-for-comparison' | translate }}
           </mat-slide-toggle>
         </mat-panel-title>
@@ -230,7 +227,7 @@
       <ng-template matExpansionPanelContent>
         <div class="tb-form-row">
           <div class="fixed-title-width" translate>widgets.chart.comparison-values-label</div>
-          <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+          <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
             <input matInput formControlName="comparisonValuesLabel" placeholder="{{ 'widget-config.set' | translate }}">
           </mat-form-field>
         </div>

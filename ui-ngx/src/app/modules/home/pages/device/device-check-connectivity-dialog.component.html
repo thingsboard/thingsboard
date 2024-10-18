@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2 translate>{{ dialogTitle }}</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
 <!--  <div [tb-help]="'check-connectivity'"></div>-->
   <button mat-icon-button
           (click)="close()"
@@ -32,7 +32,7 @@
                       name="TransportProtocol"
                       useSelectOnMdLg="false"
                       appearance="fill"
-                      [fxHide]="allowTransportType.size < 2">
+                      [class.!hidden]="allowTransportType.size < 2">
       <tb-toggle-option
         *ngIf="allowTransportType.has(BasicTransportType.HTTP)"
         [value]="BasicTransportType.HTTP">
@@ -59,7 +59,7 @@
         {{ deviceTransportTypeTranslationMap.get(DeviceTransportType.LWM2M) | translate }}
       </tb-toggle-option>
     </tb-toggle-header>
-    <div class="tb-form-panel no-padding no-border" [fxHide]="!allowTransportType.size">
+    <div class="tb-form-panel no-padding no-border" [class.!hidden]="!allowTransportType.size">
       <ng-container [ngSwitch]="transportProtocol.value">
         <ng-template [ngSwitchCase]="BasicTransportType.HTTP">
           <div class="tb-no-data-text" translate>device.connectivity.use-following-instructions</div>
@@ -288,24 +288,24 @@
       </ng-container>
     </div>
     <div class="tb-form-panel stroked">
-      <div fxFlex fxLayout="row">
+      <div class="flex flex-1 flex-row">
         <div class="tb-form-panel-title" translate>device.state</div>
-        <div class="status" [ngClass]="{'inactive': !status, 'hide': status === undefined}">
+        <div class="status" [class.inactive]="!status" [class.hide]="status === undefined">
           {{ (status ? 'device.active' : 'device.inactive') | translate }}
         </div>
       </div>
       <div class="tb-form-panel-hint tb-font-14" translate>attribute.latest-telemetry</div>
       <div class="tb-form-table">
         <div class="tb-form-table-header">
-          <div class="tb-form-table-header-cell" fxFlex translate>device.time</div>
-          <div class="tb-form-table-header-cell" fxFlex translate>attribute.key</div>
-          <div class="tb-form-table-header-cell" fxFlex translate>attribute.value</div>
+          <div class="tb-form-table-header-cell flex-1" translate>device.time</div>
+          <div class="tb-form-table-header-cell flex-1" translate>attribute.key</div>
+          <div class="tb-form-table-header-cell flex-1" translate>attribute.value</div>
         </div>
         <div *ngIf="latestTelemetry.length; else noData" class="tb-form-table-body">
           <div class="tb-form-table-row" *ngFor="let telemetry of latestTelemetry">
-            <div class="tb-form-table-row-cell" fxFlex>{{ telemetry.lastUpdateTs | date: 'yyyy-MM-dd HH:mm:ss' }}</div>
-            <div class="tb-form-table-row-cell" fxFlex>{{ telemetry.key }}</div>
-            <div class="tb-form-table-row-cell" fxFlex>{{ telemetry.value }}</div>
+            <div class="tb-form-table-row-cell flex-1">{{ telemetry.lastUpdateTs | date: 'yyyy-MM-dd HH:mm:ss' }}</div>
+            <div class="tb-form-table-row-cell flex-1">{{ telemetry.key }}</div>
+            <div class="tb-form-table-row-cell flex-1">{{ telemetry.value }}</div>
           </div>
         </div>
       </div>
@@ -313,8 +313,8 @@
   </section>
 </div>
 <div mat-dialog-actions class="tb-dialog-actions">
-  <mat-slide-toggle fxShow="{{ showDontShowAgain }}" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
-  <span fxFlex></span>
+  <mat-slide-toggle [class.!hidden]="!showDontShowAgain" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
+  <span class="flex-1"></span>
   <button mat-button
           [disabled]="(isLoading$ | async)"
           (click)="close()">{{ 'action.close' | translate }}</button>
@@ -336,10 +336,10 @@
 
 <ng-template #executeCommand let-cmd="cmd">
   <div class="tb-form-panel stroked">
-    <div fxLayout="row" fxLayoutAlign="space-between center" [fxHide]="!(cmd.noSec || cmd.sec !== 'Check documentation')">
+    <div class="flex flex-row items-center justify-between" [class.!hidden]="!(cmd.noSec || cmd.sec !== 'Check documentation')">
       <div class="tb-form-panel-title" translate>device.connectivity.execute-following-command</div>
       <tb-toggle-header #protocolType value="{{ cmd.noSec ? 'noSec' : 'sec'}}" name="protocolType" useSelectOnMdLg="false"
-                        [fxShow]="cmd.noSec && cmd.sec">
+                        [class.!hidden]="!cmd.noSec || !cmd.sec">
         <tb-toggle-option value="noSec">{{ cmd.noSecLabel }}</tb-toggle-option>
         <tb-toggle-option value="sec">{{ cmd.secLabel }}</tb-toggle-option>
       </tb-toggle-header>

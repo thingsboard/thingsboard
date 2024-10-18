@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div [fxHide]="disabled && isEmpty()" matTooltip="{{ tooltipSetAttributesTelemetry | translate }}" matTooltipPosition="above">
+<div [class.!hidden]="disabled && isEmpty()" matTooltip="{{ tooltipSetAttributesTelemetry | translate }}" matTooltipPosition="above">
   <button type="button"
           [disabled]="isDisableBtn()"
           mat-icon-button

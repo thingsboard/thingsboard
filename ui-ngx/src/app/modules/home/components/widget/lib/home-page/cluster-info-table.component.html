@@ -41,7 +41,7 @@
               [matTooltip]="infoTooltip(serviceData, 'cpu')"
               matTooltipPosition="above"
               class="tb-resource-usage"
-              [ngClass]="statusClass(serviceData.cpuUsage)">
+              [class]="statusClass(serviceData.cpuUsage)">
       {{ serviceData.cpuUsage }}%
     </mat-cell>
   </ng-container>
@@ -53,7 +53,7 @@
               [matTooltip]="infoTooltip(serviceData, 'ram')"
               matTooltipPosition="above"
               class="tb-resource-usage"
-              [ngClass]="statusClass(serviceData.memoryUsage)">
+              [class]="statusClass(serviceData.memoryUsage)">
       {{ serviceData.memoryUsage }}%
     </mat-cell>
   </ng-container>
@@ -65,13 +65,12 @@
               [matTooltip]="infoTooltip(serviceData, 'disc')"
               matTooltipPosition="above"
               class="tb-resource-usage"
-              [ngClass]="statusClass(serviceData.discUsage)">
+              [class]="statusClass(serviceData.discUsage)">
       {{ serviceData.discUsage }}%
     </mat-cell>
   </ng-container>
   <mat-header-row *matHeaderRowDef="displayedColumns; sticky: true"></mat-header-row>
   <mat-row *matRowDef="let serviceData; columns: displayedColumns;"></mat-row>
 </table>
-<span [fxShow]="dataSource.isEmpty() | async"
-      fxLayoutAlign="center center"
-      class="no-data-found" translate>widgets.cluster-info.no-data</span>
+<span [class.!hidden]="(dataSource.isEmpty() | async) === false"
+      class="no-data-found flex items-center justify-center" translate>widgets.cluster-info.no-data</span>

@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<form fxLayout="column" class="tb-filter" [formGroup]="eventFilterFormGroup" (ngSubmit)="update()">
-  <div fxLayout="column" class="tb-filter-container mat-padding">
+<form class="tb-filter flex flex-col" [formGroup]="eventFilterFormGroup" (ngSubmit)="update()">
+  <div class="tb-filter-container mat-padding flex flex-col">
     <ng-container *ngFor="let column of showColumns">
       <ng-container [ngSwitch]="column.key">
         <ng-template [ngSwitchCase]="isSelector(column.key)">
@@ -46,7 +46,7 @@
           </tb-checkbox>
         </ng-template>
         <ng-template [ngSwitchCase]="'errorStr'">
-          <mat-form-field fxHide [fxShow]="showErrorMsgFields()">
+          <mat-form-field [class.!hidden]="!showErrorMsgFields()">
             <mat-label>{{ column.title | translate}}</mat-label>
             <input matInput type="text" name="errorSearchText" formControlName="errorStr">
           </mat-form-field>
@@ -60,7 +60,7 @@
       </ng-container>
     </ng-container>
   </div>
-  <div fxLayout="row" class="tb-panel-actions mat-padding" fxLayoutAlign="end center">
+  <div class="tb-panel-actions mat-padding flex flex-row items-center justify-end">
     <button type="button"
             mat-button
             (click)="cancel()">

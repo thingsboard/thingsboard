@@ -74,7 +74,7 @@ body {
   line-height: normal;
 }
 
-a:not(.mat-mdc-button-base) {
+a:not(.mat-mdc-button-base):not(.mdc-tab) {
   font-weight: 400;
   color: #106cc8;
   text-decoration: none;
@@ -85,7 +85,7 @@ a:not(.mat-mdc-button-base) {
 
 a:hover,
 a:focus {
-  &:not(.mat-mdc-button-base) {
+  &:not(.mat-mdc-button-base):not(.mdc-tab) {
     border-bottom: 1px solid #4054b2;
   }
 }
@@ -314,40 +314,6 @@ pre.tb-highlight {
   z-index: 0;
 }
 
-mat-label {
-  &.tb-title {
-    font-size: 13px;
-    font-weight: 400;
-    color: #666;
-    pointer-events: none;
-
-    &.no-padding {
-      padding-bottom: 0;
-    }
-
-    &.tb-required::after {
-      font-size: 13px;
-      color: rgba(0, 0, 0, .54);
-      vertical-align: top;
-      content: " *";
-    }
-
-    &.tb-error {
-      color: rgb(221, 44, 0);
-
-      &.tb-required::after {
-        color: rgb(221, 44, 0);
-      }
-    }
-  }
-}
-
-mat-icon {
-  &.tb-error {
-    color: rgb(221, 44, 0);
-  }
-}
-
 .tb-error-messages {
   height: 24px; //30px
   margin-top: -6px;
@@ -518,6 +484,40 @@ mat-icon {
     letter-spacing: .01em;
   }
 
+  mat-label {
+    &.tb-title {
+      font-size: 13px;
+      font-weight: 400;
+      color: #666;
+      pointer-events: none;
+
+      &.no-padding {
+        padding-bottom: 0;
+      }
+
+      &.tb-required::after {
+        font-size: 13px;
+        color: rgba(0, 0, 0, .54);
+        vertical-align: top;
+        content: " *";
+      }
+
+      &.tb-error {
+        color: rgb(221, 44, 0);
+
+        &.tb-required::after {
+          color: rgb(221, 44, 0);
+        }
+      }
+    }
+  }
+
+  mat-icon {
+    &.tb-error {
+      color: rgb(221, 44, 0);
+    }
+  }
+
   .mat-mdc-tooltip {
     white-space: pre-line;
   }
@@ -573,7 +573,7 @@ mat-icon {
 
   button.mat-mdc-menu-item {
     overflow: hidden;
-    .mdc-list-item__primary-text {
+    .mat-mdc-menu-item-text {
       flex: 1;
       .tb-alt-text {
         float: right;
@@ -1265,3 +1265,11 @@ mat-icon {
     white-space: nowrap;
   }
 }
+
+/***************
+ * TAILWIND CSS
+ ***************/
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;

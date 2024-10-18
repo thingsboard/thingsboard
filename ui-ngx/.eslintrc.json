@@ -61,9 +61,14 @@
         "*.html"
       ],
       "extends": [
-        "plugin:@angular-eslint/template/recommended"
+        "plugin:@angular-eslint/template/recommended",
+        "plugin:tailwindcss/recommended"
       ],
-      "rules": {}
+      "rules": {
+          "tailwindcss/no-custom-classname": "off",
+          "tailwindcss/migration-from-tailwind-2": "off",
+          "tailwindcss/enforces-negative-arbitrary-values": "off"
+      }
     }
   ]
 }

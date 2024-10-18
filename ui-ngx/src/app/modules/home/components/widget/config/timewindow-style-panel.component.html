@@ -21,7 +21,7 @@
     <mat-slide-toggle class="mat-slide" formControlName="showIcon">
       {{ 'timewindow.icon' | translate }}
     </mat-slide-toggle>
-    <div fxLayoutAlign="start center" fxLayoutGap="8px">
+    <div class="flex items-center justify-start gap-2">
       <mat-form-field appearance="outline" subscriptSizing="dynamic">
         <input matInput formControlName="iconSize">
       </mat-form-field>
@@ -33,7 +33,7 @@
   </div>
   <div class="tb-form-row">
     <div class="fixed-title-width" translate>timewindow.icon-position</div>
-    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic">
+    <mat-form-field class="flex-1" appearance="outline" subscriptSizing="dynamic">
       <mat-select formControlName="iconPosition" placeholder="{{ 'widget-config.set' | translate }}">
         <mat-option [value]="'left'">
           {{ 'timewindow.icon-position-left' | translate }}

@@ -18,7 +18,7 @@
 <form (ngSubmit)="add()" class="dialog-container">
   <mat-toolbar color="primary">
     <h2 translate>rulenode.add</h2>
-    <span fxFlex>: {{ruleNode.component.name}}</span>
+    <span class="flex-1">: {{ruleNode.component.name}}</span>
     <div [tb-help]="helpLinkIdForRuleNodeType()"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -36,7 +36,7 @@
                   isAdd>
     </tb-rule-node>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

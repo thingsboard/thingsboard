@@ -97,8 +97,8 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
   private subscribeStorageType$: any;
   private subscribeGateway$: any;
 
-  alignment = 'row';
-  layoutGap = '5px';
+  alignment = true;
+  layoutGap = true;
   gatewayType: string;
   gatewayConfigurationGroup: UntypedFormGroup;
   securityTypes = SecurityTypeTranslationMap;
@@ -166,11 +166,11 @@ export class GatewayFormComponent extends PageComponent implements OnInit, OnDes
 
   private updateWidgetDisplaying(): void {
     if(this.ctx.$container && this.ctx.$container[0].offsetWidth <= 425){
-      this.layoutGap = '0';
-      this.alignment = 'column';
+      this.layoutGap = false;
+      this.alignment = false;
     } else {
-      this.layoutGap = '5px';
-      this.alignment = 'row';
+      this.layoutGap = true;
+      this.alignment = true;
     }
   }
 

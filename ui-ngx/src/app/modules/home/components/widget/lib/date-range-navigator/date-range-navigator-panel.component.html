@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="mat-content mat-padding">
+<div class="mat-content mat-padding flex flex-col">
   <mat-form-field *ngIf="settings.showTemplate" class="mat-block">
     <input readonly [ngModel]="model.chosenLabel" matInput type="text">
   </mat-form-field>
@@ -25,8 +25,8 @@
                                 [singleDatePicker]="settings.onePanel"
                                 [autoApply]="true" (choosedDate)="choosedDate($event)">
   </ngx-daterangepicker-material>
-  <div class="tb-panel-actions" fxLayout="row" *ngIf="!settings.autoConfirm">
-    <span fxFlex></span>
+  <div class="tb-panel-actions flex flex-row" *ngIf="!settings.autoConfirm">
+    <span class="flex-1"></span>
     <button mat-button mat-raised-button color="primary"
             type="button" (click)="apply()">
       {{ 'action.ok' | translate }}

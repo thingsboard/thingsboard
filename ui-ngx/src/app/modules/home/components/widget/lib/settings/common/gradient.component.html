@@ -17,9 +17,9 @@
 -->
 <ng-container [formGroup]="gradientFormGroup">
 
-  <div fxLayout="row" fxLayoutAlign="start center" *ngIf="advancedMode">
-    <div fxFlex class="tb-form-panel-title" fxHide.xs translate>widgets.color.gradient-type</div>
-    <tb-toggle-select formControlName="advancedMode" fxFlex>
+  <div class="flex flex-row items-center justify-start" *ngIf="advancedMode">
+    <div class="tb-form-panel-title flex-1 xs:!hidden" translate>widgets.color.gradient-type</div>
+    <tb-toggle-select formControlName="advancedMode" class="flex-1">
       <tb-toggle-option [value]="false">
         {{ 'widgets.color.basic-mode' | translate }}
       </tb-toggle-option>
@@ -41,7 +41,7 @@
           <div translate>widgets.color.gradient-start</div>
           <div class="start-gradient-container">
             <div class="tb-form-row no-border no-padding">
-              <div class="gradient-text" fxHide.xs translate>widgets.color.start-value</div>
+              <div class="gradient-text xs:!hidden" translate>widgets.color.start-value</div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="minValue" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
@@ -61,7 +61,7 @@
           <div cdkDrag class="tb-form-row no-padding no-border tb-draggable"
                [formGroup]="gradientFormGroup"
                *ngFor="let gradientFormGroup of gradientListFormGroups; trackBy: trackByGradient; let $index = index; last as isLast;"
-               [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+               [class.pb-2]="!isLast">
             <div class="gradient">
               <div class="gradient-container">
                 <div translate>widgets.color.gradient-color</div>
@@ -77,8 +77,7 @@
                       matTooltipPosition="above">
                 <mat-icon>delete</mat-icon>
               </button>
-              <button class="tb-box-button"
-                      fxHide.lt-lg
+              <button class="tb-box-button lt-lg:!hidden"
                       mat-icon-button
                       type="button"
                       cdkDragHandle
@@ -101,7 +100,7 @@
           <div translate>widgets.color.gradient-end</div>
           <div class="end-gradient-container">
             <div class="tb-form-row no-border no-padding">
-              <div class="gradient-text" fxHide.xs translate>widgets.color.end-value</div>
+              <div class="gradient-text xs:!hidden" translate>widgets.color.end-value</div>
               <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
                 <input matInput type="number" formControlName="maxValue" placeholder="{{ 'widget-config.set' | translate }}">
               </mat-form-field>
@@ -119,11 +118,11 @@
       <div class="gradient" formGroupName="gradientAdvanced">
         <div class="gradient-container gradient-container-start" formGroupName="start">
           <div class="tb-gradient-text">
-            <span fxHide.xs translate>widgets.color.gradient-start</span>
-            <span fxHide fxShow.xs translate>widgets.color.gradient-start-min</span>
+            <span class="xs:!hidden" translate>widgets.color.gradient-start</span>
+            <span class="gt-xs:!hidden" translate>widgets.color.gradient-start-min</span>
           </div>
           <div class="tb-form-row no-border no-padding start-gradient-container start-gradient-container-advanced">
-            <tb-value-source-data-key fxFlex
+            <tb-value-source-data-key class="flex-1"
                                       formControlName="source"
                                       [aliasController]="aliasController"
                                       [dataKeyCallbacks]="dataKeyCallbacks"
@@ -142,15 +141,15 @@
           <div cdkDrag class="tb-form-row no-padding no-border tb-draggable"
                [formGroup]="gradientFormGroup"
                *ngFor="let gradientFormGroup of advancedGradientListFormGroups; trackBy: trackByGradient; let $index = index; last as isLast;"
-               [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+               [class.pb-2]="!isLast">
             <div class="gradient">
               <div class="gradient-container">
                 <div class="tb-gradient-text">
-                  <span fxHide.xs translate>widgets.color.gradient-color</span>
-                  <span fxHide fxShow.xs translate>widgets.color.gradient-color-min</span>
+                  <span class="xs:!hidden" translate>widgets.color.gradient-color</span>
+                  <span class="gt-xs:!hidden" translate>widgets.color.gradient-color-min</span>
                 </div>
                 <div class="list-gradient-container list-gradient-container-advanced">
-                  <tb-value-source-data-key fxFlex
+                  <tb-value-source-data-key class="flex-1"
                                             formControlName="source"
                                             [aliasController]="aliasController"
                                             [dataKeyCallbacks]="dataKeyCallbacks"
@@ -169,8 +168,7 @@
                       matTooltipPosition="above">
                 <mat-icon>delete</mat-icon>
               </button>
-              <button class="tb-box-button"
-                      fxHide.lt-lg
+              <button class="tb-box-button lt-lg:!hidden"
                       mat-icon-button
                       type="button"
                       cdkDragHandle
@@ -191,11 +189,11 @@
       <div class="gradient" formGroupName="gradientAdvanced">
         <div class="gradient-container gradient-container-end" formGroupName="end">
           <div class="tb-gradient-text">
-            <span fxHide.xs translate>widgets.color.gradient-end</span>
-            <span fxHide fxShow.xs translate>widgets.color.gradient-end-min</span>
+            <span class="xs:!hidden" translate>widgets.color.gradient-end</span>
+            <span class="gt-xs:!hidden" translate>widgets.color.gradient-end-min</span>
           </div>
           <div class="tb-form-row no-border no-padding end-gradient-container end-gradient-container-advanced">
-            <tb-value-source-data-key fxFlex
+            <tb-value-source-data-key class="flex-1"
                                       formControlName="source"
                                       [aliasController]="aliasController"
                                       [dataKeyCallbacks]="dataKeyCallbacks"

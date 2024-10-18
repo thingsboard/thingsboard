@@ -21,7 +21,7 @@
     <div class="tb-form-panel-title" translate>widgets.power-button.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     trueLabel="{{ 'widgets.rpc-state.on' | translate }}"
@@ -34,7 +34,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-on-hint' | translate}}" translate>widgets.power-button.power-on</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.power-button.power-on' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -43,7 +43,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.power-button.power-off-hint' | translate}}" translate>widgets.power-button.power-off</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.power-button.power-off' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -52,7 +52,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
@@ -81,7 +81,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -100,11 +100,11 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="powerButtonWidgetConfigForm.get('iconColor').value"
@@ -118,15 +118,15 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.power-button.power-on-colors' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-3">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.main</div>
           <tb-color-input asBoxInput
                           formControlName="mainColorOn">
           </tb-color-input>
         </div>
         <mat-divider vertical></mat-divider>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.background</div>
           <tb-color-input asBoxInput
                           formControlName="backgroundColorOn">
@@ -136,15 +136,15 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.power-button.power-off-colors' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-3">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.main</div>
           <tb-color-input asBoxInput
                           formControlName="mainColorOff">
           </tb-color-input>
         </div>
         <mat-divider vertical></mat-divider>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.background</div>
           <tb-color-input asBoxInput
                           formControlName="backgroundColorOff">
@@ -154,15 +154,15 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.power-button.disabled-colors' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-3">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.main</div>
           <tb-color-input asBoxInput
                           formControlName="mainColorDisabled">
           </tb-color-input>
         </div>
         <mat-divider vertical></mat-divider>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.power-button.background</div>
           <tb-color-input asBoxInput
                           formControlName="backgroundColorDisabled">

@@ -18,7 +18,7 @@
 <form (ngSubmit)="save()" style="width: 750px;">
   <mat-toolbar color="primary">
     <h2 translate>{{settings ? 'dashboard.settings' : 'layout.settings'}}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -58,7 +58,7 @@
             {{ 'dashboard.display-dashboard-logo' | translate }}
           </mat-slide-toggle>
         </div>
-        <tb-gallery-image-input fxFlex
+        <tb-gallery-image-input class="flex-1"
                                 label="{{'dashboard.dashboard-logo-image' | translate}}"
                                 formControlName="dashboardLogoUrl">
         </tb-gallery-image-input>
@@ -92,7 +92,7 @@
       </div>
       <mat-expansion-panel class="tb-settings">
         <mat-expansion-panel-header>
-          <mat-panel-description fxLayoutAlign="end" translate>
+          <mat-panel-description class="flex items-stretch justify-end" translate>
             dashboard.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
@@ -197,7 +197,7 @@
                           formControlName="backgroundColor">
           </tb-color-input>
         </div>
-        <tb-gallery-image-input fxFlex
+        <tb-gallery-image-input class="flex-1"
                                 label="{{'dashboard.background-image' | translate}}"
                                 formControlName="backgroundImageUrl">
         </tb-gallery-image-input>
@@ -244,7 +244,7 @@
       </div>
     </div>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

@@ -21,7 +21,7 @@
     <div class="tb-form-panel-title" translate>widgets.toggle-button.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.initial-state-hint' | translate}}" translate>widgets.rpc-state.initial-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.initial-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     trueLabel="{{ 'widgets.toggle-button.checked' | translate }}"
@@ -34,7 +34,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.check-hint' | translate}}" translate>widgets.toggle-button.check</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.toggle-button.check' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -43,7 +43,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.toggle-button.uncheck-hint' | translate}}" translate>widgets.toggle-button.uncheck</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.toggle-button.uncheck' | translate }}"
                                     [aliasController]="aliasController"
                                     [targetDevice]="targetDevice"
@@ -52,7 +52,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
@@ -66,10 +66,9 @@
     <div class="tb-form-panel-title" translate>widget-config.appearance</div>
     <div class="tb-form-panel stroked tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="!toggleButtonWidgetConfigForm.get('autoScale').value" disabled>
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="autoScale" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="autoScale" (click)="$event.stopPropagation()">
               {{ 'widgets.toggle-button.auto-scale' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -92,7 +91,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widget-config.title' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
@@ -111,11 +110,11 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showIcon">
         {{ 'widget-config.card-icon' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="iconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-        <tb-css-unit-select fxFlex formControlName="iconSizeUnit"></tb-css-unit-select>
+        <tb-css-unit-select class="flex-1" formControlName="iconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  iconClearButton
                                  [color]="toggleButtonWidgetConfigForm.get('iconColor').value"
@@ -129,7 +128,7 @@
     </div>
   </div>
   <div class="tb-form-panel">
-    <div fxLayout="row" fxLayoutAlign="space-between center">
+    <div class="flex flex-row items-center justify-between">
       <div class="tb-form-panel-title" translate>widgets.toggle-button.button-appearance</div>
       <tb-toggle-select [(ngModel)]="buttonAppearanceType" [ngModelOptions]="{standalone: true}">
         <tb-toggle-option value="checked">{{ 'widgets.toggle-button.checked' | translate }}</tb-toggle-option>
@@ -137,14 +136,14 @@
       </tb-toggle-select>
     </div>
     <tb-widget-button-appearance
-        [fxShow]="buttonAppearanceType === 'checked'"
+        [class.!hidden]="buttonAppearanceType !== 'checked'"
         withBorderRadius
         [withAutoScale]="false"
         [autoScale]="toggleButtonWidgetConfigForm.get('autoScale').value"
         formControlName="checkedAppearance">
     </tb-widget-button-appearance>
     <tb-widget-button-appearance
-        [fxShow]="buttonAppearanceType === 'unchecked'"
+      [class.!hidden]="buttonAppearanceType !== 'unchecked'"
         withBorderRadius
         [withAutoScale]="false"
         [autoScale]="toggleButtonWidgetConfigForm.get('autoScale').value"

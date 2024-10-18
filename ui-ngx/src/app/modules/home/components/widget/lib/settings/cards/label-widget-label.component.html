@@ -15,15 +15,15 @@
     limitations under the License.
 
 -->
-<mat-expansion-panel class="label-widget-label" fxFlex [formGroup]="labelWidgetLabelFormGroup" [(expanded)]="expanded">
+<mat-expansion-panel class="label-widget-label flex-1" [formGroup]="labelWidgetLabelFormGroup" [(expanded)]="expanded">
   <mat-expansion-panel-header>
-    <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+    <div class="flex flex-1 flex-row items-center justify-start">
       <mat-panel-title>
-        <div fxLayout="row" fxFlex fxLayoutAlign="start center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           {{ labelWidgetLabelFormGroup.get('pattern').value }}
         </div>
       </mat-panel-title>
-      <span fxFlex></span>
+      <span class="flex-1"></span>
       <button *ngIf="!disabled" mat-icon-button style="min-width: 40px;"
               type="button"
               (click)="removeLabel.emit()"
@@ -34,9 +34,9 @@
     </div>
   </mat-expansion-panel-header>
   <ng-template matExpansionPanelContent>
-    <div fxLayout="column" fxLayoutGap="0.5em">
+    <div class="flex flex-col gap-2">
       <mat-divider></mat-divider>
-      <section class="tb-widget-settings" fxLayout="column">
+      <section class="tb-widget-settings flex flex-col">
         <mat-form-field style="padding-bottom: 16px;">
           <mat-label translate>widgets.label-widget.label-pattern</mat-label>
           <input required matInput formControlName="pattern">
@@ -47,12 +47,12 @@
         </mat-form-field>
         <fieldset class="fields-group">
           <legend class="group-title" translate>widgets.label-widget.label-position</legend>
-          <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-            <mat-form-field fxFlex>
+          <section class="flex flex-row xs:flex-col gt-xs:gap-2">
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.label-widget.x-pos</mat-label>
               <input matInput type="number" min="0" max="100" formControlName="x">
             </mat-form-field>
-            <mat-form-field fxFlex>
+            <mat-form-field class="flex-1">
               <mat-label translate>widgets.label-widget.y-pos</mat-label>
               <input matInput type="number" min="0" max="100" formControlName="y">
             </mat-form-field>

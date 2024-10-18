@@ -75,11 +75,11 @@
   <div *ngIf="!hideDecimals && !hideDataKeyDecimals && (!singleRow || displayUnitsOrDigits)" class="tb-decimals-field">
     <mat-form-field *ngIf="displayUnitsOrDigits" appearance="outline" class="tb-inline-field number" subscriptSizing="dynamic">
       <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-      <div *ngIf="singleRow" matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+      <div *ngIf="singleRow" matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
     </mat-form-field>
   </div>
   <div *ngIf="!singleRow" class="tb-form-table-row-cell-buttons">
-    <div fxHide.lt-lg class="tb-settings-button">
+    <div class="tb-settings-button lt-lg:!hidden">
       <button *ngIf="modelValue"
               type="button"
               mat-icon-button

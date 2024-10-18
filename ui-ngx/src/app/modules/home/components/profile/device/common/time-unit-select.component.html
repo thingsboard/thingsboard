@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section [formGroup]="timeUnitSelectFormGroup" fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
-  <mat-form-field class="mat-block" fxFlex>
+<section [formGroup]="timeUnitSelectFormGroup" class="flex flex-row xs:flex-col gt-xs:gap-2">
+  <mat-form-field class="mat-block flex-1">
     <mat-label>{{ labelText | translate }}</mat-label>
     <input matInput type="number" min="0" formControlName="time" required>
     <mat-error *ngIf="timeUnitSelectFormGroup.get('time').hasError('required')">
@@ -29,7 +29,7 @@
       {{ (minText || patternText) | translate : {min: minTime/1000} }}
     </mat-error>
   </mat-form-field>
-  <mat-form-field class="mat-block" fxFlex>
+  <mat-form-field class="mat-block flex-1">
     <mat-label translate>device-profile.condition-duration-time-unit</mat-label>
     <mat-select formControlName="unit">
       <mat-option *ngFor="let timeUnit of timeUnits" [value]="timeUnit">

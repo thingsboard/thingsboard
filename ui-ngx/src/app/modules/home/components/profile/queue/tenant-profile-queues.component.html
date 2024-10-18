@@ -15,18 +15,18 @@
     limitations under the License.
 
 -->
-<div fxLayout="column">
+<div class="flex flex-col">
   <div class="tb-tenant-profile-queues"
        *ngFor="let queuesControl of queuesFormArray.controls; trackBy: trackByQueue;
        let $index = index; last as isLast;"
-       [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
-    <mat-expansion-panel fxFlex [expanded]="true">
+       [class.pb-2]="!isLast">
+    <mat-expansion-panel class="flex-1" [expanded]="true">
       <mat-expansion-panel-header>
-        <div fxFlex fxLayout="row" fxLayoutAlign="start center">
+        <div class="flex flex-1 flex-row items-center justify-start">
           <mat-panel-title>
             {{ getTitle(queuesControl.value.name) }}
           </mat-panel-title>
-          <span fxFlex></span>
+          <span class="flex-1"></span>
           <button *ngIf="!($index === 0) && !disabled" mat-icon-button style="min-width: 40px;"
                   type="button"
                   (click)="removeQueue($index)"
@@ -42,8 +42,8 @@
     </mat-expansion-panel>
   </div>
   <div *ngIf="!queuesFormArray.controls.length">
-      <span translate fxLayoutAlign="center center"
-            class="tb-prompt">tenant-profile.no-queue</span>
+      <span translate
+            class="tb-prompt flex items-center justify-center">tenant-profile.no-queue</span>
   </div>
   <div *ngIf="!disabled" style="padding-top: 16px;">
     <button mat-raised-button color="primary"

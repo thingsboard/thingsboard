@@ -15,11 +15,11 @@
     limitations under the License.
 
 -->
-<div fxLayout="column">
+<div class="flex flex-col">
   <div class="tb-device-profile-alarms">
     <div *ngFor="let alarmControl of alarmsFormArray.controls; trackBy: trackByAlarm;
                  let $index = index; last as isLast;"
-         fxLayout="column" [ngStyle]="!isLast ? {paddingBottom: '8px'} : {}">
+         class="flex flex-col" [class.pb-2]="!isLast">
       <tb-device-profile-alarm [formControl]="alarmControl"
                                [expanded]="$index === 0"
                                [deviceProfileId]="deviceProfileId"
@@ -28,8 +28,8 @@
     </div>
   </div>
   <div *ngIf="!alarmsFormArray.controls.length">
-      <span translate fxLayoutAlign="center center"
-            class="tb-prompt">device-profile.no-alarm-rules</span>
+      <span translate
+            class="tb-prompt flex items-center justify-center">device-profile.no-alarm-rules</span>
   </div>
   <div *ngIf="!disabled" style="padding-top: 16px;">
     <button mat-raised-button color="primary"

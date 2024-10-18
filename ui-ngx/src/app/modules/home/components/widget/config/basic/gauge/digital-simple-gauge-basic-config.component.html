@@ -55,7 +55,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showMinMax">
         {{ 'widgets.gauge.min-and-max-label' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="minMaxFont"
                           disabledLineHeight
                           [previewText]="previewFn">
@@ -68,7 +68,7 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div class="fixed-title-width">{{ 'widgets.gauge.min-and-max-value' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div class="tb-small-label" translate>widgets.gauge.min-value-short</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="minValue" type="number" step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -92,14 +92,14 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValue">
         {{ 'widgets.gauge.value' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <tb-unit-input
           class="flex"
           formControlName="units">
         </tb-unit-input>
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="decimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-          <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+          <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
         </mat-form-field>
         <tb-font-settings formControlName="valueFont"
                           disabledLineHeight
@@ -116,7 +116,7 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showTitle">
         {{ 'widgets.gauge.label' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <mat-form-field class="flex" appearance="outline" subscriptSizing="dynamic">
           <input matInput formControlName="title" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>

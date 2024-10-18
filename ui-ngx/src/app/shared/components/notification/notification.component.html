@@ -15,19 +15,19 @@
     limitations under the License.
 
 -->
-<section fxLayout="row" fxLayoutAlign="space-between start" class="notification"
-         [ngStyle]="{borderColor: notificationColor(), backgroundColor: notificationBackgroundColor()}">
+<section class="notification flex flex-row items-start justify-between"
+         [style]="{borderColor: notificationColor(), backgroundColor: notificationBackgroundColor()}">
   <div *ngIf="showIcon; else defaultIcon">
-    <tb-icon class="icon" [ngStyle]="{color: notification.additionalConfig.icon.color}">
+    <tb-icon class="icon" [style.color]="notification.additionalConfig.icon.color">
       {{ notification.additionalConfig.icon.icon }}
     </tb-icon>
   </div>
   <ng-template #defaultIcon>
-    <tb-icon class="icon" *ngIf="notificationTypeIcons.get(notification.type)" [ngStyle]="notificationIconColor()">
+    <tb-icon class="icon" *ngIf="notificationTypeIcons.get(notification.type)" [style]="notificationIconColor()">
       {{ notificationTypeIcons.get(notification.type) }}
     </tb-icon>
   </ng-template>
-  <div class="content" fxFlex>
+  <div class="content flex-1">
     <div class="title" [innerHTML]="(title | safe: 'html' )"></div>
     <div class="message" [innerHTML]="(message  | safe: 'html' )"></div>
     <button *ngIf="showButton" mat-stroked-button class="button" color="primary"
@@ -35,15 +35,15 @@
       {{ buttonLabel }}
     </button>
   </div>
-  <div class="description" fxLayout="column" fxLayoutAlign="start end">
+  <div class="description flex flex-col items-end justify-start">
     <span class="time">{{ notification.createdTime ?? currentDate | dateAgo }}</span>
     <button mat-icon-button (click)="markRead($event)" *ngIf="!hideMarkAsReadButton"
             matTooltip="{{ 'notification.mark-as-read' | translate }}" matTooltipPosition="above">
       <mat-icon>check_circle_outline</mat-icon>
     </button>
     <div class="alarm-severity" *ngIf="notification.type === notificationType.ALARM && !notification.info.cleared"
-         [ngStyle]="{backgroundColor: alarmColorSeverity(0.06)}">
-      <span [ngStyle]="notificationIconColor()" class="severity">
+         [style.background-color]="alarmColorSeverity(0.06)">
+      <span [style]="notificationIconColor()" class="severity">
         {{alarmSeverityTranslations.get(notification.info.alarmSeverity) | translate}}
       </span>
     </div>

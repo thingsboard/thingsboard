@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section fxLayout="row" fxLayoutAlign="start start" fxLayoutGap="16px">
+<section class="flex flex-row items-start justify-start gap-4">
   <mat-form-field>
     <mat-label *ngIf="showLabel">{{ dateText | translate }}</mat-label>
     <mat-datetimepicker-toggle [for]="datePicker" matPrefix></mat-datetimepicker-toggle>

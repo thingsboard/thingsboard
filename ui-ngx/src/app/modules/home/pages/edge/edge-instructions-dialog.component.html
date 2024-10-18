@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2 translate>{{ dialogTitle }}</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-icon-button
           (click)="close()"
           type="button">
@@ -72,8 +72,8 @@
   </section>
 </div>
 <div mat-dialog-actions class="tb-dialog-actions">
-  <mat-slide-toggle fxShow="{{ showDontShowAgain }}" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
-  <span fxFlex></span>
+  <mat-slide-toggle [class.!hidden]="!showDontShowAgain" [(ngModel)]="notShowAgain">{{ 'action.dont-show-again' | translate}}</mat-slide-toggle>
+  <span class="flex-1"></span>
   <button mat-button
           [disabled]="(isLoading$ | async)"
           (click)="close()">{{ 'action.close' | translate }}</button>

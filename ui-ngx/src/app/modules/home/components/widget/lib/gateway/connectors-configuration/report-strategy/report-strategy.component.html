@@ -17,9 +17,9 @@
 -->
 <div [formGroup]="reportStrategyFormGroup" class="tb-form-panel stroked">
   <mat-expansion-panel *ngIf="isExpansionMode else defaultMode" class="tb-settings" [expanded]="showStrategyControl.value">
-    <mat-expansion-panel-header fxLayout="row wrap">
+    <mat-expansion-panel-header class="flex-wrap">
       <mat-panel-title>
-        <mat-slide-toggle fxLayoutAlign="center" [formControl]="showStrategyControl" class="mat-slide" (click)="$event.stopPropagation()">
+        <mat-slide-toggle [formControl]="showStrategyControl" class="mat-slide" (click)="$event.stopPropagation()">
           <mat-label>
             {{ 'gateway.report-strategy.label' | translate }}
           </mat-label>
@@ -33,7 +33,7 @@
     <ng-container [ngTemplateOutlet]="strategyFields"></ng-container>
   </ng-template>
   <ng-template #strategyFields>
-    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div class="tb-form-row column-xs">
       <div class="fixed-title-width">{{ 'gateway.type' | translate }}</div>
       <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
         <mat-select formControlName="type">
@@ -41,17 +41,15 @@
         </mat-select>
       </mat-form-field>
     </div>
-    <div *ngIf="reportStrategyFormGroup.get('type').value !== ReportStrategyType.OnChange" class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+    <div *ngIf="reportStrategyFormGroup.get('type').value !== ReportStrategyType.OnChange" class="tb-form-row column-xs">
       <div class="fixed-title-width tb-required">
         <span tbTruncateWithTooltip translate>
           gateway.report-strategy.report-period
         </span>
       </div>
-      <div class="tb-flex no-gap">
-        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-          <input matInput type="number" min="0" name="value" formControlName="reportPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
-        </mat-form-field>
-      </div>
+      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+        <input matInput type="number" min="0" name="value" formControlName="reportPeriod" placeholder="{{ 'gateway.set' | translate }}"/>
+      </mat-form-field>
     </div>
   </ng-template>
 </div>

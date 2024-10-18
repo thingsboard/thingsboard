@@ -18,7 +18,7 @@
 <form [formGroup]="userFilterFormGroup" (ngSubmit)="save()" style="width: 400px;">
   <mat-toolbar color="primary">
     <h2>{{ filter.filter }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -60,7 +60,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

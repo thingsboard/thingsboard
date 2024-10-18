@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="tb-svg-xml" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'no-label': noLabel}"
+<div class="tb-svg-xml flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight, 'no-label': noLabel}"
      tb-fullscreen
-     [fullscreen]="fullscreen" fxLayout="column">
-  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;" class="tb-svg-xml-toolbar">
-    <label *ngIf="!noLabel" class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
-    <span fxFlex></span>
+     [fullscreen]="fullscreen">
+  <div style="min-height: 40px;" class="tb-svg-xml-toolbar flex flex-row items-center justify-start">
+    <label *ngIf="!noLabel" class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
+    <span class="flex-1"></span>
     <fieldset style="width: initial">
       <div matTooltip="{{(fullscreen ? 'fullscreen.exit' : 'fullscreen.expand') | translate}}"
            matTooltipPosition="above"
@@ -32,7 +32,7 @@
       </div>
     </fieldset>
   </div>
-  <div id="tb-svg-xml-panel" class="tb-svg-xml-content-panel" fxLayout="column">
-    <div #svgXmlEditor id="tb-svg-xml-input" [ngStyle]="fillHeight ? {} : {minHeight: minHeight}" [ngClass]="{'fill-height': fillHeight}"></div>
+  <div id="tb-svg-xml-panel" class="tb-svg-xml-content-panel flex flex-col">
+    <div #svgXmlEditor id="tb-svg-xml-input" [style]="fillHeight ? {} : {minHeight: minHeight}" [class.fill-height]="fillHeight"></div>
   </div>
 </div>

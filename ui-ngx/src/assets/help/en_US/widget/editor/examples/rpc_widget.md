@@ -12,7 +12,7 @@ The **Widget Editor** will open, pre-populated with default **Control** template
 
 ```html
     <form #rpcForm="ngForm" (submit)="sendCommand()">
-      <div class="mat-content mat-padding" fxLayout="column">
+      <div class="mat-content mat-padding flex flex-col">
         <mat-form-field class="mat-block">
           <mat-label>RPC method</mat-label>
           <input matInput required name="rpcMethod" #rpcMethodField="ngModel" [(ngModel)]="rpcMethod"/>

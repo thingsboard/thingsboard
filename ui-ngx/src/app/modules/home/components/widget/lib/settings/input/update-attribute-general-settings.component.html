@@ -18,24 +18,24 @@
 <section class="tb-widget-settings" [formGroup]="updateAttributeGeneralSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.input-widgets.general-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.input-widgets.widget-title</mat-label>
       <input matInput formControlName="widgetTitle">
     </mat-form-field>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-slide-toggle fxFlex fxFlex.gt-xs="25" formControlName="showLabel">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-slide-toggle class="flex-1 gt-xs:max-w-25% gt-xs:flex-full" formControlName="showLabel">
         {{ 'widgets.input-widgets.show-label' | translate }}
       </mat-slide-toggle>
-      <mat-form-field *ngIf="hasLabelValue" fxFlex class="mat-block">
+      <mat-form-field *ngIf="hasLabelValue" class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.label</mat-label>
         <input matInput formControlName="labelValue">
       </mat-form-field>
     </section>
-    <section fxLayout="column" fxLayout.gt-xs="row" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-      <mat-slide-toggle fxFlex fxFlex.gt-xs="25" formControlName="isRequired">
+    <section class="flex flex-col gt-xs:flex-row gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+      <mat-slide-toggle class="flex-1 gt-xs:max-w-25% gt-xs:flex-full" formControlName="isRequired">
         {{ 'widgets.input-widgets.required' | translate }}
       </mat-slide-toggle>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.input-widgets.required-error-message</mat-label>
         <input matInput formControlName="requiredErrorMessage">
       </mat-form-field>

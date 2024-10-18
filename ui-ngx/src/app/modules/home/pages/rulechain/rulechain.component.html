@@ -19,63 +19,63 @@
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'open')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'rulechain.open-rulechain' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{'rulechain.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setRoot')"
-          [fxShow]="!isEdit && ((!entity?.root && ruleChainScope === 'tenant') || (!isEdgeRootRuleChain() && ruleChainScope === 'edge'))">
+          [class.!hidden]="isEdit || !((!entity?.root && ruleChainScope === 'tenant') || (!isEdgeRootRuleChain() && ruleChainScope === 'edge'))">
     {{'rulechain.set-root' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setEdgeTemplateRoot')"
-          [fxShow]="!isEdit && !entity?.root && ruleChainScope === 'edges'">
+          [class.!hidden]="isEdit || entity?.root || ruleChainScope !== 'edges'">
     {{'rulechain.set-edge-template-root-rulechain' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'setAutoAssignToEdge')"
-          [fxShow]="!isEdit && isNotAutoAssignToEdgeRuleChain() && ruleChainScope === 'edges'">
+          [class.!hidden]="isEdit || !isNotAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
     {{'rulechain.set-auto-assign-to-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unsetAutoAssignToEdge')"
-          [fxShow]="!isEdit && isAutoAssignToEdgeRuleChain() && ruleChainScope === 'edges'">
+          [class.!hidden]="isEdit || !isAutoAssignToEdgeRuleChain() || ruleChainScope !== 'edges'">
     {{'rulechain.unset-auto-assign-to-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'unassignFromEdge')"
-          [fxShow]="!isEdit && !isEdgeRootRuleChain() && ruleChainScope === 'edge'">
+          [class.!hidden]="isEdit || isEdgeRootRuleChain() || ruleChainScope !== 'edges'">
     {{'edge.unassign-from-edge' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit && ruleChainScope !== 'edge'">
+          [class.!hidden]="hideDelete() || isEdit || ruleChainScope === 'edge'">
     {{'rulechain.delete' | translate }}
   </button>
-  <div fxLayout="row">
+  <div class="flex flex-row">
     <button mat-raised-button
             ngxClipboard
             (cbOnSuccess)="onRuleChainIdCopied($event)"
             [cbContent]="entity?.id?.id"
-            [fxShow]="!isEdit">
+            [class.!hidden]="isEdit">
       <mat-icon svgIcon="mdi:clipboard-arrow-left"></mat-icon>
       <span translate>rulechain.copyId</span>
     </button>
   </div>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
@@ -88,7 +88,7 @@
           {{ 'rulechain.name-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <mat-checkbox fxFlex formControlName="debugMode" style="padding-bottom: 16px;">
+      <mat-checkbox class="flex-1" formControlName="debugMode" style="padding-bottom: 16px;">
         {{ 'rulechain.debug-mode' | translate }}
       </mat-checkbox>
       <div formGroupName="additionalInfo">

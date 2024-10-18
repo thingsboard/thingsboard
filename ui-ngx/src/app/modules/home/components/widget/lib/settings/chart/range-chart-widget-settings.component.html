@@ -118,8 +118,8 @@
               {{ 'widgets.time-series-chart.series.point.point-label' | translate }}
             </div>
           </mat-slide-toggle>
-          <div fxLayout="row" fxFlex.lt-md fxLayoutAlign="start center" fxLayoutGap="8px">
-            <mat-form-field class="medium-width" fxFlex.lt-md appearance="outline" subscriptSizing="dynamic">
+          <div class="flex flex-row items-center justify-start gap-2 lt-md:flex-1">
+            <mat-form-field class="medium-width lt-md:flex-1" appearance="outline" subscriptSizing="dynamic">
               <mat-select formControlName="pointLabelPosition">
                 <mat-option *ngFor="let position of chartLabelPositions" [value]="position">
                   {{ chartLabelPositionTranslations.get(position) | translate }}
@@ -191,10 +191,9 @@
     </tb-time-series-chart-thresholds-panel>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetSettingsForm.get('showLegend').value" [disabled]="!rangeChartWidgetSettingsForm.get('showLegend').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="showLegend" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showLegend" (click)="$event.stopPropagation()">
               {{ 'widget-config.legend' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -212,7 +211,7 @@
           </div>
           <div class="tb-form-row space-between">
             <div>{{ 'legend.label' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="legendLabelFont"
                                 previewText="20 - 30">
               </tb-font-settings>
@@ -227,10 +226,9 @@
     </div>
     <div class="tb-form-panel tb-slide-toggle">
       <mat-expansion-panel class="tb-settings" [expanded]="rangeChartWidgetSettingsForm.get('showTooltip').value" [disabled]="!rangeChartWidgetSettingsForm.get('showTooltip').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
-            <mat-slide-toggle class="mat-slide" formControlName="showTooltip" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+            <mat-slide-toggle class="mat-slide flex items-stretch justify-center" formControlName="showTooltip" (click)="$event.stopPropagation()">
               {{ 'widget-config.tooltip' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
@@ -238,7 +236,7 @@
         <ng-template matExpansionPanelContent>
           <div class="tb-form-row space-between">
             <div>{{ 'tooltip.label' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="tooltipLabelFont"
                                 [initialPreviewStyle]="{ color: rangeChartWidgetSettingsForm.get('tooltipLabelColor').value }"
                                 previewText="Temperature">
@@ -251,7 +249,7 @@
           </div>
           <div class="tb-form-row space-between">
             <div>{{ 'tooltip.value' | translate }}</div>
-            <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+            <div class="flex flex-row items-center justify-start gap-2">
               <tb-font-settings formControlName="tooltipValueFont"
                                 [initialPreviewStyle]="{ color: rangeChartWidgetSettingsForm.get('tooltipValueColor').value }"
                                 [previewText]="tooltipValuePreviewFn">
@@ -266,8 +264,8 @@
             <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="tooltipShowDate">
               {{ 'tooltip.date' | translate }}
             </mat-slide-toggle>
-            <div fxFlex.gt-xs fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-              <tb-date-format-select fxFlex excludeLastUpdateAgo includeAuto
+            <div class="flex flex-row items-center justify-start gap-2 gt-xs:flex-1">
+              <tb-date-format-select class="flex-1" excludeLastUpdateAgo includeAuto
                                      formControlName="tooltipDateFormat"></tb-date-format-select>
               <tb-font-settings formControlName="tooltipDateFont"
                                 [initialPreviewStyle]="{ color: rangeChartWidgetSettingsForm.get('tooltipDateColor').value }"

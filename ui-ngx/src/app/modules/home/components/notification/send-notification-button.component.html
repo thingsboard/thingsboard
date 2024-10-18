@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div *ngIf="show()" fxLayout="row" fxLayoutAlign="end end" style="height: 100%; padding: 0 16px;">
-  <button fxHide.lt-md mat-flat-button color="primary" (click)="sendNotification($event)">
+<div *ngIf="show()" class="flex flex-row items-end justify-end" style="height: 100%; padding: 0 16px;">
+  <button class="lt-md:!hidden" mat-flat-button color="primary" (click)="sendNotification($event)">
     <mat-icon>send</mat-icon>
     <span translate>notification.send-notification</span>
   </button>
-  <button class="mat-elevation-z0" fxHide.gt-sm mat-mini-fab color="primary" (click)="sendNotification($event)">
+  <button class="mat-elevation-z0 gt-sm:!hidden" mat-mini-fab color="primary" (click)="sendNotification($event)">
     <mat-icon>send</mat-icon>
   </button>
 </div>

@@ -15,19 +15,19 @@
     limitations under the License.
 
 -->
-<section [formGroup]="widgetFontFormGroup" fxLayout="column">
-  <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-    <mat-form-field fxFlex class="mat-block">
+<section [formGroup]="widgetFontFormGroup" class="flex flex-col">
+  <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.widget-font.font-family</mat-label>
       <input matInput formControlName="family">
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>{{ sizeTitle }}</mat-label>
       <input matInput type="number" min="1" step="1" formControlName="size">
     </mat-form-field>
   </section>
-  <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px" fxLayoutAlign.gt-xs="start center">
-    <mat-form-field fxFlex class="mat-block">
+  <section class="flex flex-row xs:flex-col gt-xs:items-center gt-xs:justify-start gt-xs:gap-2">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.widget-font.font-style</mat-label>
       <mat-select formControlName="style">
         <mat-option [value]="'normal'">
@@ -41,7 +41,7 @@
         </mat-option>
       </mat-select>
     </mat-form-field>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.widget-font.font-weight</mat-label>
       <mat-select formControlName="weight">
         <mat-option [value]="'normal'">
@@ -68,16 +68,16 @@
       </mat-select>
     </mat-form-field>
   </section>
-  <section fxLayout="row" fxLayout.xs="column" fxLayoutGap.gt-xs="8px">
+  <section class="flex flex-row xs:flex-col gt-xs:gap-2">
     <tb-color-input
-      fxFlex
+      class="flex-1"
       formControlName="color"
       icon="format_color_fill"
       label="{{ 'widgets.widget-font.color' | translate }}" openOnInput colorClearButton>
     </tb-color-input>
     <tb-color-input
       *ngIf="hasShadowColor"
-      fxFlex
+      class="flex-1"
       formControlName="shadowColor"
       icon="format_color_fill"
       label="{{ 'widgets.widget-font.shadow-color' | translate }}" openOnInput colorClearButton>

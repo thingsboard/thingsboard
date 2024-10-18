@@ -15,33 +15,33 @@
     limitations under the License.
 
 -->
-<div class="tb-details-buttons" fxLayout.xs="column">
+<div class="tb-details-buttons xs:flex xs:flex-col">
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'edit')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{ 'widget.edit' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'openDetails')"
-          [fxShow]="!isEdit && !isDetailsPage">
+          [class.!hidden]="isEdit || isDetailsPage">
     {{'common.open-details-page' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'export')"
-          [fxShow]="!isEdit">
+          [class.!hidden]="isEdit">
     {{ 'widget.export' | translate }}
   </button>
   <button mat-raised-button color="primary"
           [disabled]="(isLoading$ | async)"
           (click)="onEntityAction($event, 'delete')"
-          [fxShow]="!hideDelete() && !isEdit">
+          [class.!hidden]="hideDelete() || isEdit">
     {{ 'widget.delete-widget' | translate }}
   </button>
 </div>
-<div class="mat-padding" fxLayout="column">
+<div class="mat-padding flex flex-col">
   <form [formGroup]="entityForm">
     <fieldset [disabled]="(isLoading$ | async) || !isEdit">
       <mat-form-field class="mat-block">
@@ -54,7 +54,7 @@
           {{ 'widget.title-max-length' | translate }}
         </mat-error>
       </mat-form-field>
-      <tb-gallery-image-input fxFlex
+      <tb-gallery-image-input class="flex-1"
                       label="{{'widget.image-preview' | translate}}"
                       formControlName="image">
       </tb-gallery-image-input>
@@ -67,7 +67,7 @@
         label="{{ 'widget.tags' | translate }}"
         formControlName="tags">
       </tb-string-items-list>
-      <div fxLayout="column" fxLayoutGap="16px">
+      <div class="flex flex-col gap-4">
         <mat-slide-toggle formControlName="scada">
           {{ 'widget.scada' | translate }}
         </mat-slide-toggle>

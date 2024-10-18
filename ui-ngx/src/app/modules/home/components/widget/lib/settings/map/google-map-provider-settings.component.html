@@ -16,11 +16,11 @@
 
 -->
 <section class="tb-widget-settings" [formGroup]="providerSettingsFormGroup">
-  <mat-form-field fxFlex class="mat-block">
+  <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.google-maps-api-key</mat-label>
     <input required matInput formControlName="gmApiKey">
   </mat-form-field>
-  <mat-form-field fxFlex class="mat-block">
+  <mat-form-field class="mat-block">
     <mat-label translate>widgets.maps.default-map-type</mat-label>
     <mat-select required formControlName="gmDefaultMapType">
       <mat-option *ngFor="let type of googleMapTypes" [value]="type">

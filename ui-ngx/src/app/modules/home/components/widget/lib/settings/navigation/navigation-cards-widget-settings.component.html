@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="navigationCardsWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="navigationCardsWidgetSettingsForm">
   <section style="margin-bottom: 16px;">
     <div class="mat-caption" style="margin: -8px 0 8px;" translate>widgets.navigation.filter-type</div>
-    <mat-radio-group formControlName="filterType" fxLayoutGap="16px">
+    <mat-radio-group formControlName="filterType" class="gap-4">
       <mat-radio-button [value]="'all'">{{ 'widgets.navigation.filter-type-all' | translate }}</mat-radio-button>
       <mat-radio-button [value]="'include'">{{ 'widgets.navigation.filter-type-include' | translate }}</mat-radio-button>
       <mat-radio-button [value]="'exclude'">{{ 'widgets.navigation.filter-type-exclude' | translate }}</mat-radio-button>
     </mat-radio-group>
   </section>
-  <mat-form-field [fxShow]="navigationCardsWidgetSettingsForm.get('filterType').value !== 'all'" fxFlex class="mat-block" floatLabel="always">
+  <mat-form-field [class.!hidden]="navigationCardsWidgetSettingsForm.get('filterType').value === 'all'" class="mat-block flex-1" floatLabel="always">
     <mat-label translate>widgets.navigation.items</mat-label>
     <mat-chip-grid #filterItemsChipList>
       <mat-chip-row *ngFor="let filterItem of navigationCardsWidgetSettingsForm.get('filter').value"

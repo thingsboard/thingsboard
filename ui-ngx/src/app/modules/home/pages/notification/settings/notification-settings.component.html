@@ -18,12 +18,11 @@
 <div>
   <mat-card appearance="outlined" class="settings-card tb-absolute-fill">
     <mat-card-header>
-      <div fxFlex fxLayout="row" fxLayout.xs="column" fxLayoutGap.xs="8px"
-           fxLayoutAlign="space-between start" fxLayoutAlign.xs="start start">
-        <div fxFlex fxLayout="column">
+      <div class="flex flex-1 flex-row items-start justify-between xs:flex-col xs:justify-start xs:gap-2">
+        <div class="flex flex-1 flex-col">
           <span class="mat-headline-5" translate>notification.settings.notification-settings</span>
         </div>
-        <div fxLayout="column">
+        <div class="flex flex-col">
           <button mat-button color="primary"
                   [disabled]="(isLoading$ | async)"
                   (click)="resetSettings()">{{ 'notification.settings.reset-all' | translate }}</button>
@@ -37,8 +36,8 @@
       <form [formGroup]="notificationSettings" class="notification-form">
         <section class="notification-section">
           <div  class="notification-section-block">
-            <div fxLayout="row" fxLayoutAlign="start center" style="height: 44px;">
-              <div fxFlex="50">
+            <div class="flex flex-row items-center justify-start" style="height: 44px;">
+              <div class="max-w-50% flex-full">
                 <mat-checkbox color="warn"
                               (click)="$event.stopPropagation()"
                               [indeterminate]="getIndeterminate()"
@@ -47,8 +46,8 @@
                   <mat-label translate>notification.settings.type</mat-label>
                 </mat-checkbox>
               </div>
-              <div fxFlex *ngFor="let deliveryMethods of notificationDeliveryMethods">
-                <div fxFlex fxLayoutAlign="start center">
+              <div class="flex-1" *ngFor="let deliveryMethods of notificationDeliveryMethods">
+                <div class="flex flex-1 items-center justify-start">
                   <mat-checkbox color="warn"
                                 [checked]="getChecked(deliveryMethods)"
                                 (change)="changeInstanceTypeCheckBox($event.checked, deliveryMethods)"
@@ -70,7 +69,7 @@
         </section>
       </form>
     </mat-card-content>
-    <div fxLayout="row" fxLayoutAlign="end start" style="padding: 16px;">
+    <div class="flex flex-row items-start justify-end" style="padding: 16px;">
       <button mat-button mat-raised-button color="primary"
               type="button"
               (click)="save()"

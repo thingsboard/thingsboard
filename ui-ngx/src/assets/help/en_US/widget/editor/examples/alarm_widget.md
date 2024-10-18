@@ -19,9 +19,9 @@ The **Widget Editor** will be opened, pre-populated with the content of the defa
  - Put the following HTML code inside the HTML tab of "Resources" section:
 
 ```html
-  <div fxFlex fxLayout="column" style="height: 100%;">
+  <div class="flex h-full flex-1 flex-col">
       <div>My first Alarm widget.</div>
-      <table class="my-alarm-table" style="width: 100%;">
+      <table class="my-alarm-table w-full">
           <thead>
               <tr>
                   <th *ngFor="let dataKey of alarmSource?.dataKeys">{{dataKey.label}}</th> 
@@ -30,7 +30,7 @@ The **Widget Editor** will be opened, pre-populated with the content of the defa
           <tbody>
               <tr *ngFor="let alarm of alarms">
                   <td *ngFor="let dataKey of alarmSource?.dataKeys" 
-                      [ngStyle]="getAlarmCellStyle(alarm, dataKey)">
+                      [style]="getAlarmCellStyle(alarm, dataKey)">
                       {{getAlarmValue(alarm, dataKey)}}
                   </td>
               </tr>      

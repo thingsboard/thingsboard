@@ -16,9 +16,9 @@
 
 -->
 <div style="min-width: 400px; position: relative;">
-  <mat-toolbar fxLayout="row" color="primary">
+  <mat-toolbar class="flex flex-row" color="primary">
     <h2>{{ 'dashboard.public-dashboard-title' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="close()"
             type="button">
@@ -32,8 +32,8 @@
     <span
        innerHTML="{{ translate.get('dashboard.public-dashboard-text', {dashboardTitle: dashboard.title, publicLink: publicLink}) | async }}">
     </span>
-    <div fxLayout="row" fxLayoutAlign="start center">
-      <pre class="tb-highlight" fxFlex><code>{{ publicLink }}</code></pre>
+    <div class="flex flex-row items-center justify-start">
+      <pre class="tb-highlight flex-1"><code>{{ publicLink }}</code></pre>
       <button mat-icon-button
               ngxClipboard
               (cbOnSuccess)="onPublicLinkCopied($event)"
@@ -51,8 +51,8 @@
                            shareHashTags="thingsboard, iot">
     </tb-social-share-panel>
   </div>
-  <div mat-dialog-actions fxLayout="row">
-    <span fxFlex></span>
+  <div mat-dialog-actions class="flex flex-row">
+    <span class="flex-1"></span>
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

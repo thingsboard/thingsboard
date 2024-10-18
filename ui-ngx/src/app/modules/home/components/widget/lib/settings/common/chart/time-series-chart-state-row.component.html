@@ -33,7 +33,7 @@
     <tb-value-input
         *ngIf="stateFormGroup.get('sourceType').value === TimeSeriesChartStateSourceType.constant"
         formControlName="sourceValue"
-        fxFlex
+        class="flex-1"
         [layout]="{
                     layout: 'column',
                     breakpoints: {'gt-sm': 'row'}

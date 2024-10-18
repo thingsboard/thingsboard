@@ -20,7 +20,7 @@
     <div class="tb-form-panel-title" translate>widgets.slider.behavior</div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.slider.initial-value-hint' | translate}}" translate>widgets.slider.initial-value</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.slider.initial-value' | translate }}"
                                     [valueType]="valueType.DOUBLE"
                                     [aliasController]="aliasController"
@@ -30,7 +30,7 @@
     </div>
     <div class="tb-form-row space-between">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.slider.on-value-change-hint' | translate}}" translate>widgets.slider.on-value-change</div>
-      <tb-set-value-action-settings fxFlex
+      <tb-set-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.slider.on-value-change' | translate }}"
                                     [valueType]="valueType.DOUBLE"
                                     [aliasController]="aliasController"
@@ -40,7 +40,7 @@
     </div>
     <div class="tb-form-row">
       <div class="fixed-title-width" tb-hint-tooltip-icon="{{'widgets.rpc-state.disabled-state-hint' | translate}}" translate>widgets.rpc-state.disabled-state</div>
-      <tb-get-value-action-settings fxFlex
+      <tb-get-value-action-settings class="flex-1"
                                     panelTitle="{{ 'widgets.rpc-state.disabled-state' | translate }}"
                                     [valueType]="valueType.BOOLEAN"
                                     stateLabel="{{ 'widgets.rpc-state.disabled' | translate }}"
@@ -88,11 +88,11 @@
       <mat-slide-toggle class="mat-slide fixed-title-width" formControlName="showValue">
         {{ 'widgets.slider.value' | translate }}
       </mat-slide-toggle>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
         <tb-unit-input class="flex" formControlName="valueUnits"></tb-unit-input>
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="valueDecimals" type="number" min="0" max="15" step="1" placeholder="{{ 'widget-config.set' | translate }}">
-          <div matSuffix fxHide.lt-md translate>widget-config.decimals-suffix</div>
+          <div matSuffix class="lt-md:!hidden" translate>widget-config.decimals-suffix</div>
         </mat-form-field>
         <tb-font-settings formControlName="valueFont"
                           [previewText]="valuePreviewFn">
@@ -105,7 +105,7 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.slider.range' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <div class="tb-small-label" translate>widgets.slider.min</div>
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="tickMin" type="number" placeholder="{{ 'widget-config.set' | translate }}">
@@ -120,7 +120,7 @@
       <mat-slide-toggle class="mat-slide" formControlName="showTicks">
         {{ 'widgets.slider.range-ticks' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <tb-font-settings formControlName="ticksFont"
                           previewText="100">
         </tb-font-settings>
@@ -134,7 +134,7 @@
       <mat-slide-toggle class="mat-slide" formControlName="showTickMarks">
         {{ 'widgets.slider.tick-marks' | translate }}
       </mat-slide-toggle>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2">
         <mat-form-field appearance="outline" class="number" subscriptSizing="dynamic">
           <input matInput formControlName="tickMarksCount" type="number" min="2"
                  step="1" placeholder="{{ 'widget-config.set' | translate }}">
@@ -146,15 +146,15 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.slider.colors' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-3">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.main</div>
           <tb-color-input asBoxInput
                           formControlName="mainColor">
           </tb-color-input>
         </div>
         <mat-divider vertical></mat-divider>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.background</div>
           <tb-color-input asBoxInput
                           formControlName="backgroundColor">
@@ -164,15 +164,15 @@
     </div>
     <div class="tb-form-row space-between column-xs">
       <div>{{ 'widgets.rpc-state.disabled-state' | translate }}</div>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="12px">
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-3">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.main</div>
           <tb-color-input asBoxInput
                           formControlName="mainColorDisabled">
           </tb-color-input>
         </div>
         <mat-divider vertical></mat-divider>
-        <div fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
+        <div class="flex flex-row items-center justify-start gap-2">
           <div translate>widgets.slider.background</div>
           <tb-color-input asBoxInput
                           formControlName="backgroundColorDisabled">
@@ -185,11 +185,11 @@
       <div class="fixed-title-width">
         {{ 'widgets.slider.left-icon' | translate }}
       </div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="leftIconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-        <tb-css-unit-select fxFlex formControlName="leftIconSizeUnit"></tb-css-unit-select>
+        <tb-css-unit-select class="flex-1" formControlName="leftIconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  [color]="sliderWidgetSettingsForm.get('leftIconColor').value"
                                  formControlName="leftIcon">
@@ -204,11 +204,11 @@
       <div class="fixed-title-width">
         {{ 'widgets.slider.right-icon' | translate }}
       </div>
-      <div fxFlex fxLayout="row" fxLayoutAlign="start center" fxLayoutGap="8px">
-        <mat-form-field appearance="outline" class="flex number" subscriptSizing="dynamic">
+      <div class="flex flex-1 flex-row items-center justify-start gap-2">
+        <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput type="number" min="0" formControlName="rightIconSize" placeholder="{{ 'widget-config.set' | translate }}">
         </mat-form-field>
-        <tb-css-unit-select fxFlex formControlName="rightIconSizeUnit"></tb-css-unit-select>
+        <tb-css-unit-select class="flex-1" formControlName="rightIconSizeUnit"></tb-css-unit-select>
         <tb-material-icon-select asBoxInput
                                  [color]="sliderWidgetSettingsForm.get('rightIconColor').value"
                                  formControlName="rightIcon">

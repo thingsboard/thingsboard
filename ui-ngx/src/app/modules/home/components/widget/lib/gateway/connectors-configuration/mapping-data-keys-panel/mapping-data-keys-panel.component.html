@@ -24,7 +24,7 @@
         <div class="tb-form-panel stroked tb-flex">
           <ng-container [formGroup]="keyControl">
             <mat-expansion-panel class="tb-settings" [expanded]="last">
-              <mat-expansion-panel-header fxLayout="row wrap">
+              <mat-expansion-panel-header class="flex flex-row flex-wrap">
                 <mat-panel-title>
                   <ng-container *ngIf="keysType !== MappingKeysType.RPC_METHODS">
                     <div tbTruncateWithTooltip class="title-container">
@@ -40,25 +40,23 @@
                      *ngIf="keysType !== MappingKeysType.CUSTOM && keysType !== MappingKeysType.RPC_METHODS">
                   <div class="tb-form-panel stroked">
                     <div class="tb-form-panel-title" translate>gateway.platform-side</div>
-                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="tb-form-row column-xs">
                       <div class="fixed-title-width tb-required"
                            tb-hint-tooltip-icon="{{ 'gateway.JSONPath-hint' | translate }}">
                         {{ 'gateway.key' | translate }}
                       </div>
-                      <div class="tb-flex no-gap">
-                        <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                          <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
-                          <mat-icon matSuffix
-                                    matTooltipPosition="above"
-                                    matTooltipClass="tb-error-tooltip"
-                                    [matTooltip]="('gateway.key-required') | translate"
-                                    *ngIf="keyControl.get('key').hasError('required') &&
-                                           keyControl.get('key').touched"
-                                    class="tb-error">
-                            warning
-                          </mat-icon>
-                        </mat-form-field>
-                      </div>
+                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                        <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
+                        <mat-icon matSuffix
+                                  matTooltipPosition="above"
+                                  matTooltipClass="tb-error-tooltip"
+                                  [matTooltip]="('gateway.key-required') | translate"
+                                  *ngIf="keyControl.get('key').hasError('required') &&
+                                         keyControl.get('key').touched"
+                                  class="tb-error">
+                          warning
+                        </mat-icon>
+                      </mat-form-field>
                     </div>
                   </div>
                   <div class="tb-form-panel stroked">
@@ -98,12 +96,12 @@
                         </mat-select>
                       </mat-form-field>
                     </div>
-                    <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                    <div class="tb-form-row column-xs">
                       <div class="fixed-title-width tb-required"
                            tb-hint-tooltip-icon="{{ 'gateway.JSONPath-hint' | translate }}">
                         {{ 'gateway.value' | translate }}
                       </div>
-                      <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-flex no-gap">
+                      <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-flex no-gap">
                         <input matInput required formControlName="value"
                                placeholder="{{ 'gateway.set' | translate }}"/>
                         <mat-icon matSuffix
@@ -127,25 +125,23 @@
                   </div>
                 </div>
                 <div class="tb-form-panel no-border no-padding" *ngIf="keysType === MappingKeysType.CUSTOM">
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                  <div class="tb-form-row column-xs">
                     <div class="fixed-title-width tb-required" translate>gateway.key</div>
-                    <div class="tb-flex no-gap">
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
-                        <mat-icon matSuffix
-                                  matTooltipPosition="above"
-                                  matTooltipClass="tb-error-tooltip"
-                                  [matTooltip]="('gateway.key-required') | translate"
-                                  *ngIf="keyControl.get('key').hasError('required') && keyControl.get('key').touched"
-                                  class="tb-error">
-                          warning
-                        </mat-icon>
-                      </mat-form-field>
-                    </div>
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <input matInput name="value" formControlName="key" placeholder="{{ 'gateway.set' | translate }}"/>
+                      <mat-icon matSuffix
+                                matTooltipPosition="above"
+                                matTooltipClass="tb-error-tooltip"
+                                [matTooltip]="('gateway.key-required') | translate"
+                                *ngIf="keyControl.get('key').hasError('required') && keyControl.get('key').touched"
+                                class="tb-error">
+                        warning
+                      </mat-icon>
+                    </mat-form-field>
                   </div>
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                  <div class="tb-form-row column-xs">
                     <div class="fixed-title-width tb-required" translate>gateway.value</div>
-                    <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+                    <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
                       <input matInput required formControlName="value"
                              placeholder="{{ 'gateway.set' | translate }}"/>
                       <mat-icon matSuffix
@@ -160,27 +156,25 @@
                   </div>
                 </div>
                 <div class="tb-form-panel no-border no-padding" *ngIf="keysType === MappingKeysType.RPC_METHODS">
-                  <div class="tb-form-row column-xs" fxLayoutAlign="space-between center">
+                  <div class="tb-form-row column-xs">
                     <div class="fixed-title-width tb-required" tb-hint-tooltip-icon="{{ 'gateway.hints.method-name' | translate }}">
                       {{ 'gateway.method-name' | translate }}
                     </div>
-                    <div class="tb-flex no-gap">
-                      <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
-                        <input matInput name="value" formControlName="method" placeholder="{{ 'gateway.set' | translate }}"/>
-                        <mat-icon matSuffix
-                                  matTooltipPosition="above"
-                                  matTooltipClass="tb-error-tooltip"
-                                  [matTooltip]="('gateway.method-required') | translate"
-                                  *ngIf="keyControl.get('method').hasError('required') && keyControl.get('method').touched"
-                                  class="tb-error">
-                          warning
-                        </mat-icon>
-                      </mat-form-field>
-                    </div>
+                    <mat-form-field class="tb-flex no-gap" appearance="outline" subscriptSizing="dynamic">
+                      <input matInput name="value" formControlName="method" placeholder="{{ 'gateway.set' | translate }}"/>
+                      <mat-icon matSuffix
+                                matTooltipPosition="above"
+                                matTooltipClass="tb-error-tooltip"
+                                [matTooltip]="('gateway.method-required') | translate"
+                                *ngIf="keyControl.get('method').hasError('required') && keyControl.get('method').touched"
+                                class="tb-error">
+                        warning
+                      </mat-icon>
+                    </mat-form-field>
                   </div>
                   <div class="tb-form-panel stroked tb-flex">
                     <mat-expansion-panel class="tb-settings">
-                      <mat-expansion-panel-header fxLayout="row wrap">
+                      <mat-expansion-panel-header class="flex flex-wrap">
                         <mat-panel-title>
                           <div class="title-container" tb-hint-tooltip-icon="{{ 'gateway.hints.arguments' | translate }}">
                             {{ 'gateway.arguments' | translate }}{{' (' + keyControl.get('arguments').value?.length + ')'}}

@@ -18,7 +18,7 @@
 <form [formGroup]="filterFormGroup" (ngSubmit)="save()" style="width: 700px;">
   <mat-toolbar color="primary">
     <h2>{{ (isAdd ? 'filter.add' : 'filter.edit') | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -29,9 +29,9 @@
   </mat-progress-bar>
   <div mat-dialog-content>
     <fieldset [disabled]="isLoading$ | async">
-      <div fxFlex fxLayout="column">
-        <div fxLayout="row">
-          <mat-form-field fxFlex class="mat-block">
+      <div class="flex flex-1 flex-col">
+        <div class="flex flex-row">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>filter.name</mat-label>
             <input matInput formControlName="filter" required>
             <mat-error *ngIf="filterFormGroup.get('filter').hasError('required')">
@@ -41,7 +41,7 @@
               {{ 'filter.duplicate-filter' | translate }}
             </mat-error>
           </mat-form-field>
-          <section class="tb-editable-switch" fxLayout="column" fxLayoutAlign="start center">
+          <section class="tb-editable-switch flex flex-col items-center justify-start">
             <label class="tb-small editable-label" translate>filter.editable</label>
             <mat-slide-toggle class="editable-switch"
                               formControlName="editable">
@@ -54,7 +54,7 @@
       </div>
     </fieldset>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions  class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

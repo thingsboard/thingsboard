@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="dashboardStateWidgetSettingsForm" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="dashboardStateWidgetSettingsForm">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.dashboard-state.dashboard-state-settings</legend>
     <mat-form-field class="mat-block">
@@ -39,7 +39,7 @@
     </mat-form-field>
     <mat-expansion-panel class="tb-settings">
       <mat-expansion-panel-header>
-        <mat-panel-description fxLayoutAlign="end" translate>
+        <mat-panel-description class="flex items-stretch justify-end" translate>
           widget-config.advanced-settings
         </mat-panel-description>
       </mat-expansion-panel-header>
@@ -47,7 +47,7 @@
         <mat-slide-toggle class="mat-slide" formControlName="defaultAutofillLayout">
           {{ 'widgets.dashboard-state.autofill-state-layout' | translate }}
         </mat-slide-toggle>
-        <mat-form-field fxFlex class="mat-block">
+        <mat-form-field class="mat-block flex-1">
           <mat-label translate>widgets.dashboard-state.default-margin</mat-label>
           <input matInput type="number" min="0" step="1" formControlName="defaultMargin">
         </mat-form-field>

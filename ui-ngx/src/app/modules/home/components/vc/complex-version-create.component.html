@@ -15,22 +15,22 @@
     limitations under the License.
 
 -->
-<section *ngIf="!versionCreateResult$" fxLayout="column" style="height: 100%;">
+<section *ngIf="!versionCreateResult$" class="flex flex-col" style="height: 100%;">
   <mat-toolbar>
     <h2>{{ 'version-control.create-entities-version' | translate }}</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
   </mat-toolbar>
   <mat-progress-bar color="warn" style="z-index: 10; width: 100%; margin-bottom: -4px;" mode="indeterminate"
                     *ngIf="isLoading$ | async">
   </mat-progress-bar>
-  <form [formGroup]="createVersionFormGroup" fxLayout="column" style="flex: 1; padding-top: 16px; overflow: auto;">
-    <div fxLayout="column" fxLayout.gt-sm="row" fxLayoutGap.gt-sm="8px">
+  <form [formGroup]="createVersionFormGroup" class="flex flex-col" style="flex: 1; padding-top: 16px; overflow: auto;">
+    <div class="flex flex-col gt-sm:flex-row gt-sm:gap-2">
       <tb-branch-autocomplete
-        fxFlex
+        class="flex-1"
         required
         formControlName="branch">
       </tb-branch-autocomplete>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>version-control.version-name</mat-label>
         <input required matInput formControlName="versionName">
         <mat-error *ngIf="createVersionFormGroup.get('versionName').hasError('required') ||
@@ -52,7 +52,7 @@
       formControlName="entityTypes">
     </tb-entity-types-version-create>
   </form>
-  <div fxLayoutAlign="end center" fxLayoutGap="8px" style="padding-top: 16px;">
+  <div class="flex items-center justify-end gap-2" style="padding-top: 16px;">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -71,7 +71,7 @@
   <section *ngIf="resultMessage">
     <div class="mat-headline-6 vc-result-message" [innerHtml]="resultMessage"></div>
   </section>
-  <div *ngIf="(versionCreateResult$ | async)?.done || hasError; else progress" fxLayoutAlign="end center" fxLayoutGap="8px">
+  <div *ngIf="(versionCreateResult$ | async)?.done || hasError; else progress" class="flex items-center justify-end gap-2">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"
@@ -80,7 +80,7 @@
     </button>
   </div>
   <ng-template #progress>
-    <section fxLayout="column" fxLayoutAlign="center center">
+    <section class="flex flex-col items-center justify-center">
       <div class="mat-headline-6 vc-result-message progress">
         <span translate>version-control.creating-version</span>
         <mat-progress-bar mode="indeterminate"></mat-progress-bar>

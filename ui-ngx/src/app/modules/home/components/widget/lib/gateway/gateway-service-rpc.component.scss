@@ -30,6 +30,11 @@
     margin-left: 10px;
   }
 
+  tb-gateway-service-rpc-connector-templates {
+    flex: 1 1 30%;
+    max-width: 30%;
+  }
+
 
   .command-form {
     flex-wrap: nowrap;
@@ -83,5 +88,6 @@
     box-shadow: 0 0 0 0 rgb(0 0 0 / 20%), 0 0 0 0 rgb(0 0 0 / 14%), 0 0 0 0 rgb(0 0 0 / 12%);
     border: solid 1px #e0e0e0;
     border-radius: 4px;
+
   }
 }

@@ -18,7 +18,7 @@
 <form (ngSubmit)="add()" style="min-width: 450px;">
   <mat-toolbar color="primary">
     <h2 translate>user.add</h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <div [tb-help]="'users'"></div>
     <button mat-icon-button
             (click)="cancel()"
@@ -40,7 +40,7 @@
       </mat-select>
     </mat-form-field>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             cdkFocusInitial

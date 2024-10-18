@@ -20,7 +20,7 @@
     <h2>
       {{ (readonly ? 'device-profile.lwm2m.view-attributes' : 'device-profile.lwm2m.edit-attributes') | translate : {name: name} }}
     </h2>
-    <span fxFlex></span>
+    <span class="flex-1"></span>
     <button mat-icon-button
             (click)="cancel()"
             type="button">
@@ -35,7 +35,7 @@
       formControlName="attributes">
     </tb-lwm2m-attributes-key-list>
   </div>
-  <div mat-dialog-actions fxLayoutAlign="end center">
+  <div mat-dialog-actions class="flex items-center justify-end">
     <button mat-button color="primary"
             type="button"
             [disabled]="(isLoading$ | async)"

@@ -23,7 +23,7 @@
          (focusin)="onFocus()"
          [required]="required"
          [matAutocomplete]="ruleChainAutocomplete"
-         [fxShow]="!disabled || !selectRuleChainFormGroup.get('ruleChainId').value">
+         [class.!hidden]="disabled && selectRuleChainFormGroup.get('ruleChainId').value">
   <a *ngIf="selectRuleChainFormGroup.get('ruleChainId').value && disabled" aria-label="Open device profile" [routerLink]=ruleChainURL>
     {{ displayRuleChainFn(selectRuleChainFormGroup.get('ruleChainId').value) }}
   </a>

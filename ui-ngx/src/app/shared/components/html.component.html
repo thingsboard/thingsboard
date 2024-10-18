@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div class="tb-html" style="background: #fff;" [ngClass]="{'tb-disabled': disabled, 'fill-height': fillHeight}"
+<div class="tb-html flex flex-col" style="background: #fff;" [class]="{'tb-disabled': disabled, 'fill-height': fillHeight}"
      tb-fullscreen
-     [fullscreen]="fullscreen" fxLayout="column">
-  <div fxLayout="row" fxLayoutAlign="start center" style="min-height: 40px;" class="tb-html-toolbar">
-    <label class="tb-title no-padding" [ngClass]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
-    <span fxFlex></span>
+     [fullscreen]="fullscreen">
+  <div style="min-height: 40px;" class="tb-html-toolbar flex flex-row items-center justify-start">
+    <label class="tb-title no-padding" [class]="{'tb-error': !disabled && (hasErrors || required && !modelValue), 'tb-required': !disabled && required}">{{ label }}</label>
+    <span class="flex-1"></span>
     <button type='button' *ngIf="!disabled" mat-button class="tidy" (click)="beautifyHtml()">
       {{'js-func.tidy' | translate }}
     </button>
@@ -35,7 +35,7 @@
       </div>
     </fieldset>
   </div>
-  <div id="tb-html-panel" class="tb-html-content-panel" fxLayout="column">
-    <div #htmlEditor id="tb-html-input" [ngStyle]="fillHeight ? {} : {minHeight: minHeight}" [ngClass]="{'fill-height': fillHeight}"></div>
+  <div id="tb-html-panel" class="tb-html-content-panel flex flex-col">
+    <div #htmlEditor id="tb-html-input" [style]="fillHeight ? {} : {minHeight: minHeight}" [class.fill-height]="fillHeight"></div>
   </div>
 </div>

@@ -16,7 +16,7 @@
 
 -->
 <div [formGroup]="targetDeviceFormGroup" class="tb-form-panel">
-  <div fxLayout="row" fxLayoutAlign="space-between center">
+  <div class="flex flex-row items-center justify-between">
     <div class="tb-form-panel-title" translate>widget-config.target-device</div>
     <tb-toggle-select formControlName="type">
       <tb-toggle-option [value]="targetDeviceType.device">{{ 'device.device' | translate }}</tb-toggle-option>

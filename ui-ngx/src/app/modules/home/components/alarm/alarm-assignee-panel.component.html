@@ -35,11 +35,11 @@
       <span>{{ assignedToCurrentUserText | translate }}</span>
     </mat-option>
     <mat-option *ngFor="let user of filteredUsers | async" [value]="user"
-                [fxHide]="assigneeId === user.id.id">
+                [class.!hidden]="assigneeId === user.id.id">
       <span class="user-avatar" [innerHTML]="getUserInitials(user)"
             [style.background-color]="getAvatarBgColor(user)">
       </span>
-      <div class="user-display-name" fxLayout="column" fxLayoutGap="2px">
+      <div class="user-display-name flex flex-col gap-0.5">
         <span *ngIf="user.firstName || user.lastName"
               [innerHTML]="getFullName(user) | highlight:searchText"></span>
         <span [innerHTML]="user.email | highlight:searchText"></span>

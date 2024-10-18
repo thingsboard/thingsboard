@@ -23,13 +23,13 @@
     <mat-label>{{ 'gateway.rpc.method' | translate }}</mat-label>
     <input matInput formControlName="method" placeholder="multiply"/>
   </mat-form-field>
-  <fieldset class="tb-form-panel stroked arguments-container" fxLayout="column" formArrayName="arguments">
+  <fieldset class="tb-form-panel stroked arguments-container" formArrayName="arguments">
     <strong>
       <span class="fields-label">{{ 'gateway.rpc.arguments' | translate }}</span>
     </strong>
-    <div fxFlex fxLayout="row" fxLayoutGap="10px" fxLayoutAlign="center center"
+    <div class="flex flex-1 items-center justify-center gap-2.5"
          *ngFor="let argumentFormGroup of rpcParametersFormGroup.get('arguments')['controls']; let i = index" [formGroup]="argumentFormGroup">
-      <div class="tb-form-row column-xs type-container" fxLayoutAlign="space-between center">
+      <div class="tb-form-row column-xs type-container items-center justify-between">
         <div class="tb-required" translate>gateway.type</div>
         <div class="tb-flex no-gap">
           <mat-form-field class="tb-flex no-gap fill-width" appearance="outline" subscriptSizing="dynamic">
@@ -50,9 +50,9 @@
           </mat-form-field>
         </div>
       </div>
-      <div class="tb-form-row column-xs value-container" fxLayoutAlign="space-between center">
+      <div class="tb-form-row column-xs value-container item-center justify-between">
         <div class="tb-required" translate>gateway.value</div>
-        <mat-form-field fxFlex appearance="outline" subscriptSizing="dynamic" class="tb-inline-field flex tb-suffix-absolute">
+        <mat-form-field appearance="outline" subscriptSizing="dynamic" class="tb-inline-field tb-suffix-absolute flex">
           <ng-container [ngSwitch]="argumentFormGroup.get('type').value">
             <input *ngSwitchCase="MappingValueType.STRING" matInput required formControlName="string"
                    placeholder="{{ 'gateway.set' | translate }}" />
@@ -84,7 +84,7 @@
       </button>
     </div>
     <button mat-raised-button
-            fxFlexAlign="start"
+            class="self-start"
             (click)="addArgument()">
       {{ 'gateway.rpc.add-argument' | translate }}
     </button>

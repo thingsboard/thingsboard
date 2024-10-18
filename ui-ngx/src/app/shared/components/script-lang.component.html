@@ -15,12 +15,12 @@
     limitations under the License.
 
 -->
-<div [formGroup]="scriptLangFormGroup" fxLayout="row" fxLayoutAlign="center">
+<div [formGroup]="scriptLangFormGroup" class="flex flex-row items-stretch justify-center">
   <mat-button-toggle-group class="tb-script-lang-toggle-group"
                            formControlName="scriptLang"
                            aria-label="Script language">
-    <mat-button-toggle fxFlex value="{{ scriptLanguage.TBEL }}">{{ 'rulenode.script-lang-tbel' | translate }}</mat-button-toggle>
-    <mat-button-toggle fxFlex value="{{ scriptLanguage.JS }}">
+    <mat-button-toggle class="flex-1" value="{{ scriptLanguage.TBEL }}">{{ 'rulenode.script-lang-tbel' | translate }}</mat-button-toggle>
+    <mat-button-toggle class="flex-1" value="{{ scriptLanguage.JS }}">
       {{ 'rulenode.script-lang-java-script' | translate }}
     </mat-button-toggle>
   </mat-button-toggle-group>

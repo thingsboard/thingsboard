@@ -15,16 +15,16 @@
     limitations under the License.
 
 -->
-<div class="tb-card-content" fxLayout="column" fxLayoutGap="8px">
+<div class="tb-card-content flex flex-col gap-2">
   <ng-container *ngIf="hasDashboardsAccess; else noDataAvailable">
     <div class="tb-card-header">
       <a class="tb-title-link" routerLink="/dashboards">{{ 'widgets.recent-dashboards.title' | translate }}</a>
-      <div fxLayout="row" fxLayoutAlign="start center" fxLayoutAlign.lt-md="space-between center" fxLayoutGap="8px">
+      <div class="flex flex-row items-center justify-start gap-2 lt-md:items-center lt-md:justify-between">
         <tb-toggle-header #dashboardsToggle [value]="toggleValue" name="usageToggle" (valueChange)="toggleValueChange($event)">
           <tb-toggle-option value="last">{{ 'widgets.recent-dashboards.last' | translate }}</tb-toggle-option>
           <tb-toggle-option value="starred">{{ 'widgets.recent-dashboards.starred' | translate }}</tb-toggle-option>
         </tb-toggle-header>
-        <a *ngIf="authUser.authority === authority.TENANT_ADMIN" fxHide.md
+        <a *ngIf="authUser.authority === authority.TENANT_ADMIN" class="md:!hidden"
            mat-flat-button color="primary" routerLink="/dashboards" [queryParams]="{action: 'add'}">{{ 'dashboard.add' | translate }}</a>
       </div>
     </div>
@@ -40,7 +40,7 @@
               </mat-header-cell>
               <mat-cell class="star-cell" *matCellDef="let lastVisitedDashboard">
                 <mat-icon (click)="toggleDashboardStar(lastVisitedDashboard)"
-                          class="star" [ngClass]="{'starred': lastVisitedDashboard.starred}">{{ lastVisitedDashboard.starred ? 'star' : 'star_border' }}</mat-icon>
+                          class="star" [class.starred]="lastVisitedDashboard.starred">{{ lastVisitedDashboard.starred ? 'star' : 'star_border' }}</mat-icon>
               </mat-cell>
             </ng-container>
             <ng-container matColumnDef="title">
@@ -75,7 +75,7 @@
           <div class="tb-starred-dashboard-row" *ngFor="let dashboard of userDashboardsInfo?.starred">
             <div class="tb-cell star-cell">
               <mat-icon (click)="toggleDashboardStar(dashboard)"
-                        class="star" [ngClass]="{'starred': dashboard.starred}">{{ dashboard.starred ? 'star' : 'star_border' }}</mat-icon>
+                        class="star" [class.starred]="dashboard.starred">{{ dashboard.starred ? 'star' : 'star_border' }}</mat-icon>
             </div>
             <div class="tb-cell title">
               <a [routerLink]="createDashboardUrl(dashboard.id)">{{ dashboard.title | customTranslate }}</a>

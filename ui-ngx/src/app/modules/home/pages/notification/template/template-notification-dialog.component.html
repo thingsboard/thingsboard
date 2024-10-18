@@ -17,7 +17,7 @@
 -->
 <mat-toolbar color="primary">
   <h2>{{ dialogTitle | translate }}</h2>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <div tb-help="templateNotifications"></div>
   <button mat-icon-button
           (click)="cancel()"
@@ -45,7 +45,7 @@
             {{ 'notification.name-required' | translate }}
           </mat-error>
         </mat-form-field>
-        <mat-form-field fxFlex class="mat-block" *ngIf="!hideSelectType">
+        <mat-form-field class="mat-block flex-1" *ngIf="!hideSelectType">
           <mat-label translate>notification.type</mat-label>
           <mat-select formControlName="notificationType">
             <mat-option *ngFor="let notificationType of notificationTypes" [value]="notificationType">
@@ -54,7 +54,7 @@
           </mat-select>
         </mat-form-field>
         <section formGroupName="configuration">
-          <label [ngClass]="{'tb-error': templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')}"
+          <label [class.tb-error]="templateNotificationForm.get('configuration.deliveryMethodsTemplates').hasError('atLeastOne')"
             class="tb-title tb-required">{{ "notification.delivery-methods" | translate }}</label>
           <div class="tb-hint" translate>notification.at-least-one-should-be-selected</div>
           <section formGroupName="deliveryMethodsTemplates" class="delivery-methods-container">
@@ -88,7 +88,7 @@
 <div mat-dialog-actions class="tb-dialog-actions">
   <button mat-stroked-button *ngIf="selectedIndex > 0"
           (click)="backStep()">{{ 'action.back' | translate }}</button>
-  <span fxFlex></span>
+  <span class="flex-1"></span>
   <button mat-raised-button
           color="primary"
           (click)="nextStep()">{{ nextStepLabel() | translate }}</button>

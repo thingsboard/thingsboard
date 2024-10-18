@@ -83,7 +83,7 @@
     </div>
     <div *ngIf="propertyFormGroup.get('type').value === ScadaSymbolPropertyType.number" class="tb-form-row space-between">
       <div translate>scada.property.number-settings</div>
-      <div fxLayout="row" fxFlex fxLayoutAlign="end center" fxLayoutGap="8px">
+      <div class="flex flex-1 flex-row items-center justify-end gap-2">
         <div class="tb-small-label" translate>scada.property.min</div>
         <mat-form-field appearance="outline" class="number flex" subscriptSizing="dynamic">
           <input matInput formControlName="min"
@@ -110,7 +110,7 @@
     </div>
     <div class="tb-form-panel stroked">
       <mat-expansion-panel class="tb-settings">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             {{ 'scada.property.advanced-ui-settings' | translate }}
           </mat-panel-title>

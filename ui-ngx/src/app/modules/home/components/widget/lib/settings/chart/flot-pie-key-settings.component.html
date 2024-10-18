@@ -15,8 +15,8 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="flotPieKeySettingsForm" fxLayout="column">
-  <fieldset class="fields-group" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="flotPieKeySettingsForm">
+  <fieldset class="fields-group flex flex-col">
     <legend class="group-title" translate>widgets.chart.common-settings</legend>
     <mat-checkbox formControlName="hideDataByDefault">
       {{ 'widgets.chart.data-is-hidden-by-default' | translate }}

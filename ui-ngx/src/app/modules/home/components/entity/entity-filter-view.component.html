@@ -15,10 +15,10 @@
     limitations under the License.
 
 -->
-<div fxLayout="column" class="tb-entity-filter-view">
+<div class="tb-entity-filter-view flex flex-col">
   <div *ngIf="!filter || !filter.type; else filterView" class="entity-filter-empty" translate>alias.no-entity-filter-specified</div>
   <ng-template #filterView>
-    <div fxLayout="column">
+    <div class="flex flex-col">
       <div class="entity-filter-value">{{ filterDisplayValue }}</div>
     </div>
   </ng-template>

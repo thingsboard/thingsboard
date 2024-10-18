@@ -15,7 +15,7 @@
     limitations under the License.
 
 -->
-<section class="tb-widget-settings" [formGroup]="switchRpcSettingsFormGroup" fxLayout="column">
+<section class="tb-widget-settings flex flex-col" [formGroup]="switchRpcSettingsFormGroup">
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.value-settings</legend>
     <mat-checkbox formControlName="initialValue">
@@ -23,7 +23,7 @@
     </mat-checkbox>
     <fieldset class="fields-group">
       <legend class="group-title" translate>widgets.rpc.retrieve-value-settings</legend>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.rpc.retrieve-value-method</mat-label>
         <mat-select formControlName="retrieveValueMethod">
           <mat-option [value]="'none'">
@@ -40,20 +40,20 @@
           </mat-option>
         </mat-select>
       </mat-form-field>
-      <tb-device-key-autocomplete fxFlex
-        [fxShow]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'attribute' ||
-                  switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'timeseries'"
+      <tb-device-key-autocomplete class="flex-1"
+        [class.!hidden]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value !== 'attribute' &&
+                         switchRpcSettingsFormGroup.get('retrieveValueMethod').value !== 'timeseries'"
         [aliasController]="aliasController"
         [targetDevice]="targetDevice"
         [keyType]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'attribute' ? dataKeyType.attribute : dataKeyType.timeseries"
         required
         formControlName="valueKey">
       </tb-device-key-autocomplete>
-      <mat-form-field [fxShow]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'rpc'" fxFlex class="mat-block">
+      <mat-form-field [class.!hidden]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value !== 'rpc'" class="mat-block flex-1">
         <mat-label translate>widgets.rpc.get-value-method</mat-label>
         <input required matInput formControlName="getValueMethod">
       </mat-form-field>
-      <tb-js-func [fxHide]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'none'"
+      <tb-js-func [class.!hidden]="switchRpcSettingsFormGroup.get('retrieveValueMethod').value === 'none'"
         formControlName="parseValueFunction"
         [globalVariables]="functionScopeVariables"
         [functionArgs]="['data']"
@@ -63,7 +63,7 @@
     </fieldset>
     <fieldset class="fields-group">
       <legend class="group-title" translate>widgets.rpc.update-value-settings</legend>
-      <mat-form-field fxFlex class="mat-block">
+      <mat-form-field class="mat-block flex-1">
         <mat-label translate>widgets.rpc.set-value-method</mat-label>
         <input required matInput formControlName="setValueMethod">
       </mat-form-field>
@@ -78,26 +78,26 @@
   </fieldset>
   <fieldset class="fields-group">
     <legend class="group-title" translate>widgets.rpc.rpc-settings</legend>
-    <mat-form-field fxFlex class="mat-block">
+    <mat-form-field class="mat-block flex-1">
       <mat-label translate>widgets.rpc.request-timeout</mat-label>
       <input matInput type="number" min="0" formControlName="requestTimeout">
     </mat-form-field>
     <fieldset class="fields-group fields-group-slider">
       <legend class="group-title" translate>widgets.rpc.persistent-rpc-settings</legend>
       <mat-expansion-panel class="tb-settings" [expanded]="switchRpcSettingsFormGroup.get('requestPersistent').value">
-        <mat-expansion-panel-header fxLayout="row wrap">
+        <mat-expansion-panel-header class="flex flex-row flex-wrap">
           <mat-panel-title>
             <mat-slide-toggle formControlName="requestPersistent" (click)="$event.stopPropagation()"
-                              fxLayoutAlign="center">
+                              class="flex items-stretch justify-center">
               {{ 'widgets.rpc.request-persistent' | translate }}
             </mat-slide-toggle>
           </mat-panel-title>
-          <mat-panel-description fxLayoutAlign="end center" fxHide.xs translate>
+          <mat-panel-description class="flex items-center justify-end xs:!hidden" translate>
             widget-config.advanced-settings
           </mat-panel-description>
         </mat-expansion-panel-header>
         <ng-template matExpansionPanelContent>
-          <mat-form-field fxFlex class="mat-block">
+          <mat-form-field class="mat-block flex-1">
             <mat-label translate>widgets.rpc.persistent-polling-interval</mat-label>
             <input matInput type="number" min="1000" formControlName="persistentPollingInterval">
           </mat-form-field>

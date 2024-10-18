@@ -16,8 +16,8 @@
 
 -->
 <div class="tb-table-widget tb-absolute-fill">
-  <div fxFlex fxLayout="column" class="tb-absolute-fill">
-    <div fxFlex class="table-container">
+  <div class="tb-absolute-fill flex flex-1 flex-col">
+    <div class="table-container flex-1">
       <table mat-table [dataSource]="persistentDatasource"
              matSort [matSortActive]="pageLink.sortOrder.property"
              [matSortDirection]="pageLink.sortDirection()" matSortDisableClear>
@@ -50,7 +50,8 @@
             {{ 'widgets.persistent-table.status' | translate }}
           </mat-header-cell>
           <mat-cell *matCellDef="let column"
-                    [ngStyle]="{fontWeight: 'bold', color: rpcStatusColor.get((column.status))}">
+                    style="font-weight: bold;"
+                    [style.color]="rpcStatusColor.get(column.status)">
             {{ rpcStatusTranslation.get(column.status) | translate }}
           </mat-cell>
         </ng-container>
@@ -74,7 +75,7 @@
           <mat-header-cell *matHeaderCellDef>
           </mat-header-cell>
           <mat-cell *matCellDef="let column">
-            <div fxHide fxShow.gt-md fxLayout="row" fxLayoutAlign="end">
+            <div class="flex flex-row items-stretch justify-end lt-lg:!hidden">
               <ng-container *ngFor="let actionDescriptor of actionCellButtonAction">
                 <button mat-icon-button [disabled]="isLoading$ | async"
                         matTooltip="{{ actionDescriptor.displayName }}"
@@ -84,7 +85,7 @@
                 </button>
               </ng-container>
             </div>
-            <div fxHide fxShow.lt-lg *ngIf="actionCellButtonAction.length">
+            <div class="gt-md:!hidden" *ngIf="actionCellButtonAction.length">
               <button mat-icon-button
                       (click)="$event.stopPropagation(); ctx.detectChanges();"
                       [matMenuTriggerFor]="cellActionsMenu">
@@ -105,14 +106,12 @@
         </ng-container>
         <mat-header-row *matHeaderRowDef="displayedColumns; sticky: enableStickyHeader"></mat-header-row>
         <mat-row *matRowDef="let column; columns: displayedColumns"
-                 [fxShow]="!persistentDatasource.dataLoading"></mat-row>
+                 [class.!hidden]="persistentDatasource.dataLoading"></mat-row>
       </table>
-      <span [fxShow]="(persistentDatasource.isEmpty() | async) && !persistentDatasource.dataLoading && hasData"
-            fxLayoutAlign="center center"
-            class="no-data-found">{{ noDataDisplayMessageText }}</span>
-      <span [fxShow]="persistentDatasource.dataLoading"
-            fxLayoutAlign="center center"
-            class="no-data-found">{{ 'common.loading' | translate }}</span>
+      <span [class.!hidden]="(persistentDatasource.isEmpty() | async) === false || persistentDatasource.dataLoading || !hasData"
+            class="no-data-found flex items-center justify-center">{{ noDataDisplayMessageText }}</span>
+      <span [class.!hidden]="!persistentDatasource.dataLoading"
+            class="no-data-found flex items-center justify-center">{{ 'common.loading' | translate }}</span>
   </div>
   <mat-divider *ngIf="displayPagination"></mat-divider>
   <mat-paginator *ngIf="displayPagination"
