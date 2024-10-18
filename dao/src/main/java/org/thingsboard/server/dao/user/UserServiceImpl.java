@@ -17,9 +17,6 @@ package org.thingsboard.server.dao.user;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.BooleanNode;
-import com.fasterxml.jackson.databind.node.IntNode;
-import com.fasterxml.jackson.databind.node.LongNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.RequiredArgsConstructor;
@@ -87,14 +84,9 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     public static final String USER_PASSWORD_HISTORY = "userPasswordHistory";
 
-    public static final String LAST_LOGIN_TS = "lastLoginTs";
-    public static final String FAILED_LOGIN_ATTEMPTS = "failedLoginAttempts";
-
     private static final int DEFAULT_TOKEN_LENGTH = 30;
     public static final String INCORRECT_USER_ID = "Incorrect userId ";
     public static final String INCORRECT_TENANT_ID = "Incorrect tenantId ";
-
-    private static final String USER_CREDENTIALS_ENABLED = "userCredentialsEnabled";
 
     @Value("${security.user_login_case_sensitive:true}")
     private boolean userLoginCaseSensitive;
@@ -428,40 +420,28 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
         customerUsersRemover.removeEntities(tenantId, customerId);
     }
 
+    @Transactional
     @Override
     public void setUserCredentialsEnabled(TenantId tenantId, UserId userId, boolean enabled) {
         log.trace("Executing setUserCredentialsEnabled [{}], [{}]", userId, enabled);
         validateId(userId, id -> INCORRECT_USER_ID + id);
         UserCredentials userCredentials = userCredentialsDao.findByUserId(tenantId, userId.getId());
         userCredentials.setEnabled(enabled);
-        saveUserCredentials(tenantId, userCredentials);
-
-        User user = findUserById(tenantId, userId);
-        user.setAdditionalInfoField(USER_CREDENTIALS_ENABLED, BooleanNode.valueOf(enabled));
         if (enabled) {
-            resetFailedLoginAttempts(user);
+            userCredentials.setFailedLoginAttempts(0);
         }
-        saveUser(tenantId, user);
+        saveUserCredentials(tenantId, userCredentials);
     }
-
 
     @Override
     public void resetFailedLoginAttempts(TenantId tenantId, UserId userId) {
-        log.trace("Executing onUserLoginSuccessful [{}]", userId);
-        User user = findUserById(tenantId, userId);
-        resetFailedLoginAttempts(user);
-        saveUser(tenantId, user);
-    }
-
-    private void resetFailedLoginAttempts(User user) {
-        user.setAdditionalInfoField(FAILED_LOGIN_ATTEMPTS, IntNode.valueOf(0));
+        log.trace("Executing resetFailedLoginAttempts [{}]", userId);
+        userCredentialsDao.setFailedLoginAttempts(tenantId, userId, 0);
     }
 
     @Override
-    public void setLastLoginTs(TenantId tenantId, UserId userId) {
-        User user = findUserById(tenantId, userId);
-        user.setAdditionalInfoField(LAST_LOGIN_TS, new LongNode(System.currentTimeMillis()));
-        saveUser(tenantId, user);
+    public void updateLastLoginTs(TenantId tenantId, UserId userId) {
+        userCredentialsDao.setLastLoginTs(tenantId, userId, System.currentTimeMillis());
     }
 
     @Override
@@ -502,18 +482,8 @@ public class UserServiceImpl extends AbstractCachedEntityService<UserCacheKey, U
 
     @Override
     public int increaseFailedLoginAttempts(TenantId tenantId, UserId userId) {
-        log.trace("Executing onUserLoginIncorrectCredentials [{}]", userId);
-        User user = findUserById(tenantId, userId);
-        int failedLoginAttempts = increaseFailedLoginAttempts(user);
-        saveUser(tenantId, user);
-        return failedLoginAttempts;
-    }
-
-    private int increaseFailedLoginAttempts(User user) {
-        int failedLoginAttempts = user.getAdditionalInfoField(FAILED_LOGIN_ATTEMPTS, JsonNode::asInt, 0);
-        failedLoginAttempts++;
-        user.setAdditionalInfoField(FAILED_LOGIN_ATTEMPTS, new IntNode(failedLoginAttempts));
-        return failedLoginAttempts;
+        log.trace("Executing increaseFailedLoginAttempts [{}]", userId);
+        return userCredentialsDao.incrementFailedLoginAttempts(tenantId, userId);
     }
 
     private void updatePasswordHistory(UserCredentials userCredentials) {

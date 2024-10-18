@@ -50,7 +50,6 @@ import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.RelationActionEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
 import org.thingsboard.server.dao.tenant.TenantService;
-import org.thingsboard.server.dao.user.UserServiceImpl;
 
 /**
  * This event listener does not support async event processing because relay on ThreadLocal
@@ -226,13 +225,10 @@ public class EdgeEventSourcingListener {
     }
 
     private void cleanUpUserAdditionalInfo(User user) {
-        // reset FAILED_LOGIN_ATTEMPTS and LAST_LOGIN_TS - edge is not interested in this information
         if (user.getAdditionalInfo() instanceof NullNode) {
             user.setAdditionalInfo(null);
         }
         if (user.getAdditionalInfo() instanceof ObjectNode additionalInfo) {
-            additionalInfo.remove(UserServiceImpl.FAILED_LOGIN_ATTEMPTS);
-            additionalInfo.remove(UserServiceImpl.LAST_LOGIN_TS);
             if (additionalInfo.isEmpty()) {
                 user.setAdditionalInfo(null);
             } else {
