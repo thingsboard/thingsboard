@@ -16,6 +16,7 @@
 package org.thingsboard.server.dao.resource;
 
 import com.google.common.util.concurrent.ListenableFuture;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
 import org.thingsboard.server.common.data.TbResourceInfo;
@@ -24,9 +25,11 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.entity.EntityDaoService;
 
 import java.util.List;
+import java.util.Map;
 
 public interface ResourceService extends EntityDaoService {
 
@@ -63,6 +66,18 @@ public interface ResourceService extends EntityDaoService {
     void deleteResourcesByTenantId(TenantId tenantId);
 
     long sumDataSizeByTenantId(TenantId tenantId);
+
+    String calculateEtag(byte[] data);
+
+    TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag);
+
+    List<TbResourceInfo> processResourcesForExport(Dashboard dashboard);
+
+    List<TbResourceInfo> processResourcesForExport(WidgetTypeDetails widgetTypeDetails);
+
+    void processResourcesForImport(Dashboard dashboard, Map<TbResourceId, TbResourceId> importedResources);
+
+    void processResourcesForImport(WidgetTypeDetails widgetTypeDetails, Map<TbResourceId, TbResourceId> importedResources);
 
     TbResource updateSystemResource(ResourceType resourceType, String resourceKey, String data);
 

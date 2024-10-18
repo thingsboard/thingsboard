@@ -31,6 +31,7 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.fasterxml.jackson.databind.type.CollectionType;
 import com.fasterxml.jackson.datatype.jdk8.Jdk8Module;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.google.common.base.Strings;
 import com.google.common.collect.Lists;
 import lombok.Data;
 import lombok.extern.slf4j.Slf4j;
@@ -467,6 +468,75 @@ public class JacksonUtil {
         }
     }
 
+    public static void replaceAllByMapping(JsonNode jsonNode, Map<String, String> mapping, Map<String, String> templateParams, BiFunction<String, String, String> processor) {
+        for (var entry : mapping.entrySet()) {
+            String expression = entry.getValue();
+            Queue<JsonPathProcessingTask> tasks = new LinkedList<>();
+            tasks.add(new JsonPathProcessingTask(entry.getKey().split("\\."), templateParams, jsonNode));
+            while (!tasks.isEmpty()) {
+                JsonPathProcessingTask task = tasks.poll();
+                String token = task.currentToken();
+                JsonNode node = task.getNode();
+                if (node == null) {
+                    continue;
+                }
+                if (token.equals("*") || token.startsWith("$")) {
+                    String variableName = token.startsWith("$") ? token.substring(1) : null;
+                    if (node.isArray()) {
+                        ArrayNode childArray = (ArrayNode) node;
+                        for (JsonNode element : childArray) {
+                            tasks.add(task.next(element));
+                        }
+                    } else if (node.isObject()) {
+                        ObjectNode on = (ObjectNode) node;
+                        for (Iterator<Map.Entry<String, JsonNode>> it = on.fields(); it.hasNext(); ) {
+                            var kv = it.next();
+                            if (variableName != null) {
+                                tasks.add(task.next(kv.getValue(), variableName, kv.getKey()));
+                            } else {
+                                tasks.add(task.next(kv.getValue()));
+                            }
+                        }
+                    }
+                } else {
+                    String variableName = null;
+                    String variableValue = null;
+                    if (token.contains("[$")) {
+                        variableName = StringUtils.substringBetween(token, "[$", "]");
+                        token = StringUtils.substringBefore(token, "[$");
+                    }
+                    if (node.has(token)) {
+                        JsonNode value = node.get(token);
+                        if (variableName != null && value.has(variableName) && value.get(variableName).isTextual()) {
+                            variableValue = value.get(variableName).asText();
+                        }
+                        if (task.isLast()) {
+                            String name = expression;
+                            for (var replacement : task.getVariables().entrySet()) {
+                                name = name.replace("$" + replacement.getKey(), Strings.nullToEmpty(replacement.getValue()));
+                            }
+                            if (node.isObject() && value.isTextual()) {
+                                ((ObjectNode) node).put(token, processor.apply(name, value.asText()));
+                            } else if (value.isArray()) {
+                                ArrayNode array = (ArrayNode) value;
+                                for (int i = 0; i < array.size(); i++) {
+                                    String arrayElementName = name.replace("$index", Integer.toString(i));
+                                    array.set(i, processor.apply(arrayElementName, array.get(i).asText()));
+                                }
+                            }
+                        } else {
+                            if (StringUtils.isNotEmpty(variableName)) {
+                                tasks.add(task.next(value, variableName, variableValue));
+                            } else {
+                                tasks.add(task.next(value));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+    }
+
     @Data
     public static class JsonNodeProcessingTask {
         private final String path;
@@ -476,6 +546,54 @@ public class JacksonUtil {
             this.path = path;
             this.node = node;
         }
+
+    }
+
+    @Data
+    public static class JsonPathProcessingTask {
+        private final String[] tokens;
+        private final Map<String, String> variables;
+        private final JsonNode node;
+
+        public JsonPathProcessingTask(String[] tokens, Map<String, String> variables, JsonNode node) {
+            this.tokens = tokens;
+            this.variables = variables;
+            this.node = node;
+        }
+
+        public boolean isLast() {
+            return tokens.length == 1;
+        }
+
+        public String currentToken() {
+            return tokens[0];
+        }
+
+        public JsonPathProcessingTask next(JsonNode next) {
+            return new JsonPathProcessingTask(
+                    Arrays.copyOfRange(tokens, 1, tokens.length),
+                    variables,
+                    next);
+        }
+
+        public JsonPathProcessingTask next(JsonNode next, String key, String value) {
+            Map<String, String> variables = new HashMap<>(this.variables);
+            variables.put(key, value);
+            return new JsonPathProcessingTask(
+                    Arrays.copyOfRange(tokens, 1, tokens.length),
+                    variables,
+                    next);
+        }
+
+        @Override
+        public String toString() {
+            return "JsonPathProcessingTask{" +
+                    "tokens=" + Arrays.toString(tokens) +
+                    ", variables=" + variables +
+                    ", node=" + node.toString().substring(0, 20) +
+                    '}';
+        }
+
     }
 
 }

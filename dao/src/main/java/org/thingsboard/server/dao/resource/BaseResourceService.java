@@ -15,17 +15,21 @@
  */
 package org.thingsboard.server.dao.resource;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.google.common.hash.Hashing;
 import com.google.common.util.concurrent.ListenableFuture;
 import lombok.AllArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.apache.commons.lang3.StringUtils;
 import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
+import org.thingsboard.server.common.data.Dashboard;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.ResourceType;
 import org.thingsboard.server.common.data.TbResource;
@@ -37,6 +41,7 @@ import org.thingsboard.server.common.data.id.TbResourceId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
+import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
 import org.thingsboard.server.dao.entity.AbstractCachedEntityService;
 import org.thingsboard.server.dao.eventsourcing.DeleteEntityEvent;
 import org.thingsboard.server.dao.eventsourcing.SaveEntityEvent;
@@ -46,8 +51,13 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
 import java.nio.charset.StandardCharsets;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
+import java.util.UUID;
 
 import static org.thingsboard.server.dao.device.DeviceServiceImpl.INCORRECT_TENANT_ID;
 import static org.thingsboard.server.dao.service.Validator.validateId;
@@ -63,9 +73,20 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     protected final TbResourceInfoDao resourceInfoDao;
     protected final ResourceDataValidator resourceValidator;
 
+    private static final Map<String, String> DASHBOARD_RESOURCES_MAPPING = Map.of(
+            "widgets.*.config.actions.*.*.customResources.*.url.id", ""
+    );
+
+    private static final Map<String, String> WIDGET_RESOURCES_MAPPING = Map.of(
+            "descriptor.resources.*.url.id", ""
+    );
+
     @Override
     public TbResource saveResource(TbResource resource, boolean doValidate) {
         log.trace("Executing saveResource [{}]", resource);
+        if (resource.getId() == null) {
+            resource.setResourceKey(getUniqueKey(resource.getTenantId(), resource.getResourceType(), StringUtils.defaultIfEmpty(resource.getResourceKey(), resource.getFileName())));
+        }
         if (doValidate) {
             resourceValidator.validate(resource, TbResourceInfo::getTenantId);
         }
@@ -107,6 +128,27 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
 
     private TbResourceInfo saveResourceInfo(TbResource resource) {
         return resourceInfoDao.save(resource.getTenantId(), new TbResourceInfo(resource));
+    }
+
+    protected String getUniqueKey(TenantId tenantId, ResourceType resourceType, String filename) {
+        if (!resourceInfoDao.existsByTenantIdAndResourceTypeAndResourceKey(tenantId, resourceType, filename)) {
+            return filename;
+        }
+
+        String basename = StringUtils.substringBeforeLast(filename, ".");
+        String extension = StringUtils.substringAfterLast(filename, ".");
+
+        Set<String> existing = resourceInfoDao.findKeysByTenantIdAndResourceTypeAndResourceKeyPrefix(
+                tenantId, resourceType, basename
+        );
+        String resourceKey = filename;
+        int idx = 1;
+        while (existing.contains(resourceKey)) {
+            resourceKey = basename + "_(" + idx + ")." + extension;
+            idx++;
+        }
+        log.debug("[{}] Generated unique key {} for {} {}", tenantId, resourceKey, resourceType, filename);
+        return resourceKey;
     }
 
     @Override
@@ -240,6 +282,67 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     }
 
     @Override
+    public List<TbResourceInfo> processResourcesForExport(Dashboard dashboard) {
+        return processResourcesForExport(dashboard.getTenantId(), dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING);
+    }
+
+    @Override
+    public List<TbResourceInfo> processResourcesForExport(WidgetTypeDetails widgetTypeDetails) {
+        return processResourcesForExport(widgetTypeDetails.getTenantId(), widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING);
+    }
+
+    private List<TbResourceInfo> processResourcesForExport(TenantId tenantId, JsonNode jsonNode, Map<String, String> mapping) {
+        List<TbResourceInfo> resources = new ArrayList<>();
+        JacksonUtil.replaceAllByMapping(jsonNode, mapping, Collections.emptyMap(), (name, value) -> {
+            if (StringUtils.isBlank(value)) {
+                return value;
+            }
+
+            TbResourceId resourceId;
+            try {
+                resourceId = new TbResourceId(UUID.fromString(value));
+            } catch (IllegalArgumentException e) {
+                return value;
+            }
+            TbResourceInfo resourceInfo = findResourceInfoById(tenantId, resourceId);
+            resources.add(resourceInfo);
+            return value;
+        });
+        return resources;
+    }
+
+    @Override
+    public void processResourcesForImport(Dashboard dashboard, Map<TbResourceId, TbResourceId> importedResources) {
+        processResourcesForImport(dashboard.getConfiguration(), DASHBOARD_RESOURCES_MAPPING, importedResources);
+    }
+
+    @Override
+    public void processResourcesForImport(WidgetTypeDetails widgetTypeDetails, Map<TbResourceId, TbResourceId> importedResources) {
+        processResourcesForImport(widgetTypeDetails.getDescriptor(), WIDGET_RESOURCES_MAPPING, importedResources);
+    }
+
+    private void processResourcesForImport(JsonNode jsonNode, Map<String, String> mapping, Map<TbResourceId, TbResourceId> importedResources) {
+        JacksonUtil.replaceAllByMapping(jsonNode, mapping, Collections.emptyMap(), (name, value) -> {
+            if (StringUtils.isBlank(value)) {
+                return value;
+            }
+
+            TbResourceId oldResourceId;
+            try {
+                oldResourceId = new TbResourceId(UUID.fromString(value));
+            } catch (IllegalArgumentException e) {
+                return value;
+            }
+            TbResourceId importedResourceId = importedResources.get(oldResourceId);
+            if (importedResourceId != null) {
+                return importedResourceId.toString();
+            } else {
+                return value;
+            }
+        });
+    }
+
+    @Override
     public TbResource updateSystemResource(ResourceType resourceType, String resourceKey, String data) {
         if (resourceType == ResourceType.DASHBOARD) {
             data = checkSystemResourcesUsage(data, ResourceType.JS_MODULE);
@@ -274,23 +377,32 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
         });
     }
 
-    protected String calculateEtag(byte[] data) {
+    @Override
+    public String calculateEtag(byte[] data) {
         return Hashing.sha256().hashBytes(data).toString();
     }
 
-    private final PaginatedRemover<TenantId, TbResource> tenantResourcesRemover =
-            new PaginatedRemover<>() {
+    @Override
+    public TbResourceInfo findSystemOrTenantResourceByEtag(TenantId tenantId, ResourceType resourceType, String etag) {
+        if (StringUtils.isEmpty(etag)) {
+            return null;
+        }
+        log.trace("Executing findSystemOrTenantResourceByEtag [{}] [{}] [{}]", tenantId, resourceType, etag);
+        return resourceInfoDao.findSystemOrTenantResourceByEtag(tenantId, resourceType, etag);
+    }
 
-                @Override
-                protected PageData<TbResource> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
-                    return resourceDao.findAllByTenantId(id, pageLink);
-                }
+    private final PaginatedRemover<TenantId, TbResourceId> tenantResourcesRemover = new PaginatedRemover<>() {
 
-                @Override
-                protected void removeEntity(TenantId tenantId, TbResource entity) {
-                    deleteResource(tenantId, entity.getId());
-                }
-            };
+        @Override
+        protected PageData<TbResourceId> findEntities(TenantId tenantId, TenantId id, PageLink pageLink) {
+            return resourceDao.findIdsByTenantId(id.getId(), pageLink);
+        }
+
+        @Override
+        protected void removeEntity(TenantId tenantId, TbResourceId resourceId) {
+            deleteResource(tenantId, resourceId);
+        }
+    };
 
     @TransactionalEventListener(classes = ResourceInfoEvictEvent.class)
     @Override

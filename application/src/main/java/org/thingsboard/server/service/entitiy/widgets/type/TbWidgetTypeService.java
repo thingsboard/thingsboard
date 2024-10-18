@@ -18,10 +18,14 @@ package org.thingsboard.server.service.entitiy.widgets.type;
 import org.thingsboard.server.common.data.User;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.id.TenantId;
+import org.thingsboard.server.common.data.id.WidgetsBundleId;
 import org.thingsboard.server.common.data.widget.WidgetExportData;
 import org.thingsboard.server.common.data.widget.WidgetTypeDetails;
+import org.thingsboard.server.common.data.widget.WidgetsExportData;
 import org.thingsboard.server.service.entitiy.SimpleTbEntityService;
 import org.thingsboard.server.service.security.model.SecurityUser;
+
+import java.util.List;
 
 public interface TbWidgetTypeService extends SimpleTbEntityService<WidgetTypeDetails> {
 
@@ -29,6 +33,10 @@ public interface TbWidgetTypeService extends SimpleTbEntityService<WidgetTypeDet
 
     WidgetExportData exportWidgetType(TenantId tenantId, WidgetTypeDetails widgetTypeDetails, SecurityUser user) throws ThingsboardException;
 
+    WidgetsExportData exportBundleWidgetTypes(TenantId tenantId, WidgetsBundleId bundleId, SecurityUser user) throws ThingsboardException;
+
     WidgetTypeDetails importWidgetType(WidgetExportData exportData, SecurityUser user) throws Exception;
+
+    List<WidgetTypeDetails> importWidgetTypes(WidgetsExportData exportData, SecurityUser user) throws Exception;
 
 }

@@ -16,9 +16,7 @@
 package org.thingsboard.server.dao.resource;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.node.ArrayNode;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.google.common.base.Strings;
 import jakarta.annotation.PostConstruct;
 import lombok.Data;
 import lombok.SneakyThrows;
@@ -55,7 +53,6 @@ import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 import org.thingsboard.server.dao.util.ImageUtils;
 import org.thingsboard.server.dao.util.ImageUtils.ProcessedImage;
-import org.thingsboard.server.dao.util.JsonPathProcessingTask;
 import org.thingsboard.server.dao.widget.WidgetTypeDao;
 import org.thingsboard.server.dao.widget.WidgetsBundleDao;
 
@@ -64,12 +61,9 @@ import java.util.ArrayList;
 import java.util.Base64;
 import java.util.Collections;
 import java.util.HashMap;
-import java.util.Iterator;
-import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Queue;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.BiFunction;
@@ -143,7 +137,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     @SneakyThrows
     public TbResourceInfo saveImage(TbResource image) {
         if (image.getId() == null) {
-            image.setResourceKey(getUniqueKey(image.getTenantId(), StringUtils.defaultIfEmpty(image.getResourceKey(), image.getFileName())));
+            image.setResourceKey(getUniqueKey(image.getTenantId(), ResourceType.IMAGE, StringUtils.defaultIfEmpty(image.getResourceKey(), image.getFileName())));
         }
         if (image.getResourceSubType() == null) {
             image.setResourceSubType(ResourceSubType.IMAGE);
@@ -183,27 +177,6 @@ public class BaseImageService extends BaseResourceService implements ImageServic
         descriptor.setPreviewDescriptor(previewDescriptor);
 
         return Pair.of(descriptor, preview.getData());
-    }
-
-    private String getUniqueKey(TenantId tenantId, String filename) {
-        if (!resourceInfoDao.existsByTenantIdAndResourceTypeAndResourceKey(tenantId, ResourceType.IMAGE, filename)) {
-            return filename;
-        }
-
-        String basename = StringUtils.substringBeforeLast(filename, ".");
-        String extension = StringUtils.substringAfterLast(filename, ".");
-
-        Set<String> existing = resourceInfoDao.findKeysByTenantIdAndResourceTypeAndResourceKeyPrefix(
-                tenantId, ResourceType.IMAGE, basename
-        );
-        String resourceKey = filename;
-        int idx = 1;
-        while (existing.contains(resourceKey)) {
-            resourceKey = basename + "_(" + idx + ")." + extension;
-            idx++;
-        }
-        log.debug("[{}] Generated unique key {} for image {}", tenantId, resourceKey, filename);
-        return resourceKey;
     }
 
     private String generatePublicResourceKey() {
@@ -296,11 +269,7 @@ public class BaseImageService extends BaseResourceService implements ImageServic
 
     @Override
     public TbResourceInfo findSystemOrTenantImageByEtag(TenantId tenantId, String etag) {
-        if (StringUtils.isEmpty(etag)) {
-            return null;
-        }
-        log.trace("Executing findSystemOrTenantImageByEtag [{}] [{}]", tenantId, etag);
-        return resourceInfoDao.findSystemOrTenantImageByEtag(tenantId, ResourceType.IMAGE, etag);
+        return findSystemOrTenantResourceByEtag(tenantId, ResourceType.IMAGE, etag);
     }
 
     @Transactional(noRollbackFor = Exception.class) // we don't want transaction to rollback in case of an image processing failure
@@ -358,78 +327,15 @@ public class BaseImageService extends BaseResourceService implements ImageServic
     }
 
     private boolean base64ToImageUrlUsingMapping(TenantId tenantId, Map<String, String> mapping, Map<String, String> templateParams, JsonNode configuration) {
-        boolean updated = false;
-        for (var entry : mapping.entrySet()) {
-            String expression = entry.getValue();
-            Queue<JsonPathProcessingTask> tasks = new LinkedList<>();
-            tasks.add(new JsonPathProcessingTask(entry.getKey().split("\\."), templateParams, configuration));
-            while (!tasks.isEmpty()) {
-                JsonPathProcessingTask task = tasks.poll();
-                String token = task.currentToken();
-                JsonNode node = task.getNode();
-                if (node == null) {
-                    continue;
-                }
-                if (token.equals("*") || token.startsWith("$")) {
-                    String variableName = token.startsWith("$") ? token.substring(1) : null;
-                    if (node.isArray()) {
-                        ArrayNode childArray = (ArrayNode) node;
-                        for (JsonNode element : childArray) {
-                            tasks.add(task.next(element));
-                        }
-                    } else if (node.isObject()) {
-                        ObjectNode on = (ObjectNode) node;
-                        for (Iterator<Map.Entry<String, JsonNode>> it = on.fields(); it.hasNext(); ) {
-                            var kv = it.next();
-                            if (variableName != null) {
-                                tasks.add(task.next(kv.getValue(), variableName, kv.getKey()));
-                            } else {
-                                tasks.add(task.next(kv.getValue()));
-                            }
-                        }
-                    }
-                } else {
-                    String variableName = null;
-                    String variableValue = null;
-                    if (token.contains("[$")) {
-                        variableName = StringUtils.substringBetween(token, "[$", "]");
-                        token = StringUtils.substringBefore(token, "[$");
-                    }
-                    if (node.has(token)) {
-                        JsonNode value = node.get(token);
-                        if (variableName != null && value.has(variableName) && value.get(variableName).isTextual()) {
-                            variableValue = value.get(variableName).asText();
-                        }
-                        if (task.isLast()) {
-                            String name = expression;
-                            for (var replacement : task.getVariables().entrySet()) {
-                                name = name.replace("$" + replacement.getKey(), Strings.nullToEmpty(replacement.getValue()));
-                            }
-                            if (node.isObject() && value.isTextual()) {
-                                var result = base64ToImageUrl(tenantId, name, value.asText());
-                                ((ObjectNode) node).put(token, result.getValue());
-                                updated |= result.isUpdated();
-                            } else if (value.isArray()) {
-                                ArrayNode array = (ArrayNode) value;
-                                for (int i = 0; i < array.size(); i++) {
-                                    String arrayElementName = name.replace("$index", Integer.toString(i));
-                                    UpdateResult result = base64ToImageUrl(tenantId, arrayElementName, array.get(i).asText());
-                                    array.set(i, result.getValue());
-                                    updated |= result.isUpdated();
-                                }
-                            }
-                        } else {
-                            if (StringUtils.isNotEmpty(variableName)) {
-                                tasks.add(task.next(value, variableName, variableValue));
-                            } else {
-                                tasks.add(task.next(value));
-                            }
-                        }
-                    }
-                }
+        AtomicBoolean updated = new AtomicBoolean(false);
+        JacksonUtil.replaceAllByMapping(configuration, mapping, templateParams, (name, value) -> {
+            UpdateResult result = base64ToImageUrl(tenantId, name, value);
+            if (result.isUpdated()) {
+                updated.set(true);
             }
-        }
-        return updated;
+            return result.getValue();
+        });
+        return updated.get();
     }
 
     private UpdateResult base64ToImageUrl(TenantId tenantId, String name, String data) {
