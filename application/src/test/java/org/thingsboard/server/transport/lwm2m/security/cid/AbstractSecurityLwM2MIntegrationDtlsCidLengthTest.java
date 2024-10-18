@@ -54,6 +54,8 @@ public abstract class AbstractSecurityLwM2MIntegrationDtlsCidLengthTest extends 
         final Device device = createLwm2mDevice(deviceCredentials, clientEndpoint, deviceProfile.getId());
         createNewClient(security, null, true, clientEndpoint, clientDtlsCidLength, device.getId().getId().toString());
         lwM2MTestClient.start(true);
+
+        awaitUpdateReg(1);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS));

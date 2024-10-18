@@ -61,4 +61,10 @@ public interface UserCredentialsDao extends Dao<UserCredentials> {
 
     void removeByUserId(TenantId tenantId, UserId userId);
 
+    void setLastLoginTs(TenantId tenantId, UserId userId, long lastLoginTs);
+
+    int incrementFailedLoginAttempts(TenantId tenantId, UserId userId);
+
+    void setFailedLoginAttempts(TenantId tenantId, UserId userId, int failedLoginAttempts);
+
 }
