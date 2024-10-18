@@ -1400,6 +1400,8 @@ edges:
   state:
     # Persist state of edge (active, last connect, last disconnect) into timeseries or attributes tables. 'false' means to store edge state into attributes table
     persistToTelemetry: "${EDGES_PERSIST_STATE_TO_TELEMETRY:false}"
+  # GitHub link with latest released tag
+  latest-release-url: "${EDGES_LATEST_RELEASE_URL:https://api.github.com/repos/thingsboard/thingsboard-edge/releases/latest}"
 
 # Spring doc common parameters
 springdoc:
