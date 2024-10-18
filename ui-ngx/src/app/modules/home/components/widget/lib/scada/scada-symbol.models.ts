@@ -1168,13 +1168,13 @@ class CssScadaSymbolAnimation implements ScadaSymbolAnimation {
               private element: Element,
               duration = 1000)  {
     this._duration = duration;
-    this.fixPatternAnimationForChromeBelow128();
+    this.fixPatternAnimationForChrome();
   }
 
-  private fixPatternAnimationForChromeBelow128(): void {
+  private fixPatternAnimationForChrome(): void {
     try {
       const userAgent = window.navigator.userAgent;
-      if (+(/Chrome\/(\d+)/i.exec(userAgent)[1]) <= 127) {
+      if (+(/Chrome\/(\d+)/i.exec(userAgent)[1]) > 0) {
         if (this.svgShape.defs().findOne('pattern')  && !this.svgShape.defs().findOne('pattern.empty-animation')) {
           this.svgShape.defs().add(SVG('<pattern class="empty-animation"></pattern>'));
           this.svgShape.style()
