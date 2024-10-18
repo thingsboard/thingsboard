@@ -37,6 +37,7 @@
         <pkg.name>thingsboard</pkg.name>
         <tb-postgres.docker.name>tb-postgres</tb-postgres.docker.name>
         <tb-cassandra.docker.name>tb-cassandra</tb-cassandra.docker.name>
+        <tb-tdengine.docker.name>tb-tdengine</tb-tdengine.docker.name>
         <pkg.installFolder>/usr/share/${pkg.name}</pkg.installFolder>
         <pkg.upgradeVersion>3.9.0</pkg.upgradeVersion>
     </properties>
@@ -96,6 +97,25 @@
                             </artifactItems>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>copy-tb-tdengine-deb</id>
+                        <phase>package</phase>
+                        <goals>
+                            <goal>copy</goal>
+                        </goals>
+                        <configuration>
+                            <artifactItems>
+                                <artifactItem>
+                                    <groupId>org.thingsboard</groupId>
+                                    <artifactId>application</artifactId>
+                                    <classifier>deb</classifier>
+                                    <type>deb</type>
+                                    <destFileName>${pkg.name}.deb</destFileName>
+                                    <outputDirectory>${project.build.directory}/docker-tdengine</outputDirectory>
+                                </artifactItem>
+                            </artifactItems>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
             <plugin>
@@ -137,6 +157,26 @@
                                 </resource>
                                 <resource>
                                     <directory>docker-cassandra</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>copy-docker-tb-tdengine-config</id>
+                        <phase>process-resources</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/docker-tdengine</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>docker</directory>
+                                    <filtering>true</filtering>
+                                </resource>
+                                <resource>
+                                    <directory>docker-tdengine</directory>
                                     <filtering>true</filtering>
                                 </resource>
                             </resources>
@@ -202,6 +242,33 @@
                             <tag>${project.version}</tag>
                         </configuration>
                     </execution>
+                    <execution>
+                        <id>build-docker-tb-tdengine-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>build</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <repository>${docker.repo}/${tb-tdengine.docker.name}</repository>
+                            <verbose>true</verbose>
+                            <googleContainerRegistryEnabled>false</googleContainerRegistryEnabled>
+                            <contextDirectory>${project.build.directory}/docker-tdengine</contextDirectory>
+                            <noCache>true</noCache>
+                        </configuration>
+                    </execution>
+                    <execution>
+                        <id>tag-docker-tb-tdengine-image</id>
+                        <phase>pre-integration-test</phase>
+                        <goals>
+                            <goal>tag</goal>
+                        </goals>
+                        <configuration>
+                            <skip>${dockerfile.skip}</skip>
+                            <repository>${docker.repo}/${tb-tdengine.docker.name}</repository>
+                            <tag>${project.version}</tag>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -262,6 +329,28 @@
                                 <configuration>
                                     <tag>${project.version}</tag>
                                     <repository>${docker.repo}/${tb-cassandra.docker.name}</repository>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>push-latest-docker-tb-tdengine-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <tag>latest</tag>
+                                    <repository>${docker.repo}/${tb-tdengine.docker.name}</repository>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>push-version-docker-tb-tdengine-image</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>push</goal>
+                                </goals>
+                                <configuration>
+                                    <tag>${project.version}</tag>
+                                    <repository>${docker.repo}/${tb-tdengine.docker.name}</repository>
                                 </configuration>
                             </execution>
                         </executions>
@@ -359,6 +448,48 @@
                                         <argument>build</argument>
                                         <argument>-t</argument>
                                         <argument>${docker.repo}/${tb-cassandra.docker.name}:${project.version}</argument>
+                                        <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>-o</argument>
+                                        <argument>type=registry</argument>
+                                        <argument>.</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>push-latest-docker-amd-arm-tb-tdengine-images</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <workingDirectory>${project.build.directory}/docker-tdengine</workingDirectory>
+                                    <arguments>
+                                        <argument>buildx</argument>
+                                        <argument>build</argument>
+                                        <argument>-t</argument>
+                                        <argument>${docker.repo}/${tb-tdengine.docker.name}:latest</argument>
+                                        <argument>--platform=linux/amd64,linux/arm64</argument>
+                                        <argument>-o</argument>
+                                        <argument>type=registry</argument>
+                                        <argument>.</argument>
+                                    </arguments>
+                                </configuration>
+                            </execution>
+                            <execution>
+                                <id>push-version-docker-amd-arm-tb-tdengine-images</id>
+                                <phase>pre-integration-test</phase>
+                                <goals>
+                                    <goal>exec</goal>
+                                </goals>
+                                <configuration>
+                                    <executable>docker</executable>
+                                    <workingDirectory>${project.build.directory}/docker-tdengine</workingDirectory>
+                                    <arguments>
+                                        <argument>buildx</argument>
+                                        <argument>build</argument>
+                                        <argument>-t</argument>
+                                        <argument>${docker.repo}/${tb-tdengine.docker.name}:${project.version}</argument>
                                         <argument>--platform=linux/amd64,linux/arm64</argument>
                                         <argument>-o</argument>
                                         <argument>type=registry</argument>
