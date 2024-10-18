@@ -1104,12 +1104,12 @@ public class DefaultTransportService extends TransportActivityManager implements
         TopicPartitionInfo tpi;
         try {
             tpi = partitionService.resolve(ServiceType.TB_CORE, tenantId, entityId);
-        } catch (TenantNotFoundException e) {
-            log.trace("Failed to send message to core. Tenant with ID [{}] not found in the database. Message delivery aborted.", tenantId, e);
-            tpi = TopicPartitionInfo.builder().topic("").build();
+        } catch (Exception e) {
+            log.trace("Failed to send message to core. Tenant with ID [{}], entityType [{}], entityId [{}], routingKey [{}], \nmsg [{}].\n Message delivery aborted.", tenantId, entityId.getEntityType(),  entityId.toString(), routingKey, msg, e);
             if (callback != null) {
                 callback.onError(e);
             }
+            return;
         }
         if (log.isTraceEnabled()) {
             log.trace("[{}][{}] Pushing to topic {} message {}", tenantId, entityId, tpi.getFullTopicName(), msg);
