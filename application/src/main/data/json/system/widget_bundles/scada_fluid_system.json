@@ -58,6 +58,7 @@
     "stand_vertical_tank",
     "cylindrical_tank",
     "stand_cylindrical_tank",
+    "small_cylindrical_tank",
     "vertical_short_tank",
     "stand_vertical_short_tank",
     "large_cylindrical_tank",
@@ -68,6 +69,8 @@
     "stand_horizontal_tank",
     "spherical_tank",
     "small_spherical_tank",
+    "conical_tank",
+    "large_conical_tank",
     "elevated_tank",
     "pool"
   ]
