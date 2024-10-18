@@ -36,7 +36,7 @@ import org.thingsboard.server.dao.service.validator.RuleChainDataValidator;
 import org.thingsboard.server.dao.tenant.TenantService;
 import org.thingsboard.server.dao.usagerecord.ApiLimitService;
 import org.thingsboard.server.dao.widget.WidgetTypeService;
-import org.thingsboard.server.service.entitiy.widgets.bundle.TbWidgetsBundleService;
+import org.thingsboard.server.dao.widget.WidgetsBundleService;
 import org.thingsboard.server.service.install.update.ImagesUpdater;
 
 import java.io.IOException;
@@ -60,7 +60,7 @@ class InstallScriptsTest {
     @MockBean
     WidgetTypeService widgetTypeService;
     @MockBean
-    TbWidgetsBundleService tbWidgetsBundleService;
+    WidgetsBundleService widgetsBundleService;
     @MockBean
     OAuth2ConfigTemplateService oAuth2TemplateService;
     @MockBean

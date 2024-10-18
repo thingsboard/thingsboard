@@ -23,6 +23,7 @@ import org.hibernate.exception.ConstraintViolationException;
 import org.springframework.context.annotation.Primary;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.event.TransactionalEventListener;
+import org.thingsboard.common.util.RegexUtils;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoCacheKey;
 import org.thingsboard.server.cache.resourceInfo.ResourceInfoEvictEvent;
 import org.thingsboard.server.common.data.EntityType;
@@ -44,6 +45,7 @@ import org.thingsboard.server.dao.service.PaginatedRemover;
 import org.thingsboard.server.dao.service.Validator;
 import org.thingsboard.server.dao.service.validator.ResourceDataValidator;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 import java.util.Optional;
 
@@ -235,6 +237,41 @@ public class BaseResourceService extends AbstractCachedEntityService<ResourceInf
     @Override
     public long sumDataSizeByTenantId(TenantId tenantId) {
         return resourceDao.sumDataSizeByTenantId(tenantId);
+    }
+
+    @Override
+    public TbResource updateSystemResource(ResourceType resourceType, String resourceKey, String data) {
+        if (resourceType == ResourceType.DASHBOARD) {
+            data = checkSystemResourcesUsage(data, ResourceType.JS_MODULE);
+        }
+
+        TbResource resource = findResourceByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
+        if (resource == null) {
+            resource = new TbResource();
+            resource.setTenantId(TenantId.SYS_TENANT_ID);
+            resource.setResourceType(resourceType);
+            resource.setResourceKey(resourceKey);
+            resource.setFileName(resourceKey);
+            resource.setTitle(resourceKey);
+        }
+        resource.setData(data.getBytes(StandardCharsets.UTF_8));
+        log.debug("{} system resource {}", (resource.getId() == null ? "Creating" : "Updating"), resourceKey);
+        return saveResource(resource);
+    }
+
+    @Override
+    public String checkSystemResourcesUsage(String content, ResourceType... usedResourceTypes) {
+        return RegexUtils.replace(content, "\\$\\{RESOURCE:(.+)}", matchResult -> {
+            String resourceKey = matchResult.group(1);
+            for (ResourceType resourceType : usedResourceTypes) {
+                TbResourceInfo resource = findResourceInfoByTenantIdAndKey(TenantId.SYS_TENANT_ID, resourceType, resourceKey);
+                if (resource != null) {
+                    log.trace("Replaced '{}' with resource id {}", matchResult.group(), resource.getUuidId());
+                    return resource.getUuidId().toString();
+                }
+            }
+            return "";
+        });
     }
 
     protected String calculateEtag(byte[] data) {
