@@ -836,6 +836,8 @@ export interface WidgetPosition {
 export interface WidgetSize {
   sizeX: number;
   sizeY: number;
+  preserveAspectRatio: boolean;
+  resizable: boolean;
 }
 
 export interface IWidgetSettingsComponent {
