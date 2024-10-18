@@ -322,13 +322,11 @@ public class RpcLwm2mIntegrationObserveTest extends AbstractRpcLwM2MIntegrationO
     public void testObserveResource_Update_AfterUpdateRegistration() throws Exception {
         sendObserveCancelAllWithAwait(lwM2MTestClient.getDeviceIdStr());
 
-        int cntUpdate = 3;
-        verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
-                .updatedReg(Mockito.any(Registration.class));
+        awaitUpdateReg(3);
 
         sendRpcObserveWithContainsLwM2mSingleResource(idVer_3_0_9);
 
-        cntUpdate = 10;
+        int cntUpdate = 10;
         verify(defaultUplinkMsgHandlerTest, timeout(50000).atLeast(cntUpdate))
                 .updateAttrTelemetry(Mockito.any(Registration.class), eq(idVer_3_0_9), eq(null));
     }

@@ -70,11 +70,15 @@ public abstract class AbstractLwM2MIntegrationDiffPortTest extends AbstractSecur
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_SUCCESS) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED));
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccess));
 
+        awaitUpdateReg(1);
         await(awaitAlias)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> lwM2MTestClient.getClientStates().contains(ON_UPDATE_SUCCESS));
 
         Assert.assertTrue(lwM2MTestClient.getClientStates().containsAll(expectedStatusesRegistrationLwm2mSuccessUpdate));
+
+        long cntBefore = countUpdateReg();
+        awaitUpdateReg((int) (cntBefore + 1));
     }
 
     private RegistrationUpdate registrationUpdateNewPort (RegistrationUpdate update, int portValueChange) {
