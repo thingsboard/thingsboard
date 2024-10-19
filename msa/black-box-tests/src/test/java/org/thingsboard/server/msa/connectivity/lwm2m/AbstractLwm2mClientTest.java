@@ -214,8 +214,6 @@ public class AbstractLwm2mClientTest extends AbstractContainerTest {
                     log.warn("msa basicTestConnection started -> finishState: [{}] states: {}", finishState, lwM2MTestClient.getClientStates());
                     return lwM2MTestClient.getClientStates().contains(finishState) || lwM2MTestClient.getClientStates().contains(ON_REGISTRATION_STARTED);
                 });
-
-        awaitUpdateReg(1);
         await(alias + " - " + ON_UPDATE_SUCCESS)
                 .atMost(40, TimeUnit.SECONDS)
                 .until(() -> {
