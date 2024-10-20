@@ -33,7 +33,6 @@ import org.thingsboard.server.common.data.AttributeScope;
 import org.thingsboard.server.common.data.EntityType;
 import org.thingsboard.server.common.data.id.AssetId;
 import org.thingsboard.server.common.data.id.DeviceId;
-import org.thingsboard.server.common.data.id.EntityIdFactory;
 import org.thingsboard.server.common.data.id.RuleNodeId;
 import org.thingsboard.server.common.data.kv.AttributeKvEntry;
 import org.thingsboard.server.common.data.kv.BaseAttributeKvEntry;
@@ -51,51 +50,51 @@ import org.thingsboard.server.dao.relation.RelationService;
 import java.util.List;
 import java.util.Optional;
 import java.util.UUID;
+import java.util.concurrent.TimeUnit;
 
+import static java.lang.Thread.sleep;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.mockito.Mockito.any;
 import static org.mockito.Mockito.atLeastOnce;
 import static org.mockito.Mockito.eq;
 import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.timeout;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 public class TbGpsMultiGeofencingActionNodeTest {
 
+    private static final String PERIMETER_DEFINITION_JSON = """
+            {
+              "perimeterType": "CIRCLE",
+              "centerLatitude": 48.8566,
+              "centerLongitude": 2.3522,
+              "range": 5,
+              "rangeUnit": "KILOMETER"
+            }
+            """;
+    private static final RuleNodeId RULE_NODE_ID = new RuleNodeId(RuleNodeId.NULL_UUID);
+    private static final String ASSET_GEOFENCE_STATE_KEY_ATTR = "geofenceState_" + RULE_NODE_ID;
+    private static final DeviceId DEVICE_ID = new DeviceId(DeviceId.NULL_UUID);
+    private static final AssetId ZONE_ID = new AssetId(AssetId.NULL_UUID);
+    private static final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
+    private static final int VERIFY_TIMEOUT_MS = 5000;
+    private static final int MIN_INSIDE_DURATION_MS = 500;
+    private static final int MIN_OUTSIDE_DURATION_MS = 500;
+
     private TbGpsMultiGeofencingActionNode node;
     private TbContext ctx;
     private AttributesService attributesService;
-    private DeviceId deviceId;
-    private AssetId zoneId;
-    private String geofenceStateAttributeKey;
-
-    private final ListeningExecutor DB_EXECUTOR = new TestDbCallbackExecutor();
 
     @BeforeEach
     public void setUp() throws TbNodeException {
         node = new TbGpsMultiGeofencingActionNode();
         ctx = mock(TbContext.class);
-        when(ctx.getSelfId()).thenReturn(new RuleNodeId(UUID.randomUUID()));
-        geofenceStateAttributeKey = "geofenceState_" + ctx.getSelfId();
+        when(ctx.getSelfId()).thenReturn(RULE_NODE_ID);
 
-        TbGpsMultiGeofencingActionNodeConfiguration configuration = new TbGpsMultiGeofencingActionNodeConfiguration();
-        configuration.setPerimeterKeyName("perimeter");
-        configuration.setLatitudeKeyName("latitude");
-        configuration.setLongitudeKeyName("longitude");
-        configuration.setMinOutsideDuration(10);
-        configuration.setMinOutsideDuration(10);
+        TbGpsMultiGeofencingActionNodeConfiguration geoConfig = createGeoConfig(createRelationsQuery());
 
-        RelationsQuery relationsQuery = new RelationsQuery();
-        relationsQuery.setDirection(EntitySearchDirection.FROM);
-        relationsQuery.setMaxLevel(1);
-        RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
-        relationsQuery.setFilters(List.of(filter));
-        configuration.setRelationsQuery(relationsQuery);
-
-        JsonNode jsonNode = JacksonUtil.valueToTree(configuration);
-        TbNodeConfiguration tbNodeConfiguration = new TbNodeConfiguration(jsonNode);
-
-        node.init(ctx, tbNodeConfiguration);
+        node.init(ctx, createNodeConfiguration(geoConfig));
 
         AttributesService attributesService = mock(AttributesService.class);
         this.attributesService = attributesService;
@@ -106,112 +105,112 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         when(ctx.getDbCallbackExecutor()).thenReturn(DB_EXECUTOR);
 
-        deviceId = (DeviceId) EntityIdFactory.getByTypeAndUuid(EntityType.DEVICE, UUID.randomUUID().toString());
-        zoneId = (AssetId) EntityIdFactory.getByTypeAndUuid(EntityType.ASSET, UUID.randomUUID().toString());
-
-        EntityRelation entityRelation = new EntityRelation(deviceId, zoneId, "DeviceToZone", RelationTypeGroup.COMMON);
+        EntityRelation entityRelation = new EntityRelation(DEVICE_ID, ZONE_ID, "DeviceToZone", RelationTypeGroup.COMMON);
         when(relationService.findByQuery(any(), any())).thenReturn(Futures.immediateFuture(List.of(entityRelation)));
 
-        BaseAttributeKvEntry perimeterAttribute = new BaseAttributeKvEntry(new JsonDataEntry(configuration.getPerimeterKeyName(), "{\n" +
-                "  \"perimeterType\": \"CIRCLE\",\n" +
-                "  \"centerLatitude\": 48.8566,\n" +
-                "  \"centerLongitude\": 2.3522,\n" +
-                "  \"range\": 5,\n" +
-                "  \"rangeUnit\": \"KILOMETER\"\n" +
-                "}"), System.currentTimeMillis());
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(configuration.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute)));
-
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.empty()));
-
+        BaseAttributeKvEntry perimeterAttribute = new BaseAttributeKvEntry(new JsonDataEntry(geoConfig.getPerimeterKeyName(), PERIMETER_DEFINITION_JSON), System.currentTimeMillis());
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geoConfig.getPerimeterKeyName()))).thenReturn(Futures.immediateFuture(Optional.of(perimeterAttribute)));
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.empty()));
     }
 
     @Test
     public void testEnteredEvent() throws Exception {
-        TbMsg msg = createTbMsgWithCoordinates(deviceId, 48.8566, 2.3522);
+        TbMsg msg = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msg);
 
-        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
 
         assertCapturedEvent(msgCaptor, labelCaptor, "Entered");
     }
 
     @Test
     public void testInsideEvent() throws Exception {
-        TbMsg msgEntered = createTbMsgWithCoordinates(deviceId, 48.8566, 2.3522);
+        TbMsg msgEntered = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msgEntered);
 
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        Thread.sleep(1000L);
+        sleep(MIN_INSIDE_DURATION_MS);
 
-        TbMsg msgInside = createTbMsgWithCoordinates(deviceId, 48.8566, 2.3522);
+        TbMsg msgInside = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
 
         node.onMsg(ctx, msgInside);
 
-        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+
         assertCapturedEvent(msgCaptor, labelCaptor, "Inside");
     }
 
     @Test
     public void testLeftEvent() throws Exception {
-        TbMsg msgInside = createTbMsgWithCoordinates(deviceId, 48.8566, 2.3522);
-        TbMsg msgOutside = createTbMsgWithCoordinates(deviceId, 40.7128, -74.0060);
+        TbMsg msgEntered = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
+        TbMsg msgLeft = createTbMsgWithCoordinates(DEVICE_ID, 40.7128, -74.0060);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
-        node.onMsg(ctx, msgInside);
+        node.onMsg(ctx, msgEntered);
+
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
 
         BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        node.onMsg(ctx, msgOutside);
+        node.onMsg(ctx, msgLeft);
 
-        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+
         assertCapturedEvent(msgCaptor, labelCaptor, "Left");
     }
 
     @Test
     public void testOutsideEvent() throws Exception {
-        TbMsg msgInside = createTbMsgWithCoordinates(deviceId, 48.8566, 2.3522);
+        TbMsg msgInside = createTbMsgWithCoordinates(DEVICE_ID, 48.8566, 2.3522);
 
         ArgumentCaptor<TbMsg> msgCaptor = ArgumentCaptor.forClass(TbMsg.class);
         ArgumentCaptor<String> labelCaptor = ArgumentCaptor.forClass(String.class);
 
         node.onMsg(ctx, msgInside);
 
-        BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(1)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
 
-        TbMsg msgLeft = createTbMsgWithCoordinates(deviceId, 40.7128, -74.0060);
+        BaseAttributeKvEntry attributeKvEntry = captureStateAttribute();
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
+
+        TbMsg msgLeft = createTbMsgWithCoordinates(DEVICE_ID, 40.7128, -74.0060);
 
         node.onMsg(ctx, msgLeft);
 
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(2)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+
+        sleep(MIN_OUTSIDE_DURATION_MS);
+
         attributeKvEntry = captureStateAttribute();
-        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(geofenceStateAttributeKey))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
+        when(attributesService.find(any(), any(), any(AttributeScope.class), eq(ASSET_GEOFENCE_STATE_KEY_ATTR))).thenReturn(Futures.immediateFuture(Optional.of(attributeKvEntry)));
 
-        Thread.sleep(1000L);
-
-        TbMsg msgOutside = createTbMsgWithCoordinates(deviceId, 40.7128, -74.0060);
+        TbMsg msgOutside = createTbMsgWithCoordinates(DEVICE_ID, 40.7128, -74.0060);
 
         node.onMsg(ctx, msgOutside);
 
-        verify(ctx, atLeastOnce()).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+        verify(ctx, timeout(VERIFY_TIMEOUT_MS).times(3)).enqueueForTellNext(msgCaptor.capture(), labelCaptor.capture());
+
         assertCapturedEvent(msgCaptor, labelCaptor, "Outside");
     }
 
     private BaseAttributeKvEntry captureStateAttribute() {
         ArgumentCaptor<AttributeKvEntry> attributeCaptor = ArgumentCaptor.forClass(AttributeKvEntry.class);
-        verify(ctx.getAttributesService(), atLeastOnce()).save(eq(ctx.getTenantId()), eq(deviceId), eq(AttributeScope.SERVER_SCOPE), attributeCaptor.capture());
+        verify(ctx.getAttributesService(), atLeastOnce()).save(eq(ctx.getTenantId()), eq(DEVICE_ID), eq(AttributeScope.SERVER_SCOPE), attributeCaptor.capture());
         return (BaseAttributeKvEntry) attributeCaptor.getValue();
     }
 
@@ -223,12 +222,41 @@ public class TbGpsMultiGeofencingActionNodeTest {
 
         String data = objectMapper.writeValueAsString(jsonNode);
         TbMsgMetaData metaData = new TbMsgMetaData();
-        return TbMsg.newMsg(TbMsgType.NA, deviceId, metaData, data);
+        TbMsg tbMsg = TbMsg.newMsg(TbMsgType.NA, deviceId, metaData, data);
+        return tbMsg;
     }
 
     private void assertCapturedEvent(ArgumentCaptor<TbMsg> msgCaptor, ArgumentCaptor<String> relationTypeCaptor, String expectedRelationType) {
         assertEquals(expectedRelationType, relationTypeCaptor.getValue());
-        assertEquals(zoneId, msgCaptor.getValue().getOriginator());
+        assertEquals(ZONE_ID, msgCaptor.getValue().getOriginator());
+        assertEquals(DEVICE_ID, new DeviceId(UUID.fromString(msgCaptor.getValue().getMetaData().getValue("originatorId"))));
+    }
+
+    private TbNodeConfiguration createNodeConfiguration(TbGpsMultiGeofencingActionNodeConfiguration geoConfig) {
+        JsonNode jsonNode = JacksonUtil.valueToTree(geoConfig);
+        return new TbNodeConfiguration(jsonNode);
+    }
+
+    private RelationsQuery createRelationsQuery() {
+        RelationsQuery relationsQuery = new RelationsQuery();
+        relationsQuery.setDirection(EntitySearchDirection.FROM);
+        relationsQuery.setMaxLevel(1);
+        RelationEntityTypeFilter filter = new RelationEntityTypeFilter("DeviceToZone", List.of(EntityType.ASSET));
+        relationsQuery.setFilters(List.of(filter));
+        return relationsQuery;
+    }
+
+    private TbGpsMultiGeofencingActionNodeConfiguration createGeoConfig(RelationsQuery relationsQuery) {
+        TbGpsMultiGeofencingActionNodeConfiguration geoConfig = new TbGpsMultiGeofencingActionNodeConfiguration();
+        geoConfig.setPerimeterKeyName("perimeter");
+        geoConfig.setLatitudeKeyName("latitude");
+        geoConfig.setLongitudeKeyName("longitude");
+        geoConfig.setMinInsideDuration(MIN_INSIDE_DURATION_MS);
+        geoConfig.setMinOutsideDuration(MIN_OUTSIDE_DURATION_MS);
+        geoConfig.setMinInsideDurationTimeUnit(TimeUnit.MILLISECONDS.name());
+        geoConfig.setMinOutsideDurationTimeUnit(TimeUnit.MILLISECONDS.name());
+        geoConfig.setRelationsQuery(relationsQuery);
+        return geoConfig;
     }
 
 }

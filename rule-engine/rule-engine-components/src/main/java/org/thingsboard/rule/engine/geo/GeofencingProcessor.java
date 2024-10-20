@@ -56,8 +56,8 @@ public class GeofencingProcessor {
         this.context = context;
     }
 
-    public ListenableFuture<GeofenceResponse> process(TbMsg msg, EntityId entityId, List<EntityId> matchedGeofences) {
-        ListenableFuture<Set<GeofenceState>> geofenceStatesFuture = fetchGeofenceStatesForEntity(entityId, msg.getRuleNodeId());
+    public ListenableFuture<GeofenceResponse> process(RuleNodeId ruleNodeId, TbMsg msg, EntityId entityId, List<EntityId> matchedGeofences) {
+        ListenableFuture<Set<GeofenceState>> geofenceStatesFuture = fetchGeofenceStatesForEntity(entityId, ruleNodeId);
 
         return Futures.transform(geofenceStatesFuture, geofenceStates -> {
             List<EntityId> enteredGeofences = null;
@@ -77,7 +77,7 @@ public class GeofencingProcessor {
 
             List<EntityId> outsideGeofences = getOutsideGeofences(msg.getMetaDataTs(), matchedGeofences, geofenceStates);
 
-            persistState(entityId, msg.getRuleNodeId(), geofenceStates);
+            persistState(entityId, ruleNodeId, geofenceStates);
 
             return new GeofenceResponse(enteredGeofences, leftGeofences, insideGeofences, outsideGeofences);
         }, MoreExecutors.directExecutor());
@@ -128,7 +128,7 @@ public class GeofencingProcessor {
         GeofenceState geofenceState = optionalGeofenceState.get();
 
         long diff = currentTs - geofenceState.getEnterTs();
-        boolean isOver = diff > TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()).toMillis(nodeConfiguration.getMinInsideDuration());
+        boolean isOver = diff >= TimeUnit.valueOf(nodeConfiguration.getMinInsideDurationTimeUnit()).toMillis(nodeConfiguration.getMinInsideDuration());
         if (isOver) {
             geofenceState.setInsideTs(currentTs);
             return List.of(geofenceState.getGeofenceId());
@@ -148,7 +148,7 @@ public class GeofencingProcessor {
 
         for (GeofenceState candidate : candidatesForOutside) {
             long diff = currentTs - candidate.getLeftTs();
-            boolean isTimeForOutside = diff > TimeUnit.valueOf(nodeConfiguration.getMinOutsideDurationTimeUnit()).toMillis(nodeConfiguration.getMinOutsideDuration());
+            boolean isTimeForOutside = diff >= TimeUnit.valueOf(nodeConfiguration.getMinOutsideDurationTimeUnit()).toMillis(nodeConfiguration.getMinOutsideDuration());
             if (isTimeForOutside) {
                 outsideGeofences.add(candidate);
             }

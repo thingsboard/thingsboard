@@ -60,6 +60,10 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
     @Override
     public void init(TbContext ctx, TbNodeConfiguration configuration) throws TbNodeException {
         super.init(ctx, configuration);
+        if (config.getRelationsQuery() == null) {
+            throw new TbNodeException("Relations query should be specified");
+        }
+
         geofencingProcessor = new GeofencingProcessor(ctx, this.config);
     }
 
@@ -73,7 +77,7 @@ public class TbGpsMultiGeofencingActionNode extends AbstractGeofencingNode<TbGps
 
         ListenableFuture<List<EntityId>> matchedZonesFuture = findMatchedZones(ctx, msg);
 
-        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(msg, ctx.getSelfId(),matchedZones), MoreExecutors.directExecutor());
+        ListenableFuture<GeofenceResponse> geofenceResponseFuture = Futures.transformAsync(matchedZonesFuture, matchedZones -> geofencingProcessor.process(ctx.getSelfId(), msg, msg.getOriginator(), matchedZones), MoreExecutors.directExecutor());
 
         withCallback(geofenceResponseFuture, geofenceResponse -> {
             processGeofenceResponse(ctx, msg, msg.getOriginator(), geofenceResponse);
