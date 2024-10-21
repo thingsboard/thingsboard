@@ -319,7 +319,9 @@ public class TwoFactorAuthTest extends AbstractControllerTest {
             assertThat(successfulLogInAuditLog.getActionStatus()).isEqualTo(ActionStatus.SUCCESS);
             assertThat(successfulLogInAuditLog.getUserName()).isEqualTo(username);
         });
-        assertThat(userService.findUserById(tenantId, user.getId()).getAdditionalInfo()
+
+        loginTenantAdmin();
+        assertThat(doGet("/api/user/" + user.getId(), User.class).getAdditionalInfo()
                 .get("lastLoginTs").asLong())
                 .isGreaterThan(System.currentTimeMillis() - TimeUnit.SECONDS.toMillis(3));
     }

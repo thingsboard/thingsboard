@@ -636,7 +636,7 @@ export class DashboardUtilsService {
                            targetLayout: DashboardLayoutId,
                            widget: Widget,
                            originalColumns?: number,
-                           originalSize?: {sizeX: number; sizeY: number},
+                           originalSize?: WidgetSize,
                            row?: number,
                            column?: number,
                            breakpoint = 'default'): void {
@@ -661,8 +661,8 @@ export class DashboardUtilsService {
       mobileHeight: widget.config.mobileHeight,
       mobileHide: widget.config.mobileHide,
       desktopHide: widget.config.desktopHide,
-      preserveAspectRatio: widget.config.preserveAspectRatio,
-      resizable: widget.config.resizable
+      preserveAspectRatio: originalSize ? originalSize.preserveAspectRatio : widget.config.preserveAspectRatio,
+      resizable: originalSize ? originalSize.resizable : widget.config.resizable
     };
     if (isUndefined(originalColumns)) {
       originalColumns = 24;
@@ -1065,7 +1065,9 @@ export class DashboardUtilsService {
     const widgetLayout = layout.widgets[widget.id];
     return {
       sizeX: widgetLayout.sizeX,
-      sizeY: widgetLayout.sizeY
+      sizeY: widgetLayout.sizeY,
+      preserveAspectRatio: widgetLayout.preserveAspectRatio,
+      resizable: widgetLayout.resizable
     };
   }
 
