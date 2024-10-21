@@ -74,8 +74,8 @@
         <fasterxml-classmate.version>1.7.0</fasterxml-classmate.version>
         <auth0-jwt.version>4.4.0</auth0-jwt.version>
         <json-schema-validator.version>2.2.14</json-schema-validator.version>
-        <californium.version>3.11.0</californium.version>
-        <leshan.version>2.0.0-M14</leshan.version>
+        <californium.version>3.12.1</californium.version>
+        <leshan.version>2.0.0-M15</leshan.version>
         <gson.version>2.10.1</gson.version>
         <freemarker.version>2.3.32</freemarker.version>
         <mail.version>2.0.1</mail.version>
@@ -83,7 +83,7 @@
         <zookeeper.version>3.9.2</zookeeper.version>
         <protobuf.version>3.25.3</protobuf.version> <!-- A Major v4 does not support by the pubsub yet-->
         <grpc.version>1.63.0</grpc.version>
-        <tbel.version>1.2.3</tbel.version>
+        <tbel.version>1.2.4</tbel.version>
         <lombok.version>1.18.32</lombok.version>
         <paho.client.version>1.2.5</paho.client.version>
         <paho.mqttv5.client.version>1.2.5</paho.mqttv5.client.version>

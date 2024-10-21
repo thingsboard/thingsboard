@@ -60,18 +60,21 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
     private Long resetTokenExpTime;
 
     @Convert(converter = JsonConverter.class)
-    @Column(name = ModelConstants.USER_CREDENTIALS_ADDITIONAL_PROPERTY)
+    @Column(name = ModelConstants.ADDITIONAL_INFO_PROPERTY)
     private JsonNode additionalInfo;
+
+    @Column(name = ModelConstants.USER_CREDENTIALS_LAST_LOGIN_TS_PROPERTY)
+    private Long lastLoginTs;
+
+    @Column(name = ModelConstants.USER_CREDENTIALS_FAILED_LOGIN_ATTEMPTS_PROPERTY)
+    private Integer failedLoginAttempts;
 
     public UserCredentialsEntity() {
         super();
     }
 
     public UserCredentialsEntity(UserCredentials userCredentials) {
-        if (userCredentials.getId() != null) {
-            this.setUuid(userCredentials.getId().getId());
-        }
-        this.setCreatedTime(userCredentials.getCreatedTime());
+        super(userCredentials);
         if (userCredentials.getUserId() != null) {
             this.userId = userCredentials.getUserId().getId();
         }
@@ -82,6 +85,8 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         this.resetToken = userCredentials.getResetToken();
         this.resetTokenExpTime = userCredentials.getResetTokenExpTime();
         this.additionalInfo = userCredentials.getAdditionalInfo();
+        this.lastLoginTs = userCredentials.getLastLoginTs();
+        this.failedLoginAttempts = userCredentials.getFailedLoginAttempts();
     }
 
     @Override
@@ -98,6 +103,8 @@ public final class UserCredentialsEntity extends BaseSqlEntity<UserCredentials> 
         userCredentials.setResetToken(resetToken);
         userCredentials.setResetTokenExpTime(resetTokenExpTime);
         userCredentials.setAdditionalInfo(additionalInfo);
+        userCredentials.setLastLoginTs(lastLoginTs);
+        userCredentials.setFailedLoginAttempts(failedLoginAttempts);
         return userCredentials;
     }
 
