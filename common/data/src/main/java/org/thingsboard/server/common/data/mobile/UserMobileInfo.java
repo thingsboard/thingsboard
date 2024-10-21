@@ -17,7 +17,9 @@ package org.thingsboard.server.common.data.mobile;
 
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.User;
-import org.thingsboard.server.common.data.mobile.layout.MobileLayoutConfig;
+import org.thingsboard.server.common.data.mobile.layout.MobilePage;
 
-public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, MobileLayoutConfig layoutConfig) {
+import java.util.List;
+
+public record UserMobileInfo(User user, HomeDashboardInfo homeDashboardInfo, List<MobilePage> pages) {
 }

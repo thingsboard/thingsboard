@@ -15,6 +15,8 @@
  */
 package org.thingsboard.server.controller;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.core.type.TypeReference;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.RequiredArgsConstructor;
@@ -22,21 +24,26 @@ import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import org.thingsboard.common.util.JacksonUtil;
 import org.thingsboard.server.common.data.HomeDashboardInfo;
 import org.thingsboard.server.common.data.User;
+import org.thingsboard.server.common.data.Views;
 import org.thingsboard.server.common.data.exception.ThingsboardException;
 import org.thingsboard.server.common.data.mobile.LoginMobileInfo;
 import org.thingsboard.server.common.data.mobile.app.MobileApp;
 import org.thingsboard.server.common.data.mobile.bundle.MobileAppBundle;
 import org.thingsboard.server.common.data.mobile.app.MobileAppVersionInfo;
 import org.thingsboard.server.common.data.mobile.UserMobileInfo;
+import org.thingsboard.server.common.data.mobile.layout.MobilePage;
 import org.thingsboard.server.common.data.oauth2.OAuth2ClientLoginInfo;
 import org.thingsboard.server.common.data.oauth2.PlatformType;
 import org.thingsboard.server.config.annotations.ApiOperation;
 import org.thingsboard.server.queue.util.TbCoreComponent;
 import org.thingsboard.server.service.security.model.SecurityUser;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import static org.thingsboard.server.controller.ControllerConstants.AVAILABLE_FOR_ANY_AUTHORIZED_USER;
 
@@ -62,12 +69,12 @@ public class MobileV2Controller extends BaseController {
     public UserMobileInfo getUserMobileInfo(@Parameter(description = "Mobile application package name")
                                             @RequestParam String pkgName,
                                             @Parameter(description = "Platform type", schema = @Schema(allowableValues = {"ANDROID", "IOS"}))
-                                            @RequestParam PlatformType platform) throws ThingsboardException {
+                                            @RequestParam PlatformType platform) throws ThingsboardException, JsonProcessingException {
         SecurityUser securityUser = getCurrentUser();
         User user = userService.findUserById(securityUser.getTenantId(), securityUser.getId());
         HomeDashboardInfo homeDashboardInfo = securityUser.isSystemAdmin() ? null : getHomeDashboardInfo(securityUser, user.getAdditionalInfo());
         MobileAppBundle mobileAppBundle = mobileAppBundleService.findMobileAppBundleByPkgNameAndPlatform(securityUser.getTenantId(), pkgName, platform);
-        return new UserMobileInfo(user, homeDashboardInfo, mobileAppBundle != null ? mobileAppBundle.getLayoutConfig() : null);
+        return new UserMobileInfo(user, homeDashboardInfo, getVisiblePages(mobileAppBundle));
     }
 
     @ApiOperation(value = "Get mobile app version info (getMobileVersionInfo)")
@@ -78,6 +85,18 @@ public class MobileV2Controller extends BaseController {
                                                      @RequestParam PlatformType platform) {
         MobileApp mobileApp = mobileAppService.findMobileAppByPkgNameAndPlatformType(pkgName, platform);
         return mobileApp != null ? mobileApp.getVersionInfo() : null;
+    }
+
+    private List<MobilePage> getVisiblePages(MobileAppBundle mobileAppBundle) throws JsonProcessingException {
+        if (mobileAppBundle != null && mobileAppBundle.getLayoutConfig() != null) {
+            List<MobilePage> mobilePages = mobileAppBundle.getLayoutConfig().getPages()
+                    .stream()
+                    .filter(MobilePage::isVisible)
+                    .collect(Collectors.toList());
+            return JacksonUtil.readValue(JacksonUtil.writeValueAsViewIgnoringNullFields(mobilePages, Views.Public.class), new TypeReference<>() {});
+        } else {
+            return Collections.emptyList();
+        }
     }
 
 }
