@@ -228,6 +228,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('realtime.hideLastInterval').enable({emitEvent: false});
         this.timewindowForm.get('realtime.hideQuickInterval').enable({emitEvent: false});
       }
+      this.updateDisableAdvancedOptionState('realtime.disableCustomInterval', value);
     });
     this.timewindowForm.get('realtime.hideLastInterval').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -235,6 +236,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       if (hideLastInterval && !this.timewindowForm.get('realtime.hideQuickInterval').value) {
         this.timewindowForm.get('realtime.realtimeType').setValue(RealtimeWindowType.INTERVAL);
       }
+      this.updateDisableAdvancedOptionState('realtime.disableCustomInterval', hideLastInterval);
     });
     this.timewindowForm.get('realtime.hideQuickInterval').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -256,6 +258,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('history.hideQuickInterval').enable({emitEvent: false});
         this.timewindowForm.get('history.hideFixedInterval').enable({emitEvent: false});
       }
+      this.updateDisableAdvancedOptionState('history.disableCustomInterval', value);
     });
     this.timewindowForm.get('history.hideLastInterval').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -267,6 +270,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
           this.timewindowForm.get('history.historyType').setValue(HistoryWindowType.INTERVAL);
         }
       }
+      this.updateDisableAdvancedOptionState('history.disableCustomInterval', hideLastInterval);
     });
     this.timewindowForm.get('history.hideFixedInterval').valueChanges.pipe(
       takeUntil(this.destroy$)
@@ -290,6 +294,7 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         }
       }
     });
+
     this.timewindowForm.get('hideAggregation').valueChanges.pipe(
       takeUntil(this.destroy$)
     ).subscribe((value: boolean) => {
@@ -297,11 +302,26 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         this.timewindowForm.get('allowedAggTypes').patchValue([]);
       }
     });
+    this.timewindowForm.get('hideAggInterval').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: boolean) => {
+      this.updateDisableAdvancedOptionState('realtime.disableCustomGroupInterval', value);
+      this.updateDisableAdvancedOptionState('history.disableCustomGroupInterval', value);
+    });
   }
 
   ngOnDestroy() {
     this.destroy$.next();
     this.destroy$.complete();
+  }
+
+  private updateDisableAdvancedOptionState(controlName: string, intervalHidden: boolean) {
+    if (intervalHidden) {
+      this.timewindowForm.get(controlName).disable({emitEvent: false});
+      this.timewindowForm.get(controlName).patchValue(false, {emitEvent: false});
+    } else {
+      this.timewindowForm.get(controlName).enable({emitEvent: false});
+    }
   }
 
   private updateValidators(aggType: AggregationType) {
