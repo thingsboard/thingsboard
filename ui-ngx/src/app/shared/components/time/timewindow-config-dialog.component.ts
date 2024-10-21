@@ -31,13 +31,12 @@ import { Store } from '@ngrx/store';
 import { AppState } from '@core/core.state';
 import { FormBuilder, FormGroup, Validators } from '@angular/forms';
 import { TimeService } from '@core/services/time.service';
-import { isDefined, isDefinedAndNotNull, mergeDeep } from '@core/utils';
+import { deepClone, isDefined, isDefinedAndNotNull, mergeDeep } from '@core/utils';
 import { ToggleHeaderOption } from '@shared/components/toggle-header.component';
 import { TranslateService } from '@ngx-translate/core';
 import { MAT_DIALOG_DATA, MatDialogRef } from '@angular/material/dialog';
 import { Subject } from 'rxjs';
 import { takeUntil } from 'rxjs/operators';
-import { TimezoneSelectionResult } from '@shared/components/time/timezone-panel.component';
 import { TbPopoverService } from '@shared/components/popover.service';
 import {
   AggregationOptionsConfigPanelComponent
@@ -198,6 +197,8 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         limit: [ isDefined(aggregation?.limit) ? this.timewindow.aggregation.limit : null ]
       }),
       timezone: [ isDefined(this.timewindow.timezone) ? this.timewindow.timezone : null ],
+      allowedAggTypes: [ isDefinedAndNotNull(this.timewindow.allowedAggTypes)
+                      ? this.timewindow.allowedAggTypes : null ],
       hideAggregation: [ isDefinedAndNotNull(this.timewindow.hideAggregation)
                       ? this.timewindow.hideAggregation : false ],
       hideAggInterval: [ isDefinedAndNotNull(this.timewindow.hideAggInterval)
@@ -289,6 +290,13 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
         }
       }
     });
+    this.timewindowForm.get('hideAggregation').valueChanges.pipe(
+      takeUntil(this.destroy$)
+    ).subscribe((value: boolean) => {
+      if (value) {
+        this.timewindowForm.get('allowedAggTypes').patchValue([]);
+      }
+    });
   }
 
   ngOnDestroy() {
@@ -344,6 +352,11 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
   update() {
     const timewindowFormValue = this.timewindowForm.getRawValue();
     this.timewindow = mergeDeep(this.timewindow, timewindowFormValue);
+    if (timewindowFormValue.allowedAggTypes?.length) {
+      this.timewindow.allowedAggTypes = timewindowFormValue.allowedAggTypes;
+    } else {
+      delete this.timewindow.allowedAggTypes;
+    }
     if (!this.aggregation) {
       delete this.timewindow.aggregation;
     }
@@ -405,18 +418,19 @@ export class TimewindowConfigDialogComponent extends PageComponent implements On
       this.popoverService.hidePopover(trigger);
     } else {
       const aggregationConfigPopover = this.popoverService.displayPopover(trigger, this.renderer,
-        this.viewContainerRef, AggregationOptionsConfigPanelComponent, ['bottomRight', 'leftBottom'], true, null,
+        this.viewContainerRef, AggregationOptionsConfigPanelComponent, ['left', 'leftTop', 'leftBottom'], true, null,
         {
-          allowedAggregationTypes: null,
-          onClose: (result: TimezoneSelectionResult | null) => {
+          allowedAggregationTypes: deepClone(this.timewindowForm.get('allowedAggTypes').value),
+          onClose: (result: Array<AggregationType> | null) => {
             aggregationConfigPopover.hide();
             if (result) {
-              console.log(result);
+              this.timewindowForm.get('allowedAggTypes').patchValue(result);
+              this.timewindowForm.markAsDirty();
             }
           }
         },
-        {},
-        {}, {}, false);
+        {maxHeight: '90vh', height: '100%'},
+        {}, {}, true, () => {}, {padding: 0});
       aggregationConfigPopover.tbComponentRef.instance.popoverComponent = aggregationConfigPopover;
     }
     this.cd.detectChanges();

@@ -112,7 +112,7 @@ export class AggregationTypeSelectComponent implements ControlValueAccessor, OnI
           this.aggregationTypes = this.allowedAggregationTypes?.length ? this.allowedAggregationTypes : this.allAggregationTypes;
           const currentAggregationType: AggregationType = this.aggregationTypeFormGroup.get('aggregationType').value;
           if (currentAggregationType && !this.aggregationTypes.includes(currentAggregationType)) {
-            this.aggregationTypeFormGroup.get('aggregationType').patchValue(null, {emitEvent: true});
+            this.aggregationTypeFormGroup.get('aggregationType').patchValue(this.aggregationTypes[0], {emitEvent: true});
           }
         }
       }

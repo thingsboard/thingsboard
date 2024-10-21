@@ -16,7 +16,7 @@
 @import '../../../../scss/constants';
 
 :host {
-  min-width: 355px;
+  min-width: 300px;
   display: block;
 
   @media #{$mat-xs} {

@@ -139,6 +139,7 @@ export interface Aggregation {
 export interface Timewindow {
   displayValue?: string;
   displayTimezoneAbbr?: string;
+  allowedAggTypes?: Array<AggregationType>;
   hideAggregation?: boolean;
   hideAggInterval?: boolean;
   hideTimezone?: boolean;
@@ -301,6 +302,9 @@ export const initModelFromDefaultTimewindow = (value: Timewindow, quickIntervalO
                                                historyOnly: boolean, timeService: TimeService): Timewindow => {
   const model = defaultTimewindow(timeService);
   if (value) {
+    if (value.allowedAggTypes?.length) {
+      model.allowedAggTypes = value.allowedAggTypes;
+    }
     model.hideAggregation = value.hideAggregation;
     model.hideAggInterval = value.hideAggInterval;
     model.hideTimezone = value.hideTimezone;
@@ -429,7 +433,7 @@ export const toHistoryTimewindow = (timewindow: Timewindow, startTimeMs: number,
     aggType = AggregationType.AVG;
     limit = timeService.getMaxDatapointsLimit();
   }
-  return {
+  const historyTimewindow: Timewindow = {
     hideAggregation: timewindow.hideAggregation || false,
     hideAggInterval: timewindow.hideAggInterval || false,
     hideTimezone: timewindow.hideTimezone || false,
@@ -451,6 +455,10 @@ export const toHistoryTimewindow = (timewindow: Timewindow, startTimeMs: number,
     },
     timezone: timewindow.timezone
   };
+  if (timewindow.allowedAggTypes?.length) {
+    historyTimewindow.allowedAggTypes = timewindow.allowedAggTypes;
+  }
+  return historyTimewindow;
 };
 
 export const timewindowTypeChanged = (newTimewindow: Timewindow, oldTimewindow: Timewindow): boolean => {
@@ -898,6 +906,9 @@ export const createTimewindowForComparison = (subscriptionTimewindow: Subscripti
 
 export const cloneSelectedTimewindow = (timewindow: Timewindow): Timewindow => {
   const cloned: Timewindow = {};
+  if (timewindow.allowedAggTypes?.length) {
+    cloned.allowedAggTypes = timewindow.allowedAggTypes;
+  }
   cloned.hideAggregation = timewindow.hideAggregation || false;
   cloned.hideAggInterval = timewindow.hideAggInterval || false;
   cloned.hideTimezone = timewindow.hideTimezone || false;

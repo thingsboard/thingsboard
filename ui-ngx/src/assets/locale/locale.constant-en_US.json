@@ -5216,7 +5216,10 @@
         "hide-group-interval": "Hide grouping interval from end-users",
         "hide-max-values": "Hide max values from end-users",
         "hide-timezone": "Hide time zone from end-users",
-        "disable-custom-interval": "Disable custom interval selection"
+        "disable-custom-interval": "Disable custom interval selection",
+        "edit-aggregation-functions-list": "Edit aggregation functions list",
+        "edit-aggregation-functions-list-hint": "List of available options can be specified.",
+        "allowed-aggregation-functions": "Allowed aggregation functions"
     },
     "tooltip": {
         "trigger": "Trigger",

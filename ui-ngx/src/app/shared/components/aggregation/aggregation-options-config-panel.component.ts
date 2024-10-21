@@ -19,10 +19,6 @@ import { aggregationTranslations, AggregationType } from '@shared/models/time/ti
 import { FormBuilder, FormGroup } from '@angular/forms';
 import { TbPopoverComponent } from '@shared/components/popover.component';
 
-export interface AggregationOptionsSelectionResult {
-  allowedAggregationTypes: AggregationType[] | null;
-}
-
 @Component({
   selector: 'tb-aggregation-options-config-panel',
   templateUrl: './aggregation-options-config-panel.component.html',
@@ -34,7 +30,7 @@ export class AggregationOptionsConfigPanelComponent implements OnInit {
   allowedAggregationTypes: Array<AggregationType>;
 
   @Input()
-  onClose: (result: AggregationOptionsSelectionResult | null) => void;
+  onClose: (result: Array<AggregationType> | null) => void;
 
   @Input()
   popoverComponent: TbPopoverComponent;
@@ -43,7 +39,7 @@ export class AggregationOptionsConfigPanelComponent implements OnInit {
 
   aggregationTypes = AggregationType;
 
-  aggregations = Object.keys(AggregationType);
+  allAggregationTypes: Array<AggregationType> = Object.values(AggregationType);
 
   aggregationTypesTranslations = aggregationTranslations;
 
@@ -57,9 +53,9 @@ export class AggregationOptionsConfigPanelComponent implements OnInit {
 
   update() {
     if (this.onClose) {
-      this.onClose({
-        allowedAggregationTypes: this.aggregationOptionsConfigForm.get('allowedAggregationTypes').value
-      });
+      const allowedAggregationTypes = this.aggregationOptionsConfigForm.get('allowedAggregationTypes').value;
+      // if full list selected returns empty for optimization
+      this.onClose(allowedAggregationTypes?.length < this.allAggregationTypes.length ? allowedAggregationTypes : []);
     }
   }
 

@@ -103,6 +103,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
   historyIntervalSelectionAvailable: boolean;
   aggregationOptionsAvailable: boolean;
 
+  allowedAggTypes: Array<AggregationType>;
+
   private destroy$ = new Subject<void>();
 
   constructor(@Inject(TIMEWINDOW_PANEL_DATA) public data: TimewindowPanelData,
@@ -121,6 +123,8 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
     this.aggregation = data.aggregation;
     this.timezone = data.timezone;
     this.isEdit = data.isEdit;
+
+    this.allowedAggTypes = this.timewindow.allowedAggTypes;
 
     if (!this.historyOnly) {
       this.timewindowTypeOptions.unshift({
@@ -366,6 +370,9 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
         fixedTimewindow: timewindowFormValue.history.fixedTimewindow,
         quickInterval: timewindowFormValue.history.quickInterval,
       }};
+    if (!this.timewindow.allowedAggTypes?.length) {
+      delete this.timewindow.allowedAggTypes;
+    }
     if (this.aggregation) {
       this.timewindow.aggregation = {
         type: timewindowFormValue.aggregation.type,
@@ -508,6 +515,7 @@ export class TimewindowPanelComponent extends PageComponent implements OnInit, O
       .subscribe((res) => {
         if (res) {
           this.timewindow = res;
+          this.allowedAggTypes = this.timewindow.allowedAggTypes;
           this.updateTimewindowForm();
         }
       });

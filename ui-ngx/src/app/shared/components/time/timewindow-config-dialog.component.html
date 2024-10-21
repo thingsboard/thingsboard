@@ -51,7 +51,7 @@
             {{ 'timewindow.disable-custom-interval' | translate }}
           </mat-slide-toggle>
         </div>
-        <div class="tb-form-row">
+        <div class="tb-form-row column-xs">
           <mat-slide-toggle *ngIf="!quickIntervalOnly"
                             class="mat-slide" formControlName="hideLastInterval">
             <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
@@ -70,7 +70,7 @@
       </ng-container>
 
       <div *ngIf="timewindowForm.get('realtime.realtimeType').value === realtimeTypes.INTERVAL"
-           class="tb-form-row">
+           class="tb-form-row column-xs">
         <mat-slide-toggle *ngIf="!quickIntervalOnly"
                           class="mat-slide" formControlName="hideQuickInterval">
           <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
@@ -107,7 +107,7 @@
             {{ 'timewindow.disable-custom-interval' | translate }}
           </mat-slide-toggle>
         </div>
-        <div class="tb-form-row">
+        <div class="tb-form-row column-xs">
           <mat-slide-toggle class="mat-slide" formControlName="hideLastInterval">
             <div tb-hint-tooltip-icon="{{'timewindow.hide-last-interval' | translate}}">
               {{ 'timewindow.hide' | translate }}
@@ -124,7 +124,7 @@
         </div>
       </ng-container>
 
-      <div *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED" class="tb-form-row">
+      <div *ngIf="timewindowForm.get('history.historyType').value === historyTypes.FIXED" class="tb-form-row column-xs">
         <mat-slide-toggle class="mat-slide" formControlName="hideFixedInterval">
           <div tb-hint-tooltip-icon="{{'timewindow.hide-fixed-interval' | translate}}">
             {{ 'timewindow.hide' | translate }}
@@ -140,7 +140,7 @@
         </tb-datetime-period>
       </div>
 
-      <div *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL" class="tb-form-row">
+      <div *ngIf="timewindowForm.get('history.historyType').value === historyTypes.INTERVAL" class="tb-form-row column-xs">
           <mat-slide-toggle class="mat-slide" formControlName="hideQuickInterval">
             <div tb-hint-tooltip-icon="{{'timewindow.hide-relative-interval' | translate}}">
               {{ 'timewindow.hide' | translate }}
@@ -168,8 +168,10 @@
           </mat-slide-toggle>
           <ng-container formGroupName="aggregation">
             <tb-aggregation-type-select class="flex" subscriptSizing="dynamic" appearance="outline" displayLabel="false"
-                                        formControlName="type">
-              <button matSuffix mat-icon-button type="button" class="tb-mat-24"
+                                        formControlName="type"
+                                        [allowedAggregationTypes]="timewindowForm.get('allowedAggTypes').value">
+              <button *ngIf="!timewindowForm.get('hideAggregation').value"
+                      matSuffix mat-icon-button type="button" class="tb-mat-24"
                       (click)="openAggregationOptionsConfig($event)">
                 <mat-icon>edit</mat-icon>
               </button>

@@ -15,10 +15,33 @@
     limitations under the License.
 
 -->
-<div [formGroup]="aggregationOptionsConfigForm">
-  <mat-selection-list formControlName="allowedAggregationTypes">
-    <mat-list-option *ngFor="let aggregation of aggregations" [value]="aggregation">
-      {{ aggregationTypesTranslations.get(aggregationTypes[aggregation]) | translate }}
-    </mat-list-option>
-  </mat-selection-list>
-</div>
+<form [formGroup]="aggregationOptionsConfigForm" class="tb-aggregation-options-form tb-form-panel no-border">
+  <div class="tb-form-panel-title">{{ 'timewindow.edit-aggregation-functions-list' | translate }}</div>
+  <div class="tb-form-hint tb-primary-fill">{{ 'timewindow.edit-aggregation-functions-list-hint' | translate }}</div>
+  <div class="tb-form-table no-gap no-padding">
+    <div class="tb-form-table-header">
+      <div class="tb-form-table-header-cell">{{"timewindow.allowed-aggregation-functions" | translate }}</div>
+    </div>
+    <div class="tb-form-table-body">
+      <mat-selection-list formControlName="allowedAggregationTypes">
+        <mat-list-option *ngFor="let type of allAggregationTypes" [value]="type" togglePosition="before">
+          {{ aggregationTypesTranslations.get(aggregationTypes[type]) | translate }}
+        </mat-list-option>
+      </mat-selection-list>
+    </div>
+  </div>
+  <div class="tb-flex flex-end no-gap">
+    <button type="button"
+            mat-button
+            (click)="cancel()">
+      {{ 'action.cancel' | translate }}
+    </button>
+    <button type="button"
+            mat-raised-button
+            color="primary"
+            (click)="update()"
+            [disabled]="aggregationOptionsConfigForm.invalid || !aggregationOptionsConfigForm.dirty">
+      {{ 'action.apply' | translate }}
+    </button>
+  </div>
+</form>
