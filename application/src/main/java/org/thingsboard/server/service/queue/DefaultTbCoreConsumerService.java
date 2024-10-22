@@ -236,7 +236,7 @@ public class DefaultTbCoreConsumerService extends AbstractConsumerService<ToCore
     @Override
     protected void startConsumers() {
         super.startConsumers();
-        firmwareStatesConsumer.subscribe();
+        firmwareStatesConsumer. subscribe();
         firmwareStatesConsumer.launch();
         usageStatsConsumer.launch();
     }

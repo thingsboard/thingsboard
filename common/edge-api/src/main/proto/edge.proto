@@ -40,6 +40,7 @@ enum EdgeVersion {
   V_3_6_4 = 6;
   V_3_7_0 = 7;
   V_3_8_0 = 8;
+  V_3_9_0 = 9;
 }
 
 /**
@@ -633,6 +634,10 @@ message ProcessingStrategyProto {
   double failurePercentage = 3;
   int64 pauseBetweenRetries = 4;
   int64 maxPauseBetweenRetries = 5;
+}
+
+message EdgeEvent {
+
 }
 
 /**

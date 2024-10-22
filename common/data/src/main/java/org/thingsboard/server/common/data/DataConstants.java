@@ -141,5 +141,6 @@ public class DataConstants {
     public static final String QUEUE_NAME = "queueName";
 
     public static final String EDGE_QUEUE_NAME = "Edge";
+    public static final String EDGE_EVENT_QUEUE_NAME = "EdgeEvent";
 
 }

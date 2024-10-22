@@ -17,6 +17,7 @@ package org.thingsboard.server.queue.discovery;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
+import org.thingsboard.server.common.data.id.EdgeId;
 import org.thingsboard.server.common.data.id.TenantId;
 import org.thingsboard.server.common.msg.queue.ServiceType;
 import org.thingsboard.server.common.msg.queue.TopicPartitionInfo;
@@ -33,6 +34,7 @@ public class TopicService {
     private final ConcurrentMap<String, TopicPartitionInfo> tbCoreNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbRuleEngineNotificationTopics = new ConcurrentHashMap<>();
     private final ConcurrentMap<String, TopicPartitionInfo> tbEdgeNotificationTopics = new ConcurrentHashMap<>();
+    private final ConcurrentMap<EdgeId, TopicPartitionInfo> tbEdgeEventsNotificationTopics = new ConcurrentHashMap<>();
 
     /**
      * Each Service should start a consumer for messages that target individual service instance based on serviceId.
@@ -57,6 +59,14 @@ public class TopicService {
 
     private TopicPartitionInfo buildEdgeNotificationsTopicPartitionInfo(String serviceId) {
         return buildTopicPartitionInfo("tb_edge.notifications." + serviceId, null, null, false);
+    }
+
+    public TopicPartitionInfo getEdgeEventNotificationsTopic(TenantId tenantId, EdgeId edgeId, String serviceId) {
+        return tbEdgeEventsNotificationTopics.computeIfAbsent(edgeId, id -> buildEdgeEventNotificationsTopicPartitionInfo(tenantId, edgeId, serviceId));
+    }
+
+    private TopicPartitionInfo buildEdgeEventNotificationsTopicPartitionInfo(TenantId tenantId, EdgeId edgeId, String serviceId) {
+        return buildTopicPartitionInfo("tb_edge_event.notifications." + tenantId + "." + edgeId + "." + serviceId, null, null, false);
     }
 
     private TopicPartitionInfo buildNotificationsTopicPartitionInfo(ServiceType serviceType, String serviceId) {
