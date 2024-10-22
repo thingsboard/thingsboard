@@ -44,10 +44,10 @@ public class QrCodeSettings extends BaseData<QrCodeSettingsId> implements HasTen
     private QRCodeConfig qrCodeConfig;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String defaultGooglePlayLink;
+    private String googlePlayLink;
 
     @JsonProperty(access = JsonProperty.Access.READ_ONLY)
-    private String defaultAppStoreLink;
+    private String appStoreLink;
 
     public QrCodeSettings() {
     }

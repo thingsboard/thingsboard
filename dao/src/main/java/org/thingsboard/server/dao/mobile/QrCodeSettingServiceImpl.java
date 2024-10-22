@@ -31,6 +31,8 @@ import org.thingsboard.server.dao.service.DataValidator;
 
 import java.util.Map;
 
+import static org.thingsboard.server.common.data.oauth2.PlatformType.ANDROID;
+import static org.thingsboard.server.common.data.oauth2.PlatformType.IOS;
 import static org.thingsboard.server.dao.service.Validator.validateId;
 
 @Service
@@ -112,8 +114,17 @@ public class QrCodeSettingServiceImpl extends AbstractCachedEntityService<Tenant
             qrCodeSettings.setMobileAppBundleId(qrCodeSettings.getMobileAppBundleId());
         }
         if (qrCodeSettings.isUseDefaultApp()) {
-            qrCodeSettings.setDefaultGooglePlayLink(googlePlayLink);
-            qrCodeSettings.setDefaultAppStoreLink(appStoreLink);
+            qrCodeSettings.setGooglePlayLink(googlePlayLink);
+            qrCodeSettings.setAppStoreLink(appStoreLink);
+        } else {
+            MobileApp androidApp = mobileAppService.findByBundleIdAndPlatformType(qrCodeSettings.getTenantId(), qrCodeSettings.getMobileAppBundleId(), ANDROID);
+            MobileApp iosApp = mobileAppService.findByBundleIdAndPlatformType(qrCodeSettings.getTenantId(), qrCodeSettings.getMobileAppBundleId(), IOS);
+            if (androidApp != null && androidApp.getStoreInfo() != null && androidApp.getStoreInfo().isEnabled()) {
+                qrCodeSettings.setGooglePlayLink(androidApp.getStoreInfo().getStoreLink());
+            }
+            if (iosApp != null && iosApp.getStoreInfo() != null && iosApp.getStoreInfo().isEnabled()) {
+                qrCodeSettings.setAppStoreLink(iosApp.getStoreInfo().getStoreLink());
+            }
         }
         return qrCodeSettings;
     }
