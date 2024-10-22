@@ -20,7 +20,7 @@ import { RouterTabsComponent } from '@home/components/router-tabs.component';
 import { Authority } from '@shared/models/authority.enum';
 import { MenuId } from '@core/services/menu.models';
 import { MobileAppTableConfigResolver } from '@home/pages/mobile/applications/mobile-app-table-config.resolver';
-import { MobileAppSettingsComponent } from '@home/pages/admin/mobile-app-settings.component';
+import { MobileAppSettingsComponent } from '@home/pages/mobile/qr-code-widget/mobile-app-settings.component';
 import { ConfirmOnExitGuard } from '@core/guards/confirm-on-exit.guard';
 import { applicationsRoutes } from '@home/pages/mobile/applications/applications-routing.module';
 import { bundlesRoutes } from '@home/pages/mobile/bundes/bundles-routing.module';

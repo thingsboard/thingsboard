@@ -32,7 +32,7 @@ import { ActionUpdateMobileQrCodeEnabled } from '@core/auth/auth.actions';
 @Component({
   selector: 'tb-mobile-app-settings',
   templateUrl: './mobile-app-settings.component.html',
-  styleUrls: ['mobile-app-settings.component.scss', './settings-card.scss']
+  styleUrls: ['mobile-app-settings.component.scss', '../../admin/settings-card.scss']
 })
 export class MobileAppSettingsComponent extends PageComponent implements HasConfirmForm, OnDestroy {
 
