@@ -33,6 +33,7 @@ import org.thingsboard.server.common.data.page.PageData;
 import org.thingsboard.server.common.data.page.PageLink;
 import org.thingsboard.server.dao.service.DaoSqlTest;
 
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -97,6 +98,17 @@ public class MobileAppBundleControllerTest extends AbstractControllerTest {
         MobileAppBundle createdMobileAppBundle = doPost("/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class);
         assertThat(createdMobileAppBundle.getAndroidAppId()).isEqualTo(androidApp.getId());
         assertThat(createdMobileAppBundle.getIosAppId()).isEqualTo(iosApp.getId());
+    }
+
+    @Test
+    public void testSaveMobileAppBundleWithoutApps() throws Exception {
+        MobileAppBundle mobileAppBundle = new MobileAppBundle();
+        mobileAppBundle.setTitle("Test bundle");
+
+        MobileAppBundle savedAppBundle = doPost("/api/mobile/bundle", mobileAppBundle, MobileAppBundle.class);
+        MobileAppBundleInfo retrievedMobileAppBundleInfo = doGet("/api/mobile/bundle/info/{id}", MobileAppBundleInfo.class, savedAppBundle.getId().getId());
+        assertThat(retrievedMobileAppBundleInfo).isEqualTo(new MobileAppBundleInfo(savedAppBundle, null, null, false,
+                Collections.emptyList()));
     }
 
 

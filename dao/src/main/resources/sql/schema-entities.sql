@@ -636,7 +636,7 @@ CREATE TABLE IF NOT EXISTS mobile_app (
     app_secret varchar(2048),
     platform_type varchar(32),
     status varchar(32),
-    version_info varchar(16384),
+    version_info varchar(100000),
     store_info varchar(16384),
     CONSTRAINT pkg_name_platform_unique UNIQUE (pkg_name, platform_type)
 );

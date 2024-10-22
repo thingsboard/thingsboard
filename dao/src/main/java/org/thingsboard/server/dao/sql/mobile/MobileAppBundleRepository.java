@@ -30,7 +30,8 @@ import java.util.UUID;
 
 public interface MobileAppBundleRepository extends JpaRepository<MobileAppBundleEntity, UUID> {
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.MobileAppBundleInfoEntity(b, andApp.pkgName, iosApp.pkgName, (andApp.status = 'PUBLISHED' or iosApp.status = 'PUBLISHED')) " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.MobileAppBundleInfoEntity(b, andApp.pkgName, iosApp.pkgName, " +
+            "((andApp.status IS NOT NULL AND andApp.status = 'PUBLISHED') OR (iosApp.status IS NOT NULL AND iosApp.status = 'PUBLISHED'))) " +
             "FROM MobileAppBundleEntity b " +
             "LEFT JOIN MobileAppEntity andApp on b.androidAppId = andApp.id " +
             "LEFT JOIN MobileAppEntity iosApp on b.iosAppID = iosApp.id " +
@@ -40,7 +41,8 @@ public interface MobileAppBundleRepository extends JpaRepository<MobileAppBundle
                                                        @Param("searchText") String searchText,
                                                        Pageable pageable);
 
-    @Query("SELECT new org.thingsboard.server.dao.model.sql.MobileAppBundleInfoEntity(b, andApp.pkgName, iosApp.pkgName, (andApp.status = 'PUBLISHED' or iosApp.status = 'PUBLISHED')) " +
+    @Query("SELECT new org.thingsboard.server.dao.model.sql.MobileAppBundleInfoEntity(b, andApp.pkgName, iosApp.pkgName, " +
+            "((andApp.status IS NOT NULL AND andApp.status = 'PUBLISHED') OR (iosApp.status IS NOT NULL AND iosApp.status = 'PUBLISHED'))) " +
             "FROM MobileAppBundleEntity b " +
             "LEFT JOIN MobileAppEntity andApp on b.androidAppId = andApp.id " +
             "LEFT JOIN MobileAppEntity iosApp on b.iosAppID = iosApp.id " +

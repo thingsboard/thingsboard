@@ -35,7 +35,7 @@ public class MobileAppVersionInfo {
     private String minVersion;
 
     @Schema(description = "Release notes of minimum supported version")
-    @Length(fieldName = "minVersionReleaseNotes", max = 10000)
+    @Length(fieldName = "minVersionReleaseNotes", max = 40000)
     private String minVersionReleaseNotes;
 
     @Schema(description = "Latest supported version")
@@ -43,7 +43,7 @@ public class MobileAppVersionInfo {
     private String latestVersion;
 
     @Schema(description = "Release notes of latest supported version")
-    @Length(fieldName = "latestVersionReleaseNotes", max = 10000)
+    @Length(fieldName = "latestVersionReleaseNotes", max = 40000)
     private String latestVersionReleaseNotes;
 
 }

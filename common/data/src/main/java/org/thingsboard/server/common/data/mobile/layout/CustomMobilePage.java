@@ -31,7 +31,7 @@ import org.thingsboard.server.common.data.Views;
 @EqualsAndHashCode(callSuper = true)
 public class CustomMobilePage extends AbstractMobilePage {
 
-    @Schema(description = "Path", example = "")
+    @Schema(description = "Path to custom page", example = "/alarmDetails/868c7083-032d-4f52-b8b4-7859aebb6a4e")
     @JsonView(Views.Public.class)
     private String path;
 
