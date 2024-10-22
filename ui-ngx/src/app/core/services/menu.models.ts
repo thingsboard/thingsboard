@@ -804,6 +804,14 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
           {id: MenuId.notification_rules}
         ]
       },
+      {
+        id: MenuId.mobile_center,
+        pages: [
+          {id: MenuId.mobile_apps},
+          {id: MenuId.mobile_bundles},
+          {id: MenuId.mobile_qr_code_widget}
+        ]
+      },
       {id: MenuId.api_usage},
       {
         id: MenuId.settings,
@@ -817,7 +825,13 @@ const defaultUserMenuMap = new Map<Authority, MenuReference[]>([
       {
         id: MenuId.security_settings,
         pages: [
-          {id: MenuId.audit_log}
+          {id: MenuId.audit_log},
+          {
+            id: MenuId.oauth2,
+            pages: [
+              {id: MenuId.clients}
+            ]
+          }
         ]
       }
     ]
